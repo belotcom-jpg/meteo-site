@@ -7,99 +7,91 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-        body {
-            background: #000;
-            color: #fff;
-            font-family: 'Courier New', monospace;
-            padding: 10px;
-            min-height: 100dvh;
-            overflow-x: hidden;
-        }
-
+        body { background: #000; color: #fff; font-family: 'Courier New', monospace; padding: 10px; min-height: 100dvh; overflow-x: hidden; }
         .wrap { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
 
-        /* ── Recherche ── */
         .search { display: flex; gap: 8px; }
         input {
-            flex: 1; min-width: 0;
-            background: #0d0d0d; border: 2px solid #555; border-radius: 10px;
-            padding: 13px 12px; color: #fff;
-            font-size: clamp(14px, 4vw, 18px); font-weight: 900;
-            font-family: 'Courier New', monospace; outline: none;
-            -webkit-appearance: none;
+            flex: 1; min-width: 0; background: #0d0d0d; border: 2px solid #555;
+            border-radius: 10px; padding: 13px 12px; color: #fff;
+            font-size: clamp(14px,4vw,18px); font-weight: 900;
+            font-family: 'Courier New', monospace; outline: none; -webkit-appearance: none;
         }
         input:focus { border-color: #00ffff; box-shadow: 0 0 10px rgba(0,255,255,0.3); }
         #searchBtn {
-            background: #00ffff; color: #000; border: none;
-            padding: 0 18px; border-radius: 10px;
-            font-weight: 900; cursor: pointer; flex-shrink: 0;
-            font-family: 'Courier New', monospace;
-            font-size: clamp(12px, 3.5vw, 15px);
-            min-height: 52px; min-width: 56px;
-            -webkit-appearance: none; transition: background .15s;
+            background: #00ffff; color: #000; border: none; padding: 0 18px;
+            border-radius: 10px; font-weight: 900; cursor: pointer; flex-shrink: 0;
+            font-family: 'Courier New', monospace; font-size: clamp(12px,3.5vw,15px);
+            min-height: 52px; min-width: 56px; -webkit-appearance: none; transition: background .15s;
         }
         #searchBtn:active { background: #fff; }
         #searchBtn:disabled { background: #333; color: #666; }
 
-        /* ── Carte ── */
-        .card {
-            background: #080808; border: 2px solid #333;
-            border-radius: 16px; overflow: hidden; display: flex; flex-direction: column;
+        #sourcesBar {
+            display: none; background: #080808; border: 1px solid #1e1e1e;
+            border-radius: 10px; padding: 9px 14px; flex-wrap: wrap; gap: 7px; align-items: center;
         }
-        .header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 12px 16px; border-bottom: 1px solid #2a2a2a; gap: 8px;
+        .src-lbl { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; color: #444; flex-shrink: 0; }
+        .src-badge {
+            display: flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 900;
+            padding: 3px 8px; border-radius: 6px; border: 1px solid #222; color: #444; transition: all .3s;
         }
+        .src-badge.ok  { color: #eee; }
+        .src-badge.err { border-color: #ff3d5766; color: #ff3d57; }
+        .src-dot { width: 7px; height: 7px; border-radius: 50%; background: #222; transition: all .3s; flex-shrink: 0; }
+        .src-badge.loading .src-dot { animation: pulse .8s ease-in-out infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+        #synthLine {
+            display: none; background: rgba(0,255,255,0.05); border: 1px solid rgba(0,255,255,0.18);
+            border-radius: 8px; padding: 7px 14px; font-size: 10px; color: rgba(0,255,255,0.75); font-weight: 700; line-height: 1.5;
+        }
+
+        .card { background: #080808; border: 2px solid #333; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #2a2a2a; gap: 8px; }
         .header-left { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-        .city-name {
-            font-size: clamp(16px, 5vw, 28px);
-            font-weight: 900; text-transform: uppercase; letter-spacing: 2px;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .city-tz { font-size: clamp(9px, 2vw, 11px); color: #555; letter-spacing: 1px; }
+        .city-name { font-size: clamp(16px,5vw,28px); font-weight: 900; text-transform: uppercase; letter-spacing: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .city-tz   { font-size: clamp(9px,2vw,11px); color: #555; letter-spacing: 1px; }
 
         .legend { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; flex-shrink: 0; }
-        .leg-rain { font-size: clamp(9px, 2.5vw, 12px); font-weight: 900; color: #00ffff; text-shadow: 0 0 8px rgba(0,255,255,0.5); }
-        .leg-prob { font-size: clamp(9px, 2.5vw, 12px); font-weight: 900; color: #ffe600; text-shadow: 0 0 8px rgba(255,230,0,0.5); }
+        .leg { display: flex; align-items: center; gap: 5px; }
+        .leg-dot { width: 22px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+        .leg-dot.dashed { background: repeating-linear-gradient(90deg,#ffe600 0,#ffe600 6px,transparent 6px,transparent 10px); height:2px; }
+        .leg-txt { font-size: clamp(9px,2.5vw,11px); font-weight: 900; }
 
-        /* ── Chart ── */
         #chartWrapper { position: relative; }
-        .canvas-container {
-            height: clamp(220px, 45vw, 360px);
-            width: 100%;
-        }
-
-        /* Séparateurs de jours */
+        .canvas-container { height: clamp(220px,45vw,380px); width: 100%; }
+        /* Trait vertical générique : séparateur jour ET 8h ont le même style */
         .sep-line {
             position: absolute; width: 0;
-            border-left: 2px dashed rgba(255,255,255,0.75);
+            border-left: 2px dashed rgba(255,255,255,0.72);
             pointer-events: none; z-index: 20;
         }
 
-        /* ── Résumé ── */
-        #summaryRow {
-            display: flex; border-top: 2px solid #444;
-            background: #060606;
-            height: clamp(64px, 16vw, 82px);
-            overflow: hidden;
+        #summaryRow { display: flex; border-top: 2px solid #444; background: #060606; height: clamp(64px,16vw,82px); overflow: hidden; }
+        .day-seg { display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
+        .day-name { font-size: clamp(8px,2vw,10px); font-weight: 900; color: #666; margin-bottom: 2px; letter-spacing: 1px; }
+        .day-rain { font-size: clamp(13px,3.8vw,20px); font-weight: 900; color: #00ffff; line-height: 1; text-shadow: 0 0 8px rgba(0,255,255,0.5); }
+        .day-prob { font-size: clamp(10px,2.5vw,13px); font-weight: 900; color: #ffe600; margin-top: 1px; }
+        .unit { font-size: 8px; opacity: 0.6; }
+        #viewBtns {
+            display:none; gap:6px; justify-content:flex-end;
         }
-        .day-seg {
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            flex-shrink: 0; overflow: hidden;
+        .view-btn {
+            background:#0d0d0d; border:1.5px solid #333; border-radius:8px;
+            color:#888; font-family:'Courier New',monospace; font-size:10px;
+            font-weight:900; padding:6px 12px; cursor:pointer; letter-spacing:1px;
+            transition:all .15s; white-space:nowrap;
         }
-        .day-name {
-            font-size: clamp(8px, 2vw, 10px); font-weight: 900;
-            color: #666; margin-bottom: 2px; letter-spacing: 1px;
+        .view-btn:hover { border-color:#888; color:#fff; }
+        .view-btn.active { border-color:#00ffff; color:#00ffff; background:rgba(0,255,255,0.07); }
+        #modeHint {
+            position:absolute; top:8px; right:8px;
+            font-size:9px; font-weight:900; letter-spacing:1px;
+            color:rgba(255,255,255,0.25); pointer-events:none; z-index:30;
+            font-family:'Courier New',monospace;
         }
-        .day-rain {
-            font-size: clamp(13px, 3.8vw, 20px); font-weight: 900;
-            color: #00ffff; line-height: 1;
-            text-shadow: 0 0 8px rgba(0,255,255,0.5);
-        }
-        .day-prob { font-size: clamp(10px, 2.5vw, 13px); font-weight: 900; color: #ffe600; margin-top: 1px; }
-        .unit     { font-size: 8px; opacity: 0.6; }
+        #chartWrapper:active #modeHint { color:rgba(255,255,255,0.6); }
     </style>
 </head>
 <body>
@@ -111,6 +103,13 @@
         <button id="searchBtn" onclick="load()">GO</button>
     </div>
 
+    <div id="sourcesBar"></div>
+    <div id="synthLine"></div>
+    <div id="viewBtns">
+        <button class="view-btn active" id="btnJ1"  onclick="setView('j1')">J+1 ▸</button>
+        <button class="view-btn"        id="btnJ10" onclick="setView('j10')">◂ J+10</button>
+    </div>
+
     <div class="card">
         <div class="header">
             <div class="header-left">
@@ -118,337 +117,488 @@
                 <div id="displayTz" class="city-tz"></div>
             </div>
             <div class="legend">
-                <span class="leg-rain">● PLUIE mm/h</span>
-                <span class="leg-prob">-- PROBA %</span>
+                <div class="leg"><div class="leg-dot" style="background:#00ffff;box-shadow:0 0 6px rgba(0,255,255,.5)"></div><span class="leg-txt" style="color:#00ffff">SYNTHÈSE P80</span></div>
+                <div class="leg"><div class="leg-dot" style="background:#ffe600;height:3px;box-shadow:0 0 6px rgba(255,230,0,.5)"></div><span class="leg-txt" style="color:#ffe600">MAX MODÈLES</span></div>
+                <div class="leg"><div class="leg-dot dashed"></div><span class="leg-txt" style="color:#ffe600;opacity:.7">PROBA %</span></div>
             </div>
         </div>
-
         <div id="chartWrapper">
             <div class="canvas-container"><canvas id="mainChart"></canvas></div>
             <div id="summaryRow"></div>
+            <div id="modeHint">2× J+1 / J+10</div>
         </div>
     </div>
 </div>
 
 <script>
+const SOURCES = [
+    { key:'icon',  label:'ICON',   color:'#4488ff', omModel:'icon_seamless'        },
+    { key:'gfs',   label:'GFS',    color:'#44dd88', omModel:'gfs_seamless'         },
+    { key:'ecmwf', label:'ECMWF',  color:'#cc44ff', omModel:'ecmwf_ifs04'          },
+    { key:'mf',    label:'AROME',  color:'#ff8844', omModel:'meteofrance_seamless' },
+    { key:'gem',   label:'GEM',    color:'#44dddd', omModel:'gem_seamless'         },
+    { key:'metno', label:'MET-NO', color:'#ff44aa', omModel:null                   },
+];
+
 let myChart = null;
 let lastW   = 0;
 let cityTz  = 'Europe/Paris';
+let N_HRS   = 0;
+/* Partagés entre render() et les plugins Canvas */
+let _peaks   = [];
+let _idx8hJ0 = -1;
+let _idx8hJ1 = -1;
+let _viewMode = 'j1';   /* 'j1' | 'j10' */
+let _cachedData = null; /* { omMain, omM15, rainMx, probMx } */
 
-/* ════ LOAD ════════════════════════════════════════════════════ */
-async function load() {
-    const city = document.getElementById('cityInput').value.trim();
-    if (!city) return;
-    const btn = document.getElementById('searchBtn');
-    btn.disabled = true; btn.textContent = '…';
-    try {
-        const geo = await fetch(
-            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=fr`
-        ).then(r => r.json());
-        if (!geo.results?.length) { alert('Ville introuvable'); return; }
+/* ── Maths ── */
+function p80(arr) {
+    const v = arr.filter(x => x != null && isFinite(x) && x >= 0);
+    if (!v.length) return 0;
+    const s = [...v].sort((a,b)=>a-b);
+    const i = 0.8*(s.length-1);
+    const lo=Math.floor(i),hi=Math.ceil(i);
+    return s[lo]+(s[hi]-s[lo])*(i-lo);
+}
+function maxOf(arr) {
+    const v = arr.filter(x => x != null && isFinite(x) && x >= 0);
+    return v.length ? Math.max(...v) : 0;
+}
+function interpM15(m15,slotF,off) {
+    const t=slotF+off/15,si=Math.floor(t),f=t-si;
+    return Math.max(0,(m15[si]??0)*(1-f)+(m15[si+1]??m15[si]??0)*f);
+}
+function localKey(utcStr) {
+    const l=new Date(new Date(utcStr).toLocaleString('en-US',{timeZone:cityTz}));
+    const p=n=>String(n).padStart(2,'0');
+    return `${l.getFullYear()}-${p(l.getMonth()+1)}-${p(l.getDate())}T${p(l.getHours())}:00`;
+}
 
-        const { latitude, longitude, name } = geo.results[0];
-        document.getElementById('displayCity').innerText = name;
-
-        /* forecast_days=11 → indices 0..263 dans hourly */
-        const data = await fetch(
-            `https://api.open-meteo.com/v1/forecast`
-            + `?latitude=${latitude}&longitude=${longitude}`
-            + `&hourly=precipitation,precipitation_probability`
-            + `&minutely_15=precipitation`
-            + `&forecast_days=11&timezone=auto`
-        ).then(r => r.json());
-
-        cityTz = data.timezone ?? 'Europe/Paris';
-        document.getElementById('displayTz').textContent =
-            cityTz + ' · ' + (data.timezone_abbreviation ?? '');
-
-        processData(data);
-    } catch (e) {
-        console.error(e); alert('Erreur de chargement');
-    } finally {
-        btn.disabled = false; btn.textContent = 'GO';
+/* ── UI ── */
+function initBar() {
+    const bar=document.getElementById('sourcesBar');
+    bar.style.display='flex';
+    bar.innerHTML=`<span class="src-lbl">Sources</span>`;
+    SOURCES.forEach(s=>{
+        const b=document.createElement('div');
+        b.className='src-badge loading'; b.id='b_'+s.key;
+        b.style.borderColor=s.color+'44';
+        b.innerHTML=`<div class="src-dot" style="background:${s.color}55"></div>${s.label}`;
+        bar.appendChild(b);
+    });
+}
+function setBadge(key,ok) {
+    const b=document.getElementById('b_'+key);
+    if(!b) return;
+    const src=SOURCES.find(s=>s.key===key);
+    b.className='src-badge '+(ok?'ok':'err');
+    if(ok){
+        b.style.borderColor=src.color+'66'; b.style.background=src.color+'15';
+        const dot=b.querySelector('.src-dot');
+        dot.style.background=src.color; dot.style.boxShadow=`0 0 6px ${src.color}`; dot.style.animation='none';
+    } else {
+        const dot=b.querySelector('.src-dot');
+        dot.style.background='#ff3d57'; dot.style.animation='none';
     }
 }
 
-/* ════ INTERPOLATION minutely_15 ════════════════════════════════ */
-function interpM15(m15, slotF, offsetMin) {
-    const target = slotF + offsetMin / 15;
-    const si     = Math.floor(target);
-    const frac   = target - si;
-    const v0     = m15[si]     ?? 0;
-    const v1     = m15[si + 1] ?? v0;
-    return Math.max(0, v0 * (1 - frac) + v1 * frac);
+/* ── Load ── */
+async function load() {
+    const city=document.getElementById('cityInput').value.trim();
+    if(!city) return;
+    const btn=document.getElementById('searchBtn');
+    btn.disabled=true; btn.textContent='…';
+    try {
+        const geo=await fetch(
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=fr`
+        ).then(r=>r.json());
+        if(!geo.results?.length){alert('Ville introuvable');return;}
+        const {latitude:lat,longitude:lon,name}=geo.results[0];
+        document.getElementById('displayCity').innerText=name;
+        initBar();
+        document.getElementById('synthLine').style.display='none';
+
+        const omModels=SOURCES.filter(s=>s.omModel).map(s=>s.omModel).join(',');
+        const [omMain,omM15,metno]=await Promise.all([
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability&models=${encodeURIComponent(omModels)}&forecast_days=11&timezone=auto`).then(r=>r.json()).catch(()=>null),
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&forecast_days=2&timezone=auto`).then(r=>r.json()).catch(()=>null),
+            fetch(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`).then(r=>r.json()).catch(()=>null),
+        ]);
+        if(!omMain?.hourly?.time){alert('Open-Meteo indisponible');return;}
+
+        cityTz=omMain.timezone??'Europe/Paris';
+        N_HRS=omMain.hourly.time.length;
+        document.getElementById('displayTz').textContent=cityTz+' · '+(omMain.timezone_abbreviation??'');
+
+        const tIdx={};
+        omMain.hourly.time.forEach((t,i)=>{tIdx[t]=i;});
+
+        const rainMx=buildRainMx(omMain,metno,tIdx);
+        const probMx=buildProbMx(omMain,metno,tIdx);
+
+        /* Mettre en cache pour le toggle sans re-fetch */
+        _cachedData={omMain,omM15,rainMx,probMx};
+
+        let active=[];
+        SOURCES.forEach(s=>{setBadge(s.key,rainMx[s.key]!==null);if(rainMx[s.key])active.push(s.label);});
+        const sl=document.getElementById('synthLine');
+        sl.style.display='block';
+        sl.textContent=`⚡ P80 pessimiste · MAX toutes sources · ${active.length} sources : ${active.join(' · ')}`;
+
+        _viewMode='j1';
+        document.getElementById('viewBtns').style.display='flex';
+        updateBtnState();
+        processData(omMain,omM15,rainMx,probMx);
+    } catch(e){console.error(e);alert('Erreur');}
+    finally{btn.disabled=false;btn.textContent='GO';}
 }
 
-/* ════ PROCESS DATA ═════════════════════════════════════════════
-   RÈGLE DE DENSITÉ (nombre de points par jour)
-   ─────────────────────────────────────────────
-   Chart.js espace chaque point de façon identique.
-   Pour que les colonnes du résumé aient la même largeur,
-   tous les jours J+5…J+10 ont EXACTEMENT 3 pts (0h, 8h, 16h).
-   → largeur pixel identique pour les 6 derniers jours.
-════════════════════════════════════════════════════════════════ */
-function processData(data) {
-    const pts = [];
-
-    const cityNow = new Date(new Date().toLocaleString('en-US', { timeZone: cityTz }));
-    const h = cityNow.getHours();
-    const m = cityNow.getMinutes();
-    const s = cityNow.getSeconds();
-
-    const m15   = data.minutely_15?.precipitation ?? [];
-    const slotF = h * 4 + (m + s / 60) / 15;
-
-    /* +5' / +10' / +15' / +30' / +45' ── interpolés depuis minutely_15 */
-    [5, 10, 15, 30, 45].forEach(off => {
-        pts.push({
-            t : `+${off}'`, d : 0,
-            r : interpM15(m15, slotF, off),
-            p : data.hourly.precipitation_probability[h] ?? 0
+/* ── Matrices ── */
+function buildRainMx(omMain,metno,tIdx){
+    const mx={},N=N_HRS,h=omMain.hourly;
+    SOURCES.filter(s=>s.omModel).forEach(s=>{
+        const k=`precipitation_${s.omModel}`;
+        mx[s.key]=h[k]?[...h[k]]:null;
+    });
+    if(metno?.properties?.timeseries){
+        const arr=new Array(N).fill(null);
+        metno.properties.timeseries.forEach(e=>{
+            const i=tIdx[localKey(e.time)]??-1;
+            if(i>=0&&i<N){const v=e.data?.next_1_hours?.details?.precipitation_amount;if(v!=null)arr[i]=v;}
         });
+        mx['metno']=arr;
+    } else mx['metno']=null;
+    return mx;
+}
+function buildProbMx(omMain,metno,tIdx){
+    const mx={},N=N_HRS,h=omMain.hourly;
+    SOURCES.filter(s=>s.omModel).forEach(s=>{
+        const k=`precipitation_probability_${s.omModel}`;
+        mx[s.key]=h[k]?[...h[k]]:null;
+    });
+    if(metno?.properties?.timeseries){
+        const arr=new Array(N).fill(null);
+        metno.properties.timeseries.forEach(e=>{
+            const i=tIdx[localKey(e.time)]??-1;
+            if(i>=0&&i<N){const v=e.data?.next_1_hours?.details?.probability_of_precipitation;if(v!=null)arr[i]=v;}
+        });
+        mx['metno']=arr;
+    } else mx['metno']=null;
+    return mx;
+}
+const synthR=(i,mx)=>p80(SOURCES.map(s=>mx[s.key]?.[i]));
+const synthP=(i,mx)=>Math.min(100,maxOf(SOURCES.map(s=>mx[s.key]?.[i])));
+const maxR  =(i,mx)=>maxOf(SOURCES.map(s=>mx[s.key]?.[i]));
+
+/* ── Points ── */
+function processData(omMain,omM15,rainMx,probMx){
+    const pts=[],mods=SOURCES.map(()=>[]);
+    const now=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz}));
+    const h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
+    const m15=omM15?.minutely_15?.precipitation??[];
+    const slotF=h*4+(m+s/60)/15;
+
+    function push(t,d,idx,isNewDay){
+        const r=idx>=0?synthR(idx,rainMx):0;
+        const mx=idx>=0?maxR(idx,rainMx):0;
+        const p=idx>=0?synthP(idx,probMx):0;
+        pts.push({t,d,r,mx,p,isNewDay,hourIdx:idx});
+        SOURCES.forEach((src,si)=>mods[si].push(idx>=0?(rainMx[src.key]?.[idx]??null):null));
+    }
+
+    /* Minutes proches */
+    [5,10,15,30,45].forEach(off=>{
+        const r=interpM15(m15,slotF,off);
+        pts.push({t:`+${off}'`,d:0,r,mx:r,p:synthP(h,probMx),hourIdx:-1});
+        SOURCES.forEach((_,si)=>mods[si].push(null));
     });
 
-    /* Aujourd'hui h+1 … 23 */
-    for (let i = 1; i <= (23 - h); i++) {
-        pts.push({
-            t : (h + i) + 'h', d : 0,
-            r : data.hourly.precipitation[h + i]             ?? 0,
-            p : data.hourly.precipitation_probability[h + i] ?? 0
-        });
-    }
+    /* Aujourd'hui heure par heure jusqu'à minuit */
+    for(let i=1;i<=(23-h);i++) push((h+i)+'h',0,h+i,false);
 
-    /* J+1, J+2 — 3h (8 pts) */
-    for (let d = 1; d <= 2; d++) {
-        for (let hr = 0; hr < 24; hr += 3) {
-            const idx = d * 24 + hr;
-            pts.push({ t: hr+'h', d, isNewDay: hr===0,
-                r: data.hourly.precipitation[idx]             ?? 0,
-                p: data.hourly.precipitation_probability[idx] ?? 0 });
+    if(_viewMode==='j1'){
+        /* J+1 heure par heure 0h–23h */
+        for(let hr=0;hr<24;hr++){
+            const idx=24+hr;
+            if(idx<N_HRS) push(hr+'h',1,idx,hr===0);
         }
+    } else {
+        /* J+1 heure/heure, J+2–J+4 toutes 3h, J+5–J+10 toutes 8h */
+        for(let hr=0;hr<24;hr++){const idx=24+hr;if(idx<N_HRS)push(hr+'h',1,idx,hr===0);}
+        for(let d=2;d<=4;d++) for(let hr=0;hr<24;hr+=3){const idx=d*24+hr;if(idx<N_HRS)push(hr+'h',d,idx,hr===0);}
+        for(let d=5;d<=10;d++) for(let hr=0;hr<24;hr+=8){const idx=d*24+hr;if(idx<N_HRS)push(hr+'h',d,idx,hr===0);}
     }
 
-    /* J+3, J+4 — 6h (4 pts) + biais */
-    for (let d = 3; d <= 4; d++) {
-        for (let hr = 0; hr < 24; hr += 6) {
-            const idx = d * 24 + hr;
-            pts.push({ t: hr+'h', d, isNewDay: hr===0,
-                r: (data.hourly.precipitation[idx]             ?? 0) * 1.2,
-                p: Math.min(100, (data.hourly.precipitation_probability[idx] ?? 0) + 10) });
-        }
-    }
-
-    /* J+5 … J+10 — 8h (3 pts = 0h/8h/16h) + biais
-       TOUS les jours J+5..J+10 ont le même nombre de points (3)
-       → colonnes identiques, largeurs cohérentes dans le résumé */
-    for (let d = 5; d <= 10; d++) {
-        for (let hr = 0; hr < 24; hr += 8) {
-            const idx = d * 24 + hr;
-            pts.push({ t: hr+'h', d, isNewDay: hr===0,
-                r: (data.hourly.precipitation[idx]             ?? 0) * 1.2,
-                p: Math.min(100, (data.hourly.precipitation_probability[idx] ?? 0) + 10) });
-        }
-    }
-
-    render(pts);
+    render(pts,mods);
 }
 
-/* ════ RENDER ═══════════════════════════════════════════════════ */
-function render(pts) {
-    const ctx = document.getElementById('mainChart').getContext('2d');
-    if (myChart) myChart.destroy();
-    lastW = 0;
+/* ── Boutons de vue ── */
+function updateBtnState(){
+    document.getElementById('btnJ1').classList.toggle('active',_viewMode==='j1');
+    document.getElementById('btnJ10').classList.toggle('active',_viewMode==='j10');
+}
+function setView(mode){
+    if(!_cachedData||_viewMode===mode) return;
+    _viewMode=mode;
+    updateBtnState();
+    lastW=0;
+    const {omMain,omM15,rainMx,probMx}=_cachedData;
+    processData(omMain,omM15,rainMx,probMx);
+}
 
-    const isMobile = window.innerWidth < 500;
+/* ── Détection des pics ── */
+function detectPeaks(values,labels,threshold,minDist){
+    threshold=threshold??0.15; minDist=minDist??4;
+    const peaks=[];
+    for(let i=1;i<values.length-1;i++){
+        const v=values[i];
+        if(v==null||v<threshold) continue;
+        if(v>=(values[i-1]??0)&&v>=(values[i+1]??0)){
+            if(!peaks.length||i-peaks[peaks.length-1].idx>=minDist){
+                peaks.push({idx:i,val:v,label:labels[i]});
+            } else if(v>peaks[peaks.length-1].val){
+                peaks[peaks.length-1]={idx:i,val:v,label:labels[i]};
+            }
+        }
+    }
+    return peaks;
+}
 
-    const rainG = ctx.createLinearGradient(0, 0, 0, 360);
-    rainG.addColorStop(0,    'rgba(0,255,255,0.72)');
-    rainG.addColorStop(0.55, 'rgba(0,255,255,0.18)');
-    rainG.addColorStop(1,    'rgba(0,255,255,0)');
+function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+    ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+    ctx.closePath();
+}
 
-    myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels  : pts.map(p => p.t),
-            datasets: [
-                {
-                    data: pts.map(p => p.r),
-                    borderColor: '#00ffff', borderWidth: isMobile ? 1.5 : 2.5,
-                    fill: true, backgroundColor: rainG,
-                    tension: 0.4, pointRadius: 0, yAxisID: 'y', order: 1
-                },
-                {
-                    data: pts.map(p => p.p),
-                    borderColor: '#ffe600', borderWidth: isMobile ? 1.5 : 2,
-                    borderDash: [6, 4], tension: 0.4,
-                    pointRadius: 0, yAxisID: 'yProb', order: 2
-                }
+/* ── Render ── */
+function render(pts,mods){
+    const ctx=document.getElementById('mainChart').getContext('2d');
+    if(myChart) myChart.destroy();
+    lastW=0;
+
+    const isMob=window.innerWidth<500;
+    const maxVals=pts.map(p=>p.mx);
+
+    /* Mettre à jour les globals partagés avec buildOverlays */
+    _peaks   = detectPeaks(maxVals,pts.map(p=>p.t),0.15,isMob?3:4);
+    _idx8hJ0 = pts.findIndex(p=>p.d===0&&p.t==='8h');
+    _idx8hJ1 = pts.findIndex(p=>p.d===1&&p.t==='8h');
+
+    const grad=ctx.createLinearGradient(0,0,0,380);
+    grad.addColorStop(0,'rgba(0,255,255,0.52)');
+    grad.addColorStop(0.55,'rgba(0,255,255,0.09)');
+    grad.addColorStop(1,'rgba(0,255,255,0)');
+
+    const modelDS=SOURCES.map((src,si)=>({
+        data:mods[si],borderColor:src.color+'50',
+        borderWidth:isMob?.8:1.2,tension:0.3,pointRadius:0,
+        fill:false,yAxisID:'y',order:4,spanGaps:true,
+    }));
+
+    myChart=new Chart(ctx,{
+        type:'line',
+        data:{
+            labels:pts.map(p=>p.t),
+            datasets:[
+                {data:pts.map(p=>p.r),borderColor:'transparent',borderWidth:0,fill:true,backgroundColor:grad,tension:0.4,pointRadius:0,yAxisID:'y',order:5},
+                ...modelDS,
+                {data:maxVals,borderColor:'#ffe600',borderWidth:isMob?2.5:3.5,fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:2},
+                {data:pts.map(p=>p.r),borderColor:'#00ffff',borderWidth:isMob?1.5:2.5,fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:1},
+                {data:pts.map(p=>p.p),borderColor:'rgba(255,230,0,0.55)',borderWidth:isMob?1:1.5,borderDash:[5,4],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:3},
             ]
         },
-        options: {
-            responsive: true, maintainAspectRatio: false, animation: false,
-            scales: {
-                x: {
-                    ticks: {
-                        color: '#bbb',
-                        font: { weight: 'bold', size: isMobile ? 8 : 10, family: 'Courier New' },
-                        maxRotation: 0, autoSkip: false,
-                        callback(val) {
-                            const lbl = this.getLabelForValue(val);
-                            if (!lbl) return null;
-                            if (lbl.includes("'")) return lbl;         // toujours afficher +5' etc.
-                            if (isMobile) {
-                                const n = parseInt(lbl);
-                                if (!isNaN(n) && n % 6 !== 0) return null;
-                            }
-                            return lbl;
+        options:{
+            responsive:true,maintainAspectRatio:false,animation:false,
+            scales:{
+                x:{
+                    ticks:{
+                        color:'#bbb',
+                        font:{weight:'bold',size:isMob?8:10,family:'Courier New'},
+                        maxRotation:0,autoSkip:false,
+                        callback(val){
+                            const l=this.getLabelForValue(val);
+                            if(!l) return null;
+                            if(l.includes("'")) return l;
+                            if(isMob){const n=parseInt(l);if(!isNaN(n)&&n%3!==0) return null;}
+                            return l;
                         }
                     },
-                    grid  : { display: false },
-                    border: { color: '#555' }
+                    grid:{display:false},border:{color:'#555'}
                 },
-
-                /* ── Axe pluie — GAUCHE ── */
-                y: {
-                    position    : 'left',
-                    beginAtZero : true,
-                    grid        : { color: '#1a1a1a', lineWidth: 1 },
-                    ticks       : {
-                        color: '#00ffff',
-                        font : { weight: 'bold', size: isMobile ? 8 : 11, family: 'Courier New' }
-                    },
-                    border: { color: '#555' },
-                    title : {
-                        display: !isMobile, text: 'mm/h',
-                        color: '#00ffff', font: { size: 9, family: 'Courier New' }
-                    }
+                y:{
+                    position:'left',beginAtZero:true,
+                    grid:{color:'#181818',lineWidth:1},
+                    ticks:{color:'#00ffff',font:{weight:'bold',size:isMob?8:11,family:'Courier New'}},
+                    border:{color:'#555'},
+                    title:{display:!isMob,text:'mm/h',color:'#00ffff',font:{size:9,family:'Courier New'}}
                 },
-
-                /* ── Axe probabilité — DROITE (visible) ── */
-                yProb: {
-                    position    : 'right',
-                    min         : 0,
-                    max         : 100,
-                    display     : true,
-                    grid        : { display: false },   /* pas de grille dupliquée */
-                    ticks       : {
-                        color    : '#ffe600',
-                        font     : { weight: 'bold', size: isMobile ? 8 : 11, family: 'Courier New' },
-                        callback : v => v + '%',
-                        stepSize : 25
-                    },
-                    border: { color: '#555' },
-                    title : {
-                        display: !isMobile, text: 'prob.',
-                        color: '#ffe600', font: { size: 9, family: 'Courier New' }
-                    }
+                yProb:{
+                    position:'right',min:0,max:100,display:true,
+                    grid:{display:false},
+                    ticks:{color:'#ffe600',font:{weight:'bold',size:isMob?8:11,family:'Courier New'},callback:v=>v+'%',stepSize:25},
+                    border:{color:'#555'},
+                    title:{display:!isMob,text:'prob.',color:'#ffe600',font:{size:9,family:'Courier New'}}
                 }
             },
-            plugins: { legend: { display: false } }
+            plugins:{legend:{display:false},tooltip:{enabled:false}}
         },
-        plugins: [{
-            id: 'overlaySync',
-            afterDraw(chart) {
-                if (chart.width === lastW) return;
-                lastW = chart.width;
-                buildOverlays(chart, pts);
+        plugins:[
+            /* Séparateurs jour (CSS) + traits 8h (CSS) + résumé */
+            {
+                id:'overlay',
+                afterDraw(chart){
+                    if(chart.width===lastW) return;
+                    lastW=chart.width;
+                    buildOverlays(chart,pts);
+                }
+            },
+            /* Traits pointillés jaunes aux pics (Canvas) */
+            {
+                id:'peakLines',
+                afterDatasetsDraw(chart){
+                    if(!_peaks.length) return;
+                    const {ctx:c,scales:{x},chartArea:{top,bottom}}=chart;
+                    _peaks.forEach(pk=>{
+                        const xPx=x.getPixelForValue(pk.idx);
+                        if(xPx<x.left||xPx>x.right) return;
+                        c.save();
+                        c.strokeStyle='rgba(255,230,0,0.55)';
+                        c.lineWidth=1;
+                        c.setLineDash([3,3]);
+                        c.beginPath(); c.moveTo(xPx,top); c.lineTo(xPx,bottom); c.stroke();
+                        c.setLineDash([]);
+                        c.restore();
+                    });
+                }
+            },
+            /* Point sur courbe + encadrement du tick X existant */
+            {
+                id:'peakLabels',
+                afterDatasetsDraw(chart){
+                    if(!_peaks.length) return;
+                    const {ctx:c,scales:{x,y},chartArea:{top,bottom}}=chart;
+                    _peaks.forEach(pk=>{
+                        const xPx=x.getPixelForValue(pk.idx);
+                        const yPx=y.getPixelForValue(pk.val);
+                        if(xPx<x.left||xPx>x.right) return;
+                        /* Point jaune sur la courbe MAX */
+                        c.save();
+                        c.beginPath();
+                        c.arc(xPx,yPx,isMob?3.5:4.5,0,Math.PI*2);
+                        c.fillStyle='#ffe600';
+                        c.fill();
+                        c.restore();
+                    });
+                },
+                /* Encadre le tick de l axe X APRES que Chart.js l a dessiné */
+                afterDraw(chart){
+                    if(!_peaks.length) return;
+                    const {ctx:c,scales:{x},chartArea:{bottom}}=chart;
+                    const fSize=isMob?8:10;
+                    const pad=4;
+                    _peaks.forEach(pk=>{
+                        const xPx=x.getPixelForValue(pk.idx);
+                        if(xPx<x.left||xPx>x.right) return;
+                        c.save();
+                        c.font=`900 ${fSize}px 'Courier New',monospace`;
+                        const lbl=pk.label;
+                        const tw=c.measureText(lbl).width;
+                        const bw=tw+pad*2, bh=fSize+pad*2;
+                        const bx=xPx-bw/2;
+                        const by=bottom+4;
+                        /* Fond noir pour couvrir le tick original */
+                        c.fillStyle='#000';
+                        roundRect(c,bx-1,by-1,bw+2,bh+2,4);
+                        c.fill();
+                        /* Bordure jaune */
+                        c.strokeStyle='rgba(255,230,0,0.9)';
+                        c.lineWidth=1.2;
+                        roundRect(c,bx,by,bw,bh,3);
+                        c.stroke();
+                        /* Texte jaune */
+                        c.fillStyle='#ffe600';
+                        c.textAlign='center';
+                        c.textBaseline='middle';
+                        c.fillText(lbl,xPx,by+bh/2);
+                        c.restore();
+                    });
+                }
             }
-        }]
+        ]
     });
 }
 
-/* ════ OVERLAYS ═════════════════════════════════════════════════ */
-function buildOverlays(chart, pts) {
-    const { chartArea, scales: { x }, width: canvasW } = chart;
-    const wrapper = document.getElementById('chartWrapper');
-    wrapper.querySelectorAll('.sep-line').forEach(el => el.remove());
+/* ── Overlays : séparateurs jour + traits 8h (même style via CSS .sep-line) ── */
+function buildOverlays(chart,pts){
+    const {chartArea,scales:{x},width:cW}=chart;
+    const wrapper=document.getElementById('chartWrapper');
+    wrapper.querySelectorAll('.sep-line').forEach(e=>e.remove());
 
-    /* Index du premier point de chaque jour */
-    const dayFirstIdx = {};
-    pts.forEach((p, i) => { if (dayFirstIdx[p.d] === undefined) dayFirstIdx[p.d] = i; });
-    const days = Object.keys(dayFirstIdx).map(Number).sort((a, b) => a - b);
-    const wH   = wrapper.offsetHeight;
+    const dfi={};
+    pts.forEach((p,i)=>{if(dfi[p.d]===undefined)dfi[p.d]=i;});
+    const days=Object.keys(dfi).map(Number).sort((a,b)=>a-b);
+    const wH=wrapper.offsetHeight;
+    const xp={};
+    days.forEach(d=>{xp[d]=x.getPixelForValue(dfi[d]);});
 
-    /* xPos pixel pour chaque séparateur de jour */
-    const xPos = {};
-    days.forEach(d => { xPos[d] = x.getPixelForValue(dayFirstIdx[d]); });
+    function addLine(xPx, graphOnly=false){
+        const l=document.createElement('div');
+        l.className='sep-line';
+        const lineH=graphOnly?(chartArea.bottom-chartArea.top):(wH-chartArea.top);
+        l.style.cssText=`left:${xPx}px;top:${chartArea.top}px;height:${lineH}px;`;
+        wrapper.appendChild(l);
+    }
 
-    /* Injection des lignes séparatrices */
-    days.slice(1).forEach(d => {
-        const line = document.createElement('div');
-        line.className  = 'sep-line';
-        line.style.left   = xPos[d] + 'px';
-        line.style.top    = chartArea.top + 'px';
-        line.style.height = (wH - chartArea.top) + 'px';
-        wrapper.appendChild(line);
+    /* Séparateurs de jours — s'étendent jusqu'au résumé */
+    days.slice(1).forEach(d=>addLine(xp[d], false));
+
+    /* Traits 8h — limités à la zone graphe seulement */
+    [_idx8hJ0,_idx8hJ1].forEach(idx=>{
+        if(idx<0) return;
+        const xPx=x.getPixelForValue(idx);
+        if(xPx>chartArea.left&&xPx<chartArea.right) addLine(xPx, true);
     });
 
-    buildSummary(chart, pts, days, xPos);
+    buildSummary(chart,pts,days,xp);
 }
 
-/* ════ SUMMARY ══════════════════════════════════════════════════ */
-function buildSummary(chart, pts, days, xPos) {
-    const { chartArea, scales: { x }, width: canvasW } = chart;
-    const row      = document.getElementById('summaryRow');
-    const dayNames = ['DIM','LUN','MAR','MER','JEU','VEN','SAM'];
-    const cityNow  = new Date(new Date().toLocaleString('en-US', { timeZone: cityTz }));
+/* ── Résumé par jour (largeur corrigée pour le dernier segment) ── */
+function buildSummary(chart,pts,days,xp){
+    const {chartArea,scales:{x},width:cW}=chart;
+    const row=document.getElementById('summaryRow');
+    const dn=['DIM','LUN','MAR','MER','JEU','VEN','SAM'];
+    const cn=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz}));
+    row.style.paddingLeft=chartArea.left+'px';
+    row.style.paddingRight=(cW-chartArea.right)+'px';
+    row.innerHTML='';
 
-    row.style.paddingLeft  = chartArea.left + 'px';
-    row.style.paddingRight = (canvasW - chartArea.right) + 'px';
-    row.innerHTML = '';
+    /* Pixel de fin réel du dernier point */
+    const lastXPx=x.getPixelForValue(pts.length-1);
 
-    days.forEach((d, di) => {
-        const date   = new Date(cityNow);
-        date.setDate(cityNow.getDate() + d);
-        const isLast = di === days.length - 1;
+    days.forEach((d,di)=>{
+        const date=new Date(cn); date.setDate(cn.getDate()+d);
+        const isLast=di===days.length-1;
+        const startPx=di===0?chartArea.left:xp[d];
+        const endPx  =isLast?lastXPx:xp[days[di+1]];
+        const w=Math.max(0,endPx-startPx);
 
-        /* Largeur du segment
-           ─────────────────
-           Tous les jours J+5..J+10 ont 3 pts → même espacement naturel.
-           Pour le dernier jour (J+10) : width = largeur de J+9 (= xPos[J+9]−xPos[J+8]).
-           Pour les autres : width = xPos[next] − xPos[current].  */
-        let width;
-        if (isLast && di >= 2) {
-            const dPrev  = days[di - 1];
-            const dPrev2 = days[di - 2];
-            width = xPos[dPrev] - xPos[dPrev2];
-        } else if (isLast && di >= 1) {
-            width = xPos[days[di - 1]] - chartArea.left;
-        } else {
-            const leftPx  = di === 0 ? chartArea.left : xPos[d];
-            const rightPx = xPos[days[di + 1]];
-            width = Math.max(0, rightPx - leftPx);
-        }
-
-        const dayData = pts.filter(p => p.d === d);
-        const total   = dayData.reduce((s, p) => s + p.r, 0);
-        const maxP    = Math.max(...dayData.map(p => p.p), 0);
-        const approx  = d >= 5 ? '~' : '';
-
-        let label;
-        if      (d === 0) label = 'AUJ.';
-        else if (d <= 7)  label = dayNames[date.getDay()];
-        else              label = 'J+' + d;
-
-        const div       = document.createElement('div');
-        div.className   = 'day-seg';
-        div.style.width = width + 'px';
-        div.innerHTML   = `
-            <div class="day-name">${label}</div>
-            <div class="day-rain">${approx}${total.toFixed(1)}<span class="unit">mm</span></div>
-            <div class="day-prob">${Math.round(maxP)}%</div>
-        `;
+        const dd=pts.filter(p=>p.d===d);
+        const total=dd.reduce((s,p)=>s+p.mx,0);
+        const maxP=Math.max(...dd.map(p=>p.p),0);
+        const lbl=d===0?'AUJ.':d===1?dn[date.getDay()]:'J+'+d;
+        const div=document.createElement('div');
+        div.className='day-seg'; div.style.width=w+'px';
+        div.innerHTML=`<div class="day-name">${lbl}</div><div class="day-rain">${total.toFixed(1)}<span class="unit">mm</span></div><div class="day-prob">${Math.round(maxP)}%</div>`;
         row.appendChild(div);
     });
 }
 
-/* Rerender on rotate */
-let rTimer;
-window.addEventListener('resize', () => {
-    clearTimeout(rTimer);
-    rTimer = setTimeout(() => { lastW = 0; if (myChart) myChart.update(); }, 250);
-});
-
+let rt;
+window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{lastW=0;if(myChart)myChart.update();},250);});
 load();
 </script>
 </body>
