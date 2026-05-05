@@ -1,698 +1,787 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pluie Pro</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body { background: #000; color: #fff; font-family: 'Courier New', monospace; padding: 10px; min-height: 100dvh; overflow-x: hidden; }
-        .wrap { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
-
-        .search { display: flex; gap: 8px; }
-        input {
-            flex: 1; min-width: 0; background: #0d0d0d; border: 2px solid #555;
-            border-radius: 10px; padding: 13px 12px; color: #fff;
-            font-size: clamp(14px,4vw,18px); font-weight: 900;
-            font-family: 'Courier New', monospace; outline: none; -webkit-appearance: none;
-        }
-        input:focus { border-color: #00ffff; box-shadow: 0 0 10px rgba(0,255,255,0.3); }
-        #searchBtn {
-            background: #00ffff; color: #000; border: none; padding: 0 18px;
-            border-radius: 10px; font-weight: 900; cursor: pointer; flex-shrink: 0;
-            font-family: 'Courier New', monospace; font-size: clamp(12px,3.5vw,15px);
-            min-height: 52px; min-width: 56px; -webkit-appearance: none; transition: background .15s;
-        }
-        #searchBtn:active { background: #fff; }
-        #searchBtn:disabled { background: #333; color: #666; }
-
-        #sourcesBar {
-            display: none; background: #080808; border: 1px solid #1e1e1e;
-            border-radius: 8px; padding: 5px 10px; flex-wrap: wrap; gap: 5px; align-items: center;
-        }
-        .src-lbl { font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; color: #444; flex-shrink: 0; }
-        .src-badge {
-            display: flex; align-items: center; gap: 4px; font-size: 9px; font-weight: 900;
-            padding: 2px 6px; border-radius: 5px; border: 1px solid #222; color: #444; transition: all .3s;
-        }
-        .src-badge.ok  { color: #eee; }
-        .src-badge.err { border-color: #ff3d5766; color: #ff3d57; }
-        .src-dot { width: 7px; height: 7px; border-radius: 50%; background: #222; transition: all .3s; flex-shrink: 0; }
-        .src-badge.loading .src-dot { animation: pulse .8s ease-in-out infinite; }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-
-        #synthLine {
-            display: none; background: rgba(0,255,255,0.05); border: 1px solid rgba(0,255,255,0.18);
-            border-radius: 6px; padding: 4px 10px; font-size: 9px; color: rgba(0,255,255,0.65); font-weight: 700; line-height: 1.4;
-        }
-
-        #viewBtns { display: none; gap: 6px; justify-content: flex-end; }
-        .view-btn {
-            background: #0d0d0d; border: 1.5px solid #333; border-radius: 8px;
-            color: #888; font-family: 'Courier New', monospace; font-size: 10px;
-            font-weight: 900; padding: 6px 12px; cursor: pointer; letter-spacing: 1px;
-            transition: all .15s; white-space: nowrap;
-        }
-        .view-btn:hover { border-color: #888; color: #fff; }
-        .view-btn.active { border-color: #00ffff; color: #00ffff; background: rgba(0,255,255,0.07); }
-
-        .card { background: #080808; border: 2px solid #333; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #2a2a2a; gap: 8px; }
-        .header-left { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-        .city-name { font-size: clamp(16px,5vw,28px); font-weight: 900; text-transform: uppercase; letter-spacing: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .city-tz   { font-size: clamp(9px,2vw,11px); color: #555; letter-spacing: 1px; }
-
-        .legend { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; flex-shrink: 0; }
-        .leg { display: flex; align-items: center; gap: 5px; }
-        .leg-dot { width: 22px; height: 3px; border-radius: 2px; flex-shrink: 0; }
-        .leg-dot.dashed { background: repeating-linear-gradient(90deg,#ffe600 0,#ffe600 6px,transparent 6px,transparent 10px); height: 2px; }
-        .leg-txt { font-size: clamp(9px,2.5vw,11px); font-weight: 900; }
-
-        #chartWrapper { position: relative; }
-        .canvas-container { height: clamp(220px,45vw,380px); width: 100%; }
-        .sep-line {
-            position: absolute; width: 0;
-            border-left: 2px dashed rgba(255,255,255,0.72);
-            pointer-events: none; z-index: 20;
-        }
-
-        #summaryRow { display: flex; border-top: 2px solid #444; background: #060606; height: clamp(58px,14vw,74px); overflow: hidden; }
-        .day-seg { display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
-        .day-seg.last { align-items: flex-start; padding-left: 6px; }
-        .day-name { font-size: clamp(8px,2vw,10px); font-weight: 900; color: #666; margin-bottom: 2px; letter-spacing: 1px; }
-        .day-rain { font-size: clamp(10px,2.6vw,14px); font-weight: 900; color: #00ffff; line-height: 1; text-shadow: 0 0 8px rgba(0,255,255,0.5); }
-        .day-prob { font-size: clamp(9px,2.2vw,12px); font-weight: 900; color: #ffe600; margin-top: 1px; }
-        .unit { font-size: 7px; opacity: 0.6; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pluie Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#000;color:#fff;font-family:'Courier New',monospace;padding:8px;min-height:100dvh;overflow-x:hidden}
+.wrap{max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:4px}
+.search{display:flex;gap:8px}
+input{flex:1;min-width:0;background:#0d0d0d;border:2px solid #555;border-radius:10px;padding:13px 12px;color:#fff;font-size:clamp(14px,4vw,18px);font-weight:900;font-family:'Courier New',monospace;outline:none;-webkit-appearance:none}
+input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
+#searchBtn{background:#00ffff;color:#000;border:none;padding:0 18px;border-radius:10px;font-weight:900;cursor:pointer;flex-shrink:0;font-family:'Courier New',monospace;font-size:clamp(12px,3.5vw,15px);min-height:52px;min-width:56px;-webkit-appearance:none;transition:background .15s}
+#searchBtn:active{background:#fff}
+#searchBtn:disabled{background:#333;color:#666}
+#sourcesBar{display:none;background:#080808;border:1px solid #1e1e1e;border-radius:6px;padding:3px 8px;flex-wrap:wrap;gap:4px;align-items:center}
+.src-lbl{font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:2px;color:#444;flex-shrink:0}
+.src-badge{display:flex;align-items:center;gap:3px;font-size:8px;font-weight:900;padding:1px 5px;border-radius:4px;border:1px solid #222;color:#444;transition:all .3s}
+.src-badge.ok{color:#eee}
+.src-badge.err{border-color:#ff3d5766;color:#ff3d57}
+.src-dot{width:6px;height:6px;border-radius:50%;background:#222;transition:all .3s;flex-shrink:0}
+.src-badge.loading .src-dot{animation:pulse .8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+#viewBtns{display:none;gap:6px;justify-content:flex-end}
+.view-btn{background:#0d0d0d;border:1.5px solid #333;border-radius:7px;color:#888;font-family:'Courier New',monospace;font-size:9px;font-weight:900;padding:4px 10px;cursor:pointer;letter-spacing:1px;transition:all .15s;white-space:nowrap}
+.view-btn:hover{border-color:#888;color:#fff}
+.view-btn.active{border-color:#00ffff;color:#00ffff;background:rgba(0,255,255,.07)}
+.card{background:#080808;border:2px solid #333;border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.header{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid #2a2a2a;gap:8px}
+.header-left{display:flex;flex-direction:column;gap:2px;min-width:0}
+.city-tz{font-size:clamp(9px,2vw,11px);color:#ddd;letter-spacing:1px;font-weight:700}
+.legend{display:flex;flex-direction:column;gap:3px;align-items:flex-end;flex-shrink:0}
+.leg{display:flex;align-items:center;gap:5px}
+.leg-dot{width:20px;height:3px;border-radius:2px;flex-shrink:0}
+.leg-dot.dashed{background:repeating-linear-gradient(90deg,#ffe600 0,#ffe600 6px,transparent 6px,transparent 10px);height:2px}
+.leg-txt{font-size:clamp(9px,2.5vw,10px);font-weight:900}.p80-info{position:relative}.p80-tooltip{display:none;position:absolute;right:0;top:18px;width:220px;background:#111;border:1px solid rgba(255,230,0,.3);border-radius:8px;padding:8px 10px;font-size:9px;color:rgba(255,230,0,.85);line-height:1.5;z-index:100;font-weight:700}.p80-info:hover .p80-tooltip{display:block}
+#chartWrapper{position:relative}
+.canvas-container{height:clamp(220px,45vw,380px);width:100%}
+.sep-line{position:absolute;width:0;border-left:2px dashed rgba(255,255,255,.72);pointer-events:none;z-index:20}
+#summaryRow{display:flex;border-top:2px solid #444;background:#060606;height:clamp(54px,13vw,70px);overflow:hidden}
+.day-seg{display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.day-seg.last{align-items:flex-start;padding-left:6px}
+.day-name{font-size:clamp(8px,2vw,10px);font-weight:900;color:#666;margin-bottom:2px;letter-spacing:1px}
+.day-rain{font-size:clamp(10px,2.6vw,14px);font-weight:900;color:#ffe600;line-height:1;text-shadow:0 0 8px rgba(255,230,0,.5)}
+.day-prob{font-size:clamp(9px,2.2vw,12px);font-weight:900;color:#ffe600;margin-top:1px}
+.unit{font-size:7px;opacity:.6}
+</style>
 </head>
 <body>
 <div class="wrap">
-    <div class="search">
-        <input id="cityInput" value="Juvisy-sur-Orge"
-               onkeypress="if(event.key==='Enter'){this.blur();load()}"
-               autocomplete="off" autocorrect="off" spellcheck="false">
-        <button id="searchBtn" onclick="load()">GO</button>
+  <div class="search">
+    <input id="cityInput" value="Juvisy-sur-Orge"
+           onkeypress="if(event.key==='Enter'){this.blur();load()}"
+           autocomplete="off" autocorrect="off" spellcheck="false">
+    <button id="searchBtn" onclick="load()">GO</button>
+  </div>
+  <div id="sourcesBar"></div>
+  <div id="viewBtns">
+    <button class="view-btn"        id="btnJm1" onclick="setView('jm1')">◂ J-1</button>
+    <button class="view-btn active" id="btnJ1"  onclick="setView('j1')">J+1 ▸</button>
+    <button class="view-btn"        id="btnJ8"  onclick="setView('j8')">◂ J+8</button>
+  </div>
+  <div class="card">
+    <div class="header">
+      <div class="header-left">
+        <div id="displayTz" class="city-tz"></div>
+      </div>
+      <div class="legend">
+        <div class="leg"><div class="leg-dot" style="background:#ffe600;box-shadow:0 0 6px rgba(255,230,0,.5)"></div><div class="p80-info"><span class="leg-txt" style="color:#ffe600;cursor:help;border-bottom:1px dotted rgba(255,230,0,.4)">SYNTHÈSE P80 ⓘ</span><div class="p80-tooltip">P80 = 80ᵉ percentile sur tous les modèles actifs.<br>Traduction : 80% des modèles prévoient moins de cette valeur — estimation pessimiste-réaliste, ni la médiane ni le pire cas.</div></div></div>
+        <div class="leg"><div class="leg-dot" style="background:#4488ff;height:2px"></div><span class="leg-txt" style="color:#4488ff">MAX MODÈLES</span></div>
+        <div class="leg"><div class="leg-dot dashed" style="opacity:.4;background:repeating-linear-gradient(90deg,#fff 0,#fff 6px,transparent 6px,transparent 10px)"></div><span class="leg-txt" style="color:#fff;opacity:.4">PROBA %</span></div>
+      </div>
     </div>
-
-    <div id="sourcesBar"></div>
-    <div id="synthLine"></div>
-    <div id="viewBtns">
-        <button class="view-btn active" id="btnJ1"  onclick="setView('j1')">J+1 ▸</button>
-        <button class="view-btn"        id="btnJ10" onclick="setView('j10')">◂ J+8</button>
+    <div id="chartWrapper">
+      <div class="canvas-container"><canvas id="mainChart"></canvas></div>
+      <div id="summaryRow"></div>
     </div>
-
-    <div class="card">
-        <div class="header">
-            <div class="header-left">
-                <div id="displayTz" class="city-tz"></div>
-            </div>
-            <div class="legend">
-                <div class="leg"><div class="leg-dot" style="background:#00ffff;box-shadow:0 0 6px rgba(0,255,255,.5)"></div><span class="leg-txt" style="color:#00ffff">SYNTHÈSE P80</span></div>
-                <div class="leg"><div class="leg-dot" style="background:#ffe600;height:3px;box-shadow:0 0 6px rgba(255,230,0,.5)"></div><span class="leg-txt" style="color:#ffe600">MAX MODÈLES</span></div>
-                <div class="leg"><div class="leg-dot dashed"></div><span class="leg-txt" style="color:#ffe600;opacity:.7">PROBA %</span></div>
-            </div>
-        </div>
-        <div id="chartWrapper">
-            <div class="canvas-container"><canvas id="mainChart"></canvas></div>
-            <div id="summaryRow"></div>
-        </div>
-    </div>
+  </div>
 </div>
 
 <script>
-/* ═══════════════════════════════════════════════════════════
-   SOURCES : 9 modèles NWP + MET Norway via API directe
-═══════════════════════════════════════════════════════════ */
-const SOURCES = [
-    { key:'icon',  label:'ICON',     color:'#4488ff', omModel:'icon_seamless'              },
-    { key:'gfs',   label:'GFS',      color:'#44dd88', omModel:'gfs_seamless'               },
-    { key:'ifs',   label:'IFS 9km',  color:'#cc44ff', omModel:'ecmwf_ifs025'               },
-    { key:'aifs',  label:'AIFS AI',  color:'#dd88ff', omModel:'ecmwf_aifs025_single'       },
-    { key:'mf',    label:'AROME',    color:'#ff8844', omModel:'meteofrance_seamless'        },
-    { key:'mfhd',  label:'AROME HD', color:'#ff6622', omModel:'meteofrance_arome_france_hd'},
-    { key:'gem',   label:'GEM',      color:'#44dddd', omModel:'gem_seamless'               },
-    { key:'knmi',  label:'KNMI',     color:'#88ff44', omModel:'knmi_seamless'              },
-    { key:'ukmo',  label:'UKMO',     color:'#ff4488', omModel:'ukmo_seamless'              },
-    { key:'metno', label:'MET-NO',   color:'#ff44aa', omModel:null                        },
+const SOURCES=[
+  {key:'icon', label:'ICON',    color:'#4488ff',omModel:'icon_seamless'},
+  {key:'gfs',  label:'GFS',     color:'#44dd88',omModel:'gfs_seamless'},
+  {key:'ifs',  label:'IFS 9km', color:'#cc44ff',omModel:'ecmwf_ifs025'},
+  {key:'aifs', label:'AIFS AI', color:'#dd88ff',omModel:'ecmwf_aifs025_single'},
+  {key:'mf',   label:'AROME',   color:'#ff8844',omModel:'meteofrance_seamless'},
+  {key:'mfhd', label:'AROME HD',color:'#ff6622',omModel:'meteofrance_arome_france_hd'},
+  {key:'gem',  label:'GEM',     color:'#44dddd',omModel:'gem_seamless'},
+  {key:'knmi', label:'KNMI',    color:'#88ff44',omModel:'knmi_seamless'},
+  {key:'ukmo', label:'UKMO',    color:'#ff4488',omModel:'ukmo_seamless'},
+  {key:'metno',label:'MET-NO',  color:'#ff44aa',omModel:null},
 ];
 
-let myChart    = null;
-let lastW      = 0;
-let cityTz     = 'Europe/Paris';
-let N_HRS      = 0;
-let _peaks      = [];
-let _idx8hJ0   = -1;
-let _idx8hJ1   = -1;
-let _drySlots  = [];
-let _rainStarts= [];
-let _8hXPositions = [];
-let _viewMode  = 'j1';
-let _cachedData= null;
+let myChart=null,lastW=0,cityTz='Europe/Paris',N_HRS=0;
+let _peaks=[],_idx8hJ0=-1,_idx8hJ1=-1,_drySlots=[],_rainStarts=[],_8hXPos=[];
+let _viewMode='j1',_cachedData=null,_cachedJm1=null;
+let _isMob=false;
 
-/* ── Maths ── */
-function p80(arr) {
-    const v = arr.filter(x => x != null && isFinite(x) && x >= 0);
-    if (!v.length) return 0;
-    const s = [...v].sort((a,b)=>a-b);
-    const i = 0.8*(s.length-1);
-    const lo=Math.floor(i), hi=Math.ceil(i);
-    return s[lo]+(s[hi]-s[lo])*(i-lo);
+/* ── maths ── */
+function p80(arr){
+  const v=arr.filter(x=>x!=null&&isFinite(x)&&x>=0);
+  if(!v.length)return 0;
+  const s=[...v].sort((a,b)=>a-b),i=.8*(s.length-1),lo=Math.floor(i),hi=Math.ceil(i);
+  return s[lo]+(s[hi]-s[lo])*(i-lo);
 }
-function maxOf(arr) {
-    const v = arr.filter(x => x != null && isFinite(x) && x >= 0);
-    return v.length ? Math.max(...v) : 0;
-}
-function interpM15(m15,slotF,off) {
-    const t=slotF+off/15, si=Math.floor(t), f=t-si;
-    return Math.max(0,(m15[si]??0)*(1-f)+(m15[si+1]??m15[si]??0)*f);
-}
-function localKey(utcStr) {
-    const l=new Date(new Date(utcStr).toLocaleString('en-US',{timeZone:cityTz}));
-    const p=n=>String(n).padStart(2,'0');
-    return `${l.getFullYear()}-${p(l.getMonth()+1)}-${p(l.getDate())}T${p(l.getHours())}:00`;
+function maxOf(arr){const v=arr.filter(x=>x!=null&&isFinite(x)&&x>=0);return v.length?Math.max(...v):0}
+function interpM15(m15,slotF,off){const t=slotF+off/15,si=Math.floor(t),f=t-si;return Math.max(0,(m15[si]??0)*(1-f)+(m15[si+1]??m15[si]??0)*f)}
+function localKey(utcStr){
+  const l=new Date(new Date(utcStr).toLocaleString('en-US',{timeZone:cityTz}));
+  const p=n=>String(n).padStart(2,'0');
+  return `${l.getFullYear()}-${p(l.getMonth()+1)}-${p(l.getDate())}T${p(l.getHours())}:00`;
 }
 
-/* ── UI badges ── */
-function initBar() {
-    const bar=document.getElementById('sourcesBar');
-    bar.style.display='flex';
-    bar.innerHTML=`<span class="src-lbl">Sources</span>`;
-    SOURCES.forEach(s=>{
-        const b=document.createElement('div');
-        b.className='src-badge loading'; b.id='b_'+s.key;
-        b.style.borderColor=s.color+'44';
-        b.innerHTML=`<div class="src-dot" style="background:${s.color}55"></div>${s.label}`;
-        bar.appendChild(b);
-    });
-}
-function setBadge(key,ok) {
-    const b=document.getElementById('b_'+key); if(!b) return;
-    const src=SOURCES.find(s=>s.key===key);
-    b.className='src-badge '+(ok?'ok':'err');
-    if(ok){
-        b.style.borderColor=src.color+'66'; b.style.background=src.color+'15';
-        const d=b.querySelector('.src-dot');
-        d.style.background=src.color; d.style.boxShadow=`0 0 6px ${src.color}`; d.style.animation='none';
-    } else {
-        b.querySelector('.src-dot').style.background='#ff3d57';
-        b.querySelector('.src-dot').style.animation='none';
-    }
+/* ── status inline ── */
+function showStatus(msg,color){
+  let el=document.getElementById('statusMsg');
+  if(!el){
+    el=document.createElement('div');el.id='statusMsg';
+    el.style.cssText='font-size:10px;font-weight:900;padding:4px 10px;border-radius:6px;font-family:Courier New,monospace;transition:all .3s;min-height:0';
+    const vb=document.getElementById('viewBtns');
+    vb.parentNode.insertBefore(el,vb);
+  }
+  el.textContent=msg;el.style.color=color;el.style.display=msg?'block':'none';
 }
 
-/* ── Load ── */
-async function load() {
-    const city=document.getElementById('cityInput').value.trim();
-    if(!city) return;
-    const btn=document.getElementById('searchBtn');
-    btn.disabled=true; btn.textContent='…';
-    try {
-        const geo=await fetch(
-            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=fr`
-        ).then(r=>r.json());
-        if(!geo.results?.length){alert('Ville introuvable');return;}
-        const {latitude:lat,longitude:lon,name}=geo.results[0];
-        /* nom déjà dans l'input de recherche */
-        initBar();
-        document.getElementById('synthLine').style.display='none';
-
-        const omModels=SOURCES.filter(s=>s.omModel).map(s=>s.omModel).join(',');
-        const [omMain,omM15,metno]=await Promise.all([
-            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability&models=${encodeURIComponent(omModels)}&forecast_days=11&timezone=auto`).then(r=>r.json()).catch(()=>null),
-            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&forecast_days=2&timezone=auto`).then(r=>r.json()).catch(()=>null),
-            fetch(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`).then(r=>r.json()).catch(()=>null),
-        ]);
-        if(!omMain?.hourly?.time){alert('Open-Meteo indisponible');return;}
-
-        cityTz = omMain.timezone??'Europe/Paris';
-        N_HRS  = omMain.hourly.time.length;
-        document.getElementById('displayTz').textContent=cityTz+' · '+(omMain.timezone_abbreviation??'');
-
-        const tIdx={};
-        omMain.hourly.time.forEach((t,i)=>{tIdx[t]=i;});
-
-        const rainMx=buildRainMx(omMain,metno,tIdx);
-        const probMx=buildProbMx(omMain,metno,tIdx);
-        _cachedData={omMain,omM15,rainMx,probMx};
-
-        let active=[];
-        SOURCES.forEach(s=>{setBadge(s.key,rainMx[s.key]!==null);if(rainMx[s.key])active.push(s.label);});
-        const sl=document.getElementById('synthLine');
-        sl.style.display='block';
-        sl.textContent=`⚡ P80 pessimiste · MAX toutes sources · ${active.length} sources : ${active.join(' · ')}`;
-
-        _viewMode='j1';
-        document.getElementById('viewBtns').style.display='flex';
-        updateBtnState();
-        processData(omMain,omM15,rainMx,probMx);
-    } catch(e){console.error(e);alert('Erreur réseau');}
-    finally{btn.disabled=false;btn.textContent='GO';}
+/* ── badges sources ── */
+function initBar(){
+  const bar=document.getElementById('sourcesBar');
+  bar.style.display='flex';
+  bar.innerHTML='<span class="src-lbl">Sources</span>';
+  SOURCES.forEach(s=>{
+    const b=document.createElement('div');
+    b.className='src-badge loading';b.id='b_'+s.key;b.dataset.srcKey=s.key;b.style.borderColor=s.color+'44';
+    b.innerHTML=`<div class="src-dot" style="background:${s.color}55"></div>${s.label}`;
+    b.addEventListener('mouseenter',()=>highlightSource(s.key));
+    b.addEventListener('mouseleave',()=>highlightSource(null));
+    bar.appendChild(b);
+  });
+}
+function setBadge(key,ok){
+  const b=document.getElementById('b_'+key);if(!b)return;
+  const src=SOURCES.find(s=>s.key===key);
+  b.className='src-badge '+(ok?'ok':'err');
+  if(ok){b.style.borderColor=src.color+'66';b.style.background=src.color+'15';
+    const d=b.querySelector('.src-dot');d.style.background=src.color;d.style.boxShadow=`0 0 6px ${src.color}`;d.style.animation='none';
+  }else{const d=b.querySelector('.src-dot');d.style.background='#ff3d57';d.style.animation='none';}
 }
 
-/* ── Matrices pluie / proba ── */
+/* ── fetchRetry global ── */
+async function fetchRetry(url,tries=3,delay=1200){
+  for(let i=0;i<tries;i++){
+    try{const r=await fetch(url);if(r.ok)return await r.json();}
+    catch(e){if(i<tries-1)await new Promise(res=>setTimeout(res,delay*(i+1)));}
+  }
+  return null;
+}
+
+/* ── load ── */
+async function load(){
+  const city=document.getElementById('cityInput').value.trim();if(!city)return;
+  const btn=document.getElementById('searchBtn');btn.disabled=true;btn.textContent='…';
+  try{
+    const geo=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=fr`).then(r=>r.json());
+    if(!geo.results?.length){alert('Ville introuvable');return;}
+    const {latitude:lat,longitude:lon}=geo.results[0];
+    initBar();
+    const omModels=SOURCES.filter(s=>s.omModel).map(s=>s.omModel).join(',');
+    showStatus('⏳ Chargement des modèles…','#888');
+    const [omMain,omM15,metno]=await Promise.all([
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability&models=${encodeURIComponent(omModels)}&forecast_days=9&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&forecast_days=2&timezone=auto`),
+      fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
+    ]);
+    if(!omMain?.hourly?.time){showStatus('❌ Open-Meteo inaccessible — réessaie dans quelques secondes','#ff3d57');return;}
+    showStatus('','');
+    cityTz=omMain.timezone??'Europe/Paris';N_HRS=omMain.hourly.time.length;
+    const tzEl=document.getElementById('displayTz');
+    const cityName=geo.results[0].name+(geo.results[0].country?', '+geo.results[0].country:'');
+    tzEl.innerHTML=`<span style='color:#fff;font-size:clamp(11px,3vw,15px);letter-spacing:2px;text-transform:uppercase;font-weight:900'>${cityName}</span> <span style='color:#666;font-size:clamp(8px,1.8vw,10px);font-weight:400'>${cityTz} · ${omMain.timezone_abbreviation??''}</span>`;
+    const tIdx={};omMain.hourly.time.forEach((t,i)=>{tIdx[t]=i;});
+    const rainMx=buildRainMx(omMain,metno,tIdx);
+    const probMx=buildProbMx(omMain,metno,tIdx);
+    _cachedData={omMain,omM15,rainMx,probMx};
+    /* Fetch J-1 en parallèle : past_days=1 pour les prévisions d'hier + archive pour réel */
+    fetchJm1Data(lat,lon);
+    let active=[];
+    SOURCES.forEach(s=>{setBadge(s.key,rainMx[s.key]!==null);if(rainMx[s.key])active.push(s.label);});
+
+    _viewMode='j1';
+    document.getElementById('viewBtns').style.display='flex';
+    updateBtnState();
+    processData(omMain,omM15,rainMx,probMx);
+  }catch(e){console.error(e);showStatus('❌ Erreur réseau : '+e.message,'#ff3d57');}
+  finally{btn.disabled=false;btn.textContent='GO';}
+}
+
+/* ── matrices ── */
 function buildRainMx(omMain,metno,tIdx){
-    const mx={},N=N_HRS,h=omMain.hourly;
-    SOURCES.filter(s=>s.omModel).forEach(s=>{
-        const k=`precipitation_${s.omModel}`;
-        mx[s.key]=h[k]?[...h[k]]:null;
-    });
-    if(metno?.properties?.timeseries){
-        const arr=new Array(N).fill(null);
-        metno.properties.timeseries.forEach(e=>{
-            const i=tIdx[localKey(e.time)]??-1;
-            if(i>=0&&i<N){const v=e.data?.next_1_hours?.details?.precipitation_amount;if(v!=null)arr[i]=v;}
-        });
-        mx['metno']=arr;
-    } else mx['metno']=null;
-    return mx;
+  const mx={},N=N_HRS,h=omMain.hourly;
+  SOURCES.filter(s=>s.omModel).forEach(s=>{const k=`precipitation_${s.omModel}`;mx[s.key]=h[k]?[...h[k]]:null;});
+  if(metno?.properties?.timeseries){
+    const arr=new Array(N).fill(null);
+    metno.properties.timeseries.forEach(e=>{const i=tIdx[localKey(e.time)]??-1;if(i>=0&&i<N){const v=e.data?.next_1_hours?.details?.precipitation_amount;if(v!=null)arr[i]=v;}});
+    mx['metno']=arr;
+  }else mx['metno']=null;
+  return mx;
 }
 function buildProbMx(omMain,metno,tIdx){
-    const mx={},N=N_HRS,h=omMain.hourly;
-    SOURCES.filter(s=>s.omModel).forEach(s=>{
-        const k=`precipitation_probability_${s.omModel}`;
-        mx[s.key]=h[k]?[...h[k]]:null;
-    });
-    if(metno?.properties?.timeseries){
-        const arr=new Array(N).fill(null);
-        metno.properties.timeseries.forEach(e=>{
-            const i=tIdx[localKey(e.time)]??-1;
-            if(i>=0&&i<N){const v=e.data?.next_1_hours?.details?.probability_of_precipitation;if(v!=null)arr[i]=v;}
-        });
-        mx['metno']=arr;
-    } else mx['metno']=null;
-    return mx;
+  const mx={},N=N_HRS,h=omMain.hourly;
+  SOURCES.filter(s=>s.omModel).forEach(s=>{const k=`precipitation_probability_${s.omModel}`;mx[s.key]=h[k]?[...h[k]]:null;});
+  if(metno?.properties?.timeseries){
+    const arr=new Array(N).fill(null);
+    metno.properties.timeseries.forEach(e=>{const i=tIdx[localKey(e.time)]??-1;if(i>=0&&i<N){const v=e.data?.next_1_hours?.details?.probability_of_precipitation;if(v!=null)arr[i]=v;}});
+    mx['metno']=arr;
+  }else mx['metno']=null;
+  return mx;
 }
 const synthR=(i,mx)=>p80(SOURCES.map(s=>mx[s.key]?.[i]));
 const synthP=(i,mx)=>Math.min(100,maxOf(SOURCES.map(s=>mx[s.key]?.[i])));
-const maxR  =(i,mx)=>maxOf(SOURCES.map(s=>mx[s.key]?.[i]));
+const maxR=(i,mx)=>maxOf(SOURCES.map(s=>mx[s.key]?.[i]));
 
-/* ── Boutons vue ── */
+/* ── données J-1 ── */
+async function fetchJm1Data(lat,lon){
+  try{
+    /* Calculer la date d'hier en heure locale */
+    const nowLocal=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz}));
+    const yest=new Date(nowLocal);yest.setDate(nowLocal.getDate()-1);
+    const fmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const dateStr=fmt(yest);
+
+    /* Seulement les modèles OM (pas metno) */
+    const omSources=SOURCES.filter(s=>s.omModel);
+    const omModels=omSources.map(s=>s.omModel).join(',');
+
+    const [pastForecast,realData]=await Promise.all([
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability&models=${encodeURIComponent(omModels)}&past_days=1&forecast_days=0&timezone=auto`),
+      fetchRetry(`https://historical-forecast-api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation&start_date=${dateStr}&end_date=${dateStr}&timezone=auto`),
+    ]);
+    _cachedJm1={pastForecast,realData,dateStr};
+  }catch(e){console.error('J-1 fetch error',e);}
+}
+
+/* ── boutons vue ── */
 function updateBtnState(){
-    document.getElementById('btnJ1').classList.toggle('active',_viewMode==='j1');
-    document.getElementById('btnJ10').classList.toggle('active',_viewMode==='j10');
+  document.getElementById('btnJm1').classList.toggle('active',_viewMode==='jm1');
+  document.getElementById('btnJ1').classList.toggle('active',_viewMode==='j1');
+  document.getElementById('btnJ8').classList.toggle('active',_viewMode==='j8');
 }
 function setView(mode){
-    if(!_cachedData||_viewMode===mode) return;
-    _viewMode=mode; updateBtnState(); lastW=0;
-    const {omMain,omM15,rainMx,probMx}=_cachedData;
-    processData(omMain,omM15,rainMx,probMx);
+  if(_viewMode===mode)return;
+  _viewMode=mode;updateBtnState();lastW=0;
+  if(mode==='jm1'){
+    if(_cachedJm1){processJm1(_cachedJm1);return;}
+    showStatus('⏳ Chargement J-1…','#888');
+    const waitJm1=setInterval(()=>{
+      if(_cachedJm1){clearInterval(waitJm1);processJm1(_cachedJm1);}
+    },400);
+    setTimeout(()=>clearInterval(waitJm1),8000);
+    return;
+  }
+  if(!_cachedData)return;
+  const {omMain,omM15,rainMx,probMx}=_cachedData;
+  processData(omMain,omM15,rainMx,probMx);
 }
 
-/* ── Construction des points ── */
+/* ── points ── */
 function processData(omMain,omM15,rainMx,probMx){
-    const pts=[],mods=SOURCES.map(()=>[]);
-    const now=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz}));
-    const h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
-    const m15=omM15?.minutely_15?.precipitation??[];
-    const slotF=h*4+(m+s/60)/15;
+  const pts=[],mods=SOURCES.map(()=>[]);
+  const now=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz}));
+  const h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
+  const m15=omM15?.minutely_15?.precipitation??[];
+  const slotF=h*4+(m+s/60)/15;
+  function push(t,d,idx){
+    const r=idx>=0?synthR(idx,rainMx):0,mx=idx>=0?maxR(idx,rainMx):0,p=idx>=0?synthP(idx,probMx):0;
+    pts.push({t,d,r,mx,p,hourIdx:idx});
+    SOURCES.forEach((src,si)=>mods[si].push(idx>=0?(rainMx[src.key]?.[idx]??null):null));
+  }
+  [5,10,15,30,45].forEach(off=>{
+    const r=interpM15(m15,slotF,off);
+    pts.push({t:`+${off}'`,d:0,r,mx:r,p:synthP(h,probMx),hourIdx:-1});
+    SOURCES.forEach((_,si)=>mods[si].push(null));
+  });
+  for(let i=1;i<=(23-h);i++)push((h+i)+'h',0,h+i);
+  // J+1 toujours heure/heure
+  for(let hr=0;hr<24;hr++){const idx=24+hr;if(idx<N_HRS)push(hr+'h',1,idx);}
+  if(_viewMode==='j8'){
+    for(let d=2;d<=4;d++)for(let hr=0;hr<24;hr+=3){const idx=d*24+hr;if(idx<N_HRS)push(hr+'h',d,idx);}
+    for(let d=5;d<=8;d++)for(let hr=0;hr<24;hr+=8){const idx=d*24+hr;if(idx<N_HRS)push(hr+'h',d,idx);}
+  }
+  render(pts,mods);
+}
 
-    function push(t,d,idx){
-        const r=idx>=0?synthR(idx,rainMx):0;
-        const mx=idx>=0?maxR(idx,rainMx):0;
-        const p=idx>=0?synthP(idx,probMx):0;
-        pts.push({t,d,r,mx,p,hourIdx:idx});
-        SOURCES.forEach((src,si)=>mods[si].push(idx>=0?(rainMx[src.key]?.[idx]??null):null));
-    }
+/* ── traitement J-1 ── */
+function processJm1(jm1){
+  if(!jm1?.pastForecast?.hourly?.time){
+    showStatus('❌ Données J-1 indisponibles','#ff3d57');return;
+  }
+  showStatus('','');
+  const h=jm1.pastForecast.hourly;
+  const dateStr=jm1.dateStr;
+  const omSources=SOURCES.filter(s=>s.omModel);
+  const pts=[],mods=SOURCES.map(()=>[]);
 
-    /* +5' à +45' (minutes prochaines) */
-    [5,10,15,30,45].forEach(off=>{
-        const r=interpM15(m15,slotF,off);
-        pts.push({t:`+${off}'`,d:0,r,mx:r,p:synthP(h,probMx),hourIdx:-1});
-        SOURCES.forEach((_,si)=>mods[si].push(null));
+  /* Parcourir les 24h d'hier dans la réponse */
+  h.time.forEach((t,idx)=>{
+    /* t est en heure locale grâce à timezone=auto */
+    if(!t.startsWith(dateStr)) return;
+    const hr=parseInt(t.slice(11,13));
+
+    /* P80 sur les modèles OM uniquement */
+    const rainVals=omSources.map(s=>{
+      const k=`precipitation_${s.omModel}`;
+      const v=h[k]?.[idx];
+      return (v!=null&&isFinite(v)&&v>=0)?v:null;
     });
+    const r=p80(rainVals);
+    const mx=maxOf(rainVals);
+    const probVals=omSources.map(s=>{
+      const k=`precipitation_probability_${s.omModel}`;
+      const v=h[k]?.[idx];
+      return (v!=null&&isFinite(v)&&v>=0)?v:null;
+    });
+    const prob=Math.min(100,maxOf(probVals));
 
-    /* Aujourd'hui heure par heure */
-    for(let i=1;i<=(23-h);i++) push((h+i)+'h',0,h+i);
+    pts.push({t:hr+'h',d:0,r,mx,p:prob,hourIdx:idx});
 
-    if(_viewMode==='j1'){
-        /* J+1 heure par heure */
-        for(let hr=0;hr<24;hr++){const idx=24+hr;if(idx<N_HRS)push(hr+'h',1,idx);}
-    } else {
-        /* J+1 heure/heure */
-        for(let hr=0;hr<24;hr++){const idx=24+hr;if(idx<N_HRS)push(hr+'h',1,idx);}
-        /* J+2 à J+4 : toutes les 3h */
-        for(let d=2;d<=4;d++) for(let hr=0;hr<24;hr+=3){const idx=d*24+hr;if(idx<N_HRS)push(hr+'h',d,idx);}
-        /* J+5 à J+10 : toutes les 8h */
-        for(let d=5;d<=8;d++) for(let hr=0;hr<24;hr+=8){const idx=d*24+hr;if(idx<N_HRS)push(hr+'h',d,idx);}
-    }
+    /* mods : une entrée par source dans SOURCES (metno = null) */
+    SOURCES.forEach(src=>{
+      if(!src.omModel){mods[SOURCES.indexOf(src)].push(null);return;}
+      const k=`precipitation_${src.omModel}`;
+      const v=h[k]?.[idx];
+      mods[SOURCES.indexOf(src)].push((v!=null&&isFinite(v))?v:null);
+    });
+  });
 
-    render(pts,mods);
+  if(!pts.length){showStatus('❌ Aucune donnée J-1 pour cette date','#ff3d57');return;}
+
+  /* Précipitations réelles */
+  const realArr=new Array(24).fill(null);
+  if(jm1.realData?.hourly?.time){
+    jm1.realData.hourly.time.forEach((t,i)=>{
+      if(!t.startsWith(dateStr))return;
+      const hr=parseInt(t.slice(11,13));
+      const v=jm1.realData.hourly.precipitation?.[i];
+      if(v!=null&&isFinite(v)) realArr[hr]=v;
+    });
+  }
+  /* Aligner realArr sur pts */
+  const realPts=pts.map(p=>{
+    const hr=parseInt(p.t);
+    return isNaN(hr)?null:realArr[hr];
+  });
+
+  renderJm1(pts,mods,realPts);
 }
 
-/* ── Détection des pics locaux ── */
+/* ── détection pics ── */
 function detectPeaks(values,labels,threshold,minDist){
-    threshold=threshold??0.15; minDist=minDist??4;
-    const peaks=[];
-    for(let i=1;i<values.length-1;i++){
-        const v=values[i];
-        if(v==null||v<threshold) continue;
-        if(v>=(values[i-1]??0)&&v>=(values[i+1]??0)){
-            if(!peaks.length||i-peaks[peaks.length-1].idx>=minDist){
-                peaks.push({idx:i,val:v,label:labels[i]});
-            } else if(v>peaks[peaks.length-1].val){
-                peaks[peaks.length-1]={idx:i,val:v,label:labels[i]};
-            }
-        }
+  threshold=threshold??0.15;minDist=minDist??4;
+  const peaks=[];
+  for(let i=1;i<values.length-1;i++){
+    const v=values[i];if(v==null||v<threshold)continue;
+    if(v>=(values[i-1]??0)&&v>=(values[i+1]??0)){
+      if(!peaks.length||i-peaks[peaks.length-1].idx>=minDist)peaks.push({idx:i,val:v,label:labels[i]});
+      else if(v>peaks[peaks.length-1].val)peaks[peaks.length-1]={idx:i,val:v,label:labels[i]};
     }
-    return peaks;
+  }
+  return peaks;
 }
 
-/* ── Détection plages sèches diurnes (8h-20h, >2h, pluie<1mm ET proba<25%) ── */
+/* ── détection plages sèches (8h-20h, >2h, pluie<1mm ET proba<25%) ── */
 function detectDrySlots(pts){
-    const slots=[];
-    function hourOf(p){
-        if(p.t.includes("'")) return -1;
-        const h=parseInt(p.t);
-        return isNaN(h)?-1:h;
-    }
-    let runStart=-1;
-    for(let i=0;i<pts.length;i++){
-        const p=pts[i];
-        const h=hourOf(p);
-        const inDay=(h>=8&&h<=20);
-        const dry=inDay&&p.mx<1&&p.p<25;
-        if(dry&&runStart<0){ runStart=i; }
-        else if(!dry&&runStart>=0){
-            if(i-runStart>2) slots.push({startIdx:runStart,endIdx:i-1});
-            runStart=-1;
-        }
-    }
-    if(runStart>=0&&pts.length-runStart>2) slots.push({startIdx:runStart,endIdx:pts.length-1});
-    return slots;
+  const slots=[];
+  function hourOf(p){if(p.t.includes("'"))return -1;const h=parseInt(p.t);return isNaN(h)?-1:h;}
+  let runStart=-1;
+  for(let i=0;i<pts.length;i++){
+    const h=hourOf(pts[i]),inDay=h>=8&&h<=20,dry=inDay&&pts[i].mx<1&&pts[i].p<25;
+    if(dry&&runStart<0)runStart=i;
+    else if(!dry&&runStart>=0){if(i-runStart>2)slots.push({startIdx:runStart,endIdx:i-1});runStart=-1;}
+  }
+  if(runStart>=0&&pts.length-runStart>2)slots.push({startIdx:runStart,endIdx:pts.length-1});
+  return slots;
 }
 
-/* ── roundRect helper ── */
+/* ── roundRect ── */
 function roundRect(ctx,x,y,w,h,r){
-    ctx.beginPath();
-    ctx.moveTo(x+r,y);
-    ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
-    ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
-    ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
-    ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
-    ctx.closePath();
+  ctx.beginPath();ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
 }
 
-/* ── Dessin d'un badge encadré sur l'axe X ── */
-function drawTickBadge(c,xPx,bottom,lbl,fSize,pad,borderColor,textColor){
-    c.save();
-    c.font=`900 ${fSize}px 'Courier New',monospace`;
-    const tw=c.measureText(lbl).width;
-    const bw=tw+pad*2, bh=fSize+pad*2;
-    const bx=xPx-bw/2;
-    const by=bottom+4;
-    c.fillStyle='#000';
-    roundRect(c,bx-1,by-1,bw+2,bh+2,4); c.fill();
-    c.strokeStyle=borderColor; c.lineWidth=1.2;
-    roundRect(c,bx,by,bw,bh,3); c.stroke();
-    c.fillStyle=textColor; c.textAlign='center'; c.textBaseline='middle';
-    c.fillText(lbl,xPx,by+bh/2);
-    c.restore();
+/* ── badge encadré sur axe X ── */
+function drawTickBadge(c,xPx,bottom,lbl,fSize,pad,borderCol,textCol){
+  c.save();c.font=`900 ${fSize}px 'Courier New',monospace`;
+  const tw=c.measureText(lbl).width,bw=tw+pad*2,bh=fSize+pad*2,bx=xPx-bw/2,by=bottom+4;
+  c.fillStyle='#000';roundRect(c,bx-1,by-1,bw+2,bh+2,4);c.fill();
+  c.strokeStyle=borderCol;c.lineWidth=1.2;roundRect(c,bx,by,bw,bh,3);c.stroke();
+  c.fillStyle=textCol;c.textAlign='center';c.textBaseline='middle';c.fillText(lbl,xPx,by+bh/2);
+  c.restore();
+}
+
+/* ── balle de tennis canvas ── */
+function drawTennisBall(c,cx,cy,r){
+  c.save();
+  // Corps jaune-vert
+  c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);
+  c.fillStyle='#c8e000';c.fill();
+  // Liseré blanc courbé haut
+  c.strokeStyle='rgba(255,255,255,0.9)';c.lineWidth=r*0.22;
+  c.beginPath();c.arc(cx,cy,r*0.58,Math.PI*1.1,Math.PI*1.9);c.stroke();
+  // Liseré blanc courbé bas
+  c.beginPath();c.arc(cx,cy,r*0.58,Math.PI*0.1,Math.PI*0.9);c.stroke();
+  // Contour
+  c.strokeStyle='rgba(0,0,0,0.3)';c.lineWidth=1;
+  c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.stroke();
+  c.restore();
+}
+
+/* ── icône météo canvas : soleil / nuage / pluie selon intensité ── */
+function drawWeatherIcon(c,cx,cy,r,rainMm,prob){
+  c.save();
+  c.lineCap='round';c.lineJoin='round';
+  if(rainMm<0.1&&prob<20){
+    /* ── SOLEIL ── */
+    const sr=r*0.42;
+    c.beginPath();c.arc(cx,cy,sr,0,Math.PI*2);
+    c.fillStyle='#ffe600';c.fill();
+    c.strokeStyle='#ffe600';c.lineWidth=r*0.12;
+    for(let i=0;i<8;i++){
+      const a=i*Math.PI/4,r1=sr+r*0.18,r2=sr+r*0.38;
+      c.beginPath();c.moveTo(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1);
+      c.lineTo(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2);c.stroke();
+    }
+  } else {
+    /* nuage de base */
+    const cw=r*0.9,ch=r*0.45,cbx=cx-cw*0.1,cby=cy+r*0.05;
+    c.beginPath();
+    c.arc(cbx-cw*0.18,cby,ch*0.7,Math.PI,0);
+    c.arc(cbx+cw*0.12,cby-ch*0.3,ch*0.95,Math.PI,0);
+    c.arc(cbx+cw*0.42,cby,ch*0.6,Math.PI,0);
+    c.lineTo(cbx+cw*0.42+ch*0.6,cby+ch*0.5);
+    c.lineTo(cbx-cw*0.18-ch*0.7,cby+ch*0.5);
+    c.closePath();
+    /* couleur nuage selon intensité */
+    const intensity=Math.min(rainMm/5,1);
+    const gray=Math.round(180-intensity*130);
+    c.fillStyle=`rgb(${gray},${gray},${gray+10})`;c.fill();
+    c.strokeStyle=`rgba(255,255,255,0.3)`;c.lineWidth=r*0.07;c.stroke();
+
+    if(rainMm>=0.1){
+      /* gouttes de pluie */
+      const drops=rainMm<1?2:rainMm<3?3:4;
+      const dropColor=rainMm<1?'rgba(120,180,255,0.7)':rainMm<3?'rgba(80,140,255,0.85)':'rgba(60,100,255,1)';
+      c.strokeStyle=dropColor;c.lineWidth=r*0.12;
+      const dropLen=r*(0.2+Math.min(rainMm/4,0.25));
+      for(let i=0;i<drops;i++){
+        const dx=cx-cw*0.3+i*(cw*0.55/(drops-1||1));
+        const dy0=cby+ch*0.6+r*0.1;
+        c.beginPath();c.moveTo(dx,dy0);c.lineTo(dx-r*0.08,dy0+dropLen);c.stroke();
+      }
+    }
+  }
+  c.restore();
+}
+
+/* ── surbrillance source au hover ── */
+function highlightSource(key){
+  if(!myChart)return;
+  const ds=myChart.data.datasets;
+  // Les modelDS commencent à l'index 1 (après le gradient fill)
+  SOURCES.forEach((src,si)=>{
+    const dsIdx=1+si; // index dans datasets (0=fill, 1..N=modèles)
+    if(dsIdx>=ds.length)return;
+    if(key===null){
+      // Reset : toutes les courbes à leur opacité normale
+      ds[dsIdx].borderColor=src.color+'50';
+      ds[dsIdx].borderWidth=_isMob?.8:1.2;
+    } else if(src.key===key){
+      // Surbrillance : couleur pleine, trait épais
+      ds[dsIdx].borderColor=src.color;
+      ds[dsIdx].borderWidth=_isMob?2.5:3.5;
+    } else {
+      // Estompage des autres
+      ds[dsIdx].borderColor=src.color+'18';
+      ds[dsIdx].borderWidth=_isMob?.5:.8;
+    }
+  });
+  myChart.update('none');
+}
+
+/* ── renderJm1 ── */
+function renderJm1(pts,mods,realPrecip){
+  const ctx=document.getElementById('mainChart').getContext('2d');
+  if(myChart)myChart.destroy();lastW=0;
+  _isMob=window.innerWidth<500;const isMob=_isMob;
+  _peaks=[];_drySlots=[];_idx8hJ0=-1;_idx8hJ1=-1;_rainStarts=[];_8hXPos=[];
+
+  const realArr=realPrecip; /* déjà aligné sur pts */
+
+  const grad=ctx.createLinearGradient(0,0,0,380);
+  grad.addColorStop(0,'rgba(255,230,0,0.35)');
+  grad.addColorStop(0.55,'rgba(255,230,0,0.06)');
+  grad.addColorStop(1,'rgba(255,230,0,0)');
+
+  const modelDS=SOURCES.map((src,si)=>({
+    data:mods[si],borderColor:src.color+'50',borderWidth:isMob?.8:1.2,
+    tension:0.3,pointRadius:0,fill:false,yAxisID:'y',order:4,spanGaps:true,
+  }));
+
+  myChart=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:pts.map(p=>p.t),
+      datasets:[
+        /* fond P80 */
+        {data:pts.map(p=>p.r),borderColor:'transparent',borderWidth:0,fill:true,backgroundColor:grad,tension:0.4,pointRadius:0,yAxisID:'y',order:5},
+        ...modelDS,
+        /* MAX modèles bleu pointillé */
+        {data:pts.map(p=>p.mx),borderColor:'#4488ff',borderWidth:isMob?1:1.5,borderDash:[8,3,2,3],fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:2},
+        /* P80 jaune */
+        {data:pts.map(p=>p.r),borderColor:'#ffe600',borderWidth:isMob?2.5:3.5,fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:1},
+        /* Proba pointillé léger */
+        {data:pts.map(p=>p.p),borderColor:'rgba(255,255,255,0.35)',borderWidth:isMob?.8:1,borderDash:[2,4],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:3},
+        /* ── Précipitations réelles — vert vif trait épais ── */
+        {data:realArr,borderColor:'rgba(255,255,255,0.92)',borderWidth:isMob?3.5:5,fill:false,tension:0.3,pointRadius:0,yAxisID:'y',order:0,spanGaps:false,
+         label:'RÉEL'},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:false,
+      scales:{
+        x:{ticks:{color:'#bbb',font:{weight:'bold',size:isMob?8:10,family:'Courier New'},maxRotation:0,autoSkip:false,callback(v){const l=this.getLabelForValue(v);return l||null;}},grid:{display:false},border:{color:'#555'}},
+        y:{position:'left',beginAtZero:true,grid:{color:'#181818',lineWidth:1},ticks:{color:'#ffe600',font:{weight:'bold',size:isMob?8:11,family:'Courier New'}},border:{color:'#555'},title:{display:!isMob,text:'mm/h',color:'#ffe600',font:{size:9,family:'Courier New'}}},
+        yProb:{position:'right',min:0,max:100,display:true,grid:{display:false},ticks:{color:'rgba(255,255,255,0.4)',font:{weight:'bold',size:isMob?8:11,family:'Courier New'},callback:v=>v+'%',stepSize:25},border:{color:'#555'}}
+      },
+      plugins:{legend:{display:false},tooltip:{enabled:false}}
+    },
+    plugins:[
+      {id:'overlay',afterDraw(chart){if(chart.width===lastW)return;lastW=chart.width;buildOverlays(chart,pts);}},
+      /* Légende réel */
+      {id:'realLegend',afterDraw(chart){
+        const {ctx:c,chartArea:{top,right}}=chart;
+        c.save();
+        c.strokeStyle='rgba(255,255,255,0.9)';c.lineWidth=4;
+        c.beginPath();c.moveTo(right-55,top+10);c.lineTo(right-35,top+10);c.stroke();
+        c.fillStyle='rgba(255,255,255,0.9)';c.font=`700 9px 'Courier New',monospace`;
+        c.textAlign='left';c.textBaseline='middle';c.fillText('RÉEL',right-32,top+10);
+        c.restore();
+      }}
+    ]
+  });
 }
 
 /* ══════════════════════════════════════════════
    RENDER
 ══════════════════════════════════════════════ */
 function render(pts,mods){
-    const ctx=document.getElementById('mainChart').getContext('2d');
-    if(myChart) myChart.destroy();
-    lastW=0;
+  const ctx=document.getElementById('mainChart').getContext('2d');
+  if(myChart)myChart.destroy();
+  lastW=0;
+  _isMob=window.innerWidth<500;
+  const isMob=_isMob;
+  const maxVals=pts.map(p=>p.mx);
+  const p80Vals=pts.map(p=>p.r);
+  _peaks=detectPeaks(p80Vals,pts.map(p=>p.t),0.15,isMob?3:4);
+  _drySlots=detectDrySlots(pts);
+  _idx8hJ0=pts.findIndex(p=>p.d===0&&p.t==='8h');
+  _idx8hJ1=pts.findIndex(p=>p.d===1&&p.t==='8h');
+  _rainStarts=[];
+  for(let i=1;i<maxVals.length;i++){
+    if((maxVals[i-1]??0)<0.05&&(maxVals[i]??0)>=0.05)_rainStarts.push({idx:i,label:pts[i].t});
+  }
 
-    const isMob=window.innerWidth<500;
-    const maxVals=pts.map(p=>p.mx);
+  const grad=ctx.createLinearGradient(0,0,0,380);
+  grad.addColorStop(0,'rgba(255,230,0,0.35)');
+  grad.addColorStop(0.55,'rgba(255,230,0,0.06)');
+  grad.addColorStop(1,'rgba(255,230,0,0)');
 
-    _peaks      = detectPeaks(maxVals,pts.map(p=>p.t),0.15,isMob?3:4);
-    _drySlots   = detectDrySlots(pts);
-    _idx8hJ0    = pts.findIndex(p=>p.d===0&&p.t==='8h');
-    _idx8hJ1    = pts.findIndex(p=>p.d===1&&p.t==='8h');
+  const modelDS=SOURCES.map((src,si)=>({
+    data:mods[si],borderColor:src.color+'50',borderWidth:isMob?.8:1.2,
+    tension:0.3,pointRadius:0,fill:false,yAxisID:'y',order:4,spanGaps:true,
+  }));
 
-    /* Transitions 0→>0 de pluie */
-    _rainStarts=[];
-    for(let i=1;i<maxVals.length;i++){
-        if((maxVals[i-1]??0)<0.05&&(maxVals[i]??0)>=0.05){
-            _rainStarts.push({idx:i,label:pts[i].t});
-        }
-    }
-
-    const grad=ctx.createLinearGradient(0,0,0,380);
-    grad.addColorStop(0,'rgba(0,255,255,0.52)');
-    grad.addColorStop(0.55,'rgba(0,255,255,0.09)');
-    grad.addColorStop(1,'rgba(0,255,255,0)');
-
-    const modelDS=SOURCES.map((src,si)=>({
-        data:mods[si],borderColor:src.color+'50',
-        borderWidth:isMob?.8:1.2,tension:0.3,pointRadius:0,
-        fill:false,yAxisID:'y',order:4,spanGaps:true,
-    }));
-
-    myChart=new Chart(ctx,{
-        type:'line',
-        data:{
-            labels:pts.map(p=>p.t),
-            datasets:[
-                /* fond gradient cyan */
-                {data:pts.map(p=>p.r),borderColor:'transparent',borderWidth:0,fill:true,backgroundColor:grad,tension:0.4,pointRadius:0,yAxisID:'y',order:5},
-                /* modèles individuels */
-                ...modelDS,
-                /* MAX toutes sources — jaune */
-                {data:maxVals,borderColor:'#ffe600',borderWidth:isMob?2.5:3.5,fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:2},
-                /* Synthèse P80 — cyan */
-                {data:pts.map(p=>p.r),borderColor:'#00ffff',borderWidth:isMob?1.5:2.5,fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:1},
-                /* Proba — tiret jaune */
-                {data:pts.map(p=>p.p),borderColor:'rgba(255,230,0,0.55)',borderWidth:isMob?1:1.5,borderDash:[5,4],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:3},
-            ]
-        },
-        options:{
-            responsive:true,maintainAspectRatio:false,animation:false,
-            scales:{
-                x:{
-                    ticks:{
-                        color:'#bbb',
-                        font:{weight:'bold',size:isMob?8:10,family:'Courier New'},
-                        maxRotation:0,autoSkip:false,
-                        callback(val){
-                            const l=this.getLabelForValue(val);
-                            if(!l) return null;
-                            if(l.includes("'")) return l;
-                            if(isMob){const n=parseInt(l);if(!isNaN(n)&&n%3!==0) return null;}
-                            return l;
-                        }
-                    },
-                    grid:{display:false},border:{color:'#555'}
-                },
-                y:{
-                    position:'left',beginAtZero:true,
-                    grid:{color:'#181818',lineWidth:1},
-                    ticks:{color:'#00ffff',font:{weight:'bold',size:isMob?8:11,family:'Courier New'}},
-                    border:{color:'#555'},
-                    title:{display:!isMob,text:'mm/h',color:'#00ffff',font:{size:9,family:'Courier New'}}
-                },
-                yProb:{
-                    position:'right',min:0,max:100,display:true,
-                    grid:{display:false},
-                    ticks:{color:'#ffe600',font:{weight:'bold',size:isMob?8:11,family:'Courier New'},callback:v=>v+'%',stepSize:25},
-                    border:{color:'#555'},
-                    title:{display:!isMob,text:'prob.',color:'#ffe600',font:{size:9,family:'Courier New'}}
-                }
-            },
-            plugins:{legend:{display:false},tooltip:{enabled:false}}
-        },
-        plugins:[
-            /* ── Séparateurs jour + traits 8h (CSS) + résumé ── */
-            {
-                id:'overlay',
-                afterDraw(chart){
-                    if(chart.width===lastW) return;
-                    lastW=chart.width;
-                    buildOverlays(chart,pts);
-                }
-            },
-            /* ── Surbrillance plages sèches diurnes ── */
-            {
-                id:'drySlots',
-                afterDatasetsDraw(chart){
-                    if(!_drySlots.length) return;
-                    const {ctx:c,scales:{x},chartArea:{top,bottom}}=chart;
-                    const step=Math.abs(x.getPixelForValue(1)-x.getPixelForValue(0))/2;
-                    _drySlots.forEach(sl=>{
-                        const x0=x.getPixelForValue(sl.startIdx)-step;
-                        const x1=x.getPixelForValue(sl.endIdx)+step;
-                        if(x1<x.left||x0>x.right) return;
-                        const cx0=Math.max(x0,x.left), cx1=Math.min(x1,x.right);
-                        c.save();
-                        c.fillStyle='rgba(255,230,0,0.09)';
-                        c.fillRect(cx0,top,cx1-cx0,bottom-top);
-                        c.strokeStyle='rgba(255,230,0,0.3)';
-                        c.lineWidth=1; c.setLineDash([3,3]);
-                        c.beginPath(); c.moveTo(cx0,top); c.lineTo(cx0,bottom); c.stroke();
-                        c.beginPath(); c.moveTo(cx1,top); c.lineTo(cx1,bottom); c.stroke();
-                        c.setLineDash([]);
-                        const fSize=isMob?7:8;
-                        const midX=(cx0+cx1)/2;
-                        const slotW=cx1-cx0;
-                        const secSize=isMob?11:13;
-                        c.font=`900 ${secSize}px 'Courier New',monospace`;
-                        c.fillStyle='rgba(255,230,0,0.65)';
-                        c.textAlign='center'; c.textBaseline='top';
-                        /* "SEC" centré en haut */
-                        c.fillText('🎾',midX,top+4);
-                        /* Heures début et fin si assez de place */
-                        const startLbl=pts[sl.startIdx].t;
-                        const endLbl=pts[sl.endIdx].t;
-                        c.font=`900 ${fSize}px 'Courier New',monospace`;
-                        const timeStr=startLbl+'→'+endLbl;
-                        const needed=c.measureText(timeStr).width+4;
-                        if(slotW>=needed){
-                            c.fillStyle='rgba(255,230,0,0.4)';
-                            c.fillText(timeStr,midX,top+4+secSize+3);
-                        } else {
-                            const halfW=slotW/2;
-                            const needHalf=c.measureText(startLbl).width+2;
-                            if(halfW>=needHalf){
-                                c.fillStyle='rgba(255,230,0,0.4)';
-                                c.textAlign='left';
-                                c.fillText(startLbl,cx0+3,top+4+secSize+3);
-                                c.textAlign='right';
-                                c.fillText(endLbl,cx1-3,top+4+secSize+3);
-                            }
-                        }
-                        c.restore();
-                    });
-                }
-            },
-            /* ── Emoji 🌅 sur les traits 8h ── */
-            {
-                id:'sunrise8h',
-                afterDraw(chart){
-                    if(!_8hXPositions.length) return;
-                    const {ctx:c,chartArea:{top}}=chart;
-                    const fSize=isMob?12:15;
-                    c.save();
-                    c.font=`${fSize}px serif`;
-                    c.textAlign='center';
-                    c.textBaseline='top';
-                    _8hXPositions.forEach(xPx=>{
-                        c.fillText('🌅',xPx,top+6);
-                    });
-                    c.restore();
-                }
-            },
-            /* ── Trait pointillé jaune aux pics + point sur courbe ── */
-            {
-                id:'peakLines',
-                afterDatasetsDraw(chart){
-                    if(!_peaks.length) return;
-                    const {ctx:c,scales:{x,y},chartArea:{top,bottom}}=chart;
-                    _peaks.forEach(pk=>{
-                        const xPx=x.getPixelForValue(pk.idx);
-                        const yPx=y.getPixelForValue(pk.val);
-                        if(xPx<x.left||xPx>x.right) return;
-                        c.save();
-                        c.strokeStyle='rgba(255,230,0,0.55)';
-                        c.lineWidth=1; c.setLineDash([3,3]);
-                        c.beginPath(); c.moveTo(xPx,top); c.lineTo(xPx,bottom); c.stroke();
-                        c.setLineDash([]);
-                        c.beginPath();
-                        c.arc(xPx,yPx,isMob?3.5:4.5,0,Math.PI*2);
-                        c.fillStyle='#ffe600'; c.fill();
-                        c.restore();
-                    });
-                }
-            },
-            /* ── Badges axe X : jaune=pics, cyan=début pluie ── */
-            {
-                id:'axisLabels',
-                afterDraw(chart){
-                    const {ctx:c,scales:{x},chartArea:{bottom}}=chart;
-                    const fSize=isMob?8:10, pad=4;
-                    /* Pics — jaune */
-                    _peaks.forEach(pk=>{
-                        if(x.getPixelForValue(pk.idx)<x.left||x.getPixelForValue(pk.idx)>x.right) return;
-                        drawTickBadge(c,x.getPixelForValue(pk.idx),bottom,pk.label,fSize,pad,'rgba(255,230,0,0.9)','#ffe600');
-                    });
-                    /* Début de pluie — cyan */
-                    _rainStarts.forEach(rs=>{
-                        const xPx=x.getPixelForValue(rs.idx);
-                        if(xPx<x.left||xPx>x.right) return;
-                        /* Ne pas dessiner si un pic est exactement au même endroit */
-                        const overlap=_peaks.some(pk=>Math.abs(x.getPixelForValue(pk.idx)-xPx)<6);
-                        if(!overlap) drawTickBadge(c,xPx,bottom,rs.label,fSize,pad,'rgba(0,255,255,0.9)','#00ffff');
-                    });
-                }
+  myChart=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:pts.map(p=>p.t),
+      datasets:[
+        {data:pts.map(p=>p.r),borderColor:'transparent',borderWidth:0,fill:true,backgroundColor:grad,tension:0.4,pointRadius:0,yAxisID:'y',order:5},
+        ...modelDS,
+        {data:maxVals,borderColor:'#4488ff',borderWidth:isMob?1:1.5,borderDash:[8,3,2,3],fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:2},
+        {data:pts.map(p=>p.r),borderColor:'#ffe600',borderWidth:isMob?2.5:3.5,fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:1},
+        {data:pts.map(p=>p.p),borderColor:'rgba(255,255,255,0.35)',borderWidth:isMob?.8:1,borderDash:[2,4],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:3},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:false,
+      scales:{
+        x:{
+          ticks:{color:'#bbb',font:{weight:'bold',size:isMob?8:10,family:'Courier New'},maxRotation:0,autoSkip:false,
+            callback(val){
+              const l=this.getLabelForValue(val);if(!l)return null;
+              if(l.includes("'"))return l;
+              if(isMob){const n=parseInt(l);if(!isNaN(n)&&n%3!==0)return null;}
+              return l;
             }
-        ]
-    });
-}
-
-/* ── Overlays CSS : séparateurs jour + traits 8h ── */
-function buildOverlays(chart,pts){
-    const {chartArea,scales:{x},width:cW}=chart;
-    const wrapper=document.getElementById('chartWrapper');
-    wrapper.querySelectorAll('.sep-line').forEach(e=>e.remove());
-
-    const dfi={};
-    pts.forEach((p,i)=>{if(dfi[p.d]===undefined)dfi[p.d]=i;});
-    const days=Object.keys(dfi).map(Number).sort((a,b)=>a-b);
-    const wH=wrapper.offsetHeight;
-    const xp={};
-    days.forEach(d=>{xp[d]=x.getPixelForValue(dfi[d]);});
-
-    function addLine(xPx,graphOnly){
-        const l=document.createElement('div');
-        l.className='sep-line';
-        const h=graphOnly?(chartArea.bottom-chartArea.top):(wH-chartArea.top);
-        l.style.cssText=`left:${xPx}px;top:${chartArea.top}px;height:${h}px;`;
-        wrapper.appendChild(l);
-    }
-
-    days.slice(1).forEach(d=>addLine(xp[d],false));
-    _8hXPositions=[];
-    [_idx8hJ0,_idx8hJ1].forEach(idx=>{
-        if(idx<0) return;
-        const xPx=x.getPixelForValue(idx);
-        if(xPx>chartArea.left&&xPx<chartArea.right){
-            addLine(xPx,true);
-            _8hXPositions.push(xPx);
+          },
+          grid:{display:false},border:{color:'#555'}
+        },
+        y:{position:'left',beginAtZero:true,grid:{color:'#181818',lineWidth:1},
+          ticks:{color:'#ffe600',font:{weight:'bold',size:isMob?8:11,family:'Courier New'}},
+          border:{color:'#555'},title:{display:!isMob,text:'mm/h',color:'#ffe600',font:{size:9,family:'Courier New'}}
+        },
+        yProb:{position:'right',min:0,max:100,display:true,grid:{display:false},
+          ticks:{color:'rgba(255,255,255,0.4)',font:{weight:'bold',size:isMob?8:11,family:'Courier New'},callback:v=>v+'%',stepSize:25},
+          border:{color:'#555'},title:{display:!isMob,text:'prob.',color:'#ffe600',font:{size:9,family:'Courier New'}}
         }
-    });
+      },
+      plugins:{legend:{display:false},tooltip:{enabled:false}}
+    },
+    plugins:[
+      /* séparateurs + résumé */
+      {id:'overlay',afterDraw(chart){if(chart.width===lastW)return;lastW=chart.width;buildOverlays(chart,pts);}},
 
-    buildSummary(chart,pts,days,xp);
+      /* plages sèches avec balle tennis */
+      {id:'drySlots',afterDatasetsDraw(chart){
+        if(!_drySlots.length)return;
+        const {ctx:c,scales:{x},chartArea:{top,bottom}}=chart;
+        const step=Math.abs(x.getPixelForValue(1)-x.getPixelForValue(0))/2;
+        _drySlots.forEach(sl=>{
+          const x0=x.getPixelForValue(sl.startIdx)-step;
+          const x1=x.getPixelForValue(sl.endIdx)+step;
+          if(x1<x.left||x0>x.right)return;
+          const cx0=Math.max(x0,x.left),cx1=Math.min(x1,x.right);
+          const midX=(cx0+cx1)/2,slotW=cx1-cx0;
+          c.save();
+          // fond jaune doux
+          c.fillStyle='rgba(255,230,0,0.09)';
+          c.fillRect(cx0,top,slotW,bottom-top);
+          // bordures pointillées
+          c.strokeStyle='rgba(255,230,0,0.3)';c.lineWidth=1;c.setLineDash([3,3]);
+          c.beginPath();c.moveTo(cx0,top);c.lineTo(cx0,bottom);c.stroke();
+          c.beginPath();c.moveTo(cx1,top);c.lineTo(cx1,bottom);c.stroke();
+          c.setLineDash([]);
+          // balle de tennis
+          const ballR=isMob?7:10;
+          drawTennisBall(c,midX,top+8+ballR,ballR);
+          // heures début→fin
+          const fSize=isMob?10:12;
+          const startLbl=pts[sl.startIdx].t,endLbl=pts[sl.endIdx].t;
+          c.font=`900 ${fSize}px 'Courier New',monospace`;
+          const timeStr=startLbl+'→'+endLbl;
+          const needed=c.measureText(timeStr).width+4;
+          const textY=top+8+ballR*2+5;
+          c.fillStyle='rgba(255,230,0,0.85)';
+          if(slotW>=needed){
+            c.textAlign='center';c.textBaseline='top';
+            c.fillText(timeStr,midX,textY);
+          }else{
+            const needHalf=c.measureText(startLbl).width+2;
+            if(slotW/2>=needHalf){
+              c.textBaseline='top';
+              c.textAlign='left';c.fillText(startLbl,cx0+3,textY);
+              c.textAlign='right';c.fillText(endLbl,cx1-3,textY);
+            }
+          }
+          c.restore();
+        });
+      }},
+
+      /* icône météo sur traits 8h */
+      {id:'bike8h',afterDraw(chart){
+        if(!_8hXPos.length)return;
+        const {ctx:c,chartArea:{top}}=chart;
+        const r=isMob?11:15;
+        _8hXPos.forEach((xPx,hi)=>{
+          const dayPts=pts.filter(p=>p.d===hi);
+          const avgRain=dayPts.length?dayPts.reduce((s,p)=>s+p.mx,0)/dayPts.length:0;
+          const avgProb=dayPts.length?dayPts.reduce((s,p)=>s+p.p,0)/dayPts.length:0;
+          /* Fond noir pour lisibilité */
+          c.save();
+          c.beginPath();c.arc(xPx,top+r+6,r+3,0,Math.PI*2);
+          c.fillStyle='rgba(0,0,0,0.7)';c.fill();
+          c.restore();
+          drawWeatherIcon(c,xPx,top+r+6,r,avgRain,avgProb);
+        });
+      }},
+
+      /* trait pointillé jaune aux pics + point courbe */
+      {id:'peakLines',afterDatasetsDraw(chart){
+        if(!_peaks.length)return;
+        const {ctx:c,scales:{x,y},chartArea:{top,bottom}}=chart;
+        _peaks.forEach(pk=>{
+          const xPx=x.getPixelForValue(pk.idx),yPx=y.getPixelForValue(pk.val);
+          if(xPx<x.left||xPx>x.right)return;
+          c.save();
+          c.strokeStyle='rgba(255,230,0,0.5)';c.lineWidth=1;c.setLineDash([3,3]);
+          c.beginPath();c.moveTo(xPx,top);c.lineTo(xPx,bottom);c.stroke();
+          c.setLineDash([]);
+          c.beginPath();c.arc(xPx,yPx,isMob?3.5:4.5,0,Math.PI*2);
+          c.fillStyle='#ffe600';c.fill();
+          c.restore();
+        });
+      }},
+
+      /* badges axe X : jaune=pics, cyan=début pluie */
+      {id:'axisLabels',afterDraw(chart){
+        const {ctx:c,scales:{x},chartArea:{bottom}}=chart;
+        const fSize=isMob?8:10,pad=4;
+        _peaks.forEach(pk=>{
+          const xPx=x.getPixelForValue(pk.idx);
+          if(xPx<x.left||xPx>x.right)return;
+          drawTickBadge(c,xPx,bottom,pk.label,fSize,pad,'rgba(255,230,0,0.9)','#ffe600');
+        });
+        _rainStarts.forEach(rs=>{
+          const xPx=x.getPixelForValue(rs.idx);
+          if(xPx<x.left||xPx>x.right)return;
+          const overlap=_peaks.some(pk=>Math.abs(x.getPixelForValue(pk.idx)-xPx)<6);
+          if(!overlap)drawTickBadge(c,xPx,bottom,rs.label,fSize,pad,'rgba(0,255,255,0.9)','#00ffff');
+        });
+      }}
+    ]
+  });
 }
 
-/* ── Résumé par jour ── */
+/* ── overlays CSS ── */
+function buildOverlays(chart,pts){
+  const {chartArea,scales:{x},width:cW}=chart;
+  const wrapper=document.getElementById('chartWrapper');
+  wrapper.querySelectorAll('.sep-line').forEach(e=>e.remove());
+  const dfi={};pts.forEach((p,i)=>{if(dfi[p.d]===undefined)dfi[p.d]=i;});
+  const days=Object.keys(dfi).map(Number).sort((a,b)=>a-b);
+  const wH=wrapper.offsetHeight;
+  const xp={};days.forEach(d=>{xp[d]=x.getPixelForValue(dfi[d]);});
+  function addLine(xPx,graphOnly){
+    const l=document.createElement('div');l.className='sep-line';
+    const h=graphOnly?(chartArea.bottom-chartArea.top):(wH-chartArea.top);
+    l.style.cssText=`left:${xPx}px;top:${chartArea.top}px;height:${h}px;`;
+    wrapper.appendChild(l);
+  }
+  days.slice(1).forEach(d=>addLine(xp[d],false));
+  _8hXPos=[];
+  [_idx8hJ0,_idx8hJ1].forEach(idx=>{
+    if(idx<0)return;
+    const xPx=x.getPixelForValue(idx);
+    if(xPx>chartArea.left&&xPx<chartArea.right){addLine(xPx,true);_8hXPos.push(xPx);}
+  });
+  buildSummary(chart,pts,days,xp);
+}
+
+/* ── résumé par jour ── */
 function buildSummary(chart,pts,days,xp){
-    const {chartArea,scales:{x},width:cW}=chart;
-    const row=document.getElementById('summaryRow');
-    const dn=['DIM','LUN','MAR','MER','JEU','VEN','SAM'];
-    const cn=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz}));
-    row.style.paddingLeft=chartArea.left+'px';
-    row.style.paddingRight=(cW-chartArea.right)+'px';
-    row.innerHTML='';
-
-    const lastXPx=x.getPixelForValue(pts.length-1);
-
-    /* Largeur standard = moyenne des colonnes sauf la dernière */
-    const starts=days.map((d,di)=>di===0?chartArea.left:xp[d]);
-    const ends  =days.map((d,di)=>di===days.length-1?lastXPx:xp[days[di+1]]);
-    const innerW=days.slice(0,-1).map((_,di)=>Math.max(0,ends[di]-starts[di]));
-    const stdW  =innerW.length?innerW.reduce((a,b)=>a+b,0)/innerW.length:60;
-
-    days.forEach((d,di)=>{
-        const date=new Date(cn); date.setDate(cn.getDate()+d);
-        const isLast=di===days.length-1;
-        const rawW=Math.max(0,ends[di]-starts[di]);
-        /* Dernier segment : utilise tout l'espace jusqu'à la droite du graphe */
-        const w=isLast?Math.max(rawW,stdW):rawW;
-
-        const dd=pts.filter(p=>p.d===d);
-        const total=dd.reduce((s,p)=>s+p.mx,0);
-        const maxP=Math.max(...dd.map(p=>p.p),0);
-        const lbl=d===0?'AUJ.':dn[date.getDay()]; /* toujours le jour de la semaine */
-
-        const div=document.createElement('div');
-        div.className='day-seg'+(isLast?' last':''); div.style.width=w+'px';
-        div.innerHTML=`<div class="day-name">${lbl}</div><div class="day-rain">${total.toFixed(1)}<span class="unit">mm</span></div><div class="day-prob">${Math.round(maxP)}%</div>`;
-        row.appendChild(div);
-    });
+  const {chartArea,scales:{x},width:cW}=chart;
+  const row=document.getElementById('summaryRow');
+  const dn=['DIM','LUN','MAR','MER','JEU','VEN','SAM'];
+  const cn=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz}));
+  row.style.paddingLeft=chartArea.left+'px';
+  row.style.paddingRight=(cW-chartArea.right)+'px';
+  row.innerHTML='';
+  const lastXPx=x.getPixelForValue(pts.length-1);
+  const starts=days.map((d,di)=>di===0?chartArea.left:xp[d]);
+  const ends=days.map((d,di)=>di===days.length-1?lastXPx:xp[days[di+1]]);
+  const innerW=days.slice(0,-1).map((_,di)=>Math.max(0,ends[di]-starts[di]));
+  const stdW=innerW.length?innerW.reduce((a,b)=>a+b,0)/innerW.length:60;
+  days.forEach((d,di)=>{
+    const date=new Date(cn);date.setDate(cn.getDate()+d);
+    const isLast=di===days.length-1;
+    const rawW=Math.max(0,ends[di]-starts[di]);
+    const w=isLast?Math.max(rawW,stdW):rawW;
+    const dd=pts.filter(p=>p.d===d);
+    const total=dd.reduce((s,p)=>s+p.mx,0);
+    const maxP=Math.max(...dd.map(p=>p.p),0);
+    const lbl=d===0?'AUJ.':dn[date.getDay()];
+    const div=document.createElement('div');
+    div.className='day-seg'+(isLast&&days.length>2?' last':'');div.style.width=w+'px';
+    div.innerHTML=`<div class="day-name">${lbl}</div><div class="day-rain">${total.toFixed(1)}<span class="unit">mm</span></div><div class="day-prob">${Math.round(maxP)}%</div>`;
+    row.appendChild(div);
+  });
 }
 
 let rt;
