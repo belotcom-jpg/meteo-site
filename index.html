@@ -23,7 +23,9 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 .src-dot{width:6px;height:6px;border-radius:50%;background:#222;transition:all .3s;flex-shrink:0}
 .src-badge.loading .src-dot{animation:pulse .8s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-#viewBtns{display:none;gap:6px;justify-content:flex-end}
+#viewBtns{display:none;gap:6px;justify-content:flex-end;align-items:center}
+#modeToggle{background:#0d0d0d;border:1.5px solid #444;border-radius:7px;color:#888;font-family:'Courier New',monospace;font-size:9px;font-weight:900;padding:4px 10px;cursor:pointer;letter-spacing:1px;transition:all .15s;white-space:nowrap}
+#modeToggle.simple{border-color:#ffe600;color:#ffe600;background:rgba(255,230,0,0.07)}
 .view-btn{background:#0d0d0d;border:1.5px solid #333;border-radius:7px;color:#888;font-family:'Courier New',monospace;font-size:9px;font-weight:900;padding:4px 10px;cursor:pointer;letter-spacing:1px;transition:all .15s;white-space:nowrap}
 .view-btn:hover{border-color:#888;color:#fff}
 .view-btn.active{border-color:#00ffff;color:#00ffff;background:rgba(0,255,255,.07)}
@@ -61,6 +63,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
     <button class="view-btn"        id="btnJm1" onclick="setView('jm1')">◂ J-1</button>
     <button class="view-btn active" id="btnJ1"  onclick="setView('j1')">J+1 ▸</button>
     <button class="view-btn"        id="btnJ8"  onclick="setView('j8')">◂ J+8</button>
+    <button id="modeToggle" class="simple" onclick="toggleComplexity()">● SIMPLE</button>
   </div>
   <div class="card">
     <div class="header">
@@ -96,7 +99,7 @@ const SOURCES=[
 
 let myChart=null,lastW=0,cityTz='Europe/Paris',N_HRS=0;
 let _peaks=[],_idx8hJ0=-1,_idx8hJ1=-1,_drySlots=[],_rainStarts=[],_8hXPos=[];
-let _viewMode='j1',_cachedData=null,_cachedJm1=null;
+let _viewMode='j1',_cachedData=null,_cachedJm1=null,_simpleMode=true,_gradCache=null;
 let _isMob=false;
 
 /* ── maths ── */
@@ -149,6 +152,55 @@ function setBadge(key,ok){
   }else{const d=b.querySelector('.src-dot');d.style.background='#ff3d57';d.style.animation='none';}
 }
 
+/* ── toggle complexité ── */
+function toggleComplexity(){
+  _simpleMode=!_simpleMode;
+  const btn=document.getElementById('modeToggle');
+  btn.textContent=_simpleMode?'● SIMPLE':'○ COMPLEXE';
+  btn.classList.toggle('simple',_simpleMode);
+  applyComplexity();
+}
+function applyComplexity(){
+  if(!myChart)return;
+  const ds=myChart.data.datasets;
+  // indices: 0=fill, 1..9=modèles, 10=MAX bleu, 11=P80 jaune, 12=proba, [13=réel si jm1]
+  const nSrc=SOURCES.length; // 10
+  const idxFill=0;
+  const idxModels=[...Array(nSrc)].map((_,i)=>1+i);  // 1..10
+  const idxMax=1+nSrc;    // 11
+  const idxP80=2+nSrc;    // 12
+  const idxProb=3+nSrc;   // 13
+  const idxReal=4+nSrc;   // 14 (J-1 only)
+
+  if(_simpleMode){
+    idxModels.forEach(i=>{if(ds[i])ds[i].borderColor='transparent';});
+    if(ds[idxFill])ds[idxFill].backgroundColor='rgba(255,230,0,0.22)';
+    if(ds[idxMax])ds[idxMax].borderColor='transparent';
+    if(ds[idxProb])ds[idxProb].borderColor='transparent';
+    if(ds[idxReal])ds[idxReal].borderColor='rgba(255,255,255,0.92)';
+    /* Rescaler Y sur les données P80 uniquement */
+    const p80data=(ds[idxP80]?.data||[]).filter(v=>v!=null&&isFinite(v)&&v>=0);
+    const p80max=p80data.length?Math.max(...p80data):1;
+    const yMax=Math.max(p80max*1.2,0.5);
+    myChart.options.scales.y.max=yMax;
+    myChart.options.scales.y.suggestedMax=undefined;
+  } else {
+    SOURCES.forEach((src,si)=>{
+      if(ds[1+si])ds[1+si].borderColor=src.color+'50';
+    });
+    if(ds[idxFill])ds[idxFill].backgroundColor=_gradCache||'rgba(255,230,0,0.18)';
+    if(ds[idxMax])ds[idxMax].borderColor='#4488ff';
+    if(ds[idxProb])ds[idxProb].borderColor='rgba(255,255,255,0.35)';
+    if(ds[idxReal])ds[idxReal].borderColor='rgba(255,255,255,0.92)';
+    /* Rescaler Y sur MAX toutes courbes */
+    const allVals=ds.slice(1,idxProb).flatMap(d=>d.data||[]).filter(v=>v!=null&&isFinite(v)&&v>=0);
+    const allMax=allVals.length?Math.max(...allVals):1;
+    myChart.options.scales.y.max=undefined;
+    myChart.options.scales.y.suggestedMax=undefined;
+  }
+  myChart.update('none');
+}
+
 /* ── fetchRetry global ── */
 async function fetchRetry(url,tries=3,delay=1200){
   for(let i=0;i<tries;i++){
@@ -171,12 +223,13 @@ async function load(){
     showStatus('⏳ Chargement des modèles…','#888');
     const [omMain,omM15,metno]=await Promise.all([
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability&models=${encodeURIComponent(omModels)}&forecast_days=9&timezone=auto`),
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&forecast_days=2&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&models=icon_seamless,meteofrance_seamless&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
     ]);
     if(!omMain?.hourly?.time){showStatus('❌ Open-Meteo inaccessible — réessaie dans quelques secondes','#ff3d57');return;}
     showStatus('','');
     cityTz=omMain.timezone??'Europe/Paris';N_HRS=omMain.hourly.time.length;
+    clearInterval(_autoRefreshTimer); // reset si re-load manuel
     const tzEl=document.getElementById('displayTz');
     const cityName=geo.results[0].name+(geo.results[0].country?', '+geo.results[0].country:'');
     tzEl.innerHTML=`<span style='color:#fff;font-size:clamp(11px,3vw,15px);letter-spacing:2px;text-transform:uppercase;font-weight:900'>${cityName}</span> <span style='color:#666;font-size:clamp(8px,1.8vw,10px);font-weight:400'>${cityTz} · ${omMain.timezone_abbreviation??''}</span>`;
@@ -271,19 +324,41 @@ function processData(omMain,omM15,rainMx,probMx){
   const pts=[],mods=SOURCES.map(()=>[]);
   const now=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz}));
   const h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
-  const m15=omM15?.minutely_15?.precipitation??[];
+  /* minutely_15 : 2 modèles → P80 local pour réduire la sous-estimation */
+  const m15_icon=omM15?.minutely_15?.precipitation_icon_seamless??[];
+  const m15_mf  =omM15?.minutely_15?.precipitation_meteofrance_seamless??[];
+  /* Fallback sur best_match si les modèles séparés ne répondent pas */
+  const m15_best=omM15?.minutely_15?.precipitation??[];
+  const m15len=Math.max(m15_icon.length,m15_mf.length,m15_best.length);
+  /* Pour chaque slot : p80 sur les valeurs disponibles */
+  const m15=Array.from({length:m15len},(_,i)=>{
+    const vals=[];
+    if(m15_icon[i]!=null&&isFinite(m15_icon[i]))vals.push(m15_icon[i]);
+    if(m15_mf[i]  !=null&&isFinite(m15_mf[i]))  vals.push(m15_mf[i]);
+    if(!vals.length&&m15_best[i]!=null&&isFinite(m15_best[i]))vals.push(m15_best[i]);
+    return vals.length?Math.max(...vals):0; /* MAX des 2 modèles m15 */
+  });
   const slotF=h*4+(m+s/60)/15;
   function push(t,d,idx){
     const r=idx>=0?synthR(idx,rainMx):0,mx=idx>=0?maxR(idx,rainMx):0,p=idx>=0?synthP(idx,probMx):0;
     pts.push({t,d,r,mx,p,hourIdx:idx});
     SOURCES.forEach((src,si)=>mods[si].push(idx>=0?(rainMx[src.key]?.[idx]??null):null));
   }
-  [5,10,15,30,45].forEach(off=>{
-    const r=interpM15(m15,slotF,off);
-    pts.push({t:`+${off}'`,d:0,r,mx:r,p:synthP(h,probMx),hourIdx:-1});
-    SOURCES.forEach((_,si)=>mods[si].push(null));
-  });
-  for(let i=1;i<=(23-h);i++)push((h+i)+'h',0,h+i);
+  /* Minutes restantes avant la prochaine heure (pas en vue J+8) */
+  let minutesAdded=false;
+  if(_viewMode!=='j8'&&m15.length>0&&m>0){
+    const minsToNextHour=60-m;
+    for(let o=5;o<minsToNextHour;o+=5){
+      const slotIdx=Math.min(Math.round(slotF+o/15),m15.length-1);
+      const r=Math.max(0,m15[slotIdx]??0);
+      pts.push({t:`+${o}'`,d:0,r,mx:r,p:synthP(h,probMx),hourIdx:-1});
+      SOURCES.forEach((_,si)=>mods[si].push(null));
+      minutesAdded=true;
+    }
+  }
+  /* Heures : toujours depuis h+1 — h+1 = données rainMx de l'heure suivante,
+     les minutes m15 couvrent h+0→h+1, pas de doublon car sources différentes */
+  for(let i=h+1;i<=23;i++) push(i+'h',0,i);
   // J+1 toujours heure/heure
   for(let hr=0;hr<24;hr++){const idx=24+hr;if(idx<N_HRS)push(hr+'h',1,idx);}
   if(_viewMode==='j8'){
@@ -491,7 +566,7 @@ function highlightSource(key){
       ds[dsIdx].borderWidth=_isMob?.5:.8;
     }
   });
-  myChart.update('none');
+  setTimeout(applyComplexity,0);
 }
 
 /* ── renderJm1 ── */
@@ -507,6 +582,7 @@ function renderJm1(pts,mods,realPrecip){
   grad.addColorStop(0,'rgba(255,230,0,0.35)');
   grad.addColorStop(0.55,'rgba(255,230,0,0.06)');
   grad.addColorStop(1,'rgba(255,230,0,0)');
+  _gradCache=grad;
 
   const modelDS=SOURCES.map((src,si)=>({
     data:mods[si],borderColor:src.color+'50',borderWidth:isMob?.8:1.2,
@@ -555,6 +631,7 @@ function renderJm1(pts,mods,realPrecip){
       }}
     ]
   });
+  setTimeout(applyComplexity,0);
 }
 
 /* ══════════════════════════════════════════════
@@ -581,9 +658,10 @@ function render(pts,mods){
   grad.addColorStop(0,'rgba(255,230,0,0.35)');
   grad.addColorStop(0.55,'rgba(255,230,0,0.06)');
   grad.addColorStop(1,'rgba(255,230,0,0)');
+  _gradCache=grad;
 
   const modelDS=SOURCES.map((src,si)=>({
-    data:mods[si],borderColor:src.color+'50',borderWidth:isMob?.8:1.2,
+    data:mods[si],borderColor:_simpleMode?'transparent':src.color+'50',borderWidth:isMob?.8:1.2,
     tension:0.3,pointRadius:0,fill:false,yAxisID:'y',order:4,spanGaps:true,
   }));
 
@@ -592,11 +670,11 @@ function render(pts,mods){
     data:{
       labels:pts.map(p=>p.t),
       datasets:[
-        {data:pts.map(p=>p.r),borderColor:'transparent',borderWidth:0,fill:true,backgroundColor:grad,tension:0.4,pointRadius:0,yAxisID:'y',order:5},
+        {data:pts.map(p=>p.r),borderColor:'transparent',borderWidth:0,fill:true,backgroundColor:_simpleMode?'rgba(255,230,0,0.22)':grad,tension:0.4,pointRadius:0,yAxisID:'y',order:5},
         ...modelDS,
-        {data:maxVals,borderColor:'#4488ff',borderWidth:isMob?1:1.5,borderDash:[8,3,2,3],fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:2},
+        {data:maxVals,borderColor:_simpleMode?'transparent':'#4488ff',borderWidth:isMob?1:1.5,borderDash:[8,3,2,3],fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:2},
         {data:pts.map(p=>p.r),borderColor:'#ffe600',borderWidth:isMob?2.5:3.5,fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:1},
-        {data:pts.map(p=>p.p),borderColor:'rgba(255,255,255,0.35)',borderWidth:isMob?.8:1,borderDash:[2,4],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:3},
+        {data:pts.map(p=>p.p),borderColor:_simpleMode?'transparent':'rgba(255,255,255,0.35)',borderWidth:isMob?.8:1,borderDash:[2,4],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:3},
       ]
     },
     options:{
@@ -727,6 +805,7 @@ function render(pts,mods){
       }}
     ]
   });
+  setTimeout(applyComplexity,0);
 }
 
 /* ── overlays CSS ── */
@@ -786,7 +865,27 @@ function buildSummary(chart,pts,days,xp){
 
 let rt;
 window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{lastW=0;if(myChart)myChart.update();},250);});
-load();
+
+/* ── MAJ automatique ── */
+let _autoRefreshTimer=null;
+function startAutoRefresh(){
+  clearInterval(_autoRefreshTimer);
+  _autoRefreshTimer=setInterval(()=>{
+    if(!_cachedData)return;
+    if(_viewMode==='jm1')return; // pas de MAJ auto sur J-1
+    const {omMain,omM15,rainMx,probMx}=_cachedData;
+    // Recalcule les pts avec l'heure actuelle (now recalculé dans processData)
+    lastW=0;
+    processData(omMain,omM15,rainMx,probMx);
+  }, 5*60*1000); // toutes les 5 minutes
+
+  // Re-fetch complet toutes les 30 min
+  setInterval(()=>{
+    if(_cachedData) load();
+  }, 30*60*1000);
+}
+
+load().then(()=>startAutoRefresh()).catch(()=>startAutoRefresh());
 </script>
 </body>
 </html>
