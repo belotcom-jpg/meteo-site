@@ -10,7 +10,10 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{background:#000;color:#fff;font-family:'Courier New',monospace;padding:6px;min-height:100dvh;overflow-x:hidden}
-.wrap{max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:4px}
+.wrap{max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:3px}
+.search{position:relative}
+#clearBtn{position:absolute;right:70px;top:50%;transform:translateY(-50%);background:none;border:none;color:#555;font-size:16px;cursor:pointer;padding:4px 6px;line-height:1;display:none}
+#clearBtn:hover{color:#fff}
 .search{display:flex;gap:8px}
 input{flex:1;min-width:0;background:#0d0d0d;border:2px solid #555;border-radius:10px;padding:9px 12px;color:#fff;font-size:clamp(13px,3.5vw,16px);font-weight:900;font-family:'Courier New',monospace;outline:none;-webkit-appearance:none}
 input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
@@ -44,7 +47,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 .view-btn:hover{border-color:#888;color:#fff}
 .view-btn.active{border-color:#00ffff;color:#00ffff;background:rgba(0,255,255,.07)}
 .card{background:#080808;border:2px solid #333;border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
-.header{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid #2a2a2a;gap:8px}
+.header{display:flex;justify-content:space-between;align-items:center;padding:5px 10px;border-bottom:1px solid #2a2a2a;gap:8px}
 .header-left{display:flex;flex-direction:column;gap:2px;min-width:0}
 .city-tz{font-size:clamp(9px,2vw,11px);color:#ddd;letter-spacing:1px;font-weight:700}
 .legend{display:flex;flex-direction:column;gap:3px;align-items:flex-end;flex-shrink:0}
@@ -53,15 +56,18 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 .leg-dot.dashed{background:repeating-linear-gradient(90deg,#ffe600 0,#ffe600 6px,transparent 6px,transparent 10px);height:2px}
 .leg-txt{font-size:clamp(9px,2.5vw,10px);font-weight:900}.p80-info{position:relative}.p80-tooltip{display:none;position:absolute;right:0;top:18px;width:220px;background:#111;border:1px solid rgba(255,230,0,.3);border-radius:8px;padding:8px 10px;font-size:9px;color:rgba(255,230,0,.85);line-height:1.5;z-index:100;font-weight:700}.p80-info:hover .p80-tooltip{display:block}
 #chartWrapper{position:relative}
-.canvas-container{height:clamp(180px,38vw,300px);width:100%}
+.canvas-container{height:clamp(160px,34vw,270px);width:100%}
 .sep-line{position:absolute;width:0;border-left:2px dashed rgba(255,255,255,.72);pointer-events:none;z-index:20}
-#summaryRow{display:flex;border-top:2px solid #444;background:#060606;height:clamp(44px,10vw,56px);overflow:hidden}
-.day-seg{display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
-.day-seg.last{align-items:flex-start;padding-left:6px}
-.day-name{font-size:clamp(8px,2vw,10px);font-weight:900;color:#666;margin-bottom:2px;letter-spacing:1px}
+#summaryRow{display:flex;border-top:2px solid #444;background:#060606;height:clamp(32px,7vw,40px);overflow:hidden}
+.day-seg{display:flex;flex-direction:row;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;gap:4px;padding:0 4px}
+.day-seg.last{justify-content:flex-start}
+.day-name{font-size:clamp(8px,2vw,10px);font-weight:900;color:#666;letter-spacing:1px}
 .day-rain{font-size:clamp(10px,2.6vw,14px);font-weight:900;color:#ffe600;line-height:1;text-shadow:0 0 8px rgba(255,230,0,.5)}
-.day-prob{font-size:clamp(9px,2.2vw,12px);font-weight:900;color:#ffe600;margin-top:1px}
+.day-prob{font-size:clamp(9px,2.2vw,12px);font-weight:900;color:#ffe600}
 .unit{font-size:7px;opacity:.6}
+.day-temp{display:flex;gap:2px}
+.temp-max{font-size:clamp(9px,2.2vw,11px);font-weight:900;color:#ff8844}
+.temp-min{font-size:clamp(9px,2.2vw,11px);font-weight:900;color:#88aaff}
 </style>
 </head>
 <body>
@@ -70,6 +76,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
     <input id="cityInput" value="Juvisy-sur-Orge"
            onkeypress="if(event.key==='Enter'){this.blur();load()}"
            autocomplete="off" autocorrect="off" spellcheck="false">
+    <button id="clearBtn" onclick="clearSearch()">✕</button>
     <button id="searchBtn" onclick="load()">GO</button>
   </div>
   <div id="sourcesBar"></div>
@@ -83,6 +90,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
     <div class="header">
       <div class="header-left">
         <div id="displayTz" class="city-tz"></div>
+        <div id="tempDisplay" class="city-tz" style="margin-top:2px"></div>
       </div>
       <div class="legend">
         <div class="leg"><div class="leg-dot" style="background:#ffe600;box-shadow:0 0 6px rgba(255,230,0,.5)"></div><div class="p80-info"><span class="leg-txt" style="color:#ffe600;cursor:help;border-bottom:1px dotted rgba(255,230,0,.4)">SYNTHÈSE P80 ⓘ</span><div class="p80-tooltip">P80 = 80ᵉ percentile sur tous les modèles actifs.<br>Traduction : 80% des modèles prévoient moins de cette valeur — estimation pessimiste-réaliste, ni la médiane ni le pire cas.</div></div></div>
@@ -127,6 +135,7 @@ const SOURCES=[
 let myChart=null,lastW=0,cityTz='Europe/Paris',N_HRS=0;
 let _peaks=[],_idx8hJ0=-1,_idx8hJ1=-1,_drySlots=[],_rainStarts=[],_8hXPos=[];
 let _viewMode='j1',_cachedData=null,_cachedJm1=null,_simpleMode=true,_gradCache=null;
+let _tempJ1Max=null,_tempJ1Min=null,_tempJ0Max=null,_tempJ0Min=null;
 let _radarMap=null,_radarLayer=null,_radarMarker=null,_radarFrames=[],_radarIdx=0,_radarPlaying=false,_radarTimer=null;
 let _cityLat=48.6869,_cityLon=2.3814; /* défaut Juvisy */
 let _isMob=false;
@@ -324,6 +333,29 @@ async function reverseGeocode(lat,lng){
   }catch(e){console.error('Reverse geocode error',e);}
 }
 
+/* ── affichage températures ── */
+function updateTempDisplay(){
+  const el=document.getElementById('tempDisplay');
+  if(!el)return;
+  if(_tempJ1Max===null){el.innerHTML='';return;}
+  const j0str=_tempJ0Max!==null?`AUJ <span class="temp-max">${Math.round(_tempJ0Max)}°</span><span class="temp-min">/${Math.round(_tempJ0Min??0)}°</span>`:'';
+  const j1str=_tempJ1Max!==null?`J+1 <span class="temp-max">${Math.round(_tempJ1Max)}°</span><span class="temp-min">/${Math.round(_tempJ1Min??0)}°</span>`:'';
+  el.innerHTML=[j0str,j1str].filter(Boolean).join('<span style="color:#333;margin:0 5px">|</span>');
+}
+
+/* ── clear search ── */
+function clearSearch(){
+  const inp=document.getElementById('cityInput');
+  inp.value='';inp.focus();
+  document.getElementById('clearBtn').style.display='none';
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const inp=document.getElementById('cityInput');
+  const btn=document.getElementById('clearBtn');
+  inp.addEventListener('input',()=>{btn.style.display=inp.value?'block':'none';});
+  if(inp.value)btn.style.display='block';
+});
+
 /* ── fetchRetry global ── */
 async function fetchRetry(url,tries=3,delay=1200){
   for(let i=0;i<tries;i++){
@@ -348,10 +380,11 @@ async function load(){
     if(rc){rc.style.display=_viewMode==='j1'?'block':'none';}
     const omModels=SOURCES.filter(s=>s.omModel).map(s=>s.omModel).join(',');
     showStatus('⏳ Chargement des modèles…','#888');
-    const [omMain,omM15,metno]=await Promise.all([
+    const [omMain,omM15,metno,omDaily]=await Promise.all([
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability&models=${encodeURIComponent(omModels)}&forecast_days=9&timezone=auto`),
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&models=icon_seamless,meteofrance_seamless&forecast_days=2&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&forecast_days=3&timezone=auto`),
     ]);
     if(!omMain?.hourly?.time){showStatus('❌ Open-Meteo inaccessible — réessaie dans quelques secondes','#ff3d57');return;}
     showStatus('','');
@@ -364,6 +397,12 @@ async function load(){
     const rainMx=buildRainMx(omMain,metno,tIdx);
     const probMx=buildProbMx(omMain,metno,tIdx);
     _cachedData={omMain,omM15,rainMx,probMx};
+    /* Températures J+1 (index 1 dans daily = demain) */
+    _tempJ1Max=omDaily?.daily?.temperature_2m_max?.[1]??null;
+    _tempJ1Min=omDaily?.daily?.temperature_2m_min?.[1]??null;
+    _tempJ0Max=omDaily?.daily?.temperature_2m_max?.[0]??null;
+    _tempJ0Min=omDaily?.daily?.temperature_2m_min?.[0]??null;
+    updateTempDisplay();
     /* Fetch J-1 en parallèle : past_days=1 pour les prévisions d'hier + archive pour réel */
     fetchJm1Data(lat,lon);
     let active=[];
@@ -459,20 +498,7 @@ function processData(omMain,omM15,rainMx,probMx){
   const pts=[],mods=SOURCES.map(()=>[]);
   const now=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz}));
   const h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
-  /* minutely_15 : 2 modèles → P80 local pour réduire la sous-estimation */
-  const m15_icon=omM15?.minutely_15?.precipitation_icon_seamless??[];
-  const m15_mf  =omM15?.minutely_15?.precipitation_meteofrance_seamless??[];
-  /* Fallback sur best_match si les modèles séparés ne répondent pas */
-  const m15_best=omM15?.minutely_15?.precipitation??[];
-  const m15len=Math.max(m15_icon.length,m15_mf.length,m15_best.length);
-  /* Pour chaque slot : p80 sur les valeurs disponibles */
-  const m15=Array.from({length:m15len},(_,i)=>{
-    const vals=[];
-    if(m15_icon[i]!=null&&isFinite(m15_icon[i]))vals.push(m15_icon[i]);
-    if(m15_mf[i]  !=null&&isFinite(m15_mf[i]))  vals.push(m15_mf[i]);
-    if(!vals.length&&m15_best[i]!=null&&isFinite(m15_best[i]))vals.push(m15_best[i]);
-    return vals.length?Math.max(...vals):0; /* MAX des 2 modèles m15 */
-  });
+  const m15=omM15?.minutely_15?.precipitation??[];
   const slotF=h*4+(m+s/60)/15;
   function push(t,d,idx){
     const r=idx>=0?synthR(idx,rainMx):0,mx=idx>=0?maxR(idx,rainMx):0,p=idx>=0?synthP(idx,probMx):0;
@@ -636,7 +662,7 @@ function drawTennisBall(c,cx,cy,r){
 function drawWeatherIcon(c,cx,cy,r,rainMm,prob){
   c.save();
   c.lineCap='round';c.lineJoin='round';
-  if(rainMm<0.1&&prob<20){
+  if(rainMm<0.3&&prob<30){
     /* ── SOLEIL ── */
     const sr=r*0.42;
     c.beginPath();c.arc(cx,cy,sr,0,Math.PI*2);
@@ -663,7 +689,7 @@ function drawWeatherIcon(c,cx,cy,r,rainMm,prob){
     c.fillStyle=`rgb(${gray},${gray},${gray+10})`;c.fill();
     c.strokeStyle=`rgba(255,255,255,0.3)`;c.lineWidth=r*0.07;c.stroke();
 
-    if(rainMm>=0.1){
+    if(rainMm>=0.3){
       /* gouttes de pluie */
       const drops=rainMm<1?2:rainMm<3?3:4;
       const dropColor=rainMm<1?'rgba(120,180,255,0.7)':rainMm<3?'rgba(80,140,255,0.85)':'rgba(60,100,255,1)';
@@ -892,19 +918,17 @@ function render(pts,mods){
         if(!_8hXPos.length)return;
         const {ctx:c,chartArea:{top}}=chart;
         const r=isMob?11:15;
-        _8hXPos.forEach((xPx,hi)=>{
-          /* Utiliser uniquement les pts autour de 8h (7h→10h) pour l'icône */
+        _8hXPos.forEach(({xPx,day})=>{
+          /* Pts autour de 8h (7h→10h) pour le bon jour */
           const around8h=pts.filter(p=>{
-            if(p.d!==hi)return false;
+            if(p.d!==day)return false;
             const h=parseInt(p.t);
             return !isNaN(h)&&h>=7&&h<=10;
           });
-          /* Fallback sur le pt exactement à 8h */
-          const at8h=pts.find(p=>p.d===hi&&p.t==='8h');
+          const at8h=pts.find(p=>p.d===day&&p.t==='8h');
           const ref=around8h.length?around8h:at8h?[at8h]:[];
-          const rainVal=ref.length?Math.max(...ref.map(p=>p.mx)):0;
-          const probVal=ref.length?Math.max(...ref.map(p=>p.p)):0;
-          /* Fond noir pour lisibilité */
+          const rainVal=ref.length?ref.reduce((s,p)=>s+p.r,0)/ref.length:0;
+          const probVal=ref.length?ref.reduce((s,p)=>s+p.p,0)/ref.length:0;
           c.save();
           c.beginPath();c.arc(xPx,top+r+6,r+3,0,Math.PI*2);
           c.fillStyle='rgba(0,0,0,0.7)';c.fill();
@@ -968,10 +992,10 @@ function buildOverlays(chart,pts){
   }
   days.slice(1).forEach(d=>addLine(xp[d],false));
   _8hXPos=[];
-  [_idx8hJ0,_idx8hJ1].forEach(idx=>{
+  [[_idx8hJ0,0],[_idx8hJ1,1]].forEach(([idx,day])=>{
     if(idx<0)return;
     const xPx=x.getPixelForValue(idx);
-    if(xPx>chartArea.left&&xPx<chartArea.right){addLine(xPx,true);_8hXPos.push(xPx);}
+    if(xPx>chartArea.left&&xPx<chartArea.right){addLine(xPx,true);_8hXPos.push({xPx,day});}
   });
   buildSummary(chart,pts,days,xp);
 }
@@ -1001,7 +1025,11 @@ function buildSummary(chart,pts,days,xp){
     const lbl=d===0?'AUJ.':dn[date.getDay()];
     const div=document.createElement('div');
     div.className='day-seg'+(isLast&&days.length>2?' last':'');div.style.width=w+'px';
-    div.innerHTML=`<div class="day-name">${lbl}</div><div class="day-rain">${total.toFixed(1)}<span class="unit">mm</span></div><div class="day-prob">${Math.round(maxP)}%</div>`;
+    const tMax=d===0?_tempJ0Max:d===1?_tempJ1Max:null;
+    const tMin=d===0?_tempJ0Min:d===1?_tempJ1Min:null;
+
+    const tempInline=tMax!==null?`<span class="temp-max">${Math.round(tMax)}°</span><span class="temp-min">/${Math.round(tMin??0)}°</span>`:'';
+    div.innerHTML=`<span class="day-name">${lbl}</span><span class="day-rain">${total.toFixed(1)}<span class="unit">mm</span></span><span class="day-prob">${Math.round(maxP)}%</span>${tempInline}`;
     row.appendChild(div);
   });
 }
