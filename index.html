@@ -56,10 +56,17 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 .leg-dot.dashed{background:repeating-linear-gradient(90deg,#ffe600 0,#ffe600 6px,transparent 6px,transparent 10px);height:2px}
 .leg-txt{font-size:clamp(9px,2.5vw,10px);font-weight:900}.p80-info{position:relative}.p80-tooltip{display:none;position:absolute;right:0;top:18px;width:220px;background:#111;border:1px solid rgba(255,230,0,.3);border-radius:8px;padding:8px 10px;font-size:9px;color:rgba(255,230,0,.85);line-height:1.5;z-index:100;font-weight:700}.p80-info:hover .p80-tooltip{display:block}
 #chartWrapper{position:relative}
+#scrollbarWrap{padding:0 0 4px 0;background:#080808}
+#scrollbarTrack{height:6px;background:#1a1a1a;border-radius:3px;position:relative;cursor:pointer;margin:0 8px}
+#scrollbarThumb{height:6px;background:#444;border-radius:3px;position:absolute;top:0;cursor:grab;transition:background .15s;min-width:24px}
+#scrollbarThumb:hover,#scrollbarThumb.dragging{background:#00ffff;cursor:grabbing}
 .canvas-container{height:clamp(160px,34vw,270px);width:100%}
 .sep-line{position:absolute;width:0;border-left:2px dashed rgba(255,255,255,.72);pointer-events:none;z-index:20}
-#summaryRow{display:flex;border-top:2px solid #444;background:#060606;height:clamp(32px,7vw,40px);overflow:hidden}
-.day-seg{display:flex;flex-direction:row;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;gap:4px;padding:0 4px}
+#summaryRow{display:flex;border-top:2px solid #444;background:#060606;overflow:hidden}
+#summaryRow.multiline{height:clamp(52px,12vw,64px)}
+#summaryRow.singleline{height:clamp(32px,7vw,40px)}
+.day-seg{display:flex;flex-direction:row;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;gap:3px;padding:0 3px;flex-wrap:wrap}
+#summaryRow.multiline .day-seg{flex-direction:column;align-items:center;gap:1px;padding:2px 3px}
 .day-seg.last{justify-content:flex-start}
 .day-name{font-size:clamp(8px,2vw,10px);font-weight:900;color:#666;letter-spacing:1px}
 .day-rain{font-size:clamp(10px,2.6vw,14px);font-weight:900;color:#ffe600;line-height:1;text-shadow:0 0 8px rgba(255,230,0,.5)}
@@ -90,7 +97,6 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
     <div class="header">
       <div class="header-left">
         <div id="displayTz" class="city-tz"></div>
-        <div id="tempDisplay" class="city-tz" style="margin-top:2px"></div>
       </div>
       <div class="legend">
         <div class="leg"><div class="leg-dot" style="background:#ffe600;box-shadow:0 0 6px rgba(255,230,0,.5)"></div><div class="p80-info"><span class="leg-txt" style="color:#ffe600;cursor:help;border-bottom:1px dotted rgba(255,230,0,.4)">SYNTHÈSE P80 ⓘ</span><div class="p80-tooltip">P80 = 80ᵉ percentile sur tous les modèles actifs.<br>Traduction : 80% des modèles prévoient moins de cette valeur — estimation pessimiste-réaliste, ni la médiane ni le pire cas.</div></div></div>
@@ -101,6 +107,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
     <div id="chartWrapper">
       <div class="canvas-container"><canvas id="mainChart"></canvas></div>
       <div id="summaryRow"></div>
+      <div id="scrollbarWrap" style="display:none"><div id="scrollbarTrack"><div id="scrollbarThumb"></div></div></div>
     </div>
   </div>
 
@@ -231,7 +238,7 @@ function applyComplexity(){
     });
     if(ds[idxFill])ds[idxFill].backgroundColor=_gradCache||'rgba(255,230,0,0.18)';
     if(ds[idxMax])ds[idxMax].borderColor='#4488ff';
-    if(ds[idxProb])ds[idxProb].borderColor='rgba(255,255,255,0.35)';
+    if(ds[idxProb]){ds[idxProb].borderColor='rgba(255,255,255,0.85)';ds[idxProb].borderWidth=_isMob?2.5:3.5;ds[idxProb].borderDash=[6,3];}
     if(ds[idxReal])ds[idxReal].borderColor='rgba(255,255,255,0.92)';
     /* Rescaler Y sur MAX toutes courbes */
     const allVals=ds.slice(1,idxProb).flatMap(d=>d.data||[]).filter(v=>v!=null&&isFinite(v)&&v>=0);
@@ -333,16 +340,6 @@ async function reverseGeocode(lat,lng){
   }catch(e){console.error('Reverse geocode error',e);}
 }
 
-/* ── affichage températures ── */
-function updateTempDisplay(){
-  const el=document.getElementById('tempDisplay');
-  if(!el)return;
-  if(_tempJ1Max===null){el.innerHTML='';return;}
-  const j0str=_tempJ0Max!==null?`AUJ <span class="temp-max">${Math.round(_tempJ0Max)}°</span><span class="temp-min">/${Math.round(_tempJ0Min??0)}°</span>`:'';
-  const j1str=_tempJ1Max!==null?`J+1 <span class="temp-max">${Math.round(_tempJ1Max)}°</span><span class="temp-min">/${Math.round(_tempJ1Min??0)}°</span>`:'';
-  el.innerHTML=[j0str,j1str].filter(Boolean).join('<span style="color:#333;margin:0 5px">|</span>');
-}
-
 /* ── clear search ── */
 function clearSearch(){
   const inp=document.getElementById('cityInput');
@@ -370,9 +367,21 @@ async function load(){
   const city=document.getElementById('cityInput').value.trim();if(!city)return;
   const btn=document.getElementById('searchBtn');btn.disabled=true;btn.textContent='…';
   try{
-    const geo=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=fr`).then(r=>r.json());
-    if(!geo.results?.length){alert('Ville introuvable');return;}
-    const {latitude:lat,longitude:lon}=geo.results[0];
+    let geo=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=5&language=fr`).then(r=>r.json());
+    if(!geo.results?.length){
+      /* Essai avec les premières lettres */
+      const short=city.split(' ')[0].slice(0,4);
+      geo=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(short)}&count=5&language=fr`).then(r=>r.json());
+    }
+    if(!geo.results?.length){showStatus('❌ Aucune ville trouvée près de "'+city+'"','#ff3d57');return;}
+    /* Prendre le résultat le plus proche si coordonnées dispo, sinon le premier */
+    const best=geo.results[0];
+    if(best.name.toLowerCase()!==city.toLowerCase()){
+      showStatus('📍 Ville la plus proche : '+best.name+(best.country?', '+best.country:''),'rgba(255,230,0,0.8)');
+      document.getElementById('cityInput').value=best.name;
+      document.getElementById('clearBtn').style.display='block';
+    }
+    const {latitude:lat,longitude:lon}=best;
     initBar();
     if(_simpleMode){const sb=document.getElementById('sourcesBar');if(sb)sb.style.display='none';}
     initRadar(lat,lon);
@@ -382,7 +391,7 @@ async function load(){
     showStatus('⏳ Chargement des modèles…','#888');
     const [omMain,omM15,metno,omDaily]=await Promise.all([
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability&models=${encodeURIComponent(omModels)}&forecast_days=9&timezone=auto`),
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&forecast_days=2&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&models=meteofrance_arome_france_hd,icon_d2&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&forecast_days=3&timezone=auto`),
     ]);
@@ -391,7 +400,7 @@ async function load(){
     cityTz=omMain.timezone??'Europe/Paris';N_HRS=omMain.hourly.time.length;
     clearInterval(_autoRefreshTimer); // reset si re-load manuel
     const tzEl=document.getElementById('displayTz');
-    const cityName=geo.results[0].name+(geo.results[0].country?', '+geo.results[0].country:'');
+    const cityName=best.name+(best.country?', '+best.country:'');
     tzEl.innerHTML=`<span style='color:#fff;font-size:clamp(11px,3vw,15px);letter-spacing:2px;text-transform:uppercase;font-weight:900'>${cityName}</span> <span style='color:#666;font-size:clamp(8px,1.8vw,10px);font-weight:400'>${cityTz} · ${omMain.timezone_abbreviation??''}</span>`;
     const tIdx={};omMain.hourly.time.forEach((t,i)=>{tIdx[t]=i;});
     const rainMx=buildRainMx(omMain,metno,tIdx);
@@ -402,7 +411,6 @@ async function load(){
     _tempJ1Min=omDaily?.daily?.temperature_2m_min?.[1]??null;
     _tempJ0Max=omDaily?.daily?.temperature_2m_max?.[0]??null;
     _tempJ0Min=omDaily?.daily?.temperature_2m_min?.[0]??null;
-    updateTempDisplay();
     /* Fetch J-1 en parallèle : past_days=1 pour les prévisions d'hier + archive pour réel */
     fetchJm1Data(lat,lon);
     let active=[];
@@ -498,7 +506,19 @@ function processData(omMain,omM15,rainMx,probMx){
   const pts=[],mods=SOURCES.map(()=>[]);
   const now=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz}));
   const h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
-  const m15=omM15?.minutely_15?.precipitation??[];
+  /* minutely_15 : AROME HD (mis à jour /h, 1.5km) + ICON D2 — MAX des deux */
+  const m15_arome = omM15?.minutely_15?.precipitation_meteofrance_arome_france_hd ?? [];
+  const m15_icon2 = omM15?.minutely_15?.precipitation_icon_d2 ?? [];
+  const m15_best  = omM15?.minutely_15?.precipitation ?? [];
+  const m15len = Math.max(m15_arome.length, m15_icon2.length, m15_best.length);
+  const m15 = Array.from({length: m15len}, (_, i) => {
+    const vals = [];
+    if (m15_arome[i] != null && isFinite(m15_arome[i])) vals.push(m15_arome[i]);
+    if (m15_icon2[i] != null && isFinite(m15_icon2[i])) vals.push(m15_icon2[i]);
+    /* fallback best_match si hors zone AROME/ICON-D2 */
+    if (!vals.length && m15_best[i] != null && isFinite(m15_best[i])) vals.push(m15_best[i]);
+    return vals.length ? Math.max(...vals) : 0;
+  });
   const slotF=h*4+(m+s/60)/15;
   function push(t,d,idx){
     const r=idx>=0?synthR(idx,rainMx):0,mx=idx>=0?maxR(idx,rainMx):0,p=idx>=0?synthP(idx,probMx):0;
@@ -763,7 +783,7 @@ function renderJm1(pts,mods,realPrecip){
         /* P80 jaune */
         {data:pts.map(p=>p.r),borderColor:'#ffe600',borderWidth:isMob?2.5:3.5,fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:1},
         /* Proba pointillé léger */
-        {data:pts.map(p=>p.p),borderColor:'rgba(255,255,255,0.35)',borderWidth:isMob?.8:1,borderDash:[2,4],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:3},
+        {data:pts.map(p=>p.p),borderColor:'rgba(255,255,255,0.85)',borderWidth:isMob?2.5:3.5,borderDash:[6,3],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:3},
         /* ── Précipitations réelles — vert vif trait épais ── */
         {data:realArr,borderColor:'rgba(255,255,255,0.92)',borderWidth:isMob?3.5:5,fill:false,tension:0.3,pointRadius:0,yAxisID:'y',order:0,spanGaps:false,
          label:'RÉEL'},
@@ -779,7 +799,7 @@ function renderJm1(pts,mods,realPrecip){
       plugins:{legend:{display:false},tooltip:{enabled:false}}
     },
     plugins:[
-      {id:'overlay',afterDraw(chart){if(chart.width===lastW)return;lastW=chart.width;buildOverlays(chart,pts);}},
+      {id:'overlay',afterDraw(chart){if(chart.width!==lastW){lastW=chart.width;buildOverlays(chart,pts);}else{updateOverlayPositions(chart,pts);}}},
       /* Légende réel */
       {id:'realLegend',afterDraw(chart){
         const {ctx:c,chartArea:{top,right}}=chart;
@@ -865,7 +885,7 @@ function render(pts,mods){
     },
     plugins:[
       /* séparateurs + résumé */
-      {id:'overlay',afterDraw(chart){if(chart.width===lastW)return;lastW=chart.width;buildOverlays(chart,pts);}},
+      {id:'overlay',afterDraw(chart){if(chart.width!==lastW){lastW=chart.width;buildOverlays(chart,pts);}else{updateOverlayPositions(chart,pts);}}},
 
       /* plages sèches avec balle tennis */
       {id:'drySlots',afterDatasetsDraw(chart){
@@ -975,6 +995,12 @@ function render(pts,mods){
   setTimeout(applyComplexity,0);
 }
 
+/* ── repositionnement au zoom/pan : reconstruction complète des lignes ── */
+function updateOverlayPositions(chart,pts){
+  /* Réutilise buildOverlays mais sans recréer le chart — juste les éléments DOM */
+  buildOverlays(chart,pts);
+}
+
 /* ── overlays CSS ── */
 function buildOverlays(chart,pts){
   const {chartArea,scales:{x},width:cW}=chart;
@@ -1009,9 +1035,15 @@ function buildSummary(chart,pts,days,xp){
   row.style.paddingLeft=chartArea.left+'px';
   row.style.paddingRight=(cW-chartArea.right)+'px';
   row.innerHTML='';
-  const lastXPx=x.getPixelForValue(pts.length-1);
-  const starts=days.map((d,di)=>di===0?chartArea.left:xp[d]);
-  const ends=days.map((d,di)=>di===days.length-1?lastXPx:xp[days[di+1]]);
+  /* Utiliser les bornes réelles de la zone visible (respecte le zoom) */
+  const visLeft=chartArea.left;
+  const visRight=chartArea.right;
+  /* Clipper xp dans la zone visible */
+  const xpClamped={};
+  days.forEach(d=>{xpClamped[d]=Math.max(visLeft,Math.min(visRight,xp[d]));});
+  const lastXPx=visRight;
+  const starts=days.map((d,di)=>di===0?visLeft:xpClamped[d]);
+  const ends=days.map((d,di)=>di===days.length-1?lastXPx:xpClamped[days[di+1]]);
   const innerW=days.slice(0,-1).map((_,di)=>Math.max(0,ends[di]-starts[di]));
   const stdW=innerW.length?innerW.reduce((a,b)=>a+b,0)/innerW.length:60;
   days.forEach((d,di)=>{
@@ -1028,11 +1060,182 @@ function buildSummary(chart,pts,days,xp){
     const tMax=d===0?_tempJ0Max:d===1?_tempJ1Max:null;
     const tMin=d===0?_tempJ0Min:d===1?_tempJ1Min:null;
 
-    const tempInline=tMax!==null?`<span class="temp-max">${Math.round(tMax)}°</span><span class="temp-min">/${Math.round(tMin??0)}°</span>`:'';
+    const tempInline=tMax!==null?`<span class="temp-min">${Math.round(tMin??0)}°</span><span class="temp-max">/${Math.round(tMax)}°</span>`:'';
     div.innerHTML=`<span class="day-name">${lbl}</span><span class="day-rain">${total.toFixed(1)}<span class="unit">mm</span></span><span class="day-prob">${Math.round(maxP)}%</span>${tempInline}`;
     row.appendChild(div);
   });
 }
+
+/* ── Pinch-zoom et pan tactile sur le graphique ── */
+(function(){
+  const wrapper=()=>document.getElementById('chartWrapper');
+  let startDist=0,startRange=null,startPan=null,startX=0;
+  let zoomMin=0,zoomMax=1; // [0..1] fraction de l'axe X visible
+
+  function getTouches(e){return Array.from(e.touches);}
+  function dist(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);}
+
+  function applyZoom(){
+    if(!myChart)return;
+    const n=myChart.data.labels.length;
+    const lo=Math.round(zoomMin*n);
+    const hi=Math.round(zoomMax*n)-1;
+    myChart.options.scales.x.min=lo;
+    myChart.options.scales.x.max=hi;
+    myChart.update('none');
+    updateScrollbar();
+  }
+  function updateScrollbar(){
+    const wrap=document.getElementById('scrollbarWrap');
+    const track=document.getElementById('scrollbarTrack');
+    const thumb=document.getElementById('scrollbarThumb');
+    if(!wrap||!track||!thumb)return;
+    const zoomed=(zoomMax-zoomMin)<0.999;
+    wrap.style.display=zoomed?'block':'none';
+    if(!zoomed)return;
+    const tw=track.offsetWidth;
+    const thumbW=Math.max(24,tw*(zoomMax-zoomMin));
+    const thumbLeft=tw*zoomMin;
+    thumb.style.width=thumbW+'px';
+    thumb.style.left=Math.min(tw-thumbW,thumbLeft)+'px';
+  }
+
+  /* Drag scrollbar */
+  let sbDragging=false,sbStartX=0,sbStartMin=0;
+  function initScrollbar(){
+    const track=document.getElementById('scrollbarTrack');
+    const thumb=document.getElementById('scrollbarThumb');
+    if(!track||!thumb)return;
+    thumb.addEventListener('mousedown',e=>{
+      sbDragging=true;sbStartX=e.clientX;sbStartMin=zoomMin;
+      thumb.classList.add('dragging');e.preventDefault();
+    });
+    track.addEventListener('click',e=>{
+      if(sbDragging)return;
+      const rect=track.getBoundingClientRect();
+      const cx=(e.clientX-rect.left)/rect.width;
+      const half=(zoomMax-zoomMin)/2;
+      zoomMin=Math.max(0,cx-half);zoomMax=zoomMin+(zoomMax-zoomMin);
+      if(zoomMax>1){zoomMin=1-(zoomMax-zoomMin);zoomMax=1;}
+      applyZoom();
+    });
+    document.addEventListener('mousemove',e=>{
+      if(!sbDragging)return;
+      const track2=document.getElementById('scrollbarTrack');
+      if(!track2)return;
+      const tw=track2.offsetWidth;
+      const dx=(e.clientX-sbStartX)/tw;
+      const range=zoomMax-zoomMin;
+      let lo=sbStartMin+dx,hi=lo+range;
+      if(lo<0){hi-=lo;lo=0;}if(hi>1){lo-=hi-1;hi=1;}
+      zoomMin=Math.max(0,lo);zoomMax=Math.min(1,hi);
+      applyZoom();
+    });
+    document.addEventListener('mouseup',()=>{
+      if(sbDragging){sbDragging=false;document.getElementById('scrollbarThumb')?.classList.remove('dragging');}
+    });
+    /* Touch sur la scrollbar */
+    thumb.addEventListener('touchstart',e=>{
+      sbDragging=true;sbStartX=e.touches[0].clientX;sbStartMin=zoomMin;e.preventDefault();
+    },{passive:false});
+    document.addEventListener('touchmove',e=>{
+      if(!sbDragging)return;
+      const track2=document.getElementById('scrollbarTrack');if(!track2)return;
+      const tw=track2.offsetWidth;
+      const dx=(e.touches[0].clientX-sbStartX)/tw;
+      const range=zoomMax-zoomMin;
+      let lo=sbStartMin+dx,hi=lo+range;
+      if(lo<0){hi-=lo;lo=0;}if(hi>1){lo-=hi-1;hi=1;}
+      zoomMin=Math.max(0,lo);zoomMax=Math.min(1,hi);
+      applyZoom();
+    },{passive:false});
+    document.addEventListener('touchend',()=>{sbDragging=false;});
+  }
+  initScrollbar();
+
+  document.addEventListener('touchstart',e=>{
+    if(!wrapper()||!wrapper().contains(e.target))return;
+    const t=getTouches(e);
+    if(t.length===2){
+      e.preventDefault();
+      startDist=dist(t[0],t[1]);
+      startRange=[zoomMin,zoomMax];
+    } else if(t.length===1){
+      startPan=[zoomMin,zoomMax];
+      startX=t[0].clientX;
+    }
+  },{passive:false});
+
+  document.addEventListener('touchmove',e=>{
+    if(!wrapper()||!wrapper().contains(e.target))return;
+    const t=getTouches(e);
+    if(t.length===2&&startRange){
+      e.preventDefault();
+      const d=dist(t[0],t[1]);
+      const scale=startDist/d; // >1 = zoom in
+      const [lo,hi]=startRange;
+      const center=(lo+hi)/2;
+      const half=(hi-lo)*scale/2;
+      zoomMin=Math.max(0,center-half);
+      zoomMax=Math.min(1,center+half);
+      if(zoomMax-zoomMin<0.05){const c2=(zoomMin+zoomMax)/2;zoomMin=c2-0.025;zoomMax=c2+0.025;}
+      applyZoom();
+    } else if(t.length===1&&startPan){
+      e.preventDefault();
+      const dx=t[0].clientX-startX;
+      const ww=wrapper().offsetWidth||300;
+      const shift=(dx/ww)*(startPan[1]-startPan[0])*-1;
+      let lo=startPan[0]+shift,hi=startPan[1]+shift;
+      if(lo<0){hi-=lo;lo=0;}
+      if(hi>1){lo-=hi-1;hi=1;}
+      zoomMin=Math.max(0,lo);zoomMax=Math.min(1,hi);
+      applyZoom();
+    }
+  },{passive:false});
+
+  document.addEventListener('touchend',e=>{
+    if(getTouches(e).length<2){startDist=0;startRange=null;}
+    if(getTouches(e).length<1){startPan=null;}
+  });
+
+  /* Molette souris pour zoom sur PC */
+  document.addEventListener('wheel',e=>{
+    if(!wrapper()||!wrapper().contains(e.target))return;
+    e.preventDefault();
+    const rect=wrapper().getBoundingClientRect();
+    const cx=(e.clientX-rect.left)/rect.width; // position relative du curseur [0..1]
+    const range=zoomMax-zoomMin;
+    const factor=e.deltaY>0?1.15:0.87; // scroll bas = zoom out, haut = zoom in
+    const newRange=Math.min(1,range*factor);
+    // Ancrer le zoom autour du curseur
+    let lo=zoomMin+(cx*range)-(cx*newRange);
+    let hi=lo+newRange;
+    if(lo<0){hi-=lo;lo=0;}
+    if(hi>1){lo-=hi-1;hi=1;}
+    zoomMin=Math.max(0,lo);zoomMax=Math.min(1,hi);
+    if(zoomMax-zoomMin<0.04){const mid=(zoomMin+zoomMax)/2;zoomMin=mid-0.02;zoomMax=mid+0.02;}
+    applyZoom();
+  },{passive:false});
+
+  /* Double-click PC pour reset zoom */
+  document.addEventListener('dblclick',e=>{
+    if(!wrapper()||!wrapper().contains(e.target))return;
+    zoomMin=0;zoomMax=1;
+    if(myChart){delete myChart.options.scales.x.min;delete myChart.options.scales.x.max;myChart.update('none');}
+  });
+
+  /* Double-tap pour reset zoom */
+  let lastTap=0;
+  document.addEventListener('touchend',e=>{
+    if(!wrapper()||!wrapper().contains(e.target))return;
+    const now=Date.now();
+    if(now-lastTap<300){
+      zoomMin=0;zoomMax=1;
+      if(myChart){delete myChart.options.scales.x.min;delete myChart.options.scales.x.max;myChart.update('none');}
+    }
+    lastTap=now;
+  });
+})();
 
 let rt;
 window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{lastW=0;if(myChart)myChart.update();},250);});
