@@ -143,6 +143,8 @@ let myChart=null,lastW=0,cityTz='Europe/Paris',N_HRS=0;
 let _peaks=[],_idx8hJ0=-1,_idx8hJ1=-1,_drySlots=[],_rainStarts=[],_8hXPos=[];
 let _viewMode='j1',_cachedData=null,_cachedJm1=null,_simpleMode=true,_gradCache=null;
 let _tempJ1Max=null,_tempJ1Min=null,_tempJ0Max=null,_tempJ0Min=null;
+let zoomMin=0,zoomMax=1; /* état zoom global */
+let _windData=null; /* vitesse vent horaire */
 let _radarMap=null,_radarLayer=null,_radarMarker=null,_radarFrames=[],_radarIdx=0,_radarPlaying=false,_radarTimer=null;
 let _cityLat=48.6869,_cityLon=2.3814; /* défaut Juvisy */
 let _isMob=false;
@@ -223,7 +225,7 @@ function applyComplexity(){
     idxModels.forEach(i=>{if(ds[i])ds[i].borderColor='transparent';});
     if(ds[idxFill])ds[idxFill].backgroundColor='rgba(255,230,0,0.22)';
     if(ds[idxMax])ds[idxMax].borderColor='transparent';
-    if(ds[idxProb])ds[idxProb].borderColor='transparent';
+    /* proba toujours visible même en simple */
     if(ds[idxReal])ds[idxReal].borderColor='rgba(255,255,255,0.92)';
     /* Rescaler Y sur les données P80 uniquement */
     const p80data=(ds[idxP80]?.data||[]).filter(v=>v!=null&&isFinite(v)&&v>=0);
@@ -390,7 +392,7 @@ async function load(){
     const omModels=SOURCES.filter(s=>s.omModel).map(s=>s.omModel).join(',');
     showStatus('⏳ Chargement des modèles…','#888');
     const [omMain,omM15,metno,omDaily]=await Promise.all([
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability&models=${encodeURIComponent(omModels)}&forecast_days=9&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m&models=${encodeURIComponent(omModels)}&forecast_days=9&timezone=auto`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&models=meteofrance_arome_france_hd,icon_d2&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&forecast_days=3&timezone=auto`),
@@ -398,7 +400,7 @@ async function load(){
     if(!omMain?.hourly?.time){showStatus('❌ Open-Meteo inaccessible — réessaie dans quelques secondes','#ff3d57');return;}
     showStatus('','');
     cityTz=omMain.timezone??'Europe/Paris';N_HRS=omMain.hourly.time.length;
-    clearInterval(_autoRefreshTimer); // reset si re-load manuel
+    clearInterval(_autoRefreshTimer);zoomMin=0;zoomMax=1;
     const tzEl=document.getElementById('displayTz');
     const cityName=best.name+(best.country?', '+best.country:'');
     tzEl.innerHTML=`<span style='color:#fff;font-size:clamp(11px,3vw,15px);letter-spacing:2px;text-transform:uppercase;font-weight:900'>${cityName}</span> <span style='color:#666;font-size:clamp(8px,1.8vw,10px);font-weight:400'>${cityTz} · ${omMain.timezone_abbreviation??''}</span>`;
@@ -406,6 +408,7 @@ async function load(){
     const rainMx=buildRainMx(omMain,metno,tIdx);
     const probMx=buildProbMx(omMain,metno,tIdx);
     _cachedData={omMain,omM15,rainMx,probMx};
+    _windData=omMain?.hourly?.windspeed_10m??null;
     /* Températures J+1 (index 1 dans daily = demain) */
     _tempJ1Max=omDaily?.daily?.temperature_2m_max?.[1]??null;
     _tempJ1Min=omDaily?.daily?.temperature_2m_min?.[1]??null;
@@ -463,7 +466,7 @@ async function fetchJm1Data(lat,lon){
     const omModels=omSources.map(s=>s.omModel).join(',');
 
     const [pastForecast,realData]=await Promise.all([
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability&models=${encodeURIComponent(omModels)}&past_days=1&forecast_days=0&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m&models=${encodeURIComponent(omModels)}&past_days=1&forecast_days=0&timezone=auto`),
       fetchRetry(`https://historical-forecast-api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation&start_date=${dateStr}&end_date=${dateStr}&timezone=auto`),
     ]);
     _cachedJm1={pastForecast,realData,dateStr};
@@ -479,6 +482,7 @@ function updateBtnState(){
 function setView(mode){
   if(_viewMode===mode)return;
   _viewMode=mode;updateBtnState();lastW=0;
+  zoomMin=0;zoomMax=1; /* reset zoom au changement de vue */
   /* Radar uniquement en J+1 */
   const rc=document.getElementById('radarCard');
   if(rc){
@@ -661,20 +665,46 @@ function drawTickBadge(c,xPx,bottom,lbl,fSize,pad,borderCol,textCol){
   c.restore();
 }
 
-/* ── balle de tennis canvas ── */
+/* ── balle de tennis réaliste ── */
 function drawTennisBall(c,cx,cy,r){
   c.save();
-  // Corps jaune-vert
+  c.lineCap='round';
+
+  /* Corps jaune-vert vif avec dégradé radial pour volume */
+  const gBall=c.createRadialGradient(cx-r*0.3,cy-r*0.3,r*0.05,cx+r*0.1,cy+r*0.1,r*1.05);
+  gBall.addColorStop(0,'#eeff44');
+  gBall.addColorStop(0.5,'#ccee00');
+  gBall.addColorStop(1,'#88bb00');
   c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);
-  c.fillStyle='#c8e000';c.fill();
-  // Liseré blanc courbé haut
-  c.strokeStyle='rgba(255,255,255,0.9)';c.lineWidth=r*0.22;
-  c.beginPath();c.arc(cx,cy,r*0.58,Math.PI*1.1,Math.PI*1.9);c.stroke();
-  // Liseré blanc courbé bas
-  c.beginPath();c.arc(cx,cy,r*0.58,Math.PI*0.1,Math.PI*0.9);c.stroke();
-  // Contour
-  c.strokeStyle='rgba(0,0,0,0.3)';c.lineWidth=1;
-  c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.stroke();
+  c.fillStyle=gBall;c.fill();
+
+  /* Liseré blanc 1 : courbe diagonale haut-gauche → bas-droite */
+  /* Reproduit exactement la courbe de la photo : S inversé */
+  c.strokeStyle='rgba(255,255,255,0.92)';
+  c.lineWidth=r*0.13;
+  /* Arc supérieur : part du haut-gauche et descend vers la droite */
+  c.beginPath();
+  c.arc(cx+r*0.55, cy-r*0.55, r*0.72, Math.PI*0.85, Math.PI*1.55);
+  c.stroke();
+  /* Arc inférieur : miroir en bas */
+  c.beginPath();
+  c.arc(cx-r*0.55, cy+r*0.55, r*0.72, Math.PI*(-0.15), Math.PI*0.55);
+  c.stroke();
+
+  /* Ombre légère sur le bord bas-droit pour le volume */
+  const gShadow=c.createRadialGradient(cx+r*0.3,cy+r*0.3,r*0.4,cx+r*0.3,cy+r*0.3,r*1.1);
+  gShadow.addColorStop(0,'rgba(0,0,0,0)');
+  gShadow.addColorStop(1,'rgba(0,0,0,0.25)');
+  c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);
+  c.fillStyle=gShadow;c.fill();
+
+  /* Reflet blanc mat en haut-gauche */
+  const gRef=c.createRadialGradient(cx-r*0.35,cy-r*0.35,0,cx-r*0.2,cy-r*0.2,r*0.6);
+  gRef.addColorStop(0,'rgba(255,255,255,0.45)');
+  gRef.addColorStop(1,'rgba(255,255,255,0)');
+  c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);
+  c.fillStyle=gRef;c.fill();
+
   c.restore();
 }
 
@@ -812,7 +842,7 @@ function renderJm1(pts,mods,realPrecip){
       }}
     ]
   });
-  setTimeout(applyComplexity,0);
+  setTimeout(()=>{applyComplexity();if(zoomMin>0||zoomMax<1){const n=myChart?.data?.labels?.length||1;myChart.options.scales.x.min=Math.round(zoomMin*n);myChart.options.scales.x.max=Math.round(zoomMax*n)-1;myChart.update('none');updateScrollbar();}},0);
 }
 
 /* ══════════════════════════════════════════════
@@ -855,7 +885,7 @@ function render(pts,mods){
         ...modelDS,
         {data:maxVals,borderColor:_simpleMode?'transparent':'#4488ff',borderWidth:isMob?1:1.5,borderDash:[8,3,2,3],fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:2},
         {data:pts.map(p=>p.r),borderColor:'#ffe600',borderWidth:isMob?2.5:3.5,fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:1},
-        {data:pts.map(p=>p.p),borderColor:_simpleMode?'transparent':'rgba(255,255,255,0.35)',borderWidth:isMob?.8:1,borderDash:[2,4],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:3},
+        {data:pts.map(p=>p.p),borderColor:'rgba(255,255,255,0.85)',borderWidth:isMob?2.5:3.5,borderDash:[6,3],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:3},
       ]
     },
     options:{
@@ -907,16 +937,19 @@ function render(pts,mods){
           c.beginPath();c.moveTo(cx0,top);c.lineTo(cx0,bottom);c.stroke();
           c.beginPath();c.moveTo(cx1,top);c.lineTo(cx1,bottom);c.stroke();
           c.setLineDash([]);
-          // balle de tennis
-          const ballR=isMob?7:10;
-          drawTennisBall(c,midX,top+8+ballR,ballR);
-          // heures début→fin
+          /* logo tennis-soleil */
+          const ballR=isMob?8:11;
+          /* clipper pour que les rayons restent dans la zone graphe */
+          const bcy=top+ballR+6;
+          c.save();c.beginPath();c.rect(cx0,top,slotW,bottom-top);c.clip();
+          drawTennisBall(c,midX,bcy,ballR);
+          c.restore();
           const fSize=isMob?10:12;
           const startLbl=pts[sl.startIdx].t,endLbl=pts[sl.endIdx].t;
           c.font=`900 ${fSize}px 'Courier New',monospace`;
           const timeStr=startLbl+'→'+endLbl;
           const needed=c.measureText(timeStr).width+4;
-          const textY=top+8+ballR*2+5;
+          const textY=bcy+ballR*1.85+4; /* sous les rayons du logo */
           c.fillStyle='rgba(255,230,0,0.85)';
           if(slotW>=needed){
             c.textAlign='center';c.textBaseline='top';
@@ -975,6 +1008,28 @@ function render(pts,mods){
       }},
 
       /* badges axe X : jaune=pics, cyan=début pluie */
+      /* Indicateur vent fort >50 km/h */
+      {id:'windAlert',afterDatasetsDraw(chart){
+        if(!_windData)return;
+        const {ctx:cv,scales:{x,y},chartArea:{top,bottom}}=chart;
+        const fSize=isMob?8:9;
+        pts.forEach((p,i)=>{
+          if(p.hourIdx<0||p.hourIdx>=_windData.length)return;
+          const wind=_windData[p.hourIdx];
+          if(wind==null||wind<50)return;
+          const xPx=x.getPixelForValue(i);
+          if(xPx<x.left||xPx>x.right)return;
+          cv.save();
+          cv.font=`${isMob?11:14}px serif`;
+          cv.textAlign='center';cv.textBaseline='top';
+          cv.fillText('\u{1F4A8}',xPx,top+2);
+          cv.font=`900 ${fSize}px 'Courier New',monospace`;
+          cv.fillStyle='rgba(100,200,255,0.9)';
+          cv.textBaseline='top';
+          cv.fillText(Math.round(wind)+'km/h',xPx,top+(isMob?14:18));
+          cv.restore();
+        });
+      }},
       {id:'axisLabels',afterDraw(chart){
         const {ctx:c,scales:{x},chartArea:{bottom}}=chart;
         const fSize=isMob?8:10,pad=4;
@@ -1035,6 +1090,8 @@ function buildSummary(chart,pts,days,xp){
   row.style.paddingLeft=chartArea.left+'px';
   row.style.paddingRight=(cW-chartArea.right)+'px';
   row.innerHTML='';
+  const isMultiline=days.length>2;
+  row.className=isMultiline?'multiline':'singleline';
   /* Utiliser les bornes réelles de la zone visible (respecte le zoom) */
   const visLeft=chartArea.left;
   const visRight=chartArea.right;
@@ -1070,7 +1127,6 @@ function buildSummary(chart,pts,days,xp){
 (function(){
   const wrapper=()=>document.getElementById('chartWrapper');
   let startDist=0,startRange=null,startPan=null,startX=0;
-  let zoomMin=0,zoomMax=1; // [0..1] fraction de l'axe X visible
 
   function getTouches(e){return Array.from(e.touches);}
   function dist(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);}
@@ -1221,7 +1277,7 @@ function buildSummary(chart,pts,days,xp){
   document.addEventListener('dblclick',e=>{
     if(!wrapper()||!wrapper().contains(e.target))return;
     zoomMin=0;zoomMax=1;
-    if(myChart){delete myChart.options.scales.x.min;delete myChart.options.scales.x.max;myChart.update('none');}
+    if(myChart){delete myChart.options.scales.x.min;delete myChart.options.scales.x.max;myChart.update('none');updateScrollbar();}
   });
 
   /* Double-tap pour reset zoom */
@@ -1231,7 +1287,7 @@ function buildSummary(chart,pts,days,xp){
     const now=Date.now();
     if(now-lastTap<300){
       zoomMin=0;zoomMax=1;
-      if(myChart){delete myChart.options.scales.x.min;delete myChart.options.scales.x.max;myChart.update('none');}
+      if(myChart){delete myChart.options.scales.x.min;delete myChart.options.scales.x.max;myChart.update('none');updateScrollbar();}
     }
     lastTap=now;
   });
@@ -1259,6 +1315,15 @@ function startAutoRefresh(){
   }, 30*60*1000);
 }
 
+/* ── Paramètre URL ?ville=xxx ── */
+(function(){
+  const params=new URLSearchParams(window.location.search);
+  const villeParam=params.get('ville');
+  if(villeParam){
+    document.getElementById('cityInput').value=villeParam;
+    document.getElementById('clearBtn').style.display='block';
+  }
+})();
 load().then(()=>startAutoRefresh()).catch(()=>startAutoRefresh());
 </script>
 </body>
