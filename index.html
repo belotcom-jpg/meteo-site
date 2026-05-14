@@ -29,6 +29,15 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 .src-badge.loading .src-dot{animation:pulse .8s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 #viewBtns{display:none;gap:6px;justify-content:flex-end;align-items:center}
+#rainNowCard{background:#080808;border:2px solid #333;border-radius:16px;overflow:hidden;display:none}
+#rainNowHeader{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;border-bottom:1px solid #2a2a2a}
+#rainNowTitle{font-size:9px;font-weight:900;color:#888;letter-spacing:2px}
+#rainNowUpdate{font-size:8px;color:#555;font-weight:700}
+#rainNowBars{display:flex;align-items:flex-end;gap:3px;padding:8px 10px 4px;height:64px;overflow:hidden}
+.rn-bar{flex:1;border-radius:2px 2px 0 0;min-height:2px;transition:height .3s}
+#rainNowLabels{display:flex;gap:3px;padding:0 10px 4px;overflow:hidden}
+.rn-lbl{flex:1;font-size:7px;font-weight:900;color:#555;text-align:center;font-family:'Courier New',monospace}
+#rainNowStatus{padding:4px 12px 6px;font-size:10px;font-weight:900;color:#888;text-align:center;letter-spacing:1px}
 #radarCard{background:#080808;border:2px solid #333;border-radius:16px;overflow:hidden}
 #radarHeader{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid #2a2a2a}
 #radarTitle{font-size:10px;font-weight:900;color:#888;letter-spacing:2px}
@@ -111,6 +120,16 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
     </div>
   </div>
 
+  <div id="rainNowCard">
+    <div id="rainNowHeader">
+      <span id="rainNowTitle">☔ PLUIE DANS L'HEURE</span>
+      <span id="rainNowUpdate">—</span>
+    </div>
+    <div id="rainNowBars"></div>
+    <div id="rainNowLabels"></div>
+    <div id="rainNowStatus">—</div>
+  </div>
+
   <div id="radarCard" style="display:none">
     <div id="radarHeader">
       <span id="radarTitle">📡 RADAR PRÉCIPITATIONS</span>
@@ -145,6 +164,9 @@ let _viewMode='j1',_cachedData=null,_cachedJm1=null,_simpleMode=true,_gradCache=
 let _tempJ1Max=null,_tempJ1Min=null,_tempJ0Max=null,_tempJ0Min=null;
 let zoomMin=0,zoomMax=1; /* état zoom global */
 let _windData=null; /* vitesse vent horaire */
+let _rainNowTimer=null;
+let _mfRainNow=null; /* données MF pluie dans l'heure */
+let _mfByMin={}; /* slots MF par offset-minutes, global */
 let _radarMap=null,_radarLayer=null,_radarMarker=null,_radarFrames=[],_radarIdx=0,_radarPlaying=false,_radarTimer=null;
 let _cityLat=48.6869,_cityLon=2.3814; /* défaut Juvisy */
 let _isMob=false;
@@ -254,93 +276,10 @@ function applyComplexity(){
 /* ══════════════════════════════════════════════
    RADAR (Leaflet + RainViewer)
 ══════════════════════════════════════════════ */
-function initRadar(lat,lon){
-  _cityLat=lat; _cityLon=lon;
-  if(!_radarMap){
-    /* zoom 6 = ~150km autour, RainViewer max tile zoom = 7 */
-    _radarMap=L.map('radarMap',{
-      center:[lat,lon], zoom:6,
-      minZoom:3, maxZoom:7,
-      zoomControl:true, attributionControl:false,
-    });
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
-      maxZoom:7, tileSize:256,
-    }).addTo(_radarMap);
-    /* Marqueur ville */
-    _radarMarker=L.circleMarker([lat,lon],{
-      radius:6, color:'#ffe600', weight:2, fillColor:'#ffe600', fillOpacity:0.9
-    }).addTo(_radarMap);
-    /* Clic → changer de ville */
-    _radarMap.on('click',e=>reverseGeocode(e.latlng.lat,e.latlng.lng));
-  } else {
-    _radarMap.setView([lat,lon],6);
-    if(_radarMarker) _radarMarker.setLatLng([lat,lon]);
-  }
-  /* Attendre que la carte soit visible avant de charger */
-  setTimeout(()=>{
-    _radarMap.invalidateSize();
-    loadRadarFrames();
-  },100);
-}
 
-async function loadRadarFrames(){
-  try{
-    const data=await fetchRetry('https://api.rainviewer.com/public/weather-maps.json');
-    if(!data?.radar?.past)return;
-    _radarFrames=[...data.radar.past,...(data.radar.nowcast||[])];
-    _radarIdx=_radarFrames.length-1;
-    showRadarFrame(_radarIdx);
-  }catch(e){console.error('Radar error',e);}
-}
 
-function showRadarFrame(idx){
-  if(!_radarFrames.length||!_radarMap)return;
-  idx=Math.max(0,Math.min(idx,_radarFrames.length-1));
-  _radarIdx=idx;
-  const frame=_radarFrames[idx];
-  if(_radarLayer){_radarMap.removeLayer(_radarLayer);}
-  _radarLayer=L.tileLayer(
-    `https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
-    {opacity:0.85,maxZoom:7,tileSize:256,noWrap:false}
-  ).addTo(_radarMap);
-  /* Heure locale */
-  const d=new Date(frame.time*1000);
-  const hh=String(d.getHours()).padStart(2,'0');
-  const mm=String(d.getMinutes()).padStart(2,'0');
-  document.getElementById('radarTime').textContent=
-    (frame.nowcast?'🔮 ':'')+(idx===_radarFrames.length-1&&!frame.nowcast?'▶ ':'')+(hh+':'+mm);
-}
 
-function toggleRadarPlay(){
-  _radarPlaying=!_radarPlaying;
-  const btn=document.getElementById('radarPlayBtn');
-  btn.textContent=_radarPlaying?'⏹ STOP':'▶ PLAY';
-  btn.classList.toggle('playing',_radarPlaying);
-  if(_radarPlaying){
-    _radarTimer=setInterval(()=>{
-      _radarIdx=(_radarIdx+1)%_radarFrames.length;
-      showRadarFrame(_radarIdx);
-    },600);
-  } else {
-    clearInterval(_radarTimer);
-    /* Revenir à la dernière image réelle */
-    const lastReal=_radarFrames.reduce((best,f,i)=>(!f.nowcast?i:best),0);
-    showRadarFrame(lastReal);
-  }
-}
 
-async function reverseGeocode(lat,lng){
-  try{
-    /* reverse geocoding via Nominatim uniquement */
-    /* Open-Meteo geocoding ne supporte pas le reverse — on utilise Nominatim */
-    const nom=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(5)}&lon=${lng.toFixed(5)}&format=json&accept-language=fr`).then(r=>r.json());
-    if(nom?.address){
-      const city=nom.address.city||nom.address.town||nom.address.village||nom.address.municipality||nom.display_name.split(',')[0];
-      document.getElementById('cityInput').value=city;
-      load();
-    }
-  }catch(e){console.error('Reverse geocode error',e);}
-}
 
 /* ── clear search ── */
 function clearSearch(){
@@ -354,6 +293,78 @@ document.addEventListener('DOMContentLoaded',()=>{
   inp.addEventListener('input',()=>{btn.style.display=inp.value?'block':'none';});
   if(inp.value)btn.style.display='block';
 });
+
+/* ── Pluie dans l'heure MF ── */
+const MF_TOKEN='__Wj7dVSTjV9YGu1guveLyDq0g7S7TfTjaHBTPTpO0kj8__';
+async function fetchRainNow(lat,lon){
+  try{
+    const url=`https://webservice.meteofrance.com/v3/rain?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}&token=${MF_TOKEN}`;
+    const r=await fetch(url);
+    if(!r.ok)return null;
+    return await r.json();
+  }catch(e){return null;}
+}
+
+function renderRainNow(data){
+  const card=document.getElementById('rainNowCard');
+  if(!card)return;
+  if(!data?.properties?.forecast?.length){card.style.display='none';return;}
+  card.dataset.hasData='1';
+  _mfRainNow=data.properties.forecast; /* stocker pour intégration courbe */
+  card.style.display='block';
+  const forecasts=data.properties.forecast;
+  /* Intensités : 0=sec,1=faible,2=modérée,3=forte */
+  const colors=['#2a2a2a','#4488ff','#0044ff','#ff2200'];
+  const labels_fr=['Sec','Faible','Modérée','Forte'];
+  const maxH=44; /* px hauteur max barre */
+  /* Barres */
+  const barsEl=document.getElementById('rainNowBars');
+  const labsEl=document.getElementById('rainNowLabels');
+  if(!barsEl||!labsEl)return;
+  barsEl.innerHTML='';labsEl.innerHTML='';
+  /* Temps de référence */
+  const t0=forecasts[0]?.time?new Date(forecasts[0].time):new Date();
+  let maxIntensity=0;
+  forecasts.forEach((f,i)=>{
+    const intens=f.rain_intensity||0;
+    if(intens>maxIntensity)maxIntensity=intens;
+    const h=Math.max(2,Math.round((intens/3)*maxH));
+    const bar=document.createElement('div');
+    bar.className='rn-bar';
+    bar.style.height=h+'px';
+    bar.style.background=colors[Math.min(intens,3)];
+    if(intens>0)bar.style.boxShadow=`0 0 6px ${colors[Math.min(intens,3)]}88`;
+    barsEl.appendChild(bar);
+    /* Label minutes */
+    const tF=new Date(f.time);
+    const diffMin=Math.round((tF-t0)/60000);
+    const lbl=document.createElement('div');
+    lbl.className='rn-lbl';
+    lbl.textContent=diffMin===0?'now':'+'+diffMin+"'";
+    labsEl.appendChild(lbl);
+  });
+  /* Statut global */
+  const statusEl=document.getElementById('rainNowStatus');
+  if(statusEl){
+    if(maxIntensity===0){statusEl.textContent='☀️ Pas de pluie prévue';statusEl.style.color='#ffe600';}
+    else if(maxIntensity===1){statusEl.textContent='🌦 Pluie faible prévue';statusEl.style.color='#88aaff';}
+    else if(maxIntensity===2){statusEl.textContent='🌧 Pluie modérée prévue';statusEl.style.color='#4488ff';}
+    else{statusEl.textContent='⛈ Pluie forte prévue';statusEl.style.color='#ff4422';}
+  }
+  /* Heure de mise à jour */
+  const upEl=document.getElementById('rainNowUpdate');
+  if(upEl&&data.update_time){
+    const d=new Date(data.update_time*1000);
+    upEl.textContent='MàJ '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }
+}
+
+async function startRainNow(lat,lon){
+  clearInterval(_rainNowTimer);
+  const run=async()=>{const d=await fetchRainNow(lat,lon);renderRainNow(d);};
+  await run();
+  _rainNowTimer=setInterval(run,5*60*1000);
+}
 
 /* ── fetchRetry global ── */
 async function fetchRetry(url,tries=3,delay=1200){
@@ -485,8 +496,10 @@ function setView(mode){
   zoomMin=0;zoomMax=1; /* reset zoom au changement de vue */
   /* Radar uniquement en J+1 */
   const rc=document.getElementById('radarCard');
+  const rnc=document.getElementById('rainNowCard');
   if(rc){
     rc.style.display=mode==='j1'?'block':'none';
+    if(rnc)rnc.style.display=mode==='j1'&&rnc.dataset.hasData?'block':'none';
     if(mode==='j1'&&_radarMap){
       setTimeout(()=>{_radarMap.invalidateSize();if(_radarFrames.length)showRadarFrame(_radarIdx);},80);
     }
@@ -523,6 +536,18 @@ function processData(omMain,omM15,rainMx,probMx){
     if (!vals.length && m15_best[i] != null && isFinite(m15_best[i])) vals.push(m15_best[i]);
     return vals.length ? Math.max(...vals) : 0;
   });
+  /* Fusionner m15 avec données MF si disponibles */
+  const mfIntensToMmh=[0,0.3,1.5,5]; /* 0=sec,1=faible,2=modéré,3=fort */
+  _mfByMin={}; /* reset global */
+  if(_mfRainNow?.length){
+    const t0=new Date(_mfRainNow[0].time);
+    _mfRainNow.forEach(f=>{
+      const tF=new Date(f.time);
+      const diffMin=Math.round((tF-t0)/60000);
+      _mfByMin[diffMin]=mfIntensToMmh[Math.min(f.rain_intensity??0,3)];
+    });
+  }
+
   const slotF=h*4+(m+s/60)/15;
   function push(t,d,idx){
     const r=idx>=0?synthR(idx,rainMx):0,mx=idx>=0?maxR(idx,rainMx):0,p=idx>=0?synthP(idx,probMx):0;
@@ -535,8 +560,14 @@ function processData(omMain,omM15,rainMx,probMx){
     const minsToNextHour=60-m;
     for(let o=5;o<minsToNextHour;o+=5){
       const slotIdx=Math.min(Math.round(slotF+o/15),m15.length-1);
-      const r=Math.max(0,m15[slotIdx]??0);
-      pts.push({t:`+${o}'`,d:0,r,mx:r,p:synthP(h,probMx),hourIdx:-1});
+      const rM15=Math.max(0,m15[slotIdx]??0);
+      /* MF : prendre la valeur au slot le plus proche en minutes */
+      const mfKeys=Object.keys(_mfByMin).map(Number);
+      const nearestMf=mfKeys.length?mfKeys.reduce((a,b)=>Math.abs(b-o)<Math.abs(a-o)?b:a,mfKeys[0]):null;
+      const rMF=nearestMf!=null?_mfByMin[nearestMf]??0:0;
+      /* MAX des deux sources */
+      const r=Math.max(rM15,rMF);
+      pts.push({t:`+${o}'`,d:0,r,mx:r,p:synthP(h,probMx),hourIdx:-1,mfIntens:_mfRainNow?._mfRainNow});
       SOURCES.forEach((_,si)=>mods[si].push(null));
       minutesAdded=true;
     }
@@ -668,39 +699,48 @@ function drawTickBadge(c,xPx,bottom,lbl,fSize,pad,borderCol,textCol){
 /* ── balle de tennis réaliste ── */
 function drawTennisBall(c,cx,cy,r){
   c.save();
-  c.lineCap='round';
 
-  /* Corps jaune-vert vif avec dégradé radial pour volume */
-  const gBall=c.createRadialGradient(cx-r*0.3,cy-r*0.3,r*0.05,cx+r*0.1,cy+r*0.1,r*1.05);
-  gBall.addColorStop(0,'#eeff44');
-  gBall.addColorStop(0.5,'#ccee00');
-  gBall.addColorStop(1,'#88bb00');
+  /* Corps : jaune-vert clair avec lumière venue du centre-droit */
+  const gBall=c.createRadialGradient(cx+r*0.2,cy-r*0.1,r*0.01,cx,cy,r);
+  gBall.addColorStop(0,'#f0ff60');
+  gBall.addColorStop(0.35,'#ddee20');
+  gBall.addColorStop(0.75,'#c8d800');
+  gBall.addColorStop(1,'#9aaa00');
   c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);
   c.fillStyle=gBall;c.fill();
 
-  /* Liseré blanc 1 : courbe diagonale haut-gauche → bas-droite */
-  /* Reproduit exactement la courbe de la photo : S inversé */
-  c.strokeStyle='rgba(255,255,255,0.92)';
-  c.lineWidth=r*0.13;
-  /* Arc supérieur : part du haut-gauche et descend vers la droite */
+  /* Liseré 1 : haut-gauche, beige/crème, courbe convexe vers le bas */
+  /* Sur la photo : part du bord supérieur gauche, descend en arc */
+  c.save();
+  c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.clip(); /* clip dans la balle */
+  const seam1_x=cx-r*0.42, seam1_y=cy-r*0.15;
   c.beginPath();
-  c.arc(cx+r*0.55, cy-r*0.55, r*0.72, Math.PI*0.85, Math.PI*1.55);
-  c.stroke();
-  /* Arc inférieur : miroir en bas */
+  c.arc(seam1_x, seam1_y, r*0.55, -Math.PI*0.35, Math.PI*0.45);
+  const seamW=r*0.055;
+  /* Double trait crème pour épaisseur */
+  c.strokeStyle='rgba(230,220,170,0.95)';c.lineWidth=seamW*2.2;c.stroke();
+  c.strokeStyle='rgba(255,255,240,0.6)';c.lineWidth=seamW*0.8;c.stroke();
+
+  /* Liseré 2 : bas-droite, miroir du premier */
+  const seam2_x=cx+r*0.42, seam2_y=cy+r*0.15;
   c.beginPath();
-  c.arc(cx-r*0.55, cy+r*0.55, r*0.72, Math.PI*(-0.15), Math.PI*0.55);
-  c.stroke();
+  c.arc(seam2_x, seam2_y, r*0.55, -Math.PI*1.35+Math.PI, Math.PI*0.45+Math.PI);
+  c.strokeStyle='rgba(230,220,170,0.95)';c.lineWidth=seamW*2.2;c.stroke();
+  c.strokeStyle='rgba(255,255,240,0.6)';c.lineWidth=seamW*0.8;c.stroke();
+  c.restore();
 
-  /* Ombre légère sur le bord bas-droit pour le volume */
-  const gShadow=c.createRadialGradient(cx+r*0.3,cy+r*0.3,r*0.4,cx+r*0.3,cy+r*0.3,r*1.1);
-  gShadow.addColorStop(0,'rgba(0,0,0,0)');
-  gShadow.addColorStop(1,'rgba(0,0,0,0.25)');
-  c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);
-  c.fillStyle=gShadow;c.fill();
+  /* Ombre portée douce en bas */
+  const gShad=c.createRadialGradient(cx,cy+r*0.85,r*0.1,cx,cy+r*0.9,r*0.7);
+  gShad.addColorStop(0,'rgba(0,0,0,0.18)');
+  gShad.addColorStop(1,'rgba(0,0,0,0)');
+  c.beginPath();
+  c.ellipse(cx,cy+r*0.95,r*0.7,r*0.18,0,0,Math.PI*2);
+  c.fillStyle=gShad;c.fill();
 
-  /* Reflet blanc mat en haut-gauche */
-  const gRef=c.createRadialGradient(cx-r*0.35,cy-r*0.35,0,cx-r*0.2,cy-r*0.2,r*0.6);
-  gRef.addColorStop(0,'rgba(255,255,255,0.45)');
+  /* Reflet lumineux centre-droit */
+  const gRef=c.createRadialGradient(cx+r*0.15,cy-r*0.05,0,cx+r*0.15,cy-r*0.05,r*0.65);
+  gRef.addColorStop(0,'rgba(255,255,255,0.38)');
+  gRef.addColorStop(0.5,'rgba(255,255,220,0.12)');
   gRef.addColorStop(1,'rgba(255,255,255,0)');
   c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);
   c.fillStyle=gRef;c.fill();
@@ -724,7 +764,6 @@ function drawWeatherIcon(c,cx,cy,r,rainMm,prob){
       c.lineTo(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2);c.stroke();
     }
   } else {
-    /* nuage de base */
     const cw=r*0.9,ch=r*0.45,cbx=cx-cw*0.1,cby=cy+r*0.05;
     c.beginPath();
     c.arc(cbx-cw*0.18,cby,ch*0.7,Math.PI,0);
@@ -733,14 +772,11 @@ function drawWeatherIcon(c,cx,cy,r,rainMm,prob){
     c.lineTo(cbx+cw*0.42+ch*0.6,cby+ch*0.5);
     c.lineTo(cbx-cw*0.18-ch*0.7,cby+ch*0.5);
     c.closePath();
-    /* couleur nuage selon intensité */
     const intensity=Math.min(rainMm/5,1);
     const gray=Math.round(180-intensity*130);
     c.fillStyle=`rgb(${gray},${gray},${gray+10})`;c.fill();
-    c.strokeStyle=`rgba(255,255,255,0.3)`;c.lineWidth=r*0.07;c.stroke();
-
+    c.strokeStyle='rgba(255,255,255,0.3)';c.lineWidth=r*0.07;c.stroke();
     if(rainMm>=0.3){
-      /* gouttes de pluie */
       const drops=rainMm<1?2:rainMm<3?3:4;
       const dropColor=rainMm<1?'rgba(120,180,255,0.7)':rainMm<3?'rgba(80,140,255,0.85)':'rgba(60,100,255,1)';
       c.strokeStyle=dropColor;c.lineWidth=r*0.12;
@@ -755,31 +791,6 @@ function drawWeatherIcon(c,cx,cy,r,rainMm,prob){
   c.restore();
 }
 
-/* ── surbrillance source au hover ── */
-function highlightSource(key){
-  if(!myChart)return;
-  const ds=myChart.data.datasets;
-  // Les modelDS commencent à l'index 1 (après le gradient fill)
-  SOURCES.forEach((src,si)=>{
-    const dsIdx=1+si; // index dans datasets (0=fill, 1..N=modèles)
-    if(dsIdx>=ds.length)return;
-    if(key===null){
-      // Reset : toutes les courbes à leur opacité normale
-      ds[dsIdx].borderColor=src.color+'50';
-      ds[dsIdx].borderWidth=_isMob?.8:1.2;
-    } else if(src.key===key){
-      // Surbrillance : couleur pleine, trait épais
-      ds[dsIdx].borderColor=src.color;
-      ds[dsIdx].borderWidth=_isMob?2.5:3.5;
-    } else {
-      // Estompage des autres
-      ds[dsIdx].borderColor=src.color+'18';
-      ds[dsIdx].borderWidth=_isMob?.5:.8;
-    }
-  });
-  myChart.update('none');
-}
-
 /* ── renderJm1 ── */
 function renderJm1(pts,mods,realPrecip){
   const ctx=document.getElementById('mainChart').getContext('2d');
@@ -787,7 +798,7 @@ function renderJm1(pts,mods,realPrecip){
   _isMob=window.innerWidth<500;const isMob=_isMob;
   _peaks=[];_drySlots=[];_idx8hJ0=-1;_idx8hJ1=-1;_rainStarts=[];_8hXPos=[];
 
-  const realArr=realPrecip; /* déjà aligné sur pts */
+  const realArr=realPrecip;
 
   const grad=ctx.createLinearGradient(0,0,0,380);
   grad.addColorStop(0,'rgba(255,230,0,0.35)');
@@ -805,18 +816,12 @@ function renderJm1(pts,mods,realPrecip){
     data:{
       labels:pts.map(p=>p.t),
       datasets:[
-        /* fond P80 */
-        {data:pts.map(p=>p.r),borderColor:'transparent',borderWidth:0,fill:true,backgroundColor:grad,tension:0.4,pointRadius:0,yAxisID:'y',order:5},
+        {data:pts.map(p=>p.r),borderColor:'transparent',borderWidth:0,fill:true,backgroundColor:_simpleMode?'rgba(255,230,0,0.08)':'rgba(0,0,0,0)',tension:0.4,pointRadius:0,yAxisID:'y',order:5},
         ...modelDS,
-        /* MAX modèles bleu pointillé */
-        {data:pts.map(p=>p.mx),borderColor:'#4488ff',borderWidth:isMob?1:1.5,borderDash:[8,3,2,3],fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:2},
-        /* P80 jaune */
+        {data:pts.map(p=>p.mx),borderColor:_simpleMode?'transparent':'#4488ff',borderWidth:isMob?1:1.5,borderDash:[8,3,2,3],fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:2},
         {data:pts.map(p=>p.r),borderColor:'#ffe600',borderWidth:isMob?2.5:3.5,fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:1},
-        /* Proba pointillé léger */
         {data:pts.map(p=>p.p),borderColor:'rgba(255,255,255,0.85)',borderWidth:isMob?2.5:3.5,borderDash:[6,3],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:3},
-        /* ── Précipitations réelles — vert vif trait épais ── */
-        {data:realArr,borderColor:'rgba(255,255,255,0.92)',borderWidth:isMob?3.5:5,fill:false,tension:0.3,pointRadius:0,yAxisID:'y',order:0,spanGaps:false,
-         label:'RÉEL'},
+        {data:realArr,borderColor:'rgba(255,255,255,0.92)',borderWidth:isMob?3.5:5,fill:false,tension:0.3,pointRadius:0,yAxisID:'y',order:0,spanGaps:false,label:'RÉEL'},
       ]
     },
     options:{
@@ -824,21 +829,18 @@ function renderJm1(pts,mods,realPrecip){
       scales:{
         x:{ticks:{color:'#bbb',font:{weight:'bold',size:isMob?8:10,family:'Courier New'},maxRotation:0,autoSkip:false,callback(v){const l=this.getLabelForValue(v);return l||null;}},grid:{display:false},border:{color:'#555'}},
         y:{position:'left',beginAtZero:true,grid:{color:'#181818',lineWidth:1},ticks:{color:'#ffe600',font:{weight:'bold',size:isMob?8:11,family:'Courier New'}},border:{color:'#555'},title:{display:!isMob,text:'mm/h',color:'#ffe600',font:{size:9,family:'Courier New'}}},
-        yProb:{position:'right',min:0,max:100,display:true,grid:{display:false},ticks:{color:'rgba(255,255,255,0.4)',font:{weight:'bold',size:isMob?8:11,family:'Courier New'},callback:v=>v+'%',stepSize:25},border:{color:'#555'}}
+        yProb:{position:'right',min:0,max:100,display:true,grid:{display:false},ticks:{color:'rgba(255,255,255,0.4)',font:{weight:'bold',size:isMob?8:11,family:'Courier New'},callback:v=>v+'%',stepSize:25},border:{color:'#555'},title:{display:!isMob,text:'prob.',color:'rgba(255,255,255,0.4)',font:{size:9,family:'Courier New'}}}
       },
       plugins:{legend:{display:false},tooltip:{enabled:false}}
     },
     plugins:[
       {id:'overlay',afterDraw(chart){if(chart.width!==lastW){lastW=chart.width;buildOverlays(chart,pts);}else{updateOverlayPositions(chart,pts);}}},
-      /* Légende réel */
       {id:'realLegend',afterDraw(chart){
         const {ctx:c,chartArea:{top,right}}=chart;
-        c.save();
-        c.strokeStyle='rgba(255,255,255,0.9)';c.lineWidth=4;
+        c.save();c.strokeStyle='rgba(255,255,255,0.9)';c.lineWidth=4;
         c.beginPath();c.moveTo(right-55,top+10);c.lineTo(right-35,top+10);c.stroke();
         c.fillStyle='rgba(255,255,255,0.9)';c.font=`700 9px 'Courier New',monospace`;
-        c.textAlign='left';c.textBaseline='middle';c.fillText('RÉEL',right-32,top+10);
-        c.restore();
+        c.textAlign='left';c.textBaseline='middle';c.fillText('RÉEL',right-32,top+10);c.restore();
       }}
     ]
   });
@@ -881,7 +883,7 @@ function render(pts,mods){
     data:{
       labels:pts.map(p=>p.t),
       datasets:[
-        {data:pts.map(p=>p.r),borderColor:'transparent',borderWidth:0,fill:true,backgroundColor:_simpleMode?'rgba(255,230,0,0.22)':grad,tension:0.4,pointRadius:0,yAxisID:'y',order:5},
+        {data:pts.map(p=>p.r),borderColor:'transparent',borderWidth:0,fill:true,backgroundColor:_simpleMode?'rgba(255,230,0,0.08)':'rgba(0,0,0,0)',tension:0.4,pointRadius:0,yAxisID:'y',order:5},
         ...modelDS,
         {data:maxVals,borderColor:_simpleMode?'transparent':'#4488ff',borderWidth:isMob?1:1.5,borderDash:[8,3,2,3],fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:2},
         {data:pts.map(p=>p.r),borderColor:'#ffe600',borderWidth:isMob?2.5:3.5,fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:1},
@@ -914,10 +916,7 @@ function render(pts,mods){
       plugins:{legend:{display:false},tooltip:{enabled:false}}
     },
     plugins:[
-      /* séparateurs + résumé */
       {id:'overlay',afterDraw(chart){if(chart.width!==lastW){lastW=chart.width;buildOverlays(chart,pts);}else{updateOverlayPositions(chart,pts);}}},
-
-      /* plages sèches avec balle tennis */
       {id:'drySlots',afterDatasetsDraw(chart){
         if(!_drySlots.length)return;
         const {ctx:c,scales:{x},chartArea:{top,bottom}}=chart;
@@ -929,68 +928,178 @@ function render(pts,mods){
           const cx0=Math.max(x0,x.left),cx1=Math.min(x1,x.right);
           const midX=(cx0+cx1)/2,slotW=cx1-cx0;
           c.save();
-          // fond jaune doux
           c.fillStyle='rgba(255,230,0,0.09)';
           c.fillRect(cx0,top,slotW,bottom-top);
-          // bordures pointillées
           c.strokeStyle='rgba(255,230,0,0.3)';c.lineWidth=1;c.setLineDash([3,3]);
           c.beginPath();c.moveTo(cx0,top);c.lineTo(cx0,bottom);c.stroke();
           c.beginPath();c.moveTo(cx1,top);c.lineTo(cx1,bottom);c.stroke();
           c.setLineDash([]);
-          /* logo tennis-soleil */
-          const ballR=isMob?8:11;
-          /* clipper pour que les rayons restent dans la zone graphe */
+          /* logo tennis */
+          const ballR=isMob?9:13;
           const bcy=top+ballR+6;
           c.save();c.beginPath();c.rect(cx0,top,slotW,bottom-top);c.clip();
           drawTennisBall(c,midX,bcy,ballR);
           c.restore();
+          /* heures début→fin */
           const fSize=isMob?10:12;
           const startLbl=pts[sl.startIdx].t,endLbl=pts[sl.endIdx].t;
           c.font=`900 ${fSize}px 'Courier New',monospace`;
           const timeStr=startLbl+'→'+endLbl;
+          const textY=bcy+ballR*1.85+4;
           const needed=c.measureText(timeStr).width+4;
-          const textY=bcy+ballR*1.85+4; /* sous les rayons du logo */
           c.fillStyle='rgba(255,230,0,0.85)';
-          if(slotW>=needed){
-            c.textAlign='center';c.textBaseline='top';
-            c.fillText(timeStr,midX,textY);
-          }else{
+          if(slotW>=needed){c.textAlign='center';c.textBaseline='top';c.fillText(timeStr,midX,textY);}
+          else{
             const needHalf=c.measureText(startLbl).width+2;
-            if(slotW/2>=needHalf){
-              c.textBaseline='top';
-              c.textAlign='left';c.fillText(startLbl,cx0+3,textY);
-              c.textAlign='right';c.fillText(endLbl,cx1-3,textY);
-            }
+            if(slotW/2>=needHalf){c.textBaseline='top';c.textAlign='left';c.fillText(startLbl,cx0+3,textY);c.textAlign='right';c.fillText(endLbl,cx1-3,textY);}
           }
           c.restore();
         });
       }},
+      /* ── Dégradé coloré sous courbe P80 — suit le tracé exact ── */
+      {id:'colorFill',afterDatasetsDraw(chart){
+        const {ctx:cv,scales:{x,y},chartArea:{top,bottom}}=chart;
+        const p80data=pts.map(p=>p.r);
+        /* Index du dataset P80 = 1(fill)+nSrc(modèles)+1(MAX)+1(P80) = nSrc+2 */
+        const nSrc=SOURCES.length;
+        const p80ds=chart.data.datasets[nSrc+2];
+        const meta=chart.getDatasetMeta(nSrc+2);
+        if(!meta?.data?.length)return;
 
-      /* icône météo sur traits 8h */
+        function rainColor(mm){
+          if(mm<=0)     return null;
+          if(mm<0.1)    return 'rgba(180,255,180,0.22)';
+          if(mm<0.5)    return 'rgba(100,220,120,0.28)';
+          if(mm<1)      return 'rgba(60,180,100,0.32)';
+          if(mm<2)      return 'rgba(50,150,255,0.38)';
+          if(mm<5)      return 'rgba(30,100,255,0.45)';
+          if(mm<10)     return 'rgba(80,50,220,0.52)';
+          if(mm<20)     return 'rgba(140,30,200,0.58)';
+          return         'rgba(200,20,80,0.68)';
+        }
+
+        cv.save();
+        cv.beginPath();cv.rect(x.left,top,x.right-x.left,bottom-top);cv.clip();
+
+        /* Dessiner segment par segment entre chaque paire de points consécutifs
+           en utilisant les coordonnées pixel RÉELLES du dataset Chart.js */
+        for(let i=0;i<meta.data.length-1;i++){
+          const mm=p80data[i]??0;
+          const col=rainColor(mm);
+          if(!col)continue;
+          const ptA=meta.data[i];
+          const ptB=meta.data[i+1];
+          if(!ptA||!ptB)continue;
+          const ax=ptA.x, ay=ptA.y;
+          const bx=ptB.x, by=ptB.y;
+          /* Tracer le trapèze : courbe en haut, ligne droite en bas */
+          cv.beginPath();
+          cv.moveTo(ax,bottom);
+          cv.lineTo(ax,ay);
+          /* Utiliser les control points de Bézier du dataset pour suivre la courbe */
+          if(ptA.cp2x!==undefined&&ptB.cp1x!==undefined){
+            cv.bezierCurveTo(ptA.cp2x,ptA.cp2y,ptB.cp1x,ptB.cp1y,bx,by);
+          } else {
+            cv.lineTo(bx,by);
+          }
+          cv.lineTo(bx,bottom);
+          cv.closePath();
+          cv.fillStyle=col;
+          cv.fill();
+        }
+        cv.restore();
+      }},
+
       {id:'bike8h',afterDraw(chart){
         if(!_8hXPos.length)return;
         const {ctx:c,chartArea:{top}}=chart;
         const r=isMob?11:15;
         _8hXPos.forEach(({xPx,day})=>{
-          /* Pts autour de 8h (7h→10h) pour le bon jour */
-          const around8h=pts.filter(p=>{
-            if(p.d!==day)return false;
-            const h=parseInt(p.t);
-            return !isNaN(h)&&h>=7&&h<=10;
-          });
+          const around8h=pts.filter(p=>{if(p.d!==day)return false;const h=parseInt(p.t);return !isNaN(h)&&h>=7&&h<=10;});
           const at8h=pts.find(p=>p.d===day&&p.t==='8h');
           const ref=around8h.length?around8h:at8h?[at8h]:[];
           const rainVal=ref.length?ref.reduce((s,p)=>s+p.r,0)/ref.length:0;
           const probVal=ref.length?ref.reduce((s,p)=>s+p.p,0)/ref.length:0;
-          c.save();
-          c.beginPath();c.arc(xPx,top+r+6,r+3,0,Math.PI*2);
-          c.fillStyle='rgba(0,0,0,0.7)';c.fill();
-          c.restore();
+          c.save();c.beginPath();c.arc(xPx,top+r+6,r+3,0,Math.PI*2);
+          c.fillStyle='rgba(0,0,0,0.7)';c.fill();c.restore();
           drawWeatherIcon(c,xPx,top+r+6,r,rainVal,probVal);
         });
       }},
+      {id:'windAlert',afterDatasetsDraw(chart){
+        if(!_windData)return;
+        const {ctx:cv,scales:{x},chartArea:{top,bottom}}=chart;
+        const fSize=isMob?8:9;
+        pts.forEach((p,i)=>{
+          if(p.hourIdx<0||p.hourIdx>=_windData.length)return;
+          const wind=_windData[p.hourIdx];
+          if(wind==null||wind<50)return;
+          const xPx=x.getPixelForValue(i);
+          if(xPx<x.left||xPx>x.right)return;
+          cv.save();
+          cv.font=`${isMob?11:14}px serif`;cv.textAlign='center';cv.textBaseline='top';cv.globalAlpha=0.8;
+          cv.fillText('\u{1F4A8}',xPx,top+2);
+          cv.font=`900 ${fSize}px 'Courier New',monospace`;cv.fillStyle='rgba(100,200,255,0.9)';
+          cv.textBaseline='top';cv.fillText(Math.round(wind)+'km/h',xPx,top+(isMob?14:18));
+          cv.globalAlpha=1;cv.restore();
+        });
+      }},
+      /* ── Mini widget MF pluie dans l'heure — barres colorées visibles ── */
+      {id:'mfRainWidget',afterDraw(chart){
+        if(!_mfRainNow?.length)return;
+        const {ctx:cv,scales:{x},chartArea:{top,bottom}}=chart;
+        const minuteIdxs=pts.map((p,i)=>p.t.includes("'")?i:-1).filter(i=>i>=0);
+        if(!minuteIdxs.length)return;
+        const firstIdx=minuteIdxs[0];
+        const lastIdx=minuteIdxs[minuteIdxs.length-1];
+        const x0=x.getPixelForValue(firstIdx);
+        const x1=x.getPixelForValue(lastIdx);
+        if(x1<x.left||x0>x.right)return;
+        const cx0=Math.max(x0,x.left), cx1=Math.min(x1,x.right);
+        /* Hauteur et position : DANS la zone graphe, juste au-dessus du bas */
+        const H=isMob?16:22;
+        const barY=bottom-H-2; /* au-dessus des ticks mais dans chartArea */
+        /* Fond semi-transparent derrière le widget */
+        cv.save();
+        cv.fillStyle='rgba(0,0,30,0.92)';
+        cv.fillRect(cx0,barY-1,cx1-cx0,H+2);
+        /* Couleurs vives sur fond sombre */
+        const colors=['#0a0a1a','#00ccff','#0044ff','#ff2200'];
+        minuteIdxs.forEach((gi,mi)=>{
+          const xPx=x.getPixelForValue(gi);
+          if(xPx<x.left||xPx>x.right)return;
+          const nextPx=x.getPixelForValue(gi+1);
+          const slotW=Math.max(2,Math.abs(nextPx-xPx)-1);
+          const o=parseInt(pts[gi].t); /* "+5'" → 5 */
+          const mfKeys=Object.keys(_mfByMin).map(Number);
+          let intens=0;
+          if(mfKeys.length){
+            const nk=mfKeys.reduce((a,b)=>Math.abs(b-o)<Math.abs(a-o)?b:a,mfKeys[0]);
+            const v=_mfByMin[nk]??0;
+            intens=v>=5?3:v>=1.5?2:v>0?1:0;
+          }
+          cv.fillStyle=colors[intens];
+          cv.fillRect(xPx,barY,slotW,H);
+          /* Glow sur les barres colorées */
+          if(intens>0){
+            cv.shadowColor=colors[intens];
+            cv.shadowBlur=4;
+            cv.fillRect(xPx,barY,slotW,H);
+            cv.shadowBlur=0;
+          }
+        });
+        /* Bordure fine */
+        cv.strokeStyle='rgba(100,180,255,0.5)';
+        cv.lineWidth=1;
+        cv.strokeRect(cx0,barY-1,cx1-cx0,H+2);
+        /* Label "MF" */
+        const fs=isMob?7:8;
+        cv.font=`900 ${fs}px 'Courier New',monospace`;
+        cv.fillStyle='rgba(100,180,255,0.9)';
+        cv.textAlign='left';cv.textBaseline='middle';
+        cv.fillText('MF',cx0+2,barY+H/2);
+        cv.restore();
+      }},
 
-      /* trait pointillé jaune aux pics + point courbe */
       {id:'peakLines',afterDatasetsDraw(chart){
         if(!_peaks.length)return;
         const {ctx:c,scales:{x,y},chartArea:{top,bottom}}=chart;
@@ -1004,30 +1113,6 @@ function render(pts,mods){
           c.beginPath();c.arc(xPx,yPx,isMob?3.5:4.5,0,Math.PI*2);
           c.fillStyle='#ffe600';c.fill();
           c.restore();
-        });
-      }},
-
-      /* badges axe X : jaune=pics, cyan=début pluie */
-      /* Indicateur vent fort >50 km/h */
-      {id:'windAlert',afterDatasetsDraw(chart){
-        if(!_windData)return;
-        const {ctx:cv,scales:{x,y},chartArea:{top,bottom}}=chart;
-        const fSize=isMob?8:9;
-        pts.forEach((p,i)=>{
-          if(p.hourIdx<0||p.hourIdx>=_windData.length)return;
-          const wind=_windData[p.hourIdx];
-          if(wind==null||wind<50)return;
-          const xPx=x.getPixelForValue(i);
-          if(xPx<x.left||xPx>x.right)return;
-          cv.save();
-          cv.font=`${isMob?11:14}px serif`;
-          cv.textAlign='center';cv.textBaseline='top';
-          cv.fillText('\u{1F4A8}',xPx,top+2);
-          cv.font=`900 ${fSize}px 'Courier New',monospace`;
-          cv.fillStyle='rgba(100,200,255,0.9)';
-          cv.textBaseline='top';
-          cv.fillText(Math.round(wind)+'km/h',xPx,top+(isMob?14:18));
-          cv.restore();
         });
       }},
       {id:'axisLabels',afterDraw(chart){
@@ -1047,12 +1132,11 @@ function render(pts,mods){
       }}
     ]
   });
-  setTimeout(applyComplexity,0);
+  setTimeout(()=>{applyComplexity();if(zoomMin>0||zoomMax<1){const n=myChart?.data?.labels?.length||1;myChart.options.scales.x.min=Math.round(zoomMin*n);myChart.options.scales.x.max=Math.round(zoomMax*n)-1;myChart.update('none');updateScrollbar();}},0);
 }
 
-/* ── repositionnement au zoom/pan : reconstruction complète des lignes ── */
+/* ── repositionnement rapide des overlays au zoom/pan ── */
 function updateOverlayPositions(chart,pts){
-  /* Réutilise buildOverlays mais sans recréer le chart — juste les éléments DOM */
   buildOverlays(chart,pts);
 }
 
@@ -1092,12 +1176,8 @@ function buildSummary(chart,pts,days,xp){
   row.innerHTML='';
   const isMultiline=days.length>2;
   row.className=isMultiline?'multiline':'singleline';
-  /* Utiliser les bornes réelles de la zone visible (respecte le zoom) */
-  const visLeft=chartArea.left;
-  const visRight=chartArea.right;
-  /* Clipper xp dans la zone visible */
-  const xpClamped={};
-  days.forEach(d=>{xpClamped[d]=Math.max(visLeft,Math.min(visRight,xp[d]));});
+  const visLeft=chartArea.left,visRight=chartArea.right;
+  const xpClamped={};days.forEach(d=>{xpClamped[d]=Math.max(visLeft,Math.min(visRight,xp[d]));});
   const lastXPx=visRight;
   const starts=days.map((d,di)=>di===0?visLeft:xpClamped[d]);
   const ends=days.map((d,di)=>di===days.length-1?lastXPx:xpClamped[days[di+1]]);
@@ -1112,24 +1192,139 @@ function buildSummary(chart,pts,days,xp){
     const total=dd.reduce((s,p)=>s+p.mx,0);
     const maxP=Math.max(...dd.map(p=>p.p),0);
     const lbl=d===0?'AUJ.':dn[date.getDay()];
-    const div=document.createElement('div');
-    div.className='day-seg'+(isLast&&days.length>2?' last':'');div.style.width=w+'px';
     const tMax=d===0?_tempJ0Max:d===1?_tempJ1Max:null;
     const tMin=d===0?_tempJ0Min:d===1?_tempJ1Min:null;
-
     const tempInline=tMax!==null?`<span class="temp-min">${Math.round(tMin??0)}°</span><span class="temp-max">/${Math.round(tMax)}°</span>`:'';
+    const div=document.createElement('div');
+    div.className='day-seg'+(isLast&&days.length>2?' last':'');div.style.width=w+'px';
     div.innerHTML=`<span class="day-name">${lbl}</span><span class="day-rain">${total.toFixed(1)}<span class="unit">mm</span></span><span class="day-prob">${Math.round(maxP)}%</span>${tempInline}`;
     row.appendChild(div);
   });
 }
 
-/* ── Pinch-zoom et pan tactile sur le graphique ── */
+/* ══════════════════════════════════════════════
+   RADAR
+══════════════════════════════════════════════ */
+function initRadar(lat,lon){
+  _cityLat=lat;_cityLon=lon;
+  if(!_radarMap){
+    _radarMap=L.map('radarMap',{center:[lat,lon],zoom:6,minZoom:3,maxZoom:7,zoomControl:true,attributionControl:false});
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:7,tileSize:256}).addTo(_radarMap);
+    _radarMarker=L.circleMarker([lat,lon],{radius:6,color:'#ffe600',weight:2,fillColor:'#ffe600',fillOpacity:0.9}).addTo(_radarMap);
+    _radarMap.on('click',e=>reverseGeocode(e.latlng.lat,e.latlng.lng));
+  } else {
+    _radarMap.setView([lat,lon],6);
+    if(_radarMarker)_radarMarker.setLatLng([lat,lon]);
+  }
+  setTimeout(()=>{_radarMap.invalidateSize();loadRadarFrames();},100);
+}
+
+async function loadRadarFrames(){
+  try{
+    const data=await fetchRetry('https://api.rainviewer.com/public/weather-maps.json');
+    if(!data?.radar?.past)return;
+    _radarFrames=[...data.radar.past,...(data.radar.nowcast||[])];
+    _radarIdx=_radarFrames.length-1;
+    showRadarFrame(_radarIdx);
+  }catch(e){console.error('Radar error',e);}
+}
+
+function showRadarFrame(idx){
+  if(!_radarFrames.length||!_radarMap)return;
+  idx=Math.max(0,Math.min(idx,_radarFrames.length-1));
+  _radarIdx=idx;
+  const frame=_radarFrames[idx];
+  if(_radarLayer){_radarMap.removeLayer(_radarLayer);}
+  _radarLayer=L.tileLayer(
+    `https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
+    {opacity:0.85,maxZoom:7,tileSize:256,noWrap:false}
+  ).addTo(_radarMap);
+  const d=new Date(frame.time*1000);
+  const hh=String(d.getHours()).padStart(2,'0'),mm=String(d.getMinutes()).padStart(2,'0');
+  document.getElementById('radarTime').textContent=(frame.nowcast?'🔮 ':'')+hh+':'+mm;
+}
+
+function toggleRadarPlay(){
+  _radarPlaying=!_radarPlaying;
+  const btn=document.getElementById('radarPlayBtn');
+  btn.textContent=_radarPlaying?'⏹ STOP':'▶ PLAY';
+  btn.classList.toggle('playing',_radarPlaying);
+  if(_radarPlaying){
+    _radarTimer=setInterval(()=>{_radarIdx=(_radarIdx+1)%_radarFrames.length;showRadarFrame(_radarIdx);},600);
+  } else {
+    clearInterval(_radarTimer);
+    const lastReal=_radarFrames.reduce((best,f,i)=>(!f.nowcast?i:best),0);
+    showRadarFrame(lastReal);
+  }
+}
+
+async function reverseGeocode(lat,lng){
+  try{
+    const nom=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(5)}&lon=${lng.toFixed(5)}&format=json&accept-language=fr`).then(r=>r.json());
+    if(nom?.address){
+      const city=nom.address.city||nom.address.town||nom.address.village||nom.address.municipality||nom.display_name.split(',')[0];
+      document.getElementById('cityInput').value=city;
+      document.getElementById('clearBtn').style.display='block';
+      load();
+    }
+  }catch(e){console.error('Reverse geocode error',e);}
+}
+
+/* ── Scrollbar ── */
+function updateScrollbar(){
+  const wrap=document.getElementById('scrollbarWrap');
+  const track=document.getElementById('scrollbarTrack');
+  const thumb=document.getElementById('scrollbarThumb');
+  if(!wrap||!track||!thumb)return;
+  const zoomed=(zoomMax-zoomMin)<0.999;
+  wrap.style.display=zoomed?'block':'none';
+  if(!zoomed)return;
+  const tw=track.offsetWidth;
+  const thumbW=Math.max(24,tw*(zoomMax-zoomMin));
+  const thumbLeft=tw*zoomMin;
+  thumb.style.width=thumbW+'px';
+  thumb.style.left=Math.min(tw-thumbW,thumbLeft)+'px';
+}
+
+function initScrollbar(){
+  const track=document.getElementById('scrollbarTrack');
+  const thumb=document.getElementById('scrollbarThumb');
+  if(!track||!thumb)return;
+  thumb.addEventListener('mousedown',e=>{sbDragging=true;sbStartX=e.clientX;sbStartMin=zoomMin;thumb.classList.add('dragging');e.preventDefault();});
+  track.addEventListener('click',e=>{
+    if(sbDragging)return;
+    const rect=track.getBoundingClientRect();
+    const cx=(e.clientX-rect.left)/rect.width;
+    const half=(zoomMax-zoomMin)/2;
+    zoomMin=Math.max(0,cx-half);zoomMax=zoomMin+(zoomMax-zoomMin);
+    if(zoomMax>1){zoomMin=1-(zoomMax-zoomMin);zoomMax=1;}
+    applyZoom();
+  });
+  document.addEventListener('mousemove',e=>{
+    if(!sbDragging)return;
+    const track2=document.getElementById('scrollbarTrack');if(!track2)return;
+    const tw=track2.offsetWidth;const dx=(e.clientX-sbStartX)/tw;
+    const range=zoomMax-zoomMin;let lo=sbStartMin+dx,hi=lo+range;
+    if(lo<0){hi-=lo;lo=0;}if(hi>1){lo-=hi-1;hi=1;}
+    zoomMin=Math.max(0,lo);zoomMax=Math.min(1,hi);applyZoom();
+  });
+  document.addEventListener('mouseup',()=>{if(sbDragging){sbDragging=false;document.getElementById('scrollbarThumb')?.classList.remove('dragging');}});
+  thumb.addEventListener('touchstart',e=>{sbDragging=true;sbStartX=e.touches[0].clientX;sbStartMin=zoomMin;e.preventDefault();},{passive:false});
+  document.addEventListener('touchmove',e=>{
+    if(!sbDragging)return;
+    const track2=document.getElementById('scrollbarTrack');if(!track2)return;
+    const tw=track2.offsetWidth;const dx=(e.touches[0].clientX-sbStartX)/tw;
+    const range=zoomMax-zoomMin;let lo=sbStartMin+dx,hi=lo+range;
+    if(lo<0){hi-=lo;lo=0;}if(hi>1){lo-=hi-1;hi=1;}
+    zoomMin=Math.max(0,lo);zoomMax=Math.min(1,hi);applyZoom();
+  },{passive:false});
+  document.addEventListener('touchend',()=>{sbDragging=false;});
+}
+
+/* ── Zoom tactile + molette ── */
 (function(){
   const wrapper=()=>document.getElementById('chartWrapper');
   let startDist=0,startRange=null,startPan=null,startX=0;
-
-  function getTouches(e){return Array.from(e.touches);}
-  function dist(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);}
 
   function applyZoom(){
     if(!myChart)return;
@@ -1141,85 +1336,15 @@ function buildSummary(chart,pts,days,xp){
     myChart.update('none');
     updateScrollbar();
   }
-  function updateScrollbar(){
-    const wrap=document.getElementById('scrollbarWrap');
-    const track=document.getElementById('scrollbarTrack');
-    const thumb=document.getElementById('scrollbarThumb');
-    if(!wrap||!track||!thumb)return;
-    const zoomed=(zoomMax-zoomMin)<0.999;
-    wrap.style.display=zoomed?'block':'none';
-    if(!zoomed)return;
-    const tw=track.offsetWidth;
-    const thumbW=Math.max(24,tw*(zoomMax-zoomMin));
-    const thumbLeft=tw*zoomMin;
-    thumb.style.width=thumbW+'px';
-    thumb.style.left=Math.min(tw-thumbW,thumbLeft)+'px';
-  }
 
-  /* Drag scrollbar */
-  let sbDragging=false,sbStartX=0,sbStartMin=0;
-  function initScrollbar(){
-    const track=document.getElementById('scrollbarTrack');
-    const thumb=document.getElementById('scrollbarThumb');
-    if(!track||!thumb)return;
-    thumb.addEventListener('mousedown',e=>{
-      sbDragging=true;sbStartX=e.clientX;sbStartMin=zoomMin;
-      thumb.classList.add('dragging');e.preventDefault();
-    });
-    track.addEventListener('click',e=>{
-      if(sbDragging)return;
-      const rect=track.getBoundingClientRect();
-      const cx=(e.clientX-rect.left)/rect.width;
-      const half=(zoomMax-zoomMin)/2;
-      zoomMin=Math.max(0,cx-half);zoomMax=zoomMin+(zoomMax-zoomMin);
-      if(zoomMax>1){zoomMin=1-(zoomMax-zoomMin);zoomMax=1;}
-      applyZoom();
-    });
-    document.addEventListener('mousemove',e=>{
-      if(!sbDragging)return;
-      const track2=document.getElementById('scrollbarTrack');
-      if(!track2)return;
-      const tw=track2.offsetWidth;
-      const dx=(e.clientX-sbStartX)/tw;
-      const range=zoomMax-zoomMin;
-      let lo=sbStartMin+dx,hi=lo+range;
-      if(lo<0){hi-=lo;lo=0;}if(hi>1){lo-=hi-1;hi=1;}
-      zoomMin=Math.max(0,lo);zoomMax=Math.min(1,hi);
-      applyZoom();
-    });
-    document.addEventListener('mouseup',()=>{
-      if(sbDragging){sbDragging=false;document.getElementById('scrollbarThumb')?.classList.remove('dragging');}
-    });
-    /* Touch sur la scrollbar */
-    thumb.addEventListener('touchstart',e=>{
-      sbDragging=true;sbStartX=e.touches[0].clientX;sbStartMin=zoomMin;e.preventDefault();
-    },{passive:false});
-    document.addEventListener('touchmove',e=>{
-      if(!sbDragging)return;
-      const track2=document.getElementById('scrollbarTrack');if(!track2)return;
-      const tw=track2.offsetWidth;
-      const dx=(e.touches[0].clientX-sbStartX)/tw;
-      const range=zoomMax-zoomMin;
-      let lo=sbStartMin+dx,hi=lo+range;
-      if(lo<0){hi-=lo;lo=0;}if(hi>1){lo-=hi-1;hi=1;}
-      zoomMin=Math.max(0,lo);zoomMax=Math.min(1,hi);
-      applyZoom();
-    },{passive:false});
-    document.addEventListener('touchend',()=>{sbDragging=false;});
-  }
-  initScrollbar();
+  function getTouches(e){return Array.from(e.touches);}
+  function dist(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);}
 
   document.addEventListener('touchstart',e=>{
     if(!wrapper()||!wrapper().contains(e.target))return;
     const t=getTouches(e);
-    if(t.length===2){
-      e.preventDefault();
-      startDist=dist(t[0],t[1]);
-      startRange=[zoomMin,zoomMax];
-    } else if(t.length===1){
-      startPan=[zoomMin,zoomMax];
-      startX=t[0].clientX;
-    }
+    if(t.length===2){e.preventDefault();startDist=dist(t[0],t[1]);startRange=[zoomMin,zoomMax];}
+    else if(t.length===1){startPan=[zoomMin,zoomMax];startX=t[0].clientX;}
   },{passive:false});
 
   document.addEventListener('touchmove',e=>{
@@ -1227,25 +1352,18 @@ function buildSummary(chart,pts,days,xp){
     const t=getTouches(e);
     if(t.length===2&&startRange){
       e.preventDefault();
-      const d=dist(t[0],t[1]);
-      const scale=startDist/d; // >1 = zoom in
-      const [lo,hi]=startRange;
-      const center=(lo+hi)/2;
-      const half=(hi-lo)*scale/2;
-      zoomMin=Math.max(0,center-half);
-      zoomMax=Math.min(1,center+half);
+      const d=dist(t[0],t[1]);const scale=startDist/d;
+      const [lo,hi]=startRange;const center=(lo+hi)/2;const half=(hi-lo)*scale/2;
+      zoomMin=Math.max(0,center-half);zoomMax=Math.min(1,center+half);
       if(zoomMax-zoomMin<0.05){const c2=(zoomMin+zoomMax)/2;zoomMin=c2-0.025;zoomMax=c2+0.025;}
       applyZoom();
     } else if(t.length===1&&startPan){
       e.preventDefault();
-      const dx=t[0].clientX-startX;
-      const ww=wrapper().offsetWidth||300;
+      const dx=t[0].clientX-startX;const ww=wrapper().offsetWidth||300;
       const shift=(dx/ww)*(startPan[1]-startPan[0])*-1;
       let lo=startPan[0]+shift,hi=startPan[1]+shift;
-      if(lo<0){hi-=lo;lo=0;}
-      if(hi>1){lo-=hi-1;hi=1;}
-      zoomMin=Math.max(0,lo);zoomMax=Math.min(1,hi);
-      applyZoom();
+      if(lo<0){hi-=lo;lo=0;}if(hi>1){lo-=hi-1;hi=1;}
+      zoomMin=Math.max(0,lo);zoomMax=Math.min(1,hi);applyZoom();
     }
   },{passive:false});
 
@@ -1254,47 +1372,38 @@ function buildSummary(chart,pts,days,xp){
     if(getTouches(e).length<1){startPan=null;}
   });
 
-  /* Molette souris pour zoom sur PC */
   document.addEventListener('wheel',e=>{
     if(!wrapper()||!wrapper().contains(e.target))return;
     e.preventDefault();
     const rect=wrapper().getBoundingClientRect();
-    const cx=(e.clientX-rect.left)/rect.width; // position relative du curseur [0..1]
-    const range=zoomMax-zoomMin;
-    const factor=e.deltaY>0?1.15:0.87; // scroll bas = zoom out, haut = zoom in
+    const cx=(e.clientX-rect.left)/rect.width;
+    const range=zoomMax-zoomMin;const factor=e.deltaY>0?1.15:0.87;
     const newRange=Math.min(1,range*factor);
-    // Ancrer le zoom autour du curseur
-    let lo=zoomMin+(cx*range)-(cx*newRange);
-    let hi=lo+newRange;
-    if(lo<0){hi-=lo;lo=0;}
-    if(hi>1){lo-=hi-1;hi=1;}
+    let lo=zoomMin+(cx*range)-(cx*newRange);let hi=lo+newRange;
+    if(lo<0){hi-=lo;lo=0;}if(hi>1){lo-=hi-1;hi=1;}
     zoomMin=Math.max(0,lo);zoomMax=Math.min(1,hi);
     if(zoomMax-zoomMin<0.04){const mid=(zoomMin+zoomMax)/2;zoomMin=mid-0.02;zoomMax=mid+0.02;}
     applyZoom();
   },{passive:false});
 
-  /* Double-click PC pour reset zoom */
+  let lastTap=0;
+  document.addEventListener('touchend',e=>{
+    if(!wrapper()||!wrapper().contains(e.target))return;
+    const now=Date.now();
+    if(now-lastTap<300){zoomMin=0;zoomMax=1;if(myChart){delete myChart.options.scales.x.min;delete myChart.options.scales.x.max;myChart.update('none');updateScrollbar();}}
+    lastTap=now;
+  });
+
   document.addEventListener('dblclick',e=>{
     if(!wrapper()||!wrapper().contains(e.target))return;
     zoomMin=0;zoomMax=1;
     if(myChart){delete myChart.options.scales.x.min;delete myChart.options.scales.x.max;myChart.update('none');updateScrollbar();}
   });
 
-  /* Double-tap pour reset zoom */
-  let lastTap=0;
-  document.addEventListener('touchend',e=>{
-    if(!wrapper()||!wrapper().contains(e.target))return;
-    const now=Date.now();
-    if(now-lastTap<300){
-      zoomMin=0;zoomMax=1;
-      if(myChart){delete myChart.options.scales.x.min;delete myChart.options.scales.x.max;myChart.update('none');updateScrollbar();}
-    }
-    lastTap=now;
-  });
+  let sbDragging=false,sbStartX=0,sbStartMin=0;
+  window.sbDragging=false;
+  initScrollbar();
 })();
-
-let rt;
-window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{lastW=0;if(myChart)myChart.update();},250);});
 
 /* ── MAJ automatique ── */
 let _autoRefreshTimer=null;
@@ -1302,20 +1411,17 @@ function startAutoRefresh(){
   clearInterval(_autoRefreshTimer);
   _autoRefreshTimer=setInterval(()=>{
     if(!_cachedData)return;
-    if(_viewMode==='jm1')return; // pas de MAJ auto sur J-1
+    if(_viewMode==='jm1')return;
     const {omMain,omM15,rainMx,probMx}=_cachedData;
-    // Recalcule les pts avec l'heure actuelle (now recalculé dans processData)
-    lastW=0;
-    processData(omMain,omM15,rainMx,probMx);
-  }, 5*60*1000); // toutes les 5 minutes
-
-  // Re-fetch complet toutes les 30 min
-  setInterval(()=>{
-    if(_cachedData) load();
-  }, 30*60*1000);
+    lastW=0;processData(omMain,omM15,rainMx,probMx);
+  },5*60*1000);
+  setInterval(()=>{if(_cachedData)load();},30*60*1000);
 }
 
-/* ── Paramètre URL ?ville=xxx ── */
+let rt;
+window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{lastW=0;if(myChart)myChart.update();},250);});
+
+/* ── Paramètre URL ?ville=xxx &j=8 ── */
 (function(){
   const params=new URLSearchParams(window.location.search);
   const villeParam=params.get('ville');
@@ -1323,8 +1429,12 @@ function startAutoRefresh(){
     document.getElementById('cityInput').value=villeParam;
     document.getElementById('clearBtn').style.display='block';
   }
+  const jParam=params.get('j');
+  if(jParam==='8'||jParam==='+8') window._autoSelectView='j8';
+  else if(jParam==='-1'||jParam==='m1') window._autoSelectView='jm1';
 })();
-load().then(()=>startAutoRefresh()).catch(()=>startAutoRefresh());
+
+load().then(()=>{startAutoRefresh();if(window._autoSelectView){setView(window._autoSelectView);}}).catch(()=>startAutoRefresh());
 </script>
 </body>
 </html>
