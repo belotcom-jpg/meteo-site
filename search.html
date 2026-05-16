@@ -1,1 +1,773 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NEXUS · Multi-Recherche</title>
+<style>
+/* ══ VARIABLES — contraste maximum ═══════════════════ */
+:root {
+  --bg0: #05070d;
+  --bg1: #0a0f1a;
+  --bg2: #0f1520;
+  --bg3: #162030;
+  --bg4: #1d2a3d;
+  --border: #253548;
+  --border2: #2f4260;
 
+  /* TEXTES : lumineux sur fond sombre */
+  --t0: #ffffff;      /* titres, réponses importantes */
+  --t1: #dde8f5;      /* texte courant */
+  --t2: #9ab8d4;      /* secondaire */
+  --t3: #5a7a96;      /* hints, désactivé */
+
+  --acc:  #5badff;    /* bleu principal */
+  --acc2: #00e8c0;    /* vert/cyan succès */
+  --acc3: #ff8050;    /* orange alerte */
+  --glow: rgba(91,173,255,.15);
+  --fw: 'Consolas','Courier New',monospace;
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html, body { height:100%; width:100%; overflow:hidden; background:var(--bg0); color:var(--t1); font-family:var(--fw); font-size:13px; }
+#app { display:flex; height:100vh; width:100vw; }
+
+/* ══ SIDEBAR ══════════════════════════════════════════ */
+#sidebar {
+  width:272px; min-width:272px;
+  background:var(--bg1);
+  border-right:2px solid var(--border);
+  display:flex; flex-direction:column; flex-shrink:0;
+  position:relative; z-index:20;
+  transition:width .2s, min-width .2s;
+}
+#sidebar.col { width:44px; min-width:44px; }
+#sidebar.col .sbi { opacity:0; pointer-events:none; }
+#sidebar.col #tog { right:auto; left:5px; }
+
+.sbi {
+  flex:1; display:flex; flex-direction:column; overflow:hidden;
+  padding:14px 12px 10px; transition:opacity .15s;
+}
+
+/* Logo */
+#logo {
+  font-size:1.2rem; font-weight:900; letter-spacing:.02em;
+  color:var(--acc); margin-bottom:14px; display:flex; align-items:center; gap:8px;
+  font-family:Arial,sans-serif;
+}
+#logo em { color:var(--acc2); font-style:normal; font-size:.6em; font-weight:400; letter-spacing:.15em; }
+
+/* ─ CHAMP RECHERCHE ─ */
+.sbox { position:relative; margin-bottom:7px; }
+.sbox input {
+  width:100%; padding:10px 38px 10px 13px;
+  background:var(--bg0); border:2px solid var(--border2); border-radius:8px;
+  color:var(--t0); font-family:var(--fw); font-size:.88rem; outline:none;
+  transition:border-color .18s, box-shadow .18s;
+}
+.sbox input:focus { border-color:var(--acc); box-shadow:0 0 0 3px var(--glow); }
+.sbox input::placeholder { color:var(--t3); }
+.sico {
+  position:absolute; right:10px; top:50%; transform:translateY(-50%);
+  color:var(--t3); cursor:pointer; font-size:1.1rem; transition:color .15s;
+}
+.sico:hover { color:var(--acc); }
+
+/* ─ URL DIRECTE ─ */
+.urow { display:flex; gap:5px; margin-bottom:10px; }
+.urow input {
+  flex:1; padding:8px 10px; background:var(--bg0); border:1px solid var(--border);
+  border-radius:7px; color:var(--t1); font-family:var(--fw); font-size:.78rem; outline:none;
+  transition:border-color .18s;
+}
+.urow input:focus { border-color:var(--acc2); color:var(--t0); }
+.urow input::placeholder { color:var(--t3); }
+.urow button {
+  padding:8px 11px; background:var(--bg3); border:1px solid var(--border2);
+  border-radius:7px; color:var(--acc2); cursor:pointer; font-size:.78rem; font-family:var(--fw);
+  transition:background .15s, border-color .15s; white-space:nowrap;
+}
+.urow button:hover { background:var(--bg4); border-color:var(--acc2); color:var(--t0); }
+
+/* ─ SÉLECTEUR PANNEAUX ─ */
+.trow { display:flex; gap:4px; margin-bottom:10px; flex-wrap:wrap; }
+.tbtn {
+  flex:1; min-width:38px; padding:7px 4px; text-align:center;
+  background:var(--bg0); border:1px solid var(--border); border-radius:7px;
+  color:var(--t2); cursor:pointer; font-family:var(--fw); font-size:.75rem;
+  transition:all .14s;
+}
+.tbtn.active { background:var(--acc); border-color:var(--acc); color:#fff; font-weight:700; }
+.tbtn:hover:not(.active) { border-color:var(--acc); color:var(--acc); }
+
+/* ─ LÉGENDE ─ */
+.legend {
+  display:flex; gap:12px; margin-bottom:8px;
+  font-size:.7rem; color:var(--t2); padding:4px 2px;
+  background:var(--bg2); border-radius:6px; justify-content:center;
+}
+.legend span { display:flex; align-items:center; gap:4px; }
+
+/* ─ SECTION LABELS ─ */
+.slabel {
+  font-size:.65rem; font-weight:700; letter-spacing:.15em; text-transform:uppercase;
+  color:var(--t2);   /* ← BIEN VISIBLE */
+  padding:9px 4px 4px; margin-top:3px; border-top:1px solid var(--border);
+}
+
+/* ─ BOUTONS SITES ─ */
+.blist { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:2px; padding-right:2px; }
+.blist::-webkit-scrollbar { width:3px; }
+.blist::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+
+.sbtn {
+  display:flex; align-items:center; gap:8px; width:100%;
+  padding:8px 11px; background:transparent; border:1px solid transparent;
+  border-radius:7px; cursor:pointer; font-family:var(--fw); font-size:.82rem;
+  text-align:left; transition:all .12s;
+  color:var(--t1);   /* ← TEXTE CLAIR */
+}
+.sbtn:hover { background:var(--bg3); border-color:var(--border2); color:var(--t0); }
+.sbtn .ico  { width:20px; text-align:center; flex-shrink:0; font-size:1rem; }
+.sbtn .sn   { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:inherit; }
+.sbtn .stag {
+  font-size:.6rem; padding:2px 6px; border-radius:4px; flex-shrink:0;
+  background:var(--bg3); border:1px solid var(--border); color:var(--t2);
+}
+.sbtn.ok  .stag { color:var(--acc2); border-color:rgba(0,232,192,.3); background:rgba(0,232,192,.06); }
+.sbtn.ext .stag { color:var(--acc3); border-color:rgba(255,128,80,.3); background:rgba(255,128,80,.06); }
+.sbtn .ebadge {
+  font-size:.62rem; padding:2px 5px; border-radius:4px; flex-shrink:0;
+  color:var(--acc3); background:rgba(255,128,80,.1); border:1px solid rgba(255,128,80,.3);
+}
+
+/* ─ TOGGLE SIDEBAR ─ */
+#tog {
+  position:absolute; top:50%; right:-14px; transform:translateY(-50%);
+  width:26px; height:42px; background:var(--bg2); border:1px solid var(--border2);
+  border-radius:0 8px 8px 0; cursor:pointer; color:var(--t2);
+  display:flex; align-items:center; justify-content:center; font-size:.9rem; z-index:30;
+  transition:color .15s, background .15s;
+}
+#tog:hover { color:var(--acc); background:var(--bg3); }
+
+/* ══ WORKSPACE ════════════════════════════════════════ */
+#workspace { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+/* ─ TOPBAR ─ */
+#topbar {
+  height:42px; background:var(--bg1); border-bottom:2px solid var(--border);
+  display:flex; align-items:center; gap:4px; padding:0 10px; flex-shrink:0;
+  overflow-x:auto;
+}
+.lbtn {
+  padding:5px 10px; background:var(--bg2); border:1px solid var(--border);
+  border-radius:6px; cursor:pointer; font-family:var(--fw); font-size:.74rem;
+  white-space:nowrap; flex-shrink:0; transition:all .14s;
+  color:var(--t2);   /* ← VISIBLE */
+}
+.lbtn:hover, .lbtn.active { border-color:var(--acc); color:var(--acc); background:rgba(91,173,255,.08); }
+.lbtn.danger { color:var(--acc3); }
+.lbtn.danger:hover { border-color:var(--acc3); background:rgba(255,128,80,.08); }
+.tsep { height:22px; width:1px; background:var(--border); margin:0 3px; flex-shrink:0; }
+#sbar { margin-left:auto; font-size:.68rem; color:var(--t2); display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.sdot { width:8px; height:8px; border-radius:50%; background:var(--acc2); box-shadow:0 0 6px var(--acc2); display:inline-block; }
+
+/* ─ GRILLE PANNEAUX ─ */
+#grid { flex:1; display:grid; gap:2px; background:var(--border); overflow:hidden; }
+#grid.l1   { grid-template-columns:1fr; grid-template-rows:1fr; }
+#grid.l2h  { grid-template-columns:1fr 1fr; }
+#grid.l2v  { grid-template-rows:1fr 1fr; }
+#grid.l3r  { grid-template-columns:2fr 1fr; grid-template-rows:1fr 1fr; }
+#grid.l3r  .pane:first-child { grid-row:1/3; }
+#grid.l3b  { grid-template-columns:1fr 1fr; grid-template-rows:2fr 1fr; }
+#grid.l3b  .pane:nth-child(3) { grid-column:1/3; }
+#grid.l4   { grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; }
+
+/* ─ PANNEAU ─ */
+.pane { background:var(--bg0); display:flex; flex-direction:column; overflow:hidden; }
+.pane.ap { outline:2px solid var(--acc); outline-offset:-2px; }
+
+.ph {
+  height:30px; min-height:30px; background:var(--bg1); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:5px; padding:0 8px; flex-shrink:0;
+  cursor:pointer; user-select:none;
+}
+.ph:hover { background:var(--bg2); }
+.pnum {
+  font-size:.65rem; font-weight:700; color:var(--acc);
+  background:rgba(91,173,255,.12); border:1px solid rgba(91,173,255,.3);
+  border-radius:4px; padding:1px 7px; flex-shrink:0;
+}
+.purl {
+  flex:1; font-size:.66rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  color:var(--t2);  /* ← plus lisible */
+}
+.pact { display:flex; gap:2px; }
+.pabtn {
+  background:none; border:none; cursor:pointer; font-size:.82rem;
+  padding:3px 6px; border-radius:4px; transition:all .12s;
+  color:var(--t3);
+}
+.pabtn:hover { color:var(--acc); background:rgba(91,173,255,.1); }
+
+.pane iframe { flex:1; border:none; width:100%; background:#fff; }
+
+/* ─ PANNEAU VIDE ─ */
+.pempty {
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:12px; background:var(--bg0);
+}
+.pempty .bnum { font-size:6rem; font-weight:900; color:var(--border2); line-height:1; font-family:Arial,sans-serif; }
+.pempty p { font-size:.8rem; color:var(--t3); text-align:center; max-width:180px; line-height:1.6; }
+.pempty .hint { font-size:.68rem; color:var(--t3); background:var(--bg2); padding:5px 12px; border-radius:20px; border:1px solid var(--border); }
+
+/* ─ OVERLAY BLOQUÉ ─ */
+.bov {
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:14px; padding:28px; background:var(--bg0); text-align:center;
+}
+.bov .bi { font-size:2.8rem; }
+.bov .wb {
+  font-size:.72rem; padding:5px 12px; border-radius:6px;
+  background:rgba(255,128,80,.1); color:var(--acc3); border:1px solid rgba(255,128,80,.3);
+}
+.bov h3 { font-size:1rem; color:var(--t0); }   /* ← BLANC */
+.bov p  { font-size:.8rem; color:var(--t1); line-height:1.65; max-width:280px; }
+.bov .obt {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:10px 20px; background:var(--acc); color:#fff;
+  border-radius:8px; font-size:.82rem; font-weight:700; text-decoration:none;
+  transition:background .15s, transform .1s; cursor:pointer; border:none; font-family:var(--fw);
+}
+.bov .obt:hover { background:#7ac0ff; transform:translateY(-1px); }
+.bov .alts { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+.bov .ab {
+  padding:7px 13px; background:var(--bg3); color:var(--t1);  /* ← LISIBLE */
+  border:1px solid var(--border2); border-radius:7px;
+  font-family:var(--fw); font-size:.78rem; cursor:pointer;
+  transition:background .13s, border-color .13s; text-decoration:none;
+}
+.bov .ab:hover { background:var(--bg4); border-color:var(--acc2); color:var(--t0); }
+
+/* ══ HISTORIQUE ════════════════════════════════════════ */
+#hpanel {
+  position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
+  background:var(--bg2); border:1px solid var(--border2); border-radius:12px;
+  padding:14px 16px; z-index:50; min-width:360px; max-width:540px;
+  box-shadow:0 24px 70px rgba(0,0,0,.7); display:none;
+}
+#hpanel.show { display:block; }
+#hpanel h4 { font-size:.72rem; color:var(--t2); letter-spacing:.12em; text-transform:uppercase; margin-bottom:9px; }
+.hitem { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:7px; cursor:pointer; transition:background .12s; }
+.hitem:hover { background:var(--bg3); }
+.hitem .hq { color:var(--t0); font-size:.84rem; flex:1; }  /* ← BLANC */
+.hitem .hs { color:var(--t2); font-size:.7rem; }
+.hitem .ht { color:var(--t3); font-size:.66rem; margin-left:auto; }
+
+/* ══ AIDE RACCOURCIS ════════════════════════════════════ */
+#scov { display:none; position:fixed; inset:0; background:rgba(0,0,0,.78); z-index:100; align-items:center; justify-content:center; }
+#scov.show { display:flex; }
+.scbox {
+  background:var(--bg2); border:1px solid var(--border2); border-radius:16px;
+  padding:26px 30px; width:480px; max-width:96vw;
+  box-shadow:0 32px 90px rgba(0,0,0,.75);
+}
+.scbox h3 { font-size:1.05rem; color:var(--acc); margin-bottom:16px; font-weight:700; font-family:Arial,sans-serif; }
+.scr { display:flex; align-items:center; gap:12px; padding:6px 0; border-bottom:1px solid var(--border); }
+.scr:last-child { border:none; }
+.sck { display:flex; gap:4px; flex-shrink:0; }
+kbd {
+  background:var(--bg3); border:1px solid var(--border2); border-radius:5px;
+  padding:3px 8px; font-family:var(--fw); font-size:.72rem;
+  color:var(--t0); box-shadow:0 2px 0 var(--border);
+}
+.scd { color:var(--t1); font-size:.82rem; }  /* ← LISIBLE */
+.sc-note {
+  margin-top:14px; padding:12px; background:var(--bg3); border-radius:9px;
+  font-size:.74rem; line-height:1.75; color:var(--t1); border:1px solid var(--border);
+}
+
+/* ══ TOAST ════════════════════════════════════════════ */
+#toast {
+  position:fixed; bottom:18px; right:18px; z-index:200;
+  background:var(--bg3); border:1px solid var(--border2); border-radius:9px;
+  padding:11px 18px; font-size:.82rem; color:var(--t0);  /* ← BLANC */
+  transform:translateY(14px); opacity:0; transition:all .22s ease;
+  pointer-events:none; max-width:280px;
+}
+#toast.show { transform:translateY(0); opacity:1; }
+#toast.ok   { border-left:4px solid var(--acc2); }
+#toast.err  { border-left:4px solid var(--acc3); }
+#toast.info { border-left:4px solid var(--acc); }
+
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ════ SIDEBAR ════════════════════════════════════ -->
+<div id="sidebar">
+  <div id="tog" onclick="toggleSB()">‹</div>
+  <div class="sbi">
+
+    <div id="logo">NEXUS <em>MULTI-SEARCH</em></div>
+
+    <!-- Recherche -->
+    <div class="sbox">
+      <input type="text" id="query" placeholder="Rechercher…" autocomplete="off"
+             onkeydown="if(event.key==='Enter') runDef()">
+      <span class="sico" onclick="runDef()" title="Lancer la recherche">⌕</span>
+    </div>
+
+    <!-- URL directe -->
+    <div class="urow">
+      <input type="text" id="durl" placeholder="https://…" autocomplete="off"
+             onkeydown="if(event.key==='Enter') loadUrl()">
+      <button onclick="loadUrl()">GO</button>
+    </div>
+
+    <!-- Sélecteur de panneau -->
+    <div class="trow" id="trow"></div>
+
+    <!-- Légende compatibilité -->
+    <div class="legend">
+      <span><span style="color:var(--acc2)">●</span> S'ouvre ici</span>
+      <span><span style="color:var(--acc3)">◆</span> Nouvel onglet</span>
+    </div>
+
+    <!-- Liste des sites -->
+    <div class="blist" id="blist"></div>
+  </div>
+</div>
+
+<!-- ════ WORKSPACE ══════════════════════════════════ -->
+<div id="workspace">
+  <!-- Barre du haut -->
+  <div id="topbar">
+    <button class="lbtn" onclick="setLayout('l1')"  title="1 panneau">⬜ ×1</button>
+    <button class="lbtn" onclick="setLayout('l2h')" title="2 côte à côte">⬜⬜</button>
+    <button class="lbtn" onclick="setLayout('l2v')" title="2 empilés">⬛↕</button>
+    <button class="lbtn" onclick="setLayout('l3r')" title="Grand + 2 droite">▩▪×3</button>
+    <button class="lbtn" onclick="setLayout('l3b')" title="2 + bas">▩▩↓</button>
+    <button class="lbtn" onclick="setLayout('l4')"  title="4 panneaux">▪▪×4</button>
+    <div class="tsep"></div>
+    <button class="lbtn" onclick="reloadAP()" title="Recharger panneau actif">↺ Reload</button>
+    <button class="lbtn danger" onclick="clearAP()" title="Vider panneau actif">✕ Pane</button>
+    <button class="lbtn danger" onclick="clearAll()" title="Tout vider">✕ Tout</button>
+    <div class="tsep"></div>
+    <button class="lbtn" onclick="toggleHist()">📋 Historique</button>
+    <button class="lbtn" onclick="toggleSC()">⌨ Aide</button>
+    <div id="sbar">
+      <span>P<span id="apn">1</span> actif</span>
+      <span class="sdot"></span>
+    </div>
+  </div>
+
+  <!-- Grille -->
+  <div id="grid" class="l3r"></div>
+</div>
+</div>
+
+<!-- Historique flottant -->
+<div id="hpanel">
+  <h4>Historique récent</h4>
+  <div id="hlist"></div>
+</div>
+
+<!-- Aide raccourcis -->
+<div id="scov" onclick="closeSC()">
+  <div class="scbox" onclick="event.stopPropagation()">
+    <h3>⌨ Raccourcis clavier</h3>
+    <div class="scr"><div class="sck"><kbd>↵ Entrée</kbd></div><div class="scd">Rechercher avec le moteur par défaut</div></div>
+    <div class="scr"><div class="sck"><kbd>Ctrl</kbd><kbd>1–4</kbd></div><div class="scd">Sélectionner le panneau 1, 2, 3 ou 4</div></div>
+    <div class="scr"><div class="sck"><kbd>Ctrl</kbd><kbd>L</kbd></div><div class="scd">Focus sur la barre de recherche</div></div>
+    <div class="scr"><div class="sck"><kbd>Ctrl</kbd><kbd>U</kbd></div><div class="scd">Focus sur la barre URL directe</div></div>
+    <div class="scr"><div class="sck"><kbd>Ctrl</kbd><kbd>R</kbd></div><div class="scd">Recharger le panneau actif</div></div>
+    <div class="scr"><div class="sck"><kbd>Ctrl</kbd><kbd>W</kbd></div><div class="scd">Vider le panneau actif</div></div>
+    <div class="scr"><div class="sck"><kbd>Ctrl</kbd><kbd>H</kbd></div><div class="scd">Afficher / masquer l'historique</div></div>
+    <div class="scr"><div class="sck"><kbd>?</kbd></div><div class="scd">Afficher cette aide</div></div>
+    <div class="scr"><div class="sck"><kbd>Échap</kbd></div><div class="scd">Fermer les panneaux flottants</div></div>
+    <div class="sc-note">
+      <strong style="color:var(--t0)">Pourquoi certains sites s'ouvrent dans un onglet ?</strong><br>
+      Des sites comme Google, DDG, Bing, Mojeek envoient le header
+      <code style="color:var(--acc3)">X-Frame-Options: DENY</code> qui interdit leur intégration.
+      <strong style="color:var(--acc2)">● vert</strong> = compatible iframe &nbsp;·&nbsp;
+      <strong style="color:var(--acc3)">◆ orange</strong> = bloqué → onglet automatique.
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+// ══ CATALOGUE (iframe testé) ════════════════════════
+// ok:true  = réellement compatible iframe (testé)
+// ok:false = envoie X-Frame-Options DENY/SAMEORIGIN
+const SITES = [
+  { sec:'🔍 Recherche — compatibles iframe', items:[
+    { id:'searx',     n:'SearXNG',             ico:'🌐', tag:'WEB',  ok:true,  url:q=>`https://searx.be/search?q=${q}` },
+    { id:'searx2',    n:'SearXNG (instance 2)', ico:'🌐', tag:'WEB',  ok:true,  url:q=>`https://search.bus-hit.me/search?q=${q}` },
+    { id:'wiby',      n:'Wiby',                ico:'🕸', tag:'WEB',  ok:true,  url:q=>`https://wiby.me/?q=${q}` },
+    { id:'hn',        n:'Hacker News Search',  ico:'🟠', tag:'NEWS', ok:true,  url:q=>`https://hn.algolia.com/?q=${q}` },
+  ]},
+  { sec:'🔍 Recherche — s\'ouvre dans un onglet', items:[
+    { id:'ddg',       n:'DuckDuckGo',           ico:'🦆', tag:'WEB',  ok:false, url:q=>`https://duckduckgo.com/?q=${q}` },
+    { id:'mojeek',    n:'Mojeek',               ico:'🔎', tag:'WEB',  ok:false, url:q=>`https://www.mojeek.com/search?q=${q}` },
+    { id:'bing',      n:'Bing',                 ico:'Ⓑ',  tag:'WEB',  ok:false, url:q=>`https://www.bing.com/search?q=${q}` },
+    { id:'google',    n:'Google',               ico:'G',  tag:'WEB',  ok:false, url:q=>`https://www.google.com/search?q=${q}` },
+    { id:'brave',     n:'Brave Search',         ico:'🦁', tag:'WEB',  ok:false, url:q=>`https://search.brave.com/search?q=${q}` },
+    { id:'qwant',     n:'Qwant',                ico:'Q',  tag:'WEB',  ok:false, url:q=>`https://www.qwant.com/?q=${q}` },
+    { id:'ecosia',    n:'Ecosia',               ico:'🌿', tag:'WEB',  ok:false, url:q=>`https://www.ecosia.org/search?q=${q}` },
+  ]},
+  { sec:'🤖 Intelligence Artificielle', items:[
+    { id:'perplexity',n:'Perplexity',           ico:'⧖',  tag:'AI',   ok:false, url:q=>`https://www.perplexity.ai/search?q=${q}` },
+    { id:'phind',     n:'Phind (code)',          ico:'⟨⟩', tag:'AI',   ok:false, url:q=>`https://www.phind.com/search?q=${q}` },
+    { id:'claude',    n:'Claude',               ico:'✦',  tag:'AI',   ok:false, url:q=>`https://claude.ai/new?q=${q}` },
+    { id:'you',       n:'You.com',              ico:'◎',  tag:'AI',   ok:false, url:q=>`https://you.com/search?q=${q}` },
+    { id:'chatgpt',   n:'ChatGPT',              ico:'⬡',  tag:'AI',   ok:false, url:q=>`https://chatgpt.com/?q=${q}` },
+  ]},
+  { sec:'📚 Encyclopédies & Documentation', items:[
+    { id:'wiki_fr',   n:'Wikipédia FR',         ico:'📖', tag:'WIKI', ok:true,  url:q=>`https://fr.m.wikipedia.org/wiki/${q}` },
+    { id:'wiki_en',   n:'Wikipédia EN',         ico:'📖', tag:'WIKI', ok:true,  url:q=>`https://en.m.wikipedia.org/wiki/${q}` },
+    { id:'wikt_fr',   n:'Wiktionnaire FR',      ico:'📝', tag:'DICT', ok:true,  url:q=>`https://fr.m.wiktionary.org/wiki/${q}` },
+    { id:'scholar',   n:'Semantic Scholar',     ico:'🎓', tag:'ACAD', ok:true,  url:q=>`https://www.semanticscholar.org/search?q=${q}` },
+    { id:'arxiv',     n:'arXiv',                ico:'📄', tag:'ACAD', ok:false, url:q=>`https://arxiv.org/search/?query=${q}` },
+    { id:'mdn',       n:'MDN Web Docs',         ico:'⟨⟩', tag:'DEV',  ok:false, url:q=>`https://developer.mozilla.org/fr/search?q=${q}` },
+    { id:'so',        n:'Stack Overflow',       ico:'📦', tag:'DEV',  ok:false, url:q=>`https://stackoverflow.com/search?q=${q}` },
+    { id:'gh',        n:'GitHub',               ico:'⎇',  tag:'DEV',  ok:false, url:q=>`https://github.com/search?q=${q}` },
+  ]},
+  { sec:'📺 Médias & Réseaux sociaux', items:[
+    { id:'yt',        n:'Invidious (YouTube)',  ico:'▶',  tag:'VID',  ok:true,  url:q=>`https://yewtu.be/search?q=${q}` },
+    { id:'nitter',    n:'Nitter (Twitter/X)',   ico:'🐦', tag:'SOC',  ok:true,  url:q=>`https://nitter.net/search?q=${q}` },
+    { id:'reddit',    n:'Reddit',               ico:'🔴', tag:'SOC',  ok:false, url:q=>`https://www.reddit.com/search/?q=${q}` },
+    { id:'youtube',   n:'YouTube',              ico:'▶',  tag:'VID',  ok:false, url:q=>`https://www.youtube.com/results?search_query=${q}` },
+    { id:'lemmy',     n:'Lemmy',                ico:'🐘', tag:'SOC',  ok:false, url:q=>`https://lemmy.world/search?q=${q}` },
+  ]},
+  { sec:'🛠 Outils & Utilitaires', items:[
+    { id:'weather',   n:'Météo wttr.in',        ico:'🌤', tag:'TOOL', ok:true,  url:q=>`https://wttr.in/${q}` },
+    { id:'osm',       n:'OpenStreetMap embed',  ico:'🗺', tag:'MAP',  ok:true,  url:q=>`https://www.openstreetmap.org/export/embed.html?bbox=-5.0,42.0,9.5,51.5&layer=mapnik` },
+    { id:'wa',        n:'WolframAlpha',         ico:'Ω',  tag:'CALC', ok:false, url:q=>`https://www.wolframalpha.com/input?i=${q}` },
+    { id:'larousse',  n:'Larousse',             ico:'📕', tag:'DICT', ok:false, url:q=>`https://www.larousse.fr/dictionnaires/francais/${q}` },
+    { id:'deepl',     n:'DeepL',               ico:'🌍', tag:'TRAD', ok:false, url:q=>`https://www.deepl.com/translator#fr/en/${q}` },
+    { id:'archive',   n:'Wayback Machine',     ico:'🏛', tag:'ARCH', ok:false, url:q=>`https://web.archive.org/web/*/${q}` },
+    { id:'imdb',      n:'IMDB',                ico:'🎬', tag:'FILM', ok:false, url:q=>`https://www.imdb.com/find?q=${q}` },
+  ]},
+  { sec:'🛒 Shopping', items:[
+    { id:'amz',       n:'Amazon FR',           ico:'🛒', tag:'SHOP', ok:false, url:q=>`https://www.amazon.fr/s?k=${q}` },
+    { id:'fnac',      n:'Fnac',                ico:'🔷', tag:'SHOP', ok:false, url:q=>`https://www.fnac.com/SearchResult/ResultList.aspx?sk=${q}` },
+    { id:'lbc',       n:'Leboncoin',           ico:'🟡', tag:'OCC',  ok:false, url:q=>`https://www.leboncoin.fr/recherche?text=${q}` },
+  ]},
+];
+
+// Moteur iframe par défaut (premier ok:true trouvé)
+const DEFAULT_ID = 'searx';
+
+// ══ ÉTAT ════════════════════════════════════════════
+let AP = 1;         // panneau actif
+let curL = 'l3r';   // layout courant
+let hist = [];      // historique
+let sbCol = false;  // sidebar collapsed
+const PN = { l1:1, l2h:2, l2v:2, l3r:3, l3b:3, l4:4 };
+const pData = {};   // { id: {url, label, ok} }
+
+// ══ INIT ════════════════════════════════════════════
+function init() {
+  buildBtns();
+  setLayout('l3r');
+  document.addEventListener('keydown', gKey);
+}
+
+function buildBtns() {
+  const list = document.getElementById('blist');
+  list.innerHTML = '';
+  SITES.forEach(s => {
+    const lbl = document.createElement('div');
+    lbl.className = 'slabel';
+    lbl.textContent = s.sec;
+    list.appendChild(lbl);
+    s.items.forEach(site => {
+      const b = document.createElement('button');
+      b.className = 'sbtn ' + (site.ok ? 'ok' : 'ext');
+      b.innerHTML =
+        `<span class="ico">${site.ico}</span>` +
+        `<span class="sn">${site.n}</span>` +
+        `<span class="stag">${site.tag}</span>` +
+        (!site.ok ? `<span class="ebadge">⧉</span>` : '');
+      b.title = site.ok
+        ? 'Charger dans le panneau P' + AP
+        : 'Bloqué par X-Frame-Options — s\'ouvrira dans un nouvel onglet';
+      b.onclick = () => runSearch(site.id);
+      list.appendChild(b);
+    });
+  });
+}
+
+// ══ LAYOUT ══════════════════════════════════════════
+function setLayout(l) {
+  curL = l;
+  document.getElementById('grid').className = l;
+  document.querySelectorAll('.lbtn').forEach((b, i) => {
+    b.classList.toggle('active', ['l1','l2h','l2v','l3r','l3b','l4'][i] === l);
+  });
+  const cnt = PN[l] || 1;
+  if (AP > cnt) AP = 1;
+  buildPanes(cnt);
+  buildTargets(cnt);
+  restoreAll();
+}
+
+function buildTargets(cnt) {
+  const row = document.getElementById('trow');
+  row.innerHTML = '';
+  for (let i = 1; i <= cnt; i++) {
+    const b = document.createElement('button');
+    b.className = 'tbtn' + (i === AP ? ' active' : '');
+    b.textContent = 'P' + i;
+    b.title = 'Cibler le panneau ' + i;
+    b.onclick = () => setAP(i);
+    row.appendChild(b);
+  }
+}
+
+function buildPanes(cnt) {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  for (let i = 1; i <= cnt; i++) {
+    const p = document.createElement('div');
+    p.className = 'pane' + (i === AP ? ' ap' : '');
+    p.id = 'p' + i;
+    p.innerHTML =
+      `<div class="ph" onclick="setAP(${i})">
+        <span class="pnum">P${i}</span>
+        <span class="purl" id="pu${i}">Panneau vide</span>
+        <div class="pact">
+          <button class="pabtn" onclick="reloadPane(${i});event.stopPropagation()" title="Recharger">↺</button>
+          <button class="pabtn" onclick="openTab(${i});event.stopPropagation()" title="Ouvrir dans un onglet">⧉</button>
+          <button class="pabtn" onclick="clearPane(${i});event.stopPropagation()" title="Vider">✕</button>
+        </div>
+      </div>
+      <div class="pempty" id="pe${i}">
+        <div class="bnum">${i}</div>
+        <p>Panneau disponible</p>
+        <span class="hint">Sélectionne P${i} puis lance une recherche</span>
+      </div>`;
+    grid.appendChild(p);
+  }
+}
+
+function restoreAll() {
+  Object.entries(pData).forEach(([id, d]) => {
+    if (d) doInject(parseInt(id), d.url, d.label, d.ok);
+  });
+}
+
+// ══ SEARCH ══════════════════════════════════════════
+function findSite(id) {
+  for (const s of SITES) for (const it of s.items) if (it.id === id) return it;
+  return null;
+}
+
+function runDef() { runSearch(DEFAULT_ID); }
+
+function runSearch(sid) {
+  const q = document.getElementById('query').value.trim();
+  if (!q) { showToast('Entrez un terme de recherche', 'err'); focusSrch(); return; }
+  const site = findSite(sid);
+  if (!site) return;
+  const url = site.url(encodeURIComponent(q));
+  const label = site.n + ': "' + q + '"';
+
+  if (site.ok) {
+    doInject(AP, url, label, true);
+    pData[AP] = { url, label, ok: true };
+    updatePU(AP, label);
+    showToast('P' + AP + ' → ' + site.n, 'ok');
+  } else {
+    window.open(url, '_blank');
+    showBlockedPane(AP, url, label, site.n);
+    pData[AP] = { url, label, ok: false };
+    showToast(site.n + ' → ouvert dans un onglet', 'info');
+  }
+  addHist(q, site.n + (site.ok ? '' : ' ⧉'), AP);
+}
+
+function loadUrl() {
+  let url = document.getElementById('durl').value.trim();
+  if (!url) return;
+  if (!url.startsWith('http')) url = 'https://' + url;
+  doInject(AP, url, url, true);
+  pData[AP] = { url, label: url, ok: true };
+  updatePU(AP, url);
+  showToast('P' + AP + ' → chargement…', 'ok');
+}
+
+function doInject(id, url, label, useFrame) {
+  const pane = document.getElementById('p' + id);
+  if (!pane) return;
+  rmContent(pane);
+  if (useFrame) {
+    const fr = document.createElement('iframe');
+    fr.src = url;
+    fr.sandbox = 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox';
+    fr.loading = 'lazy';
+    pane.appendChild(fr);
+  }
+  updatePU(id, label);
+}
+
+function showBlockedPane(id, url, label, siteName) {
+  const pane = document.getElementById('p' + id);
+  if (!pane) return;
+  rmContent(pane);
+  const q = document.getElementById('query').value.trim();
+  const div = document.createElement('div');
+  div.className = 'bov';
+  div.innerHTML =
+    `<div class="bi">🚫</div>
+    <div class="wb">◆ Intégration bloquée (X-Frame-Options)</div>
+    <h3>${siteName}</h3>
+    <p>Ce site refuse d'être affiché dans un cadre.<br>
+       Il a été ouvert automatiquement dans un nouvel onglet.</p>
+    <a class="obt" href="${url}" target="_blank">↗ Rouvrir l'onglet</a>
+    <p style="font-size:.74rem;color:var(--t3);margin:0">Alternatives compatibles ici :</p>
+    <div class="alts">
+      <button class="ab" onclick="runSearch('searx')">🌐 SearXNG</button>
+      <button class="ab" onclick="runSearch('wiki_fr')">📖 Wikipédia</button>
+      <button class="ab" onclick="runSearch('yt')">▶ Invidious</button>
+      <button class="ab" onclick="runSearch('weather')">🌤 Météo</button>
+    </div>`;
+  pane.appendChild(div);
+  updatePU(id, '⧉ ' + label);
+}
+
+// ══ GESTION PANNEAUX ════════════════════════════════
+function setAP(id) {
+  AP = id;
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('ap'));
+  document.getElementById('p' + id)?.classList.add('ap');
+  document.getElementById('apn').textContent = id;
+  document.querySelectorAll('.tbtn').forEach((b, i) => b.classList.toggle('active', i + 1 === id));
+}
+
+function rmContent(pane) {
+  ['iframe', '.pempty', '.bov'].forEach(sel =>
+    pane.querySelectorAll(sel).forEach(el => el.remove())
+  );
+}
+
+function clearPane(id) {
+  const pane = document.getElementById('p' + id);
+  if (!pane) return;
+  rmContent(pane);
+  delete pData[id];
+  updatePU(id, 'Panneau vide');
+  const e = document.createElement('div');
+  e.className = 'pempty'; e.id = 'pe' + id;
+  e.innerHTML = `<div class="bnum">${id}</div><p>Panneau disponible</p><span class="hint">Sélectionne P${id} puis lance une recherche</span>`;
+  pane.appendChild(e);
+  showToast('Panneau ' + id + ' vidé', 'ok');
+}
+
+function reloadPane(id) {
+  const d = pData[id];
+  if (d) doInject(id, d.url, d.label, d.ok);
+  else showToast('Panneau ' + id + ' est vide', 'err');
+}
+
+function openTab(id) {
+  const d = pData[id];
+  if (d) window.open(d.url, '_blank');
+  else showToast('Panneau ' + id + ' est vide', 'err');
+}
+
+function updatePU(id, t) { const e = document.getElementById('pu' + id); if (e) e.textContent = t; }
+function reloadAP() { reloadPane(AP); }
+function clearAP() { clearPane(AP); }
+function clearAll() { for (let i = 1; i <= (PN[curL] || 1); i++) clearPane(i); }
+
+// ══ HISTORIQUE ══════════════════════════════════════
+function addHist(q, site, pane) {
+  hist.unshift({ q, site, pane, t: new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' }) });
+  if (hist.length > 25) hist.pop();
+}
+
+function toggleHist() {
+  const p = document.getElementById('hpanel');
+  const show = !p.classList.contains('show');
+  if (show) renderHist();
+  p.classList.toggle('show', show);
+}
+
+function renderHist() {
+  const l = document.getElementById('hlist');
+  if (!hist.length) {
+    l.innerHTML = '<div style="color:var(--t3);font-size:.82rem;padding:8px 4px">Aucun historique</div>';
+    return;
+  }
+  l.innerHTML = hist.map((h, i) =>
+    `<div class="hitem" onclick="restoreH(${i})">
+      <span class="hq">${h.q}</span>
+      <span class="hs">${h.site}</span>
+      <span class="ht">P${h.pane} · ${h.t}</span>
+    </div>`
+  ).join('');
+}
+
+function restoreH(i) {
+  document.getElementById('query').value = hist[i].q;
+  document.getElementById('hpanel').classList.remove('show');
+  focusSrch();
+}
+
+// ══ SIDEBAR / SHORTCUTS / CLAVIER ════════════════════
+function toggleSB() {
+  sbCol = !sbCol;
+  document.getElementById('sidebar').classList.toggle('col', sbCol);
+  document.getElementById('tog').textContent = sbCol ? '›' : '‹';
+}
+
+function toggleSC() { document.getElementById('scov').classList.toggle('show'); }
+function closeSC()  { document.getElementById('scov').classList.remove('show'); }
+
+function gKey(e) {
+  const inI = ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
+  if (e.ctrlKey && e.key === 'l') { e.preventDefault(); focusSrch(); return; }
+  if (e.ctrlKey && e.key === 'u') { e.preventDefault(); document.getElementById('durl').focus(); return; }
+  if (e.ctrlKey && e.key === 'r') { e.preventDefault(); reloadAP(); return; }
+  if (e.ctrlKey && e.key === 'w') { e.preventDefault(); clearAP(); return; }
+  if (e.ctrlKey && e.key === 'h') { e.preventDefault(); toggleHist(); return; }
+  if (e.ctrlKey && ['1','2','3','4'].includes(e.key)) {
+    e.preventDefault();
+    const n = parseInt(e.key);
+    if (n <= (PN[curL] || 1)) setAP(n);
+    return;
+  }
+  if (!inI && e.key === '?') { toggleSC(); return; }
+  if (e.key === 'Escape') {
+    closeSC();
+    document.getElementById('hpanel').classList.remove('show');
+  }
+}
+
+function focusSrch() { const e = document.getElementById('query'); e.focus(); e.select(); }
+
+// ══ TOAST ════════════════════════════════════════════
+let tT;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + (type || '');
+  clearTimeout(tT);
+  tT = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+init();
+</script>
+</body>
+</html>
