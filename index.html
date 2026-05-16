@@ -104,6 +104,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
     <button class="view-btn"        id="btnJm1" onclick="setView('jm1')">◂ J-1</button>
     <button class="view-btn"        id="btnJ0"  onclick="setView('j0')">J</button>
     <button class="view-btn active" id="btnJ1"  onclick="setView('j1')">J+1 ▸</button>
+    <button class="view-btn"        id="btnJ5"  onclick="setView('j5')">◂ J+5</button>
     <button class="view-btn"        id="btnJ8"  onclick="setView('j8')">◂ J+8</button>
     <button class="view-btn"        id="btnJ14" onclick="setView('j14')">◂ J+14</button>
     <button id="modeToggle" class="simple" onclick="toggleComplexity()">● SIMPLE</button>
@@ -167,6 +168,7 @@ const SOURCES=[
 let myChart=null,lastW=0,cityTz='Europe/Paris',N_HRS=0;
 let _peaks=[],_idx8hJ0=-1,_idx8hJ1=-1,_drySlots=[],_rainStarts=[],_8hXPos=[];
 let _viewMode='j1',_cachedData=null,_cachedJm1=null,_cachedJm7=null,_simpleMode=true,_gradCache=null;
+let _summaryStartDate=null; /* date de départ pour buildSummary en mode passé */
 let _tempJ1Max=null,_tempJ1Min=null,_tempJ0Max=null,_tempJ0Min=null;
 let zoomMin=0,zoomMax=1; /* état zoom global */
 
@@ -536,6 +538,7 @@ function updateBtnState(){
   document.getElementById('btnJ0').classList.toggle('active',_viewMode==='j0');
   document.getElementById('btnJ1').classList.toggle('active',_viewMode==='j1');
   document.getElementById('btnJ8').classList.toggle('active',_viewMode==='j8');
+  if(document.getElementById('btnJ5')) document.getElementById('btnJ5').classList.toggle('active',_viewMode==='j5');
   if(document.getElementById('btnJ14'))document.getElementById('btnJ14').classList.toggle('active',_viewMode==='j14');
 }
 function setView(mode){
@@ -630,17 +633,28 @@ function processData(omMain,omM15,rainMx,probMx){
       minutesAdded=true;
     }
   }
-  /* Heures restantes aujourd'hui */
-  for(let i=h+1;i<=23;i++) push(i+'h',0,i);
+  /* Point H+1 : utiliser m15 fin de slot pour cohérence avec les minutes */
+  if(m15.length>0&&minutesAdded){
+    /* Valeur m15 à la fin de l'heure courante (slot = fin de H→H+1) */
+    const slotEnd=Math.min(Math.round(slotF+(60-m)/15),m15.length-1);
+    const rEnd=Math.max(0,m15[slotEnd]??0);
+    const mfEnd=Object.keys(_mfByMin).length?
+      (()=>{const mk=Object.keys(_mfByMin).map(Number);const nk=mk.reduce((a,b)=>Math.abs(b-(60-m))<Math.abs(a-(60-m))?b:a,mk[0]);return _mfByMin[nk]??0;})():0;
+    pts.push({t:(h+1)+'h',d:0,r:Math.max(rEnd,mfEnd),mx:Math.max(rEnd,mfEnd),p:synthP(h+1,probMx),hourIdx:h+1});
+    SOURCES.forEach((_,si)=>mods[si].push(null));
+  }
+  /* Heures restantes aujourd'hui (depuis H+2 si minutes ajoutées, H+1 sinon) */
+  const hStart=minutesAdded?h+2:h+1;
+  for(let i=hStart;i<=23;i++) push(i+'h',0,i);
   /* Jours suivants selon la vue */
   if(_viewMode==='j0'){
     /* Aujourd'hui seulement — stop ici */
   } else if(_viewMode==='j1'){
     for(let hr=0;hr<24;hr++){const idx=24+hr;if(idx<N_HRS)push(hr+'h',1,idx);}
-  } else if(_viewMode==='j8'||_viewMode==='j14'){
+  } else if(_viewMode==='j5'||_viewMode==='j8'||_viewMode==='j14'){
     for(let hr=0;hr<24;hr++){const idx=24+hr;if(idx<N_HRS)push(hr+'h',1,idx);}
     for(let d=2;d<=4;d++)for(let hr=0;hr<24;hr+=3){const idx=d*24+hr;if(idx<N_HRS)push(hr+'h',d,idx);}
-    const maxD=_viewMode==='j14'?14:8;
+    const maxD=_viewMode==='j14'?14:_viewMode==='j5'?5:8;
     for(let d=5;d<=maxD;d++)for(let hr=0;hr<24;hr+=8){const idx=d*24+hr;if(idx<N_HRS)push(hr+'h',d,idx);}
   }
   render(pts,mods);
@@ -689,6 +703,7 @@ function processJmN(jmData,nDays){
       if(ptIdx>=0){const v=jmData.realData.hourly.precipitation?.[i];if(v!=null&&isFinite(v))realArr[ptIdx]=v;}
     });
   }
+  _summaryStartDate=startD; /* pour buildSummary en mode passé */
   renderJm1(pts,mods,realArr);
 }
 
@@ -1019,6 +1034,7 @@ function renderJm1(pts,mods,realPrecip){
    RENDER
 ══════════════════════════════════════════════ */
 function render(pts,mods){
+  _summaryStartDate=null; /* reset : on est en mode futur */
   const ctx=document.getElementById('mainChart').getContext('2d');
   if(myChart)myChart.destroy();
   lastW=0;
@@ -1269,6 +1285,41 @@ function render(pts,mods){
         cv.restore();
       }},
 
+      /* ── Voyant pluie actuelle à H=0 ── */
+      {id:'nowIndicator',afterDraw(chart){
+        if(!pts.length)return;
+        const {ctx:cv,scales:{x,y},chartArea:{top,bottom,left}}=chart;
+        /* Le point "maintenant" = premier pt non-minute (h+1h ou premier +X') */
+        const nowPt=pts[0];
+        const nowVal=nowPt?.r??0;
+        const xNow=x.getPixelForValue(0);
+        if(xNow<left||xNow>x.right)return;
+        /* Couleur selon intensité */
+        const col=nowVal<=0?'rgba(60,200,60,0.9)':
+                  nowVal<0.3?'rgba(120,220,80,0.9)':
+                  nowVal<1?'rgba(50,150,255,0.95)':
+                  nowVal<3?'rgba(30,80,255,1)':'rgba(220,40,40,1)';
+        const r=isMob?5:7;
+        /* Ligne verticale "maintenant" */
+        cv.save();
+        cv.strokeStyle=col;cv.lineWidth=1.5;cv.setLineDash([2,3]);
+        cv.beginPath();cv.moveTo(xNow,top);cv.lineTo(xNow,bottom);cv.stroke();
+        cv.setLineDash([]);
+        /* Cercle voyant */
+        cv.beginPath();cv.arc(xNow,top+r+4,r,0,Math.PI*2);
+        cv.fillStyle=col;
+        cv.shadowColor=col;cv.shadowBlur=8;
+        cv.fill();cv.shadowBlur=0;
+        /* Valeur mm/h si >0 */
+        if(nowVal>0.05){
+          const fs=isMob?7:9;
+          cv.font=`900 ${fs}px 'Courier New',monospace`;
+          cv.fillStyle='#fff';cv.textAlign='center';cv.textBaseline='top';
+          cv.fillText(nowVal.toFixed(1),xNow,top+r*2+6);
+        }
+        cv.restore();
+      }},
+
       {id:'peakLines',afterDatasetsDraw(chart){
         if(!_peaks.length)return;
         const {ctx:c,scales:{x,y},chartArea:{top,bottom}}=chart;
@@ -1354,14 +1405,19 @@ function buildSummary(chart,pts,days,xp){
   const innerW=days.slice(0,-1).map((_,di)=>Math.max(0,ends[di]-starts[di]));
   const stdW=innerW.length?innerW.reduce((a,b)=>a+b,0)/innerW.length:60;
   days.forEach((d,di)=>{
-    const date=new Date(cn);date.setDate(cn.getDate()+d);
+    /* Calculer la vraie date : mode futur → depuis aujourd'hui, mode passé → depuis startDate */
+    const baseDate=_summaryStartDate?new Date(_summaryStartDate):cn;
+    const date=new Date(baseDate);date.setDate(baseDate.getDate()+d);
     const isLast=di===days.length-1;
     const rawW=Math.max(0,ends[di]-starts[di]);
     const w=isLast?Math.max(rawW,stdW):rawW;
     const dd=pts.filter(p=>p.d===d);
     const total=dd.reduce((s,p)=>s+p.mx,0);
     const maxP=Math.max(...dd.map(p=>p.p),0);
-    const lbl=d===0?'AUJ.':dn[date.getDay()];
+    /* Label : AUJ. si c'est aujourd'hui (futur d===0, ou passé dernier jour), sinon jour semaine */
+    const todayStr=cn.toDateString();
+    const isToday=date.toDateString()===todayStr;
+    const lbl=isToday?'AUJ.':dn[date.getDay()];
     const tMax=d===0?_tempJ0Max:d===1?_tempJ1Max:null;
     const tMin=d===0?_tempJ0Min:d===1?_tempJ1Min:null;
     const tempInline=tMax!==null?`<span class="temp-min">${Math.round(tMin??0)}°</span><span class="temp-max">/${Math.round(tMax)}°</span>`:'';
