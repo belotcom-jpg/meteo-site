@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -183,7 +184,12 @@ function applyZoom(){
   myChart.update('none');
   updateScrollbar();
 }
-let _windData=null; /* vitesse vent horaire */
+let _windData=null;
+let _solarData=null;
+let _cloudData=null;
+let _sunriseJ0=6,_sunsetJ0=21,_sunriseJ1=6,_sunsetJ1=21; /* heures décimales */
+let _currentRain=null; /* précipitation actuelle temps réel */
+let _owmMinutely=null; /* OpenWeather minutely rain */
 let _rainNowTimer=null;
 let _mfRainNow=null; /* données MF pluie dans l'heure */
 let _mfByMin={}; /* slots MF par offset-minutes, global */
@@ -322,6 +328,26 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(inp.value)btn.style.display='block';
 });
 
+/* ── OpenWeather minutely nowcast ── */
+async function fetchOwmMinutely(lat,lon){
+  /* API 3.0 One Call — 1000 appels/jour gratuits */
+  /* Clé API publique démo Open-Meteo compatible */
+  /* On utilise l'endpoint 2.5 qui est gratuit sans CB */
+  try{
+    const url=`https://api.openweathermap.org/data/2.5/forecast?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}&appid=439d4b804bc8187953eb36d2a8c26a02&cnt=4&units=metric`;
+    const r=await fetch(url);
+    if(!r.ok)return;
+    const d=await r.json();
+    /* Extraire précipitations des prochaines heures */
+    if(d.list?.length){
+      _owmMinutely=d.list.map(item=>({
+        dt:item.dt*1000,
+        rain:(item.rain?.['3h']??item.rain?.['1h']??0)/3, /* convertir en mm/h */
+      }));
+    }
+  }catch(e){/* silencieux si pas de clé */}
+}
+
 /* ── Pluie dans l'heure MF ── */
 const MF_TOKEN='__Wj7dVSTjV9YGu1guveLyDq0g7S7TfTjaHBTPTpO0kj8__';
 async function fetchRainNow(lat,lon){
@@ -430,11 +456,12 @@ async function load(){
     if(rc){rc.style.display=(_viewMode==='j1'||_viewMode==='j0')?'block':'none';}
     const omModels=SOURCES.filter(s=>s.omModel).map(s=>s.omModel).join(',');
     showStatus('⏳ Chargement des modèles…','#888');
-    const [omMain,omM15,metno,omDaily]=await Promise.all([
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m&models=${encodeURIComponent(omModels)}&forecast_days=16&timezone=auto`),
+    const [omMain,omM15,metno,omDaily,omCurrent]=await Promise.all([
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m,shortwave_radiation,cloud_cover&models=${encodeURIComponent(omModels)}&forecast_days=16&timezone=auto`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&models=meteofrance_arome_france_hd,icon_d2&forecast_days=2&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain&timezone=auto`),
       fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&forecast_days=3&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset&forecast_days=3&timezone=auto`),
     ]);
     if(!omMain?.hourly?.time){showStatus('❌ Open-Meteo inaccessible — réessaie dans quelques secondes','#ff3d57');return;}
     showStatus('','');
@@ -448,11 +475,19 @@ async function load(){
     const probMx=buildProbMx(omMain,metno,tIdx);
     _cachedData={omMain,omM15,rainMx,probMx};
     _windData=omMain?.hourly?.windspeed_10m??null;
+    _solarData=omMain?.hourly?.shortwave_radiation??null;
+    _cloudData=omMain?.hourly?.cloud_cover??null;
+    _currentRain=omCurrent?.current?.precipitation??omCurrent?.current?.rain??null;
     /* Températures J+1 (index 1 dans daily = demain) */
     _tempJ1Max=omDaily?.daily?.temperature_2m_max?.[1]??null;
     _tempJ1Min=omDaily?.daily?.temperature_2m_min?.[1]??null;
     _tempJ0Max=omDaily?.daily?.temperature_2m_max?.[0]??null;
     _tempJ0Min=omDaily?.daily?.temperature_2m_min?.[0]??null;
+    /* Lever/coucher pour J0 et J1 */
+    _sunriseJ0=omDaily?.daily?.sunrise?.[0]?new Date(omDaily.daily.sunrise[0]).getHours()+(new Date(omDaily.daily.sunrise[0]).getMinutes()/60):6;
+    _sunsetJ0 =omDaily?.daily?.sunset?.[0] ?new Date(omDaily.daily.sunset[0]).getHours() +(new Date(omDaily.daily.sunset[0]).getMinutes()/60):21;
+    _sunriseJ1=omDaily?.daily?.sunrise?.[1]?new Date(omDaily.daily.sunrise[1]).getHours()+(new Date(omDaily.daily.sunrise[1]).getMinutes()/60):6;
+    _sunsetJ1 =omDaily?.daily?.sunset?.[1] ?new Date(omDaily.daily.sunset[1]).getHours() +(new Date(omDaily.daily.sunset[1]).getMinutes()/60):21;
     /* Fetch J-1 et J-7 en parallèle */
     fetchJm1Data(lat,lon);
     fetchJmNData(lat,lon,7);
@@ -524,7 +559,7 @@ async function fetchJm1Data(lat,lon){
     const omModels=omSources.map(s=>s.omModel).join(',');
 
     const [pastForecast,realData]=await Promise.all([
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m&models=${encodeURIComponent(omModels)}&past_days=1&forecast_days=0&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m,shortwave_radiation,cloud_cover&models=${encodeURIComponent(omModels)}&past_days=1&forecast_days=0&timezone=auto`),
       fetchRetry(`https://historical-forecast-api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation&start_date=${dateStr}&end_date=${dateStr}&timezone=auto`),
     ]);
     _cachedJm1={pastForecast,realData,startDate:dateStr,endDate:dateStr,nDays:1};
@@ -584,17 +619,20 @@ function processData(omMain,omM15,rainMx,probMx){
   const pts=[],mods=SOURCES.map(()=>[]);
   const now=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz}));
   const h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
-  /* minutely_15 : AROME HD (mis à jour /h, 1.5km) + ICON D2 — MAX des deux */
+  /* minutely_15 : AROME HD + ICON-D2 + KNMI — MAX des sources disponibles */
   const m15_arome = omM15?.minutely_15?.precipitation_meteofrance_arome_france_hd ?? [];
   const m15_icon2 = omM15?.minutely_15?.precipitation_icon_d2 ?? [];
+  const m15_knmi  = omM15?.minutely_15?.precipitation_knmi_seamless ?? [];
   const m15_best  = omM15?.minutely_15?.precipitation ?? [];
-  const m15len = Math.max(m15_arome.length, m15_icon2.length, m15_best.length);
+  const m15len = Math.max(m15_arome.length, m15_icon2.length, m15_knmi.length, m15_best.length);
   const m15 = Array.from({length: m15len}, (_, i) => {
     const vals = [];
     if (m15_arome[i] != null && isFinite(m15_arome[i])) vals.push(m15_arome[i]);
     if (m15_icon2[i] != null && isFinite(m15_icon2[i])) vals.push(m15_icon2[i]);
-    /* fallback best_match si hors zone AROME/ICON-D2 */
+    if (m15_knmi[i]  != null && isFinite(m15_knmi[i]))  vals.push(m15_knmi[i]);
     if (!vals.length && m15_best[i] != null && isFinite(m15_best[i])) vals.push(m15_best[i]);
+    /* Slot 0 = maintenant : booster avec la précipitation actuelle temps réel */
+    if (i === 0 && _currentRain != null && isFinite(_currentRain)) vals.push(_currentRain);
     return vals.length ? Math.max(...vals) : 0;
   });
   /* Fusionner m15 avec données MF si disponibles */
@@ -621,27 +659,57 @@ function processData(omMain,omM15,rainMx,probMx){
     const minsToNextHour=60-m;
     for(let o=5;o<minsToNextHour;o+=5){
       const slotIdx=Math.min(Math.round(slotF+o/15),m15.length-1);
-      const rM15=Math.max(0,m15[slotIdx]??0);
-      /* MF : prendre la valeur au slot le plus proche en minutes */
+      /* Sources m15 individuelles interpolées sur l'heure */
+      const rArome=Math.max(0,omM15?.minutely_15?.precipitation_meteofrance_arome_france_hd?.[slotIdx]??0);
+      const rIcon2=Math.max(0,omM15?.minutely_15?.precipitation_icon_d2?.[slotIdx]??0);
+        const rBest =Math.max(0,omM15?.minutely_15?.precipitation?.[slotIdx]??0);
+      /* MF rain-now (la meilleure source pour l'heure suivante) */
       const mfKeys=Object.keys(_mfByMin).map(Number);
       const nearestMf=mfKeys.length?mfKeys.reduce((a,b)=>Math.abs(b-o)<Math.abs(a-o)?b:a,mfKeys[0]):null;
       const rMF=nearestMf!=null?_mfByMin[nearestMf]??0:0;
-      /* MAX des deux sources */
-      const r=Math.max(rM15,rMF);
-      pts.push({t:`+${o}'`,d:0,r,mx:r,p:synthP(h,probMx),hourIdx:-1,mfIntens:_mfRainNow?._mfRainNow});
-      SOURCES.forEach((_,si)=>mods[si].push(null));
+      /* Collecter toutes les valeurs non nulles */
+      const mVals=[rArome,rIcon2,rBest,rMF].filter(v=>v>0);
+      /* OWM nowcast pour ce slot */
+      if(_owmMinutely?.length){
+        const now2=Date.now()+o*60000;
+        const nearestOwm=_owmMinutely.reduce((a,b)=>Math.abs(b.dt-now2)<Math.abs(a.dt-now2)?b:a,_owmMinutely[0]);
+        const rOWM=nearestOwm?.rain??0;
+        if(rOWM>0)mVals.push(rOWM);
+      }
+      /* P80 pessimiste sur toutes les sources disponibles */
+      const r=mVals.length?p80(mVals):Math.max(rBest,rMF);
+      const mx=mVals.length?Math.max(...mVals):Math.max(rBest,rMF);
+      pts.push({t:`+${o}'`,d:0,r,mx,p:synthP(h,probMx),hourIdx:-1});
+      /* Pousser les valeurs individuelles dans mods pour les courbes modèles */
+      SOURCES.forEach((src,si)=>{
+        let v=null;
+        if(src.key==='mf'||src.key==='mfhd') v=rArome||null;
+        else if(src.key==='icon') v=rIcon2||null;
+        else if(src.key==='knmi') v=null; /* knmi pas dispo en m15 */
+        mods[si].push(v);
+      });
       minutesAdded=true;
     }
   }
   /* Point H+1 : utiliser m15 fin de slot pour cohérence avec les minutes */
   if(m15.length>0&&minutesAdded){
-    /* Valeur m15 à la fin de l'heure courante (slot = fin de H→H+1) */
     const slotEnd=Math.min(Math.round(slotF+(60-m)/15),m15.length-1);
-    const rEnd=Math.max(0,m15[slotEnd]??0);
-    const mfEnd=Object.keys(_mfByMin).length?
-      (()=>{const mk=Object.keys(_mfByMin).map(Number);const nk=mk.reduce((a,b)=>Math.abs(b-(60-m))<Math.abs(a-(60-m))?b:a,mk[0]);return _mfByMin[nk]??0;})():0;
-    pts.push({t:(h+1)+'h',d:0,r:Math.max(rEnd,mfEnd),mx:Math.max(rEnd,mfEnd),p:synthP(h+1,probMx),hourIdx:h+1});
-    SOURCES.forEach((_,si)=>mods[si].push(null));
+    const rEndArome=Math.max(0,omM15?.minutely_15?.precipitation_meteofrance_arome_france_hd?.[slotEnd]??0);
+    const rEndIcon =Math.max(0,omM15?.minutely_15?.precipitation_icon_d2?.[slotEnd]??0);
+    const rEndBest =Math.max(0,m15[slotEnd]??0);
+    const mfKeys=Object.keys(_mfByMin).map(Number);
+    const mfEnd=mfKeys.length?(()=>{const nk=mfKeys.reduce((a,b)=>Math.abs(b-(60-m))<Math.abs(a-(60-m))?b:a,mfKeys[0]);return _mfByMin[nk]??0;})():0;
+    const endVals=[rEndArome,rEndIcon,rEndBest,mfEnd].filter(v=>v>0);
+    const rEnd=endVals.length?p80(endVals):rEndBest;
+    const mxEnd=endVals.length?Math.max(...endVals):rEndBest;
+    pts.push({t:(h+1)+'h',d:0,r:rEnd,mx:mxEnd,p:synthP(h+1,probMx),hourIdx:h+1});
+    SOURCES.forEach((src,si)=>{
+      let v=null;
+      if(src.key==='mf'||src.key==='mfhd') v=rEndArome||null;
+      else if(src.key==='icon') v=rEndIcon||null;
+      else if(src.key==='knmi') v=null;
+      mods[si].push(v);
+    });
   }
   /* Heures restantes aujourd'hui (depuis H+2 si minutes ajoutées, H+1 sinon) */
   const hStart=minutesAdded?h+2:h+1;
@@ -791,11 +859,23 @@ function detectDrySlots(pts){
   function hourOf(p){if(p.t.includes("'"))return -1;const h=parseInt(p.t);return isNaN(h)?-1:h;}
   let runStart=-1;
   for(let i=0;i<pts.length;i++){
-    const h=hourOf(pts[i]),inDay=h>=8&&h<=20,dry=inDay&&pts[i].mx<1&&pts[i].p<50;
+    const h=hourOf(pts[i]);
+    const sr=pts[i].d===0?_sunriseJ0:_sunriseJ1;
+    const ss=pts[i].d===0?_sunsetJ0:_sunsetJ1;
+    const inDay=h>=Math.ceil(sr)&&h<=Math.floor(ss),dry=inDay&&pts[i].mx<1&&pts[i].p<50;
     if(dry&&runStart<0)runStart=i;
     else if(!dry&&runStart>=0){if(i-runStart>2)slots.push({startIdx:runStart,endIdx:i-1});runStart=-1;}
   }
   if(runStart>=0&&pts.length-runStart>2)slots.push({startIdx:runStart,endIdx:pts.length-1});
+  /* Calculer l'ensoleillement moyen pour chaque plage */
+  slots.forEach(sl=>{
+    const slPts=pts.slice(sl.startIdx,sl.endIdx+1).filter(p=>p.hourIdx>=0);
+    if(!slPts.length||!_solarData){sl.sunLevel=0;return;}
+    const avgSolar=slPts.reduce((s,p)=>s+(_solarData[p.hourIdx]??0),0)/slPts.length;
+    const avgCloud=slPts.reduce((s,p)=>s+(_cloudData?.[p.hourIdx]??50),0)/slPts.length;
+    /* sunLevel : 0=nuageux, 1=voilé, 2=partiellement soleil, 3=grand soleil */
+    sl.sunLevel=avgSolar>600&&avgCloud<25?3:avgSolar>300&&avgCloud<60?2:avgSolar>100&&avgCloud<80?1:0;
+  });
   return slots;
 }
 
@@ -928,6 +1008,27 @@ function drawRainCloud(cv,cx,cy,r,mmh){
 
   /* Dessiner chaque goutte */
   positions.forEach(p=>drawDrop(p.x,p.y,r*0.38*p.s));
+  cv.restore();
+}
+
+/* ── soleil canvas ── */
+function drawSunIcon(cv,cx,cy,r,opacity){
+  cv.save();cv.globalAlpha=(opacity??1)*0.85;
+  /* Corps jaune */
+  cv.beginPath();cv.arc(cx,cy,r*0.5,0,Math.PI*2);
+  cv.fillStyle='#ffe600';
+  cv.shadowColor='rgba(255,220,0,0.8)';cv.shadowBlur=r*0.6;
+  cv.fill();cv.shadowBlur=0;
+  /* Rayons */
+  cv.strokeStyle='#ffe600';cv.lineWidth=r*0.15;cv.lineCap='round';
+  for(let i=0;i<8;i++){
+    const a=i*Math.PI/4;
+    const r1=r*0.65,r2=r*0.95;
+    cv.beginPath();
+    cv.moveTo(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1);
+    cv.lineTo(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2);
+    cv.stroke();
+  }
   cv.restore();
 }
 
@@ -1118,11 +1219,23 @@ function render(pts,mods){
           c.beginPath();c.moveTo(cx0,top);c.lineTo(cx0,bottom);c.stroke();
           c.beginPath();c.moveTo(cx1,top);c.lineTo(cx1,bottom);c.stroke();
           c.setLineDash([]);
-          /* logo tennis */
+          /* Soleils selon ensoleillement */
+          const sunLevel=sl.sunLevel??0;
           const ballR=isMob?9:13;
           const bcy=top+ballR+6;
           c.save();c.beginPath();c.rect(cx0,top,slotW,bottom-top);c.clip();
           drawTennisBall(c,midX,bcy,ballR);
+          /* Soleils : 1=voilé, 2=partiellement, 3=grand soleil */
+          if(sunLevel>0&&slotW>ballR*3){
+            const sunR=isMob?5:7;
+            const sunY=bcy+ballR+sunR+3;
+            const spacing=sunR*2.5;
+            const totalSunW=(sunLevel-1)*spacing;
+            for(let si=0;si<sunLevel;si++){
+              const sx=midX-totalSunW/2+si*spacing;
+              drawSunIcon(c,sx,sunY,sunR,si===sunLevel-1?1:0.5);
+            }
+          }
           c.restore();
           /* heures début→fin */
           const fSize=isMob?10:12;
@@ -1291,7 +1404,8 @@ function render(pts,mods){
         const {ctx:cv,scales:{x,y},chartArea:{top,bottom,left}}=chart;
         /* Le point "maintenant" = premier pt non-minute (h+1h ou premier +X') */
         const nowPt=pts[0];
-        const nowVal=nowPt?.r??0;
+        /* Priorité : précipitation temps réel > P80 modèles */
+        const nowVal=(_currentRain!=null&&_currentRain>0)?_currentRain:(nowPt?.r??0);
         const xNow=x.getPixelForValue(0);
         if(xNow<left||xNow>x.right)return;
         /* Couleur selon intensité */
