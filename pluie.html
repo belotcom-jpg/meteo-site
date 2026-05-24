@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Précipitations — La Météo Agricole</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --card: #111827;
+    --border: #1e2d40;
+    --accent: #38bdf8;
+    --accent2: #0ea5e9;
+    --rain: #60a5fa;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --green: #34d399;
+    --font: 'Courier New', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  header h1 {
+    font-size: clamp(18px, 4vw, 28px);
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  header p {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+    letter-spacing: 2px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 8px;
+    max-width: 780px;
+    margin: 0 auto 28px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .input-row input {
+    flex: 1;
+    min-width: 200px;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 11px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .input-row input:focus { border-color: var(--accent); }
+  .input-row input::placeholder { color: var(--muted); }
+
+  button {
+    background: var(--accent2);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-family: var(--font);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: opacity .2s;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  button:hover { opacity: .8; }
+  button:disabled { opacity: .4; cursor: default; }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    max-width: 780px;
+    margin: 0 auto 24px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .card .val {
+    font-size: clamp(22px, 5vw, 34px);
+    font-weight: 900;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .card .val.ok { color: var(--green); }
+  .card .val.rain { color: var(--rain); }
+  .card .lbl {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-top: 6px;
+    text-transform: uppercase;
+  }
+
+  .chart-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    max-width: 780px;
+    margin: 0 auto 24px;
+    padding: 20px;
+    position: relative;
+  }
+  .chart-wrap canvas { width: 100% !important; }
+
+  .table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    max-width: 780px;
+    margin: 0 auto 24px;
+    overflow: hidden;
+  }
+  .table-title {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    padding: 14px 16px 10px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+  th {
+    color: var(--muted);
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 6px 16px;
+    border-bottom: 1px solid rgba(30,45,64,.5);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr.has-rain td { color: var(--rain); }
+  tr.has-rain td:last-child { font-weight: 900; }
+
+  .bar-inline {
+    display: inline-block;
+    height: 8px;
+    background: var(--rain);
+    border-radius: 4px;
+    opacity: .7;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  .status {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    padding: 12px;
+    letter-spacing: 1px;
+  }
+  .status.err { color: #f87171; }
+
+  .meta {
+    text-align: center;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-top: 8px;
+  }
+
+  #spinner {
+    display: none;
+    text-align: center;
+    color: var(--accent);
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 12px;
+    animation: blink 1s infinite;
+  }
+  @keyframes blink { 50% { opacity: .3; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌧 Précipitations</h1>
+  <p>Scraping temps réel — lameteoagricole.net</p>
+</header>
+
+<div class="input-row">
+  <span style="font-size:9px;color:var(--muted);white-space:nowrap;align-self:center;letter-spacing:1px">…/</span>
+  <input id="cityInput" type="text" placeholder="Ville" value="Paris" style="max-width:120px" oninput="buildUrl()">
+  <input id="suffixInput" type="text" placeholder="suffixe" value="-" style="max-width:70px" oninput="buildUrl()">
+  <input id="urlInput" type="text" style="display:none" value="https://www.lameteoagricole.net/meteo-minute-par-minute/Paris-.html">
+  <input id="apiInput" type="text"
+    placeholder="URL de votre serveur API"
+    value="http://127.0.0.1:5000">
+  <button id="btnFetch" onclick="fetchData()">↺ Scraper</button>
+</div>
+
+<div id="spinner">CHARGEMENT EN COURS…</div>
+<div id="statusMsg" class="status"></div>
+
+<div id="cards" class="cards" style="display:none">
+  <div class="card"><div class="val" id="cTotal">—</div><div class="lbl">Total mm</div></div>
+  <div class="card"><div class="val" id="cPoints">—</div><div class="lbl">Points</div></div>
+  <div class="card"><div class="val" id="cMax">—</div><div class="lbl">Max mm</div></div>
+  <div class="card"><div class="val" id="cPeriode">—</div><div class="lbl">Période</div></div>
+</div>
+
+<div class="chart-wrap" id="chartWrap" style="display:none">
+  <canvas id="myChart" height="180"></canvas>
+  <div class="meta" id="chartMeta"></div>
+</div>
+
+<div class="table-wrap" id="tableWrap" style="display:none">
+  <div class="table-title">Données brutes — minute par minute</div>
+  <table>
+    <thead><tr><th>Heure</th><th>Précipitation</th><th>Intensité</th></tr></thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<script>
+let myChart = null;
+const API_BASE = () => document.getElementById('apiInput').value.replace(/\/$/, '');
+
+const BASE_URL = 'https://www.lameteoagricole.net/meteo-minute-par-minute/';
+function buildUrl() {
+  const city   = document.getElementById('cityInput').value.trim();
+  const suffix = document.getElementById('suffixInput').value.trim();
+  document.getElementById('urlInput').value = BASE_URL + encodeURIComponent(city) + suffix + '.html';
+}
+
+async function fetchData() {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) { setStatus('Entrez une URL', false); return; }
+
+  const btn = document.getElementById('btnFetch');
+  btn.disabled = true;
+  document.getElementById('spinner').style.display = 'block';
+  document.getElementById('statusMsg').textContent = '';
+  document.getElementById('cards').style.display = 'none';
+  document.getElementById('chartWrap').style.display = 'none';
+  document.getElementById('tableWrap').style.display = 'none';
+
+  try {
+    const apiUrl = `${API_BASE()}/api/pluie?url=${encodeURIComponent(url)}`;
+    const resp = await fetch(apiUrl);
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      setStatus('❌ ' + (data.error || 'Erreur serveur'), true);
+      return;
+    }
+
+    renderData(data);
+  } catch(e) {
+    setStatus('❌ Impossible de joindre le serveur API — vérifiez l\'URL et que le serveur tourne.', true);
+  } finally {
+    btn.disabled = false;
+    document.getElementById('spinner').style.display = 'none';
+  }
+}
+
+function renderData(d) {
+  // Cartes
+  const maxVal = Math.max(...d.precipitation_mm);
+  document.getElementById('cTotal').textContent = d.total_mm.toFixed(2);
+  document.getElementById('cTotal').className = 'val ' + (d.total_mm > 0 ? 'rain' : 'ok');
+  document.getElementById('cPoints').textContent = d.nb_points;
+  document.getElementById('cMax').textContent = maxVal.toFixed(2);
+  document.getElementById('cMax').className = 'val ' + (maxVal > 0 ? 'rain' : 'ok');
+  document.getElementById('cPeriode').textContent = d.labels[0];
+  document.getElementById('cards').style.display = 'grid';
+
+  // Graphique
+  const ctx = document.getElementById('myChart').getContext('2d');
+  if (myChart) myChart.destroy();
+
+  const colors = d.precipitation_mm.map(v =>
+    v === 0 ? 'rgba(96,165,250,0.15)' :
+    v < 1   ? 'rgba(96,165,250,0.5)'  :
+    v < 5   ? 'rgba(56,189,248,0.8)'  :
+              'rgba(14,165,233,1)'
+  );
+
+  myChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: d.labels,
+      datasets: [{
+        data: d.precipitation_mm,
+        backgroundColor: colors,
+        borderColor: 'transparent',
+        borderRadius: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      animation: { duration: 600 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.parsed.y} mm`
+          },
+          backgroundColor: '#1e293b',
+          titleColor: '#94a3b8',
+          bodyColor: '#60a5fa',
+          borderColor: '#1e2d40',
+          borderWidth: 1,
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: '#475569',
+            font: { family: 'Courier New', size: 9 },
+            maxRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: 10
+          },
+          grid: { display: false },
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color: '#475569', font: { family: 'Courier New', size: 9 } },
+          grid: { color: 'rgba(30,45,64,.6)' },
+          title: {
+            display: true,
+            text: 'mm',
+            color: '#475569',
+            font: { family: 'Courier New', size: 9 }
+          }
+        }
+      }
+    }
+  });
+
+  document.getElementById('chartMeta').textContent =
+    `Scrapé le ${new Date(d.scraped_at).toLocaleString('fr-FR')} · ${d.periode}`;
+  document.getElementById('chartWrap').style.display = 'block';
+
+  // Tableau
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  const maxBar = maxVal > 0 ? maxVal : 1;
+  d.labels.forEach((lbl, i) => {
+    const v = d.precipitation_mm[i];
+    const tr = document.createElement('tr');
+    if (v > 0) tr.className = 'has-rain';
+    const barW = v > 0 ? Math.max(4, Math.round(v / maxBar * 120)) : 0;
+    const intensite = v === 0 ? '<span style="color:#475569">—</span>' :
+      v < 0.5  ? 'Bruine' :
+      v < 2    ? 'Faible' :
+      v < 7    ? 'Modérée' :
+      v < 10   ? 'Forte' : 'Très forte';
+    tr.innerHTML = `
+      <td>${lbl}</td>
+      <td>${v.toFixed(2)} mm${barW > 0 ? `<span class="bar-inline" style="width:${barW}px"></span>` : ''}</td>
+      <td>${intensite}</td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('tableWrap').style.display = 'block';
+
+  setStatus('', false);
+}
+
+function setStatus(msg, isErr) {
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.className = 'status' + (isErr ? ' err' : '');
+}
+
+// Lancer au chargement si URL déjà renseignée
+window.addEventListener('load', () => {
+  const url = document.getElementById('urlInput').value;
+  if (url.includes('lameteoagricole')) fetchData();
+});
+</script>
+</body>
+</html>
