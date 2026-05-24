@@ -45,6 +45,13 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 .rn-bar{flex:1;border-radius:2px 2px 0 0;min-height:2px;transition:height .3s}
 .rn-lbl{flex:1;font-size:7px;font-weight:900;color:#555;text-align:center;font-family:'Courier New',monospace}
 #radarCard{background:#080808;border:2px solid #333;border-radius:16px;overflow:hidden}
+#radarInner{display:flex;gap:0;height:100%}
+#scrapeCol{flex:1;min-width:0;border-right:1px solid #222;display:flex;flex-direction:column}
+#scrapeHeader{padding:6px 10px;font-size:9px;font-weight:900;color:#ffe600;letter-spacing:2px;border-bottom:1px solid #222;display:flex;justify-content:space-between;align-items:center}
+#scrapeChart{height:clamp(220px,50vw,360px);padding:4px 8px 4px;position:relative;flex-shrink:0}
+#scrapeCanvas{width:100%!important;height:100%!important}
+#radarCol{flex:1;min-width:0;display:flex;flex-direction:column}
+@media(max-width:600px){#radarInner{flex-direction:column}#scrapeCol{border-right:none;border-bottom:1px solid #222}}
 #radarHeader{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid #2a2a2a}
 #radarTitle{font-size:10px;font-weight:900;color:#888;letter-spacing:2px}
 #radarTime{font-size:9px;color:#555;font-weight:700}
@@ -149,15 +156,30 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 
 
   <div id="radarCard" style="display:none">
-    <div id="radarHeader">
-      <span id="radarTitle">📡 RADAR PRÉCIPITATIONS</span>
-      <div style="display:flex;gap:6px;align-items:center">
-        <span id="radarTime">—</span>
-        <button id="radarPlayBtn" onclick="toggleRadarPlay()">▶ PLAY</button>
+    <div id="radarInner">
+      <!-- Colonne gauche : histogramme scraping -->
+      <div id="scrapeCol">
+        <div id="scrapeHeader">
+          <span>🌧 PLUIE DANS L'HEURE</span>
+          <span id="scrapeTime" style="color:#666;font-weight:400">—</span>
+        </div>
+        <div id="scrapeChart">
+          <canvas id="scrapeCanvas" style="display:block;width:100%;height:100%"></canvas>
+        </div>
       </div>
-    </div>
-    <div id="radarMap">
-      <div class="radar-crosshair"></div>
+      <!-- Colonne droite : radar -->
+      <div id="radarCol">
+        <div id="radarHeader">
+          <span id="radarTitle">📡 RADAR</span>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span id="radarTime">—</span>
+            <button id="radarPlayBtn" onclick="toggleRadarPlay()">▶ PLAY</button>
+          </div>
+        </div>
+        <div id="radarMap">
+          <div class="radar-crosshair"></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -206,7 +228,9 @@ let _rainNowTimer=null;
 let _rainRanking=[]; /* classement trié par pluie décroissante */
 let _rainRankIdx=0; /* index courant dans le classement */
 let _mfRainNow=null; /* données MF pluie dans l'heure */
-let _mfByMin={}; /* slots MF par offset-minutes, global */
+let _mfByMin={};
+let _scrapedByMin={};
+let cityName=''; /* données scrapées lameteoagricole, clé=offset minutes */ /* slots MF par offset-minutes, global */
 let _radarMap=null,_radarLayer=null,_radarMarker=null,_radarFrames=[],_radarIdx=0,_radarPlaying=false,_radarTimer=null;
 let _cityLat=48.6869,_cityLon=2.3814; /* défaut Juvisy */
 let _isMob=false;
@@ -423,6 +447,7 @@ async function findWindy(){
   document.getElementById('cityInput').value=best.name;
   document.getElementById('clearBtn').style.display='block';
   _rainRanking=[];_rainRankIdx=0;
+  _scrapedByMin={};
   await load();
 }
 
@@ -472,6 +497,7 @@ async function findPollenCity(){
   document.getElementById('cityInput').value=best.name;
   document.getElementById('clearBtn').style.display='block';
   _rainRanking=[];_rainRankIdx=0;
+  _scrapedByMin={};
   await load();
 }
 
@@ -481,6 +507,7 @@ async function randomCity(){
   document.getElementById('cityInput').value=city;
   document.getElementById('clearBtn').style.display='block';
   _rainRanking=[];_rainRankIdx=0;
+  _scrapedByMin={};
   await load();
 }
 
@@ -598,6 +625,111 @@ document.addEventListener('DOMContentLoaded',()=>{
 /* ── OpenWeather minutely nowcast ── */
 /* P1 — OWM remplacé : _owmMinutely alimenté depuis omM15 (Open-Meteo minutely_15)
    Appelé après le fetch principal, lat/lon gardés pour compatibilité signature */
+
+
+/* ── Histogramme scraping dans radarCard ── */
+let _scrapeChart=null;
+function renderScrapeChart(labels,values){
+  var canvas=document.getElementById('scrapeCanvas');
+  if(!canvas){console.warn('[scrape] canvas not found');return;}
+  if(!labels||!labels.length){console.warn('[scrape] no labels');return;}
+  var maxV=Math.max.apply(null,values.concat([0.1]));
+  var colors=values.map(function(v){
+    if(v<=0)return 'rgba(255,230,0,0.12)';
+    if(v<0.5)return 'rgba(255,230,0,0.6)';
+    if(v<2)return 'rgba(255,200,0,0.85)';
+    if(v<7)return 'rgba(255,160,0,0.95)';
+    return 'rgba(255,100,0,1)';
+  });
+  if(_scrapeChart)_scrapeChart.destroy();
+  _scrapeChart=new Chart(canvas,{
+    type:'bar',
+    data:{labels:labels,datasets:[{data:values,backgroundColor:colors,borderColor:'transparent',borderRadius:2}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:{duration:400},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y.toFixed(2)+' mm';}},backgroundColor:'#1a1a1a',titleColor:'#ffe600',bodyColor:'#ffcc00'}},
+      scales:{
+        x:{ticks:{color:'#ffe600',font:{family:"'Courier New',monospace",size:9,weight:'bold'},maxRotation:0,autoSkip:true,maxTicksLimit:8},grid:{display:false}},y:{beginAtZero:true,max:maxV>0?maxV*1.15:1,ticks:{color:'#ffe600',font:{family:"'Courier New',monospace",size:9,weight:'bold'},callback:function(v){return v.toFixed(1);},maxTicksLimit:3},grid:{color:'rgba(255,230,0,0.07)'},border:{color:'transparent'}}
+      }
+    }
+  });
+  var total=values.reduce(function(a,b){return a+b;},0);
+  var el=document.getElementById('scrapeTime');
+  if(el)el.textContent=total.toFixed(2)+'mm · '+labels[0]+'-'+labels[labels.length-1];
+  console.log('[scrape] chart rendered OK, total=',total.toFixed(2),'mm');
+}
+
+/* ── Scraping lameteoagricole.net via proxy CORS ── */
+async function fetchScrapedRain(name){
+  try{
+    const siteUrl='https://www.lameteoagricole.net/meteo-minute-par-minute/'+encodeURIComponent(name)+'-.html';
+    /* Essayer plusieurs proxies CORS en cascade */
+    const proxies=[
+      {url:'https://corsproxy.io/?'+encodeURIComponent(siteUrl),json:false},
+      {url:'https://api.allorigins.win/raw?url='+encodeURIComponent(siteUrl),json:false},
+      {url:'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(siteUrl),json:false},
+      {url:'https://thingproxy.freeboard.io/fetch/'+siteUrl,json:false},
+    ];
+    let html='';
+    for(var pi=0;pi<proxies.length;pi++){
+      try{
+        const ctrl=new AbortController();
+        const tid=setTimeout(function(){ctrl.abort();},8000);
+        const resp=await fetch(proxies[pi].url,{signal:ctrl.signal});
+        clearTimeout(tid);
+        if(!resp.ok){console.warn('[scrape] proxy',pi,'error',resp.status);continue;}
+        const ct=resp.headers.get('content-type')||'';
+        if(ct.includes('json')){
+          const json=await resp.json();
+          html=json.contents||json.data||'';
+        } else {
+          html=await resp.text();
+        }
+        /* Verifier que c'est bien la vraie page (>5KB et contient Chart.js) */
+        if(html&&html.length>5000&&html.includes('dansHeure')){console.log('[scrape] proxy',pi,'OK, html',html.length,'chars');break;}
+        else{console.warn('[scrape] proxy',pi,'bad response, len=',html.length);html='';}
+      }catch(ex){console.warn('[scrape] proxy',pi,'exception',ex.message);}
+    }
+    if(!html){console.warn('[scrape] all proxies failed');return null;}
+    const mLabels=html.match(/labels:\s*(\[[^\]]+\])/);
+    const mData=html.match(/data:\s*(\[[\d.,\s]+\])/);
+    if(!mLabels||!mData){console.warn('[scrape] regex no match');return null;}
+    const labels=JSON.parse(mLabels[1]);
+    const values=JSON.parse(mData[1]).map(Number);
+    console.log('[scrape] OK',labels.length,'pts',labels[0],'-',labels[labels.length-1]);
+    return {labels:labels,values:values};
+  }catch(e){console.warn('[scrape] error',e.message);return null;}
+}
+
+/* Lancer le scraping après le chargement principal */
+async function launchScraping(){
+  if(!cityName){console.warn('[scrape] cityName empty');return;}
+  console.log('[scrape] launching for:',cityName);
+  const data=await fetchScrapedRain(cityName);
+  if(!data){
+    var el=document.getElementById('scrapeTime');
+    if(el)el.textContent='non disponible';
+    return;
+  }
+  var now=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz||'Europe/Paris'}));
+  var nowMin=now.getHours()*60+now.getMinutes();
+  _scrapedByMin={};
+  data.labels.forEach(function(lbl,i){
+    var parts=lbl.split(':');
+    if(parts.length!==2)return;
+    var lblMin=parseInt(parts[0])*60+parseInt(parts[1]);
+    var offset=lblMin-nowMin;
+    if(offset<-30)offset+=24*60;
+    _scrapedByMin[Math.round(offset)]=data.values[i];
+  });
+  renderScrapeChart(data.labels,data.values);
+  if(_cachedData&&(_viewMode==='j0'||_viewMode==='j1')){
+    lastW=0;
+    var d=_cachedData;
+    processData(d.omMain,d.omM15,d.rainMx,d.probMx);
+  }
+}
+
 function fetchOwmMinutely(lat,lon){
   /* Les données minutely sont déjà dans omM15 (precipitation_meteofrance_arome_france_hd
      et precipitation_icon_d2). On reconstitue _owmMinutely depuis omM15 si disponible.
@@ -730,8 +862,9 @@ async function load(){
       if(!omMain?.hourly?.time){} else {
         cityTz=omMain.timezone??'Europe/Paris';N_HRS=omMain.hourly.time.length;
         const tzEl=document.getElementById('displayTz');
-        const cityName=best.name+(best.country?', '+best.country:'');
-        tzEl.innerHTML=`<span style='color:#fff;font-size:clamp(11px,3vw,15px);letter-spacing:2px;text-transform:uppercase;font-weight:900'>${cityName}</span> <span style='color:#666;font-size:clamp(8px,1.8vw,10px);font-weight:400'>${cityTz} · ${omMain.timezone_abbreviation??''}</span>`;
+    cityName=best.name;
+        const _cityDisp=best.name+(best.country?', '+best.country:'');
+        tzEl.innerHTML=`<span style='color:#fff;font-size:clamp(11px,3vw,15px);letter-spacing:2px;text-transform:uppercase;font-weight:900'>${_cityDisp}</span> <span style='color:#666;font-size:clamp(8px,1.8vw,10px);font-weight:400'>${cityTz} · ${omMain.timezone_abbreviation??''}</span>`;
         const tIdx={};omMain.hourly.time.forEach((t,i)=>{tIdx[t]=i;});
         const rainMx=buildRainMx(omMain,metno,tIdx);
         const probMx=buildProbMx(omMain,metno,tIdx);
@@ -770,10 +903,11 @@ async function load(){
     if(!omMain?.hourly?.time){showStatus('❌ Open-Meteo inaccessible — réessaie dans quelques secondes','#ff3d57');return;}
     
     cityTz=omMain.timezone??'Europe/Paris';N_HRS=omMain.hourly.time.length;
+    cityName=best.name;
     clearInterval(_autoRefreshTimer);zoomMin=0;zoomMax=1;
     const tzEl=document.getElementById('displayTz');
-    const cityName=best.name+(best.country?', '+best.country:'');
-    tzEl.innerHTML=`<span style='color:#fff;font-size:clamp(11px,3vw,15px);letter-spacing:2px;text-transform:uppercase;font-weight:900'>${cityName}</span> <span style='color:#666;font-size:clamp(8px,1.8vw,10px);font-weight:400'>${cityTz} · ${omMain.timezone_abbreviation??''}</span>`;
+    const _cityDisp=best.name+(best.country?', '+best.country:'');
+    tzEl.innerHTML=`<span style='color:#fff;font-size:clamp(11px,3vw,15px);letter-spacing:2px;text-transform:uppercase;font-weight:900'>${_cityDisp}</span> <span style='color:#666;font-size:clamp(8px,1.8vw,10px);font-weight:400'>${cityTz} · ${omMain.timezone_abbreviation??''}</span>`;
     const tIdx={};omMain.hourly.time.forEach((t,i)=>{tIdx[t]=i;});
     const rainMx=buildRainMx(omMain,metno,tIdx);
     const probMx=buildProbMx(omMain,metno,tIdx);
@@ -810,6 +944,7 @@ async function load(){
     updateBtnState();
     processData(omMain,omM15,rainMx,probMx);
     _updateURL();
+    launchScraping();
   }catch(e){console.error(e);showStatus('❌ Erreur réseau : '+e.message,'#ff3d57');}
   finally{btn.disabled=false;btn.textContent='GO';}
 }
@@ -1018,8 +1153,10 @@ function processData(omMain,omM15,rainMx,probMx){
 
       /* Proposition A : si MF radar disponible, l'utiliser comme plancher fort */
       const modelR=mVals.length?p80(mVals):rBest;
-      const r=Math.max(modelR,rAnchor,rMF);
-      const mx=Math.max(mVals.length?Math.max(...mVals):rBest,rAnchor,rMF);
+      /* Scraping lameteoagricole : plancher prioritaire si dispo */
+      const rScrape=(()=>{const keys=Object.keys(_scrapedByMin).map(Number);if(!keys.length)return 0;const nk=keys.reduce((a,b)=>Math.abs(b-o)<Math.abs(a-o)?b:a,keys[0]);return Math.abs(nk-o)<=3?(_scrapedByMin[nk]??0):0;})();
+      const r=rScrape>0?Math.max(rScrape,rAnchor):Math.max(modelR,rAnchor,rMF);
+      const mx=Math.max(mVals.length?Math.max(...mVals):rBest,rAnchor,rMF,rScrape);
 
       pts.push({t:`+${o}'`,d:0,r,mx,p:synthP(h,probMx),hourIdx:-1});
       SOURCES.forEach((src,si)=>{
