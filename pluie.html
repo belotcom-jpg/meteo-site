@@ -217,9 +217,7 @@
   <input id="cityInput" type="text" placeholder="Ville" value="Paris" style="max-width:120px" oninput="buildUrl()">
   <input id="suffixInput" type="text" placeholder="suffixe" value="-" style="max-width:70px" oninput="buildUrl()">
   <input id="urlInput" type="text" style="display:none" value="https://www.lameteoagricole.net/meteo-minute-par-minute/Paris-.html">
-  <input id="apiInput" type="text"
-    placeholder="URL de votre serveur API"
-    value="http://127.0.0.1:5000">
+
   <button id="btnFetch" onclick="fetchData()">↺ Scraper</button>
 </div>
 
@@ -248,8 +246,6 @@
 
 <script>
 let myChart = null;
-const API_BASE = () => document.getElementById('apiInput').value.replace(/\/$/, '');
-
 const BASE_URL = 'https://www.lameteoagricole.net/meteo-minute-par-minute/';
 function buildUrl() {
   const city   = document.getElementById('cityInput').value.trim();
@@ -270,18 +266,36 @@ async function fetchData() {
   document.getElementById('tableWrap').style.display = 'none';
 
   try {
-    const apiUrl = `${API_BASE()}/api/pluie?url=${encodeURIComponent(url)}`;
-    const resp = await fetch(apiUrl);
-    const data = await resp.json();
+    // Proxy CORS gratuit — fonctionne depuis GitHub Pages sans serveur
+    const proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+    const resp = await fetch(proxy);
+    if (!resp.ok) throw new Error('Proxy error ' + resp.status);
+    const json = await resp.json();
+    const html = json.contents;
 
-    if (!resp.ok) {
-      setStatus('❌ ' + (data.error || 'Erreur serveur'), true);
+    // Parser les données Chart.js injectées côté serveur dans le HTML
+    const mLabels = html.match(/labels:\s*(\[[^\]]+\])/);
+    const mData   = html.match(/data:\s*([\[\]\d.,\s]+\])/);
+
+    if (!mLabels || !mData) {
+      setStatus('\u274c Donn\u00e9es non trouv\u00e9es \u2014 v\u00e9rifiez l\'URL', true);
       return;
     }
 
-    renderData(data);
+    const labels = JSON.parse(mLabels[1]);
+    const values = JSON.parse(mData[1]).map(Number);
+
+    renderData({
+      url,
+      scraped_at: new Date().toISOString(),
+      labels,
+      precipitation_mm: values,
+      total_mm: Math.round(values.reduce((a,b)=>a+b,0)*1000)/1000,
+      nb_points: labels.length,
+      periode: labels[0] + ' \u2192 ' + labels[labels.length-1]
+    });
   } catch(e) {
-    setStatus('❌ Impossible de joindre le serveur API — vérifiez l\'URL et que le serveur tourne.', true);
+    setStatus('\u274c Erreur : ' + e.message, true);
   } finally {
     btn.disabled = false;
     document.getElementById('spinner').style.display = 'none';
