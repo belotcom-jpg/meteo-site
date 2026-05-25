@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PluiePro v1.10</title>
+<title>PluiePro v1.19</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -46,12 +46,16 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 .rn-lbl{flex:1;font-size:7px;font-weight:900;color:#555;text-align:center;font-family:'Courier New',monospace}
 #radarCard{background:#080808;border:2px solid #333;border-radius:16px;overflow:hidden}
 #radarInner{display:flex;gap:0;height:100%}
+#mfCol{flex:1;min-width:0;border-right:1px solid #222;display:flex;flex-direction:column}
+#mfHeader{padding:6px 10px;font-size:9px;font-weight:900;color:#4488ff;letter-spacing:2px;border-bottom:1px solid #222;display:flex;justify-content:space-between;align-items:center}
+#mfChart{height:clamp(220px,50vw,360px);padding:4px 8px 4px;position:relative;flex-shrink:0}
+#mfCanvas{display:block;width:100%;height:100%}
 #scrapeCol{flex:1;min-width:0;border-right:1px solid #222;display:flex;flex-direction:column}
 #scrapeHeader{padding:6px 10px;font-size:9px;font-weight:900;color:#ffe600;letter-spacing:2px;border-bottom:1px solid #222;display:flex;justify-content:space-between;align-items:center}
 #scrapeChart{height:clamp(220px,50vw,360px);padding:4px 8px 4px;position:relative;flex-shrink:0}
 #scrapeCanvas{width:100%!important;height:100%!important}
 #radarCol{flex:1;min-width:0;display:flex;flex-direction:column}
-@media(max-width:600px){#radarInner{flex-direction:column}#scrapeCol{border-right:none;border-bottom:1px solid #222}}
+@media(max-width:600px){#radarInner{flex-direction:column}#scrapeCol{border-right:none;border-bottom:1px solid #222}#mfCol{border-right:none;border-bottom:1px solid #222}}
 #radarHeader{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid #2a2a2a}
 #radarTitle{font-size:10px;font-weight:900;color:#888;letter-spacing:2px}
 #radarTime{font-size:9px;color:#555;font-weight:700}
@@ -68,6 +72,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 .view-btn{background:#0d0d0d;border:1.5px solid #333;border-radius:7px;color:#888;font-family:'Courier New',monospace;font-size:9px;font-weight:900;padding:4px 10px;cursor:pointer;letter-spacing:1px;transition:all .15s;white-space:nowrap}
 .view-btn:hover{border-color:#888;color:#fff}
 .view-btn.active{border-color:#00ffff;color:#00ffff;background:rgba(0,255,255,.07)}
+.view-btn.ton{border-color:#00ffff;color:#00ffff;background:rgba(0,255,255,.1)}
 .card{background:#080808;border:2px solid #333;border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
 .header{display:flex;justify-content:space-between;align-items:center;padding:5px 10px;border-bottom:1px solid #2a2a2a;gap:8px}
 .header-left{display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -91,7 +96,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 .day-seg{display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;gap:2px;padding:2px 3px;min-width:36px}
 #summaryRow.multiline .day-seg{flex-direction:column;align-items:center;gap:2px;padding:2px 3px}
 .day-seg.last{justify-content:flex-start;align-items:flex-start}
-#summaryRow.multiline .day-seg.first{align-items:flex-start;justify-content:flex-start}
+#summaryRow.multiline .day-seg.first{align-items:center;justify-content:center}
 .day-name{font-size:clamp(7px,1.8vw,9px);font-weight:900;color:#666;letter-spacing:1px;white-space:nowrap}
 .day-rain{font-size:clamp(8px,2vw,10px);font-weight:900;color:#ffe600;line-height:1}
 .day-prob{font-size:clamp(8px,2vw,10px);font-weight:900;color:#ffe600}
@@ -127,9 +132,15 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
     <button class="view-btn"        id="btnJ5"  onclick="setView('j5')">◂ J+5</button>
     <button class="view-btn"        id="btnJ8"  onclick="setView('j8')">◂ J+8</button>
     <button class="view-btn"        id="btnJ14" onclick="setView('j14')">◂ J+14</button>
-    <button id="btnUltra"   class="view-btn active" onclick="setMode('ultra')">◉ PLUIE</button>
-    <button id="btnSimple"  class="view-btn"        onclick="setMode('simple')">● PROBA-NUAGE</button>
-    <button id="btnComplex" class="view-btn"        onclick="setMode('complex')">○ TOUT</button>
+    <button id="tbWind"   class="view-btn" onclick="tgl('wind',this)">💨 VENT</button>
+    <button id="tbUV"     class="view-btn" onclick="tgl('uv',this)">☀ UV</button>
+    <button id="tbPollen" class="view-btn" onclick="tgl('pollen',this)">🌼 POLLEN</button>
+    <button id="tbPoll"   class="view-btn" onclick="tgl('poll',this)">💨 POLLUTION</button>
+    <button id="tbProba"  class="view-btn" onclick="tgl('proba',this)">〰 PROBA</button>
+    <button id="tbNuage"  class="view-btn" onclick="tgl('nuage',this)">☁ NUAGE</button>
+    <button id="tbTemp"   class="view-btn" onclick="tgl('temp',this)">🌡 TEMPÉRATURE</button>
+    <button id="tbModels" class="view-btn" onclick="tgl('models',this)">📊 MODÈLES</button>
+    <button id="tbTout"   class="view-btn" onclick="tglAll()">◎ TOUT</button>
   </div>
   <div class="card">
     <div class="header">
@@ -155,7 +166,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   </div>
 
 
-  <div id="radarCard" style="display:none">
+  <div id="radarCard">
     <div id="radarInner">
       <!-- Colonne gauche : histogramme scraping -->
       <div id="scrapeCol">
@@ -165,6 +176,16 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
         </div>
         <div id="scrapeChart">
           <canvas id="scrapeCanvas" style="display:block;width:100%;height:100%"></canvas>
+        </div>
+      </div>
+      <!-- Colonne centrale : MF Radar pluie dans l'heure -->
+      <div id="mfCol">
+        <div id="mfHeader">
+          <span>📡 MF PLUIE RADAR</span>
+          <span id="mfTime" style="color:#666;font-weight:400">—</span>
+        </div>
+        <div id="mfChart">
+          <canvas id="mfCanvas" style="display:block;width:100%;height:100%"></canvas>
         </div>
       </div>
       <!-- Colonne droite : radar -->
@@ -201,7 +222,13 @@ const SOURCES=[
 let myChart=null,lastW=0,cityTz='Europe/Paris',N_HRS=0;
 let _peaks=[],_idx8hJ0=-1,_idx8hJ1=-1,_drySlots=[],_rainStarts=[],_8hXPos=[];
 let _uvData=null;
+let _uvHourlyData2=null;
+let _uvHourlyData=null;
+let _pollenHourly=null;
+let _aqiHourly=null;
 let _viewMode='j1',_cachedData=null,_cachedJm1=null,_cachedJm7=null,_simpleMode=true,_ultraMode=true,_gradCache=null;
+let _layers={wind:false,uv:false,pollen:false,poll:false,proba:false,nuage:false,temp:false,models:false};
+let _tempHourly=null;
 let _summaryStartDate=null; /* date de départ pour buildSummary en mode passé */
 let _tempJ1Max=null,_tempJ1Min=null,_tempJ0Max=null,_tempJ0Min=null;
 let zoomMin=0,zoomMax=1; /* état zoom global */
@@ -218,6 +245,7 @@ function applyZoom(){
   updateScrollbar();
 }
 let _windData=null;
+let _windGustData=null;
 let _solarData=null;
 let _tempByDay=null; /* températures par jour J0..J+14 */
 let _cloudData=null;
@@ -310,6 +338,64 @@ function highlightSource(key){
 /* ── setMode : ultra / simple / complex ── */
 
 /* ── Pollen : alerte si risque élevé ── */
+
+
+/* ── layer toggles ── */
+function tgl(name, btn){
+  _layers[name]=!_layers[name];
+  btn.classList.toggle('ton', _layers[name]);
+  document.getElementById('tbTout').classList.remove('ton');
+  applyLayers();
+}
+function tglAll(){
+  const allOn=Object.values(_layers).every(Boolean);
+  const v=!allOn;
+  Object.keys(_layers).forEach(k=>{_layers[k]=v;});
+  ['tbWind','tbUV','tbPollen','tbPoll','tbProba','tbNuage','tbTemp','tbModels'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b)b.classList.toggle('ton',v);
+  });
+  document.getElementById('tbTout').classList.toggle('ton',v);
+  applyLayers();
+}
+function applyLayers(){
+  if(!myChart)return;
+  const ds=myChart.data.datasets;
+  const nSrc=SOURCES.length;
+  const idxProb=3+nSrc, idxCloud=4+nSrc, idxP80=2+nSrc;
+  /* MODÈLES individuels + MAX bleu */
+  for(let i=1;i<=nSrc;i++){
+    if(ds[i]){
+      ds[i].borderColor=_layers.models?(SOURCES[i-1]?.color+'aa'):'transparent';
+      ds[i].borderWidth=_layers.models?(_isMob?0.8:1.2):0;
+    }
+  }
+  const idxMax=1+nSrc;
+  if(ds[idxMax]){
+    ds[idxMax].borderColor=_layers.models?'#4488ff':'transparent';
+    ds[idxMax].borderWidth=_layers.models?(_isMob?4:6):0;
+  }
+  /* PROBA */
+  if(ds[idxProb]){
+    ds[idxProb].borderColor=_layers.proba?'rgba(255,255,255,0.85)':'rgba(0,0,0,0)';
+    ds[idxProb].borderWidth=_layers.proba?(_isMob?2.5:3.5):0;
+  }
+  /* NUAGE */
+  if(ds[idxCloud]){
+    ds[idxCloud].borderColor=_layers.nuage?'#ff3333':'rgba(0,0,0,0)';
+    ds[idxCloud].borderWidth=_layers.nuage?(_isMob?3:4):0;
+    if(_layers.nuage)ds[idxCloud].borderDash=[6,3,6,3];
+  }
+  /* axe yProb */
+  if(myChart.options.scales.yProb)
+    myChart.options.scales.yProb.display=(_layers.proba||_layers.nuage);
+  /* Rescaler Y */
+  const p80d=(ds[idxP80]?.data||[]).filter(v=>v!=null&&isFinite(v)&&v>=0);
+  myChart.options.scales.y.max=Math.max(p80d.length?Math.max(...p80d):1,0.5)*1.2;
+  /* plugins vent/uv/pollen/poll : forcer redraw */
+  lastW=0;
+  myChart.update('none');
+}
 
 function setMode(mode){
   _ultraMode=(mode==='ultra');
@@ -627,6 +713,60 @@ document.addEventListener('DOMContentLoaded',()=>{
    Appelé après le fetch principal, lat/lon gardés pour compatibilité signature */
 
 
+
+/* ── Histogramme MF Radar pluie dans l'heure ── */
+let _mfChart=null;
+function renderMfChart(){
+  const canvas=document.getElementById('mfCanvas');
+  if(!canvas)return;
+  const keys=Object.keys(_mfByMin).map(Number).sort(function(a,b){return a-b;});
+  if(!keys.length){
+    const el=document.getElementById('mfTime');
+    if(el)el.textContent='non disponible';
+    return;
+  }
+  const labels=keys.map(function(k){return k===0?'now':(k>0?'+'+k+"'":k+"'");});
+  const values=keys.map(function(k){return _mfByMin[k]??0;});
+  const maxV=Math.max.apply(null,values.concat([0.1]));
+  /* Valider : si toutes les valeurs sont identiques et très élevées = données suspectes */
+  /* Si toutes les valeurs sont identiques → bruit radar, signaler */
+  const allSame=values.length>3&&values.every(function(v){return v===values[0];});
+  if(allSame&&values[0]>0&&values[0]<4.0){
+    const el=document.getElementById('mfTime');
+    if(el)el.textContent='trace (bruit radar) · '+values[0].toFixed(1)+' mm/h';
+  }
+  const colors=values.map(function(v){
+    if(v<=0)return 'rgba(68,136,255,0.12)';
+    if(v<0.5)return 'rgba(68,136,255,0.55)';
+    if(v<2)return 'rgba(68,136,255,0.8)';
+    if(v<7)return 'rgba(100,180,255,0.95)';
+    return 'rgba(180,230,255,1)';
+  });
+  if(_mfChart)_mfChart.destroy();
+  _mfChart=new Chart(canvas,{
+    type:'bar',
+    data:{labels:labels,datasets:[{data:values,backgroundColor:colors,borderColor:'transparent',borderRadius:2}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:{duration:400},
+      plugins:{legend:{display:false},tooltip:{
+        callbacks:{label:function(ctx){return ctx.parsed.y.toFixed(1)+' mm/h';}},
+        backgroundColor:'#1a1a1a',titleColor:'#4488ff',bodyColor:'#88aaff',
+      }},
+      scales:{
+        x:{ticks:{color:'#4488ff',font:{family:"'Courier New',monospace",size:8,weight:'bold'},maxRotation:0,autoSkip:true,maxTicksLimit:10},grid:{display:false}},
+        y:{beginAtZero:true,max:maxV>0?maxV*1.15:1,
+           ticks:{color:'#4488ff',font:{family:"'Courier New',monospace",size:9,weight:'bold'},callback:function(v){return v.toFixed(1);},maxTicksLimit:3},
+           grid:{color:'rgba(68,136,255,0.08)'},border:{color:'transparent'}}
+      }
+    }
+  });
+  /* Afficher max mm/h et statut (pas le total cumulé qui n'a pas de sens) */
+  const hasRain=values.some(function(v){return v>0;});
+  const status=hasRain?(maxV.toFixed(1)+' mm/h max'):'sec';
+  const el=document.getElementById('mfTime');
+  if(el)el.textContent=status+' · màj '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
+
 /* ── Histogramme scraping dans radarCard ── */
 let _scrapeChart=null;
 function renderScrapeChart(labels,values){
@@ -647,16 +787,26 @@ function renderScrapeChart(labels,values){
     data:{labels:labels,datasets:[{data:values,backgroundColor:colors,borderColor:'transparent',borderRadius:2}]},
     options:{
       responsive:true,maintainAspectRatio:false,animation:{duration:400},
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y.toFixed(2)+' mm';}},backgroundColor:'#1a1a1a',titleColor:'#ffe600',bodyColor:'#ffcc00'}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y.toFixed(2)+' mm/h';}},backgroundColor:'#1a1a1a',titleColor:'#ffe600',bodyColor:'#ffcc00'}},
       scales:{
         x:{ticks:{color:'#ffe600',font:{family:"'Courier New',monospace",size:9,weight:'bold'},maxRotation:0,autoSkip:true,maxTicksLimit:8},grid:{display:false}},y:{beginAtZero:true,max:maxV>0?maxV*1.15:1,ticks:{color:'#ffe600',font:{family:"'Courier New',monospace",size:9,weight:'bold'},callback:function(v){return v.toFixed(1);},maxTicksLimit:3},grid:{color:'rgba(255,230,0,0.07)'},border:{color:'transparent'}}
       }
     }
   });
-  var total=values.reduce(function(a,b){return a+b;},0);
+  var maxVal=Math.max.apply(null,values);
+  var nonZero=values.filter(function(v){return v>0;});
+  var avgVal=nonZero.length?nonZero.reduce(function(a,b){return a+b;},0)/nonZero.length:0;
   var el=document.getElementById('scrapeTime');
-  if(el)el.textContent=total.toFixed(2)+'mm · '+labels[0]+'-'+labels[labels.length-1];
-  console.log('[scrape] chart rendered OK, total=',total.toFixed(2),'mm');
+  if(maxVal>50){
+    if(el)el.textContent='⚠ données suspectes ('+maxVal.toFixed(1)+' mm/h)';
+  } else if(maxVal===0){
+    if(el)el.textContent='sec';
+  } else {
+    if(el)el.textContent='max '+maxVal.toFixed(1)+' · moy '+avgVal.toFixed(1)+' mm/h';
+  }
+  console.log('[scrape] chart rendered OK, max=',maxVal.toFixed(2),'mm/h');
+  /* Forcer redraw des plugins */
+  if(myChart){lastW=0;setTimeout(function(){myChart&&myChart.update();},100);}
 }
 
 /* ── Scraping lameteoagricole.net via proxy CORS ── */
@@ -730,6 +880,71 @@ async function launchScraping(){
   }
 }
 
+
+/* ── Fetch MF pluie dans l'heure (radar) ── */
+async function fetchMfRain(lat,lon){
+  try{
+    const url=`https://webservice.meteofrance.com/v3/rain?lat=${lat}&lon=${lon}&token=${MF_TOKEN}`;
+    const ctrl=new AbortController();
+    const tid=setTimeout(function(){ctrl.abort();},8000);
+    const resp=await fetch(url,{signal:ctrl.signal});
+    clearTimeout(tid);
+    if(resp.status===401||resp.status===403){
+      await refreshMFToken();
+      return fetchMfRain(lat,lon);
+    }
+    if(!resp.ok)return;
+    const d=await resp.json();
+    if(!d?.properties?.forecast?.length)return;
+    _mfRainNow=d.properties.forecast;
+    /* Recalculer _mfByMin immédiatement */
+    const mfIntensToMmh=[0,1.0,4.0,10.0];
+    _mfByMin={};
+    const t0=new Date(_mfRainNow[0].time);
+    _mfRainNow.forEach(function(f){
+      const tF=new Date(f.time);
+      const diffMin=Math.round((tF-t0)/60000);
+      _mfByMin[diffMin]=mfIntensToMmh[Math.min(f.rain_intensity??0,3)];
+    });
+    console.log('[MF] rain OK, '+Object.keys(_mfByMin).length+' slots');
+    renderMfChart();
+    /* Mettre à jour la courbe jaune */
+    if(_cachedData){
+      lastW=0;
+      processData(_cachedData.omMain,_cachedData.omM15,_cachedData.rainMx,_cachedData.probMx);
+    }
+  }catch(e){console.warn('[MF] rain error',e.message);}
+}
+
+async function fetchAirQuality(lat,lon){
+  /* Essayer avec 3 tentatives et délai plus long */
+  const keys=['grass_pollen','birch_pollen','alder_pollen','mugwort_pollen','olive_pollen','ragweed_pollen'];
+  const url=`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=${keys.join(',')},european_aqi&forecast_days=7&timezone=auto`;
+  let d=null;
+  for(let attempt=0;attempt<3;attempt++){
+    try{
+      const ctrl=new AbortController();
+      const tid=setTimeout(function(){ctrl.abort();},10000);
+      const resp=await fetch(url,{signal:ctrl.signal});
+      clearTimeout(tid);
+      if(resp.ok){d=await resp.json();break;}
+    }catch(e){
+      if(attempt<2)await new Promise(function(r){setTimeout(r,1500);});
+    }
+  }
+  if(!d?.hourly){console.warn('[AQ] failed after 3 attempts');return;}
+  const n=d.hourly.european_aqi?.length||0;
+  _pollenHourly=Array.from({length:n},function(_,i){
+    return keys.reduce(function(mx,k){return Math.max(mx,d.hourly[k]?.[i]??0);},0);
+  });
+  _aqiHourly=d.hourly.european_aqi||null;
+  console.log('[AQ] OK pollen max='+Math.max.apply(null,_pollenHourly)+' n='+n);
+  /* Forcer redraw immédiat + différé pour être sûr */
+  if(myChart){
+    lastW=0;myChart.update();
+    setTimeout(function(){if(myChart){lastW=0;myChart.update();}},300);
+  }
+}
 function fetchOwmMinutely(lat,lon){
   /* Les données minutely sont déjà dans omM15 (precipitation_meteofrance_arome_france_hd
      et precipitation_icon_d2). On reconstitue _owmMinutely depuis omM15 si disponible.
@@ -803,23 +1018,27 @@ async function _loadWithCoords(lat,lon,displayName){
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&models=meteofrance_arome_france_hd,icon_d2&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain&timezone=auto`),
       fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover&forecast_days=16&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover,windgusts_10m,uv_index,temperature_2m&forecast_days=16&timezone=auto`),
     ]);
     const [omMain,omM15,omCurrent,metno,omDaily]=_res.map(r=>r.status==='fulfilled'?r.value:null);
     const rainMx=buildRainMx(omMain,metno,0);
     const probMx=buildProbMx(omMain,metno,0);
     _cachedData={omMain,omM15,rainMx,probMx};
     _windData=omMain?.hourly?.windspeed_10m??null;
+    _windGustData=omDaily?.hourly?.windgusts_10m??null;
     _currentRain=omCurrent?.current?.precipitation??null;
     _solarData=omDaily?.hourly?.shortwave_radiation??null;
     _cloudData=omDaily?.hourly?.cloud_cover??null;
     _uvData=omDaily?.daily?.uv_index_max??null;
+    _uvHourlyData=omDaily?.hourly?.uv_index??null;
+    _tempHourly=omDaily?.hourly?.temperature_2m??null;
+    _uvHourlyData=omDaily?.hourly?.uv_index??null;
     _tempByDay=omDaily?.daily?.temperature_2m_max?.map((mx,di)=>({max:mx,min:omDaily.daily.temperature_2m_min?.[di]??null}))??null;
     _sunriseJ0=omDaily?.daily?.sunrise?.[0]?new Date(omDaily.daily.sunrise[0]).getHours()+(new Date(omDaily.daily.sunrise[0]).getMinutes()/60):6;
     _sunsetJ0=omDaily?.daily?.sunset?.[0]?new Date(omDaily.daily.sunset[0]).getHours()+(new Date(omDaily.daily.sunset[0]).getMinutes()/60):21;
     initBar();initRadar(lat,lon);
     const rc=document.getElementById('radarCard');
-    if(rc)rc.style.display=(_viewMode==='j1'||_viewMode==='j0')?'block':'none';
+    if(rc)rc.style.display='block';
     if(_viewMode==='jm1'||_viewMode==='jm7') _viewMode='j1';
     document.getElementById('viewBtns').style.display='flex';
     updateBtnState();
@@ -852,7 +1071,7 @@ async function load(){
     if(_simpleMode){const sb=document.getElementById('sourcesBar');if(sb)sb.style.display='none';}
     initRadar(lat,lon);
     const rc=document.getElementById('radarCard');
-    if(rc){rc.style.display=(_viewMode==='j1'||_viewMode==='j0')?'block':'none';}
+    if(rc){rc.style.display='block';}
     const omModels=SOURCES.filter(s=>s.omModel).map(s=>s.omModel).join(',');
     
     /* O — Essayer le cache d'abord */
@@ -870,10 +1089,14 @@ async function load(){
         const probMx=buildProbMx(omMain,metno,tIdx);
         _cachedData={omMain,omM15,rainMx,probMx};
         _windData=omMain?.hourly?.windspeed_10m??null;
+    _windGustData=omDaily?.hourly?.windgusts_10m??null;
         _solarData=omDaily?.hourly?.shortwave_radiation??null;
         _cloudData=omDaily?.hourly?.cloud_cover??null;
         _currentRain=omCurrent?.current?.precipitation??omCurrent?.current?.rain??null;
         _uvData=omDaily?.daily?.uv_index_max??null;
+    _uvHourlyData=omDaily?.hourly?.uv_index??null;
+    _tempHourly=omDaily?.hourly?.temperature_2m??null;
+    _uvHourlyData=omDaily?.hourly?.uv_index??null;
         _tempByDay=omDaily?.daily?.temperature_2m_max?.map((mx,di)=>({max:mx,min:omDaily.daily.temperature_2m_min?.[di]??null}))??null;
         _sunriseJ0=omDaily?.daily?.sunrise?.[0]?new Date(omDaily.daily.sunrise[0]).getHours()+(new Date(omDaily.daily.sunrise[0]).getMinutes()/60):6;
         _sunsetJ0=omDaily?.daily?.sunset?.[0]?new Date(omDaily.daily.sunset[0]).getHours()+(new Date(omDaily.daily.sunset[0]).getMinutes()/60):21;
@@ -887,7 +1110,7 @@ async function load(){
         clearInterval(_autoRefreshTimer);zoomMin=0;zoomMax=1;
         initBar();initRadar(lat,lon);
         const rc=document.getElementById('radarCard');
-        if(rc)rc.style.display=(_viewMode==='j1'||_viewMode==='j0')?'block':'none';
+        if(rc)rc.style.display='block';
         return; /* cache hit : pas de fetch réseau */
       }
     }
@@ -897,7 +1120,7 @@ async function load(){
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&models=meteofrance_arome_france_hd,icon_d2&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain&timezone=auto`),
       fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover&forecast_days=16&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover,windgusts_10m,uv_index,temperature_2m&forecast_days=16&timezone=auto`),
     ]);
     const [omMain,omM15,omCurrent,metno,omDaily]=_res2.map(r=>r.status==='fulfilled'?r.value:null);
     if(!omMain?.hourly?.time){showStatus('❌ Open-Meteo inaccessible — réessaie dans quelques secondes','#ff3d57');return;}
@@ -913,6 +1136,7 @@ async function load(){
     const probMx=buildProbMx(omMain,metno,tIdx);
     _cachedData={omMain,omM15,rainMx,probMx};
     _windData=omMain?.hourly?.windspeed_10m??null;
+    _windGustData=omDaily?.hourly?.windgusts_10m??null;
     _solarData=omDaily?.hourly?.shortwave_radiation??null;
     _cloudData=omDaily?.hourly?.cloud_cover??null;
     _currentRain=omCurrent?.current?.precipitation??omCurrent?.current?.rain??null;
@@ -945,6 +1169,10 @@ async function load(){
     processData(omMain,omM15,rainMx,probMx);
     _updateURL();
     launchScraping();
+    fetchAirQuality(lat,lon);
+    fetchMfRain(lat,lon);
+    /* Redraw de sécurité : 1s, 3s, 8s */
+    [1000,3000,8000].forEach(function(t){setTimeout(function(){if(myChart){lastW=0;myChart.update();}},t);});
   }catch(e){console.error(e);showStatus('❌ Erreur réseau : '+e.message,'#ff3d57');}
   finally{btn.disabled=false;btn.textContent='GO';}
 }
@@ -1044,7 +1272,7 @@ function setView(mode){
   /* Radar uniquement en J+1 */
   const rc=document.getElementById('radarCard');
   if(rc){
-    rc.style.display=(mode==='j1'||mode==='j0')?'block':'none';
+    rc.style.display='block';
     if((mode==='j1'||mode==='j0')&&_radarMap){
       setTimeout(()=>{_radarMap.invalidateSize();_radarMap.setZoom(7);if(_radarFrames.length)showRadarFrame(_radarIdx);},80);
     } else if(_radarMap){
@@ -1097,7 +1325,7 @@ function processData(omMain,omM15,rainMx,probMx){
     return vals.length ? Math.max(...vals) : 0;
   });
   /* Fusionner m15 avec données MF si disponibles */
-  const mfIntensToMmh=[0,0.3,1.5,5]; /* 0=sec,1=faible,2=modéré,3=fort */
+  const mfIntensToMmh=[0,1.0,4.0,10.0]; /* 0=sec,1=faible,2=modéré,3=fort */
   _mfByMin={}; /* reset global */
   if(_mfRainNow?.length){
     const t0=new Date(_mfRainNow[0].time);
@@ -1153,10 +1381,21 @@ function processData(omMain,omM15,rainMx,probMx){
 
       /* Proposition A : si MF radar disponible, l'utiliser comme plancher fort */
       const modelR=mVals.length?p80(mVals):rBest;
-      /* Scraping lameteoagricole : plancher prioritaire si dispo */
-      const rScrape=(()=>{const keys=Object.keys(_scrapedByMin).map(Number);if(!keys.length)return 0;const nk=keys.reduce((a,b)=>Math.abs(b-o)<Math.abs(a-o)?b:a,keys[0]);return Math.abs(nk-o)<=3?(_scrapedByMin[nk]??0):0;})();
-      const r=rScrape>0?Math.max(rScrape,rAnchor):Math.max(modelR,rAnchor,rMF);
-      const mx=Math.max(mVals.length?Math.max(...mVals):rBest,rAnchor,rMF,rScrape);
+      /* Scraping lameteoagricole : plancher prioritaire si dispo
+         Tolérance élargie à ±6min pour absorber les décalages d'horloge     */
+      const rScrape=(()=>{
+        const keys=Object.keys(_scrapedByMin).map(Number);
+        if(!keys.length)return 0;
+        const nk=keys.reduce((a,b)=>Math.abs(b-o)<Math.abs(a-o)?b:a,keys[0]);
+        return Math.abs(nk-o)<=6?(_scrapedByMin[nk]??0):0;
+      })();
+      /* Fusionner : scrape prime sur les modèles, mais P80 si scrape=0      */
+      /* rMF ignoré comme plancher si < 4.0mm/h (classe 1 = bruit radar) */
+      const rMFfloor=rMF>=4.0?rMF:0;
+      const r=rScrape>0
+        ?Math.max(rScrape,rAnchor)
+        :Math.max(modelR,rAnchor,rMFfloor);
+      const mx=Math.max(mVals.length?Math.max(...mVals):rBest,rAnchor,rMFfloor,rScrape);
 
       pts.push({t:`+${o}'`,d:0,r,mx,p:synthP(h,probMx),hourIdx:-1});
       SOURCES.forEach((src,si)=>{
@@ -1178,11 +1417,20 @@ function processData(omMain,omM15,rainMx,probMx){
     const rEndBest=Math.max(0,m15[slotEnd]??0);
     const mfKeys2=Object.keys(_mfByMin).map(Number);
     const rMFend=mfKeys2.length?(()=>{const nk=mfKeys2.reduce((a,b)=>Math.abs(b-(60-m))<Math.abs(a-(60-m))?b:a,mfKeys2[0]);return _mfByMin[nk]??0;})():0;
-    const endVals=[rEndArome,rEndIcon,rEndBest,rMFend].filter(v=>v>0);
+    const rMFendFloor=rMFend>=4.0?rMFend:0; /* ignorer bruit classe 1 */
+    const endVals=[rEndArome,rEndIcon,rEndBest,rMFendFloor].filter(v=>v>0);
     const rEnd=endVals.length?p80(endVals):rEndBest;
     const mxEnd=endVals.length?Math.max(...endVals):rEndBest;
+    /* Scraping sur le point H+1 aussi pour éviter le creux de jonction */
+    const scrapedKeys2=Object.keys(_scrapedByMin).map(Number);
+    const rScrapeEnd=scrapedKeys2.length?(()=>{
+      const target=60-m;
+      const nk=scrapedKeys2.reduce((a,b)=>Math.abs(b-target)<Math.abs(a-target)?b:a,scrapedKeys2[0]);
+      return Math.abs(nk-target)<=8?(_scrapedByMin[nk]??0):0;
+    })():0;
+    const rEndFinal=rScrapeEnd>0?Math.max(rScrapeEnd,rEnd):rEnd;
     /* Proposition B : hourIdx:h = cumul sur l'heure courante (pas h+1) */
-    pts.push({t:(h+1)+'h',d:0,r:rEnd,mx:mxEnd,p:synthP(h,probMx),hourIdx:h});
+    pts.push({t:(h+1)+'h',d:0,r:rEndFinal,mx:Math.max(mxEnd,rScrapeEnd),p:synthP(h,probMx),hourIdx:h});
     SOURCES.forEach((src,si)=>{
       let v=null;
       if(src.key==='mf'||src.key==='mfhd') v=rMFend>0?rMFend:(rEndArome||null);
@@ -1669,7 +1917,7 @@ function renderJm1(pts,mods,realPrecip){
       datasets:[
         {data:pts.map(p=>p.r),borderColor:'transparent',borderWidth:0,fill:true,backgroundColor:_simpleMode?'rgba(255,230,0,0.08)':'rgba(0,0,0,0)',tension:0.4,pointRadius:0,yAxisID:'y',order:5},
         ...modelDS,
-        {data:pts.map(p=>p.mx),borderColor:_simpleMode?'transparent':'#4488ff',borderWidth:isMob?1:1.5,borderDash:[8,3,2,3],fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:2},
+        {data:pts.map(p=>p.mx),borderColor:_simpleMode?'transparent':'#4488ff',borderWidth:isMob?4:6,borderDash:[8,3,2,3],fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:2},
         {data:pts.map(p=>p.r),borderColor:'#ffe600',borderWidth:isMob?4:6,fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:1},
         {data:pts.map(p=>p.p),borderColor:_ultraMode?'rgba(0,0,0,0)':'rgba(255,255,255,0.85)',borderWidth:_ultraMode?0:isMob?2.5:3.5,borderDash:[6,3],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:3},
         {data:pts.map(p=>_cloudData&&p.hourIdx>=0?(_cloudData[p.hourIdx]??null):null),borderColor:_ultraMode?'rgba(0,0,0,0)':'#ff3333',borderWidth:_ultraMode?0:isMob?3:4,borderDash:[6,3,6,3],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:6,spanGaps:true},
@@ -1693,6 +1941,113 @@ function renderJm1(pts,mods,realPrecip){
         c.beginPath();c.moveTo(right-55,top+10);c.lineTo(right-35,top+10);c.stroke();
         c.fillStyle='rgba(255,255,255,0.9)';c.font=`700 9px 'Courier New',monospace`;
         c.textAlign='left';c.textBaseline='middle';c.fillText('RÉEL',right-32,top+10);c.restore();
+      }},
+      {id:'windGusts',afterDraw(chart){
+        if(!_layers.wind||!_windGustData||!_windGustData.length)return;
+        const {ctx:cv,scales:{x},chartArea:{top}}=chart;
+        const fs=isMob?9:11,ph=fs+4;
+        const shown=new Set();
+        cv.save();cv.textAlign='center';cv.textBaseline='middle';
+        cv.font='900 '+fs+'px \'Courier New\',monospace';
+        pts.forEach(function(p,pi){
+          const hi=p.hourIdx;if(hi<0||hi>=(_windGustData?.length||0))return;
+          const g=_windGustData[hi];if(g<20)return;
+          if(shown.has(hi))return;shown.add(hi);
+          const xp=x.getPixelForValue(pi);if(xp<x.left||xp>x.right)return;
+          const lv=g>=60?4:g>=40?3:g>=30?2:1;
+          const bg=lv>=4?'#ff3333':lv>=3?'#ff8800':lv>=2?'#88ccff':'#aaddff';
+          const lb=lv>=4?'W4':lv>=3?'W3':lv>=2?'W2':'W1';
+          const tw=cv.measureText(lb).width,pw=tw+6,row=top+2;
+          cv.fillStyle=bg;cv.beginPath();
+          cv.roundRect?cv.roundRect(xp-pw/2,row,pw,ph,3):cv.rect(xp-pw/2,row,pw,ph);
+          cv.fill();cv.fillStyle='#000';cv.fillText(lb,xp,row+ph/2);
+        });cv.restore();
+      }},
+      {id:'uvIndex',afterDraw(chart){
+        if(!_layers.uv||!_uvHourlyData||!_uvHourlyData.length)return;
+        const {ctx:cv,scales:{x},chartArea:{top}}=chart;
+        const fs=isMob?9:11,ph=fs+4,row=top+2+(ph+2);
+        const shown=new Set();
+        cv.save();cv.textAlign='center';cv.textBaseline='middle';
+        cv.font='900 '+fs+'px \'Courier New\',monospace';
+        pts.forEach(function(p,pi){
+          const hi=p.hourIdx;if(hi<0||hi>=(_uvHourlyData?.length||0))return;
+          const uv=_uvHourlyData[hi];if(!uv||uv<1)return;
+          if(shown.has(hi))return;shown.add(hi);
+          const xp=x.getPixelForValue(pi);if(xp<x.left||xp>x.right)return;
+          const bg=uv>=11?'#ff00ff':uv>=8?'#ff3300':uv>=6?'#ff8800':uv>=3?'#ffcc00':'#88ddff';
+          const lb='UV'+Math.round(uv);
+          const tw=cv.measureText(lb).width,pw=tw+6;
+          cv.fillStyle=bg;cv.beginPath();
+          cv.roundRect?cv.roundRect(xp-pw/2,row,pw,ph,3):cv.rect(xp-pw/2,row,pw,ph);
+          cv.fill();cv.fillStyle='#000';cv.fillText(lb,xp,row+ph/2);
+        });cv.restore();
+      }},
+      {id:'pollenRow',afterDraw(chart){
+        if(!_layers.pollen||!_pollenHourly||!_pollenHourly.length)return;
+        const {ctx:cv,scales:{x},chartArea:{top}}=chart;
+        const fs=isMob?9:11,ph=fs+4,row=top+2+(ph+2)*2;
+        const shown=new Set();
+        cv.save();cv.textAlign='center';cv.textBaseline='middle';
+        cv.font='900 '+fs+'px \'Courier New\',monospace';
+        pts.forEach(function(p,pi){
+          const hi=p.hourIdx;if(hi<0||hi>=(_pollenHourly?.length||0))return;
+          const v=_pollenHourly[hi];if(!v||v<1)return;
+          if(shown.has(hi))return;shown.add(hi);
+          const xp=x.getPixelForValue(pi);if(xp<x.left||xp>x.right)return;
+          const bg=v>=200?'#ff2244':v>=100?'#ff6600':v>=50?'#ffaa00':'#aadd00';
+          const lb=v>=200?'P4':v>=100?'P3':v>=50?'P2':'P1';
+          const tw=cv.measureText(lb).width,pw=tw+6;
+          cv.fillStyle=bg;cv.beginPath();
+          cv.roundRect?cv.roundRect(xp-pw/2,row,pw,ph,3):cv.rect(xp-pw/2,row,pw,ph);
+          cv.fill();cv.fillStyle='#000';cv.fillText(lb,xp,row+ph/2);
+        });cv.restore();
+      }},
+      {id:'tempRow',afterDraw(chart){
+        if(!_layers.temp||!_tempHourly||!_tempHourly.length)return;
+        const {ctx:cv,scales:{x},chartArea:{top}}=chart;
+        const fs=isMob?9:11,ph=fs+4;
+        const row=top+2+(ph+2)*4; /* 5ème ligne */
+        const shown=new Set();
+        cv.save();cv.textAlign='center';cv.textBaseline='middle';
+        cv.font='900 '+fs+'px \'Courier New\',monospace';
+        pts.forEach(function(p,pi){
+          const hi=p.hourIdx;if(hi<0||hi>=(_tempHourly?.length||0))return;
+          const t=_tempHourly[hi];if(t==null)return;
+          if(shown.has(hi))return;shown.add(hi);
+          const xp=x.getPixelForValue(pi);if(xp<x.left||xp>x.right)return;
+          /* Couleur selon température */
+          const bg=t>=35?'#ff2200':t>=28?'#ff6600':t>=22?'#ffaa00':t>=15?'#ffdd44':t>=8?'#88ddff':t>=0?'#aaddff':'#ccccff';
+          const lb=Math.round(t)+'°';
+          const tw=cv.measureText(lb).width,pw=tw+6;
+          cv.fillStyle=bg;
+          cv.beginPath();
+          cv.roundRect?cv.roundRect(xp-pw/2,row,pw,ph,3):cv.rect(xp-pw/2,row,pw,ph);
+          cv.fill();
+          cv.fillStyle=t>=22?'#000':'#000';
+          cv.fillText(lb,xp,row+ph/2);
+        });
+        cv.restore();
+      }},
+      {id:'aqiRow',afterDraw(chart){
+        if(!_layers.poll||!_aqiHourly||!_aqiHourly.length)return;
+        const {ctx:cv,scales:{x},chartArea:{top}}=chart;
+        const fs=isMob?9:11,ph=fs+4,row=top+2+(ph+2)*3;
+        const shown=new Set();
+        cv.save();cv.textAlign='center';cv.textBaseline='middle';
+        cv.font='900 '+fs+'px \'Courier New\',monospace';
+        pts.forEach(function(p,pi){
+          const hi=p.hourIdx;if(hi<0||hi>=(_aqiHourly?.length||0))return;
+          const aqi=_aqiHourly[hi];if(!aqi||aqi<25)return;
+          if(shown.has(hi))return;shown.add(hi);
+          const xp=x.getPixelForValue(pi);if(xp<x.left||xp>x.right)return;
+          const bg=aqi>=80?'#cc00cc':aqi>=60?'#ff2200':aqi>=40?'#ff8800':'#ffdd00';
+          const lb=aqi>=80?'AQ5':aqi>=60?'AQ4':aqi>=40?'AQ3':'AQ2';
+          const tw=cv.measureText(lb).width,pw=tw+6;
+          cv.fillStyle=bg;cv.beginPath();
+          cv.roundRect?cv.roundRect(xp-pw/2,row,pw,ph,3):cv.rect(xp-pw/2,row,pw,ph);
+          cv.fill();cv.fillStyle='#000';cv.fillText(lb,xp,row+ph/2);
+        });cv.restore();
       }}
     ]
   });
@@ -1790,7 +2145,7 @@ function render(pts,mods){
       datasets:[
         {data:pts.map(p=>p.r),borderColor:'transparent',borderWidth:0,fill:true,backgroundColor:_simpleMode?'rgba(255,230,0,0.08)':'rgba(0,0,0,0)',tension:0.4,pointRadius:0,yAxisID:'y',order:5},
         ...modelDS,
-        {data:maxVals,borderColor:_simpleMode?'transparent':'#4488ff',borderWidth:isMob?1:1.5,borderDash:[8,3,2,3],fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:2},
+        {data:maxVals,borderColor:_simpleMode?'transparent':'#4488ff',borderWidth:isMob?4:6,borderDash:[8,3,2,3],fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:2},
         {data:pts.map(p=>p.r),borderColor:'#ffe600',borderWidth:isMob?4:6,fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:1},
         {data:pts.map(p=>p.p),borderColor:'rgba(255,255,255,0.85)',borderWidth:isMob?2.5:3.5,borderDash:[6,3],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:3},
         {data:pts.map(p=>_cloudData&&p.hourIdx>=0?(_cloudData[p.hourIdx]??null):null),borderColor:'#ff3333',borderWidth:isMob?3:4,borderDash:[6,3,6,3],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:6,spanGaps:true},
@@ -1834,7 +2189,7 @@ function render(pts,mods){
           const cx0=Math.max(x0,x.left),cx1=Math.min(x1,x.right);
           const midX=(cx0+cx1)/2,slotW=cx1-cx0;
           const ballR=isMob?9:13;
-          const bcy=top+ballR+6;
+          const bcy=top+ballR+92;
 
           /* ── Dégradé de fond ── */
           c.save();
@@ -2052,8 +2407,33 @@ function render(pts,mods){
           c.restore();
         });
       }},
-      {id:'axisLabels',afterDraw(chart){
-        const {ctx:c,scales:{x},chartArea:{bottom}}=chart;
+      {id:'tempRow',afterDraw(chart){
+        if(!_layers.temp||!_tempHourly||!_tempHourly.length)return;
+        const {ctx:cv,scales:{x},chartArea:{top}}=chart;
+        const fs=isMob?9:11,ph=fs+4;
+        const row=top+2+(ph+2)*4; /* 5ème ligne */
+        const shown=new Set();
+        cv.save();cv.textAlign='center';cv.textBaseline='middle';
+        cv.font='900 '+fs+'px \'Courier New\',monospace';
+        pts.forEach(function(p,pi){
+          const hi=p.hourIdx;if(hi<0||hi>=(_tempHourly?.length||0))return;
+          const t=_tempHourly[hi];if(t==null)return;
+          if(shown.has(hi))return;shown.add(hi);
+          const xp=x.getPixelForValue(pi);if(xp<x.left||xp>x.right)return;
+          /* Couleur selon température */
+          const bg=t>=35?'#ff2200':t>=28?'#ff6600':t>=22?'#ffaa00':t>=15?'#ffdd44':t>=8?'#88ddff':t>=0?'#aaddff':'#ccccff';
+          const lb=Math.round(t)+'°';
+          const tw=cv.measureText(lb).width,pw=tw+6;
+          cv.fillStyle=bg;
+          cv.beginPath();
+          cv.roundRect?cv.roundRect(xp-pw/2,row,pw,ph,3):cv.rect(xp-pw/2,row,pw,ph);
+          cv.fill();
+          cv.fillStyle=t>=22?'#000':'#000';
+          cv.fillText(lb,xp,row+ph/2);
+        });
+        cv.restore();
+      }},
+      {id:'axisLabels',afterDraw(chart){        const {ctx:c,scales:{x},chartArea:{bottom}}=chart;
         const fSize=isMob?8:10,pad=4;
         _peaks.forEach(pk=>{
           const xPx=x.getPixelForValue(pk.idx);
@@ -2066,6 +2446,87 @@ function render(pts,mods){
           const overlap=_peaks.some(pk=>Math.abs(x.getPixelForValue(pk.idx)-xPx)<6);
           if(!overlap)drawTickBadge(c,xPx,bottom,rs.label,fSize,pad,'rgba(0,255,255,0.9)','#00ffff');
         });
+      }},
+      {id:'windGusts',afterDraw(chart){
+        if(!_layers.wind||!_windGustData||!_windGustData.length)return;
+        const {ctx:cv,scales:{x},chartArea:{top}}=chart;
+        const fs=isMob?9:11,ph=fs+4;
+        const shown=new Set();
+        cv.save();cv.textAlign='center';cv.textBaseline='middle';
+        cv.font='900 '+fs+'px \'Courier New\',monospace';
+        pts.forEach(function(p,pi){
+          const hi=p.hourIdx;if(hi<0||hi>=(_windGustData?.length||0))return;
+          const g=_windGustData[hi];if(g<20)return;
+          if(shown.has(hi))return;shown.add(hi);
+          const xp=x.getPixelForValue(pi);if(xp<x.left||xp>x.right)return;
+          const lv=g>=60?4:g>=40?3:g>=30?2:1;
+          const bg=lv>=4?'#ff3333':lv>=3?'#ff8800':lv>=2?'#88ccff':'#aaddff';
+          const lb=lv>=4?'W4':lv>=3?'W3':lv>=2?'W2':'W1';
+          const tw=cv.measureText(lb).width,pw=tw+6,row=top+2;
+          cv.fillStyle=bg;cv.beginPath();
+          cv.roundRect?cv.roundRect(xp-pw/2,row,pw,ph,3):cv.rect(xp-pw/2,row,pw,ph);
+          cv.fill();cv.fillStyle='#000';cv.fillText(lb,xp,row+ph/2);
+        });cv.restore();
+      }},
+      {id:'uvIndex',afterDraw(chart){
+        if(!_layers.uv||!_uvHourlyData||!_uvHourlyData.length)return;
+        const {ctx:cv,scales:{x},chartArea:{top}}=chart;
+        const fs=isMob?9:11,ph=fs+4,row=top+2+(ph+2);
+        const shown=new Set();
+        cv.save();cv.textAlign='center';cv.textBaseline='middle';
+        cv.font='900 '+fs+'px \'Courier New\',monospace';
+        pts.forEach(function(p,pi){
+          const hi=p.hourIdx;if(hi<0||hi>=(_uvHourlyData?.length||0))return;
+          const uv=_uvHourlyData[hi];if(!uv||uv<1)return;
+          if(shown.has(hi))return;shown.add(hi);
+          const xp=x.getPixelForValue(pi);if(xp<x.left||xp>x.right)return;
+          const bg=uv>=11?'#ff00ff':uv>=8?'#ff3300':uv>=6?'#ff8800':uv>=3?'#ffcc00':'#88ddff';
+          const lb='UV'+Math.round(uv);
+          const tw=cv.measureText(lb).width,pw=tw+6;
+          cv.fillStyle=bg;cv.beginPath();
+          cv.roundRect?cv.roundRect(xp-pw/2,row,pw,ph,3):cv.rect(xp-pw/2,row,pw,ph);
+          cv.fill();cv.fillStyle='#000';cv.fillText(lb,xp,row+ph/2);
+        });cv.restore();
+      }},
+      {id:'pollenRow',afterDraw(chart){
+        if(!_layers.pollen||!_pollenHourly||!_pollenHourly.length)return;
+        const {ctx:cv,scales:{x},chartArea:{top}}=chart;
+        const fs=isMob?9:11,ph=fs+4,row=top+2+(ph+2)*2;
+        const shown=new Set();
+        cv.save();cv.textAlign='center';cv.textBaseline='middle';
+        cv.font='900 '+fs+'px \'Courier New\',monospace';
+        pts.forEach(function(p,pi){
+          const hi=p.hourIdx;if(hi<0||hi>=(_pollenHourly?.length||0))return;
+          const v=_pollenHourly[hi];if(!v||v<1)return;
+          if(shown.has(hi))return;shown.add(hi);
+          const xp=x.getPixelForValue(pi);if(xp<x.left||xp>x.right)return;
+          const bg=v>=200?'#ff2244':v>=100?'#ff6600':v>=50?'#ffaa00':'#aadd00';
+          const lb=v>=200?'P4':v>=100?'P3':v>=50?'P2':'P1';
+          const tw=cv.measureText(lb).width,pw=tw+6;
+          cv.fillStyle=bg;cv.beginPath();
+          cv.roundRect?cv.roundRect(xp-pw/2,row,pw,ph,3):cv.rect(xp-pw/2,row,pw,ph);
+          cv.fill();cv.fillStyle='#000';cv.fillText(lb,xp,row+ph/2);
+        });cv.restore();
+      }},
+      {id:'aqiRow',afterDraw(chart){
+        if(!_layers.poll||!_aqiHourly||!_aqiHourly.length)return;
+        const {ctx:cv,scales:{x},chartArea:{top}}=chart;
+        const fs=isMob?9:11,ph=fs+4,row=top+2+(ph+2)*3;
+        const shown=new Set();
+        cv.save();cv.textAlign='center';cv.textBaseline='middle';
+        cv.font='900 '+fs+'px \'Courier New\',monospace';
+        pts.forEach(function(p,pi){
+          const hi=p.hourIdx;if(hi<0||hi>=(_aqiHourly?.length||0))return;
+          const aqi=_aqiHourly[hi];if(!aqi||aqi<25)return;
+          if(shown.has(hi))return;shown.add(hi);
+          const xp=x.getPixelForValue(pi);if(xp<x.left||xp>x.right)return;
+          const bg=aqi>=80?'#cc00cc':aqi>=60?'#ff2200':aqi>=40?'#ff8800':'#ffdd00';
+          const lb=aqi>=80?'AQ5':aqi>=60?'AQ4':aqi>=40?'AQ3':'AQ2';
+          const tw=cv.measureText(lb).width,pw=tw+6;
+          cv.fillStyle=bg;cv.beginPath();
+          cv.roundRect?cv.roundRect(xp-pw/2,row,pw,ph,3):cv.rect(xp-pw/2,row,pw,ph);
+          cv.fill();cv.fillStyle='#000';cv.fillText(lb,xp,row+ph/2);
+        });cv.restore();
       }}
     ]
   });
@@ -2127,6 +2588,8 @@ function buildSummary(chart,pts,days,xp){
     const isLast=di===days.length-1;
     const rawW=Math.max(0,ends[di]-starts[di]);
     const isFirst=di===0;
+    /* Masquer le dernier jour si trop étroit */
+    if(isLast&&rawW<50)return;
     const w=Math.max(rawW,(isLast||isFirst)?stdW:0);
     const dd=pts.filter(p=>p.d===d);
     const total=dd.reduce((s,p)=>s+p.mx,0);
@@ -2413,6 +2876,8 @@ window.addEventListener('online',()=>{
 });
 
 function startAutoRefresh(){
+  /* MF rain refresh toutes les 5min */
+  setInterval(function(){if(typeof lat!=="undefined"&&lat)fetchMfRain(lat,lon);},5*60*1000);
   clearInterval(_autoRefreshTimer);
   _autoRefreshTimer=setInterval(()=>{
     if(!_cachedData||_isOffline)return;
