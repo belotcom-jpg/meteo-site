@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PluiePro v1.22</title>
+<title>PluiePro v1.23</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -55,18 +55,18 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 #radarInner{display:flex;gap:0;height:100%}
 #mfCol{flex:1;min-width:0;border-right:1px solid #222;display:flex;flex-direction:column}
 #mfHeader{padding:6px 10px;font-size:9px;font-weight:900;color:#4488ff;letter-spacing:2px;border-bottom:1px solid #222;display:flex;justify-content:space-between;align-items:center}
-#mfChart{height:clamp(220px,50vw,360px);padding:4px 8px 4px;position:relative;flex-shrink:0}
+#mfChart{height:clamp(141px,32vw,230px);padding:4px 8px 4px;position:relative;flex-shrink:0}
 #mfCanvas{display:block;width:100%;height:100%}
 #scrapeCol{flex:1;min-width:0;border-right:1px solid #222;display:flex;flex-direction:column}
 #scrapeHeader{padding:6px 10px;font-size:9px;font-weight:900;color:#ffe600;letter-spacing:2px;border-bottom:1px solid #222;display:flex;justify-content:space-between;align-items:center}
-#scrapeChart{height:clamp(220px,50vw,360px);padding:4px 8px 4px;position:relative;flex-shrink:0}
+#scrapeChart{height:clamp(141px,32vw,230px);padding:4px 8px 4px;position:relative;flex-shrink:0}
 #scrapeCanvas{width:100%!important;height:100%!important}
 #radarCol{flex:1;min-width:0;display:flex;flex-direction:column}
 @media(max-width:600px){#radarInner{flex-direction:column}#scrapeCol{border-right:none;border-bottom:1px solid #222}#mfCol{border-right:none;border-bottom:1px solid #222}}
 #radarHeader{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid #2a2a2a}
 #radarTitle{font-size:10px;font-weight:900;color:#888;letter-spacing:2px}
 #radarTime{font-size:9px;color:#555;font-weight:700}
-#radarMap{height:clamp(220px,50vw,360px);width:100%;position:relative}
+#radarMap{height:clamp(141px,32vw,230px);width:100%;position:relative}
 #radarMap .leaflet-container{background:#111}
 .radar-crosshair{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:16px;height:16px;pointer-events:none;z-index:1000}
 .radar-crosshair::before,.radar-crosshair::after{content:'';position:absolute;background:rgba(255,230,0,0.8)}
@@ -204,7 +204,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
           <span>🟢 MET NOWCAST</span>
           <span id="nowcastTime" style="color:#666;font-weight:400">—</span>
         </div>
-        <div style="height:clamp(220px,50vw,360px);padding:4px 8px;position:relative;flex-shrink:0">
+        <div style="height:clamp(141px,32vw,230px);padding:4px 8px;position:relative;flex-shrink:0">
           <canvas id="nowcastCanvas" style="display:block;width:100%;height:100%"></canvas>
         </div>
       </div>
@@ -433,9 +433,8 @@ function applyLayers(){
   /* Rescaler Y */
   const p80d=(ds[idxP80]?.data||[]).filter(v=>v!=null&&isFinite(v)&&v>=0);
   myChart.options.scales.y.max=Math.max(p80d.length?Math.max(...p80d):1,0.5)*1.2;
-  /* plugins vent/uv/pollen/poll : forcer redraw */
-  lastW=0;
-  myChart.update('none');
+  /* plugins badges : forcer afterDraw */
+  if(myChart){lastW=0;myChart.update();}
 }
 
 function setMode(mode){
@@ -1419,6 +1418,8 @@ async function load(){
         if(omDaily?.hourly?.shortwave_radiation) _solarData=omDaily.hourly.shortwave_radiation;
         if(omDaily?.hourly?.cloud_cover) _cloudData=omDaily.hourly.cloud_cover;
         _currentRain=omCurrent?.current?.precipitation??omCurrent?.current?.rain??null;
+        if(omCurrent?.hourly?.uv_index) _uvHourlyData=omCurrent.hourly.uv_index;
+        if(omCurrent?.hourly?.temperature_2m) _tempHourly=omCurrent.hourly.temperature_2m;
         if(omDaily?.daily?.uv_index_max) _uvData=omDaily.daily.uv_index_max;
     if(omDaily?.hourly?.uv_index) _uvHourlyData=omDaily.hourly.uv_index;
     if(omDaily?.hourly?.temperature_2m) _tempHourly=omDaily.hourly.temperature_2m;
@@ -1467,6 +1468,8 @@ async function load(){
     if(omDaily?.hourly?.shortwave_radiation) _solarData=omDaily.hourly.shortwave_radiation;
     if(omDaily?.hourly?.cloud_cover) _cloudData=omDaily.hourly.cloud_cover;
     _currentRain=omCurrent?.current?.precipitation??omCurrent?.current?.rain??null;
+    if(omCurrent?.hourly?.uv_index) _uvHourlyData=omCurrent.hourly.uv_index;
+    if(omCurrent?.hourly?.temperature_2m) _tempHourly=omCurrent.hourly.temperature_2m;
     _saveCache(lat,lon,{omMain,omM15,omCurrent,metno,omDaily}); /* O */
     /* Températures J+1 (index 1 dans daily = demain) */
     /* Températures J0→J+14 */
