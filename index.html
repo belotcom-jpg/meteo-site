@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PluiePro v1.20</title>
+<title>PluiePro v1.22</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -198,6 +198,16 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
           <canvas id="mfCanvas" style="display:block;width:100%;height:100%"></canvas>
         </div>
       </div>
+      <!-- Colonne nowcast MET Norway -->
+      <div id="nowcastCol" style="flex:1;min-width:0;border-right:1px solid #222;display:flex;flex-direction:column">
+        <div style="padding:6px 10px;font-size:9px;font-weight:900;color:#44ff88;letter-spacing:2px;border-bottom:1px solid #222;display:flex;justify-content:space-between;align-items:center">
+          <span>🟢 MET NOWCAST</span>
+          <span id="nowcastTime" style="color:#666;font-weight:400">—</span>
+        </div>
+        <div style="height:clamp(220px,50vw,360px);padding:4px 8px;position:relative;flex-shrink:0">
+          <canvas id="nowcastCanvas" style="display:block;width:100%;height:100%"></canvas>
+        </div>
+      </div>
       <!-- Colonne droite : radar -->
       <div id="radarCol">
         <div id="radarHeader">
@@ -256,6 +266,7 @@ let _pollenHourly=null;
 let _aqiHourly=null;
 let _viewMode='j1',_cachedData=null,_cachedJm1=null,_cachedJm7=null,_simpleMode=true,_ultraMode=true,_gradCache=null;
 let _layers={wind:false,uv:false,pollen:false,poll:false,proba:false,nuage:false,temp:false,models:false};
+let _loadDebounce=null;
 let _tempHourly=null;
 let _summaryStartDate=null; /* date de départ pour buildSummary en mode passé */
 let _tempJ1Max=null,_tempJ1Min=null,_tempJ0Max=null,_tempJ0Min=null;
@@ -285,6 +296,8 @@ let _rainRanking=[]; /* classement trié par pluie décroissante */
 let _rainRankIdx=0; /* index courant dans le classement */
 let _mfRainNow=null; /* données MF pluie dans l'heure */
 let _mfByMin={};
+let _nowcastByMin={}; /* MET Norway nowcast 5min */
+let _m15ByMin={};   /* Open-Meteo minutely15 */
 let _scrapedByMin={};
 let cityName=''; /* données scrapées lameteoagricole, clé=offset minutes */ /* slots MF par offset-minutes, global */
 let _radarMap=null,_radarLayer=null,_radarMarker=null,_radarFrames=[],_radarIdx=0,_radarPlaying=false,_radarTimer=null;
@@ -742,6 +755,42 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 
 
+
+/* ── Histogramme MET Nowcast ── */
+let _nowcastChart=null;
+function renderNowcastChart(){
+  const canvas=document.getElementById('nowcastCanvas');
+  if(!canvas)return;
+  const keys=Object.keys(_nowcastByMin).map(Number).sort(function(a,b){return a-b;});
+  if(!keys.length){const el=document.getElementById('nowcastTime');if(el)el.textContent='non disponible';return;}
+  const labels=keys.map(function(k){return k===0?'now':(k>0?'+'+k+"'":k+"'");});
+  const values=keys.map(function(k){return _nowcastByMin[k]??0;});
+  const maxV=Math.max.apply(null,values.concat([0.1]));
+  const allZero2=values.every(function(v){return v===0;});
+  const colors=values.map(function(v){
+    if(v<=0)return 'rgba(68,255,136,0.1)';
+    if(v<0.5)return 'rgba(68,255,136,0.5)';
+    if(v<2)return 'rgba(68,255,136,0.8)';
+    if(v<7)return 'rgba(100,255,180,0.95)';
+    return 'rgba(180,255,220,1)';
+  });
+  if(_nowcastChart)_nowcastChart.destroy();
+  _nowcastChart=new Chart(canvas,{
+    type:'bar',
+    data:{labels:labels,datasets:[{data:values,backgroundColor:colors,borderColor:'transparent',borderRadius:2}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:{duration:400},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y.toFixed(2)+' mm/h';}},backgroundColor:'#1a1a1a',titleColor:'#44ff88',bodyColor:'#88ffaa'}},
+      scales:{
+        x:{ticks:{color:'#44ff88',font:{family:"'Courier New',monospace",size:8,weight:'bold'},maxRotation:0,autoSkip:true,maxTicksLimit:10},grid:{display:false}},
+        y:{beginAtZero:true,max:maxV>0?maxV*1.15:1,ticks:{color:'#44ff88',font:{family:"'Courier New',monospace",size:9,weight:'bold'},callback:function(v){return v.toFixed(1);},maxTicksLimit:3},grid:{color:'rgba(68,255,136,0.08)'},border:{color:'transparent'}}
+      }
+    }
+  });
+  const el=document.getElementById('nowcastTime');
+  if(el)el.textContent=allZero2?'sec':'max '+maxV.toFixed(1)+' mm/h';
+}
+
 /* ── Histogramme MF Radar pluie dans l'heure ── */
 let _mfChart=null;
 function renderMfChart(){
@@ -758,7 +807,11 @@ function renderMfChart(){
   const maxV=Math.max.apply(null,values.concat([0.1]));
   /* Valider : si toutes les valeurs sont identiques et très élevées = données suspectes */
   /* Si toutes les valeurs sont identiques → bruit radar, signaler */
-  const allZero=values.every(function(v){return v===0;});
+  /* Arrondir au-dessous de 0.05mm/h → bruit numérique */
+  const values2=values.map(function(v){return v<0.05?0:v;});
+  const allZero=values2.every(function(v){return v===0;});
+  /* Remplacer values par values2 */
+  for(var _vi=0;_vi<values.length;_vi++)values[_vi]=values2[_vi];
   const el0=document.getElementById('mfTime');
   if(allZero){if(el0)el0.textContent='sec';}
   const colors=values.map(function(v){
@@ -846,7 +899,7 @@ async function fetchScrapedRain(name){
       base+enc+'-'+n.replace(/[^0-9]/g,'').slice(0,5)+'.html',
     ];
     /* Variantes sans accents */
-    const noAccent=n.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9\-\s]/g,'');
+    const noAccent=n.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[\u0100-\uFFFF]/g,'').replace(/[^a-zA-Z0-9\-\s]/g,'');
     const encNA=encodeURIComponent(noAccent);
     if(encNA!==enc){
       variants.push(base+encNA+'-.html');
@@ -865,7 +918,6 @@ async function fetchScrapedRain(name){
     u=>'https://corsproxy.io/?'+encodeURIComponent(u),
     u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
     u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u),
-    u=>'https://thingproxy.freeboard.io/fetch/'+u,
   ];
   for(const siteUrl of variants){
     for(const proxyFn of proxies){
@@ -920,6 +972,149 @@ async function launchScraping(){
 
 
 /* ── Fetch MF pluie dans l'heure (radar) ── */
+
+/* ── MET Norway Nowcast : précipitations 5-min sur 2h ── */
+
+/* ── Alimenter nowcast depuis omM15 si met.no hors zone ── */
+function fillNowcastFromM15(omM15){
+  if(!omM15?.minutely_15?.time)return;
+  const times=omM15.minutely_15.time;
+  const precip=omM15.minutely_15.precipitation??[];
+  const aromp=omM15.minutely_15.precipitation_meteofrance_arome_france_hd??[];
+  const now=new Date();
+  /* Trouver l'index le plus proche de maintenant */
+  let t0idx=0;
+  let minDiff=Infinity;
+  times.forEach(function(t,i){
+    const diff=Math.abs(new Date(t)-now);
+    if(diff<minDiff){minDiff=diff;t0idx=i;}
+  });
+  _nowcastByMin={};
+  /* Prendre les 2 heures suivantes (8 slots × 15min) */
+  for(var i=t0idx;i<Math.min(t0idx+8,times.length);i++){
+    const offsetMin=Math.round((new Date(times[i])-now)/60000);
+    /* omM15 en mm/15min → mm/h ×4 */
+    const v=Math.max(aromp[i]??0,precip[i]??0)*4;
+    _nowcastByMin[offsetMin]=v<0.2?0:v;
+  }
+  console.log('[nowcast] filled from omM15:',Object.keys(_nowcastByMin).length,'pts');
+  renderNowcastChart();
+}
+
+async function fetchNowcast(lat,lon){
+  /* api.met.no nowcast couvre uniquement la Norvège (~54-72°N, 3-32°E) */
+  if(lat<54||lat>72||lon<3||lon>32){
+    console.log('[nowcast] hors zone met.no → utilise omM15');
+    if(typeof _cachedData!=='undefined'&&_cachedData?.omM15)fillNowcastFromM15(_cachedData.omM15);
+    return;
+  }
+  console.log('[nowcast] fetching for',lat.toFixed(3),lon.toFixed(3));
+  const apiUrl=`https://api.met.no/weatherapi/nowcast/2.0/complete?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`;
+  const proxies=[
+    function(){
+      const ctrl=new AbortController();
+      setTimeout(function(){ctrl.abort();},6000);
+      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'PluiePro/1.21'}});
+    },
+    function(){
+      const ctrl=new AbortController();
+      setTimeout(function(){ctrl.abort();},8000);
+      return fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(apiUrl),{signal:ctrl.signal});
+    },
+    function(){
+      const ctrl=new AbortController();
+      setTimeout(function(){ctrl.abort();},8000);
+      return fetch('https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(apiUrl),{signal:ctrl.signal});
+    },
+  ];
+  let d=null;
+  for(var ai=0;ai<proxies.length;ai++){
+    try{
+      const resp=await proxies[ai]();
+      if(!resp.ok){console.warn('[nowcast] proxy',ai,'HTTP',resp.status);continue;}
+      d=await resp.json();
+      console.log('[nowcast] OK via proxy',ai);
+      break;
+    }catch(e){
+      console.warn('[nowcast] proxy',ai,'error:',e.message);
+    }
+  }
+  if(!d){console.warn('[nowcast] all attempts failed');return;}
+  const series=d?.properties?.timeseries;
+  if(!series?.length){console.warn('[nowcast] no timeseries');return;}
+  const t0=new Date(series[0].time);
+  _nowcastByMin={};
+  series.forEach(function(s){
+    const tS=new Date(s.time);
+    const diffMin=Math.round((tS-t0)/60000);
+    const rate=s.data?.instant?.details?.precipitation_rate??0;
+    _nowcastByMin[diffMin]=rate<0.05?0:rate;
+  });
+  const mx=Math.max.apply(null,Object.values(_nowcastByMin).concat([0]));
+  console.log('[nowcast]',Object.keys(_nowcastByMin).length,'pts max='+mx.toFixed(2)+'mm/h');
+  renderNowcastChart();
+  if(myChart){lastW=0;myChart.update('none');}
+}
+
+
+/* ── Open-Meteo minutely15 ── */
+async function fetchMinutely15(lat,lon){
+  try{
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&forecast_days=2&timezone=auto`;
+    const d=await fetchRetry(url,2,800);
+    if(!d?.minutely_15?.time)return;
+    const times=d.minutely_15.time;
+    const precip=d.minutely_15.precipitation;
+    const now=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz||'Europe/Paris'}));
+    const nowMin=now.getHours()*60+now.getMinutes();
+    _m15ByMin={};
+    times.forEach(function(t,i){
+      const dt=new Date(t);
+      const lblMin=dt.getHours()*60+dt.getMinutes();
+      let offset=lblMin-nowMin;
+      if(offset<-30)offset+=24*60;
+      if(offset>=-5&&offset<=120)_m15ByMin[Math.round(offset)]=(precip[i]??0)*4; /* mm/15min→mm/h */
+    });
+    console.log('[m15] OK',Object.keys(_m15ByMin).length,'pts');
+  }catch(e){console.warn('[m15]',e.message);}
+}
+
+
+/* ── Fetch dédié températures (robuste, séparé du batch principal) ── */
+async function fetchDailyTemps(lat,lon){
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&forecast_days=16&timezone=auto`;
+  for(let attempt=0;attempt<5;attempt++){
+    try{
+      const ctrl=new AbortController();
+      const tid=setTimeout(()=>ctrl.abort(),10000);
+      const r=await fetch(url,{signal:ctrl.signal});
+      clearTimeout(tid);
+      if(r.status===429){
+        const wait=2000*(attempt+1);
+        console.warn('[temp] 429, retry dans',wait,'ms');
+        await new Promise(res=>setTimeout(res,wait));
+        continue;
+      }
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const d=await r.json();
+      if(!d?.daily?.time||!d?.daily?.temperature_2m_max)return;
+      _tempByDay=d.daily.temperature_2m_max.map(function(mx,di){return{max:mx,min:d.daily.temperature_2m_min?.[di]??null};});
+      console.log('[temp] OK',_tempByDay.length,'jours');
+      /* Redessiner le summary */
+      if(myChart){
+        lastW=0;
+        myChart.update('none');
+      } else {
+        console.warn('[temp] myChart is null - pas de redraw!');
+      }
+      return;
+    }catch(e){
+      console.warn('[temp] attempt',attempt,'error:',e.message);
+      if(attempt<4)await new Promise(res=>setTimeout(res,1500));
+    }
+  }
+}
+
 async function fetchMfRain(lat,lon){
   try{
     const url=`https://webservice.meteofrance.com/v3/rain?lat=${lat}&lon=${lon}&token=${MF_TOKEN}&_=${Date.now()}`;
@@ -994,6 +1189,7 @@ async function fetchAirQuality(lat,lon){
       clearTimeout(tid);
       if(resp.ok){d=await resp.json();break;}
     }catch(e){
+      console.warn('[AQ] attempt',attempt,e.message);
       if(attempt<2)await new Promise(function(r){setTimeout(r,1500);});
     }
   }
@@ -1043,7 +1239,7 @@ function _loadCache(lat,lon){
     const s=sessionStorage.getItem(_cacheKey(lat,lon));
     if(!s)return null;
     const obj=JSON.parse(s);
-    if(Date.now()-obj.ts>5*60*1000)return null; /* expiré */
+    if(Date.now()-obj.ts>2*60*1000)return null; /* expiré après 2min */
     return obj.data;
   }catch(e){return null;}
 }
@@ -1051,18 +1247,21 @@ function _loadCache(lat,lon){
 /* ── fetchRetry global — P2 : timeout 10s + AbortController ── */
 async function fetchRetry(url,tries=3,delay=1200){
   for(let i=0;i<tries;i++){
-    const ctrl=new AbortController();
-    const tid=setTimeout(()=>ctrl.abort(),10000); /* timeout 10s */
     try{
-      const r=await fetch(url,{signal:ctrl.signal});
-      clearTimeout(tid);
-      if(r.ok)return await r.json();
+      const r=await fetch(url);
+      if(r.status===429){
+        const wait=delay*(i+1)*2; /* backoff : 2.4s, 4.8s, 7.2s */
+        console.warn('[fetchRetry] 429 rate limit, attente',wait,'ms');
+        await new Promise(res=>setTimeout(res,wait));
+        continue;
+      }
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return r.json();
     }catch(e){
-      clearTimeout(tid);
-      if(i<tries-1)await new Promise(res=>setTimeout(res,delay*(i+1)));
+      if(i<tries-1)await new Promise(res=>setTimeout(res,delay));
+      else throw e;
     }
   }
-  return null;
 }
 
 /* ── load ── */
@@ -1081,24 +1280,66 @@ async function _loadWithCoords(lat,lon,displayName){
     const _res=await Promise.allSettled([
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m&models=${encodeURIComponent(omModels)}&forecast_days=16&timezone=auto`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&models=meteofrance_arome_france_hd,icon_d2&forecast_days=2&timezone=auto`),
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain&hourly=uv_index,temperature_2m&forecast_days=16&timezone=auto`),
       fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover,windgusts_10m,uv_index,temperature_2m&forecast_days=16&timezone=auto`),
     ]);
     const [omMain,omM15,omCurrent,metno,omDaily]=_res.map(r=>r.status==='fulfilled'?r.value:null);
     const rainMx=buildRainMx(omMain,metno,0);
+    /* Températures min/max daily depuis metno (fiable, déjà fetché) */
+    if(metno?.properties?.timeseries?.length){
+      const _tmap={};
+      metno.properties.timeseries.forEach(function(ts){
+        const dk=ts.time.slice(0,10);
+        const t=ts.data?.instant?.details?.air_temperature;
+        if(t==null)return;
+        if(!_tmap[dk]){_tmap[dk]={max:-99,min:99};}
+        if(t>_tmap[dk].max)_tmap[dk].max=t;
+        if(t<_tmap[dk].min)_tmap[dk].min=t;
+      });
+      const _now0=new Date(cn.getFullYear(),cn.getMonth(),cn.getDate());
+      _tempByDay=[];
+      for(let _i=0;_i<16;_i++){
+        const _d=new Date(_now0);_d.setDate(_now0.getDate()+_i);
+        const _dk=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
+        _tempByDay[_i]=_tmap[_dk]||null;
+      }
+      console.log('[temp] from metno:',_tempByDay.filter(Boolean).length,'jours, J0=',_tempByDay[0]);
+    }
     const probMx=buildProbMx(omMain,metno,0);
     _cachedData={omMain,omM15,rainMx,probMx};
     _windData=omMain?.hourly?.windspeed_10m??null;
-    _windGustData=omDaily?.hourly?.windgusts_10m??null;
+    if(omDaily?.hourly?.windgusts_10m) _windGustData=omDaily.hourly.windgusts_10m;
     _currentRain=omCurrent?.current?.precipitation??null;
-    _solarData=omDaily?.hourly?.shortwave_radiation??null;
-    _cloudData=omDaily?.hourly?.cloud_cover??null;
-    _uvData=omDaily?.daily?.uv_index_max??null;
-    _uvHourlyData=omDaily?.hourly?.uv_index??null;
-    _tempHourly=omDaily?.hourly?.temperature_2m??null;
-    _uvHourlyData=omDaily?.hourly?.uv_index??null;
-    _tempByDay=omDaily?.daily?.temperature_2m_max?.map((mx,di)=>({max:mx,min:omDaily.daily.temperature_2m_min?.[di]??null}))??null;
+    /* UV et température depuis omCurrent (pas de models=, tableau direct) */
+    if(omCurrent?.hourly?.uv_index) _uvHourlyData=omCurrent.hourly.uv_index;
+    if(omCurrent?.hourly?.temperature_2m){
+      _tempHourly=omCurrent.hourly.temperature_2m;
+      /* Calculer min/max daily depuis les données horaires */
+      const _tmap={};
+      (omCurrent.hourly.time||[]).forEach(function(t,i){
+        const dk=t.slice(0,10);
+        const v=omCurrent.hourly.temperature_2m[i];
+        if(v==null)return;
+        if(!_tmap[dk]){_tmap[dk]={max:-99,min:99};}
+        if(v>_tmap[dk].max)_tmap[dk].max=v;
+        if(v<_tmap[dk].min)_tmap[dk].min=v;
+      });
+      const _t0=new Date(cn.getFullYear(),cn.getMonth(),cn.getDate());
+      _tempByDay=[];
+      for(let _i=0;_i<16;_i++){
+        const _d=new Date(_t0.getTime()+_i*86400000);
+        const _k=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
+        _tempByDay[_i]=_tmap[_k]||null;
+      }
+    }
+    if(omDaily?.hourly?.shortwave_radiation) _solarData=omDaily.hourly.shortwave_radiation;
+    if(omDaily?.hourly?.cloud_cover) _cloudData=omDaily.hourly.cloud_cover;
+    if(omDaily?.daily?.uv_index_max) _uvData=omDaily.daily.uv_index_max;
+    if(omDaily?.hourly?.uv_index) _uvHourlyData=omDaily.hourly.uv_index;
+    if(omDaily?.hourly?.temperature_2m) _tempHourly=omDaily.hourly.temperature_2m;
+    if(omDaily?.hourly?.uv_index) _uvHourlyData=omDaily.hourly.uv_index;
+    if(omDaily?.daily?.temperature_2m_max) _tempByDay=omDaily.daily.temperature_2m_max.map(function(mx,di){return{max:mx,min:omDaily.daily.temperature_2m_min?.[di]??null};});
     _sunriseJ0=omDaily?.daily?.sunrise?.[0]?new Date(omDaily.daily.sunrise[0]).getHours()+(new Date(omDaily.daily.sunrise[0]).getMinutes()/60):6;
     _sunsetJ0=omDaily?.daily?.sunset?.[0]?new Date(omDaily.daily.sunset[0]).getHours()+(new Date(omDaily.daily.sunset[0]).getMinutes()/60):21;
     initBar();initRadar(lat,lon);
@@ -1109,6 +1350,8 @@ async function _loadWithCoords(lat,lon,displayName){
     updateBtnState();
     
         processData(omMain,omM15,rainMx,probMx);
+    fetchDailyTemps(lat,lon);
+    fetchNowcast(lat,lon);fetchMinutely15(lat,lon);
     fetchJm1Data(lat,lon);fetchJmNData(lat,lon,7);
   }catch(e){showStatus('❌ Erreur : '+e.message,'#ff3d57');}
   finally{btn.disabled=false;btn.textContent='GO';}
@@ -1117,9 +1360,12 @@ async function _loadWithCoords(lat,lon,displayName){
 async function load(){
   const city=document.getElementById('cityInput').value.trim();if(!city)return;
   const btn=document.getElementById('searchBtn');btn.disabled=true;btn.textContent='…';
-  /* Reset systématique des données temps réel pour éviter cache fantôme */
+  /* Reset systématique + vider sessionStorage pour éviter fantômes */
+  try{sessionStorage.clear();}catch(e){}
   _mfByMin={};
   _mfRainNow=null;
+  _nowcastByMin={};
+  _m15ByMin={};
   _scrapedByMin={};
   _pollenHourly=null;
   _aqiHourly=null;
@@ -1130,11 +1376,14 @@ async function load(){
   if(scrapeTime)scrapeTime.textContent='chargement...';
   if(mfTime)mfTime.textContent='chargement...';
   try{
-    let geo=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=5&language=fr`).then(r=>r.json());
+    const _gc1=new AbortController();setTimeout(()=>_gc1.abort(),6000);
+    let geo=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=5&language=fr`,{signal:_gc1.signal}).then(r=>r.json()).catch(()=>null);
+    if(!geo){showStatus('❌ Réseau indisponible, réessaie dans quelques secondes','#ff3d57');return;}
     if(!geo.results?.length){
       /* Essai avec les premières lettres */
       const short=city.split(' ')[0].slice(0,4);
-      geo=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(short)}&count=5&language=fr`).then(r=>r.json());
+      const _gc2=new AbortController();setTimeout(()=>_gc2.abort(),6000);
+      geo=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(short)}&count=5&language=fr`,{signal:_gc2.signal}).then(r=>r.json()).catch(()=>({results:[]}));
     }
     if(!geo.results?.length){showStatus('❌ Aucune ville trouvée près de "'+city+'"','#ff3d57');return;}
     /* Prendre le résultat le plus proche si coordonnées dispo, sinon le premier */
@@ -1166,15 +1415,15 @@ async function load(){
         const probMx=buildProbMx(omMain,metno,tIdx);
         _cachedData={omMain,omM15,rainMx,probMx};
         _windData=omMain?.hourly?.windspeed_10m??null;
-    _windGustData=omDaily?.hourly?.windgusts_10m??null;
-        _solarData=omDaily?.hourly?.shortwave_radiation??null;
-        _cloudData=omDaily?.hourly?.cloud_cover??null;
+    if(omDaily?.hourly?.windgusts_10m) _windGustData=omDaily.hourly.windgusts_10m;
+        if(omDaily?.hourly?.shortwave_radiation) _solarData=omDaily.hourly.shortwave_radiation;
+        if(omDaily?.hourly?.cloud_cover) _cloudData=omDaily.hourly.cloud_cover;
         _currentRain=omCurrent?.current?.precipitation??omCurrent?.current?.rain??null;
-        _uvData=omDaily?.daily?.uv_index_max??null;
-    _uvHourlyData=omDaily?.hourly?.uv_index??null;
-    _tempHourly=omDaily?.hourly?.temperature_2m??null;
-    _uvHourlyData=omDaily?.hourly?.uv_index??null;
-        _tempByDay=omDaily?.daily?.temperature_2m_max?.map((mx,di)=>({max:mx,min:omDaily.daily.temperature_2m_min?.[di]??null}))??null;
+        if(omDaily?.daily?.uv_index_max) _uvData=omDaily.daily.uv_index_max;
+    if(omDaily?.hourly?.uv_index) _uvHourlyData=omDaily.hourly.uv_index;
+    if(omDaily?.hourly?.temperature_2m) _tempHourly=omDaily.hourly.temperature_2m;
+    if(omDaily?.hourly?.uv_index) _uvHourlyData=omDaily.hourly.uv_index;
+        if(omDaily?.daily?.temperature_2m_max) _tempByDay=omDaily.daily.temperature_2m_max.map(function(mx,di){return{max:mx,min:omDaily.daily.temperature_2m_min?.[di]??null};});
         _sunriseJ0=omDaily?.daily?.sunrise?.[0]?new Date(omDaily.daily.sunrise[0]).getHours()+(new Date(omDaily.daily.sunrise[0]).getMinutes()/60):6;
         _sunsetJ0=omDaily?.daily?.sunset?.[0]?new Date(omDaily.daily.sunset[0]).getHours()+(new Date(omDaily.daily.sunset[0]).getMinutes()/60):21;
         _sunriseJ1=omDaily?.daily?.sunrise?.[1]?new Date(omDaily.daily.sunrise[1]).getHours()+(new Date(omDaily.daily.sunrise[1]).getMinutes()/60):6;
@@ -1185,6 +1434,7 @@ async function load(){
         updateBtnState();
         processData(omMain,omM15,rainMx,probMx);
         clearInterval(_autoRefreshTimer);zoomMin=0;zoomMax=1;
+        fetchNowcast(lat,lon);fetchMinutely15(lat,lon);
         initBar();initRadar(lat,lon);
         const rc=document.getElementById('radarCard');
         if(rc)rc.style.display='block';
@@ -1195,7 +1445,7 @@ async function load(){
     const _res2=await Promise.allSettled([
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m&models=${encodeURIComponent(omModels)}&forecast_days=16&timezone=auto`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&models=meteofrance_arome_france_hd,icon_d2&forecast_days=2&timezone=auto`),
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain&hourly=uv_index,temperature_2m&forecast_days=16&timezone=auto`),
       fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover,windgusts_10m,uv_index,temperature_2m&forecast_days=16&timezone=auto`),
     ]);
@@ -1213,14 +1463,14 @@ async function load(){
     const probMx=buildProbMx(omMain,metno,tIdx);
     _cachedData={omMain,omM15,rainMx,probMx};
     _windData=omMain?.hourly?.windspeed_10m??null;
-    _windGustData=omDaily?.hourly?.windgusts_10m??null;
-    _solarData=omDaily?.hourly?.shortwave_radiation??null;
-    _cloudData=omDaily?.hourly?.cloud_cover??null;
+    if(omDaily?.hourly?.windgusts_10m) _windGustData=omDaily.hourly.windgusts_10m;
+    if(omDaily?.hourly?.shortwave_radiation) _solarData=omDaily.hourly.shortwave_radiation;
+    if(omDaily?.hourly?.cloud_cover) _cloudData=omDaily.hourly.cloud_cover;
     _currentRain=omCurrent?.current?.precipitation??omCurrent?.current?.rain??null;
     _saveCache(lat,lon,{omMain,omM15,omCurrent,metno,omDaily}); /* O */
     /* Températures J+1 (index 1 dans daily = demain) */
     /* Températures J0→J+14 */
-    _tempByDay=omDaily?.daily?.temperature_2m_max?.map((mx,di)=>({max:mx,min:omDaily.daily.temperature_2m_min?.[di]??null}))??null;
+    if(omDaily?.daily?.temperature_2m_max) _tempByDay=omDaily.daily.temperature_2m_max.map(function(mx,di){return{max:mx,min:omDaily.daily.temperature_2m_min?.[di]??null};});
     _tempJ1Max=omDaily?.daily?.temperature_2m_max?.[1]??null;
     _tempJ1Min=omDaily?.daily?.temperature_2m_min?.[1]??null;
     _tempJ0Max=omDaily?.daily?.temperature_2m_max?.[0]??null;
@@ -1248,9 +1498,12 @@ async function load(){
     launchScraping();
     fetchAirQuality(lat,lon);
     fetchMfRain(lat,lon);
+    fetchDailyTemps(lat,lon);
+    fetchNowcast(lat,lon);
+    fetchMinutely15(lat,lon);
     /* Redraw de sécurité : 1s, 3s, 8s */
     [1000,3000,8000].forEach(function(t){setTimeout(function(){if(myChart){lastW=0;myChart.update();}},t);});
-  }catch(e){console.error(e);showStatus('❌ Erreur réseau : '+e.message,'#ff3d57');}
+  }catch(e){console.warn('[load]',e.message);showStatus('❌ '+e.message,'#ff3d57');}
   finally{btn.disabled=false;btn.textContent='GO';}
 }
 
@@ -1295,7 +1548,7 @@ async function fetchJmNData(lat,lon,nDays){
     const data={pastForecast,realData,startDate:fmt(startDate),endDate:fmt(endDate),nDays};
     if(nDays===7)_cachedJm7=data;
     else _cachedJm1=data;
-  }catch(e){console.error(`J-${nDays} fetch error`,e);}
+  }catch(e){console.warn('[J-N]',e.message);}
 }
 
 async function fetchJm1Data(lat,lon){
@@ -1315,7 +1568,7 @@ async function fetchJm1Data(lat,lon){
       fetchRetry(`https://historical-forecast-api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation&start_date=${dateStr}&end_date=${dateStr}&timezone=auto`),
     ]);
     _cachedJm1={pastForecast,realData,startDate:dateStr,endDate:dateStr,nDays:1};
-  }catch(e){console.error('J-1 fetch error',e);}
+  }catch(e){console.warn('[J-1]',e.message);}
 }
 
 /* ── boutons vue ── */
@@ -1464,15 +1717,21 @@ function processData(omMain,omM15,rainMx,probMx){
         const keys=Object.keys(_scrapedByMin).map(Number);
         if(!keys.length)return 0;
         const nk=keys.reduce((a,b)=>Math.abs(b-o)<Math.abs(a-o)?b:a,keys[0]);
-        return Math.abs(nk-o)<=6?(_scrapedByMin[nk]??0):0;
+        const v=Math.abs(nk-o)<=6?(_scrapedByMin[nk]??0):0;
+        return v>=0.1?v:0; /* ignorer bruit < 0.1mm/h */
       })();
       /* Fusionner : scrape prime sur les modèles, mais P80 si scrape=0      */
+      /* Nowcast MET : plancher si disponible */
+      const rNowcast=(()=>{const nk2=Object.keys(_nowcastByMin).map(Number);if(!nk2.length)return 0;const near=nk2.reduce((a,b)=>Math.abs(b-o)<Math.abs(a-o)?b:a,nk2[0]);return Math.abs(near-o)<=8?(_nowcastByMin[near]??0):0;})();
       /* rMF ignoré comme plancher si < 4.0mm/h (classe 1 = bruit radar) */
       const rMFfloor=rMF>=4.0?rMF:0;
+      /* Priorité : scraping > nowcast omM15 > MF radar > modèles */
       const r=rScrape>0
         ?Math.max(rScrape,rAnchor)
-        :Math.max(modelR,rAnchor,rMFfloor);
-      const mx=Math.max(mVals.length?Math.max(...mVals):rBest,rAnchor,rMFfloor,rScrape);
+        :rNowcast>0
+          ?Math.max(rNowcast,rAnchor)
+          :Math.max(modelR,rAnchor,rMFfloor);
+      const mx=Math.max(mVals.length?Math.max(...mVals):rBest,rAnchor,rMFfloor,rScrape,rNowcast);
 
       pts.push({t:`+${o}'`,d:0,r,mx,p:synthP(h,probMx),hourIdx:-1});
       SOURCES.forEach((src,si)=>{
@@ -2645,40 +2904,57 @@ function buildSummary(chart,pts,days,xp){
   const {chartArea,width:cW}=chart;
   const row=document.getElementById('summaryRow');
   const dn=['DIM','LUN','MAR','MER','JEU','VEN','SAM'];
-  const cn=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz}));
+  const cn=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz||'Europe/Paris'}));
+  const todayMidnight=new Date(cn.getFullYear(),cn.getMonth(),cn.getDate());
   row.innerHTML='';
-  row.style.cssText='position:relative;border-top:2px solid #444;background:#060606;overflow:hidden;'+
-    (days.length>2?'min-height:clamp(68px,15vw,82px)':'min-height:clamp(52px,12vw,62px)');
-  const vL=chartArea.left,vR=chartArea.right;
-  const clamp=px=>Math.max(vL,Math.min(vR,px));
-  const sep=days.map(d=>clamp(xp[d]));
-  /* starts[i] = left edge of cell i, ends[i] = right edge */
-  const starts=days.map((d,i)=>i===0?vL:sep[i]);
-  const ends=days.map((d,i)=>i===days.length-1?vR:sep[i+1]);
+  row.style.cssText='display:flex;flex-direction:row;align-items:stretch;border-top:2px solid #444;background:#060606;overflow:hidden;'+
+    (days.length>2?'min-height:clamp(68px,15vw,82px)':'min-height:clamp(56px,12vw,66px)');
+  /* Spacer gauche = axe Y */
+  const sL=document.createElement('div');
+  sL.style.cssText='flex:0 0 '+chartArea.left+'px';
+  row.appendChild(sL);
+  /* Cellules */
   days.forEach((d,di)=>{
-    const cellL=starts[di],cellW=Math.max(0,ends[di]-starts[di]);
-    if(di===days.length-1&&cellW<50)return;
+    const isLast=di===days.length-1;
+    const vL=chartArea.left,vR=chartArea.right;
+    const clampX=px=>Math.max(vL,Math.min(vR,px));
+    const cellL=di===0?vL:clampX(xp[d]);
+    const cellR=isLast?vR:clampX(xp[days[di+1]]);
+    const cellW=Math.max(0,cellR-cellL);
+    if(isLast&&cellW<50)return;
+    /* Date réelle de cette colonne */
     const baseDate=_summaryStartDate?new Date(_summaryStartDate):cn;
     const date=new Date(baseDate);date.setDate(baseDate.getDate()+d);
+    const dateMidnight=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+    const daysFromToday=Math.round((dateMidnight-todayMidnight)/86400000);
+    /* Cumuls */
     const dd=pts.filter(p=>p.d===d);
     const total=dd.reduce((s,p)=>s+p.mx,0);
     const maxP=Math.max(...dd.map(p=>p.p),0);
-    const lbl=date.toDateString()===cn.toDateString()?'AUJ.':dn[date.getDay()];
-    const dt=_tempByDay?.[d];
+    /* Label */
+    const isToday=dateMidnight.getTime()===todayMidnight.getTime();
+    const lbl=isToday?'AUJ.':dn[date.getDay()];
+    /* Température */
+    const dt=_tempByDay?.[daysFromToday];
     const tMax=dt?.max??null,tMin=dt?.min??null;
-    const t3=tMax!==null
-      ?'<div style="font-size:clamp(8px,1.8vw,10px);font-weight:900;white-space:nowrap;line-height:1.4;text-align:center"><span style="color:#88aaff">'+Math.round(tMin??0)+'°</span><span style="color:#ff8844">/'+Math.round(tMax)+'°</span></div>'
+    const tempHTML=tMax!==null
+      ?'<div style="font-size:clamp(8px,1.8vw,10px);font-weight:900;white-space:nowrap;line-height:1.3;text-align:center"><span style="color:#88aaff">'+Math.round(tMin??0)+'°</span><span style="color:#ff8844">/'+Math.round(tMax)+'°</span></div>'
       :'';
     const div=document.createElement('div');
-    div.style.cssText='position:absolute;left:'+cellL+'px;width:'+cellW+'px;top:0;bottom:0;'+
+    div.style.cssText=
+      'flex:0 0 '+cellW+'px;overflow:hidden;box-sizing:border-box;padding:1px 2px;'+
       'display:flex;flex-direction:column;align-items:center;justify-content:center;'+
-      'overflow:hidden;box-sizing:border-box;padding:1px 2px;gap:1px;text-align:center;';
+      'text-align:center;gap:1px;border-left:1px solid #1a1a1a;';
     div.innerHTML=
-      '<div style="font-size:clamp(7px,1.8vw,9px);font-weight:900;color:#666;letter-spacing:1px;white-space:nowrap;line-height:1.4">'+lbl+'</div>'+
-      '<div style="font-size:clamp(7px,1.9vw,9px);font-weight:900;color:#ffe600;white-space:nowrap;line-height:1.4">'+total.toFixed(1)+'<span style="font-size:6px;opacity:.6">mm</span>\u00a0'+Math.round(maxP)+'<span style="font-size:6px;opacity:.6">%</span></div>'+
-      t3;
+      '<div style="font-size:clamp(7px,1.8vw,9px);font-weight:900;color:#666;letter-spacing:1px;white-space:nowrap;line-height:1.3">'+lbl+'</div>'+
+      '<div style="font-size:clamp(7px,1.9vw,9px);font-weight:900;color:#ffe600;white-space:nowrap;line-height:1.3">'+total.toFixed(1)+'<span style="font-size:6px;opacity:.6">mm</span>\u00a0'+Math.round(maxP)+'<span style="font-size:6px;opacity:.6">%</span></div>'+
+      tempHTML;
     row.appendChild(div);
   });
+  /* Spacer droit */
+  const sR=document.createElement('div');
+  sR.style.cssText='flex:0 0 '+(cW-chartArea.right)+'px';
+  row.appendChild(sR);
 }
 /* ══════════════════════════════════════════════
    RADAR
@@ -2704,7 +2980,7 @@ async function loadRadarFrames(){
     _radarFrames=[...data.radar.past,...(data.radar.nowcast||[])];
     _radarIdx=_radarFrames.length-1;
     showRadarFrame(_radarIdx);
-  }catch(e){console.error('Radar error',e);}
+  }catch(e){console.warn('[radar]',e.message);}
 }
 
 function showRadarFrame(idx){
@@ -2738,7 +3014,8 @@ function toggleRadarPlay(){
 
 async function reverseGeocode(lat,lng){
   try{
-    const nom=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(5)}&lon=${lng.toFixed(5)}&format=json&accept-language=fr`).then(r=>r.json());
+    const ctrl2=new AbortController();setTimeout(()=>ctrl2.abort(),6000);
+    const nom=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(5)}&lon=${lng.toFixed(5)}&format=json&accept-language=fr`,{signal:ctrl2.signal}).then(r=>r.json()).catch(()=>null);
     let city=null;
     if(nom?.address){
       city=nom.address.city||nom.address.town||nom.address.village||
@@ -2948,7 +3225,7 @@ window.addEventListener('online',()=>{
 
 function startAutoRefresh(){
   /* MF rain refresh toutes les 5min */
-  setInterval(function(){if(typeof lat!=="undefined"&&lat){fetchMfRain(lat,lon);launchScraping();}},5*60*1000);
+  setInterval(function(){if(typeof lat!=="undefined"&&lat){fetchMfRain(lat,lon);launchScraping();fetchNowcast(lat,lon);}},5*60*1000);
   clearInterval(_autoRefreshTimer);
   _autoRefreshTimer=setInterval(()=>{
     if(!_cachedData||_isOffline)return;
