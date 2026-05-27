@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PluiePro v1.23</title>
+<title>PluiePro v1.25</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -287,6 +287,7 @@ let _windData=null;
 let _windGustData=null;
 let _solarData=null;
 let _tempByDay=null; /* températures par jour J0..J+14 */
+let _pressureMSL=null; /* pression au niveau de la mer (hPa) */
 let _cloudData=null;
 let _sunriseJ0=6,_sunsetJ0=21,_sunriseJ1=6,_sunsetJ1=21; /* heures décimales */
 let _currentRain=null; /* précipitation actuelle temps réel */
@@ -311,6 +312,21 @@ function p80(arr){
   const s=[...v].sort((a,b)=>a-b),i=.8*(s.length-1),lo=Math.floor(i),hi=Math.ceil(i);
   return s[lo]+(s[hi]-s[lo])*(i-lo);
 }
+/* Percentile 20 (pour spread incertitude) */
+function p20(arr){
+  const v=arr.filter(x=>x!=null&&isFinite(x)&&x>=0);
+  if(!v.length)return 0;
+  const s=[...v].sort((a,b)=>a-b);
+  const i=Math.floor(s.length*0.20);
+  return s[i]??s[0];
+}
+
+/* Détecter si ville française (lat/lon) */
+function _isFranceCity(){
+  return _cityLat>=41&&_cityLat<=51.5&&_cityLon>=-5.5&&_cityLon<=9.6;
+}
+
+
 function maxOf(arr){const v=arr.filter(x=>x!=null&&isFinite(x)&&x>=0);return v.length?Math.max(...v):0}
 function interpM15(m15,slotF,off){const t=slotF+off/15,si=Math.floor(t),f=t-si;return Math.max(0,(m15[si]??0)*(1-f)+(m15[si+1]??m15[si]??0)*f)}
 function localKey(utcStr){
@@ -1079,9 +1095,21 @@ async function fetchMinutely15(lat,lon){
 }
 
 
+
+/* Lisser et médianiser les données nuages (P50 fenêtre 3h) */
+function smoothCloudData(arr){
+  if(!arr||!arr.length)return arr;
+  return arr.map((_,i)=>{
+    const w=arr.slice(Math.max(0,i-1),Math.min(arr.length,i+2)).filter(v=>v!=null);
+    return w.length?Math.round(w.reduce((a,b)=>a+b,0)/w.length):null;
+  });
+}
 /* ── Fetch dédié températures (robuste, séparé du batch principal) ── */
 async function fetchDailyTemps(lat,lon){
-  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&forecast_days=16&timezone=auto`;
+  /* Utiliser AROME HD pour les villes françaises (meilleure précision) */
+  const _isFr=_isFranceCity();
+  const _tempModel=_isFr?'&models=meteofrance_arome_france_hd':'';
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&forecast_days=16${_tempModel}&timezone=auto`;
   for(let attempt=0;attempt<5;attempt++){
     try{
       const ctrl=new AbortController();
@@ -1279,7 +1307,7 @@ async function _loadWithCoords(lat,lon,displayName){
     const _res=await Promise.allSettled([
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m&models=${encodeURIComponent(omModels)}&forecast_days=16&timezone=auto`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&models=meteofrance_arome_france_hd,icon_d2&forecast_days=2&timezone=auto`),
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain&hourly=uv_index,temperature_2m&forecast_days=16&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain,pressure_msl&hourly=uv_index,temperature_2m&forecast_days=16&timezone=auto`),
       fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover,windgusts_10m,uv_index,temperature_2m&forecast_days=16&timezone=auto`),
     ]);
@@ -1311,6 +1339,7 @@ async function _loadWithCoords(lat,lon,displayName){
     if(omDaily?.hourly?.windgusts_10m) _windGustData=omDaily.hourly.windgusts_10m;
     _currentRain=omCurrent?.current?.precipitation??null;
     /* UV et température depuis omCurrent (pas de models=, tableau direct) */
+    if(omCurrent?.current?.pressure_msl) _pressureMSL=omCurrent.current.pressure_msl;
     if(omCurrent?.hourly?.uv_index) _uvHourlyData=omCurrent.hourly.uv_index;
     if(omCurrent?.hourly?.temperature_2m){
       _tempHourly=omCurrent.hourly.temperature_2m;
@@ -1333,7 +1362,7 @@ async function _loadWithCoords(lat,lon,displayName){
       }
     }
     if(omDaily?.hourly?.shortwave_radiation) _solarData=omDaily.hourly.shortwave_radiation;
-    if(omDaily?.hourly?.cloud_cover) _cloudData=omDaily.hourly.cloud_cover;
+    if(omDaily?.hourly?.cloud_cover) _cloudData=smoothCloudData(omDaily.hourly.cloud_cover);
     if(omDaily?.daily?.uv_index_max) _uvData=omDaily.daily.uv_index_max;
     if(omDaily?.hourly?.uv_index) _uvHourlyData=omDaily.hourly.uv_index;
     if(omDaily?.hourly?.temperature_2m) _tempHourly=omDaily.hourly.temperature_2m;
@@ -1416,9 +1445,10 @@ async function load(){
         _windData=omMain?.hourly?.windspeed_10m??null;
     if(omDaily?.hourly?.windgusts_10m) _windGustData=omDaily.hourly.windgusts_10m;
         if(omDaily?.hourly?.shortwave_radiation) _solarData=omDaily.hourly.shortwave_radiation;
-        if(omDaily?.hourly?.cloud_cover) _cloudData=omDaily.hourly.cloud_cover;
+        if(omDaily?.hourly?.cloud_cover) _cloudData=smoothCloudData(omDaily.hourly.cloud_cover);
         _currentRain=omCurrent?.current?.precipitation??omCurrent?.current?.rain??null;
-        if(omCurrent?.hourly?.uv_index) _uvHourlyData=omCurrent.hourly.uv_index;
+        if(omCurrent?.current?.pressure_msl) _pressureMSL=omCurrent.current.pressure_msl;
+    if(omCurrent?.hourly?.uv_index) _uvHourlyData=omCurrent.hourly.uv_index;
         if(omCurrent?.hourly?.temperature_2m) _tempHourly=omCurrent.hourly.temperature_2m;
         if(omDaily?.daily?.uv_index_max) _uvData=omDaily.daily.uv_index_max;
     if(omDaily?.hourly?.uv_index) _uvHourlyData=omDaily.hourly.uv_index;
@@ -1446,7 +1476,7 @@ async function load(){
     const _res2=await Promise.allSettled([
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m&models=${encodeURIComponent(omModels)}&forecast_days=16&timezone=auto`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&models=meteofrance_arome_france_hd,icon_d2&forecast_days=2&timezone=auto`),
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain&hourly=uv_index,temperature_2m&forecast_days=16&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain,pressure_msl&hourly=uv_index,temperature_2m&forecast_days=16&timezone=auto`),
       fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover,windgusts_10m,uv_index,temperature_2m&forecast_days=16&timezone=auto`),
     ]);
@@ -1466,8 +1496,9 @@ async function load(){
     _windData=omMain?.hourly?.windspeed_10m??null;
     if(omDaily?.hourly?.windgusts_10m) _windGustData=omDaily.hourly.windgusts_10m;
     if(omDaily?.hourly?.shortwave_radiation) _solarData=omDaily.hourly.shortwave_radiation;
-    if(omDaily?.hourly?.cloud_cover) _cloudData=omDaily.hourly.cloud_cover;
+    if(omDaily?.hourly?.cloud_cover) _cloudData=smoothCloudData(omDaily.hourly.cloud_cover);
     _currentRain=omCurrent?.current?.precipitation??omCurrent?.current?.rain??null;
+    if(omCurrent?.current?.pressure_msl) _pressureMSL=omCurrent.current.pressure_msl;
     if(omCurrent?.hourly?.uv_index) _uvHourlyData=omCurrent.hourly.uv_index;
     if(omCurrent?.hourly?.temperature_2m) _tempHourly=omCurrent.hourly.temperature_2m;
     _saveCache(lat,lon,{omMain,omM15,omCurrent,metno,omDaily}); /* O */
@@ -1736,7 +1767,7 @@ function processData(omMain,omM15,rainMx,probMx){
           :Math.max(modelR,rAnchor,rMFfloor);
       const mx=Math.max(mVals.length?Math.max(...mVals):rBest,rAnchor,rMFfloor,rScrape,rNowcast);
 
-      pts.push({t:`+${o}'`,d:0,r,mx,p:synthP(h,probMx),hourIdx:-1});
+      pts.push({t:`+${o}'`,d:0,r,mx,p:synthP(h,probMx),hourIdx:-1,spread:parseFloat((Math.max(0,mx-r)*0.5).toFixed(2))});
       SOURCES.forEach((src,si)=>{
         let v=null;
         if(src.key==='mf'||src.key==='mfhd') v=rMF>0?rMF:(rArome||null);
@@ -1828,9 +1859,11 @@ function processJmN(jmData,nDays){
     const hr=parseInt(t.slice(11,13));
     const rainVals=omSources.map(s=>{const k=`precipitation_${s.omModel}`;const v=h[k]?.[idx];return(v!=null&&isFinite(v)&&v>=0)?v:null;});
     const r=p80(rainVals),mx=maxOf(rainVals);
+    const _rP20=p20(rainVals);
+    const _spread=parseFloat((r-_rP20).toFixed(2));
     const probVals=omSources.map(s=>{const k=`precipitation_probability_${s.omModel}`;const v=h[k]?.[idx];return(v!=null&&isFinite(v)&&v>=0)?v:null;});
     const prob=Math.min(100,maxOf(probVals));
-    pts.push({t:hr+'h',d:dayDiff,r,mx,p:prob,hourIdx:idx});
+    pts.push({t:hr+'h',d:dayDiff,r,mx,p:prob,hourIdx:idx,spread:_spread});
     SOURCES.forEach(src=>{
       const k=`precipitation_${src.omModel}`;
       const v=src.omModel?h[k]?.[idx]:null;
@@ -2273,7 +2306,7 @@ function renderJm1(pts,mods,realPrecip){
       plugins:{legend:{display:false},tooltip:{enabled:false}}
     },
     plugins:[
-      {id:'overlay',afterDraw(chart){if(chart.width!==lastW){lastW=chart.width;buildOverlays(chart,pts);}else{updateOverlayPositions(chart,pts);}}},
+      {id:'overlay',afterDraw(chart){if(chart.width!==lastW){lastW=chart.width;buildOverlays(chart,pts);}else{updateOverlayPositions(chart,pts);}drawUncertaintyBadge(chart,pts);}},
       {id:'realLegend',afterDraw(chart){
         const {ctx:c,chartArea:{top,right}}=chart;
         c.save();c.strokeStyle='rgba(255,255,255,0.9)';c.lineWidth=4;
@@ -2878,6 +2911,23 @@ function updateOverlayPositions(chart,pts){
 }
 
 /* ── overlays CSS ── */
+
+/* ── Badge incertitude précipitations ── */
+function drawUncertaintyBadge(chart,pts){
+  const now=new Date();
+  const spread3h=pts.filter(p=>p.hourIdx>=0&&p.spread>2).slice(0,3);
+  if(!spread3h.length)return;
+  const {ctx,chartArea}=chart;
+  ctx.save();
+  ctx.fillStyle='rgba(255,140,0,0.92)';
+  ctx.strokeStyle='#ff8800';
+  ctx.lineWidth=1;
+  const bx=chartArea.left+8,by=chartArea.top+8,bw=140,bh=18;
+  ctx.beginPath();ctx.roundRect(bx,by,bw,bh,4);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#fff';ctx.font='bold 10px Courier New';ctx.textAlign='left';
+  ctx.fillText('⚡ Forte incertitude (±'+spread3h[0].spread.toFixed(1)+'mm/h)',bx+6,by+13);
+  ctx.restore();
+}
 function buildOverlays(chart,pts){
   const {chartArea,scales:{x},width:cW}=chart;
   const wrapper=document.getElementById('chartWrapper');
