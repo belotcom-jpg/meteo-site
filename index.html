@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PluiePro v1.25</title>
+<title>PluiePro v1.29</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -116,6 +116,20 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   .day-row3{display:flex;align-items:center;justify-content:center;gap:0;white-space:nowrap;width:100%;line-height:1}
 .temp-max{font-size:clamp(8px,1.8vw,10px);font-weight:900;color:#ff8844;white-space:nowrap}
 .temp-min{font-size:clamp(8px,1.8vw,10px);font-weight:900;color:#88aaff;white-space:nowrap}
+
+  #reliabilityScore{padding:2px 8px;border-radius:10px;cursor:help}
+  #reliabilityScore.rel-high{background:#1a4a1a;color:#aaff88;border:1px solid #55aa44}
+  #reliabilityScore.rel-med{background:#4a3a00;color:#ffcc44;border:1px solid #aa8800}
+  #reliabilityScore.rel-low{background:#4a1010;color:#ff7777;border:1px solid #aa3333}
+
+
+  #modelLegend{background:#060606;border-bottom:1px solid #1a1a1a}
+  .leg-model-btn{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);cursor:pointer;font-family:'Courier New',monospace;font-size:9px;font-weight:700;color:#ccc;transition:opacity .2s;user-select:none}
+  .leg-model-btn:hover{border-color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.1)}
+  .leg-model-btn .dot{width:14px;height:3px;border-radius:2px;display:inline-block}
+  .leg-era5{color:#88ff88}
+  .leg-p80{color:#ffe600;font-size:10px}
+
 </style>
 </head>
 <body>
@@ -157,6 +171,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
       <div class="header-left">
         <div id="displayTz" class="city-tz"></div>
         <div id="nextRainBadge"></div>
+        <div id="reliabilityScore" style="display:none;font-size:10px;font-weight:700;font-family:'Courier New';letter-spacing:.5px;margin-top:2px"></div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
       <div id="legendBar" class="legend" style="flex-direction:row;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
@@ -170,6 +185,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
     </div>
     <div id="chartWrapper">
       <div class="canvas-container"><canvas id="mainChart"></canvas></div>
+  <div id="modelLegend" style="display:flex;flex-wrap:wrap;gap:5px;padding:4px 8px 2px;"></div>
       <div id="summaryRow"></div>
       <div id="scrollbarWrap" style="display:none"><div id="scrollbarTrack"><div id="scrollbarThumb"></div></div></div>
     </div>
@@ -267,6 +283,7 @@ let _aqiHourly=null;
 let _viewMode='j1',_cachedData=null,_cachedJm1=null,_cachedJm7=null,_simpleMode=true,_ultraMode=true,_gradCache=null;
 let _layers={wind:false,uv:false,pollen:false,poll:false,proba:false,nuage:false,temp:false,models:false};
 let _loadDebounce=null;
+const _hiddenModels=new Set(); /* modèles masqués par clic légende */
 let _tempHourly=null;
 let _summaryStartDate=null; /* date de départ pour buildSummary en mode passé */
 let _tempJ1Max=null,_tempJ1Min=null,_tempJ0Max=null,_tempJ0Min=null;
@@ -288,6 +305,7 @@ let _windGustData=null;
 let _solarData=null;
 let _tempByDay=null; /* températures par jour J0..J+14 */
 let _pressureMSL=null; /* pression au niveau de la mer (hPa) */
+let _capeHourly=null; /* CAPE J/kg heure par heure */
 let _cloudData=null;
 let _sunriseJ0=6,_sunsetJ0=21,_sunriseJ1=6,_sunsetJ1=21; /* heures décimales */
 let _currentRain=null; /* précipitation actuelle temps réel */
@@ -306,6 +324,30 @@ let _cityLat=48.6869,_cityLon=2.3814; /* défaut Juvisy */
 let _isMob=false;
 
 /* ── maths ── */
+
+/* Pondération adaptative des modèles (historique 7j localStorage) */
+function _getModelWeights(){
+  try{
+    const stored=localStorage.getItem('pp_model_weights');
+    if(!stored)return null;
+    const obj=JSON.parse(stored);
+    if(Date.now()-obj.ts>7*24*3600*1000)return null; /* expire après 7j */
+    return obj.weights;
+  }catch{return null;}
+}
+function _updateModelWeight(modelKey,mae){
+  try{
+    const stored=localStorage.getItem('pp_model_mae_hist');
+    const hist=stored?JSON.parse(stored):{};
+    if(!hist[modelKey])hist[modelKey]=[];
+    hist[modelKey].push({mae,ts:Date.now()});
+    /* Garder 7 jours */
+    const cutoff=Date.now()-7*24*3600*1000;
+    hist[modelKey]=hist[modelKey].filter(e=>e.ts>cutoff).slice(-14);
+    localStorage.setItem('pp_model_mae_hist',JSON.stringify(hist));
+  }catch{}
+}
+
 function p80(arr){
   const v=arr.filter(x=>x!=null&&isFinite(x)&&x>=0);
   if(!v.length)return 0;
@@ -324,6 +366,10 @@ function p20(arr){
 /* Détecter si ville française (lat/lon) */
 function _isFranceCity(){
   return _cityLat>=41&&_cityLat<=51.5&&_cityLon>=-5.5&&_cityLon<=9.6;
+}
+/* Zone tropicale (|lat| < 25°) → P60 pour réduire surestimation convective */
+function _isTropical(){
+  return Math.abs(_cityLat)<25;
 }
 
 
@@ -1266,7 +1312,7 @@ function _loadCache(lat,lon){
     const s=sessionStorage.getItem(_cacheKey(lat,lon));
     if(!s)return null;
     const obj=JSON.parse(s);
-    if(Date.now()-obj.ts>2*60*1000)return null; /* expiré après 2min */
+    if(Date.now()-obj.ts>8*60*1000)return null; /* expiré après 8min */
     return obj.data;
   }catch(e){return null;}
 }
@@ -1305,7 +1351,7 @@ async function _loadWithCoords(lat,lon,displayName){
     const omModels=SOURCES.filter(s=>s.omModel).map(s=>s.omModel).join(',');
     /* P3 — allSettled : continue même si metno ou omDaily échoue */
     const _res=await Promise.allSettled([
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m&models=${encodeURIComponent(omModels)}&forecast_days=16&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m,cape&models=${encodeURIComponent(omModels)}&forecast_days=16&timezone=auto`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&models=meteofrance_arome_france_hd,icon_d2&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain,pressure_msl&hourly=uv_index,temperature_2m&forecast_days=16&timezone=auto`),
       fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
@@ -1341,6 +1387,11 @@ async function _loadWithCoords(lat,lon,displayName){
     /* UV et température depuis omCurrent (pas de models=, tableau direct) */
     if(omCurrent?.current?.pressure_msl) _pressureMSL=omCurrent.current.pressure_msl;
     if(omCurrent?.hourly?.uv_index) _uvHourlyData=omCurrent.hourly.uv_index;
+    /* CAPE depuis omMain (premier modèle dispo) */
+    if(omMain?.hourly) {
+      const _capeKey=Object.keys(omMain.hourly).find(k=>k.startsWith('cape_'));
+      if(_capeKey) _capeHourly=omMain.hourly[_capeKey];
+    }
     if(omCurrent?.hourly?.temperature_2m){
       _tempHourly=omCurrent.hourly.temperature_2m;
       /* Calculer min/max daily depuis les données horaires */
@@ -1388,8 +1439,8 @@ async function _loadWithCoords(lat,lon,displayName){
 async function load(){
   const city=document.getElementById('cityInput').value.trim();if(!city)return;
   const btn=document.getElementById('searchBtn');btn.disabled=true;btn.textContent='…';
-  /* Reset systématique + vider sessionStorage pour éviter fantômes */
-  try{sessionStorage.clear();}catch(e){}
+  /* Reset : supprimer seulement le cache de la ville précédente, pas tout */
+  if(typeof _cityLat!=='undefined')try{sessionStorage.removeItem(_cacheKey(_cityLat,_cityLon));}catch(e){}
   _mfByMin={};
   _mfRainNow=null;
   _nowcastByMin={};
@@ -1431,7 +1482,9 @@ async function load(){
     /* O — Essayer le cache d'abord */
     const _cached=_loadCache(lat,lon);
     if(_cached&&_cached.omMain?.hourly?.time){
-      const {omMain,omM15,omCurrent,metno,omDaily}=_cached;
+      const {omMain,omM15,omCurrent,metno,omDaily,_tempByDayCached,_uvCached}=_cached;
+    if(_tempByDayCached&&!_tempByDay)_tempByDay=_tempByDayCached;
+    if(_uvCached&&!_uvHourlyData)_uvHourlyData=_uvCached;
       if(!omMain?.hourly?.time){} else {
         cityTz=omMain.timezone??'Europe/Paris';N_HRS=omMain.hourly.time.length;
         const tzEl=document.getElementById('displayTz');
@@ -1474,7 +1527,7 @@ async function load(){
     }
     /* P3 — allSettled : dégradation gracieuse si source secondaire échoue */
     const _res2=await Promise.allSettled([
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m&models=${encodeURIComponent(omModels)}&forecast_days=16&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m,cape&models=${encodeURIComponent(omModels)}&forecast_days=16&timezone=auto`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&models=meteofrance_arome_france_hd,icon_d2&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain,pressure_msl&hourly=uv_index,temperature_2m&forecast_days=16&timezone=auto`),
       fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
@@ -1501,7 +1554,7 @@ async function load(){
     if(omCurrent?.current?.pressure_msl) _pressureMSL=omCurrent.current.pressure_msl;
     if(omCurrent?.hourly?.uv_index) _uvHourlyData=omCurrent.hourly.uv_index;
     if(omCurrent?.hourly?.temperature_2m) _tempHourly=omCurrent.hourly.temperature_2m;
-    _saveCache(lat,lon,{omMain,omM15,omCurrent,metno,omDaily}); /* O */
+    _saveCache(lat,lon,{omMain,omM15,omCurrent,metno,omDaily,_tempByDayCached:_tempByDay,_uvCached:_uvHourlyData}); /* O */
     /* Températures J+1 (index 1 dans daily = demain) */
     /* Températures J0→J+14 */
     if(omDaily?.daily?.temperature_2m_max) _tempByDay=omDaily.daily.temperature_2m_max.map(function(mx,di){return{max:mx,min:omDaily.daily.temperature_2m_min?.[di]??null};});
@@ -1598,7 +1651,7 @@ async function fetchJm1Data(lat,lon){
     const omModels=omSources.map(s=>s.omModel).join(',');
 
     const [pastForecast,realData]=await Promise.all([
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m&models=${encodeURIComponent(omModels)}&past_days=1&forecast_days=0&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m,cape&models=${encodeURIComponent(omModels)}&past_days=1&forecast_days=0&timezone=auto`),
       fetchRetry(`https://historical-forecast-api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation&start_date=${dateStr}&end_date=${dateStr}&timezone=auto`),
     ]);
     _cachedJm1={pastForecast,realData,startDate:dateStr,endDate:dateStr,nDays:1};
@@ -1759,12 +1812,11 @@ function processData(omMain,omM15,rainMx,probMx){
       const rNowcast=(()=>{const nk2=Object.keys(_nowcastByMin).map(Number);if(!nk2.length)return 0;const near=nk2.reduce((a,b)=>Math.abs(b-o)<Math.abs(a-o)?b:a,nk2[0]);return Math.abs(near-o)<=8?(_nowcastByMin[near]??0):0;})();
       /* rMF ignoré comme plancher si < 4.0mm/h (classe 1 = bruit radar) */
       const rMFfloor=rMF>=4.0?rMF:0;
-      /* Priorité : scraping > nowcast omM15 > MF radar > modèles */
+      /* Priorité : scraping prime, sinon MAX de toutes les sources temps-réel.
+         Bug corrigé : rNowcast(0.1) ne masque plus rMFfloor(4.0) */
       const r=rScrape>0
-        ?Math.max(rScrape,rAnchor)
-        :rNowcast>0
-          ?Math.max(rNowcast,rAnchor)
-          :Math.max(modelR,rAnchor,rMFfloor);
+        ?Math.max(rScrape,rMFfloor,rNowcast,rAnchor)
+        :Math.max(rNowcast,rMFfloor,modelR,rAnchor);
       const mx=Math.max(mVals.length?Math.max(...mVals):rBest,rAnchor,rMFfloor,rScrape,rNowcast);
 
       pts.push({t:`+${o}'`,d:0,r,mx,p:synthP(h,probMx),hourIdx:-1,spread:parseFloat((Math.max(0,mx-r)*0.5).toFixed(2))});
@@ -1857,13 +1909,19 @@ function processJmN(jmData,nDays){
     if(tDate<startD||tDate>endD)return;
     const dayDiff=Math.round((tDate-startD)/(24*3600*1000));
     const hr=parseInt(t.slice(11,13));
-    const rainVals=omSources.map(s=>{const k=`precipitation_${s.omModel}`;const v=h[k]?.[idx];return(v!=null&&isFinite(v)&&v>=0)?v:null;});
-    const r=p80(rainVals),mx=maxOf(rainVals);
-    const _rP20=p20(rainVals);
+    /* Pour la France : P80 sur AROME+MF uniquement (×5 plus précis) */
+    const _frSources=_isFranceCity()
+      ?omSources.filter(s=>s.omModel.includes('arome')||s.omModel.includes('meteofrance'))
+      :omSources;
+    const _allRainVals=omSources.map(s=>{const k=`precipitation_${s.omModel}`;const v=h[k]?.[idx];return(v!=null&&isFinite(v)&&v>=0)?v:null;});
+    const rainVals=_frSources.map(s=>{const k=`precipitation_${s.omModel}`;const v=h[k]?.[idx];return(v!=null&&isFinite(v)&&v>=0)?v:null;});
+    const _pctFunc=_isTropical()?function(a){const v=a.filter(x=>x!=null&&x>=0);if(!v.length)return 0;const s=[...v].sort((a,b)=>a-b);return s[Math.floor(s.length*0.60)]??0;}:p80;
+    const r=_pctFunc(rainVals.filter(v=>v!=null).length>=1?rainVals:_allRainVals),mx=maxOf(_allRainVals);
+    const _rP20=p20(_frSources&&_frSources.length>0&&_isFranceCity()?rainVals:_allRainVals);
     const _spread=parseFloat((r-_rP20).toFixed(2));
     const probVals=omSources.map(s=>{const k=`precipitation_probability_${s.omModel}`;const v=h[k]?.[idx];return(v!=null&&isFinite(v)&&v>=0)?v:null;});
     const prob=Math.min(100,maxOf(probVals));
-    pts.push({t:hr+'h',d:dayDiff,r,mx,p:prob,hourIdx:idx,spread:_spread});
+    pts.push({t:hr+'h',d:dayDiff,r,mx,p:prob,hourIdx:idx,spread:_spread,p20:_rP20});
     SOURCES.forEach(src=>{
       const k=`precipitation_${src.omModel}`;
       const v=src.omModel?h[k]?.[idx]:null;
@@ -2278,6 +2336,8 @@ function renderJm1(pts,mods,realPrecip){
   _gradCache=grad;
 
   const modelDS=SOURCES.map((src,si)=>({
+    _modelKey:src.key,
+    hidden:_hiddenModels.has(src.key),
     data:mods[si],borderColor:_simpleMode?'transparent':src.color+'50',borderWidth:isMob?.8:1.2,
     tension:0.3,pointRadius:0,fill:false,yAxisID:'y',order:4,spanGaps:true,
   }));
@@ -2288,9 +2348,11 @@ function renderJm1(pts,mods,realPrecip){
       labels:pts.map(p=>p.t),
       datasets:[
         {data:pts.map(p=>p.r),borderColor:'transparent',borderWidth:0,fill:true,backgroundColor:_simpleMode?'rgba(255,230,0,0.08)':'rgba(0,0,0,0)',tension:0.4,pointRadius:0,yAxisID:'y',order:5},
+        /* Enveloppe P20 semi-transparente entre P20 et P80 */
+        {data:pts.map(p=>p.p20??p.r),borderColor:'rgba(255,220,0,0)',borderWidth:0,fill:'+1',backgroundColor:'rgba(255,200,0,0.10)',tension:0.4,pointRadius:0,yAxisID:'y',order:1.5,label:'P20'},
         ...modelDS,
         {data:pts.map(p=>p.mx),borderColor:_simpleMode?'transparent':'#4488ff',borderWidth:isMob?4:6,borderDash:[8,3,2,3],fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:2},
-        {data:pts.map(p=>p.r),borderColor:'#ffe600',borderWidth:isMob?4:6,fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:1},
+        {data:pts.map(p=>p.r),borderColor:pts.some(p=>p.spread>1.5)?'#ffcc00':'#ffe600',borderWidth:isMob?4:6,fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:1},
         {data:pts.map(p=>p.p),borderColor:_ultraMode?'rgba(0,0,0,0)':'rgba(255,255,255,0.85)',borderWidth:_ultraMode?0:isMob?2.5:3.5,borderDash:[6,3],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:3},
         {data:pts.map(p=>_cloudData&&p.hourIdx>=0?(_cloudData[p.hourIdx]??null):null),borderColor:_ultraMode?'rgba(0,0,0,0)':'#ff3333',borderWidth:_ultraMode?0:isMob?3:4,borderDash:[6,3,6,3],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:6,spanGaps:true},
         {data:realArr,borderColor:'rgba(255,255,255,0.92)',borderWidth:isMob?3.5:5,fill:false,tension:0.3,pointRadius:0,yAxisID:'y',order:0,spanGaps:false,label:'RÉEL'},
@@ -2913,19 +2975,76 @@ function updateOverlayPositions(chart,pts){
 /* ── overlays CSS ── */
 
 /* ── Badge incertitude précipitations ── */
+
+/* Score fiabilité live basé sur spread P20-P80 */
+function updateReliabilityScore(pts){
+  const el=document.getElementById('reliabilityScore');
+  if(!el||!pts||!pts.length){if(el)el.style.display='none';return;}
+  const valid=pts.filter(p=>p.spread!=null&&p.hourIdx>=0);
+  if(!valid.length){el.style.display='none';return;}
+  const avgSpread=valid.reduce((s,p)=>s+p.spread,0)/valid.length;
+  const score=Math.max(0,Math.round(100-avgSpread/3*100));
+  el.textContent='FIABILITÉ '+score+'%';
+  el.className='rel-'+(score>=80?'high':score>=50?'med':'low');
+  const detail=score>=80?'Modèles en accord':score>=50?'Accord partiel':'Forte divergence';
+  el.title='Spread P20-P80 moyen: ±'+avgSpread.toFixed(2)+' mm/h — '+detail;
+  el.style.display='block';
+}
+
+
+/* Toggle visibilité d'un modèle depuis la légende */
+function toggleModel(key){
+  if(_hiddenModels.has(key))_hiddenModels.delete(key);
+  else _hiddenModels.add(key);
+  /* Mettre à jour le style du bouton légende */
+  const btn=document.querySelector(`.leg-model-btn[data-key="${key}"]`);
+  if(btn)btn.style.opacity=_hiddenModels.has(key)?'0.3':'1';
+  /* Redraw chart en masquant les datasets concernés */
+  if(myChart){
+    myChart.data.datasets.forEach(ds=>{
+      if(ds._modelKey&&_hiddenModels.has(ds._modelKey))ds.hidden=true;
+      else if(ds._modelKey)ds.hidden=false;
+    });
+    myChart.update('none');
+  }
+}
+
 function drawUncertaintyBadge(chart,pts){
-  const now=new Date();
-  const spread3h=pts.filter(p=>p.hourIdx>=0&&p.spread>2).slice(0,3);
-  if(!spread3h.length)return;
-  const {ctx,chartArea}=chart;
+  const {ctx,chartArea:{left,top}}=chart;
   ctx.save();
-  ctx.fillStyle='rgba(255,140,0,0.92)';
-  ctx.strokeStyle='#ff8800';
-  ctx.lineWidth=1;
-  const bx=chartArea.left+8,by=chartArea.top+8,bw=140,bh=18;
-  ctx.beginPath();ctx.roundRect(bx,by,bw,bh,4);ctx.fill();ctx.stroke();
-  ctx.fillStyle='#fff';ctx.font='bold 10px Courier New';ctx.textAlign='left';
-  ctx.fillText('⚡ Forte incertitude (±'+spread3h[0].spread.toFixed(1)+'mm/h)',bx+6,by+13);
+
+  /* ── Badge alerte orage (CAPE > 400 + prob > 50%) ── */
+  const capeVals=pts.filter(p=>p.hourIdx>=0).map(p=>_capeHourly?.[p.hourIdx]??0);
+  const capeMax=capeVals.length?Math.round(Math.max(...capeVals)):0;
+  const probMax=Math.max(...pts.filter(p=>p.hourIdx>=0).map(p=>p.p||0),0);
+  const _orage=capeMax>400&&probMax>50;
+
+  if(_orage){
+    const bx=left+8,by=top+8,bw=168,bh=20;
+    const alpha=0.75+0.25*Math.sin(Date.now()/300);
+    ctx.fillStyle=`rgba(210,20,20,${alpha})`;
+    ctx.strokeStyle='#ff2222';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.roundRect(bx,by,bw,bh,4);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 10px Courier New';ctx.textAlign='left';ctx.textBaseline='middle';
+    ctx.fillText('⚡ ALERTE ORAGE — CAPE '+capeMax+' J/kg',bx+6,by+10);
+    if(!drawUncertaintyBadge._t)
+      drawUncertaintyBadge._t=setInterval(()=>{try{if(myChart)myChart.render();}catch(e){}},600);
+  }else{
+    if(drawUncertaintyBadge._t){clearInterval(drawUncertaintyBadge._t);drawUncertaintyBadge._t=null;}
+  }
+
+  /* ── Badge incertitude précipitations (spread P80-P20 > 2mm/h) ── */
+  const badPts=pts.filter(p=>p.hourIdx>=0&&p.spread>2);
+  if(badPts.length){
+    const by2=_orage?top+32:top+8;
+    const bx2=left+8,bw2=168,bh2=18;
+    ctx.fillStyle='rgba(255,130,0,0.88)';
+    ctx.strokeStyle='#ff8800';ctx.lineWidth=1;
+    ctx.beginPath();ctx.roundRect(bx2,by2,bw2,bh2,4);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 9px Courier New';ctx.textAlign='left';ctx.textBaseline='middle';
+    ctx.fillText('⚡ Forte incertitude ±'+badPts[0].spread.toFixed(1)+'mm/h',bx2+6,by2+9);
+  }
+
   ctx.restore();
 }
 function buildOverlays(chart,pts){
@@ -2950,9 +3069,30 @@ function buildOverlays(chart,pts){
     if(xPx>chartArea.left&&xPx<chartArea.right){addLine(xPx,true);_8hXPos.push({xPx,day});}
   });
   buildSummary(chart,pts,days,xp);
+  updateReliabilityScore(pts);
+  buildModelLegend(pts);
 }
 
 /* ── résumé par jour ── */
+
+/* Construire la légende interactive des modèles */
+function buildModelLegend(pts){
+  const el=document.getElementById('modelLegend');
+  if(!el)return;
+  const hasReal=pts.some(p=>p.real!=null);
+  let html='';
+  /* ERA5 / RÉEL */
+  if(hasReal) html+=`<span class="leg-model-btn leg-era5"><span class="dot" style="background:#ffffff"></span>RÉEL</span>`;
+  /* P80 PluiePro */
+  html+=`<span class="leg-model-btn leg-p80"><span class="dot" style="background:#ffe600"></span>P80 ★</span>`;
+  /* Modèles */
+  SOURCES.filter(s=>s.omModel).forEach(s=>{
+    const hidden=_hiddenModels.has(s.key);
+    html+=`<span class="leg-model-btn" data-key="${s.key}" style="opacity:${hidden?'0.3':'1'}" onclick="toggleModel('${s.key}')"><span class="dot" style="background:${s.color}"></span>${s.label}</span>`;
+  });
+  el.innerHTML=html;
+}
+
 function buildSummary(chart,pts,days,xp){
   const {chartArea,width:cW}=chart;
   const row=document.getElementById('summaryRow');
