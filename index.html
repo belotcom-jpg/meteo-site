@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PluiePro v1.29</title>
+<title>PluiePro v1.32</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{background:#000;color:#fff;font-family:'Courier New',monospace;padding:6px;min-height:100dvh;overflow-x:hidden}
+body{background:#000;color:#fff;font-family:'Courier New',monospace;padding:6px;height:100dvh;overflow:hidden;overflow-x:hidden}
 .wrap{max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:3px}
 .search{position:relative}
 #clearBtn{position:absolute;right:70px;top:50%;transform:translateY(-50%);background:none;border:none;color:#555;font-size:16px;cursor:pointer;padding:4px 6px;line-height:1;display:none}
@@ -95,7 +95,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 #scrollbarTrack{height:6px;background:#1a1a1a;border-radius:3px;position:relative;cursor:pointer;margin:0 8px}
 #scrollbarThumb{height:6px;background:#444;border-radius:3px;position:absolute;top:0;cursor:grab;transition:background .15s;min-width:24px}
 #scrollbarThumb:hover,#scrollbarThumb.dragging{background:#00ffff;cursor:grabbing}
-.canvas-container{height:clamp(160px,34vw,270px);width:100%}
+.canvas-container{height:calc(100dvh - 465px);min-height:220px;width:100%}
 .sep-line{position:absolute;width:0;border-left:2px dashed rgba(255,255,255,.72);pointer-events:none;z-index:20}
 #summaryRow{display:flex;border-top:2px solid #444;background:#060606;overflow:visible;align-items:stretch}
 #summaryRow.multiline{min-height:clamp(68px,15vw,82px)}
@@ -123,12 +123,27 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   #reliabilityScore.rel-low{background:#4a1010;color:#ff7777;border:1px solid #aa3333}
 
 
-  #modelLegend{background:#060606;border-bottom:1px solid #1a1a1a}
+  #modelLegend{background:#060606;border-bottom:1px solid #1a1a1a;display:none}
+  #modelLegend.visible{display:flex;flex-wrap:wrap;gap:5px;padding:4px 8px 2px}
   .leg-model-btn{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);cursor:pointer;font-family:'Courier New',monospace;font-size:9px;font-weight:700;color:#ccc;transition:opacity .2s;user-select:none}
   .leg-model-btn:hover{border-color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.1)}
   .leg-model-btn .dot{width:14px;height:3px;border-radius:2px;display:inline-block}
   .leg-era5{color:#88ff88}
   .leg-p80{color:#ffe600;font-size:10px}
+
+
+  #oragesPanel{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);z-index:9999;overflow-y:auto;padding:16px}
+  #oragesPanel.open{display:block}
+  .op-card{background:#0d0d0d;border:1px solid #2a2a2a;border-radius:8px;padding:14px;margin-bottom:10px;max-width:700px;margin-left:auto;margin-right:auto}
+  .orage-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:6px;margin-bottom:7px;cursor:pointer;border:.5px solid #3a1a00;background:#1a0800;transition:background .15s}
+  .orage-item:hover{background:#2a1000;border-color:#ff6600}
+  .orage-item .ville{font-family:'Courier New',monospace;font-size:13px;font-weight:700;color:#ffcc44}
+  .orage-item .cape-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;background:#4a0000;color:#ff4444}
+  .orage-item .prob-badge{font-size:11px;padding:2px 8px;border-radius:8px;background:#1a1a00;color:#ffcc00}
+  .orage-item .region{font-size:10px;color:#888;margin-left:8px}
+  .op-scanning{font-family:'Courier New',monospace;font-size:11px;color:#666;text-align:center;padding:8px}
+  .op-progress{height:3px;background:#1a1a1a;border-radius:2px;margin:8px 0}
+  .op-progress-fill{height:100%;background:#ff4400;border-radius:2px;transition:width .3s}
 
 </style>
 </head>
@@ -143,6 +158,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
     <button id="gpsBtn" onclick="loadGPS()" title="Ma position GPS">📍</button>
     <button id="diceBtn"   onclick="randomCity()"  title="Ville aléatoire dans le monde">🎲</button>
     <button id="rainHuntBtn" onclick="findRainiest()" title="Trouver la ville la plus pluvieuse">💧</button>
+    <button id="oragesBtn" onclick="openOragesPanel()" title="Villes avec alertes orages (CAPE > 400)" style="color:#ff5500">⚡</button>
     <button id="homeBtn"  onclick="goHome()" title="Retour Juvisy-sur-Orge">🏠</button>
     <button id="clearBtn" onclick="clearSearch()">✕</button>
     <button id="searchBtn" onclick="load()">GO</button>
@@ -185,7 +201,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
     </div>
     <div id="chartWrapper">
       <div class="canvas-container"><canvas id="mainChart"></canvas></div>
-  <div id="modelLegend" style="display:flex;flex-wrap:wrap;gap:5px;padding:4px 8px 2px;"></div>
+  <div id="modelLegend"></div>
       <div id="summaryRow"></div>
       <div id="scrollbarWrap" style="display:none"><div id="scrollbarTrack"><div id="scrollbarThumb"></div></div></div>
     </div>
@@ -220,7 +236,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
           <span>🟢 MET NOWCAST</span>
           <span id="nowcastTime" style="color:#666;font-weight:400">—</span>
         </div>
-        <div style="height:clamp(141px,32vw,230px);padding:4px 8px;position:relative;flex-shrink:0">
+        <div style="height:clamp(150px,22vw,220px);padding:4px 8px;position:relative;flex-shrink:0">
           <canvas id="nowcastCanvas" style="display:block;width:100%;height:100%"></canvas>
         </div>
       </div>
@@ -449,6 +465,11 @@ function tgl(name, btn){
   btn.classList.toggle('ton', _layers[name]);
   document.getElementById('tbTout').classList.remove('ton');
   applyLayers();
+  /* Légende interactive visible seulement quand MODÈLES est ON */
+  if(name==='models'){
+    const el=document.getElementById('modelLegend');
+    if(el)el.classList.toggle('visible',_layers.models);
+  }
 }
 function tglAll(){
   const allOn=Object.values(_layers).every(Boolean);
@@ -1152,10 +1173,9 @@ function smoothCloudData(arr){
 }
 /* ── Fetch dédié températures (robuste, séparé du batch principal) ── */
 async function fetchDailyTemps(lat,lon){
-  /* Utiliser AROME HD pour les villes françaises (meilleure précision) */
-  const _isFr=_isFranceCity();
-  const _tempModel=_isFr?'&models=meteofrance_arome_france_hd':'';
-  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&forecast_days=16${_tempModel}&timezone=auto`;
+  /* Pas de modèle forcé : Open-Meteo blend auto couvre 16j partout.
+     MF Seamless et AROME HD sont limités à 7j/48h avec models= forcé. */
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&forecast_days=16&timezone=auto`;
   for(let attempt=0;attempt<5;attempt++){
     try{
       const ctrl=new AbortController();
@@ -1387,10 +1407,12 @@ async function _loadWithCoords(lat,lon,displayName){
     /* UV et température depuis omCurrent (pas de models=, tableau direct) */
     if(omCurrent?.current?.pressure_msl) _pressureMSL=omCurrent.current.pressure_msl;
     if(omCurrent?.hourly?.uv_index) _uvHourlyData=omCurrent.hourly.uv_index;
-    /* CAPE depuis omMain (premier modèle dispo) */
-    if(omMain?.hourly) {
-      const _capeKey=Object.keys(omMain.hourly).find(k=>k.startsWith('cape_'));
-      if(_capeKey) _capeHourly=omMain.hourly[_capeKey];
+    /* CAPE — essaie toutes les variantes de clé selon le modèle */
+    if(omMain?.hourly){
+      const _ks=Object.keys(omMain.hourly);
+      const _ck=_ks.find(k=>k==='cape')||_ks.find(k=>k.startsWith('cape_'));
+      if(_ck){_capeHourly=omMain.hourly[_ck];console.log('[CAPE] clé='+_ck+' max='+Math.round(Math.max(...(_capeHourly||[0]).filter(Number.isFinite))));}
+      else console.warn('[CAPE] introuvable',_ks.slice(0,5));
     }
     if(omCurrent?.hourly?.temperature_2m){
       _tempHourly=omCurrent.hourly.temperature_2m;
@@ -3010,42 +3032,75 @@ function toggleModel(key){
 }
 
 function drawUncertaintyBadge(chart,pts){
-  const {ctx,chartArea:{left,top}}=chart;
-  ctx.save();
+  if(!chart||!pts||!pts.length)return;
+  try{
+    const {ctx,chartArea:{left,top,right}}=chart;
 
-  /* ── Badge alerte orage (CAPE > 400 + prob > 50%) ── */
-  const capeVals=pts.filter(p=>p.hourIdx>=0).map(p=>_capeHourly?.[p.hourIdx]??0);
-  const capeMax=capeVals.length?Math.round(Math.max(...capeVals)):0;
-  const probMax=Math.max(...pts.filter(p=>p.hourIdx>=0).map(p=>p.p||0),0);
-  const _orage=capeMax>400&&probMax>50;
+    /* ── probMax sur TOUS les pts (minutes + heures) ── */
+    const probMax=Math.max(...pts.map(p=>p.p||0),0);
 
-  if(_orage){
-    const bx=left+8,by=top+8,bw=168,bh=20;
-    const alpha=0.75+0.25*Math.sin(Date.now()/300);
-    ctx.fillStyle=`rgba(210,20,20,${alpha})`;
-    ctx.strokeStyle='#ff2222';ctx.lineWidth=1.5;
-    ctx.beginPath();ctx.roundRect(bx,by,bw,bh,4);ctx.fill();ctx.stroke();
-    ctx.fillStyle='#fff';ctx.font='bold 10px Courier New';ctx.textAlign='left';ctx.textBaseline='middle';
-    ctx.fillText('⚡ ALERTE ORAGE — CAPE '+capeMax+' J/kg',bx+6,by+10);
-    if(!drawUncertaintyBadge._t)
-      drawUncertaintyBadge._t=setInterval(()=>{try{if(myChart)myChart.render();}catch(e){}},600);
-  }else{
-    if(drawUncertaintyBadge._t){clearInterval(drawUncertaintyBadge._t);drawUncertaintyBadge._t=null;}
-  }
+    /* ── capeMax depuis _capeHourly ── */
+    let capeMax=0;
+    if(_capeHourly&&_capeHourly.length){
+      const capeFinite=_capeHourly.slice(0,48).filter(Number.isFinite);
+      if(capeFinite.length)capeMax=Math.round(Math.max(...capeFinite));
+    }
 
-  /* ── Badge incertitude précipitations (spread P80-P20 > 2mm/h) ── */
-  const badPts=pts.filter(p=>p.hourIdx>=0&&p.spread>2);
-  if(badPts.length){
-    const by2=_orage?top+32:top+8;
-    const bx2=left+8,bw2=168,bh2=18;
-    ctx.fillStyle='rgba(255,130,0,0.88)';
-    ctx.strokeStyle='#ff8800';ctx.lineWidth=1;
-    ctx.beginPath();ctx.roundRect(bx2,by2,bw2,bh2,4);ctx.fill();ctx.stroke();
-    ctx.fillStyle='#fff';ctx.font='bold 9px Courier New';ctx.textAlign='left';ctx.textBaseline='middle';
-    ctx.fillText('⚡ Forte incertitude ±'+badPts[0].spread.toFixed(1)+'mm/h',bx2+6,by2+9);
-  }
+    /* ── Seuils : CAPE>400+prob>50 OU prob>=50 (fallback visible) ── */
+    const alerte=capeMax>400&&probMax>50;
+    const risque=probMax>=50&&!alerte;
+    if(!alerte&&!risque)return;
 
-  ctx.restore();
+    ctx.save();
+
+    /* Fonction rect arrondi compatible partout (sans roundRect) */
+    function rRect(x,y,w,h,r){
+      ctx.beginPath();
+      ctx.moveTo(x+r,y);
+      ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
+      ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+      ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);
+      ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);
+      ctx.closePath();
+    }
+
+    const bx=left+8,by=top+8,bw=180,bh=20;
+
+    if(alerte){
+      /* Badge rouge clignotant */
+      const alpha=0.78+0.22*Math.sin(Date.now()/280);
+      ctx.fillStyle='rgba(200,15,15,'+alpha+')';
+      ctx.strokeStyle='#ff3333';ctx.lineWidth=1.5;
+      rRect(bx,by,bw,bh,4);ctx.fill();ctx.stroke();
+      ctx.fillStyle='#ffffff';
+      ctx.font='bold 10px Courier New';ctx.textAlign='left';ctx.textBaseline='middle';
+      ctx.fillText('⚡ ALERTE ORAGE — CAPE '+capeMax+' J/kg',bx+6,by+10);
+      if(!drawUncertaintyBadge._t)
+        drawUncertaintyBadge._t=setInterval(()=>{try{if(myChart)myChart.render();}catch(e){}},280);
+    }else{
+      /* Badge orange risque pluie */
+      if(drawUncertaintyBadge._t){clearInterval(drawUncertaintyBadge._t);drawUncertaintyBadge._t=null;}
+      ctx.fillStyle='rgba(200,90,0,0.82)';
+      ctx.strokeStyle='#ff8800';ctx.lineWidth=1;
+      rRect(bx,by,bw,bh,4);ctx.fill();ctx.stroke();
+      ctx.fillStyle='#ffffff';
+      ctx.font='bold 10px Courier New';ctx.textAlign='left';ctx.textBaseline='middle';
+      ctx.fillText('⚡ RISQUE PLUIE — PROB '+Math.round(probMax)+'%',bx+6,by+10);
+    }
+
+    /* ── Badge incertitude précipitations (spread>2mm/h) ── */
+    const badPts=pts.filter(p=>p.hourIdx>=0&&p.spread>2);
+    if(badPts.length){
+      const by2=(alerte||risque)?top+32:top+8;
+      ctx.fillStyle='rgba(180,100,0,0.80)';
+      ctx.strokeStyle='#ff8800';ctx.lineWidth=1;
+      rRect(bx,by2,175,18,4);ctx.fill();ctx.stroke();
+      ctx.fillStyle='#fff';ctx.font='bold 9px Courier New';ctx.textAlign='left';ctx.textBaseline='middle';
+      ctx.fillText('⚡ Incertitude ±'+badPts[0].spread.toFixed(1)+'mm/h',bx+6,by2+9);
+    }
+
+    ctx.restore();
+  }catch(e){console.warn('[badge]',e.message);}
 }
 function buildOverlays(chart,pts){
   const {chartArea,scales:{x},width:cW}=chart;
@@ -3076,9 +3131,36 @@ function buildOverlays(chart,pts){
 /* ── résumé par jour ── */
 
 /* Construire la légende interactive des modèles */
+
+/* Survol légende : clignoter la courbe du modèle */
+let _hlTimer=null,_hlPhase=false;
+function highlightModel(key,on){
+  if(_hlTimer){clearInterval(_hlTimer);_hlTimer=null;}
+  if(!myChart)return;
+  myChart.data.datasets.forEach(ds=>{
+    if(ds._modelKey===key){
+      const src=SOURCES.find(s=>s.key===key);
+      if(on){
+        _hlPhase=true;
+        _hlTimer=setInterval(()=>{
+          _hlPhase=!_hlPhase;
+          ds.borderColor=_hlPhase?(src?.color||'#fff'):'rgba(255,255,255,0.85)';
+          ds.borderWidth=_hlPhase?(_isMob?3.5:5):(_isMob?0.8:1.2);
+          myChart.update('none');
+        },250);
+      }else{
+        ds.borderColor=src?src.color+'aa':'transparent';
+        ds.borderWidth=_isMob?0.8:1.2;
+        myChart.update('none');
+      }
+    }
+  });
+}
 function buildModelLegend(pts){
   const el=document.getElementById('modelLegend');
   if(!el)return;
+  if(!_layers.models){el.classList.remove('visible');return;}
+  el.classList.add('visible');
   const hasReal=pts.some(p=>p.real!=null);
   let html='';
   /* ERA5 / RÉEL */
@@ -3088,7 +3170,7 @@ function buildModelLegend(pts){
   /* Modèles */
   SOURCES.filter(s=>s.omModel).forEach(s=>{
     const hidden=_hiddenModels.has(s.key);
-    html+=`<span class="leg-model-btn" data-key="${s.key}" style="opacity:${hidden?'0.3':'1'}" onclick="toggleModel('${s.key}')"><span class="dot" style="background:${s.color}"></span>${s.label}</span>`;
+    html+=`<span class="leg-model-btn" data-key="${s.key}" style="opacity:${hidden?'0.3':'1'}" onclick="toggleModel('${s.key}')" onmouseenter="highlightModel('${s.key}',true)" onmouseleave="highlightModel('${s.key}',false)"><span class="dot" style="background:${s.color}"></span>${s.label}</span>`;
   });
   el.innerHTML=html;
 }
@@ -3446,6 +3528,155 @@ window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{lastW=
 })();
 
 load().then(()=>{startAutoRefresh();setMode('ultra');if(window._autoSelectView){setView(window._autoSelectView);}}).catch(()=>startAutoRefresh());
+/* ════════════════════════════════════════════════════
+   SCANNER ALERTES ORAGES
+   ════════════════════════════════════════════════════ */
+const ORAGE_CITIES = [
+  /* France */
+  {n:'Paris',c:'FR',lat:48.857,lon:2.352},{n:'Lyon',c:'FR',lat:45.764,lon:4.836},
+  {n:'Marseille',c:'FR',lat:43.297,lon:5.370},{n:'Toulouse',c:'FR',lat:43.605,lon:1.444},
+  {n:'Bordeaux',c:'FR',lat:44.838,lon:-0.579},{n:'Nice',c:'FR',lat:43.710,lon:7.262},
+  {n:'Nantes',c:'FR',lat:47.218,lon:-1.554},{n:'Strasbourg',c:'FR',lat:48.573,lon:7.752},
+  {n:'Grenoble',c:'FR',lat:45.189,lon:5.725},{n:'Brest',c:'FR',lat:48.390,lon:-4.486},
+  {n:'Montpellier',c:'FR',lat:43.611,lon:3.877},{n:'Clermont-Ferrand',c:'FR',lat:45.780,lon:3.086},
+  {n:'Rennes',c:'FR',lat:48.117,lon:-1.678},{n:'Perpignan',c:'FR',lat:42.689,lon:2.895},
+  {n:'Chamonix',c:'FR',lat:45.924,lon:6.869},{n:'Ajaccio',c:'FR',lat:41.919,lon:8.739},
+  {n:'Limoges',c:'FR',lat:45.834,lon:1.261},{n:'Dijon',c:'FR',lat:47.322,lon:5.042},
+  {n:'Reims',c:'FR',lat:49.258,lon:4.032},{n:'Toulon',c:'FR',lat:43.124,lon:5.928},
+  {n:'Pau',c:'FR',lat:43.296,lon:-0.371},{n:'Nancy',c:'FR',lat:48.693,lon:6.184},
+  {n:'La Rochelle',c:'FR',lat:46.160,lon:-1.152},{n:'Metz',c:'FR',lat:49.119,lon:6.177},
+  {n:'Mulhouse',c:'FR',lat:47.750,lon:7.336},{n:'Bastia',c:'FR',lat:42.703,lon:9.451},
+  {n:'Caen',c:'FR',lat:49.183,lon:-0.350},{n:'Angers',c:'FR',lat:47.478,lon:-0.563},
+  /* Europe */
+  {n:'Madrid',c:'ES',lat:40.417,lon:-3.703},{n:'Barcelona',c:'ES',lat:41.386,lon:2.170},
+  {n:'Milan',c:'IT',lat:45.465,lon:9.186},{n:'Rome',c:'IT',lat:41.902,lon:12.496},
+  {n:'Munich',c:'DE',lat:48.137,lon:11.576},{n:'Frankfurt',c:'DE',lat:50.110,lon:8.682},
+  {n:'Brussels',c:'BE',lat:50.851,lon:4.352},{n:'Amsterdam',c:'NL',lat:52.370,lon:4.895},
+  {n:'Zurich',c:'CH',lat:47.376,lon:8.541},{n:'Vienna',c:'AT',lat:48.208,lon:16.373},
+  {n:'Lisbon',c:'PT',lat:38.717,lon:-9.139},{n:'Athens',c:'GR',lat:37.979,lon:23.716},
+  {n:'Istanbul',c:'TR',lat:41.015,lon:28.980},{n:'Warsaw',c:'PL',lat:52.230,lon:21.012},
+  {n:'London',c:'GB',lat:51.507,lon:-0.128},{n:'Prague',c:'CZ',lat:50.076,lon:14.420},
+  {n:'Budapest',c:'HU',lat:47.498,lon:19.040},{n:'Bucharest',c:'RO',lat:44.432,lon:26.103},
+  {n:'Sofia',c:'BG',lat:42.698,lon:23.322},{n:'Zagreb',c:'HR',lat:45.815,lon:15.982},
+];
+
+let _oragesScanRunning = false;
+
+async function fetchOrageData(city){
+  try{
+    const r=await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&hourly=precipitation_probability,cape&models=icon_seamless&forecast_days=2&timezone=auto`,
+      {signal:AbortSignal.timeout(8000)}
+    );
+    if(!r.ok)return null;
+    const d=await r.json();
+    const now=new Date();
+    const times=d.hourly?.time||[];
+    // Chercher dans les 24 prochaines heures
+    const hi=Math.max(0,times.findIndex(t=>new Date(t)>now)-1);
+    const cape_arr=(d.hourly?.cape_icon_seamless||d.hourly?.cape||[]).slice(hi,hi+24);
+    const prob_arr=(d.hourly?.precipitation_probability_icon_seamless||d.hourly?.precipitation_probability||[]).slice(hi,hi+24);
+    // Trouver le max CAPE + prob correspondant
+    let maxCape=0,maxProb=0,alertHour=null;
+    cape_arr.forEach((cape,i)=>{
+      const prob=prob_arr[i]??0;
+      if(cape>400&&prob>50){
+        if(cape>maxCape){maxCape=cape;maxProb=prob;alertHour=new Date(times[hi+i]);}
+      }
+    });
+    if(maxCape>400&&maxProb>50) return{...city,cape:Math.round(maxCape),prob:Math.round(maxProb),alertHour};
+    return null;
+  }catch{return null;}
+}
+
+async function openOragesPanel(){
+  if(_oragesScanRunning)return;
+  document.getElementById('oragesPanel').classList.add('open');
+  document.getElementById('opResults').innerHTML='';
+  document.getElementById('opStatus').textContent='Scan de '+ORAGE_CITIES.length+' villes...';
+  document.getElementById('opFill').style.width='0%';
+  _oragesScanRunning=true;
+
+  const alerts=[];
+  const PARALLEL=5;
+  for(let i=0;i<ORAGE_CITIES.length;i+=PARALLEL){
+    const batch=ORAGE_CITIES.slice(i,i+PARALLEL);
+    const pct=Math.round((i/ORAGE_CITIES.length)*100);
+    document.getElementById('opFill').style.width=pct+'%';
+    document.getElementById('opStatus').textContent=`Scan [${i+1}-${Math.min(i+PARALLEL,ORAGE_CITIES.length)}/${ORAGE_CITIES.length}] — ${alerts.length} alerte(s) trouvée(s)`;
+    const results=await Promise.all(batch.map(fetchOrageData));
+    results.forEach(r=>{ if(r)alerts.push(r); });
+    // Afficher les alertes au fur et à mesure
+    renderOrageAlerts(alerts);
+    await new Promise(res=>setTimeout(res,80));
+  }
+
+  document.getElementById('opFill').style.width='100%';
+  if(alerts.length===0){
+    document.getElementById('opStatus').textContent='✅ Aucune alerte orage détectée sur les '+ORAGE_CITIES.length+' villes scannées.';
+  }else{
+    document.getElementById('opStatus').textContent=`⚡ ${alerts.length} alerte(s) détectée(s) sur ${ORAGE_CITIES.length} villes`;
+  }
+  _oragesScanRunning=false;
+}
+
+function renderOrageAlerts(alerts){
+  if(!alerts.length){
+    document.getElementById('opResults').innerHTML='<div class="op-scanning" style="color:#444">Aucune alerte trouvée pour l\'instant...</div>';
+    return;
+  }
+  const sorted=[...alerts].sort((a,b)=>b.cape-a.cape);
+  document.getElementById('opResults').innerHTML=sorted.map(a=>{
+    const hstr=a.alertHour?a.alertHour.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';
+    const intensity=a.cape>1500?'🔴 VIOLENT':a.cape>800?'🟠 FORT':a.cape>400?'🟡 MODÉRÉ':'';
+    return`<div class="orage-item" onclick="loadOrageCity('${a.n}')">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:16px">⚡</span>
+        <div>
+          <span class="ville">${a.n}</span><span class="region">${a.c}</span>
+          ${hstr?`<div style="font-size:10px;color:#666;margin-top:2px">Pic vers ${hstr}</div>`:''}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:10px;color:#888">${intensity}</span>
+        <span class="cape-badge">CAPE ${a.cape} J/kg</span>
+        <span class="prob-badge">Prob ${a.prob}%</span>
+        <span style="font-size:10px;color:#555;margin-left:4px">→</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function loadOrageCity(cityName){
+  closeOragesPanel();
+  document.getElementById('cityInput').value=cityName;
+  load();
+}
+
+function closeOragesPanel(){
+  document.getElementById('oragesPanel').classList.remove('open');
+  _oragesScanRunning=false;
+}
+
+/* Fermer avec Escape */
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();});
+
+
 </script>
+
+<!-- ── Panneau Alertes Orages ── -->
+<div id="oragesPanel">
+  <div class="op-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-family:'Courier New',monospace;font-size:16px;font-weight:700;color:#ff6644">⚡ ALERTES ORAGES EN COURS</div>
+      <button onclick="closeOragesPanel()" style="background:none;border:1px solid #444;border-radius:4px;color:#888;padding:3px 10px;cursor:pointer;font-size:12px">✕ FERMER</button>
+    </div>
+    <div style="font-size:10px;color:#555;margin-bottom:10px;font-family:'Courier New',monospace">CAPE > 400 J/kg + Probabilité > 50% · Cliquer sur une ville pour l'afficher</div>
+    <div class="op-progress"><div class="op-progress-fill" id="opFill" style="width:0%"></div></div>
+    <div id="opStatus" class="op-scanning">Initialisation du scan...</div>
+    <div id="opResults"></div>
+  </div>
+</div>
+
 </body>
 </html>
