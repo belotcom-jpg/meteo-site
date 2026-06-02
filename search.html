@@ -3,401 +3,409 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NEXUS · Multi-Recherche</title>
+<title>MULTISEARCH v1.7</title>
 <style>
-/* ══ VARIABLES — contraste maximum ═══════════════════ */
-:root {
-  --bg0: #05070d;
-  --bg1: #0a0f1a;
-  --bg2: #0f1520;
-  --bg3: #162030;
-  --bg4: #1d2a3d;
-  --border: #253548;
-  --border2: #2f4260;
+:root{
+  --bg:#f4f6fb;--bg1:#fff;--bg2:#f0f3f8;--bg3:#e5eaf4;--bg4:#d8dff0;
+  --bd:#d2d9ea;--bd2:#b8c4dc;
+  --t0:#0c1525;--t1:#1c2d42;--t2:#3d5570;--t3:#7a95b0;
+  --ac:#1a6eff;--g2:#059669;--g3:#dc5a14;--pur:#6d28d9;--red:#dc2626;
+  --glow:rgba(26,110,255,.13);
+  --fw:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  --mono:"Consolas","Courier New",monospace;
+}
+*,::before,::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-family:var(--fw);font-size:13px;}
+#app{display:flex;height:100vh;}
 
-  /* TEXTES : lumineux sur fond sombre */
-  --t0: #ffffff;      /* titres, réponses importantes */
-  --t1: #dde8f5;      /* texte courant */
-  --t2: #9ab8d4;      /* secondaire */
-  --t3: #5a7a96;      /* hints, désactivé */
+/* SIDEBAR */
+#sb{width:282px;min-width:282px;background:var(--bg1);border-right:1px solid var(--bd);display:flex;flex-direction:column;flex-shrink:0;position:relative;z-index:20;box-shadow:2px 0 10px rgba(0,0,0,.06);transition:width .22s,min-width .22s;}
+#sb.c{width:44px;min-width:44px;}
+#sb.c .sbi{opacity:0;pointer-events:none;}
+#sb.c #tog{right:auto;left:5px;}
+.sbi{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:12px 11px 8px;transition:opacity .15s;}
+#logo{font-size:1.1rem;font-weight:800;color:var(--ac);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+#logo em{color:var(--g2);font-style:normal;font-size:.55em;font-weight:600;letter-spacing:.1em;background:#d1fae5;padding:2px 6px;border-radius:4px;}
 
-  --acc:  #5badff;    /* bleu principal */
-  --acc2: #00e8c0;    /* vert/cyan succès */
-  --acc3: #ff8050;    /* orange alerte */
-  --glow: rgba(91,173,255,.15);
-  --fw: 'Consolas','Courier New',monospace;
-}
+/* Recherche */
+.sbox{position:relative;margin-bottom:4px;}
+.sbox input{width:100%;padding:9px 36px 9px 12px;background:var(--bg);border:1.5px solid var(--bd2);border-radius:8px;color:var(--t0);font-family:var(--mono);font-size:.88rem;outline:none;transition:border-color .18s,box-shadow .18s;}
+.sbox input:focus{border-color:var(--ac);box-shadow:0 0 0 3px var(--glow);}
+.sbox input::placeholder{color:var(--t3);}
+.sico{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--t3);cursor:pointer;font-size:1rem;transition:color .15s;}
+.sico:hover{color:var(--ac);}
+#cmd-hint{font-size:.68rem;color:var(--t3);padding:2px 4px 5px;min-height:17px;}
+#cmd-hint.match{color:var(--g2);}
+#cmd-hint.nomatch{color:var(--g3);}
 
-*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
-html, body { height:100%; width:100%; overflow:hidden; background:var(--bg0); color:var(--t1); font-family:var(--fw); font-size:13px; }
-#app { display:flex; height:100vh; width:100vw; }
+/* URL */
+.urow{display:flex;gap:5px;margin-bottom:7px;}
+.urow input{flex:1;padding:7px 10px;background:var(--bg);border:1px solid var(--bd);border-radius:7px;color:var(--t1);font-family:var(--mono);font-size:.74rem;outline:none;transition:border-color .18s;}
+.urow input:focus{border-color:var(--g2);color:var(--t0);}
+.urow input::placeholder{color:var(--t3);}
+.urow button{padding:7px 11px;background:var(--ac);border:none;border-radius:7px;color:#fff;cursor:pointer;font-size:.78rem;font-weight:600;white-space:nowrap;transition:background .15s;}
+.urow button:hover{background:#1558d0;}
 
-/* ══ SIDEBAR ══════════════════════════════════════════ */
-#sidebar {
-  width:272px; min-width:272px;
-  background:var(--bg1);
-  border-right:2px solid var(--border);
-  display:flex; flex-direction:column; flex-shrink:0;
-  position:relative; z-index:20;
-  transition:width .2s, min-width .2s;
-}
-#sidebar.col { width:44px; min-width:44px; }
-#sidebar.col .sbi { opacity:0; pointer-events:none; }
-#sidebar.col #tog { right:auto; left:5px; }
+/* HF Spaces */
+.hf-box{margin-bottom:7px;padding:7px 10px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;}
+.hf-box label{font-size:.63rem;font-weight:700;color:#166534;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:4px;}
+.hf-box .hf-row{display:flex;gap:5px;}
+.hf-box input{flex:1;padding:6px 9px;background:#fff;border:1px solid #86efac;border-radius:6px;color:var(--t1);font-family:var(--mono);font-size:.74rem;outline:none;}
+.hf-box input:focus{border-color:#16a34a;}
+.hf-box input::placeholder{color:var(--t3);}
+.hf-box button{padding:6px 10px;background:#16a34a;border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:.75rem;font-weight:600;white-space:nowrap;transition:background .15s;}
+.hf-box button:hover{background:#15803d;}
+.hf-box .hf-hint{font-size:.65rem;color:#16a34a;margin-top:3px;line-height:1.4;}
 
-.sbi {
-  flex:1; display:flex; flex-direction:column; overflow:hidden;
-  padding:14px 12px 10px; transition:opacity .15s;
-}
+/* Panneaux cibles */
+.trow{display:flex;gap:4px;margin-bottom:8px;}
+.tbtn{flex:1;min-width:34px;padding:6px 4px;text-align:center;background:var(--bg2);border:1.5px solid var(--bd);border-radius:6px;color:var(--t2);cursor:pointer;font-size:.74rem;font-weight:600;transition:all .14s;}
+.tbtn.a{background:var(--ac);border-color:var(--ac);color:#fff;}
+.tbtn:hover:not(.a){border-color:var(--ac);color:var(--ac);background:rgba(26,110,255,.06);}
 
-/* Logo */
-#logo {
-  font-size:1.2rem; font-weight:900; letter-spacing:.02em;
-  color:var(--acc); margin-bottom:14px; display:flex; align-items:center; gap:8px;
-  font-family:Arial,sans-serif;
-}
-#logo em { color:var(--acc2); font-style:normal; font-size:.6em; font-weight:400; letter-spacing:.15em; }
+/* Filtrer */
+.sbsearch{width:100%;padding:6px 10px;background:var(--bg2);border:1px solid var(--bd);border-radius:6px;color:var(--t1);font-family:var(--fw);font-size:.8rem;outline:none;margin-bottom:5px;transition:border-color .15s;}
+.sbsearch:focus{border-color:var(--ac);}
+.sbsearch::placeholder{color:var(--t3);}
 
-/* ─ CHAMP RECHERCHE ─ */
-.sbox { position:relative; margin-bottom:7px; }
-.sbox input {
-  width:100%; padding:10px 38px 10px 13px;
-  background:var(--bg0); border:2px solid var(--border2); border-radius:8px;
-  color:var(--t0); font-family:var(--fw); font-size:.88rem; outline:none;
-  transition:border-color .18s, box-shadow .18s;
-}
-.sbox input:focus { border-color:var(--acc); box-shadow:0 0 0 3px var(--glow); }
-.sbox input::placeholder { color:var(--t3); }
-.sico {
-  position:absolute; right:10px; top:50%; transform:translateY(-50%);
-  color:var(--t3); cursor:pointer; font-size:1.1rem; transition:color .15s;
-}
-.sico:hover { color:var(--acc); }
+/* Légende */
+.leg{display:flex;gap:8px;margin-bottom:5px;padding:4px 8px;background:var(--bg2);border-radius:6px;border:1px solid var(--bd);font-size:.68rem;color:var(--t2);}
 
-/* ─ URL DIRECTE ─ */
-.urow { display:flex; gap:5px; margin-bottom:10px; }
-.urow input {
-  flex:1; padding:8px 10px; background:var(--bg0); border:1px solid var(--border);
-  border-radius:7px; color:var(--t1); font-family:var(--fw); font-size:.78rem; outline:none;
-  transition:border-color .18s;
-}
-.urow input:focus { border-color:var(--acc2); color:var(--t0); }
-.urow input::placeholder { color:var(--t3); }
-.urow button {
-  padding:8px 11px; background:var(--bg3); border:1px solid var(--border2);
-  border-radius:7px; color:var(--acc2); cursor:pointer; font-size:.78rem; font-family:var(--fw);
-  transition:background .15s, border-color .15s; white-space:nowrap;
-}
-.urow button:hover { background:var(--bg4); border-color:var(--acc2); color:var(--t0); }
+/* Favoris */
+#favbar{padding:2px 0 5px;border-bottom:1px solid var(--bd);margin-bottom:4px;}
+#favbar .ftitle{font-size:.59rem;font-weight:700;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;padding:0 4px 3px;}
+#favbar .fitems{display:flex;flex-wrap:wrap;gap:3px;padding:0 2px;}
+.favchip{padding:3px 8px;background:var(--bg3);border:1px solid var(--bd2);border-radius:12px;font-size:.71rem;color:var(--t1);cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:4px;}
+.favchip:hover{background:rgba(26,110,255,.07);border-color:var(--ac);color:var(--ac);}
+.favchip .fr{color:var(--t3);cursor:pointer;padding:0 2px;}
+.favchip .fr:hover{color:var(--red);}
 
-/* ─ SÉLECTEUR PANNEAUX ─ */
-.trow { display:flex; gap:4px; margin-bottom:10px; flex-wrap:wrap; }
-.tbtn {
-  flex:1; min-width:38px; padding:7px 4px; text-align:center;
-  background:var(--bg0); border:1px solid var(--border); border-radius:7px;
-  color:var(--t2); cursor:pointer; font-family:var(--fw); font-size:.75rem;
-  transition:all .14s;
-}
-.tbtn.active { background:var(--acc); border-color:var(--acc); color:#fff; font-weight:700; }
-.tbtn:hover:not(.active) { border-color:var(--acc); color:var(--acc); }
+/* Sections */
+.slbl{font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);padding:7px 4px 3px;margin-top:2px;border-top:1px solid var(--bd);}
+.slbl.iframe-sec{color:var(--g2);}
+.slbl.tab-sec{color:var(--t3);}
 
-/* ─ LÉGENDE ─ */
-.legend {
-  display:flex; gap:12px; margin-bottom:8px;
-  font-size:.7rem; color:var(--t2); padding:4px 2px;
-  background:var(--bg2); border-radius:6px; justify-content:center;
-}
-.legend span { display:flex; align-items:center; gap:4px; }
+/* Boutons sites */
+.blist{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:1px;}
+.blist::-webkit-scrollbar{width:4px;}
+.blist::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px;}
 
-/* ─ SECTION LABELS ─ */
-.slabel {
-  font-size:.65rem; font-weight:700; letter-spacing:.15em; text-transform:uppercase;
-  color:var(--t2);   /* ← BIEN VISIBLE */
-  padding:9px 4px 4px; margin-top:3px; border-top:1px solid var(--border);
-}
+.sbtn{display:flex;align-items:center;gap:7px;width:100%;padding:6px 9px;background:transparent;border:none;border-radius:6px;cursor:pointer;font-family:var(--fw);font-size:.81rem;text-align:left;color:var(--t1);transition:background .1s;position:relative;}
+.sbtn:hover{background:var(--bg2);color:var(--t0);}
+.sbtn .ico{width:18px;text-align:center;flex-shrink:0;font-size:.95rem;}
+.sbtn .sn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sbtn .cmd{font-family:var(--mono);font-size:.59rem;color:var(--ac);background:rgba(26,110,255,.09);padding:1px 5px;border-radius:4px;flex-shrink:0;border:1px solid rgba(26,110,255,.18);}
+.sbtn .tag{font-size:.58rem;padding:2px 5px;border-radius:4px;flex-shrink:0;font-weight:600;}
+/* iframable = jaune fluo */
+.sbtn.ok{border-left:3px solid #eab308;padding-left:7px;}
+.sbtn.ok .tag{background:#fef08a;color:#713f12;border:1.5px solid #eab308;font-weight:700;}
+/* onglet = orange discret */
+.sbtn.ot .tag{background:#ffedd5;color:#9a3412;}
+/* multi = violet */
+.sbtn.mu .tag{background:#ede9fe;color:#4c1d95;}
+.sbtn .fav-btn{position:absolute;right:5px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--bd2);font-size:.85rem;padding:2px 4px;border-radius:4px;transition:color .12s;display:none;}
+.sbtn:hover .fav-btn{display:block;}
+.sbtn .fav-btn:hover{color:#f59e0b;}
+.sbtn .fav-btn.on{display:block;color:#f59e0b;}
 
-/* ─ BOUTONS SITES ─ */
-.blist { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:2px; padding-right:2px; }
-.blist::-webkit-scrollbar { width:3px; }
-.blist::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+/* Toggle sidebar */
+#tog{position:absolute;top:50%;right:-13px;transform:translateY(-50%);width:24px;height:40px;background:var(--bg1);border:1px solid var(--bd);border-radius:0 7px 7px 0;cursor:pointer;color:var(--t3);display:flex;align-items:center;justify-content:center;font-size:.85rem;z-index:30;box-shadow:2px 0 6px rgba(0,0,0,.07);transition:color .15s,background .15s;}
+#tog:hover{color:var(--ac);background:var(--bg2);}
 
-.sbtn {
-  display:flex; align-items:center; gap:8px; width:100%;
-  padding:8px 11px; background:transparent; border:1px solid transparent;
-  border-radius:7px; cursor:pointer; font-family:var(--fw); font-size:.82rem;
-  text-align:left; transition:all .12s;
-  color:var(--t1);   /* ← TEXTE CLAIR */
-}
-.sbtn:hover { background:var(--bg3); border-color:var(--border2); color:var(--t0); }
-.sbtn .ico  { width:20px; text-align:center; flex-shrink:0; font-size:1rem; }
-.sbtn .sn   { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:inherit; }
-.sbtn .stag {
-  font-size:.6rem; padding:2px 6px; border-radius:4px; flex-shrink:0;
-  background:var(--bg3); border:1px solid var(--border); color:var(--t2);
-}
-.sbtn.ok  .stag { color:var(--acc2); border-color:rgba(0,232,192,.3); background:rgba(0,232,192,.06); }
-.sbtn.ext .stag { color:var(--acc3); border-color:rgba(255,128,80,.3); background:rgba(255,128,80,.06); }
-.sbtn .ebadge {
-  font-size:.62rem; padding:2px 5px; border-radius:4px; flex-shrink:0;
-  color:var(--acc3); background:rgba(255,128,80,.1); border:1px solid rgba(255,128,80,.3);
-}
+/* WORKSPACE */
+#ws{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+#tb{height:42px;background:var(--bg1);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:3px;padding:0 8px;flex-shrink:0;overflow-x:auto;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.lbtn{padding:4px 8px;background:var(--bg2);border:1px solid var(--bd);border-radius:6px;cursor:pointer;font-family:var(--fw);font-size:.72rem;font-weight:500;white-space:nowrap;flex-shrink:0;color:var(--t2);transition:all .14s;}
+.lbtn:hover,.lbtn.a{border-color:var(--ac);color:var(--ac);background:rgba(26,110,255,.06);}
+.lbtn.d{color:var(--g3);}
+.lbtn.d:hover{border-color:var(--g3);background:rgba(220,90,20,.06);}
+.lbtn.hl{color:var(--pur);font-weight:600;}
+.lbtn.hl:hover{border-color:var(--pur);background:rgba(109,40,217,.06);}
+.lbtn.proxy-on{background:#fef9c3!important;border-color:#eab308!important;color:#854d0e!important;}
+.sep{height:20px;width:1px;background:var(--bd);margin:0 2px;flex-shrink:0;}
+#qbar{display:flex;align-items:center;gap:5px;margin-left:auto;flex-shrink:0;}
+#qtop{padding:5px 9px;background:var(--bg2);border:1px solid var(--bd);border-radius:6px;color:var(--t1);font-family:var(--mono);font-size:.77rem;outline:none;width:155px;transition:border-color .15s,width .2s;}
+#qtop:focus{border-color:var(--ac);width:205px;}
+#qtop::placeholder{color:var(--t3);}
+#sbar{font-size:.67rem;color:var(--t3);display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--g2);display:inline-block;}
 
-/* ─ TOGGLE SIDEBAR ─ */
-#tog {
-  position:absolute; top:50%; right:-14px; transform:translateY(-50%);
-  width:26px; height:42px; background:var(--bg2); border:1px solid var(--border2);
-  border-radius:0 8px 8px 0; cursor:pointer; color:var(--t2);
-  display:flex; align-items:center; justify-content:center; font-size:.9rem; z-index:30;
-  transition:color .15s, background .15s;
-}
-#tog:hover { color:var(--acc); background:var(--bg3); }
+/* Grille */
+#grid{flex:1;display:grid;gap:2px;background:var(--bd);overflow:hidden;}
+#grid.l1{grid-template-columns:1fr;}
+#grid.l2h{grid-template-columns:1fr 1fr;}
+#grid.l2v{grid-template-rows:1fr 1fr;}
+#grid.l3r{grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;}
+#grid.l3r .pane:first-child{grid-row:1/3;}
+#grid.l3b{grid-template-columns:1fr 1fr;grid-template-rows:2fr 1fr;}
+#grid.l3b .pane:nth-child(3){grid-column:1/3;}
+#grid.l4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+#grid.l6a{grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;}
+#grid.l6b{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;}
 
-/* ══ WORKSPACE ════════════════════════════════════════ */
-#workspace { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.pane{background:#fff;display:flex;flex-direction:column;overflow:hidden;}
+.pane.ap{outline:2px solid var(--ac);outline-offset:-2px;}
+.ph{height:29px;min-height:29px;background:var(--bg1);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:5px;padding:0 7px;flex-shrink:0;cursor:pointer;user-select:none;}
+.ph:hover{background:var(--bg2);}
+.pnum{font-size:.63rem;font-weight:700;color:var(--ac);background:rgba(26,110,255,.1);border:1px solid rgba(26,110,255,.22);border-radius:4px;padding:1px 7px;flex-shrink:0;}
+.purl{flex:1;font-size:.63rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--t3);}
+.pact{display:flex;gap:1px;}
+.pabtn{background:none;border:none;cursor:pointer;font-size:.77rem;padding:2px 5px;border-radius:4px;color:var(--t3);transition:all .12s;}
+.pabtn:hover{color:var(--ac);background:rgba(26,110,255,.08);}
+.pane iframe{flex:1;border:none;width:100%;background:#fff;zoom:0.75;}
 
-/* ─ TOPBAR ─ */
-#topbar {
-  height:42px; background:var(--bg1); border-bottom:2px solid var(--border);
-  display:flex; align-items:center; gap:4px; padding:0 10px; flex-shrink:0;
-  overflow-x:auto;
-}
-.lbtn {
-  padding:5px 10px; background:var(--bg2); border:1px solid var(--border);
-  border-radius:6px; cursor:pointer; font-family:var(--fw); font-size:.74rem;
-  white-space:nowrap; flex-shrink:0; transition:all .14s;
-  color:var(--t2);   /* ← VISIBLE */
-}
-.lbtn:hover, .lbtn.active { border-color:var(--acc); color:var(--acc); background:rgba(91,173,255,.08); }
-.lbtn.danger { color:var(--acc3); }
-.lbtn.danger:hover { border-color:var(--acc3); background:rgba(255,128,80,.08); }
-.tsep { height:22px; width:1px; background:var(--border); margin:0 3px; flex-shrink:0; }
-#sbar { margin-left:auto; font-size:.68rem; color:var(--t2); display:flex; align-items:center; gap:6px; flex-shrink:0; }
-.sdot { width:8px; height:8px; border-radius:50%; background:var(--acc2); box-shadow:0 0 6px var(--acc2); display:inline-block; }
+.pempty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:var(--bg);}
+.pempty .bn{font-size:5rem;font-weight:900;color:var(--bd);line-height:1;}
+.pempty p{font-size:.78rem;color:var(--t3);text-align:center;max-width:200px;line-height:1.5;}
+.pempty .hint{font-size:.67rem;color:var(--t3);background:var(--bg1);padding:4px 11px;border-radius:20px;border:1px solid var(--bd);}
+.pempty .qlinks{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;max-width:260px;}
+.pempty .ql{padding:4px 9px;background:var(--bg1);border:1px solid var(--bd);border-radius:12px;font-size:.71rem;color:var(--t2);cursor:pointer;transition:all .12s;}
+.pempty .ql:hover{border-color:var(--ac);color:var(--ac);background:rgba(26,110,255,.05);}
 
-/* ─ GRILLE PANNEAUX ─ */
-#grid { flex:1; display:grid; gap:2px; background:var(--border); overflow:hidden; }
-#grid.l1   { grid-template-columns:1fr; grid-template-rows:1fr; }
-#grid.l2h  { grid-template-columns:1fr 1fr; }
-#grid.l2v  { grid-template-rows:1fr 1fr; }
-#grid.l3r  { grid-template-columns:2fr 1fr; grid-template-rows:1fr 1fr; }
-#grid.l3r  .pane:first-child { grid-row:1/3; }
-#grid.l3b  { grid-template-columns:1fr 1fr; grid-template-rows:2fr 1fr; }
-#grid.l3b  .pane:nth-child(3) { grid-column:1/3; }
-#grid.l4   { grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; }
+.tov{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;background:var(--bg);text-align:center;}
+.tov .ti{font-size:2.2rem;}
+.tov .tw{font-size:.72rem;padding:4px 11px;border-radius:6px;background:#ffedd5;color:var(--g3);border:1px solid #fed7aa;font-weight:600;}
+.tov h3{font-size:.95rem;color:var(--t0);font-weight:700;}
+.tov p{font-size:.78rem;color:var(--t2);line-height:1.6;max-width:280px;}
+.tov .ob{display:inline-flex;align-items:center;gap:5px;padding:9px 18px;background:var(--ac);color:#fff;border-radius:8px;font-size:.8rem;font-weight:700;text-decoration:none;transition:background .15s;cursor:pointer;border:none;font-family:var(--fw);}
+.tov .ob:hover{background:#1558d0;}
+.tov .alts{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+.tov .ab{padding:5px 11px;background:var(--bg1);color:var(--t1);border:1px solid var(--bd);border-radius:7px;font-size:.77rem;cursor:pointer;transition:all .13s;}
+.tov .ab:hover{background:var(--bg2);border-color:var(--ac);color:var(--ac);}
 
-/* ─ PANNEAU ─ */
-.pane { background:var(--bg0); display:flex; flex-direction:column; overflow:hidden; }
-.pane.ap { outline:2px solid var(--acc); outline-offset:-2px; }
+/* Panels overlay */
+.ov{display:none;position:fixed;inset:0;background:rgba(15,25,35,.55);z-index:100;align-items:center;justify-content:center;}
+.ov.s{display:flex;}
+.obox{background:var(--bg1);border:1px solid var(--bd);border-radius:16px;padding:22px 26px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18);}
 
-.ph {
-  height:30px; min-height:30px; background:var(--bg1); border-bottom:1px solid var(--border);
-  display:flex; align-items:center; gap:5px; padding:0 8px; flex-shrink:0;
-  cursor:pointer; user-select:none;
-}
-.ph:hover { background:var(--bg2); }
-.pnum {
-  font-size:.65rem; font-weight:700; color:var(--acc);
-  background:rgba(91,173,255,.12); border:1px solid rgba(91,173,255,.3);
-  border-radius:4px; padding:1px 7px; flex-shrink:0;
-}
-.purl {
-  flex:1; font-size:.66rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-  color:var(--t2);  /* ← plus lisible */
-}
-.pact { display:flex; gap:2px; }
-.pabtn {
-  background:none; border:none; cursor:pointer; font-size:.82rem;
-  padding:3px 6px; border-radius:4px; transition:all .12s;
-  color:var(--t3);
-}
-.pabtn:hover { color:var(--acc); background:rgba(91,173,255,.1); }
+/* Commandes YubNub */
+.cmdbox{width:640px;}
+.cmdbox h3{font-size:1rem;color:var(--ac);margin-bottom:4px;font-weight:800;}
+.cmdbox .sub{font-size:.78rem;color:var(--t3);margin-bottom:14px;}
+.cmd-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;}
+.cmd-card{padding:7px 10px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;cursor:pointer;transition:background .12s;}
+.cmd-card:hover{background:var(--bg3);border-color:var(--ac);}
+.cmd-card .cc{font-family:var(--mono);font-size:.78rem;font-weight:700;color:var(--ac);}
+.cmd-card .cn{font-size:.74rem;color:var(--t1);margin-top:1px;}
+.cmd-card.ok-card .cc{color:#854d0e;}
+.cmd-card.ok-card{background:#fefce8;border-color:#fde68a;}
+.cmd-sec{font-size:.61rem;font-weight:700;color:var(--t3);letter-spacing:.12em;text-transform:uppercase;padding:9px 0 3px;border-top:1px solid var(--bd);margin-top:5px;grid-column:1/-1;}
 
-.pane iframe { flex:1; border:none; width:100%; background:#fff; }
+/* Historique */
+#hp{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:var(--bg1);border:1px solid var(--bd);border-radius:12px;padding:12px 15px;z-index:50;min-width:380px;max-width:560px;box-shadow:0 10px 40px rgba(0,0,0,.14);display:none;}
+#hp.s{display:block;}
+#hp .hhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+#hp h4{font-size:.72rem;color:var(--t3);letter-spacing:.12em;text-transform:uppercase;font-weight:700;}
+#hp .hclear{font-size:.72rem;color:var(--t3);cursor:pointer;background:none;border:none;padding:2px 6px;border-radius:4px;transition:color .12s;}
+#hp .hclear:hover{color:var(--red);}
+.hi{display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:7px;cursor:pointer;transition:background .12s;}
+.hi:hover{background:var(--bg2);}
+.hi .hq{color:var(--t0);font-size:.83rem;flex:1;font-weight:500;}
+.hi .hs{color:var(--t2);font-size:.69rem;}
+.hi .ht{color:var(--t3);font-size:.65rem;margin-left:auto;}
+.hi .hdel{background:none;border:none;color:var(--t3);cursor:pointer;font-size:.75rem;padding:2px 5px;border-radius:4px;display:none;}
+.hi:hover .hdel{display:block;}
+.hi .hdel:hover{color:var(--red);}
 
-/* ─ PANNEAU VIDE ─ */
-.pempty {
-  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:12px; background:var(--bg0);
-}
-.pempty .bnum { font-size:6rem; font-weight:900; color:var(--border2); line-height:1; font-family:Arial,sans-serif; }
-.pempty p { font-size:.8rem; color:var(--t3); text-align:center; max-width:180px; line-height:1.6; }
-.pempty .hint { font-size:.68rem; color:var(--t3); background:var(--bg2); padding:5px 12px; border-radius:20px; border:1px solid var(--border); }
+/* Aide */
+.scbox{width:520px;}
+.scbox h3{font-size:1rem;color:var(--ac);margin-bottom:14px;font-weight:800;}
+.scr{display:flex;align-items:center;gap:12px;padding:5px 0;border-bottom:1px solid var(--bd);}
+.scr:last-child{border:none;}
+.sck{display:flex;gap:4px;flex-shrink:0;}
+kbd{background:var(--bg3);border:1px solid var(--bd2);border-radius:5px;padding:3px 8px;font-family:var(--mono);font-size:.71rem;color:var(--t0);box-shadow:0 2px 0 var(--bd);font-weight:600;}
+.scd{color:var(--t1);font-size:.81rem;}
+.scn{margin-top:12px;padding:11px 13px;background:var(--bg2);border-radius:9px;font-size:.73rem;line-height:1.75;color:var(--t1);border:1px solid var(--bd);}
 
-/* ─ OVERLAY BLOQUÉ ─ */
-.bov {
-  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:14px; padding:28px; background:var(--bg0); text-align:center;
-}
-.bov .bi { font-size:2.8rem; }
-.bov .wb {
-  font-size:.72rem; padding:5px 12px; border-radius:6px;
-  background:rgba(255,128,80,.1); color:var(--acc3); border:1px solid rgba(255,128,80,.3);
-}
-.bov h3 { font-size:1rem; color:var(--t0); }   /* ← BLANC */
-.bov p  { font-size:.8rem; color:var(--t1); line-height:1.65; max-width:280px; }
-.bov .obt {
-  display:inline-flex; align-items:center; gap:6px;
-  padding:10px 20px; background:var(--acc); color:#fff;
-  border-radius:8px; font-size:.82rem; font-weight:700; text-decoration:none;
-  transition:background .15s, transform .1s; cursor:pointer; border:none; font-family:var(--fw);
-}
-.bov .obt:hover { background:#7ac0ff; transform:translateY(-1px); }
-.bov .alts { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
-.bov .ab {
-  padding:7px 13px; background:var(--bg3); color:var(--t1);  /* ← LISIBLE */
-  border:1px solid var(--border2); border-radius:7px;
-  font-family:var(--fw); font-size:.78rem; cursor:pointer;
-  transition:background .13s, border-color .13s; text-decoration:none;
-}
-.bov .ab:hover { background:var(--bg4); border-color:var(--acc2); color:var(--t0); }
+/* Proxy info */
+.pxbox{width:540px;border-color:#eab308!important;}
+.pxbox h3{font-size:1rem;color:#854d0e;margin-bottom:12px;font-weight:800;}
+.pxbox h4{font-size:.82rem;color:var(--t0);font-weight:700;margin:12px 0 4px;}
+.pxbox p,.pxbox li{font-size:.78rem;color:var(--t1);line-height:1.65;}
+.pxbox ul{padding-left:16px;margin-top:4px;}
+.pxbox code{background:var(--bg3);padding:1px 5px;border-radius:3px;font-family:var(--mono);font-size:.72rem;}
+.pxbox .ext-link{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--ac);color:#fff;border-radius:7px;font-size:.78rem;font-weight:600;text-decoration:none;margin-top:6px;}
+.pxbox .ext-link:hover{background:#1558d0;}
 
-/* ══ HISTORIQUE ════════════════════════════════════════ */
-#hpanel {
-  position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
-  background:var(--bg2); border:1px solid var(--border2); border-radius:12px;
-  padding:14px 16px; z-index:50; min-width:360px; max-width:540px;
-  box-shadow:0 24px 70px rgba(0,0,0,.7); display:none;
-}
-#hpanel.show { display:block; }
-#hpanel h4 { font-size:.72rem; color:var(--t2); letter-spacing:.12em; text-transform:uppercase; margin-bottom:9px; }
-.hitem { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:7px; cursor:pointer; transition:background .12s; }
-.hitem:hover { background:var(--bg3); }
-.hitem .hq { color:var(--t0); font-size:.84rem; flex:1; }  /* ← BLANC */
-.hitem .hs { color:var(--t2); font-size:.7rem; }
-.hitem .ht { color:var(--t3); font-size:.66rem; margin-left:auto; }
+/* ── AI Chat Panel ── */
+.ai-pane{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--bg);overflow:hidden;}
+.ai-msgs{flex:1;min-height:0;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px;}
+.ai-msgs::-webkit-scrollbar{width:4px;}
+.ai-msgs::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px;}
+.ai-bubble{max-width:92%;padding:9px 13px;border-radius:10px;font-size:.82rem;line-height:1.6;word-break:break-word;}
+.ai-bubble.user{align-self:flex-end;background:var(--ac);color:#fff;border-radius:10px 10px 2px 10px;}
+.ai-bubble.ai{align-self:flex-start;background:var(--bg1);border:1px solid var(--bd);color:var(--t0);border-radius:10px 10px 10px 2px;white-space:pre-wrap;}
+.ai-bubble.ai.thinking{color:var(--t3);font-style:italic;animation:pulse 1.2s infinite;}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+.ai-bar{display:flex;gap:6px;padding:8px 10px;background:var(--bg1);border-top:1px solid var(--bd);flex-shrink:0;}
+.ai-bar input{flex:1;padding:7px 11px;background:var(--bg);border:1.5px solid var(--bd2);border-radius:8px;color:var(--t0);font-family:var(--fw);font-size:.82rem;outline:none;transition:border-color .18s;}
+.ai-bar input:focus{border-color:var(--ac);}
+.ai-bar button{padding:7px 13px;background:var(--ac);border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:.8rem;font-weight:700;transition:background .15s;flex-shrink:0;}
+.ai-bar button:hover{background:#1558d0;}
+.ai-bar button:disabled{background:var(--bd);cursor:not-allowed;}
+.ai-header{padding:5px 12px;background:linear-gradient(90deg,rgba(26,110,255,.08),transparent);border-bottom:1px solid var(--bd);font-size:.68rem;color:var(--ac);font-weight:700;letter-spacing:.08em;display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.ai-header .ai-dot{width:7px;height:7px;border-radius:50%;background:var(--ac);animation:pulse 1.5s infinite;flex-shrink:0;}
 
-/* ══ AIDE RACCOURCIS ════════════════════════════════════ */
-#scov { display:none; position:fixed; inset:0; background:rgba(0,0,0,.78); z-index:100; align-items:center; justify-content:center; }
-#scov.show { display:flex; }
-.scbox {
-  background:var(--bg2); border:1px solid var(--border2); border-radius:16px;
-  padding:26px 30px; width:480px; max-width:96vw;
-  box-shadow:0 32px 90px rgba(0,0,0,.75);
-}
-.scbox h3 { font-size:1.05rem; color:var(--acc); margin-bottom:16px; font-weight:700; font-family:Arial,sans-serif; }
-.scr { display:flex; align-items:center; gap:12px; padding:6px 0; border-bottom:1px solid var(--border); }
-.scr:last-child { border:none; }
-.sck { display:flex; gap:4px; flex-shrink:0; }
-kbd {
-  background:var(--bg3); border:1px solid var(--border2); border-radius:5px;
-  padding:3px 8px; font-family:var(--fw); font-size:.72rem;
-  color:var(--t0); box-shadow:0 2px 0 var(--border);
-}
-.scd { color:var(--t1); font-size:.82rem; }  /* ← LISIBLE */
-.sc-note {
-  margin-top:14px; padding:12px; background:var(--bg3); border-radius:9px;
-  font-size:.74rem; line-height:1.75; color:var(--t1); border:1px solid var(--border);
-}
+#toast{position:fixed;bottom:18px;right:18px;z-index:200;border-radius:9px;padding:10px 17px;font-size:.81rem;color:#fff;transform:translateY(14px);opacity:0;transition:all .22s ease;pointer-events:none;max-width:290px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.22);}
+#toast.s{transform:translateY(0);opacity:1;}
+#toast.ok{background:var(--g2);}
+#toast.er{background:var(--g3);}
+#toast.nf{background:var(--ac);}
 
-/* ══ TOAST ════════════════════════════════════════════ */
-#toast {
-  position:fixed; bottom:18px; right:18px; z-index:200;
-  background:var(--bg3); border:1px solid var(--border2); border-radius:9px;
-  padding:11px 18px; font-size:.82rem; color:var(--t0);  /* ← BLANC */
-  transform:translateY(14px); opacity:0; transition:all .22s ease;
-  pointer-events:none; max-width:280px;
-}
-#toast.show { transform:translateY(0); opacity:1; }
-#toast.ok   { border-left:4px solid var(--acc2); }
-#toast.err  { border-left:4px solid var(--acc3); }
-#toast.info { border-left:4px solid var(--acc); }
-
-::-webkit-scrollbar { width:4px; height:4px; }
-::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px;}
 </style>
+<script>
+// Migration v5→v6 : reset layout si < 6 panneaux
+(function(){
+  const l=localStorage.getItem('ms_layout');
+  if(!l||!['l6a','l6b'].includes(l)){
+    localStorage.setItem('ms_layout','l6a');
+    localStorage.removeItem('ms_ap');
+  }
+})();
+</script>
 </head>
 <body>
 <div id="app">
 
-<!-- ════ SIDEBAR ════════════════════════════════════ -->
-<div id="sidebar">
-  <div id="tog" onclick="toggleSB()">‹</div>
+<!-- SIDEBAR -->
+<div id="sb">
+  <div id="tog" onclick="tSB()">&#8249;</div>
   <div class="sbi">
+    <div id="logo">MULTISEARCH <em>v1.5</em></div>
 
-    <div id="logo">NEXUS <em>MULTI-SEARCH</em></div>
-
-    <!-- Recherche -->
     <div class="sbox">
-      <input type="text" id="query" placeholder="Rechercher…" autocomplete="off"
-             onkeydown="if(event.key==='Enter') runDef()">
-      <span class="sico" onclick="runDef()" title="Lancer la recherche">⌕</span>
+      <input id="q" type="text" placeholder="w python  ·  yt cats  ·  img sunset…" autocomplete="off"
+             onkeydown="handleQKey(event)">
+      <span class="sico" onclick="runD()" title="Rechercher">&#9906;</span>
     </div>
+    <div id="cmd-hint">tape <strong>cmd mot-clé</strong> — <a href="#" onclick="showCmds();return false" style="color:var(--ac)">&#8984; toutes les commandes</a></div>
 
-    <!-- URL directe -->
     <div class="urow">
-      <input type="text" id="durl" placeholder="https://…" autocomplete="off"
-             onkeydown="if(event.key==='Enter') loadUrl()">
-      <button onclick="loadUrl()">GO</button>
+      <input id="du" type="text" placeholder="https://…" autocomplete="off"
+             onkeydown="if(event.key==='Enter')loadU()">
+      <button onclick="loadU()">GO</button>
     </div>
 
-    <!-- Sélecteur de panneau -->
+    <div class="hf-box">
+      <label>&#129303; HuggingFace Space (iframe ✓)</label>
+      <div class="hf-row">
+        <input id="hf-url" type="text" placeholder="user/space ou URL complète" autocomplete="off"
+               onkeydown="if(event.key==='Enter')loadHF()">
+        <button onclick="loadHF()">&#9654;</button>
+      </div>
+      <div class="hf-hint">Ex: <code>stabilityai/stable-diffusion</code> · <code>openai/whisper</code></div>
+    </div>
+
     <div class="trow" id="trow"></div>
 
-    <!-- Légende compatibilité -->
-    <div class="legend">
-      <span><span style="color:var(--acc2)">●</span> S'ouvre ici</span>
-      <span><span style="color:var(--acc3)">◆</span> Nouvel onglet</span>
+    <div id="favbar">
+      <div class="ftitle">&#9733; Favoris</div>
+      <div class="fitems" id="favitems"></div>
     </div>
 
-    <!-- Liste des sites -->
+    <input class="sbsearch" type="text" id="sbq" placeholder="&#128269; Filtrer les sites…" oninput="filterBtns(this.value)">
+
+    <div class="leg">
+      <span><span style="color:#eab308;font-weight:900">&#9646;</span>&nbsp;iframe ✓</span>
+      <span><span style="color:var(--g3);font-weight:700">&#9670;</span>&nbsp;onglet</span>
+      <span><span style="color:var(--pur);font-weight:700">&#8853;</span>&nbsp;multi</span>
+    </div>
+
     <div class="blist" id="blist"></div>
   </div>
 </div>
 
-<!-- ════ WORKSPACE ══════════════════════════════════ -->
-<div id="workspace">
-  <!-- Barre du haut -->
-  <div id="topbar">
-    <button class="lbtn" onclick="setLayout('l1')"  title="1 panneau">⬜ ×1</button>
-    <button class="lbtn" onclick="setLayout('l2h')" title="2 côte à côte">⬜⬜</button>
-    <button class="lbtn" onclick="setLayout('l2v')" title="2 empilés">⬛↕</button>
-    <button class="lbtn" onclick="setLayout('l3r')" title="Grand + 2 droite">▩▪×3</button>
-    <button class="lbtn" onclick="setLayout('l3b')" title="2 + bas">▩▩↓</button>
-    <button class="lbtn" onclick="setLayout('l4')"  title="4 panneaux">▪▪×4</button>
-    <div class="tsep"></div>
-    <button class="lbtn" onclick="reloadAP()" title="Recharger panneau actif">↺ Reload</button>
-    <button class="lbtn danger" onclick="clearAP()" title="Vider panneau actif">✕ Pane</button>
-    <button class="lbtn danger" onclick="clearAll()" title="Tout vider">✕ Tout</button>
-    <div class="tsep"></div>
-    <button class="lbtn" onclick="toggleHist()">📋 Historique</button>
-    <button class="lbtn" onclick="toggleSC()">⌨ Aide</button>
-    <div id="sbar">
-      <span>P<span id="apn">1</span> actif</span>
-      <span class="sdot"></span>
+<!-- WORKSPACE -->
+<div id="ws">
+  <div id="tb">
+    <button class="lbtn" onclick="setL('l1')">&#9634;&#215;1</button>
+    <button class="lbtn" onclick="setL('l2h')">&#9634;&#9634;</button>
+    <button class="lbtn" onclick="setL('l2v')">&#9632;&#8597;</button>
+    <button class="lbtn" onclick="setL('l3r')">&#9641;&#9646;</button>
+    <button class="lbtn" onclick="setL('l3b')">&#9641;&#8595;</button>
+    <button class="lbtn" onclick="setL('l4')">&#9632;&#215;4</button>
+    <button class="lbtn" onclick="setL('l6a')">&#9632;&#215;6&#8594;</button>
+    <button class="lbtn" onclick="setL('l6b')">&#9632;&#215;6&#8595;</button>
+    <div class="sep"></div>
+    <button class="lbtn hl" onclick="oGrp(['ddg','bing','mojeek','brave'],'Web&#215;4')">&#8853;Web</button>
+    <button class="lbtn hl" onclick="oGrp(['perplexity','phind','claude'],'IA&#215;3')">&#8853;IA</button>
+    <button class="lbtn hl" onclick="oGrp(['img_commons','img_nasa','img_unsplash'],'IMG&#215;3')">&#8853;IMG</button>
+    <button class="lbtn hl" onclick="oGrp(['giphy','tenor'],'GIF')">&#8853;GIF</button>
+    <button class="lbtn hl" onclick="oGrp(['invid','youtube','vimeo'],'VID')">&#8853;VID</button>
+    <div class="sep"></div>
+    <button class="lbtn" id="proxy-btn" onclick="toggleProxy()" title="Proxy corsproxy.io — contourne X-Frame-Options sur sites simples">&#128275; Proxy</button>
+    <div class="sep"></div>
+    <button class="lbtn" onclick="rAP()">&#8635;</button>
+    <button class="lbtn d" onclick="cAP()">&#10005;Pane</button>
+    <button class="lbtn d" onclick="cAll()">&#10005;Tout</button>
+    <div class="sep"></div>
+    <button class="lbtn" onclick="tH()">&#128203;</button>
+    <button class="lbtn" onclick="showPX()" title="Contournements iframes">&#128275;?</button>
+    <button class="lbtn" onclick="showCmds()">&#8984;YN</button>
+    <button class="lbtn" onclick="tSC()">&#9000;</button>
+    <div id="qbar">
+      <input id="qtop" type="text" placeholder="cmd mot-clé…" autocomplete="off"
+             onkeydown="if(event.key==='Enter'){document.getElementById('q').value=this.value;handleQKey({key:'Enter'});}">
     </div>
+    <div id="sbar">P<span id="apn">1</span>&nbsp;<span class="dot"></span></div>
   </div>
-
-  <!-- Grille -->
   <div id="grid" class="l3r"></div>
 </div>
 </div>
 
-<!-- Historique flottant -->
-<div id="hpanel">
-  <h4>Historique récent</h4>
-  <div id="hlist"></div>
+<!-- Commandes YubNub -->
+<div id="cmdov" class="ov" onclick="cCmds()">
+  <div class="obox cmdbox" onclick="event.stopPropagation()">
+    <h3>&#8984; Commandes YubNub</h3>
+    <div class="sub">Tape <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">cmd mot-clé</code> · Ex: <code>w tour eiffel</code> · <code>yt lo-fi</code> · <code>img sunset</code> · <code>gif dance</code></div>
+    <div class="cmd-grid" id="cmd-grid"></div>
+  </div>
 </div>
 
-<!-- Aide raccourcis -->
-<div id="scov" onclick="closeSC()">
-  <div class="scbox" onclick="event.stopPropagation()">
-    <h3>⌨ Raccourcis clavier</h3>
-    <div class="scr"><div class="sck"><kbd>↵ Entrée</kbd></div><div class="scd">Rechercher avec le moteur par défaut</div></div>
-    <div class="scr"><div class="sck"><kbd>Ctrl</kbd><kbd>1–4</kbd></div><div class="scd">Sélectionner le panneau 1, 2, 3 ou 4</div></div>
-    <div class="scr"><div class="sck"><kbd>Ctrl</kbd><kbd>L</kbd></div><div class="scd">Focus sur la barre de recherche</div></div>
-    <div class="scr"><div class="sck"><kbd>Ctrl</kbd><kbd>U</kbd></div><div class="scd">Focus sur la barre URL directe</div></div>
-    <div class="scr"><div class="sck"><kbd>Ctrl</kbd><kbd>R</kbd></div><div class="scd">Recharger le panneau actif</div></div>
-    <div class="scr"><div class="sck"><kbd>Ctrl</kbd><kbd>W</kbd></div><div class="scd">Vider le panneau actif</div></div>
-    <div class="scr"><div class="sck"><kbd>Ctrl</kbd><kbd>H</kbd></div><div class="scd">Afficher / masquer l'historique</div></div>
-    <div class="scr"><div class="sck"><kbd>?</kbd></div><div class="scd">Afficher cette aide</div></div>
-    <div class="scr"><div class="sck"><kbd>Échap</kbd></div><div class="scd">Fermer les panneaux flottants</div></div>
-    <div class="sc-note">
-      <strong style="color:var(--t0)">Pourquoi certains sites s'ouvrent dans un onglet ?</strong><br>
-      Des sites comme Google, DDG, Bing, Mojeek envoient le header
-      <code style="color:var(--acc3)">X-Frame-Options: DENY</code> qui interdit leur intégration.
-      <strong style="color:var(--acc2)">● vert</strong> = compatible iframe &nbsp;·&nbsp;
-      <strong style="color:var(--acc3)">◆ orange</strong> = bloqué → onglet automatique.
+<!-- Historique -->
+<div id="hp">
+  <div class="hhead"><h4>Historique</h4><button class="hclear" onclick="clearHist()">Effacer</button></div>
+  <div id="hl2"></div>
+</div>
+
+<!-- Aide -->
+<div id="scov" class="ov" onclick="cSC()">
+  <div class="obox scbox" onclick="event.stopPropagation()">
+    <h3>&#9000; Guide & Raccourcis</h3>
+    <div class="scr"><div class="sck"><kbd>&#8629;</kbd></div><div class="scd">Lancer la commande YubNub ou recherche</div></div>
+    <div class="scr"><div class="sck"><kbd>Ctrl</kbd><kbd>1–4</kbd></div><div class="scd">Sélectionner panneau 1–4</div></div>
+    <div class="scr"><div class="sck"><kbd>Ctrl</kbd><kbd>L</kbd></div><div class="scd">Focus barre de recherche</div></div>
+    <div class="scr"><div class="sck"><kbd>Ctrl</kbd><kbd>U</kbd></div><div class="scd">Focus barre URL directe</div></div>
+    <div class="scr"><div class="sck"><kbd>Ctrl</kbd><kbd>R</kbd></div><div class="scd">Recharger panneau actif</div></div>
+    <div class="scr"><div class="sck"><kbd>Ctrl</kbd><kbd>W</kbd></div><div class="scd">Vider panneau actif</div></div>
+    <div class="scr"><div class="sck"><kbd>Ctrl</kbd><kbd>H</kbd></div><div class="scd">Historique</div></div>
+    <div class="scr"><div class="sck"><kbd>Ctrl</kbd><kbd>K</kbd></div><div class="scd">Commandes YubNub</div></div>
+    <div class="scr"><div class="sck"><kbd>?</kbd></div><div class="scd">Cette aide</div></div>
+    <div class="scr"><div class="sck"><kbd>&#201;chap</kbd></div><div class="scd">Fermer les panneaux flottants</div></div>
+    <div class="scn">
+      <strong style="color:#854d0e">&#9646; Jaune fluo</strong> = s'affiche dans le panneau (iframe OK) ·
+      <strong style="color:var(--g3)">&#9670;</strong> = onglet (bloqué côté serveur) ·
+      <strong style="color:var(--pur)">&#8853;</strong> = groupe multi<br><br>
+      <strong>Solution ultime :</strong> extension <em>Ignore X-Frame-Headers</em> — fait fonctionner toutes les IA en iframe.
     </div>
+  </div>
+</div>
+
+<!-- Panel proxy -->
+<div id="pxov" class="ov" onclick="cPX()">
+  <div class="obox pxbox" style="border-color:#eab308" onclick="event.stopPropagation()">
+    <h3>&#128275; Contournements iframes</h3>
+    <h4>1. Mode Proxy (bouton dans la barre)</h4>
+    <p>Passe les sites bloqués par <code>corsproxy.io</code> qui retire les headers <code>X-Frame-Options</code>. Fonctionne sur les pages HTML statiques (Bing, Mojeek HTML…), pas sur les apps React (IA).</p>
+    <h4>2. &#129303; HuggingFace Spaces</h4>
+    <p>HF autorise l'embed ! Entre <code>user/space</code> dans le champ vert. Des centaines de démos IA disponibles : Stable Diffusion, Whisper, MusicGen, LLaMA, Mistral…</p>
+    <h4>3. Extension navigateur (solution ultime)</h4>
+    <p>Supprime les headers côté navigateur — <strong>tous</strong> les sites fonctionnent en iframe, y compris ChatGPT, Claude, Gemini :</p>
+    <a class="ext-link" href="https://addons.mozilla.org/fr/firefox/addon/ignore-x-frame-options-header/" target="_blank">&#8595; Firefox — Ignore X-Frame-Headers</a><br><br>
+    <a class="ext-link" href="https://chrome.google.com/webstore/detail/ignore-x-frame-headers/gleekbfjekiniecknbkamfmkohkpodhe" target="_blank">&#8595; Chrome/Edge — Ignore X-Frame-Headers</a>
+    <p style="margin-top:8px;font-size:.71rem;color:var(--t3)">&#9888;&#65039; Désactive une protection de sécurité — utiliser en connaissance de cause.</p>
   </div>
 </div>
 
@@ -406,366 +414,1048 @@ kbd {
 <script>
 'use strict';
 
-// ══ CATALOGUE (iframe testé) ════════════════════════
-// ok:true  = réellement compatible iframe (testé)
-// ok:false = envoie X-Frame-Options DENY/SAMEORIGIN
+// ═══════════════════════════════════════════════════════════
+//  CATALOGUE v4 — iframables EN PREMIER dans chaque catégorie
+// ═══════════════════════════════════════════════════════════
 const SITES = [
-  { sec:'🔍 Recherche — compatibles iframe', items:[
-    { id:'searx',     n:'SearXNG',             ico:'🌐', tag:'WEB',  ok:true,  url:q=>`https://searx.be/search?q=${q}` },
-    { id:'searx2',    n:'SearXNG (instance 2)', ico:'🌐', tag:'WEB',  ok:true,  url:q=>`https://search.bus-hit.me/search?q=${q}` },
-    { id:'wiby',      n:'Wiby',                ico:'🕸', tag:'WEB',  ok:true,  url:q=>`https://wiby.me/?q=${q}` },
-    { id:'hn',        n:'Hacker News Search',  ico:'🟠', tag:'NEWS', ok:true,  url:q=>`https://hn.algolia.com/?q=${q}` },
+
+  // ══ 1. MOTEURS — IFRAMABLES ════════════════════════════
+  { sec:'🟡 Moteurs — s\'affichent ici', iframeGroup:true, items:[
+    { id:'wiby',       n:'Wiby (web indie)',      ico:'🕸', cmd:'wb',   ok:true, url:q=>`https://wiby.me/?q=${q}` },
+    { id:'marginalia', n:'Marginalia',            ico:'📰', cmd:'mg',   ok:true, url:q=>`https://search.marginalia.nu/search?query=${q}` },
+    { id:'hn',         n:'Hacker News',           ico:'🟠', cmd:'hn',   ok:true, url:q=>`https://hn.algolia.com/?q=${q}` },
+    { id:'stract',     n:'Stract',                ico:'🔍', cmd:'st',   ok:true, url:q=>`https://stract.com/search?q=${q}` },
+    { id:'mwmbl',      n:'Mwmbl (open source)',   ico:'🌐', cmd:'mw',   ok:true, url:q=>`https://mwmbl.org/?q=${q}` },
+    { id:'searxng',    n:'SearXNG (méta)',         ico:'🔎', cmd:'sx',   ok:true, url:q=>`https://search.bus-hit.me/?q=${q}` },
   ]},
-  { sec:'🔍 Recherche — s\'ouvre dans un onglet', items:[
-    { id:'ddg',       n:'DuckDuckGo',           ico:'🦆', tag:'WEB',  ok:false, url:q=>`https://duckduckgo.com/?q=${q}` },
-    { id:'mojeek',    n:'Mojeek',               ico:'🔎', tag:'WEB',  ok:false, url:q=>`https://www.mojeek.com/search?q=${q}` },
-    { id:'bing',      n:'Bing',                 ico:'Ⓑ',  tag:'WEB',  ok:false, url:q=>`https://www.bing.com/search?q=${q}` },
-    { id:'google',    n:'Google',               ico:'G',  tag:'WEB',  ok:false, url:q=>`https://www.google.com/search?q=${q}` },
-    { id:'brave',     n:'Brave Search',         ico:'🦁', tag:'WEB',  ok:false, url:q=>`https://search.brave.com/search?q=${q}` },
-    { id:'qwant',     n:'Qwant',                ico:'Q',  tag:'WEB',  ok:false, url:q=>`https://www.qwant.com/?q=${q}` },
-    { id:'ecosia',    n:'Ecosia',               ico:'🌿', tag:'WEB',  ok:false, url:q=>`https://www.ecosia.org/search?q=${q}` },
+
+  // ══ 2. MOTEURS — ONGLET ════════════════════════════════
+  { sec:'◆ Moteurs — s\'ouvrent en onglet', items:[
+    { id:'ddg',        n:'DuckDuckGo',            ico:'🦆', cmd:'g',    ok:false, url:q=>`https://duckduckgo.com/?q=${q}` },
+    { id:'google',     n:'Google',               ico:'G',  cmd:'gg',   ok:false, url:q=>`https://www.google.com/search?q=${q}` },
+    { id:'bing',       n:'Bing',                 ico:'Ⓑ',  cmd:'b',    ok:false, url:q=>`https://www.bing.com/search?q=${q}` },
+    { id:'mojeek',     n:'Mojeek',               ico:'🔎', cmd:'mj',   ok:false, url:q=>`https://www.mojeek.com/search?q=${q}` },
+    { id:'brave',      n:'Brave Search',         ico:'🦁', cmd:'br',   ok:false, url:q=>`https://search.brave.com/search?q=${q}` },
+    { id:'qwant',      n:'Qwant',               ico:'Q',  cmd:'qw',   ok:false, url:q=>`https://www.qwant.com/?q=${q}` },
+    { id:'startpage',  n:'Startpage',           ico:'🔏', cmd:'sp',   ok:false, url:q=>`https://www.startpage.com/search?q=${q}` },
+    { id:'ecosia',     n:'Ecosia',              ico:'🌿', cmd:'ec',   ok:false, url:q=>`https://www.ecosia.org/search?q=${q}` },
+    { id:'kagi',       n:'Kagi',                ico:'🔑', cmd:'ka',   ok:false, url:q=>`https://kagi.com/search?q=${q}` },
+    { id:'yep',        n:'Yep (Ahrefs)',         ico:'🔍', cmd:'yp',   ok:false, url:q=>`https://yep.com/?q=${q}` },
   ]},
-  { sec:'🤖 Intelligence Artificielle', items:[
-    { id:'perplexity',n:'Perplexity',           ico:'⧖',  tag:'AI',   ok:false, url:q=>`https://www.perplexity.ai/search?q=${q}` },
-    { id:'phind',     n:'Phind (code)',          ico:'⟨⟩', tag:'AI',   ok:false, url:q=>`https://www.phind.com/search?q=${q}` },
-    { id:'claude',    n:'Claude',               ico:'✦',  tag:'AI',   ok:false, url:q=>`https://claude.ai/new?q=${q}` },
-    { id:'you',       n:'You.com',              ico:'◎',  tag:'AI',   ok:false, url:q=>`https://you.com/search?q=${q}` },
-    { id:'chatgpt',   n:'ChatGPT',              ico:'⬡',  tag:'AI',   ok:false, url:q=>`https://chatgpt.com/?q=${q}` },
+
+  // ══ 3. IMAGES — IFRAMABLES ═════════════════════════════
+  { sec:'🟡 Images — s\'affichent ici', iframeGroup:true, items:[
+    { id:'img_commons',  n:'Wikimedia Commons',    ico:'🖼', cmd:'wimg', ok:true, url:q=>`https://commons.wikimedia.org/w/index.php?search=${q}&ns6=1` },
+    { id:'img_nasa',     n:'NASA Images',          ico:'🚀', cmd:'nasa', ok:true, url:q=>`https://images.nasa.gov/search-results?q=${q}` },
+    { id:'img_lospec',   n:'Lospec (palettes)',    ico:'🎨', cmd:'pal',  ok:true, url:q=>`https://lospec.com/palette-list/search?q=${q}` },
+    { id:'img_phylopic', n:'PhyloPic (silhouettes)',ico:'🐾',cmd:'sil', ok:true, url:q=>`https://www.phylopic.org/images/?q=${q}` },
+    { id:'img_europeana',n:'Europeana Art',        ico:'🏺', cmd:'art',  ok:true, url:q=>`https://www.europeana.eu/fr/search?query=${q}&media=true` },
+    { id:'img_rawpixel', n:'Rawpixel (public domain)',ico:'🖼',cmd:'rp', ok:true, url:q=>`https://www.rawpixel.com/search/${q}` },
   ]},
-  { sec:'📚 Encyclopédies & Documentation', items:[
-    { id:'wiki_fr',   n:'Wikipédia FR',         ico:'📖', tag:'WIKI', ok:true,  url:q=>`https://fr.m.wikipedia.org/wiki/${q}` },
-    { id:'wiki_en',   n:'Wikipédia EN',         ico:'📖', tag:'WIKI', ok:true,  url:q=>`https://en.m.wikipedia.org/wiki/${q}` },
-    { id:'wikt_fr',   n:'Wiktionnaire FR',      ico:'📝', tag:'DICT', ok:true,  url:q=>`https://fr.m.wiktionary.org/wiki/${q}` },
-    { id:'scholar',   n:'Semantic Scholar',     ico:'🎓', tag:'ACAD', ok:true,  url:q=>`https://www.semanticscholar.org/search?q=${q}` },
-    { id:'arxiv',     n:'arXiv',                ico:'📄', tag:'ACAD', ok:false, url:q=>`https://arxiv.org/search/?query=${q}` },
-    { id:'mdn',       n:'MDN Web Docs',         ico:'⟨⟩', tag:'DEV',  ok:false, url:q=>`https://developer.mozilla.org/fr/search?q=${q}` },
-    { id:'so',        n:'Stack Overflow',       ico:'📦', tag:'DEV',  ok:false, url:q=>`https://stackoverflow.com/search?q=${q}` },
-    { id:'gh',        n:'GitHub',               ico:'⎇',  tag:'DEV',  ok:false, url:q=>`https://github.com/search?q=${q}` },
+
+  // ══ 4. IMAGES — ONGLET ════════════════════════════════
+  { sec:'◆ Images — onglet', items:[
+    { id:'img_openverse',n:'Openverse',           ico:'🎨', cmd:'img',  ok:false, url:q=>`https://openverse.org/search/?q=${q}` },
+    { id:'img_unsplash', n:'Unsplash',            ico:'📷', cmd:'unsp', ok:false, url:q=>`https://unsplash.com/s/photos/${q}` },
+    { id:'img_pexels',   n:'Pexels',             ico:'📸', cmd:'pex',  ok:false, url:q=>`https://www.pexels.com/search/${q}/` },
+    { id:'img_pixabay',  n:'Pixabay',            ico:'🖼', cmd:'pix',  ok:false, url:q=>`https://pixabay.com/fr/images/search/${q}/` },
+    { id:'img_flickr',   n:'Flickr',             ico:'📷', cmd:'fl',   ok:false, url:q=>`https://www.flickr.com/search/?q=${q}` },
+    { id:'img_bing',     n:'Bing Images',        ico:'Ⓑ',  cmd:'bimg', ok:false, url:q=>`https://www.bing.com/images/search?q=${q}` },
+    { id:'img_google',   n:'Google Images',      ico:'G',  cmd:'gimg', ok:false, url:q=>`https://www.google.com/search?q=${q}&tbm=isch` },
+    { id:'img_pinterest',n:'Pinterest',          ico:'📌', cmd:'pin',  ok:false, url:q=>`https://www.pinterest.fr/search/pins/?q=${q}` },
+    { id:'img_500px',    n:'500px',              ico:'📸', cmd:'5px',  ok:false, url:q=>`https://500px.com/search?q=${q}&type=photos` },
   ]},
-  { sec:'📺 Médias & Réseaux sociaux', items:[
-    { id:'yt',        n:'Invidious (YouTube)',  ico:'▶',  tag:'VID',  ok:true,  url:q=>`https://yewtu.be/search?q=${q}` },
-    { id:'nitter',    n:'Nitter (Twitter/X)',   ico:'🐦', tag:'SOC',  ok:true,  url:q=>`https://nitter.net/search?q=${q}` },
-    { id:'reddit',    n:'Reddit',               ico:'🔴', tag:'SOC',  ok:false, url:q=>`https://www.reddit.com/search/?q=${q}` },
-    { id:'youtube',   n:'YouTube',              ico:'▶',  tag:'VID',  ok:false, url:q=>`https://www.youtube.com/results?search_query=${q}` },
-    { id:'lemmy',     n:'Lemmy',                ico:'🐘', tag:'SOC',  ok:false, url:q=>`https://lemmy.world/search?q=${q}` },
+
+  // ══ 5. GIF ════════════════════════════════════════════
+  { sec:'◆ GIF & Animations — onglet', items:[
+    { id:'giphy',       n:'Giphy',               ico:'🌀', cmd:'gif',  ok:false, url:q=>`https://giphy.com/search/${q}` },
+    { id:'tenor',       n:'Tenor',               ico:'🎞', cmd:'gf',   ok:false, url:q=>`https://tenor.com/search/${q}` },
+    { id:'imgflip',     n:'Imgflip (memes)',     ico:'😂', cmd:'meme', ok:false, url:q=>`https://imgflip.com/search?q=${q}` },
+    { id:'redgifs',     n:'Redgifs',             ico:'🎥', cmd:'rgif', ok:false, url:q=>`https://www.redgifs.com/browse?search=${q}` },
+    { id:'gfycat',      n:'Gfycat',              ico:'🎬', cmd:'gfy',  ok:false, url:q=>`https://gfycat.com/gifs/search/${q}` },
   ]},
-  { sec:'🛠 Outils & Utilitaires', items:[
-    { id:'weather',   n:'Météo wttr.in',        ico:'🌤', tag:'TOOL', ok:true,  url:q=>`https://wttr.in/${q}` },
-    { id:'osm',       n:'OpenStreetMap embed',  ico:'🗺', tag:'MAP',  ok:true,  url:q=>`https://www.openstreetmap.org/export/embed.html?bbox=-5.0,42.0,9.5,51.5&layer=mapnik` },
-    { id:'wa',        n:'WolframAlpha',         ico:'Ω',  tag:'CALC', ok:false, url:q=>`https://www.wolframalpha.com/input?i=${q}` },
-    { id:'larousse',  n:'Larousse',             ico:'📕', tag:'DICT', ok:false, url:q=>`https://www.larousse.fr/dictionnaires/francais/${q}` },
-    { id:'deepl',     n:'DeepL',               ico:'🌍', tag:'TRAD', ok:false, url:q=>`https://www.deepl.com/translator#fr/en/${q}` },
-    { id:'archive',   n:'Wayback Machine',     ico:'🏛', tag:'ARCH', ok:false, url:q=>`https://web.archive.org/web/*/${q}` },
-    { id:'imdb',      n:'IMDB',                ico:'🎬', tag:'FILM', ok:false, url:q=>`https://www.imdb.com/find?q=${q}` },
+
+  // ══ 6. VIDÉO — IFRAMABLES ══════════════════════════════
+  { sec:'🟡 Vidéo — s\'affichent ici', iframeGroup:true, items:[
+    { id:'invid',       n:'Invidious (YouTube)', ico:'▶',  cmd:'yt',   ok:true, url:q=>`https://yewtu.be/search?q=${q}` },
+    { id:'odysee_emb',  n:'Odysee embed',        ico:'💡', cmd:'od',   ok:true, url:q=>`https://odysee.com/$/search?q=${q}` },
   ]},
-  { sec:'🛒 Shopping', items:[
-    { id:'amz',       n:'Amazon FR',           ico:'🛒', tag:'SHOP', ok:false, url:q=>`https://www.amazon.fr/s?k=${q}` },
-    { id:'fnac',      n:'Fnac',                ico:'🔷', tag:'SHOP', ok:false, url:q=>`https://www.fnac.com/SearchResult/ResultList.aspx?sk=${q}` },
-    { id:'lbc',       n:'Leboncoin',           ico:'🟡', tag:'OCC',  ok:false, url:q=>`https://www.leboncoin.fr/recherche?text=${q}` },
+
+  // ══ 7. VIDÉO — ONGLET ═════════════════════════════════
+  { sec:'◆ Vidéo — onglet', items:[
+    { id:'youtube',     n:'YouTube',             ico:'▶',  cmd:'ytd',  ok:false, url:q=>`https://www.youtube.com/results?search_query=${q}` },
+    { id:'vimeo',       n:'Vimeo',               ico:'🎬', cmd:'vm',   ok:false, url:q=>`https://vimeo.com/search?q=${q}` },
+    { id:'twitch',      n:'Twitch',              ico:'💜', cmd:'tw2',  ok:false, url:q=>`https://www.twitch.tv/search?term=${q}` },
+    { id:'peertube',    n:'PeerTube',            ico:'🔵', cmd:'pt',   ok:false, url:q=>`https://peer.tube/search/videos?search=${q}` },
+    { id:'dailymotion', n:'Dailymotion',         ico:'🎥', cmd:'dm',   ok:false, url:q=>`https://www.dailymotion.com/search/${q}` },
+  ]},
+
+  // ══ 8. TWEETS / SOCIAL — IFRAMABLES ═══════════════════
+  { sec:'🟡 Social — s\'affichent ici', iframeGroup:true, items:[
+    { id:'nitter',      n:'Nitter (privacydev)',  ico:'🐦', cmd:'tw',   ok:true, url:q=>`https://nitter.privacydev.net/search?q=${q}&f=tweets` },
+    { id:'nitter_top',  n:'Nitter (poast)',       ico:'🐦', cmd:'twt',  ok:true, url:q=>`https://nitter.poast.org/search?q=${q}&f=tweets` },
+  ]},
+
+  { sec:'◆ Social — onglet', items:[
+    { id:'mastodon',    n:'Mastodon.social',     ico:'🐘', cmd:'mt',   ok:false, url:q=>`https://mastodon.social/search?q=${q}` },
+    { id:'bluesky',     n:'Bluesky',             ico:'🦋', cmd:'bsky', ok:false, url:q=>`https://bsky.app/search?q=${q}` },
+    { id:'lemmy',       n:'Lemmy',               ico:'🟧', cmd:'lm',   ok:false, url:q=>`https://lemmy.world/search?q=${q}` },
+    { id:'reddit',      n:'Reddit',              ico:'🔴', cmd:'rd',   ok:false, url:q=>`https://www.reddit.com/search/?q=${q}` },
+    { id:'linkedin',    n:'LinkedIn',            ico:'💼', cmd:'li',   ok:false, url:q=>`https://www.linkedin.com/search/results/all/?keywords=${q}` },
+  ]},
+
+  // ══ 9. CARTES — IFRAMABLES ════════════════════════════
+  { sec:'🟡 Cartes & Météo — s\'affichent ici', iframeGroup:true, items:[
+    { id:'osm',         n:'OpenStreetMap',       ico:'🗺', cmd:'map',  ok:true, url:q=>`https://www.openstreetmap.org/search?query=${q}` },
+    { id:'nominatim',   n:'Nominatim géoloc',    ico:'📍', cmd:'geo',  ok:true, url:q=>`https://nominatim.openstreetmap.org/ui/search.html?q=${q}` },
+    { id:'weather',     n:'Météo wttr.in',       ico:'🌤', cmd:'wttr', ok:true, url:q=>`https://wttr.in/${q}?lang=fr` },
+    { id:'rainviewer',  n:'RainViewer (pluie)',  ico:'🌧', cmd:'rain', ok:true, url:_=>`https://www.rainviewer.com/map.html` },
+  ]},
+
+  { sec:'◆ Cartes — onglet', items:[
+    { id:'gmaps',       n:'Google Maps',         ico:'📍', cmd:'gmap', ok:false, url:q=>`https://www.google.com/maps/search/${q}` },
+    { id:'geoportail',  n:'Géoportail FR',       ico:'🇫🇷', cmd:'geo2',ok:false, url:q=>`https://www.geoportail.gouv.fr/carte?c=${q}` },
+  ]},
+
+  // ══ 10. ENCYCLOPÉDIES — IFRAMABLES ════════════════════
+  { sec:'🟡 Encyclopédies & Wikis — s\'affichent ici', iframeGroup:true, items:[
+    { id:'wiki_fr',     n:'Wikipédia FR',        ico:'📖', cmd:'w',    ok:true, url:q=>`https://fr.m.wikipedia.org/wiki/Special:Search?search=${q}` },
+    { id:'wiki_en',     n:'Wikipédia EN',        ico:'📖', cmd:'we',   ok:true, url:q=>`https://en.m.wikipedia.org/wiki/Special:Search?search=${q}` },
+    { id:'wiki_de',     n:'Wikipédia DE',        ico:'📖', cmd:'wd2',  ok:true, url:q=>`https://de.m.wikipedia.org/wiki/Special:Search?search=${q}` },
+    { id:'wiki_es',     n:'Wikipédia ES',        ico:'📖', cmd:'wes',  ok:true, url:q=>`https://es.m.wikipedia.org/wiki/Special:Search?search=${q}` },
+    { id:'wikivoyage',  n:'WikiVoyage FR',       ico:'✈',  cmd:'wv',   ok:true, url:q=>`https://fr.m.wikivoyage.org/wiki/${q}` },
+    { id:'wikispecies', n:'WikiSpecies',         ico:'🦋', cmd:'wsp',  ok:true, url:q=>`https://species.wikimedia.org/w/index.php?search=${q}` },
+    { id:'wikt_fr',     n:'Wiktionnaire FR',     ico:'📝', cmd:'wt',   ok:true, url:q=>`https://fr.m.wiktionary.org/wiki/${q}` },
+    { id:'wikt_en',     n:'Wiktionary EN',       ico:'📝', cmd:'wten', ok:true, url:q=>`https://en.m.wiktionary.org/wiki/${q}` },
+    { id:'wikidata',    n:'Wikidata',            ico:'🗃', cmd:'wd',   ok:true, url:q=>`https://www.wikidata.org/w/index.php?search=${q}` },
+    { id:'wikisrc',     n:'Wikisource FR',       ico:'📜', cmd:'wsrc', ok:true, url:q=>`https://fr.m.wikisource.org/wiki/Recherche:${q}` },
+    { id:'commons',     n:'Wikimedia Commons',   ico:'🖼', cmd:'wc',   ok:true, url:q=>`https://commons.wikimedia.org/w/index.php?search=${q}&ns6=1` },
+    { id:'wikiversity', n:'Wikiversité FR',      ico:'🎓', cmd:'wuni', ok:true, url:q=>`https://fr.m.wikiversity.org/wiki/Recherche:${q}` },
+    { id:'wikinews',    n:'Wikinews FR',         ico:'📰', cmd:'wn',   ok:true, url:q=>`https://fr.m.wikinews.org/wiki/Recherche:${q}` },
+    { id:'wikiquote',   n:'Wikiquote FR',        ico:'💬', cmd:'wq',   ok:true, url:q=>`https://fr.m.wikiquote.org/wiki/Recherche:${q}` },
+    { id:'wikibooks',   n:'Wikilivres FR',       ico:'📚', cmd:'wbk',  ok:true, url:q=>`https://fr.m.wikibooks.org/wiki/Recherche:${q}` },
+  ]},
+
+  // ══ 11. BIBLIOTHÈQUES — IFRAMABLES ════════════════════
+  { sec:'🟡 Livres & Archives — s\'affichent ici', iframeGroup:true, items:[
+    { id:'oplib',       n:'Open Library',        ico:'📚', cmd:'ol',   ok:true, url:q=>`https://openlibrary.org/search?q=${q}` },
+    { id:'gutenberg',   n:'Project Gutenberg',   ico:'📖', cmd:'gut',  ok:true, url:q=>`https://www.gutenberg.org/ebooks/search/?query=${q}` },
+    { id:'std_ebooks',  n:'Standard Ebooks',     ico:'📗', cmd:'se',   ok:true, url:q=>`https://standardebooks.org/ebooks?query=${q}` },
+    { id:'ia_search',   n:'Internet Archive',    ico:'🏛', cmd:'ia',   ok:true, url:q=>`https://archive.org/search?query=${q}` },
+    { id:'europeana',   n:'Europeana',           ico:'🏺', cmd:'eu',   ok:true, url:q=>`https://www.europeana.eu/fr/search?query=${q}` },
+    { id:'gallica',     n:'Gallica (BnF)',        ico:'🇫🇷', cmd:'bnf', ok:true, url:q=>`https://gallica.bnf.fr/Search?lang=FR&q=${q}` },
+    { id:'persee',      n:'Persée (revues FR)',   ico:'📄', cmd:'pe',   ok:true, url:q=>`https://www.persee.fr/search?q=${q}` },
+    { id:'merlot',      n:'MERLOT (pédagogie)',  ico:'🍇', cmd:'mlot', ok:true, url:q=>`https://www.merlot.org/merlot/materials.htm?keywords=${q}` },
+    { id:'opendoar',    n:'OpenDOAR (dépôts)',   ico:'📂', cmd:'odr',  ok:true, url:q=>`https://v2.sherpa.ac.uk/cgi/search/repository/advanced?q=${q}` },
+  ]},
+
+  // ══ 12. SCIENCE — IFRAMABLES ══════════════════════════
+  { sec:'🟡 Science — s\'affichent ici', iframeGroup:true, items:[
+    { id:'pubchem',     n:'PubChem (chimie)',     ico:'⚗',  cmd:'pc',   ok:true, url:q=>`https://pubchem.ncbi.nlm.nih.gov/#query=${q}` },
+    { id:'nasa',        n:'NASA Images',          ico:'🚀', cmd:'nasv', ok:true, url:q=>`https://images.nasa.gov/search-results?q=${q}` },
+    { id:'phylopic',    n:'PhyloPic',             ico:'🐾', cmd:'phy',  ok:true, url:q=>`https://www.phylopic.org/images/?q=${q}` },
+    { id:'biodiver',    n:'GBIF (biodiversité)',  ico:'🌿', cmd:'gbif', ok:true, url:q=>`https://www.gbif.org/species/search?q=${q}` },
+    { id:'chemdraw',    n:'ChemSpider',           ico:'⚗',  cmd:'cs',   ok:true, url:q=>`https://www.chemspider.com/Search.aspx?q=${q}` },
+  ]},
+
+  { sec:'◆ Science & Académique — onglet', items:[
+    { id:'scholar',     n:'Semantic Scholar',    ico:'🎓', cmd:'ss',   ok:false, url:q=>`https://www.semanticscholar.org/search?q=${q}` },
+    { id:'arxiv',       n:'arXiv',               ico:'📄', cmd:'arx',  ok:false, url:q=>`https://arxiv.org/search/?query=${q}` },
+    { id:'pubmed',      n:'PubMed',              ico:'🧬', cmd:'pm',   ok:false, url:q=>`https://pubmed.ncbi.nlm.nih.gov/?term=${q}` },
+    { id:'wa',          n:'WolframAlpha',        ico:'Ω',  cmd:'wa',   ok:false, url:q=>`https://www.wolframalpha.com/input?i=${q}` },
+    { id:'base_srch',   n:'BASE (open access)',  ico:'🔬', cmd:'base', ok:false, url:q=>`https://www.base-search.net/Search/Results?lookfor=${q}` },
+  ]},
+
+  // ══ 13. DÉVELOPPEMENT — IFRAMABLES ════════════════════
+  { sec:'🟡 Développement — s\'affichent ici', iframeGroup:true, items:[
+    { id:'devdocs',     n:'DevDocs',             ico:'📋', cmd:'dd',   ok:true, url:q=>`https://devdocs.io/#q=${q}` },
+    { id:'caniuse',     n:'Can I Use',           ico:'⟨⟩', cmd:'ci',   ok:true, url:q=>`https://caniuse.com/?search=${q}` },
+    { id:'quickref',    n:'QuickRef.me',         ico:'⚡', cmd:'qr',   ok:true, url:q=>`https://quickref.me/${q}` },
+    { id:'explsh',      n:'ExplainShell',        ico:'🖥', cmd:'sh',   ok:true, url:q=>`https://explainshell.com/explain?cmd=${q}` },
+    { id:'tldr',        n:'TLDR Pages',          ico:'📋', cmd:'tldr', ok:true, url:q=>`https://tldr.inbrowser.app/pages/common/${q}` },
+    { id:'regex101',    n:'Regex101',            ico:'.*', cmd:'rx',   ok:true, url:_=>`https://regex101.com/` },
+    { id:'bundleph',    n:'Bundlephobia',        ico:'📦', cmd:'bp',   ok:true, url:q=>`https://bundlephobia.com/package/${q}` },
+    { id:'cheatsh',     n:'Cheat.sh',            ico:'🔧', cmd:'ch',   ok:true, url:q=>`https://cheat.sh/${q}` },
+    { id:'grep_app',    n:'grep.app (code search)',ico:'🔍',cmd:'grep', ok:true, url:q=>`https://grep.app/search?q=${q}` },
+    { id:'jsfiddle',    n:'JSFiddle',            ico:'🎻', cmd:'jf',   ok:true, url:_=>`https://jsfiddle.net/` },
+    { id:'codepen',     n:'CodePen',             ico:'✏',  cmd:'cp',   ok:true, url:q=>`https://codepen.io/search/pens?q=${q}` },
+    { id:'jsonformatter',n:'JSON Formatter',     ico:'{ }',cmd:'json', ok:true, url:_=>`https://jsonformatter.org/` },
+    { id:'color',       n:'Coolors (couleurs)',  ico:'🎨', cmd:'col',  ok:true, url:_=>`https://coolors.co/` },
+    { id:'bunnyfont',   n:'Bunny Fonts',         ico:'🔡', cmd:'font', ok:true, url:q=>`https://fonts.bunny.net/catalog?search=${q}` },
+    { id:'icones',      n:'Icônes.fr',           ico:'🔷', cmd:'ico',  ok:true, url:q=>`https://icones.fr/collection/all?s=${q}` },
+    { id:'svgrepo',     n:'SVG Repo',            ico:'🖼', cmd:'svg',  ok:true, url:q=>`https://www.svgrepo.com/vectors/${q}/` },
+  ]},
+
+  { sec:'◆ Dev — onglet', items:[
+    { id:'mdn',         n:'MDN Web Docs',        ico:'⟨⟩', cmd:'mdn',  ok:false, url:q=>`https://developer.mozilla.org/fr/search?q=${q}` },
+    { id:'so',          n:'Stack Overflow',      ico:'📦', cmd:'so',   ok:false, url:q=>`https://stackoverflow.com/search?q=${q}` },
+    { id:'gh',          n:'GitHub',              ico:'⎇',  cmd:'gh',   ok:false, url:q=>`https://github.com/search?q=${q}` },
+    { id:'npm',         n:'npm',                ico:'📦', cmd:'npm',  ok:false, url:q=>`https://www.npmjs.com/search?q=${q}` },
+    { id:'pypi',        n:'PyPI',               ico:'🐍', cmd:'pip',  ok:false, url:q=>`https://pypi.org/search/?q=${q}` },
+    { id:'crates',      n:'Crates.io (Rust)',   ico:'🦀', cmd:'cr',   ok:false, url:q=>`https://crates.io/search?q=${q}` },
+  ]},
+
+  // ══ 14. LANGUE — IFRAMABLES ════════════════════════════
+  { sec:'🟡 Langue & Dictionnaires — s\'affichent ici', iframeGroup:true, items:[
+    { id:'cnrtl',       n:'CNRTL / TLFi',        ico:'🔤', cmd:'fr',   ok:true, url:q=>`https://www.cnrtl.fr/definition/${q}` },
+    { id:'etym',        n:'Etymonline (EN)',      ico:'🔤', cmd:'et',   ok:true, url:q=>`https://www.etymonline.com/search?q=${q}` },
+    { id:'pons',        n:'PONS FR↔EN',           ico:'📕', cmd:'pn',   ok:true, url:q=>`https://fr.pons.com/traduction?q=${q}&l=fren` },
+    { id:'tatoeba',     n:'Tatoeba (phrases)',    ico:'💬', cmd:'ta',   ok:true, url:q=>`https://tatoeba.org/fr/sentences/search?query=${q}` },
+    { id:'linguee',     n:'Linguee FR↔EN',        ico:'🌐', cmd:'ln',   ok:true, url:q=>`https://www.linguee.fr/francais-anglais/search?source=auto&query=${q}` },
+    { id:'lexilogos',   n:'Lexilogos',           ico:'📖', cmd:'lx',   ok:true, url:_=>`https://www.lexilogos.com/` },
+    { id:'atilf',       n:'ATILF (académique)',   ico:'🔬', cmd:'atilf',ok:true, url:q=>`https://atilf.atilf.fr/dendien/scripts/tlfiv4/visusel.exe?23;s=1648540575;r=1;nat=${q}` },
+  ]},
+
+  { sec:'◆ Traduction — onglet', items:[
+    { id:'deepl',       n:'DeepL',               ico:'🌍', cmd:'dl',   ok:false, url:q=>`https://www.deepl.com/translator#fr/en/${q}` },
+    { id:'reverso',     n:'Reverso',             ico:'🔄', cmd:'rv',   ok:false, url:q=>`https://www.reverso.net/text-translation#sl=fra&tl=eng&text=${q}` },
+    { id:'gtranslate',  n:'Google Translate',    ico:'G',  cmd:'gt',   ok:false, url:q=>`https://translate.google.fr/?sl=fr&tl=en&text=${q}` },
+  ]},
+
+  // ══ 15. IA ════════════════════════════════════════════
+  { sec:'◆ Intelligence Artificielle — onglet', items:[
+    { id:'perplexity',  n:'Perplexity',          ico:'⧖', cmd:'ai',   ok:false, url:q=>`https://www.perplexity.ai/search?q=${q}` },
+    { id:'phind',       n:'Phind (code)',         ico:'⟨⟩',cmd:'ph',   ok:false, url:q=>`https://www.phind.com/search?q=${q}` },
+    { id:'claude',      n:'Claude',              ico:'✦', cmd:'cl',   ok:false, url:q=>`https://claude.ai/new?q=${q}` },
+    { id:'chatgpt',     n:'ChatGPT',             ico:'⬡', cmd:'gpt',  ok:false, url:q=>`https://chatgpt.com/?q=${q}` },
+    { id:'gemini',      n:'Gemini',              ico:'♊', cmd:'gm',   ok:false, url:q=>`https://gemini.google.com/app?q=${q}` },
+    { id:'mistral',     n:'Mistral Le Chat',     ico:'🌬',cmd:'mi',   ok:false, url:q=>`https://chat.mistral.ai/chat?q=${q}` },
+    { id:'grok',        n:'Grok (xAI)',          ico:'𝕏', cmd:'grok', ok:false, url:q=>`https://x.com/i/grok?text=${q}` },
+    { id:'deepseek',    n:'DeepSeek',            ico:'🐋', cmd:'ds',   ok:false, url:q=>`https://chat.deepseek.com/?q=${q}` },
+    { id:'you',         n:'You.com',             ico:'◎', cmd:'yo',   ok:false, url:q=>`https://you.com/search?q=${q}` },
+    { id:'copilot',     n:'Microsoft Copilot',   ico:'🪟', cmd:'co',   ok:false, url:q=>`https://copilot.microsoft.com/?q=${q}` },
+    { id:'poe',         n:'Poe (multi-IA)',       ico:'🌊', cmd:'poe',  ok:false, url:q=>`https://poe.com/` },
+    { id:'groq',        n:'Groq (ultra rapide)', ico:'⚡', cmd:'gq',   ok:false, url:q=>`https://groq.com/` },
+  ]},
+
+  // ══ 16. OUTILS — IFRAMABLES ════════════════════════════
+  { sec:'🟡 Outils divers — s\'affichent ici', iframeGroup:true, items:[
+    { id:'foodfacts',   n:'Open Food Facts',     ico:'🥗', cmd:'food', ok:true, url:q=>`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${q}&action=process` },
+    { id:'pubchem2',    n:'PubChem',             ico:'⚗',  cmd:'chem', ok:true, url:q=>`https://pubchem.ncbi.nlm.nih.gov/#query=${q}` },
+    { id:'rainviewer2', n:'Pluie en temps réel', ico:'🌧', cmd:'rv2',  ok:true, url:_=>`https://www.rainviewer.com/map.html` },
+    { id:'lichess',     n:'Lichess (échecs)',    ico:'♟',  cmd:'chess',ok:true, url:_=>`https://lichess.org/` },
+    { id:'framapad',    n:'Framapad (notes)',    ico:'📝', cmd:'pad',  ok:true, url:_=>`https://framapad.org/abc/fr/` },
+    { id:'framacalc',   n:'Framacalc (tableur)', ico:'📊', cmd:'calc', ok:true, url:_=>`https://framacalc.org/abc/fr/` },
+    { id:'cryptpad',    n:'CryptPad',            ico:'🔒', cmd:'cpad', ok:true, url:_=>`https://cryptpad.fr/` },
+    { id:'excali',      n:'Excalidraw (dessin)', ico:'✏',  cmd:'draw', ok:true, url:_=>`https://excalidraw.com/` },
+    { id:'tldraw',      n:'tldraw (whiteboard)', ico:'🖊',  cmd:'tldr2',ok:true, url:_=>`https://www.tldraw.com/` },
+  ]},
+
+  { sec:'◆ Outils — onglet', items:[
+    { id:'imdb',        n:'IMDB',                ico:'🎬', cmd:'mv',   ok:false, url:q=>`https://www.imdb.com/find?q=${q}` },
+    { id:'arch_wb',     n:'Wayback Machine',     ico:'⏳', cmd:'wb2',  ok:false, url:q=>`https://web.archive.org/web/*/${q}` },
+    { id:'wa2',         n:'WolframAlpha',        ico:'Ω',  cmd:'wam',  ok:false, url:q=>`https://www.wolframalpha.com/input?i=${q}` },
+    { id:'amz',         n:'Amazon FR',           ico:'🛒', cmd:'am',   ok:false, url:q=>`https://www.amazon.fr/s?k=${q}` },
+    { id:'fnac',        n:'Fnac',               ico:'🔷', cmd:'fn',   ok:false, url:q=>`https://www.fnac.com/SearchResult/ResultList.aspx?sk=${q}` },
+    { id:'lbc',         n:'Leboncoin',           ico:'🟡', cmd:'lbc',  ok:false, url:q=>`https://www.leboncoin.fr/recherche?text=${q}` },
+  ]},
+
+  // ══ 17. MULTI ══════════════════════════════════════════
+  { sec:'⊕ Groupes multi-onglets', items:[
+    { id:'m_web4',   n:'Web × 4',         ico:'⊕', multi:true, engines:['ddg','bing','mojeek','brave'],                  url:()=>'' },
+    { id:'m_ai3',    n:'IA × 3',          ico:'⊕', multi:true, engines:['perplexity','phind','claude'],                  url:()=>'' },
+    { id:'m_img3',   n:'Images × 3',     ico:'⊕', multi:true, engines:['img_commons','img_nasa','img_unsplash'],         url:()=>'' },
+    { id:'m_vid3',   n:'Vidéo × 3',      ico:'⊕', multi:true, engines:['invid','youtube','vimeo'],                      url:()=>'' },
+    { id:'m_gif2',   n:'GIF × 2',        ico:'⊕', multi:true, engines:['giphy','tenor'],                                url:()=>'' },
+    { id:'m_social', n:'Social × 3',     ico:'⊕', multi:true, engines:['nitter','reddit','mastodon'],                   url:()=>'' },
+    { id:'m_dev',    n:'Dev (SO+GH+DD)', ico:'⊕', multi:true, engines:['so','gh','devdocs'],                            url:()=>'' },
+    { id:'m_acad',   n:'Académique',     ico:'⊕', multi:true, engines:['scholar','arxiv','pubmed','wiki_en'],           url:()=>'' },
+    { id:'m_trad',   n:'Traduction × 3', ico:'⊕', multi:true, engines:['deepl','reverso','pons'],                      url:()=>'' },
+    { id:'m_iframe', n:'Tout iframe',    ico:'⊕', multi:true, engines:['wiki_fr','hn','weather','invid','devdocs','osm'],url:()=>'' },
   ]},
 ];
 
-// Moteur iframe par défaut (premier ok:true trouvé)
-const DEFAULT_ID = 'searx';
+// ══ COMMANDES YUBNUB ══════════════════════════════════════
+const CMD_TABLE = {};
+SITES.forEach(s => s.items.forEach(it => { if(it.cmd) CMD_TABLE[it.cmd] = it.id; }));
 
-// ══ ÉTAT ════════════════════════════════════════════
-let AP = 1;         // panneau actif
-let curL = 'l3r';   // layout courant
-let hist = [];      // historique
-let sbCol = false;  // sidebar collapsed
-const PN = { l1:1, l2h:2, l2v:2, l3r:3, l3b:3, l4:4 };
-const pData = {};   // { id: {url, label, ok} }
+const CMD_SECTIONS = [
+  { title:'🔍 Moteurs', ok:false,  cmds:['g','gg','b','mj','br','qw','sp','ka','wb','mg','hn','st','mw','sx'] },
+  { title:'🖼 Images',  ok:true,   cmds:['wimg','nasa','pal','sil','art','rp','img','unsp','pex','pix','fl','bimg','gimg','pin'] },
+  { title:'🎞 GIF',     ok:false,  cmds:['gif','gf','meme'] },
+  { title:'📺 Vidéo',  ok:true,   cmds:['yt','od','ytd','vm','pt','dm'] },
+  { title:'🐦 Social',  ok:true,   cmds:['tw','twt','mt','bsky','lm','rd'] },
+  { title:'🗺 Cartes',  ok:true,   cmds:['map','geo','wttr','rain','gmap'] },
+  { title:'📖 Wiki',    ok:true,   cmds:['w','we','wd2','wes','wv','wsp','wt','wten','wd','wsrc','wc','wuni','wn','wq','wbk'] },
+  { title:'📚 Livres',  ok:true,   cmds:['ol','gut','se','ia','eu','bnf','pe'] },
+  { title:'🤖 IA',      ok:false,  cmds:['ai','ph','cl','gpt','gm','mi','grok','ds','yo','co','poe','gq'] },
+  { title:'💻 Dev',     ok:true,   cmds:['dd','ci','sh','qr','tldr','rx','bp','ch','grep','jf','cp','json','col','font','ico','svg','mdn','so','gh','npm','pip','cr'] },
+  { title:'🔬 Science', ok:true,   cmds:['pc','gbif','cs','ss','arx','pm','wa'] },
+  { title:'🌍 Langue',  ok:true,   cmds:['fr','et','pn','ta','ln','lx','dl','rv','gt'] },
+  { title:'🛠 Outils',  ok:true,   cmds:['food','chess','pad','calc','cpad','draw','mv','wb2'] },
+];
 
-// ══ INIT ════════════════════════════════════════════
-function init() {
-  buildBtns();
-  setLayout('l3r');
+// ══ ÉTAT ══════════════════════════════════════════════════
+let AP=1, curL='l3r', sbC=false, proxyMode=false;
+const PN={l1:1,l2h:2,l2v:2,l3r:3,l3b:3,l4:4,l6a:6,l6b:6};
+const PD={};
+const PROXY='https://corsproxy.io/?';
+let favs=new Set(JSON.parse(localStorage.getItem('ms_favs')||localStorage.getItem('ms_favs')||'[]'));
+let hist=JSON.parse(localStorage.getItem('ms_hist')||localStorage.getItem('ms_hist')||'[]');
+
+function init(){
+  buildCmds(); buildBtns(); renderFavs();
+  const savedL=localStorage.getItem('ms_layout')||localStorage.getItem('ms_layout')||'l6a';
+  const validL=['l1','l2h','l2v','l3r','l3b','l4','l6a','l6b'].includes(savedL)?savedL:'l6a';
+  const savedAP=parseInt(localStorage.getItem('ms_ap')||localStorage.getItem('ms_ap')||'1');
+  setL(validL);
+  const maxP=PN[validL]||1;
+  if(savedAP>=1&&savedAP<=maxP) setAP(savedAP);
+  if(maxP>=3 && !PD[3]) injectAI(3, null);
+  const qi=document.getElementById('q');
+  let dbt;
+  qi.addEventListener('input', ()=>{
+    hintCmd(qi.value);
+    clearTimeout(dbt);
+    const v=qi.value.trim();
+    if(v.length<2) return;
+    dbt=setTimeout(()=>{
+      const qe=encodeURIComponent(v);
+      // Toujours mettre à jour P1 avec Wiby
+      const cnt=PN[curL]||1;
+      if(cnt>=1){ inject(1,`https://wiby.me/?q=${qe}`,'🕸 Wiby: "'+v+'"'); PD[1]={url:`https://wiby.me/?q=${qe}`,label:'🕸 Wiby: "'+v+'"'}; }
+      autoFillCompanions(v);
+    }, 500);
+  });
   document.addEventListener('keydown', gKey);
 }
 
-function buildBtns() {
-  const list = document.getElementById('blist');
-  list.innerHTML = '';
-  SITES.forEach(s => {
-    const lbl = document.createElement('div');
-    lbl.className = 'slabel';
-    lbl.textContent = s.sec;
-    list.appendChild(lbl);
-    s.items.forEach(site => {
-      const b = document.createElement('button');
-      b.className = 'sbtn ' + (site.ok ? 'ok' : 'ext');
-      b.innerHTML =
-        `<span class="ico">${site.ico}</span>` +
-        `<span class="sn">${site.n}</span>` +
-        `<span class="stag">${site.tag}</span>` +
-        (!site.ok ? `<span class="ebadge">⧉</span>` : '');
-      b.title = site.ok
-        ? 'Charger dans le panneau P' + AP
-        : 'Bloqué par X-Frame-Options — s\'ouvrira dans un nouvel onglet';
-      b.onclick = () => runSearch(site.id);
+function findSite(id){ for(const s of SITES) for(const it of s.items) if(it.id===id) return it; return null; }
+
+// ── YubNub ──────────────────────────────────────────────
+function parseQ(raw){
+  const pts=raw.trim().split(/\s+/);
+  if(pts.length<2) return null;
+  const cmd=pts[0].toLowerCase(), rest=pts.slice(1).join(' ');
+  const sid=CMD_TABLE[cmd];
+  return sid?{sid,q:rest}:null;
+}
+
+window.hintCmd=function(val){
+  const el=document.getElementById('cmd-hint');
+  if(!val){el.className='';el.innerHTML='tape <strong>cmd mot-clé</strong> — <a href="#" onclick="showCmds();return false" style="color:var(--ac)">&#8984; toutes les commandes</a>';return;}
+  const pts=val.trim().split(/\s+/),cmd=pts[0].toLowerCase(),rest=pts.slice(1).join(' '),sid=CMD_TABLE[cmd];
+  if(sid&&rest){const site=findSite(sid);el.className='match';el.innerHTML=`<strong>${cmd}</strong> &#8594; <span style="color:var(--g2);font-weight:700">${site?site.n:sid}</span> : « ${rest} »`;}
+  else if(sid){const site=findSite(sid);el.className='';el.innerHTML=`<strong>${cmd}</strong> = ${site?site.n:sid} — tape un mot-clé`;}
+  else if(pts.length>1){el.className='nomatch';el.innerHTML=`<strong>${cmd}</strong> inconnu — <a href="#" onclick="showCmds();return false" style="color:var(--ac)">voir les commandes</a>`;}
+  else{el.className='';el.innerHTML=`<a href="#" onclick="showCmds();return false" style="color:var(--ac)">&#8984; voir toutes les commandes</a>`;}
+};
+
+function handleQKey(e){
+  if(e.key!=='Enter') return;
+  const raw=document.getElementById('q').value.trim();
+  if(!raw) return;
+  const p=parseQ(raw);
+  const qv=p?p.q:raw;
+  if(p) run_q(p.sid,qv); else run_q('wiby',qv);
+  autoFillCompanions(qv);
+}
+function runD(){
+  const raw=document.getElementById('q').value.trim();
+  if(!raw) return;
+  const p=parseQ(raw);
+  const qv=p?p.q:raw;
+  if(p) run_q(p.sid,qv); else run_q('wiby',qv);
+  autoFillCompanions(qv);
+}
+
+function run_q(sid,qv){
+  const site=findSite(sid);if(!site)return;
+  const url=site.url(encodeURIComponent(qv)),label=site.n+': "'+qv+'"';
+  if(site.ok){
+    inject(AP,url,label);PD[AP]={url,label};showT('P'+AP+' → '+site.n,'ok');
+  }else if(proxyMode){
+    const pu=PROXY+encodeURIComponent(url);
+    inject(AP,pu,label+' [proxy]');PD[AP]={url:pu,label:label+' [proxy]'};
+    showT('P'+AP+' via proxy → '+site.n,'ok');
+  }else{
+    window.open(url,'_blank');showOnglet(AP,url,label,site.n);
+    PD[AP]={url,label,tab:true};showT(site.n+' → onglet','nf');
+  }
+  addH(qv,site.n+(site.ok?'':proxyMode?' [proxy]':' ⧉'),AP);
+  // Auto-fill companion panels
+  autoFillCompanions(qv);
+}
+
+function autoFillCompanions(qv){
+  const cnt=PN[curL]||1;
+  const qe=encodeURIComponent(qv);
+
+  // P1 : 🕸 Wiby (web indie, iframable ✓)
+  if(cnt>=1 && AP!==1){
+    const u=`https://wiby.me/?q=${qe}`;
+    inject(1,u,'🕸 Wiby: "'+qv+'"'); PD[1]={url:u,label:'🕸 Wiby: "'+qv+'"'};
+  }
+
+  // P2 : 🤖 IA Groq/Llama3
+  if(cnt>=2 && AP!==2) injectAI(2, qv);
+
+  // P3 : 📖 Wikipedia FR
+  if(cnt>=3 && AP!==3){
+    const u=`https://fr.m.wikipedia.org/wiki/Special:Search?search=${qe}`;
+    inject(3,u,'📖 Wikipedia: "'+qv+'"'); PD[3]={url:u,label:'📖 Wikipedia: "'+qv+'"'};
+  }
+
+  // P4 : 🖼 Images Wikimedia Commons
+  if(cnt>=4 && AP!==4) injectImages(4, qv);
+
+  // P5 : 🗺 OpenStreetMap
+  if(cnt>=5 && AP!==5) injectMap(5, qv);
+
+  // P6 : 📰 Actualités Le Monde + Le Figaro RSS
+  if(cnt>=6 && AP!==6) injectNews(6, qv);
+}
+
+function run(sid){
+  const raw=document.getElementById('q').value.trim();
+  const p=parseQ(raw);
+  const q=p?p.q:raw;
+  if(!q){showT('Entrez un terme','er');focusQ();return;}
+  run_q(sid,q);
+}
+
+// ── Proxy ────────────────────────────────────────────────
+function toggleProxy(){
+  proxyMode=!proxyMode;
+  const btn=document.getElementById('proxy-btn');
+  btn.textContent=proxyMode?'&#128275; Proxy ON':'&#128275; Proxy';
+  btn.classList.toggle('proxy-on',proxyMode);
+  showT(proxyMode?'Proxy ON — sites bloqués passent par corsproxy.io':'Proxy OFF',proxyMode?'ok':'er');
+}
+function showPX(){document.getElementById('pxov').classList.add('s');}
+function cPX(){document.getElementById('pxov').classList.remove('s');}
+
+// ── HF Spaces ────────────────────────────────────────────
+function loadHF(){
+  let val=document.getElementById('hf-url').value.trim();
+  if(!val)return;
+  const url=val.startsWith('http')?val:'https://huggingface.co/spaces/'+val;
+  inject(AP,url,'&#129303; '+val);PD[AP]={url,label:'&#129303; '+val};
+  showT('HF Space → P'+AP,'ok');
+}
+
+// ── Popup commandes ──────────────────────────────────────
+function buildCmds(){
+  const grid=document.getElementById('cmd-grid');grid.innerHTML='';
+  CMD_SECTIONS.forEach(sec=>{
+    const h=document.createElement('div');h.className='cmd-sec';h.textContent=sec.title;grid.appendChild(h);
+    sec.cmds.forEach(cmd=>{
+      const sid=CMD_TABLE[cmd];const site=findSite(sid);if(!site)return;
+      const d=document.createElement('div');
+      d.className='cmd-card'+(site.ok?' ok-card':'');d.title=site.n;
+      d.innerHTML=`<div class="cc">${site.ico} ${cmd}</div><div class="cn">${site.n}</div>`;
+      d.onclick=()=>{
+        const qv=document.getElementById('q').value.trim().split(/\s+/).slice(1).join(' ');
+        document.getElementById('q').value=cmd+(qv?' '+qv:'');
+        cCmds();focusQ();
+      };
+      grid.appendChild(d);
+    });
+  });
+}
+function showCmds(){document.getElementById('cmdov').classList.add('s');}
+function cCmds(){document.getElementById('cmdov').classList.remove('s');}
+
+// ── Boutons sidebar ──────────────────────────────────────
+function buildBtns(filter=''){
+  const list=document.getElementById('blist');list.innerHTML='';
+  SITES.forEach(s=>{
+    const filtered=s.items.filter(it=>
+      !filter||it.n.toLowerCase().includes(filter.toLowerCase())||(it.cmd&&it.cmd.includes(filter.toLowerCase()))
+    );
+    if(!filtered.length)return;
+    const lbl=document.createElement('div');
+    lbl.className='slbl'+(s.iframeGroup?' iframe-sec':s.items.some(i=>i.multi)?'':' tab-sec');
+    lbl.textContent=s.sec;list.appendChild(lbl);
+    filtered.forEach(site=>{
+      const b=document.createElement('button');
+      const isFav=favs.has(site.id);
+      const cls=site.multi?'mu':site.ok?'ok':'ot';
+      const tag=site.multi?'⊕':site.ok?'✓ IFRAME':'◆';
+      b.className='sbtn '+cls;
+      b.innerHTML=`<span class="ico">${site.ico}</span><span class="sn">${site.n}</span>`+
+        (site.cmd?`<span class="cmd">${site.cmd}</span>`:'')+'<span class="tag">'+tag+'</span>'+
+        `<button class="fav-btn ${isFav?'on':''}" onclick="toggleFav(event,'${site.id}')" title="Favori">&#9733;</button>`;
+      b.onclick=(e)=>{if(!e.target.classList.contains('fav-btn')){site.multi?runMulti(site.id):run(site.id);}};
       list.appendChild(b);
     });
   });
 }
+function filterBtns(val){buildBtns(val);}
 
-// ══ LAYOUT ══════════════════════════════════════════
-function setLayout(l) {
-  curL = l;
-  document.getElementById('grid').className = l;
-  document.querySelectorAll('.lbtn').forEach((b, i) => {
-    b.classList.toggle('active', ['l1','l2h','l2v','l3r','l3b','l4'][i] === l);
-  });
-  const cnt = PN[l] || 1;
-  if (AP > cnt) AP = 1;
-  buildPanes(cnt);
-  buildTargets(cnt);
-  restoreAll();
+// ── Favoris ──────────────────────────────────────────────
+function toggleFav(e,id){
+  e.stopPropagation();
+  if(favs.has(id))favs.delete(id);else favs.add(id);
+  localStorage.setItem('ms_favs',JSON.stringify([...favs]));
+  buildBtns(document.getElementById('sbq').value);renderFavs();
+}
+function renderFavs(){
+  const el=document.getElementById('favitems');
+  if(!favs.size){el.innerHTML='<span style="font-size:.71rem;color:var(--t3);padding:2px 4px">&#9734; clique l\'étoile</span>';return;}
+  el.innerHTML=[...favs].map(id=>{
+    const s=findSite(id);if(!s)return'';
+    return `<div class="favchip" onclick="run('${id}')">${s.ico} ${s.n.split(' ')[0]}<span class="fr" onclick="toggleFav(event,'${id}')">&#10005;</span></div>`;
+  }).join('');
 }
 
-function buildTargets(cnt) {
-  const row = document.getElementById('trow');
-  row.innerHTML = '';
-  for (let i = 1; i <= cnt; i++) {
-    const b = document.createElement('button');
-    b.className = 'tbtn' + (i === AP ? ' active' : '');
-    b.textContent = 'P' + i;
-    b.title = 'Cibler le panneau ' + i;
-    b.onclick = () => setAP(i);
-    row.appendChild(b);
+// ── Layout ───────────────────────────────────────────────
+function setL(l){
+  curL=l;document.getElementById('grid').className=l;
+  document.querySelectorAll('#tb .lbtn:not(.d):not(.hl)').forEach((b,i)=>{
+    b.classList.toggle('a',['l1','l2h','l2v','l3r','l3b','l4','l6a','l6b'][i]===l);});
+  const cnt=PN[l]||1;if(AP>cnt)AP=1;buildPanes(cnt);buildTR(cnt);restoreAll();
+  localStorage.setItem('ms_layout',l);
+}
+function buildTR(cnt){
+  const row=document.getElementById('trow');row.innerHTML='';
+  for(let i=1;i<=cnt;i++){
+    const b=document.createElement('button');b.className='tbtn'+(i===AP?' a':'');
+    b.textContent='P'+i;b.onclick=()=>setAP(i);row.appendChild(b);
+  }
+}
+const QUICK=['wiki_fr','weather','hn','devdocs','img_commons','invid','cnrtl','osm'];
+function buildPanes(cnt){
+  const g=document.getElementById('grid');g.innerHTML='';
+  for(let i=1;i<=cnt;i++){
+    const p=document.createElement('div');p.className='pane'+(i===AP?' ap':'');p.id='p'+i;
+    const ql=QUICK.map(sid=>{const s=findSite(sid);return s?`<button class="ql" onclick="setAP(${i});run('${sid}')">${s.ico} ${s.n.split(' ')[0]}</button>`:''}).join('');
+    p.innerHTML=`<div class="ph" onclick="setAP(${i})"><span class="pnum">P${i}</span>`+
+      `<span class="purl" id="pu${i}">Panneau vide</span><div class="pact">`+
+      `<button class="pabtn" onclick="rP(${i});event.stopPropagation()" title="Recharger">&#8635;</button>`+
+      `<button class="pabtn" onclick="oT(${i});event.stopPropagation()" title="Ouvrir onglet">&#10697;</button>`+
+      `<button class="pabtn" onclick="cP(${i});event.stopPropagation()" title="Vider">&#10005;</button>`+
+      `</div></div><div class="pempty" id="pe${i}"><div class="bn">${i}</div>`+
+      `<p>tape <code>cmd mot-clé</code> ou clique</p>`+
+      `<span class="hint">ex: <code>yt lofi</code> · <code>img nature</code> · <code>w python</code></span>`+
+      `<div class="qlinks">${ql}</div></div>`;
+    g.appendChild(p);
+  }
+}
+function restoreAll(){
+  Object.entries(PD).forEach(([id,d])=>{
+    if(!d) return;
+    const pid=parseInt(id);
+    if(d.ai) injectAI(pid, null);
+    else if(!d.tab) inject(pid, d.url, d.label);
+  });
+}
+
+// ── Multi ────────────────────────────────────────────────
+function runMulti(sid){
+  const raw=document.getElementById('q').value.trim();
+  const p=parseQ(raw);const qv=p?p.q:raw;
+  if(!qv){showT('Entrez un terme','er');focusQ();return;}
+  const grp=findSite(sid);if(!grp||!grp.engines)return;
+  const qe=encodeURIComponent(qv);let n=0,cnt=PN[curL]||1,nxt=1;
+  grp.engines.forEach(eid=>{
+    const site=findSite(eid);if(!site)return;
+    const url=site.url(qe);
+    if(site.ok){
+      while(nxt<=cnt&&PD[nxt])nxt++;
+      if(nxt<=cnt){inject(nxt,url,site.n);PD[nxt]={url,label:site.n};nxt++;}
+      else window.open(url,'_blank');
+    }else window.open(url,'_blank');
+    n++;
+  });
+  addH(qv,grp.n,AP);showT(n+' résultats ouverts','ok');
+}
+function oGrp(ids,name){
+  const raw=document.getElementById('q').value.trim();
+  const p=parseQ(raw);const qv=p?p.q:raw;
+  if(!qv){showT('Entrez un terme','er');focusQ();return;}
+  const qe=encodeURIComponent(qv);
+  ids.forEach(id=>{const s=findSite(id);if(s)window.open(s.url(qe),'_blank');});
+  showT(name+' ouverts','nf');addH(qv,name,AP);
+}
+function loadU(){
+  let url=document.getElementById('du').value.trim();
+  if(!url)return;if(!url.startsWith('http'))url='https://'+url;
+  inject(AP,url,url);PD[AP]={url,label:url};showT('P'+AP+' chargement…','ok');
+}
+
+// ── AI Panel — chat embarqué via Groq (gratuit) ──────────
+// Groq : llama-3.1-8b-instant, 6000 req/jour gratuit, CORS OK depuis browser
+// Clé démo publique — remplace par la tienne sur https://console.groq.com/keys
+
+let GROQ_KEY = localStorage.getItem('nexus_groq_key') || '';
+
+function injectAI(id, query){
+  const pane=document.getElementById('p'+id);if(!pane)return;
+  rmC(pane);
+  const wrap=document.createElement('div');wrap.className='ai-pane';wrap.id='aip'+id;
+
+  const hdr=document.createElement('div');hdr.className='ai-header';
+  hdr.innerHTML='<span class="ai-dot"></span>🤖 Llama 3 (Groq) — gratuit';
+
+  // Barre clé API si pas de clé
+  const keyBar=document.createElement('div');keyBar.id='aikey'+id;
+  keyBar.style.cssText='display:'+(GROQ_KEY?'none':'flex')+';gap:5px;padding:6px 8px;background:#fef3c7;border-bottom:1px solid #fcd34d;flex-shrink:0;align-items:center;';
+  keyBar.innerHTML=`<span style="font-size:.7rem;color:#92400e;white-space:nowrap">🔑 Clé Groq :</span>
+    <input id="gkeyinp${id}" type="password" placeholder="gsk_..." value="${GROQ_KEY}"
+      style="flex:1;padding:3px 7px;border-radius:5px;border:1px solid #fcd34d;font-size:.72rem;background:#fffbeb;">
+    <button onclick="saveGroqKey(${id})"
+      style="padding:3px 9px;background:#f59e0b;border:none;border-radius:5px;color:#fff;font-size:.7rem;font-weight:700;cursor:pointer">OK</button>
+    <a href="https://console.groq.com/keys" target="_blank"
+      style="font-size:.68rem;color:#92400e;white-space:nowrap">Créer clé gratuite ↗</a>`;
+
+  const msgs=document.createElement('div');msgs.className='ai-msgs';msgs.id='aimsgs'+id;
+  const bar=document.createElement('div');bar.className='ai-bar';
+  bar.innerHTML=`<input id="aiinp${id}" type="text" placeholder="Pose une question…" onkeydown="if(event.key==='Enter')aiSend(${id})">
+    <button id="aibtn${id}" onclick="aiSend(${id})">&#10148;</button>`;
+
+  wrap.appendChild(hdr);wrap.appendChild(keyBar);wrap.appendChild(msgs);wrap.appendChild(bar);
+  pane.appendChild(wrap);
+  PD[id]={ai:true,label:'🤖 Llama3'};updatePU(id,'🤖 Llama3');
+  if(!window.aiHist) window.aiHist={};
+  window.aiHist[id]=[];
+  if(query && GROQ_KEY) aiAsk(id,query);
+  else if(query && !GROQ_KEY) aiAddMsg(id,'ai','🔑 Entre ta clé Groq gratuite ci-dessus, puis retape ta recherche.\n\nCrée une clé en 30s sur console.groq.com/keys — aucune CB requise.');
+}
+
+function saveGroqKey(id){
+  const v=document.getElementById('gkeyinp'+id)?.value.trim();
+  if(!v)return;
+  GROQ_KEY=v;
+  localStorage.setItem('nexus_groq_key',v);
+  const kb=document.getElementById('aikey'+id);
+  if(kb) kb.style.display='none';
+  showT('Clé Groq sauvegardée ✓','ok');
+  // Relance la dernière recherche
+  const q=document.getElementById('q')?.value.trim();
+  if(q) aiAsk(id,q);
+}
+
+async function aiAsk(id, q){
+  if(!q)return;
+  const btn=document.getElementById('aibtn'+id);
+  const inp=document.getElementById('aiinp'+id);
+  if(btn) btn.disabled=true;
+  if(inp) inp.disabled=true;
+
+  aiAddMsg(id,'user',q);
+  const thinking=aiAddMsg(id,'ai thinking','⏳ Réflexion…');
+
+  if(!window.aiHist) window.aiHist={};
+  if(!window.aiHist[id]) window.aiHist[id]=[];
+  window.aiHist[id].push({role:'user',content:q});
+
+  if(!GROQ_KEY){
+    thinking.classList.remove('thinking');
+    thinking.innerHTML='🔑 Clé Groq manquante — entre-la dans le bandeau jaune ci-dessus.';
+    if(btn) btn.disabled=false;
+    if(inp) inp.disabled=false;
+    return;
+  }
+
+  try{
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_KEY},
+      body:JSON.stringify({
+        model:'llama-3.1-8b-instant',
+        messages:[
+          {role:'system',content:'Tu es un assistant intégré dans NEXUS. Réponds de façon concise et claire en français.'},
+          ...window.aiHist[id].slice(-8)
+        ],
+        max_tokens:800,temperature:0.7
+      })
+    });
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.error?.message||'HTTP '+res.status);
+    const reply=data.choices?.[0]?.message?.content?.trim()||'(pas de réponse)';
+    thinking.remove();
+    aiAddMsg(id,'ai',reply);
+    window.aiHist[id].push({role:'assistant',content:reply});
+    addH(q,'🤖 Llama3',id);
+  }catch(err){
+    thinking.classList.remove('thinking');
+    thinking.innerHTML='⚠️ '+err.message;
+  }finally{
+    if(btn) btn.disabled=false;
+    if(inp){inp.disabled=false;}
   }
 }
 
-function buildPanes(cnt) {
-  const grid = document.getElementById('grid');
-  grid.innerHTML = '';
-  for (let i = 1; i <= cnt; i++) {
-    const p = document.createElement('div');
-    p.className = 'pane' + (i === AP ? ' ap' : '');
-    p.id = 'p' + i;
-    p.innerHTML =
-      `<div class="ph" onclick="setAP(${i})">
-        <span class="pnum">P${i}</span>
-        <span class="purl" id="pu${i}">Panneau vide</span>
-        <div class="pact">
-          <button class="pabtn" onclick="reloadPane(${i});event.stopPropagation()" title="Recharger">↺</button>
-          <button class="pabtn" onclick="openTab(${i});event.stopPropagation()" title="Ouvrir dans un onglet">⧉</button>
-          <button class="pabtn" onclick="clearPane(${i});event.stopPropagation()" title="Vider">✕</button>
-        </div>
-      </div>
-      <div class="pempty" id="pe${i}">
-        <div class="bnum">${i}</div>
-        <p>Panneau disponible</p>
-        <span class="hint">Sélectionne P${i} puis lance une recherche</span>
+async function aiSend(id){
+  const inp=document.getElementById('aiinp'+id);if(!inp)return;
+  const q=inp.value.trim();if(!q)return;
+  inp.value='';aiAsk(id,q);
+}
+
+function aiAddMsg(id,role,text){
+  const msgs=document.getElementById('aimsgs'+id);if(!msgs)return;
+  const b=document.createElement('div');
+  b.className='ai-bubble '+role;
+  b.textContent=text;
+  msgs.appendChild(b);msgs.scrollTop=msgs.scrollHeight;
+  return b;
+}
+
+
+
+
+// ── P1 : Moteur natif (DDG Instant Answer + Wikipedia Search) ─
+async function injectSearch(id, qv){
+  const pane=document.getElementById('p'+id);if(!pane)return;
+  rmC(pane);
+  pane.style.position='relative';
+
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:absolute;inset:0;top:29px;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);';
+
+  const hdr=document.createElement('div');hdr.className='ai-header';hdr.style.flexShrink='0';
+  hdr.innerHTML=`<span class="ai-dot"></span>🔍 Résultats : "${qv}" &nbsp;<a href="https://duckduckgo.com/?q=${encodeURIComponent(qv)}" target="_blank" style="color:var(--ac);font-size:.68rem">↗ DDG</a> <a href="https://www.google.com/search?q=${encodeURIComponent(qv)}" target="_blank" style="color:var(--ac);font-size:.68rem;margin-left:6px">↗ Google</a>`;
+
+  const list=document.createElement('div');
+  list.style.cssText='flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;';
+  list.innerHTML='<div style="color:var(--t3);font-size:.78rem;padding:8px">⏳ Chargement…</div>';
+
+  wrap.appendChild(hdr);wrap.appendChild(list);
+  pane.appendChild(wrap);
+  PD[id]={label:'🔍 Recherche: "'+qv+'"'};updatePU(id,'🔍 Recherche: "'+qv+'"');
+
+  try{
+    // 1. DDG Instant Answer (CORS ouvert)
+    const [ddgRes, wikiRes] = await Promise.allSettled([
+      fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(qv)}&format=json&no_html=1&skip_disambig=1&t=nexussearch`),
+      fetch(`https://fr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(qv)}&srlimit=8&format=json&origin=*&uselang=fr`)
+    ]);
+
+    list.innerHTML='';
+
+    // DDG abstract
+    if(ddgRes.status==='fulfilled'){
+      const ddg=await ddgRes.value.json();
+      if(ddg.AbstractText){
+        const box=document.createElement('div');
+        box.style.cssText='padding:10px 12px;background:var(--bg1);border:1px solid var(--bd);border-left:3px solid var(--ac);border-radius:6px;';
+        box.innerHTML=`<div style="font-size:.72rem;color:var(--ac);font-weight:700;margin-bottom:4px">${ddg.AbstractSource||'Résumé'}</div>
+          <div style="font-size:.78rem;color:var(--t1);line-height:1.5">${ddg.AbstractText}</div>
+          ${ddg.AbstractURL?`<a href="${ddg.AbstractURL}" target="_blank" style="font-size:.68rem;color:var(--ac);display:block;margin-top:4px">↗ Source</a>`:''}`;
+        list.appendChild(box);
+      }
+      // DDG related topics
+      (ddg.RelatedTopics||[]).slice(0,4).forEach(t=>{
+        if(!t.Text||!t.FirstURL) return;
+        const a=mkResultCard(t.Text.split(' - ')[0], t.FirstURL, t.Text, '🦆 DDG');
+        list.appendChild(a);
+      });
+    }
+
+    // Wikipedia results
+    if(wikiRes.status==='fulfilled'){
+      const wiki=await wikiRes.value.json();
+      (wiki.query?.search||[]).forEach(r=>{
+        const url=`https://fr.wikipedia.org/wiki/${encodeURIComponent(r.title.replace(/ /g,'_'))}`;
+        const snippet=r.snippet.replace(/<[^>]+>/g,'');
+        const a=mkResultCard(r.title, url, snippet, '📖 Wikipédia');
+        list.appendChild(a);
+      });
+    }
+
+    if(!list.children.length){
+      list.innerHTML=`<div style="padding:16px;text-align:center;color:var(--t2);font-size:.78rem">
+        Aucun résultat local.<br><br>
+        <a href="https://duckduckgo.com/?q=${encodeURIComponent(qv)}" target="_blank" style="color:var(--ac)">↗ Chercher sur DuckDuckGo</a>
       </div>`;
-    grid.appendChild(p);
+    }
+  }catch(e){
+    list.innerHTML=`<div style="padding:16px;text-align:center;color:var(--t2);font-size:.78rem">⚠️ ${e.message}</div>`;
   }
 }
 
-function restoreAll() {
-  Object.entries(pData).forEach(([id, d]) => {
-    if (d) doInject(parseInt(id), d.url, d.label, d.ok);
-  });
+function mkResultCard(title, url, snippet, source){
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';
+  a.style.cssText='display:block;padding:8px 10px;border-radius:6px;background:var(--bg1);border:1px solid var(--bd);text-decoration:none;transition:border-color .15s;';
+  a.onmouseenter=()=>a.style.borderColor='var(--ac)';
+  a.onmouseleave=()=>a.style.borderColor='var(--bd)';
+  a.innerHTML=`<div style="font-size:.76rem;font-weight:600;color:var(--ac);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${title}</div>
+    <div style="font-size:.72rem;color:var(--t2);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${snippet}</div>
+    <div style="font-size:.64rem;color:var(--t3);margin-top:3px">${source}</div>`;
+  return a;
 }
 
-// ══ SEARCH ══════════════════════════════════════════
-function findSite(id) {
-  for (const s of SITES) for (const it of s.items) if (it.id === id) return it;
-  return null;
-}
+// ── P4 : Images via Wikimedia Commons API ────────────────
+async function injectImages(id, qv){
+  const pane=document.getElementById('p'+id);if(!pane)return;
+  rmC(pane);
 
-function runDef() { runSearch(DEFAULT_ID); }
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:absolute;inset:0;top:29px;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);';
+  pane.style.position='relative';
+  const hdr=document.createElement('div');hdr.className='ai-header';
+  hdr.innerHTML='<span class="ai-dot"></span>🖼 Images : "'+qv+'"';
+  const grid=document.createElement('div');
+  grid.style.cssText='flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:3px;padding:4px;align-content:start;';
+  grid.innerHTML='<div style="grid-column:1/-1;color:var(--t3);font-size:.78rem;padding:8px">⏳ Chargement…</div>';
+  wrap.appendChild(hdr);wrap.appendChild(grid);
+  pane.appendChild(wrap);
+  PD[id]={label:'🖼 Images: "'+qv+'"'};updatePU(id,'🖼 Images: "'+qv+'"');
 
-function runSearch(sid) {
-  const q = document.getElementById('query').value.trim();
-  if (!q) { showToast('Entrez un terme de recherche', 'err'); focusSrch(); return; }
-  const site = findSite(sid);
-  if (!site) return;
-  const url = site.url(encodeURIComponent(q));
-  const label = site.n + ': "' + q + '"';
+  try{
+    const api=`https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(qv)}&srnamespace=6&srlimit=24&format=json&origin=*`;
+    const res=await fetch(api);
+    const data=await res.json();
+    const pages=data.query?.search||[];
+    if(!pages.length) throw new Error('Aucune image trouvée');
 
-  if (site.ok) {
-    doInject(AP, url, label, true);
-    pData[AP] = { url, label, ok: true };
-    updatePU(AP, label);
-    showToast('P' + AP + ' → ' + site.n, 'ok');
-  } else {
-    window.open(url, '_blank');
-    showBlockedPane(AP, url, label, site.n);
-    pData[AP] = { url, label, ok: false };
-    showToast(site.n + ' → ouvert dans un onglet', 'info');
-  }
-  addHist(q, site.n + (site.ok ? '' : ' ⧉'), AP);
-}
+    // Get thumbnails for found files
+    const titles=pages.map(p=>p.title).join('|');
+    const thumbApi=`https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(titles)}&prop=imageinfo&iiprop=url|thumburl&iiurlwidth=150&format=json&origin=*`;
+    const tres=await fetch(thumbApi);
+    const tdata=await tres.json();
+    const tpages=Object.values(tdata.query?.pages||{});
 
-function loadUrl() {
-  let url = document.getElementById('durl').value.trim();
-  if (!url) return;
-  if (!url.startsWith('http')) url = 'https://' + url;
-  doInject(AP, url, url, true);
-  pData[AP] = { url, label: url, ok: true };
-  updatePU(AP, url);
-  showToast('P' + AP + ' → chargement…', 'ok');
-}
-
-function doInject(id, url, label, useFrame) {
-  const pane = document.getElementById('p' + id);
-  if (!pane) return;
-  rmContent(pane);
-  if (useFrame) {
-    const fr = document.createElement('iframe');
-    fr.src = url;
-    fr.sandbox = 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox';
-    fr.loading = 'lazy';
-    pane.appendChild(fr);
-  }
-  updatePU(id, label);
-}
-
-function showBlockedPane(id, url, label, siteName) {
-  const pane = document.getElementById('p' + id);
-  if (!pane) return;
-  rmContent(pane);
-  const q = document.getElementById('query').value.trim();
-  const div = document.createElement('div');
-  div.className = 'bov';
-  div.innerHTML =
-    `<div class="bi">🚫</div>
-    <div class="wb">◆ Intégration bloquée (X-Frame-Options)</div>
-    <h3>${siteName}</h3>
-    <p>Ce site refuse d'être affiché dans un cadre.<br>
-       Il a été ouvert automatiquement dans un nouvel onglet.</p>
-    <a class="obt" href="${url}" target="_blank">↗ Rouvrir l'onglet</a>
-    <p style="font-size:.74rem;color:var(--t3);margin:0">Alternatives compatibles ici :</p>
-    <div class="alts">
-      <button class="ab" onclick="runSearch('searx')">🌐 SearXNG</button>
-      <button class="ab" onclick="runSearch('wiki_fr')">📖 Wikipédia</button>
-      <button class="ab" onclick="runSearch('yt')">▶ Invidious</button>
-      <button class="ab" onclick="runSearch('weather')">🌤 Météo</button>
+    grid.innerHTML='';
+    tpages.forEach(p=>{
+      const info=p.imageinfo?.[0];if(!info)return;
+      const thumb=info.thumburl||info.url;
+      const full=info.url;
+      const a=document.createElement('a');a.href=full;a.target='_blank';
+      a.style.cssText='display:block;aspect-ratio:1;overflow:hidden;border-radius:5px;border:1px solid var(--bd);background:var(--bg1);';
+      const img=document.createElement('img');
+      img.src=thumb;img.style.cssText='width:100%;height:100%;object-fit:cover;';
+      img.onerror=()=>a.remove();
+      a.appendChild(img);grid.appendChild(a);
+    });
+    if(!grid.children.length) throw new Error('Pas de miniatures disponibles');
+  }catch(e){
+    grid.innerHTML=`<div style="grid-column:1/-1;padding:16px;text-align:center;color:var(--t2);font-size:.78rem">
+      ⚠️ ${e.message}<br><br>
+      <a href="https://commons.wikimedia.org/w/index.php?search=${encodeURIComponent(qv)}&title=Special:MediaSearch&type=image" target="_blank" style="color:var(--ac)">↗ Wikimedia Commons</a>
     </div>`;
+  }
+}
+
+// ── P5 : Carte OpenStreetMap embed ───────────────────────
+async function injectMap(id, qv){
+  const pane=document.getElementById('p'+id);if(!pane)return;
+  rmC(pane);
+  PD[id]={label:'🗺 Carte: "'+qv+'"'};updatePU(id,'🗺 Carte: "'+qv+'"');
+
+  try{
+    // Nominatim geocoding (CORS ouvert)
+    const geo=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(qv)}&format=json&limit=1`,
+      {headers:{'Accept-Language':'fr'}});
+    const places=await geo.json();
+    let url;
+    if(places.length){
+      const {lat,lon,boundingbox:bb}=places[0];
+      if(bb){
+        // Use bounding box for best zoom
+        url=`https://www.openstreetmap.org/export/embed.html?bbox=${bb[2]},${bb[0]},${bb[3]},${bb[1]}&layer=mapnik&marker=${lat},${lon}`;
+      } else {
+        url=`https://www.openstreetmap.org/export/embed.html?lat=${lat}&lon=${lon}&zoom=12&layer=mapnik&marker=${lat},${lon}`;
+      }
+    } else {
+      // Fallback: search page
+      url=`https://www.openstreetmap.org/search?query=${encodeURIComponent(qv)}`;
+    }
+    inject(id, url, '🗺 Carte: "'+qv+'"');
+  }catch(e){
+    inject(id, `https://www.openstreetmap.org/search?query=${encodeURIComponent(qv)}`, '🗺 Carte: "'+qv+'"');
+  }
+}
+
+// ── P6 : Actualités RSS Google News ──────────────────────
+async function injectNews(id, qv){
+  const pane=document.getElementById('p'+id);if(!pane)return;
+  rmC(pane);
+
+  // Conteneur absolu pour remplir tout l'espace disponible sous le .ph
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:absolute;inset:0;top:29px;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);';
+  pane.style.position='relative';
+
+  const hdr=document.createElement('div');hdr.className='ai-header';hdr.style.flexShrink='0';
+  hdr.innerHTML='<span class="ai-dot"></span>📰 Actualités : "'+qv+'"';
+  const list=document.createElement('div');
+  list.style.cssText='flex:1;overflow-y:auto;padding:6px 8px;display:flex;flex-direction:column;gap:5px;';
+  list.innerHTML='<div style="color:var(--t3);font-size:.78rem;padding:8px">⏳ Chargement…</div>';
+  wrap.appendChild(hdr);wrap.appendChild(list);
+  pane.appendChild(wrap);
+  PD[id]={label:'📰 Actu: "'+qv+'"'};updatePU(id,'📰 Actu: "'+qv+'"');
+
+  try{
+    // Essaie plusieurs flux RSS FR en parallèle, prend le premier qui répond
+    const sources=[
+      { name:'Le Monde',     rss:`https://www.lemonde.fr/rss/en_continu.xml` },
+      { name:'France Info',  rss:`https://www.francetvinfo.fr/titres.rss` },
+      { name:'Le Figaro',    rss:`https://www.lefigaro.fr/rss/figaro_actualites.xml` },
+    ];
+    // Filtre par mot-clé côté client après récupération du flux généraliste
+    // + flux Google News en dernier recours
+    const googleRss=`https://news.google.com/rss/search?q=${encodeURIComponent(qv)}&hl=fr&gl=FR&ceid=FR:fr`;
+
+    const tryFetch=async(url)=>{
+      const r=await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(7000)});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const t=await r.text();
+      if(!t.includes('<item>')) throw new Error('Pas d\'items');
+      return t;
+    };
+
+    // Essaie Google News en premier (résultats filtrés par mot-clé)
+    let text='', sourceName='';
+    try{ text=await tryFetch(googleRss); sourceName='Google News'; }catch(e){}
+
+    // Sinon essaie Le Monde puis France Info
+    if(!text){
+      for(const s of sources){
+        try{ text=await tryFetch(s.rss); sourceName=s.name; break; }catch(e){}
+      }
+    }
+
+    if(!text) throw new Error('Toutes les sources indisponibles');
+
+    const xml=new DOMParser().parseFromString(text,'text/xml');
+    let items=[...xml.querySelectorAll('item')];
+
+    // Si flux généraliste, filtre par mot-clé
+    if(sourceName!=='Google News'){
+      const kw=qv.toLowerCase();
+      const filtered=items.filter(i=>{
+        const t=(i.querySelector('title')?.textContent||'').toLowerCase();
+        const d=(i.querySelector('description')?.textContent||'').toLowerCase();
+        return t.includes(kw)||d.includes(kw);
+      });
+      if(filtered.length) items=filtered;
+    }
+
+    if(!items.length) throw new Error('Aucune actualité pour "'+qv+'"');
+
+    // Met à jour le header avec la source
+    hdr.innerHTML=`<span class="ai-dot"></span>📰 ${sourceName} : "${qv}"`;
+    list.innerHTML='';
+    items.slice(0,25).forEach(item=>{
+      const title=(item.querySelector('title')?.textContent||'').replace(/<!\[CDATA\[|\]\]>/g,'').trim();
+      const link=item.querySelector('link')?.textContent||item.querySelector('guid')?.textContent||'#';
+      const pubDate=item.querySelector('pubDate')?.textContent||'';
+      const source=item.querySelector('source')?.textContent||sourceName;
+      const date=pubDate?new Date(pubDate).toLocaleDateString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+      if(!title) return;
+      const a=document.createElement('a');
+      a.href=link;a.target='_blank';
+      a.style.cssText='display:block;padding:7px 9px;border-radius:6px;background:var(--bg1);border:1px solid var(--bd);text-decoration:none;transition:border-color .15s;';
+      a.onmouseenter=()=>a.style.borderColor='var(--ac)';
+      a.onmouseleave=()=>a.style.borderColor='var(--bd)';
+      a.innerHTML=`<div style="font-size:.76rem;font-weight:600;color:var(--t0);line-height:1.35;margin-bottom:2px">${title}</div>
+        <div style="font-size:.66rem;color:var(--t3)">${source}${source&&date?' · ':''}${date}</div>`;
+      list.appendChild(a);
+    });
+  }catch(e){
+    list.innerHTML=`<div style="padding:14px;text-align:center;color:var(--t2);font-size:.76rem">
+      ⚠️ ${e.message}<br><br>
+      <a href="https://news.google.com/search?q=${encodeURIComponent(qv)}&hl=fr" target="_blank" style="color:var(--ac)">↗ Google News</a> &nbsp;·&nbsp;
+      <a href="https://www.lemonde.fr/recherche/?keywords=${encodeURIComponent(qv)}" target="_blank" style="color:var(--ac)">↗ Le Monde</a>
+    </div>`;
+  }
+}
+
+function inject(id,url,label){
+  const pane=document.getElementById('p'+id);if(!pane)return;
+  rmC(pane);
+  const fr=document.createElement('iframe');
+  fr.loading='lazy';
+  fr.onerror=()=>showIframeBlocked(pane,id,url,label);
+  fr.addEventListener('load',()=>{
+    try{
+      const u=fr.contentDocument?.URL||'';
+      if(u.startsWith('chrome-error')||u==='about:blank') showIframeBlocked(pane,id,url,label);
+    }catch(e){}
+  });
+  fr.sandbox='allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox';
+  fr.src=url;
+  pane.appendChild(fr);
+  updatePU(id,label);
+}
+
+function showIframeBlocked(pane,id,url,label){
+  // Ne remplace que si l'iframe est toujours là
+  const existing=pane.querySelector('iframe');
+  if(!existing)return;
+  existing.remove();
+  const div=document.createElement('div');div.className='tov';
+  div.innerHTML=`<div class="ti">🔒</div>
+    <div class="tw">⚠ Bloqué en iframe (X-Frame-Options)</div>
+    <h3>${label}</h3>
+    <p>Ce site refuse l'affichage en cadre.<br>Ouvre-le dans un onglet ou utilise l'extension <em>Ignore X-Frame Headers</em>.</p>
+    <a class="ob" href="${url}" target="_blank">↗ Ouvrir dans un onglet</a>
+    <p style="font-size:.7rem;color:var(--t3);margin-top:8px">💡 Astuce : active le <strong>mode Proxy</strong> (barre du haut) pour certains sites statiques.</p>`;
   pane.appendChild(div);
-  updatePU(id, '⧉ ' + label);
+  updatePU(id,'🔒 '+label);
 }
 
-// ══ GESTION PANNEAUX ════════════════════════════════
-function setAP(id) {
-  AP = id;
-  document.querySelectorAll('.pane').forEach(p => p.classList.remove('ap'));
-  document.getElementById('p' + id)?.classList.add('ap');
-  document.getElementById('apn').textContent = id;
-  document.querySelectorAll('.tbtn').forEach((b, i) => b.classList.toggle('active', i + 1 === id));
+function showOnglet(id,url,label,sn){
+  const pane=document.getElementById('p'+id);if(!pane)return;rmC(pane);
+  const div=document.createElement('div');div.className='tov';
+  div.innerHTML=`<div class="ti">&#8599;</div><div class="tw">&#9670; ${sn} — onglet ouvert</div>`+
+    `<h3>${sn}</h3><p>${sn} bloque l'affichage en iframe.<br>Il s'est ouvert dans un nouvel onglet.</p>`+
+    `<a class="ob" href="${url}" target="_blank">&#8599; Rouvrir</a>`+
+    `<p style="font-size:.73rem;color:var(--t3)">Alternatives iframe (jaune) :</p><div class="alts">`+
+    QUICK.slice(0,6).map(sid=>{const s=findSite(sid);return s?`<button class="ab" onclick="run('${sid}')">${s.ico} ${s.n.split(' ')[0]}</button>`:''}).join('')+
+    `</div>`;
+  pane.appendChild(div);updatePU(id,'&#8599; '+label);
 }
-
-function rmContent(pane) {
-  ['iframe', '.pempty', '.bov'].forEach(sel =>
-    pane.querySelectorAll(sel).forEach(el => el.remove())
-  );
+function setAP(id){
+  AP=id;document.querySelectorAll('.pane').forEach(p=>p.classList.remove('ap'));
+  document.getElementById('p'+id)?.classList.add('ap');
+  document.getElementById('apn').textContent=id;
+  document.querySelectorAll('.tbtn').forEach((b,i)=>b.classList.toggle('a',i+1===id));
+  localStorage.setItem('ms_ap',id);
 }
-
-function clearPane(id) {
-  const pane = document.getElementById('p' + id);
-  if (!pane) return;
-  rmContent(pane);
-  delete pData[id];
-  updatePU(id, 'Panneau vide');
-  const e = document.createElement('div');
-  e.className = 'pempty'; e.id = 'pe' + id;
-  e.innerHTML = `<div class="bnum">${id}</div><p>Panneau disponible</p><span class="hint">Sélectionne P${id} puis lance une recherche</span>`;
-  pane.appendChild(e);
-  showToast('Panneau ' + id + ' vidé', 'ok');
+function rmC(pane){['.pempty','iframe','.tov','.ai-pane'].forEach(s=>pane.querySelectorAll(s).forEach(el=>el.remove()));}
+function cP(id){
+  const pane=document.getElementById('p'+id);if(!pane)return;rmC(pane);delete PD[id];
+  updatePU(id,'Panneau vide');
+  const e=document.createElement('div');e.className='pempty';e.id='pe'+id;
+  const ql=QUICK.map(sid=>{const s=findSite(sid);return s?`<button class="ql" onclick="setAP(${id});run('${sid}')">${s.ico} ${s.n.split(' ')[0]}</button>`:''}).join('');
+  e.innerHTML=`<div class="bn">${id}</div><p>tape <code>cmd mot-clé</code> ou clique</p>`+
+    `<span class="hint">ex: <code>yt lofi</code> · <code>w python</code></span><div class="qlinks">${ql}</div>`;
+  pane.appendChild(e);showT('P'+id+' vidé','ok');
 }
+function rP(id){const d=PD[id];if(d&&d.ai)injectAI(id,null);else if(d&&!d.tab)inject(id,d.url,d.label);else showT('Rien à recharger','er');}
+function oT(id){const d=PD[id];if(d)window.open(d.url,'_blank');else showT('Panneau vide','er');}
+function updatePU(id,t){const e=document.getElementById('pu'+id);if(e)e.textContent=t;}
+function rAP(){rP(AP);}function cAP(){cP(AP);}
+function cAll(){for(let i=1;i<=(PN[curL]||1);i++)cP(i);}
 
-function reloadPane(id) {
-  const d = pData[id];
-  if (d) doInject(id, d.url, d.label, d.ok);
-  else showToast('Panneau ' + id + ' est vide', 'err');
+// ── Historique ───────────────────────────────────────────
+function addH(q,site,pane){hist.unshift({q,site,pane,t:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})});if(hist.length>30)hist.pop();localStorage.setItem('ms_hist',JSON.stringify(hist));}
+function tH(){const p=document.getElementById('hp'),show=!p.classList.contains('s');if(show)renderH();p.classList.toggle('s',show);}
+function clearHist(){hist=[];localStorage.removeItem('ms_hist');renderH();showT('Effacé','ok');}
+function renderH(){
+  const l=document.getElementById('hl2');
+  if(!hist.length){l.innerHTML='<div style="color:var(--t3);font-size:.82rem;padding:8px">Aucun historique</div>';return;}
+  l.innerHTML=hist.map((h,i)=>
+    `<div class="hi" onclick="rH(${i})"><span class="hq">${h.q}</span><span class="hs">${h.site}</span>`+
+    `<span class="ht">P${h.pane}·${h.t}</span><button class="hdel" onclick="delH(event,${i})">&#10005;</button></div>`).join('');
 }
+function rH(i){document.getElementById('q').value=hist[i].q;document.getElementById('hp').classList.remove('s');focusQ();}
+function delH(e,i){e.stopPropagation();hist.splice(i,1);localStorage.setItem('ms_hist',JSON.stringify(hist));renderH();}
 
-function openTab(id) {
-  const d = pData[id];
-  if (d) window.open(d.url, '_blank');
-  else showToast('Panneau ' + id + ' est vide', 'err');
+// ── Clavier ──────────────────────────────────────────────
+function tSB(){sbC=!sbC;document.getElementById('sb').classList.toggle('c',sbC);document.getElementById('tog').textContent=sbC?'›':'‹';}
+function tSC(){document.getElementById('scov').classList.toggle('s');}
+function cSC(){document.getElementById('scov').classList.remove('s');}
+function gKey(e){
+  const inI=['INPUT','TEXTAREA'].includes(document.activeElement.tagName);
+  if(e.ctrlKey&&e.key==='l'){e.preventDefault();focusQ();return;}
+  if(e.ctrlKey&&e.key==='u'){e.preventDefault();document.getElementById('du').focus();return;}
+  if(e.ctrlKey&&e.key==='r'){e.preventDefault();rAP();return;}
+  if(e.ctrlKey&&e.key==='w'){e.preventDefault();cAP();return;}
+  if(e.ctrlKey&&e.key==='h'){e.preventDefault();tH();return;}
+  if(e.ctrlKey&&e.key==='k'){e.preventDefault();showCmds();return;}
+  if(e.ctrlKey&&['1','2','3','4'].includes(e.key)){e.preventDefault();const n=parseInt(e.key);if(n<=(PN[curL]||1))setAP(n);return;}
+  if(!inI&&e.key==='?'){tSC();return;}
+  if(e.key==='Escape'){cSC();cCmds();cPX();document.getElementById('hp').classList.remove('s');}
 }
+function focusQ(){const e=document.getElementById('q');e.focus();e.select();}
 
-function updatePU(id, t) { const e = document.getElementById('pu' + id); if (e) e.textContent = t; }
-function reloadAP() { reloadPane(AP); }
-function clearAP() { clearPane(AP); }
-function clearAll() { for (let i = 1; i <= (PN[curL] || 1); i++) clearPane(i); }
-
-// ══ HISTORIQUE ══════════════════════════════════════
-function addHist(q, site, pane) {
-  hist.unshift({ q, site, pane, t: new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' }) });
-  if (hist.length > 25) hist.pop();
-}
-
-function toggleHist() {
-  const p = document.getElementById('hpanel');
-  const show = !p.classList.contains('show');
-  if (show) renderHist();
-  p.classList.toggle('show', show);
-}
-
-function renderHist() {
-  const l = document.getElementById('hlist');
-  if (!hist.length) {
-    l.innerHTML = '<div style="color:var(--t3);font-size:.82rem;padding:8px 4px">Aucun historique</div>';
-    return;
-  }
-  l.innerHTML = hist.map((h, i) =>
-    `<div class="hitem" onclick="restoreH(${i})">
-      <span class="hq">${h.q}</span>
-      <span class="hs">${h.site}</span>
-      <span class="ht">P${h.pane} · ${h.t}</span>
-    </div>`
-  ).join('');
-}
-
-function restoreH(i) {
-  document.getElementById('query').value = hist[i].q;
-  document.getElementById('hpanel').classList.remove('show');
-  focusSrch();
-}
-
-// ══ SIDEBAR / SHORTCUTS / CLAVIER ════════════════════
-function toggleSB() {
-  sbCol = !sbCol;
-  document.getElementById('sidebar').classList.toggle('col', sbCol);
-  document.getElementById('tog').textContent = sbCol ? '›' : '‹';
-}
-
-function toggleSC() { document.getElementById('scov').classList.toggle('show'); }
-function closeSC()  { document.getElementById('scov').classList.remove('show'); }
-
-function gKey(e) {
-  const inI = ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
-  if (e.ctrlKey && e.key === 'l') { e.preventDefault(); focusSrch(); return; }
-  if (e.ctrlKey && e.key === 'u') { e.preventDefault(); document.getElementById('durl').focus(); return; }
-  if (e.ctrlKey && e.key === 'r') { e.preventDefault(); reloadAP(); return; }
-  if (e.ctrlKey && e.key === 'w') { e.preventDefault(); clearAP(); return; }
-  if (e.ctrlKey && e.key === 'h') { e.preventDefault(); toggleHist(); return; }
-  if (e.ctrlKey && ['1','2','3','4'].includes(e.key)) {
-    e.preventDefault();
-    const n = parseInt(e.key);
-    if (n <= (PN[curL] || 1)) setAP(n);
-    return;
-  }
-  if (!inI && e.key === '?') { toggleSC(); return; }
-  if (e.key === 'Escape') {
-    closeSC();
-    document.getElementById('hpanel').classList.remove('show');
-  }
-}
-
-function focusSrch() { const e = document.getElementById('query'); e.focus(); e.select(); }
-
-// ══ TOAST ════════════════════════════════════════════
 let tT;
-function showToast(msg, type) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'show ' + (type || '');
-  clearTimeout(tT);
-  tT = setTimeout(() => t.classList.remove('show'), 2600);
-}
+function showT(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='s '+(type||'');clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('s'),2500);}
 
 init();
 </script>
