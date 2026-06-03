@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MULTISEARCH v1.7</title>
+<title>MULTISEARCH v1.10</title>
 <style>
 :root{
   --bg:#f4f6fb;--bg1:#fff;--bg2:#f0f3f8;--bg3:#e5eaf4;--bg4:#d8dff0;
@@ -273,7 +273,7 @@ kbd{background:var(--bg3);border:1px solid var(--bd2);border-radius:5px;padding:
 <div id="sb">
   <div id="tog" onclick="tSB()">&#8249;</div>
   <div class="sbi">
-    <div id="logo">MULTISEARCH <em>v1.5</em></div>
+    <div id="logo">MULTISEARCH <em>v1.10</em></div>
 
     <div class="sbox">
       <input id="q" type="text" placeholder="w python  ·  yt cats  ·  img sunset…" autocomplete="off"
@@ -283,7 +283,7 @@ kbd{background:var(--bg3);border:1px solid var(--bd2);border-radius:5px;padding:
     <div id="cmd-hint">tape <strong>cmd mot-clé</strong> — <a href="#" onclick="showCmds();return false" style="color:var(--ac)">&#8984; toutes les commandes</a></div>
 
     <div class="urow">
-      <input id="du" type="text" placeholder="https://…" autocomplete="off"
+      <input id="du" type="text" placeholder="commande YubNub  ex: gim · wpfr · yt" autocomplete="off"
              onkeydown="if(event.key==='Enter')loadU()">
       <button onclick="loadU()">GO</button>
     </div>
@@ -669,21 +669,129 @@ const SITES = [
 const CMD_TABLE = {};
 SITES.forEach(s => s.items.forEach(it => { if(it.cmd) CMD_TABLE[it.cmd] = it.id; }));
 
-const CMD_SECTIONS = [
-  { title:'🔍 Moteurs', ok:false,  cmds:['g','gg','b','mj','br','qw','sp','ka','wb','mg','hn','st','mw','sx'] },
-  { title:'🖼 Images',  ok:true,   cmds:['wimg','nasa','pal','sil','art','rp','img','unsp','pex','pix','fl','bimg','gimg','pin'] },
-  { title:'🎞 GIF',     ok:false,  cmds:['gif','gf','meme'] },
-  { title:'📺 Vidéo',  ok:true,   cmds:['yt','od','ytd','vm','pt','dm'] },
-  { title:'🐦 Social',  ok:true,   cmds:['tw','twt','mt','bsky','lm','rd'] },
-  { title:'🗺 Cartes',  ok:true,   cmds:['map','geo','wttr','rain','gmap'] },
-  { title:'📖 Wiki',    ok:true,   cmds:['w','we','wd2','wes','wv','wsp','wt','wten','wd','wsrc','wc','wuni','wn','wq','wbk'] },
-  { title:'📚 Livres',  ok:true,   cmds:['ol','gut','se','ia','eu','bnf','pe'] },
-  { title:'🤖 IA',      ok:false,  cmds:['ai','ph','cl','gpt','gm','mi','grok','ds','yo','co','poe','gq'] },
-  { title:'💻 Dev',     ok:true,   cmds:['dd','ci','sh','qr','tldr','rx','bp','ch','grep','jf','cp','json','col','font','ico','svg','mdn','so','gh','npm','pip','cr'] },
-  { title:'🔬 Science', ok:true,   cmds:['pc','gbif','cs','ss','arx','pm','wa'] },
-  { title:'🌍 Langue',  ok:true,   cmds:['fr','et','pn','ta','ln','lx','dl','rv','gt'] },
-  { title:'🛠 Outils',  ok:true,   cmds:['food','chess','pad','calc','cpad','draw','mv','wb2'] },
+// Commandes YubNub réelles (source: yubnub.org/kernel/most_used_commands)
+const YN_CMDS = [
+  { title:'🔍 Google & recherche', cmds:[
+    {cmd:'g',       desc:'Google'},
+    {cmd:'gg',      desc:'Google (alias)'},
+    {cmd:'go',      desc:'Google (alias)'},
+    {cmd:'google',  desc:'Google (alias)'},
+    {cmd:'gfl',     desc:'Google I\'m Feeling Lucky'},
+    {cmd:'goto',    desc:'Google — 1er résultat direct'},
+    {cmd:'ifl',     desc:'I\'m Feeling Lucky'},
+    {cmd:'gup',     desc:'Google non personnalisé'},
+    {cmd:'gs',      desc:'Google Scholar'},
+    {cmd:'gn',      desc:'Google News'},
+    {cmd:'gnews',   desc:'Google News (100 résultats)'},
+    {cmd:'gcal',    desc:'Google Calendar'},
+    {cmd:'gfr',     desc:'Google.fr'},
+    {cmd:'gde',     desc:'Google.de'},
+    {cmd:'guk',     desc:'Google UK'},
+    {cmd:'gat',     desc:'Google.at'},
+    {cmd:'ges',     desc:'Google.es'},
+    {cmd:'ghu',     desc:'Google.hu'},
+    {cmd:'gmx',     desc:'Google.mx'},
+    {cmd:'gja',     desc:'Google Japan'},
+    {cmd:'gar',     desc:'Google Argentine'},
+    {cmd:'gen',     desc:'Google — résultats EN'},
+  ]},
+  { title:'🖼 Images', cmds:[
+    {cmd:'gim',     desc:'Google Images'},
+    {cmd:'gi',      desc:'Google Images (alias)'},
+    {cmd:'img',     desc:'Google Images (alias)'},
+    {cmd:'gis',     desc:'Google Images (alias)'},
+    {cmd:'xim',     desc:'Google Images (sans filtre)'},
+    {cmd:'gsm',     desc:'Google Images safemode off'},
+    {cmd:'yim',     desc:'Yahoo Images'},
+    {cmd:'flickr',  desc:'Flickr'},
+  ]},
+  { title:'📺 Vidéo', cmds:[
+    {cmd:'yt',      desc:'YouTube'},
+    {cmd:'youtube', desc:'YouTube (alias)'},
+    {cmd:'u',       desc:'YouTube (alias)'},
+    {cmd:'gv',      desc:'Google Video'},
+  ]},
+  { title:'🗺 Cartes', cmds:[
+    {cmd:'gm',      desc:'Google Maps'},
+    {cmd:'gmaps',   desc:'Google Maps (alias)'},
+    {cmd:'gmap',    desc:'Google Maps (alias)'},
+    {cmd:'maps',    desc:'Google Maps (alias)'},
+  ]},
+  { title:'📖 Wikipedia', cmds:[
+    {cmd:'wp',      desc:'Wikipedia EN'},
+    {cmd:'wiki',    desc:'Wikipedia EN (alias)'},
+    {cmd:'wi',      desc:'Wikipedia EN (alias)'},
+    {cmd:'wikigo',  desc:'Wikipedia — aller direct à l\'article'},
+    {cmd:'wpde',    desc:'Wikipedia DE'},
+    {cmd:'wikide',  desc:'Wikipedia DE (alias)'},
+    {cmd:'wpes',    desc:'Wikipedia ES'},
+    {cmd:'wpit',    desc:'Wikipedia IT'},
+  ]},
+  { title:'📚 Dictionnaires', cmds:[
+    {cmd:'d',       desc:'Dictionary.com'},
+    {cmd:'dic',     desc:'Dictionary.com (alias)'},
+    {cmd:'define',  desc:'Definition anglaise'},
+    {cmd:'mw',      desc:'Merriam-Webster'},
+    {cmd:'olrd',    desc:'OneLook Reverse Dictionary'},
+    {cmd:'onelook', desc:'OneLook Dictionary'},
+    {cmd:'gdeff',   desc:'Google Define'},
+    {cmd:'leo',     desc:'Traduction DE/EN'},
+    {cmd:'wnet',    desc:'WordNet'},
+    {cmd:'wikt',    desc:'Wiktionary EN'},
+    {cmd:'ud',      desc:'Urban Dictionary'},
+    {cmd:'t',       desc:'Thesaurus'},
+    {cmd:'thes',    desc:'Thesaurus (alias)'},
+    {cmd:'rae',     desc:'Real Academia Española'},
+    {cmd:'enes',    desc:'EN→ES WordReference'},
+    {cmd:'tr',      desc:'Traduction Google'},
+    {cmd:'wa',      desc:'Wolfram Alpha'},
+    {cmd:'nvrdic',  desc:'Naver Dictionary'},
+  ]},
+  { title:'🛒 Shopping', cmds:[
+    {cmd:'am',      desc:'Amazon.com'},
+    {cmd:'amazon',  desc:'Amazon.com (alias)'},
+    {cmd:'az',      desc:'Amazon.com (alias)'},
+    {cmd:'amuk',    desc:'Amazon UK'},
+    {cmd:'amde',    desc:'Amazon DE'},
+    {cmd:'ebay',    desc:'eBay'},
+  ]},
+  { title:'🎬 Médias & Divertissement', cmds:[
+    {cmd:'imdb',    desc:'IMDB films'},
+    {cmd:'rt',      desc:'Rotten Tomatoes'},
+    {cmd:'bgg',     desc:'BoardGameGeek'},
+    {cmd:'gr',      desc:'GoodReads'},
+    {cmd:'moz',     desc:'Addons Mozilla'},
+    {cmd:'tpb',     desc:'The Pirate Bay'},
+    {cmd:'php',     desc:'PHP doc'},
+    {cmd:'dd',      desc:'Domain Dossier'},
+    {cmd:'whois',   desc:'Whois domaine'},
+  ]},
+  { title:'💡 Outils YubNub', cmds:[
+    {cmd:'ls',      desc:'Lister commandes'},
+    {cmd:'ge',      desc:'Golden Eggs'},
+    {cmd:'man',     desc:'Manuel commande'},
+    {cmd:'url',     desc:'Commande → URL'},
+    {cmd:'echo',    desc:'Afficher texte'},
+    {cmd:'create',  desc:'Créer une commande'},
+    {cmd:'split',   desc:'Ouvrir plusieurs pages'},
+    {cmd:'date',    desc:'Date système'},
+    {cmd:'xe',      desc:'Conversion monnaie'},
+    {cmd:'wa',      desc:'Wolfram Alpha'},
+    {cmd:'gnws',    desc:'Google News RSS'},
+    {cmd:'gmail',   desc:'Gmail'},
+    {cmd:'gma',     desc:'Gmail (alias)'},
+  ]},
+  { title:'🌐 Autres moteurs', cmds:[
+    {cmd:'ddg',     desc:'DuckDuckGo'},
+    {cmd:'dg',      desc:'DuckDuckGo SSL'},
+    {cmd:'b',       desc:'Bing'},
+    {cmd:'y',       desc:'Yahoo'},
+    {cmd:'j',       desc:'Startpage'},
+    {cmd:'-s',      desc:'Startpage SSL'},
+    {cmd:'a',       desc:'Answers.com'},
+  ]},
 ];
+
 
 // ══ ÉTAT ══════════════════════════════════════════════════
 let AP=1, curL='l3r', sbC=false, proxyMode=false;
@@ -703,19 +811,23 @@ function init(){
   if(savedAP>=1&&savedAP<=maxP) setAP(savedAP);
   if(maxP>=3 && !PD[3]) injectAI(3, null);
   const qi=document.getElementById('q');
-  let dbt;
+  let dbt, lastSent='';
   qi.addEventListener('input', ()=>{
     hintCmd(qi.value);
     clearTimeout(dbt);
     const v=qi.value.trim();
     if(v.length<2) return;
     dbt=setTimeout(()=>{
+      if(v===lastSent) return;
+      lastSent=v;
       const qe=encodeURIComponent(v);
-      // Toujours mettre à jour P1 avec Wiby
       const cnt=PN[curL]||1;
-      if(cnt>=1){ inject(1,`https://wiby.me/?q=${qe}`,'🕸 Wiby: "'+v+'"'); PD[1]={url:`https://wiby.me/?q=${qe}`,label:'🕸 Wiby: "'+v+'"'}; }
+      if(cnt>=1 && (!PD[1]||PD[1].q!==v)){
+        inject(1,`https://wiby.me/?q=${qe}`,'🕸 Wiby: "'+v+'"');
+        PD[1]={url:`https://wiby.me/?q=${qe}`,label:'🕸 Wiby: "'+v+'"',q:v};
+      }
       autoFillCompanions(v);
-    }, 500);
+    }, 900);
   });
   document.addEventListener('keydown', gKey);
 }
@@ -781,29 +893,21 @@ function autoFillCompanions(qv){
   const cnt=PN[curL]||1;
   const qe=encodeURIComponent(qv);
 
-  // P1 : 🕸 Wiby (web indie, iframable ✓)
-  if(cnt>=1 && AP!==1){
+  // Ne met à jour un panneau que si sa requête a changé (ou s'il est vide)
+  const changed=(id)=> !PD[id] || PD[id].q !== qv;
+
+  if(cnt>=1 && AP!==1 && changed(1)){
     const u=`https://wiby.me/?q=${qe}`;
-    inject(1,u,'🕸 Wiby: "'+qv+'"'); PD[1]={url:u,label:'🕸 Wiby: "'+qv+'"'};
+    inject(1,u,'🕸 Wiby: "'+qv+'"'); PD[1]={url:u,label:'🕸 Wiby: "'+qv+'"',q:qv};
   }
-
-  // P2 : 🤖 IA Groq/Llama3
-  if(cnt>=2 && AP!==2) injectAI(2, qv);
-
-  // P3 : 📖 Wikipedia FR
-  if(cnt>=3 && AP!==3){
+  if(cnt>=2 && AP!==2 && changed(2)){ injectAI(2,qv); PD[2]={...PD[2],q:qv}; }
+  if(cnt>=3 && AP!==3 && changed(3)){
     const u=`https://fr.m.wikipedia.org/wiki/Special:Search?search=${qe}`;
-    inject(3,u,'📖 Wikipedia: "'+qv+'"'); PD[3]={url:u,label:'📖 Wikipedia: "'+qv+'"'};
+    inject(3,u,'📖 Wikipedia: "'+qv+'"'); PD[3]={url:u,label:'📖 Wikipedia: "'+qv+'"',q:qv};
   }
-
-  // P4 : 🖼 Images Wikimedia Commons
-  if(cnt>=4 && AP!==4) injectImages(4, qv);
-
-  // P5 : 🗺 OpenStreetMap
-  if(cnt>=5 && AP!==5) injectMap(5, qv);
-
-  // P6 : 📰 Actualités Le Monde + Le Figaro RSS
-  if(cnt>=6 && AP!==6) injectNews(6, qv);
+  if(cnt>=4 && AP!==4 && changed(4)){ injectImages(4,qv); PD[4]={...PD[4],q:qv}; }
+  if(cnt>=5 && AP!==5 && changed(5)){ injectMap(5,qv); PD[5]={...PD[5],q:qv}; }
+  if(cnt>=6 && AP!==6 && changed(6)){ injectNews(6,qv); PD[6]={...PD[6],q:qv}; }
 }
 
 function run(sid){
@@ -837,17 +941,16 @@ function loadHF(){
 // ── Popup commandes ──────────────────────────────────────
 function buildCmds(){
   const grid=document.getElementById('cmd-grid');grid.innerHTML='';
-  CMD_SECTIONS.forEach(sec=>{
+  YN_CMDS.forEach(sec=>{
     const h=document.createElement('div');h.className='cmd-sec';h.textContent=sec.title;grid.appendChild(h);
-    sec.cmds.forEach(cmd=>{
-      const sid=CMD_TABLE[cmd];const site=findSite(sid);if(!site)return;
+    sec.cmds.forEach(({cmd,desc})=>{
       const d=document.createElement('div');
-      d.className='cmd-card'+(site.ok?' ok-card':'');d.title=site.n;
-      d.innerHTML=`<div class="cc">${site.ico} ${cmd}</div><div class="cn">${site.n}</div>`;
+      d.className='cmd-card';d.title=desc;
+      d.innerHTML=`<div class="cc">${cmd}</div><div class="cn">${desc}</div>`;
       d.onclick=()=>{
-        const qv=document.getElementById('q').value.trim().split(/\s+/).slice(1).join(' ');
-        document.getElementById('q').value=cmd+(qv?' '+qv:'');
-        cCmds();focusQ();
+        document.getElementById('du').value=cmd;
+        cCmds();
+        document.getElementById('du').focus();
       };
       grid.appendChild(d);
     });
@@ -922,6 +1025,7 @@ function buildPanes(cnt){
     const ql=QUICK.map(sid=>{const s=findSite(sid);return s?`<button class="ql" onclick="setAP(${i});run('${sid}')">${s.ico} ${s.n.split(' ')[0]}</button>`:''}).join('');
     p.innerHTML=`<div class="ph" onclick="setAP(${i})"><span class="pnum">P${i}</span>`+
       `<span class="purl" id="pu${i}">Panneau vide</span><div class="pact">`+
+      `<button class="pabtn" onclick="backP(${i});event.stopPropagation()" title="Page précédente">&#8592;</button>`+
       `<button class="pabtn" onclick="rP(${i});event.stopPropagation()" title="Recharger">&#8635;</button>`+
       `<button class="pabtn" onclick="oT(${i});event.stopPropagation()" title="Ouvrir onglet">&#10697;</button>`+
       `<button class="pabtn" onclick="cP(${i});event.stopPropagation()" title="Vider">&#10005;</button>`+
@@ -969,9 +1073,20 @@ function oGrp(ids,name){
   showT(name+' ouverts','nf');addH(qv,name,AP);
 }
 function loadU(){
-  let url=document.getElementById('du').value.trim();
-  if(!url)return;if(!url.startsWith('http'))url='https://'+url;
-  inject(AP,url,url);PD[AP]={url,label:url};showT('P'+AP+' chargement…','ok');
+  const cmd=document.getElementById('du').value.trim();
+  if(!cmd) return;
+  if(cmd.startsWith('http')||cmd.startsWith('www.')){
+    const url=cmd.startsWith('http')?cmd:'https://'+cmd;
+    inject(AP,url,url); PD[AP]={url,label:url,q:url}; showT('P'+AP+' → URL','ok');
+    return;
+  }
+  // Commande YubNub → combine avec le mot-clé du haut et tente l'iframe
+  const kw=document.getElementById('q').value.trim();
+  const full=kw ? cmd+' '+kw : cmd;
+  const url='https://yubnub.org/parser/parse?command='+encodeURIComponent(full);
+  inject(AP,url,'⚡ '+full);
+  PD[AP]={url,label:'⚡ '+full,q:kw||cmd};
+  showT('YubNub: '+full+' → P'+AP,'ok');
 }
 
 // ── AI Panel — chat embarqué via Groq (gratuit) ──────────
@@ -1279,54 +1394,56 @@ async function injectNews(id, qv){
   PD[id]={label:'📰 Actu: "'+qv+'"'};updatePU(id,'📰 Actu: "'+qv+'"');
 
   try{
-    // Essaie plusieurs flux RSS FR en parallèle, prend le premier qui répond
-    const sources=[
-      { name:'Le Monde',     rss:`https://www.lemonde.fr/rss/en_continu.xml` },
-      { name:'France Info',  rss:`https://www.francetvinfo.fr/titres.rss` },
-      { name:'Le Figaro',    rss:`https://www.lefigaro.fr/rss/figaro_actualites.xml` },
-    ];
-    // Filtre par mot-clé côté client après récupération du flux généraliste
-    // + flux Google News en dernier recours
-    const googleRss=`https://news.google.com/rss/search?q=${encodeURIComponent(qv)}&hl=fr&gl=FR&ceid=FR:fr`;
-
-    const tryFetch=async(url)=>{
-      const r=await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(7000)});
-      if(!r.ok) throw new Error('HTTP '+r.status);
-      const t=await r.text();
-      if(!t.includes('<item>')) throw new Error('Pas d\'items');
-      return t;
+    // Fonction fetch RSS via proxies en cascade
+    const fetchRSS=async(rssUrl)=>{
+      for(const mkProxy of PROXIES){
+        try{
+          const r=await fetch(mkProxy(rssUrl),{signal:AbortSignal.timeout(5000)});
+          if(!r.ok) continue;
+          const t=await r.text();
+          if(t.includes('<item>')) return t;
+        }catch(e){ continue; }
+      }
+      throw new Error('Proxy indisponible');
     };
 
     // Essaie Google News en premier (résultats filtrés par mot-clé)
     let text='', sourceName='';
-    try{ text=await tryFetch(googleRss); sourceName='Google News'; }catch(e){}
+    const gUrl=`https://news.google.com/rss/search?q=${encodeURIComponent(qv)}&hl=fr&gl=FR&ceid=FR:fr`;
+    try{ text=await fetchRSS(gUrl); sourceName='Google News'; }catch(e){}
 
-    // Sinon essaie Le Monde puis France Info
+    // Sinon flux généralistes FR via proxies
     if(!text){
+      const sources=[
+        { name:'France Info', rss:'https://www.francetvinfo.fr/titres.rss' },
+        { name:'Le Monde',    rss:'https://www.lemonde.fr/rss/en_continu.xml' },
+        { name:'Le Figaro',   rss:'https://www.lefigaro.fr/rss/figaro_actualites.xml' },
+        { name:'20 Minutes',  rss:'https://www.20minutes.fr/feeds/rss-une.xml' },
+      ];
       for(const s of sources){
-        try{ text=await tryFetch(s.rss); sourceName=s.name; break; }catch(e){}
+        try{ text=await fetchRSS(s.rss); sourceName=s.name; break; }catch(e){}
       }
     }
 
-    if(!text) throw new Error('Toutes les sources indisponibles');
+    if(!text) throw new Error('Toutes les sources RSS sont indisponibles');
 
     const xml=new DOMParser().parseFromString(text,'text/xml');
     let items=[...xml.querySelectorAll('item')];
 
-    // Si flux généraliste, filtre par mot-clé
-    if(sourceName!=='Google News'){
-      const kw=qv.toLowerCase();
+    // Filtre par mot-clé côté client
+    const kw=qv.toLowerCase().trim();
+    if(kw.length>2){
       const filtered=items.filter(i=>{
         const t=(i.querySelector('title')?.textContent||'').toLowerCase();
         const d=(i.querySelector('description')?.textContent||'').toLowerCase();
         return t.includes(kw)||d.includes(kw);
       });
+      // Garde le filtre seulement si on a des résultats, sinon affiche tout
       if(filtered.length) items=filtered;
     }
 
-    if(!items.length) throw new Error('Aucune actualité pour "'+qv+'"');
+    if(!items.length) throw new Error('Aucune actualité pour "'+qv+'" — essaie un terme plus court');
 
-    // Met à jour le header avec la source
     hdr.innerHTML=`<span class="ai-dot"></span>📰 ${sourceName} : "${qv}"`;
     list.innerHTML='';
     items.slice(0,25).forEach(item=>{
@@ -1349,24 +1466,121 @@ async function injectNews(id, qv){
     list.innerHTML=`<div style="padding:14px;text-align:center;color:var(--t2);font-size:.76rem">
       ⚠️ ${e.message}<br><br>
       <a href="https://news.google.com/search?q=${encodeURIComponent(qv)}&hl=fr" target="_blank" style="color:var(--ac)">↗ Google News</a> &nbsp;·&nbsp;
-      <a href="https://www.lemonde.fr/recherche/?keywords=${encodeURIComponent(qv)}" target="_blank" style="color:var(--ac)">↗ Le Monde</a>
+      <a href="https://www.francetvinfo.fr/recherche/?term=${encodeURIComponent(qv)}" target="_blank" style="color:var(--ac)">↗ France Info</a>
     </div>`;
   }
+}
+
+// Domaines qui bloquent systématiquement les iframes
+const IFRAME_BLOCKED=[
+  'google.com','google.fr','google.be','google.ch',
+  'youtube.com','facebook.com','instagram.com','twitter.com','x.com',
+  'linkedin.com','amazon.com','amazon.fr','ebay.com','ebay.fr',
+  'netflix.com','twitch.tv','tiktok.com','reddit.com',
+];
+
+// Proxies CORS en cascade
+const PROXIES=[
+  u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
+  u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  u=>`https://thingproxy.freeboard.io/fetch/${u}`,
+];
+
+function isBlocked(url){
+  try{
+    const host=new URL(url).hostname.replace('www.','');
+    return IFRAME_BLOCKED.some(d=>host===d||host.endsWith('.'+d));
+  }catch(e){return false;}
 }
 
 function inject(id,url,label){
   const pane=document.getElementById('p'+id);if(!pane)return;
   rmC(pane);
+  pushPH(id,url);
+
+  // Si domaine connu bloquant → tente proxies d'abord
+  if(isBlocked(url)){
+    tryProxiesOrBlock(id,url,label,pane);
+    return;
+  }
+
+  injectIframe(pane,id,url,label);
+}
+
+async function tryProxiesOrBlock(id,url,label,pane){
+  console.log(`[NEXUS] Site bloqué : ${url}`);
+  console.log(`[NEXUS] Tentative avec ${PROXIES.length} proxies…`);
+
+  for(let i=0;i<PROXIES.length;i++){
+    const proxyUrl=PROXIES[i](url);
+    console.log(`[NEXUS] Proxy ${i+1}/${PROXIES.length} : ${proxyUrl.slice(0,80)}…`);
+
+    const ok=await new Promise(resolve=>{
+      const fr=document.createElement('iframe');
+      fr.style.cssText='position:absolute;width:1px;height:1px;opacity:0;pointer-events:none';
+      fr.sandbox='allow-scripts allow-same-origin allow-forms allow-popups';
+      let done=false;
+      const finish=(result)=>{ if(done)return; done=true; clearTimeout(t); fr.remove(); resolve(result); };
+      const t=setTimeout(()=>{ console.log(`[NEXUS] Proxy ${i+1} timeout`); finish(false); },4000);
+      fr.addEventListener('load',()=>{
+        try{
+          const u=fr.contentDocument?.URL||'';
+          const body=fr.contentDocument?.body?.innerText||'';
+          if(u.startsWith('chrome-error')||u==='about:blank'||body.includes('ERR_')){
+            console.log(`[NEXUS] Proxy ${i+1} bloqué (${u})`);
+            finish(false);
+          } else {
+            console.log(`[NEXUS] Proxy ${i+1} OK ✓`);
+            finish(true);
+          }
+        }catch(e){
+          // cross-origin = le proxy a bien chargé le contenu
+          console.log(`[NEXUS] Proxy ${i+1} OK ✓ (cross-origin)`);
+          finish(true);
+        }
+      });
+      fr.onerror=()=>{ console.log(`[NEXUS] Proxy ${i+1} erreur`); finish(false); };
+      fr.src=proxyUrl;
+      document.body.appendChild(fr);
+    });
+
+    if(ok){
+      console.log(`[NEXUS] Proxy ${i+1} retenu → injection dans P${id}`);
+      injectIframe(pane,id,proxyUrl,label+' [proxy]');
+      return;
+    }
+  }
+
+  console.log(`[NEXUS] Tous les proxies ont échoué → bouton onglet`);
+  showIframeBlocked(pane,id,url,label);
+}
+
+function injectIframe(pane,id,url,label){
   const fr=document.createElement('iframe');
   fr.loading='lazy';
-  fr.onerror=()=>showIframeBlocked(pane,id,url,label);
-  fr.addEventListener('load',()=>{
+  fr.sandbox='allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox';
+
+  const doBlock=()=>showIframeBlocked(pane,id,url,label);
+  const t=setTimeout(()=>{
     try{
       const u=fr.contentDocument?.URL||'';
-      if(u.startsWith('chrome-error')||u==='about:blank') showIframeBlocked(pane,id,url,label);
+      if(u===''||u==='about:blank'||u.startsWith('chrome-error')) doBlock();
+    }catch(e){}
+  },3000);
+
+  fr.addEventListener('load',()=>{
+    clearTimeout(t);
+    try{
+      const u=fr.contentDocument?.URL||'';
+      if(u.startsWith('chrome-error')||u==='about:blank') doBlock();
+      else{
+        const body=fr.contentDocument?.body?.innerText||'';
+        if(body.includes("n'autorise pas")||body.includes("refused to connect")||body.includes("ERR_")) doBlock();
+      }
     }catch(e){}
   });
-  fr.sandbox='allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox';
+
+  fr.onerror=()=>{ clearTimeout(t); doBlock(); };
   fr.src=url;
   pane.appendChild(fr);
   updatePU(id,label);
@@ -1378,14 +1592,27 @@ function showIframeBlocked(pane,id,url,label){
   if(!existing)return;
   existing.remove();
   const div=document.createElement('div');div.className='tov';
-  div.innerHTML=`<div class="ti">🔒</div>
-    <div class="tw">⚠ Bloqué en iframe (X-Frame-Options)</div>
-    <h3>${label}</h3>
-    <p>Ce site refuse l'affichage en cadre.<br>Ouvre-le dans un onglet ou utilise l'extension <em>Ignore X-Frame Headers</em>.</p>
-    <a class="ob" href="${url}" target="_blank">↗ Ouvrir dans un onglet</a>
-    <p style="font-size:.7rem;color:var(--t3);margin-top:8px">💡 Astuce : active le <strong>mode Proxy</strong> (barre du haut) pour certains sites statiques.</p>`;
+  div.innerHTML=`
+    <div class="ti">🔒</div>
+    <div class="tw">Ce site bloque l'affichage en iframe</div>
+    <h3 style="margin:6px 0 14px;font-size:.85rem;color:var(--t2);font-weight:400">${label}</h3>
+    <a class="ob" href="${url}" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:.9rem;padding:11px 22px;margin-bottom:10px">
+      ↗ Ouvrir dans un nouvel onglet
+    </a>
+    <button class="ob" onclick="retryProxy(${id},'${url.replace(/'/g,"\\'")}','${label.replace(/'/g,"\\'")}')"
+      style="background:var(--bg2);color:var(--t1);border:1px solid var(--bd2);margin-bottom:14px;width:100%;max-width:260px;padding:8px;border-radius:7px;cursor:pointer;font-size:.78rem">
+      🔄 Réessayer via proxy
+    </button>
+    <p style="font-size:.68rem;color:var(--t3)">💡 Extension <em>Ignore X-Frame Headers</em> sur Chrome pour tout débloquer</p>`;
   pane.appendChild(div);
   updatePU(id,'🔒 '+label);
+}
+
+function retryProxy(id,url,label){
+  const pu=PROXY+encodeURIComponent(url);
+  inject(id,pu,label+' [proxy]');
+  PD[id]={url:pu,label:label+' [proxy]',q:PD[id]?.q};
+  showT('Tentative via proxy…','ok');
 }
 
 function showOnglet(id,url,label,sn){
@@ -1415,6 +1642,32 @@ function cP(id){
   e.innerHTML=`<div class="bn">${id}</div><p>tape <code>cmd mot-clé</code> ou clique</p>`+
     `<span class="hint">ex: <code>yt lofi</code> · <code>w python</code></span><div class="qlinks">${ql}</div>`;
   pane.appendChild(e);showT('P'+id+' vidé','ok');
+}
+// Historique de navigation par panneau
+const PH={}; // {1:[url1,url2,...], 2:[...]}
+
+function pushPH(id,url){
+  if(!PH[id]) PH[id]=[];
+  // Ne pas dupliquer si même URL
+  if(PH[id][PH[id].length-1]===url) return;
+  PH[id].push(url);
+}
+
+function backP(id){
+  if(!PH[id]||PH[id].length<2){showT('Pas d\'historique pour P'+id,'er');return;}
+  PH[id].pop(); // retire l'URL courante
+  const prev=PH[id][PH[id].length-1];
+  const label=PD[id]?.label||prev;
+  // Injecte sans repousser dans l'historique
+  const pane=document.getElementById('p'+id);if(!pane)return;
+  rmC(pane);
+  const fr=document.createElement('iframe');
+  fr.src=prev;
+  fr.loading='lazy';
+  fr.sandbox='allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox';
+  pane.appendChild(fr);
+  updatePU(id,'← '+label);
+  showT('P'+id+' ← retour','ok');
 }
 function rP(id){const d=PD[id];if(d&&d.ai)injectAI(id,null);else if(d&&!d.tab)inject(id,d.url,d.label);else showT('Rien à recharger','er');}
 function oT(id){const d=PD[id];if(d)window.open(d.url,'_blank');else showT('Panneau vide','er');}
