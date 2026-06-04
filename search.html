@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MULTISEARCH v1.10</title>
+<title>MULTISEARCH v1.17</title>
 <style>
 :root{
   --bg:#f4f6fb;--bg1:#fff;--bg2:#f0f3f8;--bg3:#e5eaf4;--bg4:#d8dff0;
@@ -14,8 +14,15 @@
   --fw:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
   --mono:"Consolas","Courier New",monospace;
 }
+html.dark{
+  --bg:#0f1117;--bg1:#1a1d27;--bg2:#22263a;--bg3:#2a2f45;--bg4:#343a54;
+  --bd:#2e3450;--bd2:#3d4566;
+  --t0:#e8edf8;--t1:#c5cfe6;--t2:#8a9bbf;--t3:#4d5a7a;
+  --ac:#4d8eff;--g2:#10b981;--g3:#f97316;--pur:#8b5cf6;--red:#f87171;
+  --glow:rgba(77,142,255,.18);
+}
 *,::before,::after{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-family:var(--fw);font-size:13px;}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-family:var(--fw);font-size:13px;transition:background .2s,color .2s;}
 #app{display:flex;height:100vh;}
 
 /* SIDEBAR */
@@ -44,6 +51,29 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
 .urow input:focus{border-color:var(--g2);color:var(--t0);}
 .urow input::placeholder{color:var(--t3);}
 .urow button{padding:7px 11px;background:var(--ac);border:none;border-radius:7px;color:#fff;cursor:pointer;font-size:.78rem;font-weight:600;white-space:nowrap;transition:background .15s;}
+/* YubNub quick commands */
+#yn-quickbar{margin-bottom:7px;}
+#yn-quicklist{display:flex;flex-direction:column;gap:2px;}
+.yn-qrow{display:flex;align-items:center;gap:6px;padding:3px 6px;border-radius:6px;cursor:pointer;transition:background .12s;}
+.yn-qrow:hover{background:var(--bg3);}
+.yn-qcmd{font-family:var(--mono);font-size:.72rem;font-weight:700;color:var(--ac);min-width:72px;flex-shrink:0;}
+.yn-qdesc{font-size:.71rem;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.yn-qrow.ok-row .yn-qcmd{color:#854d0e;}
+.yn-qrow.ok-row{background:#fefce8;}
+.yn-qrow.ok-row:hover{background:#fef9c3;}
+html.dark .yn-qrow.ok-row{background:#2a2400;}
+html.dark .yn-qrow.ok-row .yn-qcmd{color:#fcd34d;}
+
+#yn-hist{display:flex;flex-wrap:wrap;gap:4px;padding:3px 0 4px;min-height:0;}
+.yn-tag{display:inline-flex;align-items:center;gap:3px;background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:2px 5px 2px 8px;font-size:.7rem;color:var(--t1);}
+.yn-tag span{cursor:pointer;color:var(--ac);font-weight:600;}
+.yn-tag span:hover{text-decoration:underline;}
+.yn-tag button{background:none;border:none;cursor:pointer;color:var(--t3);font-size:.75rem;padding:0 1px;line-height:1;margin-left:1px;}
+.yn-tag button:hover{color:#e53e3e;}
+.yn-tag.yn-ok{background:#fefce8;border-color:#fde68a;}
+.yn-tag.yn-ok span{color:#854d0e;}
+html.dark .yn-tag.yn-ok{background:#2a2400;border-color:#78550a;}
+html.dark .yn-tag.yn-ok span{color:#fcd34d;}
 .urow button:hover{background:#1558d0;}
 
 /* HF Spaces */
@@ -59,7 +89,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
 
 /* Panneaux cibles */
 .trow{display:flex;gap:4px;margin-bottom:8px;}
-.tbtn{flex:1;min-width:34px;padding:6px 4px;text-align:center;background:var(--bg2);border:1.5px solid var(--bd);border-radius:6px;color:var(--t2);cursor:pointer;font-size:.74rem;font-weight:600;transition:all .14s;}
+.tbtn{flex:1;min-width:26px;padding:4px 2px;text-align:center;background:var(--bg2);border:1.5px solid var(--bd);border-radius:5px;color:var(--t2);cursor:pointer;font-size:.68rem;font-weight:600;transition:all .14s;}
 .tbtn.a{background:var(--ac);border-color:var(--ac);color:#fff;}
 .tbtn:hover:not(.a){border-color:var(--ac);color:var(--ac);background:rgba(26,110,255,.06);}
 
@@ -142,6 +172,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
 #grid.l4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
 #grid.l6a{grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;}
 #grid.l6b{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;}
+#grid.l8a{grid-template-columns:1fr 1fr 1fr 1fr;grid-template-rows:1fr 1fr;}
+#grid.l8b{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr 1fr;}
 
 .pane{background:#fff;display:flex;flex-direction:column;overflow:hidden;}
 .pane.ap{outline:2px solid var(--ac);outline-offset:-2px;}
@@ -187,8 +219,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
 .cmd-card:hover{background:var(--bg3);border-color:var(--ac);}
 .cmd-card .cc{font-family:var(--mono);font-size:.78rem;font-weight:700;color:var(--ac);}
 .cmd-card .cn{font-size:.74rem;color:var(--t1);margin-top:1px;}
-.cmd-card.ok-card .cc{color:#854d0e;}
+/* Iframable = jaune */
 .cmd-card.ok-card{background:#fefce8;border-color:#fde68a;}
+.cmd-card.ok-card .cc{color:#854d0e;}
+.cmd-card.ok-card:hover{background:#fef9c3;border-color:#f59e0b;}
+html.dark .cmd-card.ok-card{background:#2a2400;border-color:#78550a;}
+html.dark .cmd-card.ok-card .cc{color:#fcd34d;}
+/* Non iframable = bleu (défaut, déjà ok) */
 .cmd-sec{font-size:.61rem;font-weight:700;color:var(--t3);letter-spacing:.12em;text-transform:uppercase;padding:9px 0 3px;border-top:1px solid var(--bd);margin-top:5px;grid-column:1/-1;}
 
 /* Historique */
@@ -256,11 +293,11 @@ kbd{background:var(--bg3);border:1px solid var(--bd2);border-radius:5px;padding:
 ::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px;}
 </style>
 <script>
-// Migration v5→v6 : reset layout si < 6 panneaux
+// Migration v15→v16 : passage à 8 panneaux par défaut
 (function(){
   const l=localStorage.getItem('ms_layout');
-  if(!l||!['l6a','l6b'].includes(l)){
-    localStorage.setItem('ms_layout','l6a');
+  if(!l||!['l8a','l8b'].includes(l)){
+    localStorage.setItem('ms_layout','l8a');
     localStorage.removeItem('ms_ap');
   }
 })();
@@ -273,7 +310,7 @@ kbd{background:var(--bg3);border:1px solid var(--bd2);border-radius:5px;padding:
 <div id="sb">
   <div id="tog" onclick="tSB()">&#8249;</div>
   <div class="sbi">
-    <div id="logo">MULTISEARCH <em>v1.10</em></div>
+    <div id="logo">MULTISEARCH <em>v1.17</em></div>
 
     <div class="sbox">
       <input id="q" type="text" placeholder="w python  ·  yt cats  ·  img sunset…" autocomplete="off"
@@ -284,9 +321,13 @@ kbd{background:var(--bg3);border:1px solid var(--bd2);border-radius:5px;padding:
 
     <div class="urow">
       <input id="du" type="text" placeholder="commande YubNub  ex: gim · wpfr · yt" autocomplete="off"
-             onkeydown="if(event.key==='Enter')loadU()">
-      <button onclick="loadU()">GO</button>
+             onkeydown="if(event.key==='Enter')loadU()"
+             oninput="ynDebounce()">
+      <button onclick="loadU()" title="Charger dans le panneau actif (iframe)">⧉</button>
+      <button onclick="loadUTab()" title="Ouvrir dans un nouvel onglet" style="background:var(--bg2);color:var(--t1);border:1px solid var(--bd2);">↗</button>
+      <button onclick="loadUAI()" title="Poser la question à l'IA Groq" style="background:#7c3aed;color:#fff;border:none;">🤖</button>
     </div>
+    <div id="yn-hist"></div>
 
     <div class="hf-box">
       <label>&#129303; HuggingFace Space (iframe ✓)</label>
@@ -299,6 +340,11 @@ kbd{background:var(--bg3);border:1px solid var(--bd2);border-radius:5px;padding:
     </div>
 
     <div class="trow" id="trow"></div>
+
+    <div id="yn-quickbar">
+      <div class="ftitle">⚡ Commandes rapides</div>
+      <div id="yn-quicklist"></div>
+    </div>
 
     <div id="favbar">
       <div class="ftitle">&#9733; Favoris</div>
@@ -320,31 +366,34 @@ kbd{background:var(--bg3);border:1px solid var(--bd2);border-radius:5px;padding:
 <!-- WORKSPACE -->
 <div id="ws">
   <div id="tb">
-    <button class="lbtn" onclick="setL('l1')">&#9634;&#215;1</button>
-    <button class="lbtn" onclick="setL('l2h')">&#9634;&#9634;</button>
-    <button class="lbtn" onclick="setL('l2v')">&#9632;&#8597;</button>
-    <button class="lbtn" onclick="setL('l3r')">&#9641;&#9646;</button>
-    <button class="lbtn" onclick="setL('l3b')">&#9641;&#8595;</button>
-    <button class="lbtn" onclick="setL('l4')">&#9632;&#215;4</button>
-    <button class="lbtn" onclick="setL('l6a')">&#9632;&#215;6&#8594;</button>
-    <button class="lbtn" onclick="setL('l6b')">&#9632;&#215;6&#8595;</button>
+    <button class="lbtn" onclick="setL('l1')"    title="1 panneau">&#9634;&#215;1</button>
+    <button class="lbtn" onclick="setL('l2h')"   title="2 panneaux côte à côte">&#9634;&#9634;</button>
+    <button class="lbtn" onclick="setL('l2v')"   title="2 panneaux haut/bas">&#9632;&#8597;</button>
+    <button class="lbtn" onclick="setL('l3r')"   title="3 panneaux (1 grand + 2 à droite)">&#9641;&#9646;</button>
+    <button class="lbtn" onclick="setL('l3b')"   title="3 panneaux (1 grand + 2 en bas)">&#9641;&#8595;</button>
+    <button class="lbtn" onclick="setL('l4')"    title="4 panneaux (2×2)">&#9632;&#215;4</button>
+    <button class="lbtn" onclick="setL('l6a')"   title="6 panneaux (3 colonnes)">&#9632;&#215;6&#8594;</button>
+    <button class="lbtn" onclick="setL('l6b')"   title="6 panneaux (2 colonnes)">&#9632;&#215;6&#8595;</button>
+    <button class="lbtn" onclick="setL('l8a')"   title="8 panneaux (4 colonnes)">&#9632;&#215;8&#8594;</button>
+    <button class="lbtn" onclick="setL('l8b')"   title="8 panneaux (2 colonnes)">&#9632;&#215;8&#8595;</button>
     <div class="sep"></div>
-    <button class="lbtn hl" onclick="oGrp(['ddg','bing','mojeek','brave'],'Web&#215;4')">&#8853;Web</button>
-    <button class="lbtn hl" onclick="oGrp(['perplexity','phind','claude'],'IA&#215;3')">&#8853;IA</button>
-    <button class="lbtn hl" onclick="oGrp(['img_commons','img_nasa','img_unsplash'],'IMG&#215;3')">&#8853;IMG</button>
-    <button class="lbtn hl" onclick="oGrp(['giphy','tenor'],'GIF')">&#8853;GIF</button>
-    <button class="lbtn hl" onclick="oGrp(['invid','youtube','vimeo'],'VID')">&#8853;VID</button>
+    <button class="lbtn hl" onclick="oGrp(['ddg','bing','mojeek','brave'],'Web&#215;4')"              title="Ouvrir DDG + Bing + Mojeek + Brave dans 4 panneaux">&#8853;Web</button>
+    <button class="lbtn hl" onclick="oGrp(['perplexity','phind','claude'],'IA&#215;3')"               title="Ouvrir Perplexity + Phind + Claude dans 3 panneaux">&#8853;IA</button>
+    <button class="lbtn hl" onclick="oGrp(['img_commons','img_nasa','img_unsplash'],'IMG&#215;3')"    title="Ouvrir Wikimedia + NASA + Unsplash dans 3 panneaux">&#8853;IMG</button>
+    <button class="lbtn hl" onclick="oGrp(['giphy','tenor'],'GIF')"                                   title="Ouvrir Giphy + Tenor dans 2 panneaux">&#8853;GIF</button>
+    <button class="lbtn hl" onclick="oGrp(['invid','youtube','vimeo'],'VID')"                         title="Ouvrir Invidious + YouTube + Vimeo dans 3 panneaux">&#8853;VID</button>
     <div class="sep"></div>
     <button class="lbtn" id="proxy-btn" onclick="toggleProxy()" title="Proxy corsproxy.io — contourne X-Frame-Options sur sites simples">&#128275; Proxy</button>
     <div class="sep"></div>
-    <button class="lbtn" onclick="rAP()">&#8635;</button>
-    <button class="lbtn d" onclick="cAP()">&#10005;Pane</button>
-    <button class="lbtn d" onclick="cAll()">&#10005;Tout</button>
+    <button class="lbtn" onclick="rAP()"  title="Recharger le panneau actif (Ctrl+R)">&#8635;</button>
+    <button class="lbtn d" onclick="cAP()" title="Vider le panneau actif">&#10005;Pane</button>
+    <button class="lbtn d" onclick="cAll()" title="Vider tous les panneaux">&#10005;Tout</button>
     <div class="sep"></div>
-    <button class="lbtn" onclick="tH()">&#128203;</button>
-    <button class="lbtn" onclick="showPX()" title="Contournements iframes">&#128275;?</button>
-    <button class="lbtn" onclick="showCmds()">&#8984;YN</button>
-    <button class="lbtn" onclick="tSC()">&#9000;</button>
+    <button class="lbtn" onclick="tH()"       title="Historique des recherches">&#128203;</button>
+    <button class="lbtn" id="dm-btn" onclick="toggleDark()" title="Basculer mode sombre / clair">☀️</button>
+    <button class="lbtn" onclick="showPX()"   title="Aide — contournements iframes bloquées">&#128275;?</button>
+    <button class="lbtn" onclick="showCmds()" title="Commandes YubNub — raccourcis de recherche (⌘YN)">&#8984;YN</button>
+    <button class="lbtn" onclick="tSC()"      title="Raccourcis clavier">&#9000;</button>
     <div id="qbar">
       <input id="qtop" type="text" placeholder="cmd mot-clé…" autocomplete="off"
              onkeydown="if(event.key==='Enter'){document.getElementById('q').value=this.value;handleQKey({key:'Enter'});}">
@@ -670,6 +719,7 @@ const CMD_TABLE = {};
 SITES.forEach(s => s.items.forEach(it => { if(it.cmd) CMD_TABLE[it.cmd] = it.id; }));
 
 // Commandes YubNub réelles (source: yubnub.org/kernel/most_used_commands)
+// iframe:true = destination iframable (jaune), sinon bleu
 const YN_CMDS = [
   { title:'🔍 Google & recherche', cmds:[
     {cmd:'g',       desc:'Google'},
@@ -694,6 +744,9 @@ const YN_CMDS = [
     {cmd:'gja',     desc:'Google Japan'},
     {cmd:'gar',     desc:'Google Argentine'},
     {cmd:'gen',     desc:'Google — résultats EN'},
+    {cmd:'gnewsfr', desc:'Google News FR'},
+    {cmd:'genfr',   desc:'Traduction EN→FR'},
+    {cmd:'gfren',   desc:'Traduction FR→EN'},
   ]},
   { title:'🖼 Images', cmds:[
     {cmd:'gim',     desc:'Google Images'},
@@ -703,7 +756,7 @@ const YN_CMDS = [
     {cmd:'xim',     desc:'Google Images (sans filtre)'},
     {cmd:'gsm',     desc:'Google Images safemode off'},
     {cmd:'yim',     desc:'Yahoo Images'},
-    {cmd:'flickr',  desc:'Flickr'},
+    {cmd:'flickr',  desc:'Flickr', iframe:true},
   ]},
   { title:'📺 Vidéo', cmds:[
     {cmd:'yt',      desc:'YouTube'},
@@ -715,96 +768,104 @@ const YN_CMDS = [
     {cmd:'gm',      desc:'Google Maps'},
     {cmd:'gmaps',   desc:'Google Maps (alias)'},
     {cmd:'gmap',    desc:'Google Maps (alias)'},
+    {cmd:'gmfr',    desc:'Google Maps France'},
     {cmd:'maps',    desc:'Google Maps (alias)'},
   ]},
   { title:'📖 Wikipedia', cmds:[
-    {cmd:'wp',      desc:'Wikipedia EN'},
-    {cmd:'wiki',    desc:'Wikipedia EN (alias)'},
-    {cmd:'wi',      desc:'Wikipedia EN (alias)'},
-    {cmd:'wikigo',  desc:'Wikipedia — aller direct à l\'article'},
-    {cmd:'wpde',    desc:'Wikipedia DE'},
-    {cmd:'wikide',  desc:'Wikipedia DE (alias)'},
-    {cmd:'wpes',    desc:'Wikipedia ES'},
-    {cmd:'wpit',    desc:'Wikipedia IT'},
+    {cmd:'wp',      desc:'Wikipedia EN', iframe:true},
+    {cmd:'wiki',    desc:'Wikipedia EN (alias)', iframe:true},
+    {cmd:'wi',      desc:'Wikipedia EN (alias)', iframe:true},
+    {cmd:'wpfr',    desc:'Wikipedia FR', iframe:true},
+    {cmd:'wikigo',  desc:'Wikipedia — aller direct à l\'article', iframe:true},
+    {cmd:'wpde',    desc:'Wikipedia DE', iframe:true},
+    {cmd:'wikide',  desc:'Wikipedia DE (alias)', iframe:true},
+    {cmd:'wpes',    desc:'Wikipedia ES', iframe:true},
+    {cmd:'wpit',    desc:'Wikipedia IT', iframe:true},
+    {cmd:'viki',    desc:'Vikidia (encyclopédie FR)', iframe:true},
   ]},
   { title:'📚 Dictionnaires', cmds:[
     {cmd:'d',       desc:'Dictionary.com'},
     {cmd:'dic',     desc:'Dictionary.com (alias)'},
     {cmd:'define',  desc:'Definition anglaise'},
-    {cmd:'mw',      desc:'Merriam-Webster'},
-    {cmd:'olrd',    desc:'OneLook Reverse Dictionary'},
-    {cmd:'onelook', desc:'OneLook Dictionary'},
+    {cmd:'mw',      desc:'Merriam-Webster', iframe:true},
+    {cmd:'olrd',    desc:'OneLook Reverse Dictionary', iframe:true},
+    {cmd:'onelook', desc:'OneLook Dictionary', iframe:true},
     {cmd:'gdeff',   desc:'Google Define'},
-    {cmd:'leo',     desc:'Traduction DE/EN'},
-    {cmd:'wnet',    desc:'WordNet'},
-    {cmd:'wikt',    desc:'Wiktionary EN'},
-    {cmd:'ud',      desc:'Urban Dictionary'},
+    {cmd:'leo',     desc:'Traduction DE/EN', iframe:true},
+    {cmd:'wnet',    desc:'WordNet', iframe:true},
+    {cmd:'wikt',    desc:'Wiktionary EN', iframe:true},
+    {cmd:'ud',      desc:'Urban Dictionary', iframe:true},
     {cmd:'t',       desc:'Thesaurus'},
     {cmd:'thes',    desc:'Thesaurus (alias)'},
-    {cmd:'rae',     desc:'Real Academia Española'},
-    {cmd:'enes',    desc:'EN→ES WordReference'},
+    {cmd:'rae',     desc:'Real Academia Española', iframe:true},
+    {cmd:'enes',    desc:'EN→ES WordReference', iframe:true},
     {cmd:'tr',      desc:'Traduction Google'},
-    {cmd:'wa',      desc:'Wolfram Alpha'},
-    {cmd:'nvrdic',  desc:'Naver Dictionary'},
+    {cmd:'wa',      desc:'Wolfram Alpha', iframe:true},
+    {cmd:'nvrdic',  desc:'Naver Dictionary', iframe:true},
   ]},
   { title:'🛒 Shopping', cmds:[
     {cmd:'am',      desc:'Amazon.com'},
+    {cmd:'amfr',    desc:'Amazon France'},
     {cmd:'amazon',  desc:'Amazon.com (alias)'},
     {cmd:'az',      desc:'Amazon.com (alias)'},
     {cmd:'amuk',    desc:'Amazon UK'},
     {cmd:'amde',    desc:'Amazon DE'},
     {cmd:'ebay',    desc:'eBay'},
+    {cmd:'ebayfr',  desc:'eBay France'},
   ]},
   { title:'🎬 Médias & Divertissement', cmds:[
-    {cmd:'imdb',    desc:'IMDB films'},
-    {cmd:'rt',      desc:'Rotten Tomatoes'},
-    {cmd:'bgg',     desc:'BoardGameGeek'},
-    {cmd:'gr',      desc:'GoodReads'},
-    {cmd:'moz',     desc:'Addons Mozilla'},
-    {cmd:'tpb',     desc:'The Pirate Bay'},
-    {cmd:'php',     desc:'PHP doc'},
-    {cmd:'dd',      desc:'Domain Dossier'},
-    {cmd:'whois',   desc:'Whois domaine'},
+    {cmd:'imdb',    desc:'IMDB films', iframe:true},
+    {cmd:'rt',      desc:'Rotten Tomatoes', iframe:true},
+    {cmd:'bgg',     desc:'BoardGameGeek', iframe:true},
+    {cmd:'gr',      desc:'GoodReads', iframe:true},
+    {cmd:'moz',     desc:'Addons Mozilla', iframe:true},
+    {cmd:'tpb',     desc:'The Pirate Bay', iframe:true},
+    {cmd:'php',     desc:'PHP doc', iframe:true},
+    {cmd:'dd',      desc:'Domain Dossier', iframe:true},
+    {cmd:'whois',   desc:'Whois domaine', iframe:true},
   ]},
   { title:'💡 Outils YubNub', cmds:[
-    {cmd:'ls',      desc:'Lister commandes'},
-    {cmd:'ge',      desc:'Golden Eggs'},
-    {cmd:'man',     desc:'Manuel commande'},
-    {cmd:'url',     desc:'Commande → URL'},
-    {cmd:'echo',    desc:'Afficher texte'},
-    {cmd:'create',  desc:'Créer une commande'},
+    {cmd:'ls',      desc:'Lister commandes', iframe:true},
+    {cmd:'ge',      desc:'Golden Eggs', iframe:true},
+    {cmd:'man',     desc:'Manuel commande', iframe:true},
+    {cmd:'url',     desc:'Commande → URL', iframe:true},
+    {cmd:'echo',    desc:'Afficher texte', iframe:true},
+    {cmd:'create',  desc:'Créer une commande', iframe:true},
     {cmd:'split',   desc:'Ouvrir plusieurs pages'},
-    {cmd:'date',    desc:'Date système'},
-    {cmd:'xe',      desc:'Conversion monnaie'},
-    {cmd:'wa',      desc:'Wolfram Alpha'},
+    {cmd:'date',    desc:'Date système', iframe:true},
+    {cmd:'xe',      desc:'Conversion monnaie', iframe:true},
     {cmd:'gnws',    desc:'Google News RSS'},
     {cmd:'gmail',   desc:'Gmail'},
     {cmd:'gma',     desc:'Gmail (alias)'},
   ]},
   { title:'🌐 Autres moteurs', cmds:[
-    {cmd:'ddg',     desc:'DuckDuckGo'},
-    {cmd:'dg',      desc:'DuckDuckGo SSL'},
+    {cmd:'ddg',     desc:'DuckDuckGo', iframe:true},
+    {cmd:'dg',      desc:'DuckDuckGo SSL', iframe:true},
     {cmd:'b',       desc:'Bing'},
     {cmd:'y',       desc:'Yahoo'},
-    {cmd:'j',       desc:'Startpage'},
-    {cmd:'-s',      desc:'Startpage SSL'},
-    {cmd:'a',       desc:'Answers.com'},
+    {cmd:'j',       desc:'Startpage', iframe:true},
+    {cmd:'-s',      desc:'Startpage SSL', iframe:true},
+    {cmd:'a',       desc:'Answers.com', iframe:true},
   ]},
 ];
 
 
 // ══ ÉTAT ══════════════════════════════════════════════════
 let AP=1, curL='l3r', sbC=false, proxyMode=false;
-const PN={l1:1,l2h:2,l2v:2,l3r:3,l3b:3,l4:4,l6a:6,l6b:6};
+const PN={l1:1,l2h:2,l2v:2,l3r:3,l3b:3,l4:4,l6a:6,l6b:6,l8a:8,l8b:8};
 const PD={};
 const PROXY='https://corsproxy.io/?';
 let favs=new Set(JSON.parse(localStorage.getItem('ms_favs')||localStorage.getItem('ms_favs')||'[]'));
 let hist=JSON.parse(localStorage.getItem('ms_hist')||localStorage.getItem('ms_hist')||'[]');
 
 function init(){
-  buildCmds(); buildBtns(); renderFavs();
-  const savedL=localStorage.getItem('ms_layout')||localStorage.getItem('ms_layout')||'l6a';
-  const validL=['l1','l2h','l2v','l3r','l3b','l4','l6a','l6b'].includes(savedL)?savedL:'l6a';
+  buildCmds(); buildBtns(); renderFavs(); renderYN(); renderYNQuick();
+  if(localStorage.getItem('nexus_dark')==='1'){
+    document.documentElement.classList.add('dark');
+    document.getElementById('dm-btn').textContent='🌙';
+  }
+  const savedL=localStorage.getItem('ms_layout')||localStorage.getItem('ms_layout')||'l8a';
+  const validL=['l1','l2h','l2v','l3r','l3b','l4','l6a','l6b','l8a','l8b'].includes(savedL)?savedL:'l8a';
   const savedAP=parseInt(localStorage.getItem('ms_ap')||localStorage.getItem('ms_ap')||'1');
   setL(validL);
   const maxP=PN[validL]||1;
@@ -820,11 +881,13 @@ function init(){
     dbt=setTimeout(()=>{
       if(v===lastSent) return;
       lastSent=v;
+      setAP(1);
       const qe=encodeURIComponent(v);
       const cnt=PN[curL]||1;
       if(cnt>=1 && (!PD[1]||PD[1].q!==v)){
-        inject(1,`https://wiby.me/?q=${qe}`,'🕸 Wiby: "'+v+'"');
-        PD[1]={url:`https://wiby.me/?q=${qe}`,label:'🕸 Wiby: "'+v+'"',q:v};
+        const u=`https://yubnub.org/parser/parse?command=${encodeURIComponent('gfr '+v)}`;
+        inject(1,u,'🔍 Google.fr: "'+v+'"');
+        PD[1]={url:u,label:'🔍 Google.fr: "'+v+'"',q:v};
       }
       autoFillCompanions(v);
     }, 900);
@@ -859,16 +922,16 @@ function handleQKey(e){
   if(!raw) return;
   const p=parseQ(raw);
   const qv=p?p.q:raw;
-  if(p) run_q(p.sid,qv); else run_q('wiby',qv);
-  autoFillCompanions(qv);
+  setAP(1);
+  if(p) run_q(p.sid,qv); else run_q('gfr',qv);
 }
 function runD(){
   const raw=document.getElementById('q').value.trim();
   if(!raw) return;
   const p=parseQ(raw);
   const qv=p?p.q:raw;
-  if(p) run_q(p.sid,qv); else run_q('wiby',qv);
-  autoFillCompanions(qv);
+  setAP(1);
+  if(p) run_q(p.sid,qv); else run_q('gfr',qv);
 }
 
 function run_q(sid,qv){
@@ -892,22 +955,48 @@ function run_q(sid,qv){
 function autoFillCompanions(qv){
   const cnt=PN[curL]||1;
   const qe=encodeURIComponent(qv);
+  const yn=(cmd)=>`https://yubnub.org/parser/parse?command=${encodeURIComponent(cmd+' '+qv)}`;
 
-  // Ne met à jour un panneau que si sa requête a changé (ou s'il est vide)
-  const changed=(id)=> !PD[id] || PD[id].q !== qv;
+  const changed=(id)=> !PD[id]?.q || PD[id].q !== qv;
+  const shouldFill=(id)=> changed(id) && (AP!==id || !PD[id]?.q);
 
-  if(cnt>=1 && AP!==1 && changed(1)){
-    const u=`https://wiby.me/?q=${qe}`;
-    inject(1,u,'🕸 Wiby: "'+qv+'"'); PD[1]={url:u,label:'🕸 Wiby: "'+qv+'"',q:qv};
+  // P1 : Google France
+  if(cnt>=1 && shouldFill(1)){
+    const u=yn('gfr');
+    inject(1,u,'🔍 Google.fr: "'+qv+'"'); PD[1]={url:u,label:'🔍 Google.fr: "'+qv+'"',q:qv};
   }
-  if(cnt>=2 && AP!==2 && changed(2)){ injectAI(2,qv); PD[2]={...PD[2],q:qv}; }
-  if(cnt>=3 && AP!==3 && changed(3)){
+  // P2 : IA Groq
+  if(cnt>=2 && shouldFill(2)){ injectAI(2,qv); PD[2]={...PD[2],q:qv}; }
+  // P3 : Wikipedia FR
+  if(cnt>=3 && shouldFill(3)){
     const u=`https://fr.m.wikipedia.org/wiki/Special:Search?search=${qe}`;
     inject(3,u,'📖 Wikipedia: "'+qv+'"'); PD[3]={url:u,label:'📖 Wikipedia: "'+qv+'"',q:qv};
   }
-  if(cnt>=4 && AP!==4 && changed(4)){ injectImages(4,qv); PD[4]={...PD[4],q:qv}; }
-  if(cnt>=5 && AP!==5 && changed(5)){ injectMap(5,qv); PD[5]={...PD[5],q:qv}; }
-  if(cnt>=6 && AP!==6 && changed(6)){ injectNews(6,qv); PD[6]={...PD[6],q:qv}; }
+  // P4 : Google Images
+  if(cnt>=4 && shouldFill(4)){
+    const u=yn('gim');
+    injectImages(4,qv,u); PD[4]={url:u,label:'🖼 Google Images: "'+qv+'"',q:qv};
+  }
+  // P5 : Google Maps France
+  if(cnt>=5 && shouldFill(5)){
+    const u=yn('gmfr');
+    inject(5,u,'🗺 Google Maps: "'+qv+'"'); PD[5]={url:u,label:'🗺 Google Maps: "'+qv+'"',q:qv};
+  }
+  // P6 : Google News FR
+  if(cnt>=6 && shouldFill(6)){
+    const u=yn('gnewsfr');
+    injectNews(6,qv,u); PD[6]={url:u,label:'📰 Google News: "'+qv+'"',q:qv};
+  }
+  // P7 : YouTube
+  if(cnt>=7 && shouldFill(7)){
+    const u=yn('yt');
+    inject(7,u,'▶ YouTube: "'+qv+'"'); PD[7]={url:u,label:'▶ YouTube: "'+qv+'"',q:qv};
+  }
+  // P8 : Twitter via YubNub twits
+  if(cnt>=8 && shouldFill(8)){
+    const u=yn('twits');
+    inject(8,u,'🐦 Twitter: "'+qv+'"'); PD[8]={url:u,label:'🐦 Twitter: "'+qv+'"',q:qv};
+  }
 }
 
 function run(sid){
@@ -939,13 +1028,19 @@ function loadHF(){
 }
 
 // ── Popup commandes ──────────────────────────────────────
+function toggleDark(){
+  const dark=document.documentElement.classList.toggle('dark');
+  localStorage.setItem('nexus_dark', dark?'1':'0');
+  document.getElementById('dm-btn').textContent=dark?'🌙':'☀️';
+}
+
 function buildCmds(){
   const grid=document.getElementById('cmd-grid');grid.innerHTML='';
   YN_CMDS.forEach(sec=>{
     const h=document.createElement('div');h.className='cmd-sec';h.textContent=sec.title;grid.appendChild(h);
-    sec.cmds.forEach(({cmd,desc})=>{
+    sec.cmds.forEach(({cmd,desc,iframe})=>{
       const d=document.createElement('div');
-      d.className='cmd-card';d.title=desc;
+      d.className='cmd-card'+(iframe?' ok-card':'');d.title=desc+(iframe?' ✓ iframable':' ⧉ onglet');
       d.innerHTML=`<div class="cc">${cmd}</div><div class="cn">${desc}</div>`;
       d.onclick=()=>{
         document.getElementById('du').value=cmd;
@@ -1072,6 +1167,39 @@ function oGrp(ids,name){
   ids.forEach(id=>{const s=findSite(id);if(s)window.open(s.url(qe),'_blank');});
   showT(name+' ouverts','nf');addH(qv,name,AP);
 }
+function loadUAI(){
+  const cmd=document.getElementById('du').value.trim();
+  const kw=document.getElementById('q').value.trim();
+  if(!cmd && !kw){ showT('Entre une commande ou un mot-clé','er'); return; }
+  const q=cmd && kw ? cmd+' '+kw : cmd||kw;
+  injectAI(AP, q);
+  PD[AP]={ai:true, label:'🤖 IA: "'+q+'"', q};
+  showT('🤖 IA → P'+AP,'ok');
+}
+
+function ynDebounce(){
+  clearTimeout(_ynDbt);
+  const v=document.getElementById('du').value.trim();
+  if(v.length<2) return;
+  _ynDbt=setTimeout(()=>loadU(), 900);
+}
+
+function loadUTab(){
+  const cmd=document.getElementById('du').value.trim();
+  if(!cmd) return;
+  const kw=document.getElementById('q').value.trim();
+  let url;
+  if(cmd.startsWith('http')||cmd.startsWith('www.')){
+    url=cmd.startsWith('http')?cmd:'https://'+cmd;
+  } else {
+    const full=kw ? cmd+' '+kw : cmd;
+    url='https://yubnub.org/parser/parse?command='+encodeURIComponent(full);
+    ynAdd(cmd);
+  }
+  window.open(url,'_blank');
+  showT('↗ Ouvert dans un onglet','ok');
+}
+
 function loadU(){
   const cmd=document.getElementById('du').value.trim();
   if(!cmd) return;
@@ -1086,6 +1214,7 @@ function loadU(){
   const url='https://yubnub.org/parser/parse?command='+encodeURIComponent(full);
   inject(AP,url,'⚡ '+full);
   PD[AP]={url,label:'⚡ '+full,q:kw||cmd};
+  ynAdd(cmd);
   showT('YubNub: '+full+' → P'+AP,'ok');
 }
 
@@ -1293,55 +1422,11 @@ function mkResultCard(title, url, snippet, source){
 }
 
 // ── P4 : Images via Wikimedia Commons API ────────────────
-async function injectImages(id, qv){
-  const pane=document.getElementById('p'+id);if(!pane)return;
-  rmC(pane);
-
-  const wrap=document.createElement('div');
-  wrap.style.cssText='position:absolute;inset:0;top:29px;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);';
-  pane.style.position='relative';
-  const hdr=document.createElement('div');hdr.className='ai-header';
-  hdr.innerHTML='<span class="ai-dot"></span>🖼 Images : "'+qv+'"';
-  const grid=document.createElement('div');
-  grid.style.cssText='flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:3px;padding:4px;align-content:start;';
-  grid.innerHTML='<div style="grid-column:1/-1;color:var(--t3);font-size:.78rem;padding:8px">⏳ Chargement…</div>';
-  wrap.appendChild(hdr);wrap.appendChild(grid);
-  pane.appendChild(wrap);
-  PD[id]={label:'🖼 Images: "'+qv+'"'};updatePU(id,'🖼 Images: "'+qv+'"');
-
-  try{
-    const api=`https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(qv)}&srnamespace=6&srlimit=24&format=json&origin=*`;
-    const res=await fetch(api);
-    const data=await res.json();
-    const pages=data.query?.search||[];
-    if(!pages.length) throw new Error('Aucune image trouvée');
-
-    // Get thumbnails for found files
-    const titles=pages.map(p=>p.title).join('|');
-    const thumbApi=`https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(titles)}&prop=imageinfo&iiprop=url|thumburl&iiurlwidth=150&format=json&origin=*`;
-    const tres=await fetch(thumbApi);
-    const tdata=await tres.json();
-    const tpages=Object.values(tdata.query?.pages||{});
-
-    grid.innerHTML='';
-    tpages.forEach(p=>{
-      const info=p.imageinfo?.[0];if(!info)return;
-      const thumb=info.thumburl||info.url;
-      const full=info.url;
-      const a=document.createElement('a');a.href=full;a.target='_blank';
-      a.style.cssText='display:block;aspect-ratio:1;overflow:hidden;border-radius:5px;border:1px solid var(--bd);background:var(--bg1);';
-      const img=document.createElement('img');
-      img.src=thumb;img.style.cssText='width:100%;height:100%;object-fit:cover;';
-      img.onerror=()=>a.remove();
-      a.appendChild(img);grid.appendChild(a);
-    });
-    if(!grid.children.length) throw new Error('Pas de miniatures disponibles');
-  }catch(e){
-    grid.innerHTML=`<div style="grid-column:1/-1;padding:16px;text-align:center;color:var(--t2);font-size:.78rem">
-      ⚠️ ${e.message}<br><br>
-      <a href="https://commons.wikimedia.org/w/index.php?search=${encodeURIComponent(qv)}&title=Special:MediaSearch&type=image" target="_blank" style="color:var(--ac)">↗ Wikimedia Commons</a>
-    </div>`;
-  }
+async function injectImages(id, qv, url){
+  const qe=encodeURIComponent(qv);
+  const u=url||`https://commons.wikimedia.org/w/index.php?search=${qe}&title=Special:MediaSearch&type=image`;
+  inject(id, u, '🖼 Images: "'+qv+'"');
+  PD[id]={url:u, label:'🖼 Images: "'+qv+'"', q:qv};
 }
 
 // ── P5 : Carte OpenStreetMap embed ───────────────────────
@@ -1374,101 +1459,11 @@ async function injectMap(id, qv){
   }
 }
 
-// ── P6 : Actualités RSS Google News ──────────────────────
-async function injectNews(id, qv){
-  const pane=document.getElementById('p'+id);if(!pane)return;
-  rmC(pane);
-
-  // Conteneur absolu pour remplir tout l'espace disponible sous le .ph
-  const wrap=document.createElement('div');
-  wrap.style.cssText='position:absolute;inset:0;top:29px;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);';
-  pane.style.position='relative';
-
-  const hdr=document.createElement('div');hdr.className='ai-header';hdr.style.flexShrink='0';
-  hdr.innerHTML='<span class="ai-dot"></span>📰 Actualités : "'+qv+'"';
-  const list=document.createElement('div');
-  list.style.cssText='flex:1;overflow-y:auto;padding:6px 8px;display:flex;flex-direction:column;gap:5px;';
-  list.innerHTML='<div style="color:var(--t3);font-size:.78rem;padding:8px">⏳ Chargement…</div>';
-  wrap.appendChild(hdr);wrap.appendChild(list);
-  pane.appendChild(wrap);
-  PD[id]={label:'📰 Actu: "'+qv+'"'};updatePU(id,'📰 Actu: "'+qv+'"');
-
-  try{
-    // Fonction fetch RSS via proxies en cascade
-    const fetchRSS=async(rssUrl)=>{
-      for(const mkProxy of PROXIES){
-        try{
-          const r=await fetch(mkProxy(rssUrl),{signal:AbortSignal.timeout(5000)});
-          if(!r.ok) continue;
-          const t=await r.text();
-          if(t.includes('<item>')) return t;
-        }catch(e){ continue; }
-      }
-      throw new Error('Proxy indisponible');
-    };
-
-    // Essaie Google News en premier (résultats filtrés par mot-clé)
-    let text='', sourceName='';
-    const gUrl=`https://news.google.com/rss/search?q=${encodeURIComponent(qv)}&hl=fr&gl=FR&ceid=FR:fr`;
-    try{ text=await fetchRSS(gUrl); sourceName='Google News'; }catch(e){}
-
-    // Sinon flux généralistes FR via proxies
-    if(!text){
-      const sources=[
-        { name:'France Info', rss:'https://www.francetvinfo.fr/titres.rss' },
-        { name:'Le Monde',    rss:'https://www.lemonde.fr/rss/en_continu.xml' },
-        { name:'Le Figaro',   rss:'https://www.lefigaro.fr/rss/figaro_actualites.xml' },
-        { name:'20 Minutes',  rss:'https://www.20minutes.fr/feeds/rss-une.xml' },
-      ];
-      for(const s of sources){
-        try{ text=await fetchRSS(s.rss); sourceName=s.name; break; }catch(e){}
-      }
-    }
-
-    if(!text) throw new Error('Toutes les sources RSS sont indisponibles');
-
-    const xml=new DOMParser().parseFromString(text,'text/xml');
-    let items=[...xml.querySelectorAll('item')];
-
-    // Filtre par mot-clé côté client
-    const kw=qv.toLowerCase().trim();
-    if(kw.length>2){
-      const filtered=items.filter(i=>{
-        const t=(i.querySelector('title')?.textContent||'').toLowerCase();
-        const d=(i.querySelector('description')?.textContent||'').toLowerCase();
-        return t.includes(kw)||d.includes(kw);
-      });
-      // Garde le filtre seulement si on a des résultats, sinon affiche tout
-      if(filtered.length) items=filtered;
-    }
-
-    if(!items.length) throw new Error('Aucune actualité pour "'+qv+'" — essaie un terme plus court');
-
-    hdr.innerHTML=`<span class="ai-dot"></span>📰 ${sourceName} : "${qv}"`;
-    list.innerHTML='';
-    items.slice(0,25).forEach(item=>{
-      const title=(item.querySelector('title')?.textContent||'').replace(/<!\[CDATA\[|\]\]>/g,'').trim();
-      const link=item.querySelector('link')?.textContent||item.querySelector('guid')?.textContent||'#';
-      const pubDate=item.querySelector('pubDate')?.textContent||'';
-      const source=item.querySelector('source')?.textContent||sourceName;
-      const date=pubDate?new Date(pubDate).toLocaleDateString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
-      if(!title) return;
-      const a=document.createElement('a');
-      a.href=link;a.target='_blank';
-      a.style.cssText='display:block;padding:7px 9px;border-radius:6px;background:var(--bg1);border:1px solid var(--bd);text-decoration:none;transition:border-color .15s;';
-      a.onmouseenter=()=>a.style.borderColor='var(--ac)';
-      a.onmouseleave=()=>a.style.borderColor='var(--bd)';
-      a.innerHTML=`<div style="font-size:.76rem;font-weight:600;color:var(--t0);line-height:1.35;margin-bottom:2px">${title}</div>
-        <div style="font-size:.66rem;color:var(--t3)">${source}${source&&date?' · ':''}${date}</div>`;
-      list.appendChild(a);
-    });
-  }catch(e){
-    list.innerHTML=`<div style="padding:14px;text-align:center;color:var(--t2);font-size:.76rem">
-      ⚠️ ${e.message}<br><br>
-      <a href="https://news.google.com/search?q=${encodeURIComponent(qv)}&hl=fr" target="_blank" style="color:var(--ac)">↗ Google News</a> &nbsp;·&nbsp;
-      <a href="https://www.francetvinfo.fr/recherche/?term=${encodeURIComponent(qv)}" target="_blank" style="color:var(--ac)">↗ France Info</a>
-    </div>`;
-  }
+async function injectNews(id, qv, url){
+  const qe=encodeURIComponent(qv);
+  const u=url||`https://www.francetvinfo.fr/recherche/?term=${qe}`;
+  inject(id, u, '📰 Actualités: "'+qv+'"');
+  PD[id]={url:u, label:'📰 Actualités: "'+qv+'"', q:qv};
 }
 
 // Domaines qui bloquent systématiquement les iframes
@@ -1493,18 +1488,54 @@ function isBlocked(url){
   }catch(e){return false;}
 }
 
-function inject(id,url,label){
+function inject(id,url,label,retryCount=0){
+  const MAX_RETRIES=3;
   const pane=document.getElementById('p'+id);if(!pane)return;
   rmC(pane);
   pushPH(id,url);
 
-  // Si domaine connu bloquant → tente proxies d'abord
   if(isBlocked(url)){
     tryProxiesOrBlock(id,url,label,pane);
     return;
   }
 
-  injectIframe(pane,id,url,label);
+  const fr=document.createElement('iframe');
+  fr.loading='lazy';
+  fr.sandbox='allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox';
+
+  const doRetryOrBlock=()=>{
+    if(retryCount < MAX_RETRIES){
+      console.log(`[NEXUS] P${id} auto-retry ${retryCount+1}/${MAX_RETRIES}…`);
+      fr.remove();
+      setTimeout(()=>inject(id,url,label,retryCount+1), (retryCount+1)*1000);
+    } else {
+      showIframeBlocked(pane,id,url,label);
+    }
+  };
+
+  const t=setTimeout(()=>{
+    try{
+      const u=fr.contentDocument?.URL||'';
+      if(u===''||u==='about:blank'||u.startsWith('chrome-error')) doRetryOrBlock();
+    }catch(e){}
+  },3000);
+
+  fr.addEventListener('load',()=>{
+    clearTimeout(t);
+    try{
+      const u=fr.contentDocument?.URL||'';
+      if(u.startsWith('chrome-error')||u==='about:blank') doRetryOrBlock();
+      else{
+        const body=fr.contentDocument?.body?.innerText||'';
+        if(body.includes("n'autorise pas")||body.includes("refused to connect")||body.includes("ERR_")) doRetryOrBlock();
+      }
+    }catch(e){}
+  });
+
+  fr.onerror=()=>{ clearTimeout(t); doRetryOrBlock(); };
+  fr.src=url;
+  pane.appendChild(fr);
+  updatePU(id,label);
 }
 
 async function tryProxiesOrBlock(id,url,label,pane){
@@ -1555,12 +1586,23 @@ async function tryProxiesOrBlock(id,url,label,pane){
   showIframeBlocked(pane,id,url,label);
 }
 
-function injectIframe(pane,id,url,label){
+function injectIframe(pane,id,url,label,retryCount=0){
+  const MAX_RETRIES=3;
   const fr=document.createElement('iframe');
   fr.loading='lazy';
   fr.sandbox='allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox';
 
-  const doBlock=()=>showIframeBlocked(pane,id,url,label);
+  const doBlock=()=>{
+    if(retryCount < MAX_RETRIES){
+      console.log(`[NEXUS] P${id} retry ${retryCount+1}/${MAX_RETRIES}…`);
+      fr.remove();
+      // Délai croissant : 1s, 2s, 3s
+      setTimeout(()=>injectIframe(pane,id,url,label,retryCount+1), (retryCount+1)*1000);
+    } else {
+      showIframeBlocked(pane,id,url,label);
+    }
+  };
+
   const t=setTimeout(()=>{
     try{
       const u=fr.contentDocument?.URL||'';
@@ -1577,16 +1619,31 @@ function injectIframe(pane,id,url,label){
         const body=fr.contentDocument?.body?.innerText||'';
         if(body.includes("n'autorise pas")||body.includes("refused to connect")||body.includes("ERR_")) doBlock();
       }
-    }catch(e){}
+    }catch(e){} // cross-origin = chargé OK
   });
 
   fr.onerror=()=>{ clearTimeout(t); doBlock(); };
   fr.src=url;
   pane.appendChild(fr);
-  updatePU(id,label);
+  updatePU(id,label+(retryCount>0?` (retry ${retryCount})`:''));
 }
 
 function showIframeBlocked(pane,id,url,label){
+  // Si c'est un panneau Nitter avec des instances de rechange → essaie la suivante
+  const pd=PD[id];
+  if(pd?.nitter && pd.nitterIdx < pd.nitter.length-1){
+    const nextIdx=pd.nitterIdx+1;
+    const nextUrl=pd.nitter[nextIdx];
+    console.log(`[NEXUS] P${id} Nitter fallback → instance ${nextIdx+1}: ${nextUrl}`);
+    PD[id]={...pd, url:nextUrl, nitterIdx:nextIdx};
+    const existing=pane.querySelector('iframe');if(existing)existing.remove();
+    const fr=document.createElement('iframe');
+    fr.loading='lazy';fr.sandbox='allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox';
+    fr.src=nextUrl;
+    pane.appendChild(fr);
+    updatePU(id,'🐦 Nitter: "'+pd.q+'"');
+    return;
+  }
   // Ne remplace que si l'iframe est toujours là
   const existing=pane.querySelector('iframe');
   if(!existing)return;
@@ -1643,7 +1700,156 @@ function cP(id){
     `<span class="hint">ex: <code>yt lofi</code> · <code>w python</code></span><div class="qlinks">${ql}</div>`;
   pane.appendChild(e);showT('P'+id+' vidé','ok');
 }
-// Historique de navigation par panneau
+// Commandes YubNub rapides (sidebar)
+const YN_QUICK=[
+  {cmd:'gfr',     desc:'Google France',            iframe:false},
+  {cmd:'gnewsfr', desc:'Google News FR',            iframe:false},
+  {cmd:'twits',   desc:'Twitter Search',            iframe:false},
+  {cmd:'gim',     desc:'Google Images',             iframe:false},
+  {cmd:'youtube', desc:'YouTube',                   iframe:false},
+  {cmd:'wpfr',    desc:'Wikipedia FR',              iframe:true},
+  {cmd:'gmfr',    desc:'Google Maps France',        iframe:false},
+  {cmd:'amfr',    desc:'Amazon France',             iframe:false},
+  {cmd:'ebayfr',  desc:'eBay France',               iframe:false},
+  {cmd:'g',       desc:'Google EN',                 iframe:false},
+  {cmd:'genfr',   desc:'Traduction EN→FR',          iframe:false},
+  {cmd:'gfren',   desc:'Traduction FR→EN',          iframe:false},
+  {cmd:'viki',    desc:'Vikidia (encyclopédie)',     iframe:true},
+  {cmd:'wp',      desc:'Wikipedia EN',              iframe:true},
+];
+
+function renderYNQuick(){
+  const el=document.getElementById('yn-quicklist');if(!el)return;
+  el.innerHTML='';
+  YN_QUICK.forEach(({cmd,desc,iframe})=>{
+    const row=document.createElement('div');
+    row.className='yn-qrow'+(iframe?' ok-row':'');
+    row.title=desc+(iframe?' ✓ iframable':' ⧉ onglet');
+    row.innerHTML=`<span class="yn-qcmd">${cmd}</span><span class="yn-qdesc">${desc}</span>`;
+    row.onclick=()=>{
+      document.getElementById('du').value=cmd;
+      loadU();
+    };
+    el.appendChild(row);
+  });
+}
+
+let ynHist=JSON.parse(localStorage.getItem('nexus_yn')||'[]');
+
+function ynAdd(cmd){
+  if(!cmd||cmd.startsWith('http')) return;
+  ynHist=ynHist.filter(c=>c!==cmd);
+  ynHist.unshift(cmd);
+  if(ynHist.length>20) ynHist.pop();
+  localStorage.setItem('nexus_yn',JSON.stringify(ynHist));
+  renderYN();
+}
+function ynDel(cmd){
+  ynHist=ynHist.filter(c=>c!==cmd);
+  localStorage.setItem('nexus_yn',JSON.stringify(ynHist));
+  renderYN();
+}
+function renderYN(){
+  const el=document.getElementById('yn-hist');if(!el)return;
+  el.innerHTML='';
+  // Construit un index rapide des cmds iframables
+  const iframeSet=new Set();
+  YN_CMDS.forEach(sec=>sec.cmds.forEach(c=>{if(c.iframe)iframeSet.add(c.cmd);}));
+  ynHist.forEach(cmd=>{
+    const isIframe=iframeSet.has(cmd);
+    const tag=document.createElement('div');
+    tag.className='yn-tag'+(isIframe?' yn-ok':'');
+    const s=document.createElement('span');s.textContent=cmd;
+    s.title=isIframe?'✓ iframable':'⧉ onglet';
+    s.onclick=()=>{ document.getElementById('du').value=cmd; loadU(); };
+    const b=document.createElement('button');b.textContent='×';b.title='Supprimer';
+    b.onclick=e=>{ e.stopPropagation(); ynDel(cmd); };
+    tag.appendChild(s);tag.appendChild(b);
+    el.appendChild(tag);
+  });
+}
+
+// ── P8 : Tweets via Nitter RSS ───────────────────────────
+async function injectTweets(id, qv){
+  const pane=document.getElementById('p'+id);if(!pane)return;
+  rmC(pane);
+  pane.style.position='relative';
+
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:absolute;inset:0;top:29px;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);';
+  const hdr=document.createElement('div');hdr.className='ai-header';
+  hdr.innerHTML='<span class="ai-dot"></span>🐦 Tweets : "'+qv+'"';
+  const list=document.createElement('div');
+  list.style.cssText='flex:1;overflow-y:auto;padding:6px 8px;display:flex;flex-direction:column;gap:5px;';
+  list.innerHTML='<div style="color:var(--t3);font-size:.78rem;padding:8px">⏳ Chargement tweets…</div>';
+  wrap.appendChild(hdr);wrap.appendChild(list);
+  pane.appendChild(wrap);
+  PD[id]={label:'🐦 Tweets: "'+qv+'"',q:qv};updatePU(id,'🐦 Tweets: "'+qv+'"');
+
+  const qe=encodeURIComponent(qv);
+  const nitterInstances=[
+    `https://nitter.privacydev.net/search/rss?q=${qe}`,
+    `https://nitter.poast.org/search/rss?q=${qe}`,
+  ];
+
+  const fetchRSS=async(rssUrl)=>{
+    try{
+      const r=await fetch(rssUrl,{signal:AbortSignal.timeout(5000)});
+      if(r.ok){const t=await r.text();if(t.includes('<item>'))return t;}
+    }catch(e){}
+    for(const mkP of PROXIES){
+      try{
+        const r=await fetch(mkP(rssUrl),{signal:AbortSignal.timeout(5000)});
+        if(!r.ok)continue;
+        const t=await r.text();
+        if(t.includes('<item>'))return t;
+      }catch(e){continue;}
+    }
+    throw new Error('indisponible');
+  };
+
+  let text='';
+  for(const inst of nitterInstances){
+    try{text=await fetchRSS(inst);break;}catch(e){}
+  }
+
+  if(!text){
+    // Fallback : bouton onglet vers Twitter direct
+    list.innerHTML=`<div style="padding:16px;text-align:center;color:var(--t2);font-size:.78rem">
+      ⚠️ Nitter indisponible<br><br>
+      <a href="https://twitter.com/search?q=${qe}&f=live" target="_blank"
+         style="padding:8px 18px;background:#1da1f2;color:#fff;border-radius:7px;text-decoration:none;font-size:.82rem;font-weight:700;display:inline-block">
+        ↗ Ouvrir Twitter/X
+      </a>
+    </div>`;
+    return;
+  }
+
+  const xml=new DOMParser().parseFromString(text,'text/xml');
+  const items=[...xml.querySelectorAll('item')];
+  if(!items.length){list.innerHTML='<div style="padding:10px;color:var(--t3);font-size:.78rem">Aucun tweet trouvé.</div>';return;}
+
+  list.innerHTML='';
+  items.slice(0,30).forEach(item=>{
+    const title=(item.querySelector('title')?.textContent||'').replace(/<!\[CDATA\[|\]\]>/g,'').trim();
+    const link=item.querySelector('link')?.textContent||'#';
+    const author=item.querySelector('dc\\:creator,creator')?.textContent||'';
+    const date=item.querySelector('pubDate')?.textContent||'';
+    const d=date?new Date(date).toLocaleDateString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+    if(!title)return;
+    const a=document.createElement('a');
+    a.href=link;a.target='_blank';
+    a.style.cssText='display:block;padding:8px 10px;border-radius:7px;background:var(--bg1);border:1px solid var(--bd);text-decoration:none;transition:border-color .15s;';
+    a.onmouseenter=()=>a.style.borderColor='#1da1f2';
+    a.onmouseleave=()=>a.style.borderColor='var(--bd)';
+    a.innerHTML=`<div style="font-size:.72rem;font-weight:700;color:#1da1f2;margin-bottom:3px">@${author}</div>
+      <div style="font-size:.76rem;color:var(--t0);line-height:1.4">${title}</div>
+      <div style="font-size:.65rem;color:var(--t3);margin-top:3px">${d}</div>`;
+    list.appendChild(a);
+  });
+}
+
+
 const PH={}; // {1:[url1,url2,...], 2:[...]}
 
 function pushPH(id,url){
