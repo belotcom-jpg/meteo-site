@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PluiePro v1.38</title>
+<title>PluiePro v1.39</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1498,6 +1498,8 @@ async function _loadWithCoords(lat,lon,displayName){
 }
 
 async function load(){
+  /* Nouvelle ville → invalider le cache J-1/J-7 */
+  _cachedJm1=null;_cachedJm7=null;
   const city=document.getElementById('cityInput').value.trim();if(!city)return;
   const btn=document.getElementById('searchBtn');btn.disabled=true;btn.textContent='…';
   /* Reset : supprimer seulement le cache de la ville précédente, pas tout */
@@ -1582,6 +1584,7 @@ async function load(){
         clearInterval(_autoRefreshTimer);zoomMin=0;zoomMax=1;
         fetchNowcast(lat,lon);fetchMinutely15(lat,lon);
         fetchJm1Data(lat,lon);fetchJmNData(lat,lon,7);
+        if(_viewMode==='jm1'||_viewMode==='jm7'){const _m=_viewMode;_viewMode='j1';setView(_m);}
         initBar();initRadar(lat,lon);
         const rc=document.getElementById('radarCard');
         if(rc)rc.style.display='block';
@@ -1636,6 +1639,7 @@ async function load(){
     /* Fetch J-1 et J-7 en parallèle */
     fetchJm1Data(lat,lon);
     fetchJmNData(lat,lon,7);
+    if(_viewMode==='jm1'||_viewMode==='jm7'){const _m=_viewMode;_viewMode='j1';setView(_m);}
     let active=[];
     SOURCES.forEach(s=>{setBadge(s.key,rainMx[s.key]!==null);if(rainMx[s.key])active.push(s.label);});
 
