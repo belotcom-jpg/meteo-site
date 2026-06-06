@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PluiePro v1.34</title>
+<title>PluiePro v1.38</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -178,9 +178,11 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
     <button id="tbUV"     class="view-btn" onclick="tgl('uv',this)">☀ UV</button>
     <button id="tbPollen" class="view-btn" onclick="tgl('pollen',this)">🌼 POLLEN</button>
     <button id="tbPoll"   class="view-btn" onclick="tgl('poll',this)">💨 POLLUTION</button>
+    <button id="tbTemp"   class="view-btn" onclick="tgl('temp',this)">🌡 TEMPÉRATURE</button>
+    <button id="tbHumid"  class="view-btn" onclick="tgl('humidity',this)">💦 HUMIDITÉ</button>
+    <button id="tbOrage"  class="view-btn" onclick="tgl('orage',this)" style="color:#ff8800">⚡ ORAGE</button>
     <button id="tbProba"  class="view-btn" onclick="tgl('proba',this)">〰 PROBA</button>
     <button id="tbNuage"  class="view-btn" onclick="tgl('nuage',this)">☁ NUAGE</button>
-    <button id="tbTemp"   class="view-btn" onclick="tgl('temp',this)">🌡 TEMPÉRATURE</button>
     <button id="tbModels" class="view-btn" onclick="tgl('models',this)">📊 MODÈLES</button>
     <button id="tbTout"   class="view-btn" onclick="tglAll()">◎ TOUT</button>
   </div>
@@ -189,7 +191,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
       <div class="header-left">
         <div id="displayTz" class="city-tz"></div>
         <div id="nextRainBadge"></div>
-        <div id="modelLegendInline" style="display:flex;flex-wrap:wrap;gap:3px;margin-top:1px"></div>
+        <div id="modelLegendInline" style="display:none;flex-wrap:wrap;gap:3px;margin-top:1px"></div>
         <div id="reliabilityScore" style="display:none;font-size:10px;font-weight:700;font-family:'Courier New';letter-spacing:.5px;margin-top:2px"></div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
@@ -299,7 +301,7 @@ let _uvHourlyData=null;
 let _pollenHourly=null;
 let _aqiHourly=null;
 let _viewMode='j1',_cachedData=null,_cachedJm1=null,_cachedJm7=null,_simpleMode=true,_ultraMode=true,_gradCache=null;
-let _layers={wind:false,uv:false,pollen:false,poll:false,proba:false,nuage:false,temp:false,models:false};
+let _layers={wind:false,uv:false,pollen:false,poll:false,proba:false,nuage:false,temp:false,humidity:false,orage:false,models:false};
 let _loadDebounce=null;
 const _hiddenModels=new Set(); /* modèles masqués par clic légende */
 let _tempHourly=null;
@@ -325,6 +327,8 @@ let _tempByDay=null; /* températures par jour J0..J+14 */
 let _pressureMSL=null; /* pression au niveau de la mer (hPa) */
 let _capeHourly=null; /* CAPE J/kg heure par heure */
 let _cloudData=null;
+let _humidityHourly=null; /* humidité relative % horaire */
+let _lastPts=null; /* derniers pts du chart pour recalcul humidité */
 let _sunriseJ0=6,_sunsetJ0=21,_sunriseJ1=6,_sunsetJ1=21; /* heures décimales */
 let _currentRain=null; /* précipitation actuelle temps réel */
 let _owmMinutely=null; /* OpenWeather minutely rain */
@@ -469,15 +473,15 @@ function tgl(name, btn){
   applyLayers();
   /* Légende interactive visible seulement quand MODÈLES est ON */
   if(name==='models'){
-    const el=document.getElementById('modelLegend');
-    if(el)el.classList.toggle('visible',_layers.models);
+    const eli=document.getElementById('modelLegendInline');
+    if(eli)eli.style.display=_layers.models?'flex':'none';
   }
 }
 function tglAll(){
   const allOn=Object.values(_layers).every(Boolean);
   const v=!allOn;
   Object.keys(_layers).forEach(k=>{_layers[k]=v;});
-  ['tbWind','tbUV','tbPollen','tbPoll','tbProba','tbNuage','tbTemp','tbModels'].forEach(id=>{
+  ['tbWind','tbUV','tbPollen','tbPoll','tbOrage','tbProba','tbNuage','tbTemp','tbHumid','tbModels'].forEach(id=>{
     const b=document.getElementById(id);
     if(b)b.classList.toggle('ton',v);
   });
@@ -512,9 +516,28 @@ function applyLayers(){
     ds[idxCloud].borderWidth=_layers.nuage?(_isMob?3:4):0;
     if(_layers.nuage)ds[idxCloud].borderDash=[6,3,6,3];
   }
+  /* HUMIDITÉ */
+  const dsHumid=ds.find(d=>d.label==='humidity');
+  if(dsHumid){
+    dsHumid.borderColor=_layers.humidity?'rgba(100,200,255,0.82)':'rgba(0,0,0,0)';
+    dsHumid.borderWidth=_layers.humidity?(_isMob?1.5:2):0;
+    if(_layers.humidity&&_humidityHourly&&_lastPts){
+      dsHumid.data=_lastPts.map(p=>{
+        const hi=p.hourIdx>=0?p.hourIdx:null;
+        return hi!=null&&hi<_humidityHourly.length?_humidityHourly[hi]:null;
+      });
+    }
+  }
+  /* ORAGE — CAPE normalisé 0-100% */
+  const dsOrage=ds.find(d=>d.label==='orage');
+  if(dsOrage){
+    dsOrage.borderColor=_layers.orage?'rgba(255,140,0,0.85)':'rgba(0,0,0,0)';
+    dsOrage.borderWidth=_layers.orage?(_isMob?1.5:2):0;
+    /* données p.p déjà dans le dataset à la création — pas de recalcul */
+  }
   /* axe yProb */
   if(myChart.options.scales.yProb)
-    myChart.options.scales.yProb.display=(_layers.proba||_layers.nuage);
+    myChart.options.scales.yProb.display=(_layers.proba||_layers.nuage||_layers.humidity||_layers.orage);
   /* Rescaler Y */
   const p80d=(ds[idxP80]?.data||[]).filter(v=>v!=null&&isFinite(v)&&v>=0);
   myChart.options.scales.y.max=Math.max(p80d.length?Math.max(...p80d):1,0.5)*1.2;
@@ -603,6 +626,14 @@ function applyComplexity(){
     myChart.options.scales.y.suggestedMax=undefined;
     if(myChart.options.scales.yProb)myChart.options.scales.yProb.display=true;
   }
+  /* Toujours forcer P80 jaune visible, robuste aux décalages d'index */
+  if(ds[idxP80]){
+    ds[idxP80].borderColor=ds[idxP80].data?.some(v=>v!=null&&v>1.5)?'#ffcc00':'#ffe600';
+    ds[idxP80].borderWidth=_isMob?4:6;
+  }
+  /* Forcer dataset RÉEL visible par label */
+  const dsReal=ds.find(d=>d.label==='RÉEL');
+  if(dsReal&&!dsReal.borderColor?.includes('0,0,0'))dsReal.borderColor='rgba(255,255,255,0.92)';
   myChart.update('none');
 }
 
@@ -1374,7 +1405,7 @@ async function _loadWithCoords(lat,lon,displayName){
     /* P3 — allSettled : continue même si metno ou omDaily échoue */
     /* Vague 1 : omMain (lourd) en premier, seul */
     const [_r0]=await Promise.allSettled([
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m,cape&models=${encodeURIComponent(omModels)}&forecast_days=10&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m,cape&models=${encodeURIComponent(omModels)}&forecast_days=16&timezone=auto`),
     ]);
     /* Vague 2 : 150ms plus tard, les 4 autres */
     await new Promise(r=>setTimeout(r,150));
@@ -1382,7 +1413,7 @@ async function _loadWithCoords(lat,lon,displayName){
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&models=meteofrance_arome_france_hd,icon_d2&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain,pressure_msl&hourly=uv_index,temperature_2m&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover,windgusts_10m,uv_index,temperature_2m&forecast_days=16&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover,windgusts_10m,uv_index,temperature_2m,relative_humidity_2m&forecast_days=16&timezone=auto`),
     ]);
     const [omMain,omM15,omCurrent,metno,omDaily]=[_r0,_r1,_r2,_r3,_r4].map(r=>r.status==='fulfilled'?r.value:null);
     const rainMx=buildRainMx(omMain,metno,0);
@@ -1418,7 +1449,7 @@ async function _loadWithCoords(lat,lon,displayName){
     if(omMain?.hourly){
       const _ks=Object.keys(omMain.hourly);
       const _ck=_ks.find(k=>k==='cape')||_ks.find(k=>k.startsWith('cape_'));
-      if(_ck){_capeHourly=omMain.hourly[_ck];console.log('[CAPE] clé='+_ck+' max='+Math.round(Math.max(...(_capeHourly||[0]).filter(Number.isFinite))));}
+      if(_ck){_capeHourly=omMain.hourly[_ck];updateLazyDatasets();console.log('[CAPE] clé='+_ck+' max='+Math.round(Math.max(...(_capeHourly||[0]).filter(Number.isFinite))));}
       else console.warn('[CAPE] introuvable',_ks.slice(0,5));
     }
     if(omCurrent?.hourly?.temperature_2m){
@@ -1446,6 +1477,7 @@ async function _loadWithCoords(lat,lon,displayName){
     if(omDaily?.daily?.uv_index_max) _uvData=omDaily.daily.uv_index_max;
     if(omDaily?.hourly?.uv_index) _uvHourlyData=omDaily.hourly.uv_index;
     if(omDaily?.hourly?.temperature_2m) _tempHourly=omDaily.hourly.temperature_2m;
+    if(omDaily?.hourly?.relative_humidity_2m){_humidityHourly=omDaily.hourly.relative_humidity_2m;updateLazyDatasets();}
     if(omDaily?.hourly?.uv_index) _uvHourlyData=omDaily.hourly.uv_index;
     if(omDaily?.daily?.temperature_2m_max) _tempByDay=omDaily.daily.temperature_2m_max.map(function(mx,di){return{max:mx,min:omDaily.daily.temperature_2m_min?.[di]??null};});
     _sunriseJ0=omDaily?.daily?.sunrise?.[0]?new Date(omDaily.daily.sunrise[0]).getHours()+(new Date(omDaily.daily.sunrise[0]).getMinutes()/60):6;
@@ -1453,7 +1485,7 @@ async function _loadWithCoords(lat,lon,displayName){
     initBar();initRadar(lat,lon);
     const rc=document.getElementById('radarCard');
     if(rc)rc.style.display='block';
-    if(_viewMode==='jm1'||_viewMode==='jm7') _viewMode='j1';
+    /* _viewMode jm1/jm7 conservé — pas de reset */
     document.getElementById('viewBtns').style.display='flex';
     updateBtnState();
     
@@ -1535,6 +1567,7 @@ async function load(){
         if(omDaily?.daily?.uv_index_max) _uvData=omDaily.daily.uv_index_max;
     if(omDaily?.hourly?.uv_index) _uvHourlyData=omDaily.hourly.uv_index;
     if(omDaily?.hourly?.temperature_2m) _tempHourly=omDaily.hourly.temperature_2m;
+    if(omDaily?.hourly?.relative_humidity_2m){_humidityHourly=omDaily.hourly.relative_humidity_2m;updateLazyDatasets();}
     if(omDaily?.hourly?.uv_index) _uvHourlyData=omDaily.hourly.uv_index;
         if(omDaily?.daily?.temperature_2m_max) _tempByDay=omDaily.daily.temperature_2m_max.map(function(mx,di){return{max:mx,min:omDaily.daily.temperature_2m_min?.[di]??null};});
         _sunriseJ0=omDaily?.daily?.sunrise?.[0]?new Date(omDaily.daily.sunrise[0]).getHours()+(new Date(omDaily.daily.sunrise[0]).getMinutes()/60):6;
@@ -1542,12 +1575,13 @@ async function load(){
         _sunriseJ1=omDaily?.daily?.sunrise?.[1]?new Date(omDaily.daily.sunrise[1]).getHours()+(new Date(omDaily.daily.sunrise[1]).getMinutes()/60):6;
         _sunsetJ1=omDaily?.daily?.sunset?.[1]?new Date(omDaily.daily.sunset[1]).getHours()+(new Date(omDaily.daily.sunset[1]).getMinutes()/60):21;
         SOURCES.forEach(s=>{setBadge(s.key,rainMx[s.key]!==null);});
-        if(_viewMode==='jm1'||_viewMode==='jm7') _viewMode='j1';
+        /* _viewMode jm1/jm7 conservé — pas de reset */
         document.getElementById('viewBtns').style.display='flex';
         updateBtnState();
         processData(omMain,omM15,rainMx,probMx);
         clearInterval(_autoRefreshTimer);zoomMin=0;zoomMax=1;
         fetchNowcast(lat,lon);fetchMinutely15(lat,lon);
+        fetchJm1Data(lat,lon);fetchJmNData(lat,lon,7);
         initBar();initRadar(lat,lon);
         const rc=document.getElementById('radarCard');
         if(rc)rc.style.display='block';
@@ -1556,11 +1590,11 @@ async function load(){
     }
     /* P3 — allSettled : dégradation gracieuse si source secondaire échoue */
     const _res2=await Promise.allSettled([
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m,cape&models=${encodeURIComponent(omModels)}&forecast_days=10&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m,cape&models=${encodeURIComponent(omModels)}&forecast_days=16&timezone=auto`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&models=meteofrance_arome_france_hd,icon_d2&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain,pressure_msl&hourly=uv_index,temperature_2m&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover,windgusts_10m,uv_index,temperature_2m&forecast_days=16&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover,windgusts_10m,uv_index,temperature_2m,relative_humidity_2m&forecast_days=16&timezone=auto`),
     ]);
     const [omMain,omM15,omCurrent,metno,omDaily]=_res2.map(r=>r.status==='fulfilled'?r.value:null);
     if(!omMain?.hourly?.time){showStatus('❌ Open-Meteo inaccessible — réessaie dans quelques secondes','#ff3d57');return;}
@@ -1606,7 +1640,7 @@ async function load(){
     SOURCES.forEach(s=>{setBadge(s.key,rainMx[s.key]!==null);if(rainMx[s.key])active.push(s.label);});
 
     /* Garder la vue actuelle sauf modes passés */
-    if(_viewMode==='jm1'||_viewMode==='jm7') _viewMode='j1';
+    /* _viewMode jm1/jm7 conservé — pas de reset */
     document.getElementById('viewBtns').style.display='flex';
     updateBtnState();
     processData(omMain,omM15,rainMx,probMx);
@@ -1658,13 +1692,13 @@ async function fetchJmNData(lat,lon,nDays){
     const omSources=SOURCES.filter(s=>s.omModel);
     const omModels=omSources.map(s=>s.omModel).join(',');
     const [pastForecast,realData]=await Promise.all([
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability&models=${encodeURIComponent(omModels)}&past_days=${nDays}&forecast_days=0&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability&models=icon_seamless,gfs_seamless,ecmwf_ifs025,meteofrance_seamless&past_days=${nDays}&forecast_days=0&timezone=auto`),
       fetchRetry(`https://historical-forecast-api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation&start_date=${fmt(startDate)}&end_date=${fmt(endDate)}&timezone=auto`),
     ]);
     const data={pastForecast,realData,startDate:fmt(startDate),endDate:fmt(endDate),nDays};
     if(nDays===7)_cachedJm7=data;
     else _cachedJm1=data;
-  }catch(e){console.warn('[J-N]',e.message);}
+  }catch(e){console.error('[J-N] ERREUR:',e.message,e);}
 }
 
 async function fetchJm1Data(lat,lon){
@@ -1680,11 +1714,11 @@ async function fetchJm1Data(lat,lon){
     const omModels=omSources.map(s=>s.omModel).join(',');
 
     const [pastForecast,realData]=await Promise.all([
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m,cape&models=${encodeURIComponent(omModels)}&past_days=1&forecast_days=0&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation,precipitation_probability,windspeed_10m&models=icon_seamless,gfs_seamless,ecmwf_ifs025,meteofrance_seamless&past_days=1&forecast_days=0&timezone=auto`),
       fetchRetry(`https://historical-forecast-api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation&start_date=${dateStr}&end_date=${dateStr}&timezone=auto`),
     ]);
     _cachedJm1={pastForecast,realData,startDate:dateStr,endDate:dateStr,nDays:1};
-  }catch(e){console.warn('[J-1]',e.message);}
+  }catch(e){console.error('[J-1] ERREUR:',e.message,e);}
 }
 
 /* ── boutons vue ── */
@@ -2377,13 +2411,14 @@ function renderJm1(pts,mods,realPrecip){
       labels:pts.map(p=>p.t),
       datasets:[
         {data:pts.map(p=>p.r),borderColor:'transparent',borderWidth:0,fill:true,backgroundColor:_simpleMode?'rgba(255,230,0,0.08)':'rgba(0,0,0,0)',tension:0.4,pointRadius:0,yAxisID:'y',order:5},
-        /* Enveloppe P20 semi-transparente entre P20 et P80 */
-        {data:pts.map(p=>p.p20??p.r),borderColor:'rgba(255,220,0,0)',borderWidth:0,fill:'+1',backgroundColor:'rgba(255,200,0,0.10)',tension:0.4,pointRadius:0,yAxisID:'y',order:1.5,label:'P20'},
         ...modelDS,
         {data:pts.map(p=>p.mx),borderColor:_simpleMode?'transparent':'#4488ff',borderWidth:isMob?4:6,borderDash:[8,3,2,3],fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:2},
         {data:pts.map(p=>p.r),borderColor:pts.some(p=>p.spread>1.5)?'#ffcc00':'#ffe600',borderWidth:isMob?4:6,fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:1},
         {data:pts.map(p=>p.p),borderColor:_ultraMode?'rgba(0,0,0,0)':'rgba(255,255,255,0.85)',borderWidth:_ultraMode?0:isMob?2.5:3.5,borderDash:[6,3],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:3},
         {data:pts.map(p=>_cloudData&&p.hourIdx>=0?(_cloudData[p.hourIdx]??null):null),borderColor:_ultraMode?'rgba(0,0,0,0)':'#ff3333',borderWidth:_ultraMode?0:isMob?3:4,borderDash:[6,3,6,3],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:6,spanGaps:true},
+        /* Humidité — bleu clair pointillé */
+        {data:pts.map(p=>_humidityHourly&&p.hourIdx>=0?(_humidityHourly[p.hourIdx]??null):null),borderColor:'rgba(0,0,0,0)',borderWidth:0,borderDash:[5,4],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:7,spanGaps:true,label:'humidity'},
+        {data:pts.map(p=>Math.min(Math.round((p.r||0)*(p.p||0)/5),100)),borderColor:'rgba(0,0,0,0)',borderWidth:0,borderDash:[3,3,1,3],tension:0.3,pointRadius:0,fill:false,yAxisID:'yProb',order:8,spanGaps:true,label:'orage'},
         {data:realArr,borderColor:'rgba(255,255,255,0.92)',borderWidth:isMob?3.5:5,fill:false,tension:0.3,pointRadius:0,yAxisID:'y',order:0,spanGaps:false,label:'RÉEL'},
       ]
     },
@@ -2396,8 +2431,7 @@ function renderJm1(pts,mods,realPrecip){
       },
       plugins:{legend:{display:false},tooltip:{enabled:false}}
     },
-    plugins:[
-      {id:'overlay',afterDraw(chart){if(chart.width!==lastW){lastW=chart.width;buildOverlays(chart,pts);}else{updateOverlayPositions(chart,pts);}drawUncertaintyBadge(chart,pts);}},
+    plugins:[ {id:'overlay',afterDraw(chart){if(chart.width!==lastW){lastW=chart.width;buildOverlays(chart,pts);}else{updateOverlayPositions(chart,pts);}drawUncertaintyBadge(chart,pts);}},
       {id:'realLegend',afterDraw(chart){
         const {ctx:c,chartArea:{top,right}}=chart;
         c.save();c.strokeStyle='rgba(255,255,255,0.9)';c.lineWidth=4;
@@ -2515,6 +2549,8 @@ function renderJm1(pts,mods,realPrecip){
     ]
   });
   setTimeout(()=>{applyComplexity();if(zoomMin>0||zoomMax<1){const n=myChart?.data?.labels?.length||1;myChart.options.scales.x.min=Math.round(zoomMin*n);myChart.options.scales.x.max=Math.round(zoomMax*n)-1;myChart.update('none');updateScrollbar();}},0);
+  /* Mettre à jour les datasets lazy après création du chart */
+  setTimeout(updateLazyDatasets, 50);
 }
 
 /* ══════════════════════════════════════════════
@@ -2580,6 +2616,7 @@ function render(pts,mods){
   _isMob=window.innerWidth<500;
   const isMob=_isMob;
   const maxVals=pts.map(p=>p.mx);
+  _lastPts=pts;
   const p80Vals=pts.map(p=>p.r);
   _peaks=detectPeaks(p80Vals,pts.map(p=>p.t),0.15,isMob?3:4);
   _drySlots=detectDrySlots(pts);
@@ -2612,6 +2649,9 @@ function render(pts,mods){
         {data:pts.map(p=>p.r),borderColor:'#ffe600',borderWidth:isMob?4:6,fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:1},
         {data:pts.map(p=>p.p),borderColor:'rgba(255,255,255,0.85)',borderWidth:isMob?2.5:3.5,borderDash:[6,3],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:3},
         {data:pts.map(p=>_cloudData&&p.hourIdx>=0?(_cloudData[p.hourIdx]??null):null),borderColor:'#ff3333',borderWidth:isMob?3:4,borderDash:[6,3,6,3],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:6,spanGaps:true},
+        /* Humidité — bleu clair pointillé */
+        {data:pts.map(p=>_humidityHourly&&p.hourIdx>=0?(_humidityHourly[p.hourIdx]??null):null),borderColor:'rgba(0,0,0,0)',borderWidth:0,borderDash:[5,4],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:7,spanGaps:true,label:'humidity'},
+        {data:pts.map(p=>Math.min(Math.round((p.r||0)*(p.p||0)/5),100)),borderColor:'rgba(0,0,0,0)',borderWidth:0,borderDash:[3,3,1,3],tension:0.3,pointRadius:0,fill:false,yAxisID:'yProb',order:8,spanGaps:true,label:'orage'},
       ]
     },
     options:{
@@ -2639,8 +2679,7 @@ function render(pts,mods){
       },
       plugins:{legend:{display:false},tooltip:{enabled:false}}
     },
-    plugins:[
-      {id:'overlay',afterDraw(chart){if(chart.width!==lastW){lastW=chart.width;buildOverlays(chart,pts);}else{updateOverlayPositions(chart,pts);}}},
+    plugins:[ {id:'overlay',afterDraw(chart){if(chart.width!==lastW){lastW=chart.width;buildOverlays(chart,pts);}else{updateOverlayPositions(chart,pts);}drawUncertaintyBadge(chart,pts);}},  
       {id:'drySlots',afterDatasetsDraw(chart){
         if(!_drySlots.length)return;
         const {ctx:c,scales:{x},chartArea:{top,bottom}}=chart;
@@ -3049,10 +3088,9 @@ function drawUncertaintyBadge(chart,pts){
       if(capeFinite.length)capeMax=Math.round(Math.max(...capeFinite));
     }
 
-    /* ── Seuils : CAPE>400+prob>50 OU prob>=50 (fallback visible) ── */
+    /* ── Seuil : CAPE>400+prob>50 uniquement ── */
     const alerte=capeMax>400&&probMax>50;
-    const risque=probMax>=50&&!alerte;
-    if(!alerte&&!risque)return;
+    if(!alerte)return;
 
     ctx.save();
 
@@ -3080,21 +3118,12 @@ function drawUncertaintyBadge(chart,pts){
       ctx.fillText('⚡ ALERTE ORAGE — CAPE '+capeMax+' J/kg',bx+6,by+10);
       if(!drawUncertaintyBadge._t)
         drawUncertaintyBadge._t=setInterval(()=>{try{if(myChart)myChart.render();}catch(e){}},280);
-    }else{
-      /* Badge orange risque pluie */
-      if(drawUncertaintyBadge._t){clearInterval(drawUncertaintyBadge._t);drawUncertaintyBadge._t=null;}
-      ctx.fillStyle='rgba(200,90,0,0.82)';
-      ctx.strokeStyle='#ff8800';ctx.lineWidth=1;
-      rRect(bx,by,bw,bh,4);ctx.fill();ctx.stroke();
-      ctx.fillStyle='#ffffff';
-      ctx.font='bold 10px Courier New';ctx.textAlign='left';ctx.textBaseline='middle';
-      ctx.fillText('⚡ RISQUE PLUIE — PROB '+Math.round(probMax)+'%',bx+6,by+10);
     }
 
     /* ── Badge incertitude précipitations (spread>2mm/h) ── */
     const badPts=pts.filter(p=>p.hourIdx>=0&&p.spread>2);
     if(badPts.length){
-      const by2=(alerte||risque)?top+32:top+8;
+      const by2=alerte?top+32:top+8;
       ctx.fillStyle='rgba(180,100,0,0.80)';
       ctx.strokeStyle='#ff8800';ctx.lineWidth=1;
       rRect(bx,by2,175,18,4);ctx.fill();ctx.stroke();
@@ -3105,6 +3134,9 @@ function drawUncertaintyBadge(chart,pts){
     ctx.restore();
   }catch(e){console.warn('[badge]',e.message);}
 }
+
+/* ── Courbe humidité relative — bleu clair pointillé ── */
+
 function buildOverlays(chart,pts){
   const {chartArea,scales:{x},width:cW}=chart;
   const wrapper=document.getElementById('chartWrapper');
@@ -3159,9 +3191,27 @@ function highlightModel(key,on){
     }
   });
 }
+
+/* Mettre à jour les datasets lazy (humidity, orage) après chargement des données */
+function updateLazyDatasets(){
+  if(!myChart)return;
+  const ds=myChart.data.datasets;
+  const dsH=ds.find(d=>d.label==='humidity');
+  const dsO=ds.find(d=>d.label==='orage');
+  const pts=_lastPts;
+  if(!pts||!pts.length)return;
+  if(dsH&&_humidityHourly){
+    dsH.data=pts.map(p=>{const hi=p.hourIdx>=0?p.hourIdx:null;return hi!=null&&hi<_humidityHourly.length?_humidityHourly[hi]:null;});
+  }
+  /* orage utilise p.p déjà dans pts → pas de recalcul lazy nécessaire */
+  if((dsH||dsO)&&myChart)myChart.update('none');
+}
+
 function buildModelLegend(pts){
   const el=document.getElementById('modelLegendInline');
   if(!el)return;
+  if(!_layers.models){el.classList.remove('active');return;}
+  el.classList.add('active');
   let html='';
   SOURCES.filter(s=>s.omModel).forEach(s=>{
     const hidden=_hiddenModels.has(s.key);
