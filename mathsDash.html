@@ -1,1 +1,1714 @@
 
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Maths Dash — 5e</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0820;
+  --bg2:#151033;
+  --grid:#2a2360;
+  --cyan:#29f0e8;
+  --magenta:#ff3d8b;
+  --yellow:#ffd23f;
+  --green:#3dff8b;
+  --txt:#f2f0ff;
+  --muted:#9a93c9;
+  --card:#1a1440;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);font-family:'Nunito',sans-serif}
+#wrap{position:relative;width:100%;height:100%}
+canvas{display:block;width:100%;height:100%}
+
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 120%, #1c1450 0%, var(--bg) 65%);z-index:10;padding:20px;overflow-y:auto}
+.hidden{display:none!important}
+
+h1.logo{font-family:'Bungee',cursive;font-size:clamp(2.2rem,7vw,4.2rem);line-height:1;text-align:center;
+  background:linear-gradient(180deg,var(--cyan) 0%, #7b6cff 55%, var(--magenta) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 18px rgba(41,240,232,.35));margin-bottom:4px}
+.tagline{color:var(--muted);font-weight:700;margin-bottom:26px;text-align:center}
+
+.panel{background:var(--card);border:2px solid var(--grid);border-radius:18px;padding:22px;max-width:680px;width:100%;box-shadow:0 0 40px rgba(123,108,255,.15)}
+.panel h2{font-family:'Bungee',cursive;font-size:1rem;letter-spacing:.06em;color:var(--cyan);margin-bottom:12px}
+.panel + .panel{margin-top:14px}
+
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{flex:1;min-width:110px;padding:11px 8px;border-radius:12px;border:2px solid var(--grid);background:transparent;color:var(--muted);font-family:'Nunito';font-weight:800;font-size:.95rem;cursor:pointer;transition:all .15s}
+.seg button.on{background:var(--cyan);border-color:var(--cyan);color:#062030;box-shadow:0 0 14px rgba(41,240,232,.5)}
+.seg button:focus-visible{outline:3px solid var(--yellow)}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chips button{padding:8px 13px;border-radius:999px;border:2px solid var(--grid);background:transparent;color:var(--muted);font-weight:800;font-size:.85rem;cursor:pointer;transition:all .15s}
+.chips button.on{border-color:var(--magenta);color:var(--txt);background:rgba(255,61,139,.18);box-shadow:0 0 10px rgba(255,61,139,.35)}
+.chips button:focus-visible{outline:3px solid var(--yellow)}
+.chips-tools{margin-top:10px;display:flex;gap:14px}
+.chips-tools a{color:var(--cyan);font-weight:800;font-size:.85rem;cursor:pointer;text-decoration:underline}
+
+#btnPlay{margin-top:22px;font-family:'Bungee',cursive;font-size:1.4rem;padding:16px 60px;border-radius:16px;border:none;cursor:pointer;color:#06203 0;
+  background:linear-gradient(180deg,var(--yellow),#ffb53f);color:#3a2600;box-shadow:0 6px 0 #b97900, 0 0 30px rgba(255,210,63,.45);transition:transform .1s}
+#btnPlay:active{transform:translateY(4px);box-shadow:0 2px 0 #b97900}
+#btnPlay:focus-visible{outline:3px solid var(--cyan)}
+.help{margin-top:14px;color:var(--muted);font-size:.85rem;text-align:center;max-width:560px}
+
+/* HUD */
+#hud{position:absolute;inset:0;pointer-events:none;z-index:5}
+#progressWrap{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:min(520px,72%);height:14px;background:rgba(255,255,255,.12);border-radius:999px;overflow:hidden;border:1px solid rgba(255,255,255,.18)}
+#progressBar{height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:999px;transition:width .3s}
+#pct{position:absolute;top:30px;left:50%;transform:translateX(-50%);font-family:'Bungee';font-size:.78rem;color:var(--cyan);text-shadow:0 0 8px rgba(41,240,232,.6)}
+#attempt{position:absolute;top:34px;left:14px;font-weight:900;font-size:.75rem;color:var(--muted)}
+#lives{position:absolute;top:8px;left:14px;font-size:1.3rem;letter-spacing:2px;filter:drop-shadow(0 0 6px rgba(255,61,139,.6))}
+#score{position:absolute;top:10px;right:14px;font-family:'Bungee';font-size:1rem;color:var(--yellow);text-shadow:0 0 10px rgba(255,210,63,.5)}
+#pauseBtn{position:absolute;top:44px;right:14px;pointer-events:auto;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:var(--txt);border-radius:10px;padding:5px 12px;font-weight:800;cursor:pointer}
+#toast{position:absolute;top:70px;left:50%;transform:translateX(-50%);font-family:'Bungee';font-size:1.1rem;color:var(--green);opacity:0;transition:opacity .3s;text-shadow:0 0 12px rgba(61,255,139,.7)}
+
+/* Question modal */
+#qModal{position:absolute;inset:0;background:rgba(7,5,22,.86);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:20;padding:16px}
+.qcard{background:var(--card);border:2px solid var(--cyan);border-radius:20px;max-width:640px;width:100%;padding:26px;box-shadow:0 0 50px rgba(41,240,232,.3);max-height:92vh;overflow-y:auto}
+.qtopic{display:inline-block;background:rgba(255,61,139,.2);border:1.5px solid var(--magenta);color:#ffb8d4;font-weight:900;font-size:.78rem;padding:5px 12px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase}
+.qtext{font-size:1.25rem;font-weight:800;margin:16px 0 20px;line-height:1.45;white-space:pre-line}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.answers{grid-template-columns:1fr}}
+.answers button{padding:15px 10px;border-radius:14px;border:2px solid var(--grid);background:#221a52;color:var(--txt);font-family:'Nunito';font-weight:900;font-size:1.1rem;cursor:pointer;transition:all .12s}
+.answers button:hover:not(:disabled){border-color:var(--cyan);transform:translateY(-2px)}
+.answers button:focus-visible{outline:3px solid var(--yellow)}
+.answers button.good{background:#0f4a2c;border-color:var(--green);box-shadow:0 0 14px rgba(61,255,139,.5)}
+.answers button.bad{background:#54122c;border-color:var(--magenta)}
+.explain{margin-top:16px;background:rgba(41,240,232,.08);border-left:4px solid var(--cyan);padding:12px 14px;border-radius:0 10px 10px 0;font-weight:700;font-size:.95rem;line-height:1.5;white-space:pre-line}
+#qContinue{margin-top:16px;width:100%;padding:13px;border-radius:14px;border:none;font-family:'Bungee';font-size:1rem;cursor:pointer;background:var(--cyan);color:#06203 0;color:#062a30}
+.qtimerWrap{height:8px;background:rgba(255,255,255,.12);border-radius:99px;margin-top:6px;overflow:hidden}
+.qtimer{height:100%;background:var(--yellow);width:100%}
+
+/* Salle secrète : contrôles tactiles */
+#roomCtl{position:absolute;inset:auto 0 18px 0;display:flex;justify-content:space-between;padding:0 18px;z-index:6;pointer-events:none}
+#roomCtl div{display:flex;gap:12px;pointer-events:auto}
+#roomCtl button{width:64px;height:64px;border-radius:50%;border:2px solid rgba(255,255,255,.4);background:rgba(123,108,255,.25);color:#fff;font-size:1.6rem;font-weight:900;backdrop-filter:blur(2px)}
+#roomCtl button:active{background:rgba(41,240,232,.45)}
+
+/* End screen */
+.bigScore{font-family:'Bungee';font-size:2.6rem;color:var(--yellow);text-shadow:0 0 20px rgba(255,210,63,.6);margin:8px 0}
+.statRow{display:flex;justify-content:space-between;align-items:center;padding:9px 4px;border-bottom:1px solid var(--grid);font-weight:800}
+.statRow .bar{flex:1;height:9px;margin:0 14px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden}
+.statRow .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--magenta),var(--cyan))}
+.statRow .pct{min-width:52px;text-align:right;color:var(--cyan)}
+.advice{margin-top:14px;color:var(--muted);font-weight:700;font-size:.92rem;line-height:1.5}
+.endBtns{display:flex;gap:12px;margin-top:20px}
+.endBtns button{flex:1;padding:14px;border-radius:14px;border:none;font-family:'Bungee';font-size:.95rem;cursor:pointer}
+#btnReplay{background:var(--yellow);color:#3a2600}
+#btnMenu{background:transparent;border:2px solid var(--cyan);color:var(--cyan)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game"></canvas>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div id="progressWrap"><div id="progressBar"></div></div>
+    <div id="pct">0 %</div>
+    <div id="attempt">Tentative 1</div>
+    <div id="lives">❤❤❤</div>
+    <div id="score">0</div>
+    <button id="pauseBtn">⏸ Pause</button>
+    <div id="toast"></div>
+  </div>
+
+  <!-- MENU -->
+  <div id="menu" class="screen">
+    <h1 class="logo">MATHS DASH</h1>
+    <p class="tagline">Tout le programme de maths du collège (6e → 3e), en mode Geometry Dash ! 🧮⚡</p>
+
+    <div class="panel">
+      <h2>Classe</h2>
+      <div class="seg" id="segLevel">
+        <button data-v="6">🟢 6e</button>
+        <button data-v="5" class="on">🟡 5e</button>
+        <button data-v="4">🟠 4e</button>
+        <button data-v="3">🔴 3e</button>
+      </div>
+      <p style="color:var(--muted);font-weight:700;font-size:.85rem;margin-top:10px">Programme officiel complet de la classe choisie. Par défaut, tous les chapitres sont actifs — affine ta sélection dans <b>⚙️ Options</b>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Vitesse du cube</h2>
+      <div class="seg" id="segSpeed">
+        <button data-v="0.8">🐢 Tranquille</button>
+        <button data-v="1" class="on">🚀 Normale</button>
+        <button data-v="1.25">⚡ Rapide</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:14px;align-items:center;margin-top:22px">
+      <button id="btnPlay" style="margin-top:0">JOUER</button>
+      <button id="btnOptions" style="font-family:'Bungee';font-size:1rem;padding:16px 24px;border-radius:16px;border:2px solid var(--cyan);background:transparent;color:var(--cyan);cursor:pointer">⚙️ OPTIONS</button>
+    </div>
+    <p class="help">💻 <b>Espace / clic</b> pour sauter · 📱 <b>touche l'écran</b> · Le jeu ne s'arrête jamais : la question s'affiche en haut et le cube ralentit. Réponds en passant dans la bonne porte : <b>saute ⬆</b> pour la réponse du haut, <b>reste au sol ⬇</b> pour celle du bas. Portes bleues 🌀 = énigme (+100 et bouclier 🛡️). Billes dorées 🟡 = Vrai/Faux : juste ➜ +1 vie ❤, faux ➜ −1 vie. Anneaux ⚪ = saute en l'air dedans pour rebondir. 10 énigmes = victoire !</p>
+  </div>
+
+
+  <!-- OPTIONS : choix des chapitres -->
+  <div id="optScreen" class="screen hidden" style="z-index:30">
+    <div class="panel" style="max-width:720px">
+      <h2 id="optTitle">⚙️ Chapitres travaillés</h2>
+      <p style="color:var(--muted);font-weight:700;font-size:.88rem;margin-bottom:12px">Décoche des chapitres pour cibler tes révisions (ex. avant un contrôle). La liste s'adapte à la classe choisie.</p>
+      <div class="chips" id="chips"></div>
+      <div class="chips-tools"><a id="selAll">Tout cocher</a><a id="selNone">Tout décocher</a></div>
+      <button id="btnOptClose" style="margin-top:20px;width:100%;padding:14px;border-radius:14px;border:none;font-family:'Bungee';font-size:1rem;cursor:pointer;background:var(--cyan);color:#062a30">✔ VALIDER</button>
+    </div>
+  </div>
+
+  <!-- CONTRÔLES SALLE SECRÈTE (mobile) -->
+  <div id="roomCtl" class="hidden">
+    <div><button id="rcL">◀</button><button id="rcR">▶</button></div>
+    <div><button id="rcJ">⬆</button></div>
+  </div>
+
+  <!-- FIN -->
+  <div id="endScreen" class="screen hidden">
+    <h1 class="logo" id="endTitle">VICTOIRE !</h1>
+    <div class="bigScore" id="endScore">0 pts</div>
+    <div class="panel">
+      <h2>Tes résultats par chapitre</h2>
+      <div id="endStats"></div>
+      <p class="advice" id="endAdvice"></p>
+      <div class="endBtns">
+        <button id="btnReplay">REJOUER</button>
+        <button id="btnMenu">MENU</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+/* ====================== BANQUE DE QUESTIONS — COLLÈGE COMPLET ====================== */
+const ri=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[ri(0,a.length-1)];
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=ri(0,i);[a[i],a[j]]=[a[j],a[i]]}return a};
+const fr=n=>(''+n).replace('.',',');
+function uniq4(correct,gens){
+  const s=new Set([String(correct)]);const out=[correct];let guard=0;
+  while(out.length<4&&guard++<90){const v=gens[ri(0,gens.length-1)]();if(!s.has(String(v))){s.add(String(v));out.push(v)}}
+  while(out.length<4){const v=String(correct)+' '+out.length;if(!s.has(v)){s.add(v);out.push(v)}}
+  return out;
+}
+function mkQ(topic,question,correct,distractGens,explain){
+  const answers=shuffle(uniq4(correct,distractGens));
+  return {topic,question,answers:answers.map(String),correct:String(correct),explain};
+}
+const pgcd=(a,b)=>b?pgcd(b,a%b):a;
+const SUP={2:'²',3:'³',4:'⁴',5:'⁵',6:'⁶',7:'⁷',8:'⁸',9:'⁹'};
+const pw=(b,e)=>`${b}${SUP[e]||'^'+e}`;
+
+/* Chaque chapitre : label, grades = niveaux où il apparaît, gen(g) avec g ∈ {6,5,4,3} */
+const TOPICS={
+
+ nombres:{label:"Nombres décimaux",grades:[6],gen(g){
+  const v=ri(1,3);
+  if(v===1){const e=ri(2,8),d1=ri(1,9),d2=ri(1,9);
+    const nums=[e+d1/10, e+d1/100, e+d2/10+d1/100, e+(d1===d2?d1+0.5:d2)/10];
+    const mx=Math.max(...nums);
+    return mkQ("Nombres décimaux",`Quel est le plus grand de ces nombres ?\n${shuffle(nums.map(fr)).join("  ;  ")}`,fr(mx),
+    [()=>fr(nums[0]),()=>fr(nums[1]),()=>fr(nums[2])],
+    `On compare chiffre par chiffre : partie entière, puis dixièmes, puis centièmes.\nLe plus grand est ${fr(mx)}.`)}
+  if(v===2){const a=ri(2,9)+ri(1,9)/10,b=ri(2,9)+ri(1,9)/10;const r=Math.round((a+b)*10)/10;
+    return mkQ("Nombres décimaux",`Calcule :\n${fr(a)} + ${fr(b)}`,fr(r),
+    [()=>fr(Math.round((a+b)*10)/10+1),()=>fr(Math.round((a+b+0.9))*1),()=>fr(Math.round((a*10+b))/10)],
+    `On aligne les virgules : ${fr(a)} + ${fr(b)} = ${fr(r)}.`)}
+  const n=ri(2,9)+ri(1,9)/10+ri(1,9)/100,k=pick([10,100]);const r=Math.round(n*k*100)/100;
+  return mkQ("Nombres décimaux",`Calcule :\n${fr(n)} × ${k}`,fr(r),
+  [()=>fr(Math.round(n*k/10*100)/100),()=>fr(Math.round(n*k*10)),()=>fr(Math.round((n+k)*100)/100)],
+  `Multiplier par ${k}, c'est décaler la virgule de ${k===10?1:2} rang${k===100?'s':''} vers la droite : ${fr(r)}.`)}},
+
+ divisibilite:{label:"Division & nombres premiers",grades:[6,3],gen(g){
+  if(g===6){const v=ri(1,2);
+    if(v===1){const d=ri(3,9),q=ri(4,12),r=ri(1,d-1);const n=d*q+r;
+      return mkQ("Division & nombres premiers",`Dans la division euclidienne de ${n} par ${d}, quel est le reste ?`,r,
+      [()=>q,()=>r+1>d-1?0:r+1,()=>d-r],
+      `${n} = ${d} × ${q} + ${r}, et ${r} < ${d}.\nLe quotient est ${q}, le reste est ${r}.`)}
+    const base=ri(3,11)*9;
+    return mkQ("Division & nombres premiers",`Quel nombre est divisible par 9 ?`,base,
+    [()=>base+ri(1,4),()=>base-ri(1,4),()=>base+ri(5,7)],
+    `Un nombre est divisible par 9 si la somme de ses chiffres l'est.\n${base} = 9 × ${base/9}. ✔`)}
+  const v=ri(1,2);
+  if(v===1){const primes=[2,3,5,7,11,13,17,19,23,29,31,37,41,43];const p=pick(primes);
+    const fake1=p+1,fake2=pick([4,6,8,9,10,12,14,15,21,25,27,33,35]);
+    return mkQ("Division & nombres premiers",`Quel nombre est premier ?`,p,
+    [()=>fake2,()=>fake1%2===0?fake1:fake1+1,()=>pick([9,15,21,25,27,33,35,49])],
+    `${p} n'a que deux diviseurs : 1 et lui-même. C'est un nombre premier.`)}
+  const a=ri(2,3),b=ri(1,2),c=pick([5,7]);const n=2**a*3**b*(ri(0,1)?c:1);
+  const deco=`2${SUP[a]||''}${a===1?'':''} × 3${b>1?SUP[b]:''}${n%c===0?` × ${c}`:''}`.replace('2²','2²').replace(/2(?!\d|²|³)/,'2'+(a>1?'':''));
+  const txt=(a>1?pw(2,a):'2')+' × '+(b>1?pw(3,b):'3')+(n%c===0?` × ${c}`:'');
+  return mkQ("Division & nombres premiers",`Quelle est la décomposition en facteurs premiers de ${n} ?`,txt,
+  [()=>(a>1?pw(2,a+1):'2')+' × '+(b>1?pw(3,b):'3'),()=>'2 × '+(n/2),()=>(a>1?pw(2,a):'2')+' × '+(b>1?pw(3,b+1):pw(3,2))],
+  `${n} = ${txt}. On divise successivement par 2, puis 3, puis 5, 7…`)}},
+
+ conversions:{label:"Grandeurs & conversions",grades:[6],gen(g){
+  const v=ri(1,3);
+  if(v===1){const n=ri(2,9)+ri(1,9)/10;
+    return mkQ("Grandeurs & conversions",`Convertis :\n${fr(n)} km = … m`,fr(n*1000),
+    [()=>fr(n*100),()=>fr(n*10),()=>fr(n*10000)],
+    `1 km = 1 000 m, donc ${fr(n)} km = ${fr(n*1000)} m.`)}
+  if(v===2){const h=ri(1,3),m=pick([15,20,30,40,45]);const r=h*60+m;
+    return mkQ("Grandeurs & conversions",`Convertis :\n${h} h ${m} min = … min`,r,
+    [()=>h*100+m,()=>r+10,()=>h*60-m],
+    `${h} h = ${h*60} min, donc ${h} h ${m} min = ${h*60} + ${m} = ${r} min.`)}
+  const n=pick([1500,2500,3200,4800]);
+  return mkQ("Grandeurs & conversions",`Convertis :\n${n} g = … kg`,fr(n/1000),
+  [()=>fr(n/100),()=>fr(n/10),()=>fr(n*10)],
+  `1 kg = 1 000 g, donc ${n} g = ${fr(n/1000)} kg.`)}},
+
+ priorites:{label:"Priorités de calcul",grades:[5,4],gen(g){
+  if(g===5){const v=ri(1,2);
+    if(v===1){const a=ri(2,9),b=ri(2,9),c=ri(2,9);const r=a+b*c;
+      return mkQ("Priorités de calcul",`Calcule :\n${a} + ${b} × ${c}`,r,[()=>(a+b)*c,()=>r+ri(1,4),()=>r-ri(1,4)],
+      `Multiplication d'abord : ${b} × ${c} = ${b*c}, puis ${a} + ${b*c} = ${r}.`)}
+    const a=ri(2,7),b=ri(2,7),c=ri(2,5),e=ri(1,6);const r=(a+b)*c-e;
+    return mkQ("Priorités de calcul",`Calcule :\n(${a} + ${b}) × ${c} − ${e}`,r,[()=>a+b*c-e,()=>(a+b)*(c-e),()=>r+ri(2,8)],
+    `Parenthèses d'abord : ${a}+${b}=${a+b}, puis ×${c} = ${(a+b)*c}, enfin −${e} : ${r}.`)}
+  const a=ri(2,8),b=ri(2,6),c=ri(2,9);const r=a-b*c;
+  return mkQ("Priorités de calcul",`Calcule :\n${a} − ${b} × ${c}`,r,[()=>(a-b)*c,()=>r+b,()=>-r],
+  `Multiplication d'abord : ${b}×${c}=${b*c}.\nPuis ${a} − ${b*c} = ${r} (résultat négatif !).`)}},
+
+ relatifs:{label:"Nombres relatifs",grades:[5,4,3],gen(g){
+  if(g===5){const v=ri(1,2);
+    if(v===1){const a=ri(1,9),b=ri(1,9);const r=-a+b;
+      return mkQ("Nombres relatifs",`Calcule :\n(−${a}) + (+${b})`,r,[()=>a+b,()=>-(a+b),()=>r===0?1:-r],
+      `Signes contraires : on soustrait et on garde le signe du plus « fort ».\nRésultat : ${r}.`)}
+    const a=ri(2,9),b=ri(2,9),c=ri(2,9);const r=-a+b+c;
+    return mkQ("Nombres relatifs",`Calcule :\n(−${a}) + (+${b}) − (−${c})`,r,[()=>-a+b-c,()=>-(a+b+c),()=>r+ri(2,5)],
+    `Soustraire (−${c}) = ajouter ${c}.\n(−${a}) + ${b} + ${c} = ${r}.`)}
+  if(g===4){const v=ri(1,2);
+    if(v===1){const a=ri(2,9),b=ri(2,9);const r=-a*b;
+      return mkQ("Nombres relatifs",`Calcule :\n(−${a}) × (+${b})`,r,[()=>a*b,()=>-a-b,()=>-a+b],
+      `Signes contraires ➜ résultat négatif.\n(−${a}) × ${b} = ${r}.`)}
+    const a=ri(2,6),b=ri(2,6);const r=a*b;
+    return mkQ("Nombres relatifs",`Calcule :\n(−${a}) × (−${b})`,r,[()=>-a*b,()=>-(a+b),()=>a+b],
+    `Deux signes − ➜ résultat positif !\n(−${a}) × (−${b}) = ${r}.`)}
+  const a=ri(2,6);const r=a*a;
+  return mkQ("Nombres relatifs",`Calcule :\n(−${a})²`,r,[()=>-a*a,()=>2*a,()=>-2*a],
+  `(−${a})² = (−${a}) × (−${a}) = +${r}.\n⚠️ Ne pas confondre avec −${a}² = ${-r} !`)}},
+
+ fractions:{label:"Fractions",grades:[6,5,4,3],gen(g){
+  if(g===6){const v=ri(1,2);
+    if(v===1){const n=pick([20,40,60,80]),b=pick([2,4,5]),a=ri(1,b-1);const r=n*a/b;
+      return mkQ("Fractions",`Calcule les ${a}/${b} de ${n}.`,r,[()=>n/b,()=>r+a,()=>n*b/a===Math.floor(n*b/a)?n*b/a:r+5],
+      `On divise par ${b} puis on multiplie par ${a} :\n${n} ÷ ${b} = ${n/b}, puis × ${a} = ${r}.`)}
+    const k=ri(2,4),a=ri(1,4),b=ri(a+1,8);
+    return mkQ("Fractions",`Quelle fraction est égale à ${a}/${b} ?`,`${a*k}/${b*k}`,
+    [()=>`${a+k}/${b+k}`,()=>`${a*k}/${b}`,()=>`${a}/${b*k}`],
+    `On multiplie le numérateur ET le dénominateur par ${k} :\n${a}/${b} = ${a*k}/${b*k}.`)}
+  if(g===5){const v=ri(1,2);
+    if(v===1){const k=ri(2,5),a=ri(1,5),b=ri(a+1,9);
+      return mkQ("Fractions",`Simplifie :\n${a*k}/${b*k}`,`${a}/${b}`,[()=>`${a*k}/${b}`,()=>`${a}/${b*k}`,()=>`${a+1}/${b}`],
+      `On divise haut et bas par ${k} : ${a}/${b}.`)}
+    const b=pick([2,3,4,5]),k=pick([2,3]),a=ri(1,b),c=ri(1,b*k-1);const num=a*k+c;
+    return mkQ("Fractions",`Calcule :\n${a}/${b} + ${c}/${b*k}`,`${num}/${b*k}`,
+    [()=>`${a+c}/${b+b*k}`,()=>`${a+c}/${b*k}`,()=>`${num}/${b}`],
+    `Même dénominateur ${b*k} : ${a}/${b} = ${a*k}/${b*k}.\nPuis ${a*k}/${b*k} + ${c}/${b*k} = ${num}/${b*k}.`)}
+  if(g===4){const v=ri(1,2);
+    if(v===1){const a=ri(1,5),b=ri(2,7),c=ri(1,5),d=ri(2,7);
+      return mkQ("Fractions",`Calcule :\n${a}/${b} × ${c}/${d}`,`${a*c}/${b*d}`,
+      [()=>`${a+c}/${b+d}`,()=>`${a*d}/${b*c}`,()=>`${a*c}/${b+d}`],
+      `On multiplie les numérateurs entre eux et les dénominateurs entre eux :\n(${a}×${c})/(${b}×${d}) = ${a*c}/${b*d}.`)}
+    const a=ri(1,5),b=ri(2,7),c=ri(2,6),d=ri(2,7);
+    return mkQ("Fractions",`Calcule :\n${a}/${b} ÷ ${c}/${d}`,`${a*d}/${b*c}`,
+    [()=>`${a*c}/${b*d}`,()=>`${a*d}/${b*d}`,()=>`${a}/${b*c}`],
+    `Diviser, c'est multiplier par l'inverse :\n${a}/${b} × ${d}/${c} = ${a*d}/${b*c}.`)}
+  const b=pick([2,3]),d=b===2?3:2,a=ri(1,b-1),c=ri(1,d-1);const num=a*d+c*b;
+  return mkQ("Fractions",`Calcule :\n${a}/${b} + ${c}/${d}`,`${num}/${b*d}`,
+  [()=>`${a+c}/${b+d}`,()=>`${a+c}/${b*d}`,()=>`${num}/${b+d}`],
+  `Dénominateur commun ${b*d} : ${a}/${b}=${a*d}/${b*d} et ${c}/${d}=${c*b}/${b*d}.\nSomme : ${num}/${b*d}.`)}},
+
+ puissances:{label:"Puissances",grades:[4,3],gen(g){
+  if(g===4){const v=ri(1,2);
+    if(v===1){const a=ri(2,5),m=ri(2,4),n=ri(2,4);
+      return mkQ("Puissances",`Simplifie :\n${pw(a,m)} × ${pw(a,n)}`,pw(a,m+n),
+      [()=>pw(a,m*n),()=>pw(a*a,m+n),()=>pw(a,m+n+1)],
+      `Même base : on AJOUTE les exposants.\n${pw(a,m)} × ${pw(a,n)} = ${pw(a,m+n)}.`)}
+    const b=pick([2,3,5]),e=b===2?ri(3,5):(b===3?ri(2,3):2);const r=b**e;
+    return mkQ("Puissances",`Calcule :\n${pw(b,e)}`,r,[()=>b*e,()=>b**(e-1),()=>b**e+b],
+    `${pw(b,e)} = ${Array(e).fill(b).join(' × ')} = ${r}.\n⚠️ Ce n'est pas ${b} × ${e} !`)}
+  const v=ri(1,2);
+  if(v===1){const m=ri(1,9),e=ri(3,5);const n=m*10**e;
+    return mkQ("Puissances",`Écris en notation scientifique :\n${n.toLocaleString('fr-FR').replace(/\u202f/g,' ')}`,`${m} × 10${SUP[e]}`,
+    [()=>`${m} × 10${SUP[e-1]}`,()=>`${m} × 10${SUP[e+1]||'⁶'}`,()=>`${m*10} × 10${SUP[e-1]}`],
+    `${n.toLocaleString('fr-FR').replace(/\u202f/g,' ')} = ${m} × ${10**e<1e6?(10**e).toLocaleString('fr-FR').replace(/\u202f/g,' '):'10'+SUP[e]} = ${m} × 10${SUP[e]}.`)}
+  const m=ri(2,5),n=ri(2,4);
+  return mkQ("Puissances",`Simplifie :\n10${SUP[m]} × 10${SUP[n]}`,`10${SUP[m+n]||'^'+(m+n)}`,
+  [()=>`10${SUP[m*n]||'^'+(m*n)}`,()=>`100${SUP[m+n]||''}`,()=>`10${SUP[Math.abs(m-n)]||'¹'}`],
+  `On ajoute les exposants : 10${SUP[m]} × 10${SUP[n]} = 10${SUP[m+n]||'^'+(m+n)}.`)}},
+
+ litteral:{label:"Calcul littéral",grades:[5,4,3],gen(g){
+  if(g===5){const v=ri(1,2);
+    if(v===1){const k=ri(2,6),a=ri(2,9);
+      return mkQ("Calcul littéral",`Développe :\n${k}(x + ${a})`,`${k}x + ${k*a}`,
+      [()=>`${k}x + ${a}`,()=>`${k+a}x`,()=>`${k}x + ${k+a}`],
+      `Distributivité : ${k}×x = ${k}x et ${k}×${a} = ${k*a}.`)}
+    const a=ri(3,9),b=ri(2,9),c=ri(1,a-1),e=ri(1,8);
+    return mkQ("Calcul littéral",`Réduis :\n${a}x + ${b} − ${c}x + ${e}`,`${a-c}x + ${b+e}`,
+    [()=>`${a+c}x + ${b+e}`,()=>`${a-c}x + ${b-e}`,()=>`${a-c+b+e}x`],
+    `Les x ensemble : ${a}x − ${c}x = ${a-c}x. Les nombres : ${b}+${e}=${b+e}.`)}
+  if(g===4){const a=ri(1,6),b=ri(1,6);
+    return mkQ("Calcul littéral",`Développe :\n(x + ${a})(x + ${b})`,`x² + ${a+b}x + ${a*b}`,
+    [()=>`x² + ${a*b}x + ${a+b}`,()=>`x² + ${a+b}x + ${a+b}`,()=>`2x + ${a+b}`],
+    `Double distributivité : x×x + x×${b} + ${a}×x + ${a}×${b}\n= x² + ${b}x + ${a}x + ${a*b} = x² + ${a+b}x + ${a*b}.`)}
+  const v=ri(1,2);
+  if(v===1){const k=ri(2,7),a=ri(2,8);
+    return mkQ("Calcul littéral",`Factorise :\n${k}x + ${k*a}`,`${k}(x + ${a})`,
+    [()=>`${k}(x + ${k*a})`,()=>`x(${k} + ${a})`,()=>`${k*a}(x + 1)`],
+    `Le facteur commun est ${k} :\n${k}x + ${k*a} = ${k} × x + ${k} × ${a} = ${k}(x + ${a}).`)}
+  const a=ri(2,5),b=ri(1,6),c=ri(1,5);
+  return mkQ("Calcul littéral",`Réduis :\n${a}x² + ${b}x + ${c}x² − x`,`${a+c}x² + ${b-1}x`,
+  [()=>`${a+c}x² + ${b+1}x`,()=>`${a+c+b-1}x²`,()=>`${a+b+c-1}x³`],
+  `On regroupe les x² : ${a}+${c}=${a+c}, et les x : ${b}−1=${b-1}.\nOn ne mélange JAMAIS x² et x !`)}},
+
+ equations:{label:"Équations",grades:[5,4,3],gen(g){
+  if(g===5){const v=ri(1,2);
+    if(v===1){const x=ri(2,9),a=ri(2,9);
+      return mkQ("Équations",`Trouve x :\nx + ${a} = ${x+a}`,x,[()=>x+a+a,()=>x+1,()=>x===1?3:x-1],
+      `x = ${x+a} − ${a} = ${x}.`)}
+    const x=ri(2,9),a=ri(2,6);
+    return mkQ("Équations",`Trouve x :\n${a}x = ${a*x}`,x,[()=>a*x-a,()=>a*x*a,()=>x+ri(1,3)],
+    `x = ${a*x} ÷ ${a} = ${x}.`)}
+  if(g===4){const x=ri(2,8),a=ri(3,6),c=ri(1,a-2),b=ri(1,9);const d=(a-c)*x+b;
+    return mkQ("Équations",`Trouve x :\n${a}x + ${b} = ${c}x + ${d}`,x,[()=>x+1,()=>d-b,()=>x===1?4:x-1],
+    `On regroupe : ${a}x − ${c}x = ${d} − ${b}, soit ${a-c}x = ${d-b}.\nDonc x = ${d-b} ÷ ${a-c} = ${x}.`)}
+  const v=ri(1,2);
+  if(v===1){const a=ri(1,8),b=ri(1,8);
+    return mkQ("Équations",`Quelles sont les solutions de :\n(x − ${a})(x + ${b}) = 0`,`${a} et −${b}`,
+    [()=>`−${a} et ${b}`,()=>`${a} et ${b}`,()=>`−${a} et −${b}`],
+    `Un produit est nul si l'un des facteurs est nul :\nx − ${a} = 0 ➜ x = ${a}, ou x + ${b} = 0 ➜ x = −${b}.`)}
+  const x=ri(3,9),k=ri(2,4),a=ri(2,9);const res=k*x+a;
+  return mkQ("Équations",`Je pense à un nombre. Je le multiplie par ${k}, j'ajoute ${a} : j'obtiens ${res}.\nQuel est ce nombre ?`,x,
+  [()=>res-a,()=>x+1,()=>res-k],
+  `On résout ${k}x + ${a} = ${res} :\n${k}x = ${res-a}, donc x = ${x}.`)}},
+
+ proportionnalite:{label:"Proportionnalité",grades:[6,5,4],gen(g){
+  if(g===6){const p=ri(2,5),n=ri(3,8);
+    return mkQ("Proportionnalité",`3 croissants coûtent ${3*p} €.\nCombien coûtent ${n} croissants ?`,`${n*p} €`,
+    [()=>`${n*p+p} €`,()=>`${3*p+n} €`,()=>`${n*p-p} €`],
+    `1 croissant : ${3*p} ÷ 3 = ${p} €. Donc ${n} × ${p} = ${n*p} €.`)}
+  if(g===5){const k=pick([1.5,2.5,3]),a=ri(4,12);
+    return mkQ("Proportionnalité",`Tableau proportionnel :\n${a} → ${fr(a*k)}\n10 → ?`,fr(10*k),
+    [()=>fr(10*k+a),()=>fr(a*k+10),()=>fr(10*k*2)],
+    `Coefficient : ${fr(a*k)} ÷ ${a} = ${fr(k)}. Donc 10 × ${fr(k)} = ${fr(10*k)}.`)}
+  const v=ri(1,2);
+  if(v===1){const vit=pick([60,80,90,100]),t=pick([2,3]);
+    return mkQ("Proportionnalité",`Une voiture parcourt ${vit*t} km en ${t} h à vitesse constante.\nQuelle est sa vitesse moyenne ?`,`${vit} km/h`,
+    [()=>`${vit*t} km/h`,()=>`${vit+t} km/h`,()=>`${vit-10} km/h`],
+    `v = d ÷ t = ${vit*t} ÷ ${t} = ${vit} km/h.`)}
+  const cm=ri(2,6),ech=pick([100000,50000]);const km=cm*ech/100000;
+  return mkQ("Proportionnalité",`Sur une carte à l'échelle 1/${ech.toLocaleString('fr-FR').replace(/\u202f/g,' ')}, ${cm} cm représentent…`,`${fr(km)} km`,
+  [()=>`${fr(km*10)} km`,()=>`${cm*ech} km`,()=>`${fr(km/10)} km`],
+  `${cm} cm × ${ech.toLocaleString('fr-FR').replace(/\u202f/g,' ')} = ${cm*ech} cm = ${fr(km)} km.`)}},
+
+ pourcentages:{label:"Pourcentages",grades:[5,4,3],gen(g){
+  if(g===5){const n=pick([40,60,80,120,200]),p=pick([10,25,50]);
+    return mkQ("Pourcentages",`Calcule ${p} % de ${n}.`,fr(n*p/100),[()=>fr(n*p/10),()=>fr(n-p),()=>fr(n*p/100+10)],
+    `${p} % de ${n} = ${n} × ${p}/100 = ${fr(n*p/100)}.`)}
+  if(g===4){const n=pick([50,80,120,200]),p=pick([10,20,25,30]);const r=n+n*p/100;
+    return mkQ("Pourcentages",`Un article coûte ${n} €. Son prix augmente de ${p} %.\nQuel est le nouveau prix ?`,`${fr(r)} €`,
+    [()=>`${fr(n*p/100)} €`,()=>`${fr(n+p)} €`,()=>`${fr(n-n*p/100)} €`],
+    `Augmentation : ${n} × ${p}/100 = ${fr(n*p/100)} €.\nNouveau prix : ${n} + ${fr(n*p/100)} = ${fr(r)} €.`)}
+  const n=pick([40,50,80]),p=pick([25,50,20]);const fin=n+n*p/100;
+  return mkQ("Pourcentages",`Un prix passe de ${n} € à ${fr(fin)} €.\nQuel est le pourcentage d'augmentation ?`,`${p} %`,
+  [()=>`${fr(fin-n)} %`,()=>`${p+5} %`,()=>`${p-5<=0?p+10:p-5} %`],
+  `Augmentation : ${fr(fin-n)} €.\nTaux : ${fr(fin-n)} ÷ ${n} × 100 = ${p} %.`)}},
+
+ angles:{label:"Angles & triangles",grades:[6,5],gen(g){
+  if(g===6){const v=ri(1,2);
+    if(v===1){const a=ri(10,80);
+      return mkQ("Angles & triangles",`Un angle de ${a}° est…`,a<90?"aigu":"obtus",
+      [()=>"droit",()=>a<90?"obtus":"aigu",()=>"plat"],
+      `${a}° < 90° donc l'angle est aigu.\n(droit = 90°, obtus = entre 90° et 180°, plat = 180°)`)}
+    const a=ri(15,75);
+    return mkQ("Angles & triangles",`Deux angles sont complémentaires. L'un mesure ${a}°.\nCombien mesure l'autre ?`,`${90-a}°`,
+    [()=>`${180-a}°`,()=>`${90+a>180?a:90+a}°`,()=>`${100-a}°`],
+    `Complémentaires : leur somme vaut 90°.\n90 − ${a} = ${90-a}°.`)}
+  const v=ri(1,3);
+  if(v===1){const a=ri(30,80),b=ri(30,80);
+    return mkQ("Angles & triangles",`Dans un triangle, deux angles mesurent ${a}° et ${b}°.\nLe troisième mesure…`,`${180-a-b}°`,
+    [()=>`${180-a}°`,()=>`${180-a-b+10}°`,()=>`${360-a-b}°`],
+    `Somme des angles = 180°.\n180 − ${a} − ${b} = ${180-a-b}°.`)}
+  if(v===2){const a=pick([20,30,40,50,60,70,80]);
+    return mkQ("Angles & triangles",`Triangle isocèle, angle au sommet ${a}°.\nChaque angle à la base mesure…`,`${(180-a)/2}°`,
+    [()=>`${180-a}°`,()=>`${(180-a)/2+5}°`,()=>`${90-a}°`],
+    `(180 − ${a}) ÷ 2 = ${(180-a)/2}°.`)}
+  const ok=ri(0,1);let a=ri(4,8),b=ri(4,8),c=ok?ri(Math.abs(a-b)+1,a+b-1):a+b+ri(1,4);
+  return mkQ("Angles & triangles",`Peut-on construire un triangle de côtés ${a}, ${b} et ${c} cm ?`,ok?"Oui":"Non",
+  [()=>ok?"Non":"Oui",()=>"Seulement s'il est rectangle",()=>"Seulement s'il est isocèle"],
+  ok?`Oui : ${c} < ${a}+${b} (=${a+b}), inégalité triangulaire OK.`:`Non : ${c} ≥ ${a}+${b} (=${a+b}).`)}},
+
+ transformations:{label:"Symétries & transformations",grades:[6,5,4,3],gen(g){
+  if(g===6){const v=ri(1,2);
+    if(v===1){const f=pick([["un carré",4],["un rectangle",2],["un triangle équilatéral",3],["un losange",2]]);
+      return mkQ("Symétries & transformations",`Combien d'axes de symétrie possède ${f[0]} ?`,f[1],
+      [()=>f[1]+1,()=>f[1]-1<=0?f[1]+2:f[1]-1,()=>f[1]*2===f[1]+1?5:f[1]*2],
+      `${f[0][0].toUpperCase()+f[0].slice(1)} possède ${f[1]} axes de symétrie.`)}
+    const L=ri(3,9);
+    return mkQ("Symétries & transformations",`Par une symétrie axiale, un segment de ${L} cm a pour image un segment de…`,`${L} cm`,
+    [()=>`${2*L} cm`,()=>`${L/2} cm`,()=>"longueur inconnue"],
+    `La symétrie axiale conserve les longueurs : ${L} cm.`)}
+  if(g===5){const x=ri(1,6),y=ri(1,6);
+    return mkQ("Symétries & transformations",`Symétrique de A(${x} ; ${y}) par rapport à O(0 ; 0) ?`,`(−${x} ; −${y})`,
+    [()=>`(${x} ; −${y})`,()=>`(−${x} ; ${y})`,()=>`(${y} ; ${x})`],
+    `Symétrie centrale : les DEUX coordonnées changent de signe.`)}
+  if(g===4){const v=ri(1,2);
+    if(v===1)return mkQ("Symétries & transformations",`Quelle transformation fait « glisser » une figure sans la tourner ni la retourner ?`,"la translation",
+    [()=>"la rotation",()=>"la symétrie axiale",()=>"l'homothétie"],
+    `La translation déplace tous les points dans la même direction, le même sens et de la même longueur.`);
+    const a=pick([90,180]);
+    return mkQ("Symétries & transformations",`Une rotation de ${a}° autour d'un point transforme une figure en une figure…`,"superposable (même taille)",
+    [()=>"deux fois plus grande",()=>"deux fois plus petite",()=>"déformée"],
+    `La rotation conserve les longueurs, les angles et les aires : l'image est superposable à la figure.`)}
+  const k=ri(2,4),L=ri(2,6);
+  return mkQ("Symétries & transformations",`Homothétie de rapport ${k} : un segment de ${L} cm devient un segment de…`,`${k*L} cm`,
+  [()=>`${L+k} cm`,()=>`${k*k*L} cm`,()=>`${L} cm`],
+  `Les longueurs sont multipliées par le rapport ${k} : ${L} × ${k} = ${k*L} cm.\n(Les aires, elles, sont multipliées par ${k}² = ${k*k} !)`)}},
+
+ parallelogrammes:{label:"Parallélogrammes",grades:[5],gen(g){
+  const v=ri(1,3);
+  if(v===1){const a=ri(3,9),b=ri(3,9);
+    return mkQ("Parallélogrammes",`Parallélogramme de côtés ${a} cm et ${b} cm.\nPérimètre ?`,`${2*(a+b)} cm`,
+    [()=>`${a+b} cm`,()=>`${a*b} cm`,()=>`${2*a+b} cm`],
+    `P = 2 × (${a} + ${b}) = ${2*(a+b)} cm.`)}
+  if(v===2)return mkQ("Parallélogrammes",`Dans un parallélogramme, les diagonales…`,"se coupent en leur milieu",
+  [()=>"sont toujours égales",()=>"sont perpendiculaires",()=>"ne se coupent jamais"],
+  `Propriété clé du parallélogramme. (Égales ➜ rectangle, perpendiculaires ➜ losange.)`);
+  return mkQ("Parallélogrammes",`Un parallélogramme avec des diagonales perpendiculaires ET égales est…`,"un carré",
+  [()=>"un losange seulement",()=>"un rectangle seulement",()=>"un trapèze"],
+  `Perpendiculaires ➜ losange. Égales ➜ rectangle. Les deux ➜ carré !`)}},
+
+ pythagore:{label:"Théorème de Pythagore",grades:[4,3],gen(g){
+  const T=[[3,4,5],[6,8,10],[5,12,13],[9,12,15],[8,15,17],[7,24,25]];
+  if(g===4){const[a,b,c]=pick(T);
+    return mkQ("Théorème de Pythagore",`Triangle ABC rectangle en A, avec AB = ${a} cm et AC = ${b} cm.\nCombien mesure l'hypoténuse BC ?`,`${c} cm`,
+    [()=>`${a+b} cm`,()=>`${c+1} cm`,()=>`${a*a+b*b} cm`],
+    `BC² = AB² + AC² = ${a*a} + ${b*b} = ${c*c}.\nDonc BC = √${c*c} = ${c} cm.`)}
+  const v=ri(1,2);
+  if(v===1){const[a,b,c]=pick(T);
+    return mkQ("Théorème de Pythagore",`Triangle de côtés ${a}, ${b} et ${c} cm.\nEst-il rectangle ?`,"Oui",
+    [()=>"Non",()=>"Impossible à savoir",()=>"Seulement s'il est isocèle"],
+    `${c}² = ${c*c} et ${a}² + ${b}² = ${a*a} + ${b*b} = ${a*a+b*b}.\nÉgalité ➜ d'après la réciproque de Pythagore, il est rectangle.`)}
+  const[a,b,c]=pick(T);
+  return mkQ("Théorème de Pythagore",`Triangle rectangle d'hypoténuse ${c} cm et un côté de ${a} cm.\nLe troisième côté mesure…`,`${b} cm`,
+  [()=>`${c-a} cm`,()=>`${b+1} cm`,()=>`${c*c-a*a} cm`],
+  `côté² = ${c}² − ${a}² = ${c*c} − ${a*a} = ${b*b}.\nDonc √${b*b} = ${b} cm.`)}},
+
+ thales:{label:"Théorème de Thalès",grades:[3],gen(g){
+  const k=pick([[1,2],[1,3],[2,3],[3,4]]);const BC=k[1]*ri(2,4);const MN=BC*k[0]/k[1];
+  const AB=k[1]*ri(2,4),AM=AB*k[0]/k[1];
+  return mkQ("Théorème de Thalès",`(MN) // (BC), M sur [AB], N sur [AC].\nAM = ${AM}, AB = ${AB}, BC = ${BC}.\nCombien vaut MN ?`,fr(MN),
+  [()=>fr(BC-AM),()=>fr(MN+k[1]),()=>fr(BC*k[1]/k[0])],
+  `Thalès : AM/AB = MN/BC, soit ${AM}/${AB} = MN/${BC}.\nMN = ${BC} × ${AM}/${AB} = ${fr(MN)}.`)}},
+
+ trigo:{label:"Trigonométrie",grades:[3],gen(g){
+  const v=ri(1,2);
+  if(v===1)return mkQ("Trigonométrie",`Dans un triangle rectangle, le cosinus d'un angle aigu est égal à…`,"côté adjacent / hypoténuse",
+  [()=>"côté opposé / hypoténuse",()=>"côté opposé / côté adjacent",()=>"hypoténuse / côté adjacent"],
+  `CAH-SOH-TOA : Cos = Adjacent/Hypoténuse, Sin = Opposé/Hypoténuse, Tan = Opposé/Adjacent.`);
+  const h=pick([4,6,8,10]);
+  return mkQ("Trigonométrie",`Triangle rectangle : hypoténuse ${h} cm, angle de 60°.\nLe côté adjacent à cet angle mesure… (cos 60° = 0,5)`,`${fr(h/2)} cm`,
+  [()=>`${h} cm`,()=>`${fr(h*0.75)} cm`,()=>`${h*2} cm`],
+  `adjacent = hypoténuse × cos 60° = ${h} × 0,5 = ${fr(h/2)} cm.`)}},
+
+ fonctions:{label:"Fonctions",grades:[3],gen(g){
+  const v=ri(1,3);
+  if(v===1){const a=ri(2,5),b=ri(1,9),x=ri(2,6);
+    return mkQ("Fonctions",`f(x) = ${a}x + ${b}.\nCalcule f(${x}).`,a*x+b,[()=>a*x-b,()=>a+b*x,()=>a*x+b+a],
+    `f(${x}) = ${a} × ${x} + ${b} = ${a*x} + ${b} = ${a*x+b}.`)}
+  if(v===2){const a=ri(2,6),x=ri(2,8);
+    return mkQ("Fonctions",`f(x) = ${a}x.\nQuel est l'antécédent de ${a*x} ?`,x,[()=>a*x*a,()=>a*x-a,()=>x+1],
+    `On cherche x tel que ${a}x = ${a*x} : x = ${a*x} ÷ ${a} = ${x}.`)}
+  const a=ri(2,7);
+  return mkQ("Fonctions",`La fonction f(x) = ${a}x est une fonction…`,"linéaire",
+  [()=>"affine non linéaire",()=>"constante",()=>"du second degré"],
+  `f(x) = ax (sans terme constant) ➜ fonction linéaire.\nSa représentation est une droite passant par l'origine.`)}},
+
+ aires:{label:"Aires & périmètres",grades:[6,5],gen(g){
+  if(g===6){const v=ri(1,2);
+    if(v===1){const L=ri(4,12),l=ri(2,L-1);
+      return mkQ("Aires & périmètres",`Aire d'un rectangle de ${L} cm sur ${l} cm ?`,`${L*l} cm²`,
+      [()=>`${2*(L+l)} cm²`,()=>`${L+l} cm²`,()=>`${L*l+L} cm²`],
+      `Aire = L × l = ${L} × ${l} = ${L*l} cm².\n(${2*(L+l)} cm serait le périmètre.)`)}
+    const c=ri(3,9);
+    return mkQ("Aires & périmètres",`Périmètre d'un carré de côté ${c} cm ?`,`${4*c} cm`,
+    [()=>`${c*c} cm`,()=>`${2*c} cm`,()=>`${4*c+2} cm`],
+    `P = 4 × c = 4 × ${c} = ${4*c} cm. (${c*c} cm² serait l'aire.)`)}
+  const v=ri(1,2);
+  if(v===1){const b=pick([4,6,8,10]),h=ri(3,9);
+    return mkQ("Aires & périmètres",`Triangle : base ${b} cm, hauteur ${h} cm.\nAire ?`,`${fr(b*h/2)} cm²`,
+    [()=>`${b*h} cm²`,()=>`${b+h} cm²`,()=>`${fr(b*h/2+2)} cm²`],
+    `Aire = (b × h) ÷ 2 = (${b} × ${h}) ÷ 2 = ${fr(b*h/2)} cm².`)}
+  const r=ri(2,6);
+  return mkQ("Aires & périmètres",`Aire d'un disque de rayon ${r} cm (en fonction de π) ?`,`${r*r}π cm²`,
+  [()=>`${2*r}π cm²`,()=>`${r*r*2}π cm²`,()=>`${r}π cm²`],
+  `Aire = π × r² = ${r*r}π cm². (${2*r}π = périmètre du cercle.)`)}},
+
+ volumes:{label:"Volumes",grades:[6,5,4,3],gen(g){
+  if(g===6){const a=ri(2,6),b=ri(2,6),c=ri(2,6);
+    return mkQ("Volumes",`Volume d'un pavé droit ${a} × ${b} × ${c} cm ?`,`${a*b*c} cm³`,
+    [()=>`${a+b+c} cm³`,()=>`${a*b+c} cm³`,()=>`${2*(a*b+b*c+a*c)} cm³`],
+    `V = L × l × h = ${a} × ${b} × ${c} = ${a*b*c} cm³.`)}
+  if(g===5){const v=ri(1,2);
+    if(v===1){const B=pick([6,8,10,12]),h=ri(3,9);
+      return mkQ("Volumes",`Prisme droit : base d'aire ${B} cm², hauteur ${h} cm.\nVolume ?`,`${B*h} cm³`,
+      [()=>`${B+h} cm³`,()=>`${B*h/2} cm³`,()=>`${B*h+B} cm³`],
+      `V = aire de base × hauteur = ${B} × ${h} = ${B*h} cm³.`)}
+    const r=ri(2,5),h=ri(3,8);
+    return mkQ("Volumes",`Cylindre : rayon ${r} cm, hauteur ${h} cm.\nVolume exact ?`,`${r*r*h}π cm³`,
+    [()=>`${2*r*h}π cm³`,()=>`${r*h}π cm³`,()=>`${r*r+h}π cm³`],
+    `V = π × r² × h = ${r*r*h}π cm³.`)}
+  if(g===4){const B=pick([6,9,12,15]),h=pick([4,5,6,8]);const V=B*h/3;
+    if(V!==Math.floor(V))return TOPICS.volumes.gen(4);
+    return mkQ("Volumes",`Pyramide : base d'aire ${B} cm², hauteur ${h} cm.\nVolume ?`,`${V} cm³`,
+    [()=>`${B*h} cm³`,()=>`${B*h/2} cm³`,()=>`${V+B} cm³`],
+    `V = (aire de base × hauteur) ÷ 3 = (${B} × ${h}) ÷ 3 = ${V} cm³.`)}
+  const r=pick([3,6]);const V=4*r*r*r/3;
+  return mkQ("Volumes",`Volume exact d'une boule de rayon ${r} cm ?`,`${V}π cm³`,
+  [()=>`${r*r*r}π cm³`,()=>`${4*r*r}π cm³`,()=>`${V/2}π cm³`],
+  `V = (4/3) × π × r³ = (4/3) × π × ${r*r*r} = ${V}π cm³.`)}},
+
+ stats:{label:"Statistiques",grades:[6,5,4,3],gen(g){
+  if(g===6){let a=ri(8,15),b=ri(8,15),c;c=3*Math.round((a+b+ri(8,15))/3)-a-b;
+    if(c<0||c>20)return TOPICS.stats.gen(6);
+    const vals=shuffle([a,b,c]),m=(a+b+c)/3;
+    return mkQ("Statistiques",`Notes : ${vals.join(" ; ")}.\nQuelle est la moyenne ?`,m,
+    [()=>m+1,()=>m-1,()=>Math.max(...vals)],
+    `Moyenne = (${vals.join(" + ")}) ÷ 3 = ${a+b+c} ÷ 3 = ${m}.`)}
+  if(g===5){const tot=pick([20,25,40,50]),n=ri(4,tot/2);
+    return mkQ("Statistiques",`Classe de ${tot} élèves, ${n} font du foot.\nFréquence (en %) ?`,`${fr(n/tot*100)} %`,
+    [()=>`${n} %`,()=>`${fr(n/tot*100+10)} %`,()=>`${fr(100-n/tot*100)} %`],
+    `Fréquence = ${n} ÷ ${tot} × 100 = ${fr(n/tot*100)} %.`)}
+  if(g===4){const vals=[ri(5,9),ri(10,12),ri(13,15),ri(16,18),ri(19,20)];
+    return mkQ("Statistiques",`Série ordonnée : ${vals.join(" ; ")}.\nQuelle est la médiane ?`,vals[2],
+    [()=>vals[1],()=>vals[3],()=>fr((vals[0]+vals[4])/2)],
+    `5 valeurs ordonnées ➜ la médiane est la 3e valeur : ${vals[2]}.\n(Autant de valeurs avant qu'après.)`)}
+  const vals=[ri(4,8),ri(9,11),ri(12,14),ri(15,17),ri(18,20)];
+  return mkQ("Statistiques",`Série : ${shuffle(vals).join(" ; ")}.\nQuelle est l'étendue ?`,vals[4]-vals[0],
+  [()=>vals[2],()=>vals[4],()=>vals[4]+vals[0]],
+  `Étendue = max − min = ${vals[4]} − ${vals[0]} = ${vals[4]-vals[0]}.`)}},
+
+ probas:{label:"Probabilités",grades:[5,4,3],gen(g){
+  if(g===5){const r=ri(1,4),v2=ri(1,4),tot=r+v2;
+    return mkQ("Probabilités",`Sac : ${r} billes rouges, ${v2} vertes.\nP(tirer une rouge) ?`,`${r}/${tot}`,
+    [()=>`${v2}/${tot}`,()=>`${r}/${v2}`,()=>`1/${r+1}`],
+    `${tot} billes en tout, ${r} rouges ➜ P = ${r}/${tot}.`)}
+  if(g===4){const r=ri(2,5),v2=ri(1,4),b=ri(1,4),tot=r+v2+b;
+    return mkQ("Probabilités",`Sac : ${r} rouges, ${v2} vertes, ${b} bleues.\nP(ne PAS tirer une rouge) ?`,`${v2+b}/${tot}`,
+    [()=>`${r}/${tot}`,()=>`${v2}/${tot}`,()=>`${b}/${tot}`],
+    `P(pas rouge) = 1 − ${r}/${tot} = ${v2+b}/${tot}.`)}
+  return mkQ("Probabilités",`On lance 2 fois une pièce équilibrée.\nP(obtenir PILE puis PILE) ?`,"1/4",
+  [()=>"1/2",()=>"1/3",()=>"2/4"],
+  `Chaque lancer : P(pile) = 1/2. Les lancers sont indépendants :\n1/2 × 1/2 = 1/4.\n(Arbre : PP, PF, FP, FF ➜ 1 cas sur 4.)`)}},
+};
+/* ====================== BANQUE VRAI / FAUX (billes 🟡) ====================== */
+const VF=[
+ {t:'relatifs',g:()=>{const a=ri(2,9),b=ri(2,9),ok=Math.random()<0.5,res=ok?-(a+b):-(a+b)+pick([1,2,-2,3]);
+   return{s:`(−${a}) + (−${b}) = −${-res}`,v:ok,e:`Deux négatifs s'additionnent : (−${a}) + (−${b}) = −${a+b}.`}}},
+ {t:'relatifs',g:()=>{const a=ri(1,9),b=ri(1,9),ok=Math.random()<0.5;
+   if(a===b)return VF[1].g();
+   const s=ok?`−${Math.max(a,b)} < −${Math.min(a,b)}`:`−${Math.min(a,b)} < −${Math.max(a,b)}`;
+   return{s,v:ok,e:`Plus un négatif est loin de zéro, plus il est petit : −${Math.max(a,b)} < −${Math.min(a,b)}.`}}},
+ {t:'priorites',g:()=>{const a=ri(2,6),b=ri(2,6),c=ri(2,6),ok=Math.random()<0.5,r=ok?a+b*c:(a+b)*c;
+   return{s:`${a} + ${b} × ${c} = ${r}`,v:ok,e:`La multiplication d'abord : ${b}×${c}=${b*c}, puis +${a} ➜ ${a+b*c}.`}}},
+ {t:'fractions',g:()=>{const a=ri(1,5),b=ri(a+1,9),k=ri(2,4),ok=Math.random()<0.5,n=ok?a*k:a*k+1;
+   return{s:`${a}/${b} = ${n}/${b*k}`,v:ok,e:`${a}/${b} = ${a*k}/${b*k} (on multiplie haut et bas par ${k}).`}}},
+ {t:'fractions',g:()=>{const ok=Math.random()<0.5;
+   return ok?{s:`Si le numérateur est plus petit que le dénominateur, la fraction est inférieure à 1`,v:true,e:`Exemple : 3/4 < 1. C'est toujours vrai.`}
+            :{s:`7/3 est inférieur à 1`,v:false,e:`7/3 ≈ 2,33 : numérateur > dénominateur, donc > 1.`}}},
+ {t:'litteral',g:()=>{const ok=Math.random()<0.5,a=ri(2,7),b=ri(2,7);
+   return ok?{s:`${a}x + ${b}x = ${a+b}x`,v:true,e:`On additionne les coefficients : ${a}+${b}=${a+b}.`}
+            :{s:`x + x = x²`,v:false,e:`x + x = 2x. (x² c'est x × x !)`}}},
+ {t:'equations',g:()=>{const x=ri(2,8),a=ri(2,6),ok=Math.random()<0.5,xt=ok?x:x+pick([1,2]);
+   return{s:`x = ${xt} est solution de ${a}x = ${a*x}`,v:ok,e:`${a} × ${x} = ${a*x}, donc la solution est x = ${x}.`}}},
+ {t:'proportionnalite',g:()=>{const a=ri(2,6),k=ri(2,4),b=ri(3,8),ok=Math.random()<0.5,b2=ok?b*k:b*k+ri(1,3);
+   return{s:`Tableau proportionnel ?  ${a} → ${a*k}  et  ${b} → ${b2}`,v:ok,e:`Coefficient : ${a*k}÷${a} = ${k}. Or ${b} × ${k} = ${b*k}${ok?'.':` ≠ ${b2}.`}`}}},
+ {t:'pourcentages',g:()=>{const n=pick([40,60,80,120,200]),p=pick([10,25,50]),ok=Math.random()<0.5,r=ok?n*p/100:n*p/100+pick([5,10]);
+   return{s:`${p} % de ${n} = ${r}`,v:ok,e:`${p} % de ${n} = ${n} × ${p}/100 = ${n*p/100}.`}}},
+ {t:'angles',g:()=>{const ok=Math.random()<0.5;
+   if(ok){const a=ri(30,80),b=ri(30,80);return{s:`Un triangle peut avoir des angles de ${a}°, ${b}° et ${180-a-b}°`,v:true,e:`${a} + ${b} + ${180-a-b} = 180°. ✔`}}
+   return{s:`Un triangle peut avoir deux angles droits`,v:false,e:`90 + 90 = 180 : il ne resterait rien pour le 3e angle !`}}},
+ {t:'angles',g:()=>{const a=ri(3,6),b=ri(3,6),ok=Math.random()<0.5,c=ok?a+b-1:a+b+ri(1,3);
+   return{s:`Un triangle de côtés ${a} cm, ${b} cm et ${c} cm peut exister`,v:ok,e:ok?`${c} < ${a}+${b} (=${a+b}) : inégalité triangulaire respectée.`:`${c} ≥ ${a}+${b} (=${a+b}) : impossible !`}}},
+ {t:'transformations',g:()=>{const ok=Math.random()<0.5;
+   return ok?{s:`La symétrie centrale conserve les longueurs et les angles`,v:true,e:`Oui ! Les figures symétriques sont superposables (après demi-tour).`}
+            :{s:`Par une symétrie centrale, l'image d'un cercle est un carré`,v:false,e:`L'image d'un cercle est un cercle de même rayon.`}}},
+ {t:'transformations',g:()=>{const x=ri(1,6),y=ri(1,6),ok=Math.random()<0.5;
+   return{s:`Le symétrique de A(${x} ; ${y}) par rapport à O(0 ; 0) est (${ok?'−'+x:x} ; −${y})`,v:ok,e:`Les DEUX coordonnées changent de signe : (−${x} ; −${y}).`}}},
+ {t:'parallelogrammes',g:()=>{const ok=Math.random()<0.5;
+   return ok?{s:`Un rectangle est un parallélogramme particulier`,v:true,e:`Oui : côtés opposés parallèles 2 à 2 (+ angles droits en bonus).`}
+            :{s:`Dans tout parallélogramme, les diagonales sont perpendiculaires`,v:false,e:`Non, ça c'est le losange ! Elles se coupent juste en leur milieu.`}}},
+ {t:'aires',g:()=>{const c=ri(3,9),ok=Math.random()<0.5;
+   return{s:`L'aire d'un carré de côté ${c} cm est ${ok?c*c:4*c} cm²`,v:ok,e:`Aire = c × c = ${c*c} cm². (${4*c} cm serait le périmètre !)`}}},
+ {t:'volumes',g:()=>{const a=ri(2,5),b=ri(2,5),c=ri(2,5),ok=Math.random()<0.5;
+   return{s:`Le volume d'un pavé ${a}×${b}×${c} cm est ${ok?a*b*c:a+b+c} cm³`,v:ok,e:`V = ${a} × ${b} × ${c} = ${a*b*c} cm³.`}}},
+ {t:'stats',g:()=>{const a=ri(6,14),b=a+ri(1,3)*2,ok=Math.random()<0.5,m=(a+b)/2,mt=ok?m:m+1;
+   return{s:`La moyenne de ${a} et ${b} est ${fr(mt)}`,v:ok,e:`(${a} + ${b}) ÷ 2 = ${fr(m)}.`}}},
+ {t:'probas',g:()=>{const ok=Math.random()<0.5;
+   return ok?{s:`Avec un dé à 6 faces, la probabilité d'un nombre pair est 1/2`,v:true,e:`3 cas favorables (2, 4, 6) sur 6 : 3/6 = 1/2.`}
+            :{s:`Une probabilité peut être égale à 2`,v:false,e:`Une probabilité est toujours entre 0 et 1.`}}},
+];
+function pickVF(){
+  const pool=VF.filter(x=>cfg.topics.includes(x.t));
+  return (pool.length?pick(pool):pick(VF)).g();
+}
+
+
+/* ====================== MOTEUR DE JEU v6 ====================== */
+const cvs=document.getElementById('game'),ctx=cvs.getContext('2d');
+let W,H,GROUND;
+function resize(){W=cvs.width=innerWidth*devicePixelRatio;H=cvs.height=innerHeight*devicePixelRatio;
+  cvs.style.width=innerWidth+'px';cvs.style.height=innerHeight+'px';
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  GROUND=innerHeight*0.78;}
+addEventListener('resize',resize);resize();
+
+const cfg={grade:5,speed:1,topics:Object.keys(TOPICS)};
+const topicsForGrade=g=>Object.keys(TOPICS).filter(k=>TOPICS[k].grades.includes(g));
+const TOTAL_Q=10,MAX_LIVES=5,PX=150,SIZE=38,BLOCK=40,PIT=110,CEIL=110;
+let ATTEMPTS=0;
+const S={running:false,paused:false,mode:'run',
+  dist:0,score:0,lives:3,shield:false,vy:0,py:0,onGround:true,dbl:false,
+  spikes:[],cols:[],coins:[],rings:[],gates:[],foes:[],holes:[],pends:[],pads:[],sdoors:[],
+  plats:[],cspikes:[],gportals:[],sportals:[],
+  grav:1,speedMul:1,speedUntil:0,combo:0,
+  particles:[],shocks:[],shake:0,flash:0,
+  qDone:0,nextSpawn:0,nextQCM:0,nextVF:0,nextFoe:0,nextDoor:0,doorsSpawned:0,nextGrav:0,gravCount:0,
+  stats:{},vfOK:0,vfTot:0,roomsOK:0,missed:[],feedback:null,deadTimer:0,t:0};
+
+/* --- audio --- */
+let AC=null;
+function beep(f,dur=0.12,type='square',vol=0.08){try{
+  AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.value=f;g.gain.value=vol;
+  g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+dur);
+  o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+dur);
+}catch(e){}}
+const sJump=()=>beep(420,0.1),sRing=()=>beep(620,0.12,'sine'),sPad=()=>{beep(380,0.08);setTimeout(()=>beep(760,0.14),60)},
+sCoin=()=>{beep(880,0.08,'sine');setTimeout(()=>beep(1320,0.1,'sine'),60)},
+sGood=()=>{beep(660,0.1,'triangle');setTimeout(()=>beep(880,0.12,'triangle'),90);setTimeout(()=>beep(1100,0.16,'triangle'),180)},
+sBad=()=>{beep(220,0.2,'sawtooth');setTimeout(()=>beep(160,0.25,'sawtooth'),120)},
+sLife=()=>{beep(520,0.1,'sine');setTimeout(()=>beep(780,0.1,'sine'),90);setTimeout(()=>beep(1040,0.18,'sine'),180)},
+sWarp=()=>{for(let i=0;i<6;i++)setTimeout(()=>beep(300+i*120,0.1,'sine'),i*55)},
+sDie=()=>beep(110,0.35,'sawtooth',0.12);
+
+/* --- contrôles --- */
+const keys={L:false,R:false};
+function jump(){
+  if(!S.running||S.paused)return;
+  if(S.mode==='room'){roomJump();return}
+  if(S.deadTimer>0)return;
+  if(S.onGround){S.vy=-13.5*S.grav;S.onGround=false;S.dbl=false;sJump();return}
+  for(const r of S.rings){
+    if(!r.used&&Math.hypot(r.x-(PX+SIZE/2),r.y-(S.py+SIZE/2))<52){
+      r.used=true;S.vy=-(r.p||12.5)*S.grav;sRing();burst(r.x,r.y,r.pink?'#ff8ac2':'#ffffff',14);return;}
+  }
+  if(!S.dbl){S.dbl=true;S.vy=-11.8*S.grav;beep(560,0.1);burst(PX+SIZE/2,S.py+(S.grav>0?SIZE:0),'#29f0e8',12);}
+}
+addEventListener('keydown',e=>{
+  if(e.code==='Space'||e.code==='ArrowUp'){e.preventDefault();jump()}
+  if(e.code==='ArrowLeft'||e.code==='KeyQ'||e.code==='KeyA')keys.L=true;
+  if(e.code==='ArrowRight'||e.code==='KeyD')keys.R=true;
+  if(e.code==='KeyP'&&S.running)togglePause();
+});
+addEventListener('keyup',e=>{
+  if(e.code==='ArrowLeft'||e.code==='KeyQ'||e.code==='KeyA')keys.L=false;
+  if(e.code==='ArrowRight'||e.code==='KeyD')keys.R=false;
+});
+cvs.addEventListener('pointerdown',()=>{if(S.mode==='run')jump()});
+const $=id=>document.getElementById(id);
+[['rcL','L'],['rcR','R']].forEach(([id,k])=>{
+  const b=$(id);
+  b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true});
+  b.addEventListener('pointerup',()=>keys[k]=false);
+  b.addEventListener('pointerleave',()=>keys[k]=false);
+});
+$('rcJ').addEventListener('pointerdown',e=>{e.preventDefault();jump()});
+
+/* --- éléments du parcours --- */
+function spk(x){S.spikes.push({x,w:34,h:34})}
+function col(x,n,ring){S.cols.push({x,w:BLOCK,h:n*BLOCK});
+  if(ring)S.rings.push({x:x+BLOCK/2,y:GROUND-n*BLOCK-72,used:false})}
+function coin(x,y){S.coins.push({x,y,r:13,taken:false})}
+function hole(x,w){S.holes.push({x,w})}
+function pend(x){S.pends.push({x,t:ri(0,200),len:ri(120,170),amp:0.5+Math.random()*0.25,sp:0.035+Math.random()*0.02,ay:Math.max(34,GROUND-300)})}
+function pad(x){S.pads.push({x,w:38,fired:false})}
+function plat(x,y,osc){S.plats.push({x,y0:y,w:76,h:14,amp:osc?26:0,sp:0.03+Math.random()*0.02,t:ri(0,99)});coin(x+38,y-42)}
+function cspk(x){S.cspikes.push({x,w:34,h:34})}
+function chomp(x){S.foes.push({k:'chomp',x,y:GROUND-19,r:19,vx:0,t:ri(0,99)})}
+function bigcoin(x,y){S.coins.push({x,y,r:19,taken:false,big:true})}
+function porb(x,y){S.rings.push({x,y,used:false,p:9.5,pink:true})}
+function sportal(x,kind){S.sportals.push({x,kind,used:false})}
+function spawnGravSection(){ // ⭐ section gravité inversée façon GD !
+  const x=innerWidth+140;
+  S.gportals.push({x,dir:-1,used:false});
+  let cx=x+300;
+  for(let i=0;i<ri(3,5);i++){cspk(cx);if(Math.random()<0.6)cspk(cx+34);coin(cx+90,CEIL+48);cx+=ri(160,230);}
+  S.gportals.push({x:Math.max(cx+120,x+1050),dir:1,used:false});
+  const end=Math.max(cx+120,x+1050);
+  const keep=o=>o.x<x-120||o.x>end+150;
+  S.spikes=S.spikes.filter(keep);S.cols=S.cols.filter(keep);S.foes=S.foes.filter(keep);
+  S.pends=S.pends.filter(keep);S.pads=S.pads.filter(keep);S.plats=S.plats.filter(keep);
+  S.holes=S.holes.filter(h=>h.x+h.w<x-120||h.x>end+150);
+  S.gravCount++;
+}
+
+const PATTERNS={
+ easy:[
+  x=>{spk(x)},
+  x=>{spk(x);spk(x+34)},
+  x=>{col(x,1);coin(x+BLOCK/2,GROUND-BLOCK-55)},
+  x=>{coin(x,GROUND-95);coin(x+70,GROUND-120);coin(x+140,GROUND-95)},
+  x=>{spk(x);coin(x+17,GROUND-110)},
+  x=>{hole(x,95);coin(x+47,GROUND-80)},                                      // petite fosse
+ ],
+ mid:[
+  x=>{spk(x);col(x+150,1);spk(x+330)},
+  x=>{col(x,1);col(x+170,2,true)},
+  x=>{spk(x);spk(x+34);spk(x+68);S.rings.push({x:x+51,y:GROUND-120,used:false})},
+  x=>{col(x,2,true);coin(x+BLOCK/2,GROUND-2*BLOCK-50)},
+  x=>{col(x,1);spk(x+BLOCK+8);spk(x+BLOCK+42)},
+  x=>{coin(x,GROUND-150);coin(x+60,GROUND-195);coin(x+120,GROUND-150)},
+  x=>{hole(x,130);coin(x+65,GROUND-95)},                                     // fosse moyenne
+  x=>{pend(x)},                                                              // pendule à pointes ⛓️
+  x=>{pad(x);coin(x+19,GROUND-190);coin(x+90,GROUND-230)},                   // pad propulseur 🟨
+  x=>{hole(x,100);hole(x+220,100);coin(x+160,GROUND-60)},                    // double fosse
+  x=>{plat(x,GROUND-115,0)},                                                  // plateforme flottante
+  x=>{hole(x,160);plat(x+42,GROUND-105,1)},                                   // plateforme mobile sur fosse
+  x=>{chomp(x)},                                                              // monstre croqueur 🦈
+  x=>{sportal(x,'slow');spk(x+220);spk(x+254);spk(x+288)},                    // ralenti + triple pic
+  x=>{spk(x);spk(x+34);porb(x+34,GROUND-100);spk(x+150);spk(x+184);porb(x+184,GROUND-100)}, // orbes roses
+ ],
+ hard:[
+  x=>{col(x,1);col(x+160,2,true);col(x+320,3,true)},
+  x=>{spk(x);spk(x+34);spk(x+68);spk(x+102);S.rings.push({x:x+68,y:GROUND-125,used:false})},
+  x=>{col(x,3,true);spk(x+BLOCK+10);spk(x+BLOCK+44);coin(x+BLOCK/2,GROUND-3*BLOCK-55)},
+  x=>{col(x,2,true);col(x+90,2);spk(x+90+BLOCK+8)},
+  x=>{spk(x);col(x+140,2,true);spk(x+140+BLOCK+8);col(x+340,1)},
+  x=>{col(x,4,true);coin(x+BLOCK/2,GROUND-4*BLOCK-55)},
+  x=>{col(x,2);col(x+150,4,true);coin(x+150+BLOCK/2,GROUND-4*BLOCK-55)},
+  x=>{col(x,1);col(x+140,3);col(x+280,5,true);coin(x+280+BLOCK/2,GROUND-5*BLOCK-55)},
+  x=>{col(x,4);col(x+90,4);spk(x+90+BLOCK+10);coin(x+45+BLOCK/2,GROUND-4*BLOCK-50)},
+  x=>{for(let i=0;i<4;i++){col(x+i*120,i+1,i===3);coin(x+i*120+BLOCK/2,GROUND-(i+1)*BLOCK-50)}},
+  x=>{S.rings.push({x:x-70,y:GROUND-130,used:false});for(let i=0;i<4;i++)col(x+i*100,4-i);spk(x+4*100+10)},
+  x=>{[1,2,3,2,1].forEach((n,i)=>col(x+i*95,n,i===2));coin(x+2*95+BLOCK/2,GROUND-3*BLOCK-50)},
+  x=>{hole(x,150);pend(x+75)},                                               // fosse + pendule au-dessus !
+  x=>{pend(x);pend(x+200)},                                                  // couloir de pendules
+  x=>{pad(x);col(x+170,5);coin(x+170+BLOCK/2,GROUND-5*BLOCK-55)},            // pad pour franchir la tour de 5
+  x=>{hole(x,120);col(x+170,2,true);hole(x+260,120)},                        // fosse-tour-fosse
+  x=>{[2,4,1,5,3].forEach((n,i)=>col(x+i*112,n,n>=4))},                       // SKYLINE de tours (comme GD !)
+  x=>{for(let i=0;i<5;i++)col(x+i*115,i+1,i===4);bigcoin(x+4*115+BLOCK/2,GROUND-5*BLOCK-62)}, // escalier géant 1→5 + pièce violette
+  x=>{S.rings.push({x:x-70,y:GROUND-140,used:false});for(let i=0;i<5;i++)col(x+i*100,5-i);spk(x+5*100+10)}, // descente 5→1
+  x=>{col(x,1);col(x+115,2);plat(x+260,GROUND-3*BLOCK-6,1);col(x+410,2);col(x+525,1)}, // zigzag escalier-plateforme
+  x=>{sportal(x,'fast');spk(x+200);spk(x+330);spk(x+460)},                    // RUSH de vitesse 🔴
+  x=>{chomp(x);col(x+160,3,true);chomp(x+330)},                               // croqueurs en embuscade
+  x=>{[1,2,3,2,1].forEach((n,i)=>col(x+i*95,n));[1,2,3,2,1].forEach((n,i)=>{if(i%2===0)coin(x+i*95+BLOCK/2,GROUND-n*BLOCK-46)});porb(x+2*95+BLOCK/2,GROUND-3*BLOCK-95)}, // double pyramide à orbe
+ ]
+};
+function spawnFoe(){
+  const ph=S.qDone;
+  const kinds=ph<3?['slime']:(ph<6?['slime','saw','fly']:['saw','fly','slime','saw']);
+  const k=pick(kinds),x=innerWidth+80;
+  if(k==='saw')S.foes.push({k,x,y:GROUND-20,r:20,vx:1.6+Math.random()*1.2+ph*0.08,t:0});
+  else if(k==='fly')S.foes.push({k,x,y:GROUND-ri(80,140),baseY:GROUND-ri(80,140),r:17,vx:1+Math.random(),t:ri(0,99)});
+  else S.foes.push({k,x,y:GROUND-16,r:16,vx:0.5,vy:0,t:ri(0,40)});
+}
+function spawnPattern(){
+  const ph=S.qDone;let pool;
+  if(ph<3)pool=Math.random()<0.8?PATTERNS.easy:PATTERNS.mid;
+  else if(ph<6)pool=Math.random()<0.55?PATTERNS.mid:(Math.random()<0.6?PATTERNS.easy:PATTERNS.hard);
+  else pool=Math.random()<0.5?PATTERNS.hard:PATTERNS.mid;
+  if(cfg.grade<=4&&Math.random()<0.25)pool=PATTERNS.hard; // parcours plus corsé en 4e-3e
+  pick(pool)(innerWidth+60);
+}
+function spawnSecretDoor(){S.sdoors.push({x:innerWidth+80,w:42,h:62,used:false});S.doorsSpawned++}
+
+/* --- PORTES-RÉPONSES --- */
+function clearRunway(fromX){
+  const keep=o=>o.x<fromX-420||o.x>fromX+220;
+  S.spikes=S.spikes.filter(keep);S.cols=S.cols.filter(keep);
+  S.foes=S.foes.filter(o=>o.x<fromX-420||o.x>fromX+260);
+  S.pends=S.pends.filter(keep);S.pads=S.pads.filter(keep);
+  S.holes=S.holes.filter(h=>h.x+h.w<fromX-420||h.x>fromX+220);
+  S.sdoors=S.sdoors.filter(keep);
+}
+function spawnQCMGate(){
+  const topic=pick(cfg.topics);
+  const q=TOPICS[topic].gen(cfg.grade);
+  const wrong=q.answers.find(a=>a!==q.correct);
+  const correctTop=Math.random()<0.5;
+  const x=innerWidth+520;
+  S.gates.push({x,kind:'qcm',text:q.question.replace(/\n/g,' '),
+    top:correctTop?q.correct:wrong,bottom:correctTop?wrong:q.correct,
+    correctTop,explain:q.explain,topicKey:topic,done:false});
+  clearRunway(x);
+}
+function spawnVFGate(){
+  const q=pickVF();
+  const x=innerWidth+520;
+  S.gates.push({x,kind:'vf',text:q.s.replace(/\n/g,' '),
+    top:'✔ VRAI',bottom:'✘ FAUX',correctTop:q.v,explain:q.e,done:false});
+  clearRunway(x);
+}
+function resolveGate(g,choseTop){
+  g.done=true;
+  const good=choseTop===g.correctTop;
+  if(g.kind==='qcm'){
+    S.stats[g.topicKey]=S.stats[g.topicKey]||{ok:0,tot:0,label:TOPICS[g.topicKey].label};
+    S.stats[g.topicKey].tot++;S.qDone++;
+    if(good){S.stats[g.topicKey].ok++;S.combo++;
+      const m=S.combo>=6?3:(S.combo>=3?2:1);
+      S.score+=100*m;S.shield=true;sGood();
+      setFeedback(true,'✔ +'+(100*m)+(m>1?' (COMBO ×'+m+')':'')+' · Bouclier 🛡️ — '+g.explain);
+    }else{sBad();S.combo=0;loseLife(false);
+      setFeedback(false,'✘ La bonne réponse était « '+(g.correctTop?g.top:g.bottom)+' » · −1 vie — '+g.explain);
+      S.missed.push({q:g.text,e:g.explain});}
+    if(S.qDone>=TOTAL_Q&&S.lives>0){setTimeout(()=>{if(S.running)finish(true)},900);}
+  }else{
+    S.vfTot++;
+    if(good){S.vfOK++;S.combo++;sLife();
+      if(S.lives<MAX_LIVES){S.lives++;setFeedback(true,'✔ +1 vie ❤ — '+g.explain);}
+      else{S.score+=100;setFeedback(true,'✔ Vies au max ➜ +100 pts — '+g.explain);}
+    }else{sBad();S.combo=0;loseLife(false);
+      setFeedback(false,'✘ C\'était '+(g.correctTop?'VRAI':'FAUX')+' · −1 vie — '+g.explain);
+      S.missed.push({q:g.text,e:g.explain});}
+  }
+  const yTop=GROUND-160,yBot=GROUND-38;
+  const by=choseTop?yTop:yBot, oy=choseTop?yBot:yTop;
+  const bc=good?'#3dff8b':'#ff3d8b';
+  burst(PX+SIZE/2,by,bc,42);burst(PX+SIZE/2,by,'#ffffff',16);
+  S.shocks.push({x:PX+SIZE/2,y:by,r:12,max:110,color:bc,a:1});
+  S.shocks.push({x:PX+SIZE/2,y:by,r:4,max:60,color:'#ffffff',a:1});
+  burst(PX+SIZE/2,oy,'#9a93c9',10);
+  S.shake=9;
+  updateHUD();
+}
+function setFeedback(good,text){S.feedback={good,text,until:S.t+300};}
+
+/* --- vie / mort / fin --- */
+function loseLife(fromCrash){
+  if(S.shield&&fromCrash){S.shield=false;toast('Bouclier utilisé !','var(--cyan)');return}
+  S.lives--;updateHUD();
+  if(S.lives<=0){finish(false);return}
+  if(fromCrash){S.deadTimer=55;sDie();S.shake=12;burst(PX+SIZE/2,S.py+SIZE/2,'#ff3d8b',26);
+    const safe=o=>o.x>innerWidth*0.55;
+    S.spikes=S.spikes.filter(safe);S.cols=S.cols.filter(safe);S.foes=S.foes.filter(safe);
+    S.pends=S.pends.filter(safe);S.holes=S.holes.filter(h=>h.x>innerWidth*0.55);
+    S.py=GROUND-SIZE;S.vy=0;S.onGround=true;S.grav=1;S.speedMul=1;}
+}
+function finish(win){
+  S.running=false;S.mode='run';
+  $('hud').classList.add('hidden');$('roomCtl').classList.add('hidden');
+  $('endTitle').textContent=win?'VICTOIRE !':'GAME OVER';
+  $('endScore').textContent=S.score+' pts';
+  const stats=Object.values(S.stats);
+  const box=$('endStats');box.innerHTML='';let weak=[];
+  if(stats.length===0&&S.vfTot===0)box.innerHTML='<p style="color:var(--muted);font-weight:700">Aucune énigme rencontrée cette fois… retente ta chance !</p>';
+  stats.forEach(s=>{
+    const pct=Math.round(s.ok/s.tot*100);if(pct<50)weak.push(s.label);
+    const row=document.createElement('div');row.className='statRow';
+    row.innerHTML=`<span>${s.label}</span><span class="bar"><i style="width:${pct}%"></i></span><span class="pct">${s.ok}/${s.tot}</span>`;
+    box.appendChild(row);});
+  if(S.vfTot){
+    const pct=Math.round(S.vfOK/S.vfTot*100);
+    const row=document.createElement('div');row.className='statRow';
+    row.innerHTML=`<span>🟡 Billes Vrai/Faux</span><span class="bar"><i style="width:${pct}%"></i></span><span class="pct">${S.vfOK}/${S.vfTot}</span>`;
+    box.appendChild(row);}
+  if(S.roomsOK){
+    const row=document.createElement('div');row.className='statRow';
+    row.innerHTML=`<span>🚪 Salles secrètes résolues</span><span class="bar"><i style="width:100%"></i></span><span class="pct">${S.roomsOK}</span>`;
+    box.appendChild(row);}
+  if(S.missed.length){
+    const det=document.createElement('div');
+    det.innerHTML='<h2 style="font-family:Bungee;font-size:.9rem;color:var(--magenta);margin:16px 0 8px">📒 À revoir</h2>'+
+      S.missed.slice(0,8).map(m=>`<p style="font-weight:700;font-size:.86rem;margin-bottom:8px;line-height:1.4"><span style="color:var(--yellow)">${m.q}</span><br><span style="color:var(--muted)">➜ ${m.e}</span></p>`).join('');
+    box.appendChild(det);}
+  $('endAdvice').textContent=weak.length
+    ?`💡 À retravailler : ${weak.join(', ')}. Refais une partie en ne cochant que ces chapitres !`
+    :(stats.length?'🌟 Excellent ! Essaie le niveau Expert ou la vitesse rapide !':'');
+  $('endScreen').classList.remove('hidden');
+}
+
+/* --- HUD / toast / particules --- */
+function updateHUD(){
+  $('lives').textContent='❤'.repeat(Math.max(0,S.lives))+(S.shield?' 🛡️':'');
+  const m=S.combo>=6?3:(S.combo>=3?2:1);
+  $('score').textContent=S.score+(m>1?'  🔥×'+m:'');
+  $('progressBar').style.width=(S.qDone/TOTAL_Q*100)+'%';
+  $('pct').textContent=Math.round(S.qDone/TOTAL_Q*100)+' %';
+  $('attempt').textContent='Tentative '+ATTEMPTS;
+}
+let toastId=null;
+function toast(msg,color){const t=$('toast');t.textContent=msg;t.style.color=color;t.style.opacity=1;
+  clearTimeout(toastId);toastId=setTimeout(()=>t.style.opacity=0,1600);}
+function togglePause(){S.paused=!S.paused;$('pauseBtn').textContent=S.paused?'▶ Reprendre':'⏸ Pause';}
+$('pauseBtn').onclick=togglePause;
+function burst(x,y,color,n=12){for(let i=0;i<n;i++)S.particles.push({x,y,vx:(Math.random()-0.5)*8,vy:(Math.random()-0.8)*8,life:1,color});}
+function pendPos(p){const a=Math.sin(p.t*p.sp)*p.amp;return{x:p.x+Math.sin(a)*p.len,y:p.ay+Math.cos(a)*p.len}}
+function overHole(){return S.holes.some(h=>h.x<=PX+6&&h.x+h.w>=PX+SIZE-6)}
+
+/* ====================== SALLE SECRÈTE (labyrinthe + résolution) ====================== */
+const LAYOUTS=[
+ ["################",
+  "#....c....c....#",
+  "#..###....###..#",
+  "#..............#",
+  "#.....aTTb.....#",
+  "#c...######...c#",
+  "#S............E#",
+  "################"],
+ ["################",
+  "#c....####....c#",
+  "#...#......#...#",
+  "#.###.aTb..###.#",
+  "#......###.....#",
+  "#..##......##..#",
+  "#S....c..c....E#",
+  "################"],
+ ["################",
+  "#..c.a....b.c..#",
+  "#....######....#",
+  "#.##........##.#",
+  "#....##TT##....#",
+  "#.c..######..c.#",
+  "#S............E#",
+  "################"],
+];
+let R=null;
+function enterRoom(){
+  S.mode='room';S.flash=22;sWarp();
+  const map=pick(LAYOUTS).map(r=>r.split(''));
+  const rows=map.length,cols=map[0].length;
+  const ts=Math.min(Math.floor((innerWidth-20)/cols),Math.floor((innerHeight-130)/rows));
+  const ox=(innerWidth-cols*ts)/2, oy=Math.max(96,(innerHeight-rows*ts)/2+20);
+  let sx=1,sy=rows-2,chest=null,exit=null,da=null,db=null;
+  const coins=[];
+  for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+    const c=map[y][x];
+    if(c==='S'){sx=x;sy=y;map[y][x]='.'}
+    else if(c==='c'){coins.push({x,y,taken:false});map[y][x]='.'}
+    else if(c==='T'){if(!chest)chest={x,y,opened:false};map[y][x]='.'}
+    else if(c==='E'){exit={x,y};map[y][x]='.'}
+    else if(c==='a'){da={x,y};map[y][x]='.'}
+    else if(c==='b'){db={x,y};map[y][x]='.'}
+  }
+  R={map,rows,cols,ts,ox,oy,
+    px:ox+sx*ts+ts*0.1,py:oy+sy*ts+ts*0.15,pw:ts*0.62,ph:ts*0.62,vx:0,vy:0,onG:false,
+    coins,chest,exit,da,db,phase:'explore',q:null,timer:38*60,t:0,doneMsg:null};
+  $('roomCtl').classList.remove('hidden');
+}
+function leaveRoom(){
+  S.mode='run';S.flash=22;sWarp();R=null;
+  $('roomCtl').classList.add('hidden');
+}
+function solidAt(px,py){
+  const cx=Math.floor((px-R.ox)/R.ts),cy=Math.floor((py-R.oy)/R.ts);
+  if(cx<0||cy<0||cx>=R.cols||cy>=R.rows)return true;
+  return R.map[cy][cx]==='#';
+}
+function roomJump(){
+  if(R&&R.onG){R.vy=-11.4;R.onG=false;sJump();}
+}
+function roomUpdate(){
+  R.t++;R.timer--;
+  if(R.timer<=0){leaveRoom();setFeedback(false,'⏰ La salle secrète s\'est refermée !');return}
+  // déplacement horizontal
+  const sp=R.ts*0.075;
+  R.vx=(keys.R?sp:0)-(keys.L?sp:0);
+  R.px+=R.vx;
+  if(R.vx>0){if(solidAt(R.px+R.pw,R.py+2)||solidAt(R.px+R.pw,R.py+R.ph-2))R.px=Math.floor((R.px+R.pw-R.ox)/R.ts)*R.ts+R.ox-R.pw-0.01;}
+  if(R.vx<0){if(solidAt(R.px,R.py+2)||solidAt(R.px,R.py+R.ph-2))R.px=(Math.floor((R.px-R.ox)/R.ts)+1)*R.ts+R.ox+0.01;}
+  // gravité
+  R.vy+=0.62;R.py+=R.vy;R.onG=false;
+  if(R.vy>0){
+    if(solidAt(R.px+3,R.py+R.ph)||solidAt(R.px+R.pw-3,R.py+R.ph)){
+      R.py=Math.floor((R.py+R.ph-R.oy)/R.ts)*R.ts+R.oy-R.ph-0.01;R.vy=0;R.onG=true;}
+  }else if(R.vy<0){
+    if(solidAt(R.px+3,R.py)||solidAt(R.px+R.pw-3,R.py)){
+      R.py=(Math.floor((R.py-R.oy)/R.ts)+1)*R.ts+R.oy+0.01;R.vy=0;}
+  }
+  const pcx=R.px+R.pw/2,pcy=R.py+R.ph/2;
+  const cellC=(c)=>({x:R.ox+c.x*R.ts+R.ts/2,y:R.oy+c.y*R.ts+R.ts/2});
+  // pièces (+50 dans la salle)
+  for(const c of R.coins){
+    if(!c.taken){const p=cellC(c);
+      if(Math.hypot(p.x-pcx,p.y-pcy)<R.ts*0.55){c.taken=true;S.score+=50;sCoin();burst(p.x,p.y,'#ffd23f',12);updateHUD();}}
+  }
+  // coffre ➜ phase résolution
+  if(R.phase==='explore'&&R.chest&&!R.chest.opened){
+    const p=cellC(R.chest);
+    if(Math.abs(p.x-pcx)<R.ts*0.9&&Math.abs(p.y-pcy)<R.ts*0.8){
+      R.chest.opened=true;R.phase='answer';
+      const topic=pick(cfg.topics);
+      const q=TOPICS[topic].gen(cfg.grade);
+      const wrong=q.answers.find(a=>a!==q.correct);
+      const correctA=Math.random()<0.5;
+      R.q={text:q.question.replace(/\n/g,' '),explain:q.explain,
+        aLabel:correctA?q.correct:wrong,bLabel:correctA?wrong:q.correct,correctA};
+      beep(700,0.15,'sine');burst(p.x,p.y,'#ffd23f',30);
+    }
+  }
+  // portes de réponse a / b
+  if(R.phase==='answer'){
+    [['a',R.da,R.q.correctA],['b',R.db,!R.q.correctA]].forEach(([_,d,isCorrect])=>{
+      if(!d)return;const p=cellC(d);
+      if(Math.abs(p.x-pcx)<R.ts*0.5&&Math.abs(p.y-pcy)<R.ts*0.75){
+        R.phase='done';
+        const bc=isCorrect?'#3dff8b':'#ff3d8b';
+        burst(p.x,p.y,bc,40);S.shocks.push({x:p.x,y:p.y,r:10,max:90,color:bc,a:1});S.shake=8;
+        if(isCorrect){S.score+=300;S.roomsOK++;sGood();
+          if(S.lives<MAX_LIVES)S.lives++;
+          R.doneMsg={good:true,text:'✔ Coffre résolu ! +300 pts'+(S.lives<=MAX_LIVES?' · +1 vie ❤':'')+' — '+R.q.explain};
+        }else{sBad();
+          R.doneMsg={good:false,text:'✘ Raté ! La réponse était « '+(R.q.correctA?R.q.aLabel:R.q.bLabel)+' » — '+R.q.explain};
+          S.missed.push({q:R.q.text,e:R.q.explain});}
+        updateHUD();
+      }
+    });
+  }
+  // sortie
+  const e=cellC(R.exit);
+  if(Math.abs(e.x-pcx)<R.ts*0.5&&Math.abs(e.y-pcy)<R.ts*0.75){
+    if(R.doneMsg)setFeedback(R.doneMsg.good,R.doneMsg.text);
+    leaveRoom();
+  }
+}
+function roomDraw(){
+  const w=innerWidth,h=innerHeight;
+  ctx.save();
+  if(S.shake>0.5)ctx.translate((Math.random()-0.5)*S.shake,(Math.random()-0.5)*S.shake);
+  // fond caverne violette
+  const g=ctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0,'#1a0f3d');g.addColorStop(1,'#0b0820');
+  ctx.fillStyle=g;ctx.fillRect(-20,-20,w+40,h+40);
+  // murs en briques bleues (comme l'image !)
+  for(let y=0;y<R.rows;y++)for(let x=0;x<R.cols;x++){
+    if(R.map[y][x]!=='#')continue;
+    const bx=R.ox+x*R.ts,by=R.oy+y*R.ts;
+    ctx.fillStyle='#0d1b4d';ctx.fillRect(bx,by,R.ts,R.ts);
+    ctx.strokeStyle='#2f6fe0';ctx.lineWidth=2;ctx.strokeRect(bx+1,by+1,R.ts-2,R.ts-2);
+    ctx.strokeStyle='rgba(80,160,255,0.5)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(bx,by+R.ts/2);ctx.lineTo(bx+R.ts,by+R.ts/2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(bx+R.ts/2,by);ctx.lineTo(bx+R.ts/2,by+R.ts/2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(bx+R.ts/4,by+R.ts/2);ctx.lineTo(bx+R.ts/4,by+R.ts);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(bx+R.ts*3/4,by+R.ts/2);ctx.lineTo(bx+R.ts*3/4,by+R.ts);ctx.stroke();
+  }
+  const cellC=(c)=>({x:R.ox+c.x*R.ts+R.ts/2,y:R.oy+c.y*R.ts+R.ts/2});
+  // pièces
+  R.coins.forEach(c=>{if(c.taken)return;const p=cellC(c);
+    ctx.save();ctx.translate(p.x,p.y);ctx.scale(Math.abs(Math.cos(R.t*0.08)),1);
+    ctx.fillStyle='#ffd23f';ctx.shadowColor='#ffd23f';ctx.shadowBlur=12;
+    ctx.beginPath();ctx.arc(0,0,R.ts*0.26,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.restore();});
+  // coffre 🧰
+  if(R.chest){const p=cellC(R.chest);
+    ctx.save();ctx.translate(p.x,p.y+R.ts*0.1);
+    const bob=R.chest.opened?0:Math.sin(R.t*0.07)*3;ctx.translate(0,bob);
+    ctx.fillStyle=R.chest.opened?'#6b5400':'#b97900';ctx.shadowColor='#ffd23f';ctx.shadowBlur=R.chest.opened?4:18;
+    ctx.fillRect(-R.ts*0.42,-R.ts*0.3,R.ts*0.84,R.ts*0.6);ctx.shadowBlur=0;
+    ctx.strokeStyle='#ffd23f';ctx.lineWidth=3;ctx.strokeRect(-R.ts*0.42,-R.ts*0.3,R.ts*0.84,R.ts*0.6);
+    ctx.fillStyle='#ffd23f';ctx.font=`900 ${R.ts*0.4}px Nunito`;ctx.textAlign='center';
+    ctx.fillText(R.chest.opened?'✓':'?',0,R.ts*0.13);ctx.restore();}
+  // portes de réponse
+  if(R.phase==='answer'){
+    [[R.da,R.q.aLabel],[R.db,R.q.bLabel]].forEach(([d,label])=>{
+      if(!d)return;const p=cellC(d);
+      ctx.save();ctx.translate(p.x,p.y);
+      ctx.fillStyle='rgba(123,108,255,0.3)';ctx.strokeStyle='#7b6cff';ctx.lineWidth=3;
+      ctx.shadowColor='#7b6cff';ctx.shadowBlur=14+Math.sin(R.t*0.15)*6;
+      roundRect(-R.ts*0.34,-R.ts*0.48,R.ts*0.68,R.ts*0.96,8);ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+      ctx.fillStyle='#fff';
+      const lines=wrapText(String(label),12);const fs=Math.max(11,R.ts*0.2);
+      ctx.font=`900 ${fs}px Nunito`;ctx.textAlign='center';
+      lines.slice(0,2).forEach((l,i)=>ctx.fillText(l,0,-R.ts*0.62-(lines.length-1-i)*(fs+2)));
+      ctx.restore();});
+  }
+  // porte de sortie
+  {const p=cellC(R.exit);
+   ctx.save();ctx.translate(p.x,p.y);
+   ctx.fillStyle='rgba(61,255,139,0.25)';ctx.strokeStyle='#3dff8b';ctx.lineWidth=3;
+   ctx.shadowColor='#3dff8b';ctx.shadowBlur=12;
+   roundRect(-R.ts*0.32,-R.ts*0.48,R.ts*0.64,R.ts*0.96,8);ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+   ctx.fillStyle='#3dff8b';ctx.font=`900 ${Math.max(10,R.ts*0.18)}px Nunito`;ctx.textAlign='center';
+   ctx.fillText('SORTIE',0,-R.ts*0.58);ctx.restore();}
+  // joueur
+  ctx.save();ctx.translate(R.px+R.pw/2,R.py+R.ph/2);
+  ctx.shadowColor='#29f0e8';ctx.shadowBlur=14;
+  ctx.fillStyle='#29f0e8';ctx.fillRect(-R.pw/2,-R.ph/2,R.pw,R.ph);ctx.shadowBlur=0;
+  ctx.fillStyle='#062a30';
+  ctx.fillRect(-R.pw/2+R.pw*0.18,-R.ph/2+R.ph*0.22,R.pw*0.16,R.ph*0.16);
+  ctx.fillRect(R.pw/2-R.pw*0.34,-R.ph/2+R.ph*0.22,R.pw*0.16,R.ph*0.16);
+  ctx.restore();
+  // particules / ondes
+  S.particles.forEach(p=>{ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,5,5);ctx.globalAlpha=1;});
+  S.shocks.forEach(sh=>{ctx.save();ctx.globalAlpha=Math.max(0,sh.a);
+    ctx.strokeStyle=sh.color;ctx.lineWidth=4;ctx.shadowColor=sh.color;ctx.shadowBlur=16;
+    ctx.beginPath();ctx.arc(sh.x,sh.y,sh.r,0,Math.PI*2);ctx.stroke();ctx.restore();});
+  // bandeau du haut : titre / question / résultat
+  let title='🚪 SALLE SECRÈTE — attrape les pièces et ouvre le coffre !',body=null,color='#7b6cff';
+  if(R.phase==='answer'){title='🧰 SALLE DE RÉSOLUTION — entre dans la porte de la bonne réponse !';body=R.q.text;color='#ffd23f'}
+  else if(R.phase==='done'&&R.doneMsg){title=R.doneMsg.good?'✔ Bien joué ! File vers la SORTIE':'✘ Dommage… file vers la SORTIE';body=R.doneMsg.text;color=R.doneMsg.good?'#3dff8b':'#ff3d8b'}
+  const lines=body?wrapText(body,Math.floor(w/12)):[];
+  const fs=Math.max(14,Math.min(19,w/46));
+  const bh=34+(lines.length?lines.length*(fs+5)+8:0);
+  const bw=Math.min(w-20,780);
+  ctx.save();ctx.translate(w/2,8);
+  ctx.fillStyle='rgba(10,7,30,0.88)';ctx.strokeStyle=color;ctx.lineWidth=2.5;
+  ctx.shadowColor=color;ctx.shadowBlur=14;
+  roundRect(-bw/2,0,bw,bh,14);ctx.fill();ctx.shadowBlur=0;ctx.stroke();
+  ctx.textAlign='center';ctx.fillStyle=color;ctx.font='900 13px Nunito';
+  ctx.fillText(title,0,22);
+  ctx.fillStyle='#fff';ctx.font=`900 ${fs}px Nunito`;
+  lines.forEach((l,i)=>ctx.fillText(l,0,40+i*(fs+5)));
+  ctx.restore();
+  // chrono
+  const tp=R.timer/(38*60);
+  ctx.fillStyle='rgba(255,255,255,0.15)';ctx.fillRect(w/2-110,bh+14,220,9);
+  ctx.fillStyle=tp>0.3?'#ffd23f':'#ff3d8b';ctx.fillRect(w/2-110,bh+14,220*tp,9);
+  if(S.flash>0)ctx.fillStyle=`rgba(200,180,255,${S.flash/22*0.9})`,ctx.fillRect(-20,-20,w+40,h+40);
+  ctx.restore();
+}
+
+/* ====================== BOUCLE PRINCIPALE ====================== */
+function activeGate(){return S.gates.find(g=>!g.done&&g.x>PX-60&&g.x<innerWidth+540)}
+function update(){
+  if(!S.running)return;
+  requestAnimationFrame(update);
+  if(S.paused){draw();return}
+  S.t++;
+  if(S.flash>0)S.flash--;
+  if(S.shake>0)S.shake*=0.85;
+  S.particles.forEach(pt=>{pt.x+=pt.vx;pt.y+=pt.vy;pt.vy+=0.3;pt.life-=0.03});
+  S.particles=S.particles.filter(p=>p.life>0);
+  S.shocks.forEach(sh=>{sh.r+=(sh.max-sh.r)*0.18+2;sh.a-=0.045});
+  S.shocks=S.shocks.filter(sh=>sh.a>0);
+
+  if(S.mode==='room'){roomUpdate();if(S.mode==='room'){roomDraw();return}draw();return}
+
+  const ag=activeGate();
+  const slow=ag?0.45:1;
+  if(S.dist>S.speedUntil)S.speedMul=1;
+  const v=(5.2+Math.min(S.qDone*0.28,2.8))*cfg.speed*slow*S.speedMul;
+  if(S.deadTimer>0){S.deadTimer--;draw();return}
+  S.dist+=v;S.score+=Math.round(v/10);
+
+  for(const a of[S.spikes,S.cols,S.coins,S.rings,S.gates,S.holes,S.pends,S.pads,S.sdoors,S.plats,S.cspikes,S.gportals,S.sportals])a.forEach(o=>o.x-=v);
+  S.spikes=S.spikes.filter(o=>o.x>-80);
+  S.cols=S.cols.filter(o=>o.x>-80);
+  S.coins=S.coins.filter(c=>c.x>-40&&!c.taken);
+  S.rings=S.rings.filter(r=>r.x>-60&&!r.used);
+  S.gates=S.gates.filter(g=>g.x>-160);
+  S.holes=S.holes.filter(h=>h.x+h.w>-40);
+  S.pends=S.pends.filter(p=>p.x>-220);
+  S.pads=S.pads.filter(p=>p.x>-60);
+  S.sdoors=S.sdoors.filter(d=>d.x>-80&&!d.used);
+  S.plats=S.plats.filter(p=>p.x>-100);
+  S.cspikes=S.cspikes.filter(o=>o.x>-60);
+  S.gportals=S.gportals.filter(p=>p.x>-80);
+  S.sportals=S.sportals.filter(p=>p.x>-60&&!p.used);
+  S.plats.forEach(p=>p.t++);
+
+  if(!ag){
+    if(S.dist>S.nextSpawn){spawnPattern();S.nextSpawn=S.dist+ri(300,470)/cfg.speed*1.15;}
+    if(S.dist>S.nextQCM&&!S.gportals.some(p=>!p.used)&&S.qDone+S.gates.filter(g=>g.kind==='qcm'&&!g.done).length<TOTAL_Q){
+      spawnQCMGate();S.nextQCM=S.dist+ri(1300,1800);S.nextVF=Math.max(S.nextVF,S.dist+700);S.nextSpawn=Math.max(S.nextSpawn,S.dist+800);}
+    else if(S.dist>S.nextVF&&!S.gportals.some(p=>!p.used)){
+      spawnVFGate();S.nextVF=S.dist+ri(1000,1500);S.nextQCM=Math.max(S.nextQCM,S.dist+700);S.nextSpawn=Math.max(S.nextSpawn,S.dist+800);}
+    if(S.dist>S.nextFoe&&S.qDone>=1){spawnFoe();S.nextFoe=S.dist+ri(650,1150)-S.qDone*20;}
+    if(S.dist>S.nextDoor&&S.doorsSpawned<3&&S.qDone>=2){
+      spawnSecretDoor();S.nextDoor=S.dist+ri(2600,3600);S.nextSpawn=Math.max(S.nextSpawn,S.dist+500);}
+    if(S.dist>S.nextGrav&&S.gravCount<3&&S.qDone>=3&&!S.gportals.some(p=>!p.used)){
+      spawnGravSection();S.nextGrav=S.dist+ri(2600,3400);
+      S.nextSpawn=Math.max(S.nextSpawn,S.dist+1900);
+      S.nextQCM=Math.max(S.nextQCM,S.dist+2100);S.nextVF=Math.max(S.nextVF,S.dist+2100);}
+  }
+
+  // ennemis
+  for(const f of S.foes){
+    f.t++;
+    if(f.k==='saw'){f.x-=v+f.vx;}
+    else if(f.k==='fly'){f.x-=v+f.vx;f.y=f.baseY+Math.sin(f.t*0.07)*32;}
+    else if(f.k==='chomp'){f.x-=v;}
+    else{f.x-=v+f.vx;f.vy+=0.55;f.y+=f.vy;
+      if(f.y>=GROUND-16){f.y=GROUND-16;f.vy=0;if(f.t%55===0)f.vy=-9;}}
+  }
+  S.foes=S.foes.filter(f=>f.x>-70);
+  for(const p of S.pends)p.t++;
+
+  // physique du cube
+  const prevBottom=S.py+SIZE;
+  S.vy+=0.7*S.grav;S.py+=S.vy;
+  let crash=false;
+  if(S.grav<0){ // ⭐ gravité inversée : on court au plafond !
+    if(S.py<=CEIL){S.py=CEIL;S.vy=0;S.onGround=true;S.dbl=false}
+    else S.onGround=false;
+    if(S.py+SIZE>GROUND){S.py=GROUND-SIZE;S.vy=0;} // filet de sécurité
+    for(const o of S.cspikes){
+      if(PX+SIZE-10>o.x+9&&PX+10<o.x+o.w-9&&S.py<CEIL+o.h-10){crash=true;break}}
+    if(crash){loseLife(true);draw();return}
+  }else{
+    let supportTop=overHole()?GROUND+400:GROUND;
+    for(const c of S.cols){
+      if(c.x<PX+SIZE-7&&c.x+c.w>PX+7){
+        const top=GROUND-c.h;
+        if(prevBottom<=top+10)supportTop=Math.min(supportTop,top);
+        else crash=true;}
+    }
+    for(const p of S.plats){ // plateformes traversantes : on n'atterrit que par le dessus
+      const top=p.y0+Math.sin(p.t*p.sp)*p.amp;
+      if(p.x<PX+SIZE-7&&p.x+p.w>PX+7&&S.vy>=0&&prevBottom<=top+12&&S.py+SIZE>=top-2)
+        supportTop=Math.min(supportTop,top);
+    }
+    if(S.py+SIZE>=supportTop){S.py=supportTop-SIZE;S.vy=0;S.onGround=true;S.dbl=false}
+    else S.onGround=false;
+    if(S.py+SIZE>GROUND+26){crash=true}
+    if(crash){loseLife(true);draw();return}
+  }
+
+  // pads propulseurs
+  for(const p of S.pads){
+    if(!p.fired&&p.x<PX+SIZE-6&&p.x+p.w>PX+6&&S.py+SIZE>=GROUND-8){
+      p.fired=true;S.vy=-17.5;S.onGround=false;S.dbl=false;sPad();
+      burst(p.x+p.w/2,GROUND-6,'#ffd23f',18);}
+  }
+  // pics
+  for(const o of S.spikes){
+    if(PX+SIZE-10>o.x+9&&PX+10<o.x+o.w-9&&S.py+SIZE>GROUND-o.h+10){
+      loseLife(true);draw();return;}
+  }
+  // pendules à pointes
+  for(const p of S.pends){
+    const pos=pendPos(p);
+    if(Math.hypot(pos.x-(PX+SIZE/2),pos.y-(S.py+SIZE/2))<16+SIZE/2-5){
+      S.shake=12;loseLife(true);draw();return;}
+  }
+  // ennemis : collision
+  for(const f of S.foes){
+    if(Math.hypot(f.x-(PX+SIZE/2),f.y-(S.py+SIZE/2))<f.r+SIZE/2-6){
+      f.x=-999;S.shake=12;loseLife(true);draw();return;}
+  }
+  // pièces
+  const mult=S.combo>=6?3:(S.combo>=3?2:1);
+  for(const c of S.coins){
+    if(Math.hypot(c.x-(PX+SIZE/2),c.y-(S.py+SIZE/2))<c.r+SIZE/2){
+      c.taken=true;S.score+=(c.big?100:25)*mult;sCoin();
+      burst(c.x,c.y,c.big?'#c77bff':'#ffd23f',c.big?22:10);
+      if(c.big)toast('💜 +'+100*mult+' !','#c77bff');}
+  }
+  // portails de gravité 🔄 et de vitesse ⏩
+  for(const p of S.gportals){
+    if(!p.used&&p.x<PX+SIZE/2){p.used=true;S.grav=p.dir;S.vy=0;S.flash=14;sWarp();
+      burst(PX+SIZE/2,S.py+SIZE/2,p.dir<0?'#ffd23f':'#29b6ff',24);}
+  }
+  for(const p of S.sportals){
+    if(!p.used&&p.x<PX+SIZE/2){p.used=true;
+      S.speedMul=p.kind==='fast'?1.4:0.65;S.speedUntil=S.dist+780;
+      sPad();toast(p.kind==='fast'?'⏩ TURBO !':'🐌 Ralenti…',p.kind==='fast'?'#ff3d8b':'#3dff8b');}
+  }
+  // porte secrète 🚪
+  for(const d of S.sdoors){
+    if(!d.used&&d.x<PX+SIZE-8&&d.x+d.w>PX+8&&S.py+SIZE>GROUND-d.h){
+      d.used=true;enterRoom();draw();return;}
+  }
+  // portes-réponses
+  for(const g of S.gates){
+    if(!g.done&&g.x<PX+SIZE/2){
+      const choseTop=(S.py+SIZE/2)<GROUND-85;
+      resolveGate(g,choseTop);}
+  }
+  updateHUD();draw();
+}
+
+/* --- helpers texte --- */
+function wrapText(text,maxChars){
+  const words=text.split(' '),lines=[];let cur='';
+  for(const w of words){
+    if((cur+' '+w).trim().length>maxChars){lines.push(cur.trim());cur=w}
+    else cur+=' '+w;}
+  if(cur.trim())lines.push(cur.trim());
+  return lines;
+}
+function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+
+/* --- rendu du parcours --- */
+function draw(){
+  const w=innerWidth,h=innerHeight;
+  ctx.save();
+  if(S.shake>0.5)ctx.translate((Math.random()-0.5)*S.shake,(Math.random()-0.5)*S.shake);
+  const g=ctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0,'#0b0820');g.addColorStop(0.7,'#1a1245');g.addColorStop(1,'#2a1a60');
+  ctx.fillStyle=g;ctx.fillRect(-20,-20,w+40,h+40);
+  // étoiles
+  ctx.fillStyle='rgba(255,255,255,0.5)';
+  for(let i=0;i<40;i++){const sx=(i*97-S.dist*0.08)%w,sy=(i*53)%(GROUND*0.7);
+    ctx.fillRect(((sx%w)+w)%w,sy,2,2);}
+  // chaînes décoratives suspendues (parallaxe, comme dans GD)
+  ctx.strokeStyle='rgba(20,14,55,0.9)';ctx.lineWidth=5;
+  for(let i=0;i<7;i++){
+    const cx=(((i*233-S.dist*0.45)%(w+160))+(w+160))%(w+160)-80;
+    const len=((i*131)%(GROUND*0.5))+60;
+    for(let yy=0;yy<len;yy+=16){
+      ctx.strokeRect(cx-3,yy,6,11);}
+  }
+  // montagnes lointaines
+  ctx.fillStyle='rgba(60,40,130,0.5)';
+  for(let i=0;i<6;i++){
+    const mx=(((i*340-S.dist*0.25)%(w+400))+(w+400))%(w+400)-200;
+    ctx.beginPath();ctx.moveTo(mx-130,GROUND);ctx.lineTo(mx,GROUND-((i*73)%90+60));ctx.lineTo(mx+130,GROUND);ctx.closePath();ctx.fill();}
+  // grille néon
+  ctx.strokeStyle='rgba(123,108,255,0.35)';ctx.lineWidth=1;
+  for(let i=0;i<14;i++){const gx=((i*90-S.dist*0.9)%(w+180));const x=((gx%(w+180))+(w+180))%(w+180)-90;
+    ctx.beginPath();ctx.moveTo(x,GROUND);ctx.lineTo(x-w*0.15,h);ctx.stroke();}
+  for(let i=1;i<5;i++){const y=GROUND+(h-GROUND)*Math.pow(i/5,1.6);
+    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+  // FOSSES à stalagmites (sous la ligne de sol)
+  S.holes.forEach(hl=>{
+    ctx.fillStyle='#070512';ctx.fillRect(hl.x,GROUND,hl.w,PIT);
+    ctx.strokeStyle='rgba(123,108,255,0.6)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(hl.x,GROUND);ctx.lineTo(hl.x,GROUND+PIT);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(hl.x+hl.w,GROUND);ctx.lineTo(hl.x+hl.w,GROUND+PIT);ctx.stroke();
+    ctx.fillStyle='#dfe8ff';
+    for(let sx=hl.x+5;sx<hl.x+hl.w-12;sx+=15){
+      ctx.beginPath();ctx.moveTo(sx,GROUND+PIT-2);ctx.lineTo(sx+7,GROUND+PIT-26-((sx*7)%12));ctx.lineTo(sx+14,GROUND+PIT-2);ctx.closePath();ctx.fill();}
+  });
+  // ligne de sol néon (interrompue au-dessus des fosses)
+  ctx.strokeStyle='#29f0e8';ctx.lineWidth=3;ctx.shadowColor='#29f0e8';ctx.shadowBlur=12;
+  let segs=[[0,w]];
+  S.holes.forEach(hl=>{const ns=[];segs.forEach(([a,b])=>{
+    if(hl.x>b||hl.x+hl.w<a){ns.push([a,b]);return}
+    if(hl.x>a)ns.push([a,hl.x]);
+    if(hl.x+hl.w<b)ns.push([hl.x+hl.w,b]);});segs=ns;});
+  segs.forEach(([a,b])=>{ctx.beginPath();ctx.moveTo(a,GROUND);ctx.lineTo(b,GROUND);ctx.stroke();});
+  ctx.shadowBlur=0;
+  // champignons décoratifs 🍄 (comme l'image)
+  for(let i=0;i<9;i++){
+    const mx=(((i*177-S.dist)%(w+80))+(w+80))%(w+80)-40;
+    if(S.holes.some(hl=>mx>hl.x-8&&mx<hl.x+hl.w+8))continue;
+    const mh=6+(i*37)%7;
+    ctx.fillStyle='#ffb53f';ctx.shadowColor='#ff3d8b';ctx.shadowBlur=6;
+    ctx.beginPath();ctx.arc(mx,GROUND-mh,5,Math.PI,0);ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle='#f2f0ff';ctx.fillRect(mx-1.5,GROUND-mh,3,mh);}
+  // PLAFOND néon + stalactites (sections gravité inversée)
+  if(S.grav<0||S.cspikes.length||S.gportals.length){
+    ctx.strokeStyle='#ff3d8b';ctx.lineWidth=3;ctx.shadowColor='#ff3d8b';ctx.shadowBlur=12;
+    ctx.beginPath();ctx.moveTo(0,CEIL);ctx.lineTo(w,CEIL);ctx.stroke();ctx.shadowBlur=0;
+  }
+  S.cspikes.forEach(o=>{
+    ctx.fillStyle='#0a0a14';
+    ctx.beginPath();ctx.moveTo(o.x,CEIL);ctx.lineTo(o.x+o.w/2,CEIL+o.h);ctx.lineTo(o.x+o.w,CEIL);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.85)';ctx.lineWidth=2;ctx.stroke();
+  });
+  // PORTAILS DE GRAVITÉ 🔄 (jaune = tête en bas, bleu = retour)
+  S.gportals.forEach(p=>{
+    if(p.used)return;
+    const c=p.dir<0?'#ffd23f':'#29b6ff';
+    ctx.save();ctx.translate(p.x,(CEIL+GROUND)/2);
+    ctx.shadowColor=c;ctx.shadowBlur=22;
+    ctx.strokeStyle=c;ctx.lineWidth=6;
+    ctx.beginPath();ctx.ellipse(0,0,24,(GROUND-CEIL)/2-8,0,0,Math.PI*2);ctx.stroke();
+    ctx.strokeStyle='#fff';ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.ellipse(0,0,13,(GROUND-CEIL)/2-30,0,S.t*0.06,S.t*0.06+Math.PI*1.3);ctx.stroke();
+    ctx.shadowBlur=0;ctx.fillStyle=c;ctx.font='900 17px Nunito';ctx.textAlign='center';
+    ctx.fillText(p.dir<0?'⤒':'⤓',0,6);ctx.restore();
+  });
+  // PORTAILS DE VITESSE ⏩
+  S.sportals.forEach(p=>{
+    const c=p.kind==='fast'?'#ff3d8b':'#3dff8b';
+    ctx.save();ctx.translate(p.x,GROUND-46);
+    ctx.shadowColor=c;ctx.shadowBlur=16;ctx.fillStyle=c;
+    const dir=p.kind==='fast'?1:-1;
+    for(let i=0;i<2;i++){
+      ctx.beginPath();
+      ctx.moveTo(-12+i*16*dir,-22);ctx.lineTo(4+i*16*dir,0);ctx.lineTo(-12+i*16*dir,22);
+      ctx.lineTo(-4+i*16*dir,0);ctx.closePath();ctx.fill();}
+    ctx.shadowBlur=0;ctx.restore();
+  });
+  // PLATEFORMES flottantes
+  S.plats.forEach(p=>{
+    const y=p.y0+Math.sin(p.t*p.sp)*p.amp;
+    ctx.save();
+    ctx.fillStyle='#0d0a26';ctx.fillRect(p.x,y,p.w,p.h);
+    ctx.shadowColor='#29f0e8';ctx.shadowBlur=10;
+    ctx.strokeStyle='#29f0e8';ctx.lineWidth=2.5;ctx.strokeRect(p.x+1,y+1,p.w-2,p.h-2);
+    ctx.shadowBlur=0;
+    ctx.strokeStyle='rgba(123,108,255,0.7)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(p.x+p.w/2,y+p.h);ctx.lineTo(p.x+p.w/2,y+p.h+9);ctx.stroke();
+    ctx.restore();
+  });
+  // PORTES SECRÈTES 🚪 (violettes scintillantes)
+  S.sdoors.forEach(d=>{
+    ctx.save();ctx.translate(d.x+d.w/2,GROUND-d.h/2);
+    const gl=14+Math.sin(S.t*0.13)*8;
+    ctx.fillStyle='rgba(123,108,255,0.35)';ctx.strokeStyle='#b9a8ff';ctx.lineWidth=3;
+    ctx.shadowColor='#7b6cff';ctx.shadowBlur=gl;
+    roundRect(-d.w/2,-d.h/2,d.w,d.h,10);ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+    ctx.fillStyle='#e9defc';ctx.font='900 11px Nunito';ctx.textAlign='center';
+    ctx.fillText('SECRET',0,-d.h/2-7);
+    ctx.fillStyle='#ffd23f';ctx.beginPath();ctx.arc(d.w/4-4,3,3,0,Math.PI*2);ctx.fill();
+    if(S.t%9<2)burst(d.x+d.w/2+ri(-14,14),GROUND-ri(6,d.h),'#b9a8ff',1);
+    ctx.restore();
+  });
+  // colonnes
+  S.cols.forEach(c=>{
+    const top=GROUND-c.h;
+    ctx.fillStyle='#0d0a26';ctx.fillRect(c.x,top,c.w,c.h);
+    ctx.shadowColor='#ffffff';ctx.shadowBlur=10;
+    ctx.strokeStyle='#e9e6ff';ctx.lineWidth=3;ctx.strokeRect(c.x+1.5,top+1.5,c.w-3,c.h-3);
+    ctx.shadowBlur=0;
+    ctx.strokeStyle='rgba(123,108,255,0.8)';ctx.lineWidth=1.5;
+    for(let yy=top+12;yy<GROUND-8;yy+=14){
+      ctx.strokeRect(c.x+8,yy,10,9);ctx.strokeRect(c.x+22,yy,10,9);}
+  });
+  // PENDULES À POINTES ⛓️
+  S.pends.forEach(p=>{
+    const pos=pendPos(p);
+    ctx.strokeStyle='#1b1340';ctx.lineWidth=5;
+    const n=Math.floor(p.len/15);
+    for(let i=0;i<n;i++){
+      const t0=i/n,t1=(i+0.7)/n;
+      const x0=p.x+(pos.x-p.x)*t0,y0=p.ay+(pos.y-p.ay)*t0;
+      const x1=p.x+(pos.x-p.x)*t1,y1=p.ay+(pos.y-p.ay)*t1;
+      ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();}
+    ctx.save();ctx.translate(pos.x,pos.y);
+    ctx.rotate(Math.atan2(pos.x-p.x,-(pos.y-p.ay)));
+    ctx.fillStyle='#0a0a14';ctx.shadowColor='#ff3d8b';ctx.shadowBlur=10;
+    ctx.beginPath();ctx.moveTo(-15,-12);ctx.lineTo(15,-12);ctx.lineTo(0,22);ctx.closePath();ctx.fill();
+    ctx.shadowBlur=0;ctx.strokeStyle='rgba(255,255,255,0.85)';ctx.lineWidth=2;ctx.stroke();
+    ctx.restore();
+  });
+  // pics
+  S.spikes.forEach(o=>{
+    const oy=GROUND-o.h;
+    ctx.fillStyle='#0a0a14';
+    ctx.beginPath();ctx.moveTo(o.x,GROUND);ctx.lineTo(o.x+o.w/2,oy);ctx.lineTo(o.x+o.w,GROUND);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.85)';ctx.lineWidth=2;ctx.stroke();
+  });
+  // PADS propulseurs 🟨
+  S.pads.forEach(p=>{
+    ctx.save();ctx.translate(p.x+p.w/2,GROUND-5);
+    const pulse=p.fired?0.4:0.9+Math.sin(S.t*0.2)*0.25;
+    ctx.globalAlpha=pulse;
+    ctx.fillStyle='#ffd23f';ctx.shadowColor='#ffd23f';ctx.shadowBlur=16;
+    ctx.beginPath();ctx.moveTo(-p.w/2,4);ctx.lineTo(0,-12);ctx.lineTo(p.w/2,4);ctx.closePath();ctx.fill();
+    ctx.beginPath();ctx.moveTo(-p.w/3,10);ctx.lineTo(0,-2);ctx.lineTo(p.w/3,10);ctx.closePath();ctx.fill();
+    ctx.shadowBlur=0;ctx.restore();
+  });
+  // anneaux (blancs = grand rebond, roses = petit rebond)
+  S.rings.forEach(r=>{
+    ctx.save();ctx.translate(r.x,r.y);
+    const pulse=1+Math.sin(S.t*0.12)*0.08;ctx.scale(pulse,pulse);
+    const c=r.pink?'#ff8ac2':'#ffffff';
+    ctx.strokeStyle=c;ctx.lineWidth=r.pink?5:6;ctx.shadowColor=c;ctx.shadowBlur=16;
+    ctx.beginPath();ctx.arc(0,0,r.pink?12:16,0,Math.PI*2);ctx.stroke();
+    ctx.shadowBlur=0;ctx.restore();
+  });
+  // portes-réponses (bulles)
+  S.gates.forEach(gt=>{
+    if(gt.done)return;
+    const isVF=gt.kind==='vf';
+    const cTop=isVF?'#3dff8b':'#29f0e8', cBot=isVF?'#ff3d8b':'#29f0e8';
+    const yTop=GROUND-160,yBot=GROUND-38;
+    [[gt.top,yTop,cTop,'⬆'],[gt.bottom,yBot,cBot,'⬇']].forEach(([label,gy,color,arr])=>{
+      ctx.save();ctx.translate(gt.x,gy+(gy===yTop?Math.sin(S.t*0.06)*4:0));
+      const lines=wrapText(String(label),14);
+      const fw=Math.max(96,...lines.map(l=>ctx.measureText(l).width))+10;
+      const r=Math.max(40,Math.min(64,fw*0.55));
+      const grad=ctx.createRadialGradient(-r*0.3,-r*0.3,r*0.15,0,0,r);
+      grad.addColorStop(0,'rgba(255,255,255,0.30)');
+      grad.addColorStop(0.7,color==='#3dff8b'?'rgba(61,255,139,0.20)':color==='#ff3d8b'?'rgba(255,61,139,0.20)':'rgba(41,240,232,0.18)');
+      grad.addColorStop(1,'rgba(10,8,30,0.55)');
+      ctx.fillStyle=grad;ctx.shadowColor=color;ctx.shadowBlur=20;
+      ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();
+      ctx.shadowBlur=0;ctx.strokeStyle=color;ctx.lineWidth=3.5;ctx.stroke();
+      ctx.fillStyle=color;ctx.font='900 15px Nunito';ctx.textAlign='center';
+      ctx.fillText(arr,0,-r+18);
+      ctx.fillStyle='#fff';
+      const fs=lines.length>2?12:(lines.length>1?14:16);
+      ctx.font=`900 ${fs}px Nunito`;
+      lines.slice(0,3).forEach((l,i)=>ctx.fillText(l,0,(i-(Math.min(lines.length,3)-1)/2)*(fs+3)+5));
+      ctx.restore();
+    });
+    ctx.save();ctx.setLineDash([6,8]);ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(gt.x,yTop+50);ctx.lineTo(gt.x,yBot-50);ctx.stroke();ctx.restore();
+  });
+  // ennemis 👾
+  S.foes.forEach(f=>{
+    ctx.save();ctx.translate(f.x,f.y);
+    if(f.k==='saw'){
+      ctx.rotate(f.t*0.25);
+      ctx.fillStyle='#ff3d8b';ctx.shadowColor='#ff3d8b';ctx.shadowBlur=14;
+      for(let i=0;i<8;i++){const a=i*Math.PI/4;
+        ctx.beginPath();ctx.moveTo(Math.cos(a)*f.r*0.6,Math.sin(a)*f.r*0.6);
+        ctx.lineTo(Math.cos(a+0.28)*(f.r+7),Math.sin(a+0.28)*(f.r+7));
+        ctx.lineTo(Math.cos(a+0.56)*f.r*0.6,Math.sin(a+0.56)*f.r*0.6);ctx.closePath();ctx.fill();}
+      ctx.beginPath();ctx.arc(0,0,f.r*0.62,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+      ctx.fillStyle='#5c0f30';ctx.beginPath();ctx.arc(0,0,f.r*0.26,0,Math.PI*2);ctx.fill();
+    }else if(f.k==='fly'){
+      const flap=Math.sin(f.t*0.5)*8;
+      ctx.fillStyle='rgba(123,108,255,0.55)';
+      ctx.beginPath();ctx.moveTo(-f.r,-4);ctx.lineTo(-f.r-15,-12-flap);ctx.lineTo(-f.r-4,2);ctx.closePath();ctx.fill();
+      ctx.beginPath();ctx.moveTo(f.r,-4);ctx.lineTo(f.r+15,-12-flap);ctx.lineTo(f.r+4,2);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#7b6cff';ctx.shadowColor='#7b6cff';ctx.shadowBlur=14;
+      ctx.beginPath();ctx.moveTo(0,-f.r);ctx.lineTo(f.r,0);ctx.lineTo(0,f.r);ctx.lineTo(-f.r,0);ctx.closePath();ctx.fill();
+      ctx.shadowBlur=0;
+      ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(0,-2,6,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#1a1440';ctx.beginPath();ctx.arc(-2,-2,3,0,Math.PI*2);ctx.fill();
+    }else if(f.k==='chomp'){ // monstre croqueur 🦈
+      const jaw=Math.abs(Math.sin(f.t*0.09))*0.55+0.08;
+      ctx.fillStyle='#ff3d8b';ctx.shadowColor='#ff3d8b';ctx.shadowBlur=14;
+      ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,f.r,Math.PI+jaw,Math.PI*3-jaw);ctx.closePath();ctx.fill();
+      ctx.shadowBlur=0;
+      ctx.fillStyle='#fff';
+      for(let i=0;i<3;i++){
+        const a1=Math.PI+jaw+0.25+i*0.5;
+        ctx.beginPath();ctx.moveTo(Math.cos(a1)*f.r,Math.sin(a1)*f.r);
+        ctx.lineTo(Math.cos(a1+0.2)*f.r*0.55,Math.sin(a1+0.2)*f.r*0.55);
+        ctx.lineTo(Math.cos(a1+0.4)*f.r,Math.sin(a1+0.4)*f.r);ctx.closePath();ctx.fill();}
+      ctx.beginPath();ctx.arc(2,-f.r*0.45,3.5,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#5c0f30';ctx.beginPath();ctx.arc(2,-f.r*0.45,1.8,0,Math.PI*2);ctx.fill();
+    }else{
+      const squish=f.vy===0?1+Math.sin(f.t*0.3)*0.08:Math.max(0.7,1-Math.abs(f.vy)*0.04);
+      ctx.scale(2-squish,squish);
+      ctx.fillStyle='#3dff8b';ctx.shadowColor='#3dff8b';ctx.shadowBlur=12;
+      ctx.beginPath();ctx.arc(0,0,f.r,Math.PI,0);ctx.lineTo(f.r,f.r*0.55);
+      ctx.quadraticCurveTo(0,f.r*0.85,-f.r,f.r*0.55);ctx.closePath();ctx.fill();ctx.shadowBlur=0;
+      ctx.fillStyle='#0c3a20';
+      ctx.beginPath();ctx.arc(-6,-3,3.2,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(6,-3,3.2,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(0,5,4,0,Math.PI);ctx.fill();
+    }
+    ctx.restore();
+  });
+  // ondes de choc
+  S.shocks.forEach(sh=>{
+    ctx.save();ctx.globalAlpha=Math.max(0,sh.a);
+    ctx.strokeStyle=sh.color;ctx.lineWidth=4;ctx.shadowColor=sh.color;ctx.shadowBlur=16;
+    ctx.beginPath();ctx.arc(sh.x,sh.y,sh.r,0,Math.PI*2);ctx.stroke();
+    ctx.restore();
+  });
+  // pièces (dorées) et grosses pièces (violettes ✦)
+  S.coins.forEach(c=>{
+    ctx.save();ctx.translate(c.x,c.y);ctx.scale(Math.abs(Math.cos(S.t*0.08)),1);
+    const col=c.big?'#c77bff':'#ffd23f';
+    ctx.fillStyle=col;ctx.shadowColor=col;ctx.shadowBlur=c.big?18:12;
+    ctx.beginPath();ctx.arc(0,0,c.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle=c.big?'#4a1a73':'#b97900';ctx.font=`900 ${c.big?16:13}px Nunito`;ctx.textAlign='center';
+    ctx.fillText(c.big?'✦':'+',0,5);
+    ctx.restore();
+  });
+  // traînée + cube
+  if(S.running&&S.deadTimer<=0){ctx.fillStyle='rgba(41,240,232,0.25)';
+    for(let i=1;i<6;i++)ctx.fillRect(PX-i*9,S.py+i*1.5*S.grav,SIZE-i*5,SIZE-i*3);}
+  if(S.deadTimer<=0||S.t%8<4){
+    ctx.save();
+    const rot=S.onGround?0:(S.vy*0.04*S.grav);
+    ctx.translate(PX+SIZE/2,S.py+SIZE/2);ctx.rotate(rot);
+    ctx.shadowColor=S.shield?'#3dff8b':'#29f0e8';ctx.shadowBlur=16;
+    ctx.fillStyle='#29f0e8';ctx.fillRect(-SIZE/2,-SIZE/2,SIZE,SIZE);
+    ctx.shadowBlur=0;ctx.fillStyle='#062a30';
+    ctx.fillRect(-SIZE/2+8,-SIZE/2+9,7,7);ctx.fillRect(SIZE/2-15,-SIZE/2+9,7,7);
+    ctx.fillRect(-SIZE/2+9,SIZE/2-14,SIZE-18,5);
+    if(S.shield){ctx.strokeStyle='#3dff8b';ctx.lineWidth=3;ctx.shadowColor='#3dff8b';ctx.shadowBlur=10;
+      ctx.beginPath();ctx.arc(0,0,SIZE*0.85,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;}
+    ctx.restore();
+  }
+  S.particles.forEach(p=>{ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,5,5);ctx.globalAlpha=1;});
+
+  // bandeau question
+  const ag=S.running?activeGate():null;
+  if(ag){
+    const isVF=ag.kind==='vf';
+    const title=isVF?'🟡 VRAI ou FAUX ?  (juste : +1 vie ❤ · faux : −1 vie)':'🌀 ÉNIGME  (+100 pts et bouclier 🛡️)';
+    const lines=wrapText(ag.text,Math.floor(w/13));
+    const fs=Math.max(16,Math.min(21,w/42));
+    const bh=46+lines.length*(fs+6)+16;
+    const bw=Math.min(w-24,760);
+    ctx.save();ctx.translate(w/2,34);
+    ctx.fillStyle='rgba(10,7,30,0.88)';
+    ctx.strokeStyle=isVF?'#ffd23f':'#29f0e8';ctx.lineWidth=2.5;
+    ctx.shadowColor=isVF?'#ffd23f':'#29f0e8';ctx.shadowBlur=18;
+    roundRect(-bw/2,0,bw,bh,16);ctx.fill();ctx.shadowBlur=0;ctx.stroke();
+    ctx.textAlign='center';
+    ctx.fillStyle=isVF?'#ffd23f':'#29f0e8';ctx.font='900 13px Nunito';
+    ctx.fillText(title,0,24);
+    ctx.fillStyle='#fff';ctx.font=`900 ${fs}px Nunito`;
+    lines.forEach((l,i)=>ctx.fillText(l,0,48+i*(fs+6)));
+    ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='800 12px Nunito';
+    ctx.fillText('⬆ saute pour la bulle du haut · ⬇ reste au sol pour celle du bas',0,bh-8);
+    ctx.restore();
+  }
+  // bandeau feedback
+  if(S.feedback&&S.t<S.feedback.until&&!ag){
+    const f=S.feedback;
+    const lines=wrapText(f.text,Math.floor(w/11));
+    const fs=Math.max(13,Math.min(16,w/55));
+    const bh=18+lines.length*(fs+5);
+    const bw=Math.min(w-24,760);
+    ctx.save();ctx.translate(w/2,34);
+    ctx.globalAlpha=Math.min(1,(f.until-S.t)/60);
+    ctx.fillStyle='rgba(10,7,30,0.85)';
+    ctx.strokeStyle=f.good?'#3dff8b':'#ff3d8b';ctx.lineWidth=2.5;
+    roundRect(-bw/2,0,bw,bh,14);ctx.fill();ctx.stroke();
+    ctx.textAlign='center';ctx.fillStyle=f.good?'#b8ffd4':'#ffc1d8';ctx.font=`800 ${fs}px Nunito`;
+    lines.forEach((l,i)=>ctx.fillText(l,0,18+i*(fs+5)));
+    ctx.restore();
+  }
+  if(S.flash>0){ctx.fillStyle=`rgba(200,180,255,${S.flash/22*0.9})`;ctx.fillRect(-20,-20,w+40,h+40);}
+  if(S.paused){ctx.fillStyle='rgba(7,5,22,0.6)';ctx.fillRect(-20,-20,w+40,h+40);
+    ctx.fillStyle='#f2f0ff';ctx.font="900 34px Bungee, Nunito";ctx.textAlign='center';
+    ctx.fillText('PAUSE',w/2,h/2);}
+  ctx.restore();
+}
+
+/* ====================== MENU & LANCEMENT ====================== */
+function segInit(id,cb){const el=$(id);el.querySelectorAll('button').forEach(b=>{
+  b.onclick=()=>{el.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');cb(b.dataset.v)};});}
+segInit('segLevel',v=>{cfg.grade=+v;buildChips()});
+segInit('segSpeed',v=>cfg.speed=+v);
+
+const chipsBox=$('chips');
+function buildChips(){
+  chipsBox.innerHTML='';
+  topicsForGrade(cfg.grade).forEach(k=>{
+    const b=document.createElement('button');b.textContent=TOPICS[k].label;b.dataset.k=k;b.classList.add('on');
+    b.onclick=()=>b.classList.toggle('on');chipsBox.appendChild(b);
+  });
+  $('optTitle').textContent='⚙️ Chapitres travaillés — classe de '+cfg.grade+'e';
+}
+buildChips();
+$('selAll').onclick=()=>chipsBox.querySelectorAll('button').forEach(b=>b.classList.add('on'));
+$('selNone').onclick=()=>chipsBox.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+$('btnOptions').onclick=()=>$('optScreen').classList.remove('hidden');
+$('btnOptClose').onclick=()=>$('optScreen').classList.add('hidden');
+
+function startGame(){
+  ATTEMPTS++;
+  const sel=[...chipsBox.querySelectorAll('button.on')].map(b=>b.dataset.k);
+  cfg.topics=sel.length?sel:topicsForGrade(cfg.grade);
+  Object.assign(S,{running:true,paused:false,mode:'run',dist:0,score:0,lives:3,shield:false,
+    vy:0,py:GROUND-SIZE,onGround:true,dbl:false,
+    spikes:[],cols:[],coins:[],rings:[],gates:[],foes:[],holes:[],pends:[],pads:[],sdoors:[],
+    particles:[],shocks:[],shake:0,flash:0,
+    plats:[],cspikes:[],gportals:[],sportals:[],grav:1,speedMul:1,speedUntil:0,combo:0,
+    qDone:0,nextSpawn:450,nextQCM:900,nextVF:500,nextFoe:1300,nextDoor:2200,doorsSpawned:0,nextGrav:1700,gravCount:0,
+    stats:{},vfOK:0,vfTot:0,roomsOK:0,missed:[],feedback:null,deadTimer:0,t:0});
+  R=null;
+  $('menu').classList.add('hidden');$('endScreen').classList.add('hidden');
+  $('roomCtl').classList.add('hidden');
+  $('hud').classList.remove('hidden');$('pauseBtn').textContent='⏸ Pause';
+  updateHUD();requestAnimationFrame(update);
+}
+$('btnPlay').onclick=startGame;
+$('btnReplay').onclick=startGame;
+$('btnMenu').onclick=()=>{$('endScreen').classList.add('hidden');$('menu').classList.remove('hidden')};
+draw();
+</script>
+</body>
+</html>
