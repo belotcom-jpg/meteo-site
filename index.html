@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PluiePro v1.40</title>
+<title>PluiePro v1.41</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -329,7 +329,9 @@ let _pressureMSL=null; /* pression au niveau de la mer (hPa) */
 let _capeHourly=null; /* CAPE J/kg heure par heure */
 let _cloudData=null;
 let _humidityHourly=null;
-let _sunshineHourly=null; /* durée ensoleillement s/h (0-3600) */ /* humidité relative % horaire */
+let _sunshineHourly=null;
+let _firstLoad=true; /* 1er chargement → ignore cache, fetch frais */
+let _tempMaxByDay=null; /* max température parmi TOUS les modèles, par jour */ /* durée ensoleillement s/h (0-3600) */ /* humidité relative % horaire */
 let _lastPts=null; /* derniers pts du chart pour recalcul humidité */
 let _sunriseJ0=6,_sunsetJ0=21,_sunriseJ1=6,_sunsetJ1=21; /* heures décimales */
 let _currentRain=null; /* précipitation actuelle temps réel */
@@ -1219,6 +1221,33 @@ function smoothCloudData(arr){
   });
 }
 /* ── Fetch dédié températures (robuste, séparé du batch principal) ── */
+
+/* Récupère temperature_2m_max sur tous les modèles → garde le MAX par jour */
+async function fetchTempMaxModels(lat,lon){
+  const models='icon_seamless,gfs_seamless,ecmwf_ifs025,ecmwf_aifs025_single,meteofrance_seamless,gem_seamless,knmi_seamless,ukmo_seamless';
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max&models=${models}&forecast_days=16&timezone=auto`;
+  try{
+    const r=await fetch(url);
+    if(!r.ok)return;
+    const d=await r.json();
+    if(!d?.daily)return;
+    /* Clés type temperature_2m_max_icon_seamless, etc. */
+    const keys=Object.keys(d.daily).filter(k=>k.startsWith('temperature_2m_max_'));
+    const nDays=d.daily.time?.length||0;
+    const out=[];
+    for(let di=0;di<nDays;di++){
+      let mx=null;
+      keys.forEach(k=>{const v=d.daily[k]?.[di];if(v!=null&&isFinite(v)&&(mx===null||v>mx))mx=v;});
+      /* Fallback : si pas de valeur multi-modèle ce jour, garder le blend */
+      if(mx===null&&_tempByDay?.[di]?.max!=null)mx=_tempByDay[di].max;
+      out.push(mx);
+    }
+    _tempMaxByDay=out;
+    console.log('[tempMax] OK',keys.length,'modèles,',nDays,'jours');
+    if(myChart){lastW=0;myChart.update('none');}
+  }catch(e){console.warn('[tempMax]',e.message);}
+}
+
 async function fetchDailyTemps(lat,lon){
   /* Pas de modèle forcé : Open-Meteo blend auto couvre 16j partout.
      MF Seamless et AROME HD sont limités à 7j/48h avec models= forcé. */
@@ -1239,7 +1268,9 @@ async function fetchDailyTemps(lat,lon){
       const d=await r.json();
       if(!d?.daily?.time||!d?.daily?.temperature_2m_max)return;
       _tempByDay=d.daily.temperature_2m_max.map(function(mx,di){return{max:mx,min:d.daily.temperature_2m_min?.[di]??null};});
-      console.log('[temp] OK',_tempByDay.length,'jours');
+      console.log('[temp] OK',_tempByDay.length,'jours (blend)');
+      /* 2e appel : max de TOUS les modèles pour le pire cas */
+      fetchTempMaxModels(lat,lon);
       /* Redessiner le summary */
       if(myChart){
         lastW=0;
@@ -1558,7 +1589,8 @@ async function load(){
     const omModels=SOURCES.filter(s=>s.omModel).map(s=>s.omModel).join(',');
     
     /* O — Essayer le cache d'abord */
-    const _cached=_loadCache(lat,lon);
+    const _cached=_firstLoad?null:_loadCache(lat,lon);
+    _firstLoad=false;
     if(_cached&&_cached.omMain?.hourly?.time){
       const {omMain,omM15,omCurrent,metno,omDaily,_tempByDayCached,_uvCached}=_cached;
     if(_tempByDayCached&&!_tempByDay)_tempByDay=_tempByDayCached;
@@ -3255,7 +3287,7 @@ function buildSummary(chart,pts,days,xp){
   const todayMidnight=new Date(cn.getFullYear(),cn.getMonth(),cn.getDate());
   row.innerHTML='';
   row.style.cssText='display:flex;flex-direction:row;align-items:stretch;border-top:2px solid #444;background:#060606;overflow:hidden;'+
-    (days.length>2?'min-height:clamp(68px,15vw,82px)':'min-height:clamp(56px,12vw,66px)');
+    (days.length>2?'min-height:clamp(94px,19vw,112px)':'min-height:clamp(78px,16vw,92px)');
   /* Spacer gauche = axe Y */
   const sL=document.createElement('div');
   sL.style.cssText='flex:0 0 '+chartArea.left+'px';
@@ -3280,12 +3312,14 @@ function buildSummary(chart,pts,days,xp){
     const maxP=Math.max(...dd.map(p=>p.p),0);
     /* Label */
     const isToday=dateMidnight.getTime()===todayMidnight.getTime();
-    const lbl=isToday?'AUJ.':dn[date.getDay()];
+    const lbl=(isToday?'AUJ.':dn[date.getDay()])+' '+date.getDate()+'/'+(date.getMonth()+1);
     /* Température */
     const dt=_tempByDay?.[daysFromToday];
     const tMax=dt?.max??null,tMin=dt?.min??null;
+    const tMaxMod=_tempMaxByDay?.[daysFromToday]??null;
+    const showMaxMod=tMaxMod!==null&&tMax!==null;
     const tempHTML=tMax!==null
-      ?'<div style="font-size:clamp(8px,1.8vw,10px);font-weight:900;white-space:nowrap;line-height:1.3;text-align:center"><span style="color:#88aaff">'+Math.round(tMin??0)+'°</span><span style="color:#ff8844">/'+Math.round(tMax)+'°</span></div>'
+      ?'<div style="font-size:clamp(10px,2.3vw,13px);font-weight:900;white-space:nowrap;line-height:1.4;text-align:center"><span style="color:#88aaff">'+Math.round(tMin??0)+'°</span><span style="color:#ff8844">/'+Math.round(tMax)+'°</span></div>'+(showMaxMod?'<div style="font-size:clamp(8px,1.9vw,11px);font-weight:900;color:#ffaa44;white-space:nowrap;line-height:1.3;text-align:center">('+Math.round(tMaxMod)+'°)</div>':'')
       :'';
     const div=document.createElement('div');
     div.style.cssText=
@@ -3293,8 +3327,8 @@ function buildSummary(chart,pts,days,xp){
       'display:flex;flex-direction:column;align-items:center;justify-content:center;'+
       'text-align:center;gap:1px;border-left:1px solid #1a1a1a;';
     div.innerHTML=
-      '<div style="font-size:clamp(7px,1.8vw,9px);font-weight:900;color:#666;letter-spacing:1px;white-space:nowrap;line-height:1.3">'+lbl+'</div>'+
-      '<div style="font-size:clamp(7px,1.9vw,9px);font-weight:900;color:#ffe600;white-space:nowrap;line-height:1.3">'+total.toFixed(1)+'<span style="font-size:6px;opacity:.6">mm</span>\u00a0'+Math.round(maxP)+'<span style="font-size:6px;opacity:.6">%</span></div>'+
+      '<div style="font-size:clamp(8px,1.9vw,11px);font-weight:900;color:#888;letter-spacing:0.3px;white-space:nowrap;line-height:1.4">'+lbl+'</div>'+
+      '<div style="font-size:clamp(9px,2.1vw,12px);font-weight:900;color:#ffe600;white-space:nowrap;line-height:1.5">'+total.toFixed(1)+'<span style="font-size:8px;opacity:.6">mm</span>\u00a0'+Math.round(maxP)+'<span style="font-size:8px;opacity:.6">%</span></div>'+
       tempHTML;
     row.appendChild(div);
   });
