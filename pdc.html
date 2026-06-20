@@ -1,1 +1,295 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Plan de classe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hanken+Grotesk:wght@500;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBFAF4;
+    --ink:#1B1B17;
+    --line:rgba(96,118,196,.16);
+    --line-strong:rgba(96,118,196,.26);
+    --margin:rgba(228,118,150,.55);
+    --board:#27432F;
+    --board-top:#315539;
+    --chalk:#ECE7D8;
+    --edge:#23231d;
+    --fill:#27432F;
+    --fill-2:#3a6e4b;
+    /* paliers blanc -> noir */
+    --l0:#ffffff; --l1:#dcdcd6; --l2:#b1b1aa; --l3:#7c7c75; --l4:#48483f; --l5:#161611;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:"Hanken Grotesk",system-ui,sans-serif;
+    color:var(--ink);
+    background-color:var(--paper);
+    background-image:
+      repeating-linear-gradient(to bottom, transparent 0, transparent 9px, var(--line) 9px, var(--line) 10px),
+      repeating-linear-gradient(to bottom, transparent 0, transparent 39px, var(--line-strong) 39px, var(--line-strong) 40px);
+    background-position:0 14px;
+    min-height:100dvh;
+    -webkit-font-smoothing:antialiased;
+    position:relative;
+    padding:clamp(20px,4vw,44px) clamp(16px,4vw,40px) 140px;
+  }
+  body::before{ /* marge gauche du cahier */
+    content:"";position:fixed;top:0;bottom:0;
+    left:clamp(14px,3.5vw,52px);width:2px;background:var(--margin);
+    opacity:.7;pointer-events:none;
+  }
+  .wrap{max-width:1000px;margin:0 auto;position:relative}
+
+  header.head{margin:0 0 clamp(16px,2.4vw,26px) clamp(8px,2vw,28px)}
+  .eyebrow{font-size:.74rem;letter-spacing:.28em;text-transform:uppercase;color:#6a6a5f;font-weight:600;margin:0 0 .35rem}
+  h1{
+    font-family:"Bricolage Grotesque",serif;font-weight:800;
+    font-size:clamp(2.1rem,6vw,3.4rem);line-height:.95;margin:0;letter-spacing:-.01em;
+  }
+  .lede{margin:.6rem 0 0;font-size:clamp(.95rem,1.6vw,1.05rem);color:#46463d;max-width:46ch}
+
+  /* tableau / devant de la classe */
+  .board{
+    position:relative;margin:0 auto clamp(14px,2.4vw,22px);
+    background:linear-gradient(180deg,var(--board-top),var(--board));
+    color:var(--chalk);border-radius:10px;
+    padding:.7rem 1rem;text-align:center;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.10), inset 0 0 60px rgba(0,0,0,.22), 0 6px 18px rgba(20,40,28,.18);
+    border:1px solid #1c3324;
+  }
+  .board span{font-weight:600;letter-spacing:.42em;text-indent:.42em;font-size:.92rem;opacity:.95}
+  .board::after{content:"";position:absolute;left:50%;bottom:.5rem;transform:translateX(-50%);width:46px;height:2px;background:rgba(236,231,216,.55);border-radius:2px}
+
+  /* salle */
+  .room{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;
+    gap:clamp(20px,5vw,52px);padding:clamp(6px,1.5vw,14px) 0}
+  .cluster{display:grid;grid-auto-rows:1fr;gap:clamp(6px,1.1vw,10px)}
+  .cluster.c2{grid-template-columns:repeat(2,1fr)}
+  .cluster.c3{grid-template-columns:repeat(3,1fr)}
+
+  .seat{
+    appearance:none;font-family:inherit;cursor:pointer;
+    width:clamp(70px,11.5vw,108px);min-height:clamp(54px,8.5vw,76px);
+    border:1.5px solid var(--edge);border-radius:5px;
+    background:var(--l0);color:var(--ink);
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    padding:.35rem .3rem 1.1rem;position:relative;
+    font-weight:800;font-size:clamp(.82rem,1.5vw,.98rem);line-height:1.02;
+    letter-spacing:-.01em;word-break:break-word;hyphens:auto;
+    box-shadow:0 2px 0 rgba(20,20,16,.10), 0 4px 10px rgba(20,20,16,.06);
+    transition:background-color .28s ease, color .28s ease, transform .08s ease, box-shadow .18s ease;
+  }
+  .seat:hover{box-shadow:0 2px 0 rgba(20,20,16,.14), 0 7px 16px rgba(20,20,16,.12)}
+  .seat:active{transform:translateY(1px)}
+  .seat:focus-visible{outline:3px solid #5b76c4;outline-offset:2px}
+  .seat.bloom{animation:bloom .34s ease}
+  @keyframes bloom{0%{transform:scale(.97)}55%{transform:scale(1.035)}100%{transform:scale(1)}}
+
+  /* tally / bâtons de comptage */
+  .tally{position:absolute;right:6px;bottom:5px;display:flex;gap:2px;height:11px;align-items:flex-end}
+  .tally .bar{width:2px;height:11px;background:currentColor;border-radius:1px;opacity:.92}
+  .tally .bar.diag{position:absolute;left:-1px;top:50%;width:calc(100% + 4px);height:2px;
+    transform:translateY(-50%) rotate(-22deg);transform-origin:center}
+
+  .seat.empty{
+    background:transparent;border:1.5px dashed rgba(60,60,52,.28);box-shadow:none;
+    color:rgba(60,60,52,.32);cursor:default;font-weight:600;font-size:1rem;
+  }
+
+  /* jauge */
+  .gauge{position:fixed;left:0;right:0;bottom:0;background:rgba(251,250,244,.92);
+    backdrop-filter:blur(6px);border-top:1.5px solid rgba(27,27,23,.12);
+    padding:.7rem clamp(16px,4vw,40px) max(.7rem,env(safe-area-inset-bottom));}
+  .gauge .row{max-width:1000px;margin:0 auto;display:flex;align-items:center;gap:14px}
+  .gauge .meta{display:flex;justify-content:space-between;align-items:baseline;flex:1;min-width:0}
+  .gauge .lbl{font-weight:600;font-size:.86rem;letter-spacing:.02em;color:#3c3c33;white-space:nowrap}
+  .gauge .num{font-family:"Bricolage Grotesque",serif;font-weight:800;font-size:1.05rem;letter-spacing:.01em}
+  .gauge .num b{color:var(--fill)}
+  .track{flex:1.4;height:12px;border-radius:7px;background:#e7e6dd;border:1px solid rgba(27,27,23,.12);overflow:hidden;min-width:120px}
+  .track i{display:block;height:100%;width:0;border-radius:7px;
+    background:linear-gradient(90deg,var(--fill),var(--fill-2));transition:width .35s cubic-bezier(.2,.8,.2,1)}
+
+  .btn{appearance:none;font-family:inherit;font-weight:600;font-size:.8rem;cursor:pointer;
+    border:1.5px solid rgba(27,27,23,.22);background:transparent;color:var(--ink);
+    border-radius:999px;padding:.42rem .8rem;display:inline-flex;align-items:center;gap:.4rem;white-space:nowrap}
+  .btn:hover{background:rgba(27,27,23,.06)}
+  .btn:focus-visible{outline:3px solid #5b76c4;outline-offset:2px}
+  .btn svg{width:15px;height:15px}
+  .btn.muted{opacity:.55}
+
+  @media (max-width:430px){
+    .gauge .row{flex-wrap:wrap;gap:8px 12px}
+    .gauge .meta{order:1;flex-basis:100%}
+    .track{order:2;flex-basis:60%}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .seat,.track i{transition:none}
+    .seat.bloom{animation:none}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="head">
+      <p class="eyebrow">Salle · 3 rangées</p>
+      <h1>Plan de classe</h1>
+      <p class="lede">Touchez un élève pour l'interroger&nbsp;: son prénom est prononcé, sa case fonce d'un cran (cinq appels jusqu'au noir) et la participation de la classe progresse.</p>
+    </header>
+
+    <div class="board"><span>TABLEAU</span></div>
+
+    <main class="room" id="room" aria-label="Plan de la classe"></main>
+  </div>
+
+  <div class="gauge">
+    <div class="row">
+      <div class="meta">
+        <span class="lbl">Participation de la classe</span>
+        <span class="num"><b id="count">0</b> / <span id="cap">0</span></span>
+      </div>
+      <div class="track" role="progressbar" aria-label="Participation de la classe" aria-valuemin="0" aria-valuenow="0" id="pb"><i id="fill"></i></div>
+      <button class="btn" id="mute" title="Couper le son" aria-pressed="false">
+        <svg id="ico-sound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>
+        <span id="mute-lbl">Son</span>
+      </button>
+      <button class="btn" id="reset" title="Remettre tous les compteurs à zéro">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+        Réinitialiser
+      </button>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+  // Plan repris du tableur : 3 îlots (colonnes A-B | D-E-F | H-I), 3 rangées.
+  // null = place vide (les "." et "…" du fichier).
+  const CLUSTERS = [
+    { cols:2, rows:[ ["Ethan", null],      ["Iyad","Lama"],            ["Sekou","Godelive"] ] },
+    { cols:3, rows:[ ["Yunus", null, "Quentin"], ["Zohra","Mathilde","Elizabeth"], ["Enael","Varnika","Yashika"] ] },
+    { cols:2, rows:[ ["Leya","Babanding"], ["Francine","Victoria"],    ["Kevin","Ahmed"] ] },
+  ];
+  const STEPS = 5;                    // 5 appels : blanc -> noir
+  const LV = ["--l0","--l1","--l2","--l3","--l4","--l5"];
+  const root = getComputedStyle(document.documentElement);
+  const seats = [];                   // {el, name, count}
+  let total = 0, capacity = 0, muted = false;
+
+  const room  = document.getElementById("room");
+  const elCnt = document.getElementById("count");
+  const elCap = document.getElementById("cap");
+  const elFill= document.getElementById("fill");
+  const elPb  = document.getElementById("pb");
+
+  // ---- voix (français) ----
+  let voice = null, warmed = false;
+  function pickVoice(){
+    const v = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+    voice = v.find(x=>/^fr(-|_|$)/i.test(x.lang)) || v.find(x=>/fran|french/i.test(x.name)) || voice;
+  }
+  if (window.speechSynthesis){
+    pickVoice();
+    speechSynthesis.onvoiceschanged = pickVoice;
+  }
+  function warm(){ // débloque la synthèse au 1er geste (iOS/Safari)
+    if (warmed || !window.speechSynthesis) return;
+    warmed = true;
+    try{ const u=new SpeechSynthesisUtterance(" "); u.volume=0; u.lang="fr-FR"; speechSynthesis.speak(u);}catch(e){}
+  }
+  document.addEventListener("pointerdown", warm, {once:true});
+
+  function say(name){
+    if (muted || !window.speechSynthesis) return;
+    try{
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(name);
+      u.lang = "fr-FR"; u.rate = 1; u.pitch = 1;
+      if (voice) u.voice = voice;
+      speechSynthesis.speak(u);
+    }catch(e){}
+  }
+
+  // ---- couleurs & tally ----
+  function paint(s){
+    const lvl = s.count;
+    s.el.style.backgroundColor = root.getPropertyValue(LV[lvl]).trim();
+    s.el.style.color = lvl >= 3 ? "#f4f3ec" : "var(--ink)";
+    s.el.setAttribute("aria-label", s.name + " — interrogé " + lvl + " fois sur " + STEPS);
+    const t = s.el.querySelector(".tally");
+    t.innerHTML = "";
+    const verticals = lvl === STEPS ? 4 : lvl;
+    for (let i=0;i<verticals;i++){ const b=document.createElement("i"); b.className="bar"; t.appendChild(b); }
+    if (lvl === STEPS){ const d=document.createElement("i"); d.className="bar diag"; t.appendChild(d); }
+  }
+
+  function refreshGauge(){
+    elCnt.textContent = total;
+    const pct = capacity ? Math.round((total/capacity)*100) : 0;
+    elFill.style.width = pct + "%";
+    elPb.setAttribute("aria-valuenow", total);
+    elPb.setAttribute("aria-valuetext", total + " sur " + capacity);
+  }
+
+  function hit(s){
+    say(s.name);
+    if (s.count < STEPS){ s.count++; total++; paint(s); refreshGauge(); }
+    s.el.classList.remove("bloom"); void s.el.offsetWidth; s.el.classList.add("bloom");
+  }
+
+  // ---- construction ----
+  CLUSTERS.forEach(cl=>{
+    const g = document.createElement("div");
+    g.className = "cluster c" + cl.cols;
+    cl.rows.forEach(rowArr=>{
+      rowArr.forEach(name=>{
+        if (name == null){
+          const d = document.createElement("div");
+          d.className = "seat empty"; d.setAttribute("aria-hidden","true"); d.textContent="·";
+          g.appendChild(d);
+        } else {
+          const b = document.createElement("button");
+          b.type = "button"; b.className = "seat";
+          b.innerHTML = '<span class="nm"></span><span class="tally" aria-hidden="true"></span>';
+          b.querySelector(".nm").textContent = name;
+          const s = { el:b, name:name, count:0 };
+          seats.push(s); capacity += STEPS;
+          paint(s);
+          b.addEventListener("click", ()=>hit(s));
+          g.appendChild(b);
+        }
+      });
+    });
+    room.appendChild(g);
+  });
+  elCap.textContent = capacity;
+  elPb.setAttribute("aria-valuemax", capacity);
+  refreshGauge();
+
+  // ---- contrôles ----
+  document.getElementById("reset").addEventListener("click", ()=>{
+    if (total>0 && !confirm("Réinitialiser tous les compteurs ?")) return;
+    seats.forEach(s=>{ s.count=0; paint(s); });
+    total = 0; refreshGauge();
+    if (window.speechSynthesis) try{ speechSynthesis.cancel(); }catch(e){}
+  });
+
+  const muteBtn = document.getElementById("mute");
+  const muteLbl = document.getElementById("mute-lbl");
+  muteBtn.addEventListener("click", ()=>{
+    muted = !muted;
+    muteBtn.classList.toggle("muted", muted);
+    muteBtn.setAttribute("aria-pressed", String(muted));
+    muteBtn.title = muted ? "Activer le son" : "Couper le son";
+    muteLbl.textContent = muted ? "Muet" : "Son";
+    if (muted && window.speechSynthesis) try{ speechSynthesis.cancel(); }catch(e){}
+  });
+})();
+</script>
+</body>
+</html>
 
