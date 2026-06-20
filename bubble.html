@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Drago Bulles v2.9 MATHS — L'Aventure des 100 Niveaux</title>
+<title>MathsBubble v1.32 — L'Aventure des 100 Niveaux</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -27,7 +27,7 @@
   }
   .readable{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif; line-height:1.55;}
   .cabinet{
-    width:100%; max-width:912px;
+    width:100%; max-width:min(866px, calc((100vh - 145px) * 26 / 24 + 34px));
     background:linear-gradient(180deg,#241147,#160a30);
     border:3px solid rgba(94,231,255,.45); border-radius:18px; padding:14px;
     box-shadow:0 0 0 4px #0c0720, 0 18px 50px rgba(0,0,0,.6), inset 0 0 40px rgba(94,231,255,.06);
@@ -119,8 +119,8 @@
 <body>
   <div class="cabinet">
     <div class="cab-top">
-      <div class="logo">DRAGO BULLES<small>L'AVENTURE DES 100 NIVEAUX</small></div>
-      <span style="font:8px 'Press Start 2P',monospace;color:#5ee7ff;background:rgba(94,231,255,.12);border:1px solid rgba(94,231,255,.4);border-radius:5px;padding:4px 7px;letter-spacing:.5px">v2.9 MATHS</span>
+      <div class="logo">MATHSBUBBLE<small>L'AVENTURE DES 100 NIVEAUX</small></div>
+      <span style="font:8px 'Press Start 2P',monospace;color:#5ee7ff;background:rgba(94,231,255,.12);border:1px solid rgba(94,231,255,.4);border-radius:5px;padding:4px 7px;letter-spacing:.5px">v1.32</span>
       <button class="sound-btn" id="soundBtn">SON: OFF</button>
     </div>
     <div class="hud" id="hud"></div>
@@ -132,9 +132,9 @@
       </div>
 
       <div class="overlay show" id="ovMenu">
-        <div class="title">DRAGO <span class="em">BULLES</span></div>
+        <div class="title">MATHS<span class="em">BUBBLE</span></div>
         <div class="sub">Emprisonne les bestioles dans des bulles, puis &eacute;clate-les&nbsp;!</div>
-        <div style="font:7px 'Press Start 2P',monospace;color:#ffd23f;letter-spacing:1px;margin:-2px 0 10px;opacity:.85">VERSION 2.9 &middot; MATHS</div>
+        <div style="font:7px 'Press Start 2P',monospace;color:#ffd23f;letter-spacing:1px;margin:-2px 0 10px;opacity:.85">VERSION 1.32</div>
         <div class="toggles">
           <button class="btn tog" id="btnPlayers">1 JOUEUR</button>
           <button class="btn tog" id="btnInvince">INVINCIBLE: OFF</button>
@@ -187,13 +187,13 @@
           <h3>Bulles sp&eacute;ciales</h3>
           <p>Parfois des bulles <b style="color:#ff7a2f">feu</b>, <b style="color:#46b6ff">eau</b> ou <b style="color:#ffe23f">&eacute;clair</b> apparaissent. Touche-les pour lib&eacute;rer leur pouvoir&nbsp;: l'&eacute;clair balaie toute une rang&eacute;e, le feu et l'eau d&eacute;valent et nettoient le sol. Elles font aussi mal au boss&nbsp;!</p>
           <h3>Boss final</h3>
-          <p>Au <b>niveau 100</b>, affronte <b>Super Drago</b>&nbsp;: esquive ses boules de feu et touche-le avec tes bulles jusqu'&agrave; vider sa barre de vie pour gagner la partie.</p>
+          <p>Au <b>niveau 100</b>, affronte <b>Super Boss</b>&nbsp;: esquive ses boules de feu et touche-le avec tes bulles jusqu'&agrave; vider sa barre de vie pour gagner la partie.</p>
           <h3>Ennemis</h3>
           <p>D&egrave;s les niveaux avanc&eacute;s, gare aux <b>volants</b> (roses, ils planent au-dessus des trous) et aux <b>tireurs</b> (cyan, ils crachent des boules&nbsp;: esquive ou bulle-les vite). Tout en haut de l'aventure d&eacute;barque le <b>Mighta</b> (brun)&nbsp;: il <b>lance des rochers</b> qui rebondissent et <b>crèvent tes bulles vides</b> &mdash; ne compte pas piéger tranquillement à côté de lui&nbsp;!</p>
           <h3>Power-ups</h3>
           <p>En crevant des bulles, des bonus tombent&nbsp;: <b>chaussure</b> (vitesse), <b style="color:#ffe23f">&eacute;clair</b> (tir rapide), <b style="color:#5ee7ff">bouclier</b> (invuln&eacute;rable un moment) et <b style="color:#ff5e6e">c&oelig;ur</b> (+1 vie).</p>
           <h3>Mini-boss &amp; Boss</h3>
-          <p>Au <b>niveau 50</b>, un <b>mini-boss</b> violet bloque la route&nbsp;: bats-le pour continuer l'aventure. Au <b>niveau 100</b>, c'est <b>Super Drago</b>&nbsp;: vide sa barre de vie pour gagner.</p>
+          <p>Au <b>niveau 50</b>, un <b>mini-boss</b> violet bloque la route&nbsp;: bats-le pour continuer l'aventure. Au <b>niveau 100</b>, c'est <b>Super Boss</b>&nbsp;: vide sa barre de vie pour gagner.</p>
           <h3>Dragon</h3>
           <p>Choisis la <b>couleur</b> de ton dragon depuis le menu (bouton DRAGON).</p>
           <h3>HURRY ! (Skel-Monsta)</h3>
@@ -775,7 +775,7 @@ function assignMathNumbers(){ const cs=carriers(); if(!cs.length) return;
   for(let i=0;i<cs.length;i++){ if(i===idx) continue; cs[i].set(distractor(G.math.q.ans,used,span)); }
 }
 function setupMathLevel(level){ const grade=level.mathGrade||G.mathGrade||"6e"; G.mathGrade=grade;
-  const idx=level.index||0, diff=clamp(1+Math.floor(idx/12),1,8);
+  const idx=level.index||0, diff=clamp(1+Math.floor(idx/10),1,9);
   const correct=(G.math&&typeof G.math.correct==="number")?G.math.correct:0;
   G.math={grade:grade,diff:diff,correct:correct,q:makeQuestionGrade(grade,diff)};
   if(!G.enemies.length){ const c=mathFloorCells(); if(c.length){ const k=c[ri(0,c.length-1)]; G.enemies.push(makeEnemyCell(ri(0,3),k.c,k.r,false)); } }
@@ -917,10 +917,10 @@ function renderEffects(g){
   }
 }
 
-/* ===== BOSS (niveau 100 : SUPER DRAGO) ===== */
+/* ===== BOSS (niveau 100 : SUPER BOSS) ===== */
 function startBoss(kind,resetSession){ kind=kind||"final"; G.bossKind=kind;
   const mini=(kind==="mini"); const base=generateCampaignLevel(mini?49:99);
-  const name=mini?"MINI-BOSS":"SUPER DRAGO", theme=mini?2:0;
+  const name=mini?"MINI-BOSS":"SUPER BOSS", theme=mini?2:0;
   G.level={name:name,tiles:base.tiles,start:{c:Math.floor(GRID_W/2),r:GRID_H-2},theme:theme,mode:"boss"};
   G.tiles=base.tiles; G.theme=THEMES[theme]; G.mode="boss"; G.mathMode=false; G.secret=false; G.testReturn=null; G.levelIndex=mini?49:99;
   makePlayers(G.level,resetSession);
@@ -984,7 +984,7 @@ function drawBossHud(g){ const bo=G.boss; if(!bo) return; const w=W-40, x=20, y=
   g.fillStyle="rgba(0,0,0,.55)"; g.fillRect(x-3,y-3,w+6,15);
   g.fillStyle="#3a0d10"; g.fillRect(x,y,w,9);
   g.fillStyle=hpc>0.5?"#37c057":(hpc>0.25?"#ffb03f":"#ff3b4d"); g.fillRect(x,y,w*hpc,9);
-  g.fillStyle="#fff"; g.font="7px 'Press Start 2P', monospace"; g.textAlign="center"; g.fillText(bo.name||"SUPER DRAGO",W/2,y+8); g.textAlign="left";
+  g.fillStyle="#fff"; g.font="7px 'Press Start 2P', monospace"; g.textAlign="center"; g.fillText(bo.name||"SUPER BOSS",W/2,y+8); g.textAlign="left";
 }
 function startCampaignIndex(i,resetSession){ if(i===49){ startBoss("mini",!!resetSession); } else if(i===99){ startBoss("final",!!resetSession); } else { startLevel(generateCampaignLevel(i),!!resetSession,null); } }
 
@@ -1206,9 +1206,9 @@ function respawnPlayer(p){ const c=G.level.start; const cc = p.id===0?c:{c:clamp
   p.x=cc.c*TILE+(TILE-PLAYER_W)/2; p.y=cc.r*TILE+(TILE-PLAYER_H); p.vx=0;p.vy=0;p.facing=1;p.invuln=RESPAWN_INVULN;p.dead=false;p.jumping=false;p.standBubble=null; }
 function checkAllOut(){ if(G.players.every(p=>p.out)) gameOver(); }
 function checkClear(){
-  if(G.clearing){ G.clearTimer--; if(G.clearTimer<=0) stageClear(); return; }
+  if(G.clearing){ G.clearTimer--; updateParticles(); if(G.clearTimer<=0) stageClear(); return; }
   const aliveSomeone=G.players.some(p=>!p.out);
-  if(G.enemies.length===0 && G.bubbles.every(b=>b.trappedType==null) && aliveSomeone){ G.clearing=true; G.clearTimer=CLEAR_DELAY; }
+  if(G.enemies.length===0 && G.bubbles.every(b=>b.trappedType==null) && aliveSomeone){ G.clearing=true; G.clearTimer=CLEAR_DELAY; if(G.mode==="campaign") spawnText(W/2,H/2-12,"NIVEAU TERMINE !","#ffe23f",true); }
 }
 
 /* ===== AUTOPILOT ===== */
@@ -1299,10 +1299,7 @@ function stageClear(){
   const cb=document.getElementById("clearBtns"); cb.innerHTML="";
   if(G.mode==="campaign"){
     G.progress=Math.min(99,Math.max(G.progress,G.levelIndex+1)); saveData();
-    document.getElementById("clearSub").textContent=(G.levelIndex+1>=100)?"Dernier niveau !":"Niveau "+(G.levelIndex+2)+" en approche\u2026";
-    cb.appendChild(mkBtn("SUIVANT \u25B6","",()=>advanceCampaign()));
-    G.screen="clear"; document.getElementById("ovClear").classList.add("show"); setMusic(false);
-    clearTimeout(G.pendingTimeout); G.pendingTimeout=setTimeout(()=>{ if(G.screen==="clear") advanceCampaign(); },1500);
+    advanceCampaign(); // transition automatique, sans page intermediaire
   } else {
     document.getElementById("clearSub").textContent="Bravo, niveau r\u00E9ussi !";
     cb.appendChild(mkBtn("REJOUER","",()=>{ document.getElementById("ovClear").classList.remove("show"); startLevel(G.level,true,G.testReturn); }));
@@ -1641,6 +1638,7 @@ document.getElementById("fileImport").addEventListener("change",e=>{ const files
 function step(){ if(G.screen==="play" && !G.paused) updatePlay(); updateAmbient(); IN[0].jumpEdge=false; IN[1].jumpEdge=false; }
 function render(){ ctx.clearRect(0,0,W,H);
   document.body.classList.toggle("editing", G.screen==="editor");
+  if(window.innerHeight!==G._fitH || document.body.classList.contains("editing")!==G._fitE){ G._fitH=window.innerHeight; G._fitE=document.body.classList.contains("editing"); fitCabinet(); }
   if(G.screen==="editor"){ renderEditor(); return; }
   if(G.screen==="menu"||G.screen==="help"||G.screen==="levels"||G.screen==="customlist"){ renderAmbient(); return; }
   renderPlay();
@@ -1649,8 +1647,28 @@ let _last=performance.now(), _acc=0;
 function frame(now){ let dt=(now-_last)/1000; _last=now; if(dt>0.1)dt=0.1; _acc+=dt; let s=0; while(_acc>=1/60 && s<5){ step(); _acc-=1/60; s++; } render(); requestAnimationFrame(frame); }
 
 /* ===== INIT ===== */
+// Ajuste la taille du cabinet d'apres la hauteur reellement disponible -> jamais d'ascenseur.
+function fitCabinet(){
+  try{
+    const cab=document.querySelector(".cabinet"), vp=document.querySelector(".viewport");
+    if(!cab||!vp) return;
+    cab.style.maxWidth="";                 // repart de la valeur CSS pour mesurer
+    const ch=cab.offsetHeight, vh=vp.offsetHeight;
+    if(!ch||!vh) return;                   // pas encore en page (ou test) -> on sort
+    const fixed=ch-vh;                     // tout sauf le canvas (cab-top, hud, marges, bordures)
+    const editing=document.body.classList.contains("editing");
+    const bar=document.querySelector(".editor-bar");
+    const barH=(editing && bar && bar.offsetHeight)?(bar.offsetHeight+12):0;
+    const availH=window.innerHeight-28-barH-4;            // 28 = padding body, 4 = marge securite
+    const widthCap=editing?600:866;
+    const targetVp=Math.max(140, Math.min(availH-fixed, (widthCap-34)*24/26));
+    cab.style.maxWidth=Math.floor(targetVp*26/24+34)+"px";
+  }catch(e){}
+}
+window.addEventListener("resize",fitCabinet);
+window.addEventListener("load",fitCabinet);
 function init(){ const d=loadData(); G.high=d.high||0; G.progress=d.progress||0; customLevels=(d.levels||[]); G.skin=Math.min(SKINS.length-1,Math.max(0,d.skin||0)); G.taBest=d.taBest||0; G.taBestLevel=d.taLevel||0;
-  initAmbient(); editorLevel=newEditorLevel(null); updateToggleLabels(); updateSkinUI(); goMenu(); autoLoadFolderLevels().catch(()=>{}); requestAnimationFrame(frame); }
+  initAmbient(); editorLevel=newEditorLevel(null); updateToggleLabels(); updateSkinUI(); goMenu(); autoLoadFolderLevels().catch(()=>{}); fitCabinet(); setTimeout(fitCabinet,300); setTimeout(fitCabinet,1000); requestAnimationFrame(frame); }
 init();
 
 })();
