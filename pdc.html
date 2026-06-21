@@ -1,295 +1,654 @@
 <!doctype html>
+<!-- Plan de classe — v1.8 -->
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Plan de classe</title>
+<title>Plan de classe · v1.8</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hanken+Grotesk:wght@500;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hanken+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
-    --paper:#FBFAF4;
-    --ink:#1B1B17;
-    --line:rgba(96,118,196,.16);
-    --line-strong:rgba(96,118,196,.26);
-    --margin:rgba(228,118,150,.55);
-    --board:#27432F;
-    --board-top:#315539;
-    --chalk:#ECE7D8;
-    --edge:#23231d;
-    --fill:#27432F;
-    --fill-2:#3a6e4b;
-    /* paliers blanc -> noir */
-    --l0:#ffffff; --l1:#dcdcd6; --l2:#b1b1aa; --l3:#7c7c75; --l4:#48483f; --l5:#161611;
+    --paper:#FBFAF4; --ink:#1B1B17;
+    --line:rgba(96,118,196,.16); --line-strong:rgba(96,118,196,.26); --margin:rgba(228,118,150,.55);
+    --board:#27432F; --board-top:#315539; --chalk:#ECE7D8; --edge:#23231d;
+    --pos:#2E7D4F; --pos-2:#46a169; --neg:#C0392B; --neg-2:#e05a4c;
   }
   *{box-sizing:border-box}
   html,body{margin:0}
   body{
-    font-family:"Hanken Grotesk",system-ui,sans-serif;
-    color:var(--ink);
+    font-family:"Hanken Grotesk",system-ui,sans-serif; color:var(--ink);
     background-color:var(--paper);
     background-image:
       repeating-linear-gradient(to bottom, transparent 0, transparent 9px, var(--line) 9px, var(--line) 10px),
       repeating-linear-gradient(to bottom, transparent 0, transparent 39px, var(--line-strong) 39px, var(--line-strong) 40px);
-    background-position:0 14px;
-    min-height:100dvh;
-    -webkit-font-smoothing:antialiased;
-    position:relative;
-    padding:clamp(20px,4vw,44px) clamp(16px,4vw,40px) 140px;
+    background-position:0 12px;
+    height:100dvh; overflow:hidden; display:flex; flex-direction:column; -webkit-font-smoothing:antialiased; position:relative;
   }
-  body::before{ /* marge gauche du cahier */
-    content:"";position:fixed;top:0;bottom:0;
-    left:clamp(14px,3.5vw,52px);width:2px;background:var(--margin);
-    opacity:.7;pointer-events:none;
-  }
-  .wrap{max-width:1000px;margin:0 auto;position:relative}
+  body::before{content:"";position:fixed;top:0;bottom:0;left:clamp(12px,3vw,40px);width:2px;background:var(--margin);opacity:.65;pointer-events:none;z-index:0}
 
-  header.head{margin:0 0 clamp(16px,2.4vw,26px) clamp(8px,2vw,28px)}
-  .eyebrow{font-size:.74rem;letter-spacing:.28em;text-transform:uppercase;color:#6a6a5f;font-weight:600;margin:0 0 .35rem}
-  h1{
-    font-family:"Bricolage Grotesque",serif;font-weight:800;
-    font-size:clamp(2.1rem,6vw,3.4rem);line-height:.95;margin:0;letter-spacing:-.01em;
-  }
-  .lede{margin:.6rem 0 0;font-size:clamp(.95rem,1.6vw,1.05rem);color:#46463d;max-width:46ch}
+  .app{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;width:100%;max-width:1120px;margin:0 auto;
+    padding:clamp(8px,1.4vw,16px) clamp(12px,3vw,28px) 0;position:relative;z-index:1}
 
-  /* tableau / devant de la classe */
-  .board{
-    position:relative;margin:0 auto clamp(14px,2.4vw,22px);
-    background:linear-gradient(180deg,var(--board-top),var(--board));
-    color:var(--chalk);border-radius:10px;
-    padding:.7rem 1rem;text-align:center;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.10), inset 0 0 60px rgba(0,0,0,.22), 0 6px 18px rgba(20,40,28,.18);
-    border:1px solid #1c3324;
-  }
-  .board span{font-weight:600;letter-spacing:.42em;text-indent:.42em;font-size:.92rem;opacity:.95}
-  .board::after{content:"";position:absolute;left:50%;bottom:.5rem;transform:translateX(-50%);width:46px;height:2px;background:rgba(236,231,216,.55);border-radius:2px}
+  /* onglets */
+  .tabs{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:1px 1px 6px;flex:0 0 auto}
+  .tab{flex:0 0 auto;display:inline-flex;align-items:center;gap:.3rem;border:1.5px solid rgba(27,27,23,.18);
+    background:#f3efe2;border-radius:9px 9px 0 0;padding:.32rem .62rem;font-weight:700;font-size:.82rem;color:#5a5142;cursor:pointer;white-space:nowrap}
+  .tab:hover{background:#efe9d8}
+  .tab.active{background:#fff;color:var(--ink);border-color:var(--edge);border-bottom-color:#fff}
+  .tab .ic{width:17px;height:17px;border-radius:50%;display:none;align-items:center;justify-content:center;font-weight:900;font-size:11px;line-height:1;border:1.5px solid;background:#fff;flex:0 0 auto}
+  .tab .ic.x{color:var(--neg);border-color:var(--neg)}
+  .tab .ic.e{color:#5b76c4;border-color:#5b76c4;font-size:10px}
+  body.editing .tab .ic{display:inline-flex}
+  .tab.add{background:transparent;border-style:dashed;color:#6a6a5f;font-size:1rem;padding:.26rem .62rem}
 
-  /* salle */
-  .room{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;
-    gap:clamp(20px,5vw,52px);padding:clamp(6px,1.5vw,14px) 0}
-  .cluster{display:grid;grid-auto-rows:1fr;gap:clamp(6px,1.1vw,10px)}
-  .cluster.c2{grid-template-columns:repeat(2,1fr)}
-  .cluster.c3{grid-template-columns:repeat(3,1fr)}
+  header.head{flex:0 0 auto;margin-bottom:6px}
+  h1{font-family:"Bricolage Grotesque",serif;font-weight:800;font-size:clamp(1.4rem,3.4vw,2.1rem);line-height:.95;margin:0;letter-spacing:-.01em;display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap}
+  h1 .ver{font-family:"Hanken Grotesk",sans-serif;font-weight:700;font-size:.74rem;color:#9a9a8c;letter-spacing:.04em}
+  .lede{margin:.25rem 0 0;font-size:.82rem;color:#56564c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lede b.g{color:var(--pos)} .lede b.r{color:var(--neg)}
 
+  .toolbar{flex:0 0 auto;display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:6px 0 4px}
+  .edit-only{display:none;align-items:center;gap:7px;flex-wrap:wrap}
+  body.editing .edit-only{display:flex}
+  .hint{font-size:.74rem;color:#7a7a6c}
+
+  /* scène : occupe la hauteur restante, sans scroll */
+  .stage{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:2px 0}
+  .plan{--w:84px;--h:62px;--gap:clamp(5px,.9vw,9px);--seatfs:14px;
+    display:flex;flex-direction:column;align-items:stretch;width:fit-content;max-width:100%}
+  .board{position:relative;background:linear-gradient(180deg,var(--board-top),var(--board));color:var(--chalk);
+    border-radius:8px;padding:.4rem 1rem;text-align:center;border:1px solid #1c3324;margin-bottom:6px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.10), inset 0 0 50px rgba(0,0,0,.22), 0 5px 14px rgba(20,40,28,.16)}
+  .board span{font-style:italic;font-family:"Bricolage Grotesque",serif;font-weight:600;letter-spacing:.06em;font-size:.92rem}
+  .bureau-row{display:flex;justify-content:flex-start;margin-bottom:clamp(8px,1.6vw,16px)}
+  .bureau{width:calc(2*var(--w) + var(--gap));min-height:30px;border:1.5px solid var(--edge);border-radius:6px;background:#f3efe2;
+    display:flex;align-items:center;justify-content:center;font-style:italic;font-family:"Bricolage Grotesque",serif;font-weight:600;font-size:.85rem;color:#5a5142;box-shadow:0 2px 0 rgba(20,20,16,.10)}
+
+  .grid{display:grid;gap:var(--gap)}
   .seat{
     appearance:none;font-family:inherit;cursor:pointer;
-    width:clamp(70px,11.5vw,108px);min-height:clamp(54px,8.5vw,76px);
-    border:1.5px solid var(--edge);border-radius:5px;
-    background:var(--l0);color:var(--ink);
-    display:flex;align-items:center;justify-content:center;text-align:center;
-    padding:.35rem .3rem 1.1rem;position:relative;
-    font-weight:800;font-size:clamp(.82rem,1.5vw,.98rem);line-height:1.02;
-    letter-spacing:-.01em;word-break:break-word;hyphens:auto;
-    box-shadow:0 2px 0 rgba(20,20,16,.10), 0 4px 10px rgba(20,20,16,.06);
-    transition:background-color .28s ease, color .28s ease, transform .08s ease, box-shadow .18s ease;
+    width:var(--w);height:var(--h);
+    border:1.5px solid var(--edge);border-radius:5px;background:#fff;color:var(--ink);
+    display:flex;align-items:center;justify-content:center;text-align:center;padding:.25rem;position:relative;overflow:hidden;
+    font-weight:800;font-size:var(--seatfs);line-height:1.02;letter-spacing:-.01em;
+    word-break:break-word;hyphens:auto;-webkit-touch-callout:none;user-select:none;touch-action:manipulation;
+    box-shadow:0 2px 0 rgba(20,20,16,.10), 0 3px 8px rgba(20,20,16,.06);
+    transition:background-color .26s ease,color .26s ease,transform .08s ease,box-shadow .18s ease;
   }
-  .seat:hover{box-shadow:0 2px 0 rgba(20,20,16,.14), 0 7px 16px rgba(20,20,16,.12)}
+  .seat:hover{box-shadow:0 2px 0 rgba(20,20,16,.14), 0 6px 14px rgba(20,20,16,.12)}
   .seat:active{transform:translateY(1px)}
   .seat:focus-visible{outline:3px solid #5b76c4;outline-offset:2px}
-  .seat.bloom{animation:bloom .34s ease}
-  @keyframes bloom{0%{transform:scale(.97)}55%{transform:scale(1.035)}100%{transform:scale(1)}}
+  .seat.bp{animation:bp .36s ease} .seat.bn{animation:bn .36s ease}
+  @keyframes bp{0%{box-shadow:0 0 0 0 rgba(46,125,79,.55)}100%{box-shadow:0 0 0 11px rgba(46,125,79,0)}}
+  @keyframes bn{0%{box-shadow:0 0 0 0 rgba(192,57,43,.5)}100%{box-shadow:0 0 0 11px rgba(192,57,43,0)}}
 
-  /* tally / bâtons de comptage */
-  .tally{position:absolute;right:6px;bottom:5px;display:flex;gap:2px;height:11px;align-items:flex-end}
-  .tally .bar{width:2px;height:11px;background:currentColor;border-radius:1px;opacity:.92}
-  .tally .bar.diag{position:absolute;left:-1px;top:50%;width:calc(100% + 4px);height:2px;
-    transform:translateY(-50%) rotate(-22deg);transform-origin:center}
+  .badge{position:absolute;min-width:17px;height:17px;padding:0 4px;border-radius:9px;border:1.5px solid #fff;
+    font-size:.68rem;font-weight:800;color:#fff;display:none;align-items:center;justify-content:center;line-height:1;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+  .badge.p{top:3px;left:3px;background:var(--pos)} .badge.n{bottom:3px;right:3px;background:var(--neg)}
+  .badge.on{display:inline-flex}
+  .del{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;border:1.5px solid var(--neg);
+    color:var(--neg);display:none;align-items:center;justify-content:center;font-weight:900;font-size:13px;line-height:1;cursor:pointer;z-index:3;box-shadow:0 1px 3px rgba(0,0,0,.25)}
 
-  .seat.empty{
-    background:transparent;border:1.5px dashed rgba(60,60,52,.28);box-shadow:none;
-    color:rgba(60,60,52,.32);cursor:default;font-weight:600;font-size:1rem;
-  }
+  .empty-cell{width:var(--w);height:var(--h);border:1.5px solid transparent;border-radius:5px;
+    display:flex;align-items:center;justify-content:center;color:transparent;font-size:1.3rem;font-weight:600;user-select:none}
 
-  /* jauge */
-  .gauge{position:fixed;left:0;right:0;bottom:0;background:rgba(251,250,244,.92);
-    backdrop-filter:blur(6px);border-top:1.5px solid rgba(27,27,23,.12);
-    padding:.7rem clamp(16px,4vw,40px) max(.7rem,env(safe-area-inset-bottom));}
-  .gauge .row{max-width:1000px;margin:0 auto;display:flex;align-items:center;gap:14px}
-  .gauge .meta{display:flex;justify-content:space-between;align-items:baseline;flex:1;min-width:0}
-  .gauge .lbl{font-weight:600;font-size:.86rem;letter-spacing:.02em;color:#3c3c33;white-space:nowrap}
-  .gauge .num{font-family:"Bricolage Grotesque",serif;font-weight:800;font-size:1.05rem;letter-spacing:.01em}
-  .gauge .num b{color:var(--fill)}
-  .track{flex:1.4;height:12px;border-radius:7px;background:#e7e6dd;border:1px solid rgba(27,27,23,.12);overflow:hidden;min-width:120px}
-  .track i{display:block;height:100%;width:0;border-radius:7px;
-    background:linear-gradient(90deg,var(--fill),var(--fill-2));transition:width .35s cubic-bezier(.2,.8,.2,1)}
+  body.editing .seat{animation:jiggle .34s ease-in-out infinite;cursor:grab}
+  body.editing .seat:nth-child(odd){animation-delay:-.17s}
+  body.editing .seat .badge{display:none!important}
+  body.editing .seat .del{display:flex}
+  body.editing .empty-cell{border:1.5px dashed rgba(60,60,52,.4);background:rgba(91,118,196,.05);color:rgba(60,60,52,.55);cursor:pointer}
+  body.editing .empty-cell:hover{border-color:#5b76c4;color:#5b76c4}
+  @keyframes jiggle{0%{transform:rotate(-1.05deg)}50%{transform:rotate(1.05deg)}100%{transform:rotate(-1.05deg)}}
+  .seat.dragging{opacity:.25;animation:none}
+  .cell-over{outline:3px dashed #5b76c4;outline-offset:2px;border-radius:6px}
+  .ghost{position:fixed;z-index:1000;pointer-events:none;border:1.5px solid var(--edge);border-radius:5px;
+    display:flex;align-items:center;justify-content:center;font-weight:800;padding:.3rem;box-shadow:0 14px 32px rgba(0,0,0,.32);transform:scale(1.05);opacity:.95}
+  .seat.picked{outline:4px solid #f1b500;outline-offset:2px;animation:picked .7s ease 2}
+  @keyframes picked{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
 
-  .btn{appearance:none;font-family:inherit;font-weight:600;font-size:.8rem;cursor:pointer;
-    border:1.5px solid rgba(27,27,23,.22);background:transparent;color:var(--ink);
-    border-radius:999px;padding:.42rem .8rem;display:inline-flex;align-items:center;gap:.4rem;white-space:nowrap}
+  /* outils : bande compacte */
+  .tools{flex:0 0 auto;display:flex;gap:9px;align-items:stretch;flex-wrap:wrap;margin:clamp(6px,1.2vw,12px) 0}
+  .tool{border:1.5px solid rgba(27,27,23,.14);background:#fffdf7;border-radius:11px;padding:.5rem .65rem;box-shadow:0 2px 0 rgba(20,20,16,.05);display:flex;flex-direction:column;gap:.3rem;min-width:0}
+  .tool.consigne{flex:1 1 240px}
+  .tool-h{font-weight:800;font-size:.72rem;letter-spacing:.02em;color:#3c3c33}
+  #note{width:100%;border:1.5px solid rgba(27,27,23,.18);border-radius:8px;padding:.4rem .55rem;font-family:inherit;font-size:.86rem;color:var(--ink);background:#fff;resize:none;min-height:40px;flex:1}
+  #note:focus{outline:2px solid #5b76c4;outline-offset:1px}
+  .timer-row{display:flex;align-items:center;gap:8px}
+  .time{font-family:"Bricolage Grotesque",serif;font-weight:800;font-size:1.5rem;line-height:1;font-variant-numeric:tabular-nums;min-width:62px}
+  .time.done{color:var(--neg);animation:flash .5s steps(1) 6}
+  @keyframes flash{0%{opacity:1}50%{opacity:.25}100%{opacity:1}}
+  #tmin{width:50px;border:1.5px solid rgba(27,27,23,.2);border-radius:7px;padding:.26rem .3rem;font-family:inherit;font-weight:700;font-size:.84rem;text-align:center}
+  .mood-row{display:flex;align-items:center;gap:8px}
+  .mood-face{font-size:1.5rem;line-height:1}
+  .mood-bar{position:relative;flex:1;min-width:70px;height:9px;border-radius:6px;background:linear-gradient(90deg,var(--neg),#e6c34a,var(--pos));border:1px solid rgba(27,27,23,.12)}
+  .mood-bar i{position:absolute;top:-3px;width:4px;height:15px;border-radius:3px;background:var(--ink);left:50%;transform:translateX(-50%);transition:left .35s cubic-bezier(.2,.8,.2,1)}
+  .mood-lbl{font-weight:700;font-size:.8rem;color:#3c3c33;white-space:nowrap}
+  .rand-row{display:flex;align-items:center;gap:8px}
+  .rand-name{font-family:"Bricolage Grotesque",serif;font-weight:800;font-size:1.1rem;line-height:1;color:var(--ink)}
+
+  /* barre du bas (dans le flux) */
+  .gauge{flex:0 0 auto;background:rgba(251,250,244,.96);border-top:1.5px solid rgba(27,27,23,.12);
+    padding:.5rem clamp(12px,3vw,28px) max(.5rem,env(safe-area-inset-bottom));position:relative;z-index:1}
+  .gauge .row{max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:clamp(10px,2.2vw,22px);flex-wrap:wrap}
+  .meter{flex:1;min-width:180px}
+  .meter .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
+  .meter .lbl{font-weight:700;font-size:.78rem;display:inline-flex;align-items:center;gap:.4rem}
+  .meter .lbl .dot{width:10px;height:10px;border-radius:50%}
+  .meter.p .dot{background:var(--pos)} .meter.n .dot{background:var(--neg)}
+  .meter .num{font-family:"Bricolage Grotesque",serif;font-weight:800;font-size:.96rem}
+  .meter.p .num b{color:var(--pos)} .meter.n .num b{color:var(--neg)}
+  .track{height:10px;border-radius:7px;background:#e7e6dd;border:1px solid rgba(27,27,23,.12);overflow:hidden}
+  .track i{display:block;height:100%;width:0;border-radius:7px;transition:width .35s cubic-bezier(.2,.8,.2,1)}
+  .meter.p .track i{background:linear-gradient(90deg,var(--pos),var(--pos-2))}
+  .meter.n .track i{background:linear-gradient(90deg,var(--neg),var(--neg-2))}
+
+  .actions{display:flex;gap:7px;flex:0 0 auto}
+  .btn{appearance:none;font-family:inherit;font-weight:600;font-size:.78rem;cursor:pointer;border:1.5px solid rgba(27,27,23,.22);
+    background:transparent;color:var(--ink);border-radius:999px;padding:.38rem .76rem;display:inline-flex;align-items:center;gap:.36rem;white-space:nowrap}
   .btn:hover{background:rgba(27,27,23,.06)}
   .btn:focus-visible{outline:3px solid #5b76c4;outline-offset:2px}
-  .btn svg{width:15px;height:15px}
-  .btn.muted{opacity:.55}
+  .btn.sm{padding:.3rem .58rem;font-size:.74rem}
+  .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)} .btn.primary:hover{background:#000}
+  .btn.danger{color:var(--neg);border-color:var(--neg)} .btn.danger:hover{background:rgba(192,57,43,.08)}
+  .btn svg{width:14px;height:14px} .btn.muted{opacity:.55}
 
-  @media (max-width:430px){
-    .gauge .row{flex-wrap:wrap;gap:8px 12px}
-    .gauge .meta{order:1;flex-basis:100%}
-    .track{order:2;flex-basis:60%}
-  }
-  @media (prefers-reduced-motion:reduce){
-    .seat,.track i{transition:none}
-    .seat.bloom{animation:none}
-  }
+  /* pop-up édition élève */
+  .modal-bg{position:fixed;inset:0;background:rgba(20,20,16,.42);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:2000;padding:18px}
+  .modal-bg[hidden]{display:none}
+  .modal{background:var(--paper);border:1.5px solid var(--edge);border-radius:16px;width:min(420px,100%);padding:1.1rem 1.2rem 1rem;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+  .modal h3{font-family:"Bricolage Grotesque",serif;font-weight:800;font-size:1.15rem;margin:0 0 .8rem}
+  .modal label{display:block;font-weight:700;font-size:.8rem;color:#3c3c33;margin:.6rem 0 .25rem}
+  .modal input{width:100%;border:1.5px solid rgba(27,27,23,.22);border-radius:9px;padding:.55rem .7rem;font-family:inherit;font-size:1rem;color:var(--ink);background:#fff}
+  .modal input:focus{outline:3px solid #5b76c4;outline-offset:1px}
+  .modal .ex{font-size:.74rem;color:#8a8a7c;margin-top:.25rem}
+  .modal-actions{display:flex;align-items:center;gap:8px;margin-top:1.1rem}
+  .modal-actions .spacer{flex:1}
+  .modal.help{width:min(580px,100%);max-height:84vh;overflow:auto}
+  .modal.help p{font-size:.9rem;color:#46463d;margin:.4rem 0;line-height:1.45}
+  .modal.help h4{font-family:"Bricolage Grotesque",serif;font-weight:800;font-size:.95rem;margin:.95rem 0 .3rem;color:var(--ink)}
+  .modal.help ul{margin:.2rem 0;padding-left:1.1rem}
+  .modal.help li{font-size:.88rem;color:#3c3c33;line-height:1.4;margin:.18rem 0}
+  .modal.help .modal-actions{position:sticky;bottom:-1rem;background:linear-gradient(180deg,rgba(251,250,244,0),var(--paper) 40%);padding-top:.6rem}
+
+  @media (prefers-reduced-motion:reduce){ .seat,.track i,.mood-bar i{transition:none} .seat.bp,.seat.bn,.seat.picked,.time.done,body.editing .seat{animation:none} }
 </style>
 </head>
 <body>
-  <div class="wrap">
+  <div class="app">
+    <nav class="tabs" id="tabs" aria-label="Classes"></nav>
     <header class="head">
-      <p class="eyebrow">Salle · 3 rangées</p>
-      <h1>Plan de classe</h1>
-      <p class="lede">Touchez un élève pour l'interroger&nbsp;: son prénom est prononcé, sa case fonce d'un cran (cinq appels jusqu'au noir) et la participation de la classe progresse.</p>
+      <h1>Plan de classe <span class="ver">v1.8</span></h1>
+      <p class="lede"><b class="r">Clic gauche</b> = négative (parle) · <b class="g">clic droit</b> = positive (muet) · 0–10, compteurs indépendants · <b>Modifier le plan</b> pour renommer / prononciation.</p>
     </header>
+    <div class="toolbar">
+      <button class="btn primary" id="edit">Modifier le plan</button>
+      <button class="btn" id="importBtn">Importer Excel</button>
+      <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden>
+      <button class="btn" id="expClasses">Exporter classes</button>
+      <button class="btn" id="expCrosses">Exporter croix</button>
+      <button class="btn" id="helpBtn" title="Aide">? Aide</button>
+      <div class="edit-only">
+        <button class="btn sm" id="addrow">+ Rangée</button>
+        <button class="btn sm" id="addcol">+ Colonne</button>
+        <span class="hint">Glissez pour déplacer · ✕ retire · touchez une case pour l'éditer</span>
+      </div>
+    </div>
 
-    <div class="board"><span>TABLEAU</span></div>
+    <div class="stage">
+      <div class="plan">
+        <div class="board"><span>Tableau</span></div>
+        <div class="bureau-row"><div class="bureau">Bureau</div></div>
+        <div class="grid" id="grid" aria-label="Plan de la classe"></div>
+      </div>
+    </div>
 
-    <main class="room" id="room" aria-label="Plan de la classe"></main>
+    <section class="tools" aria-label="Outils">
+      <div class="tool consigne">
+        <span class="tool-h">Consigne / notes</span>
+        <textarea id="note" placeholder="Consigne du moment, rappel, points à suivre…"></textarea>
+      </div>
+      <div class="tool">
+        <span class="tool-h">Minuteur</span>
+        <div class="timer-row">
+          <span class="time" id="time">05:00</span>
+          <input type="number" id="tmin" min="1" max="180" value="5" aria-label="Minutes">
+          <button class="btn sm" id="tstart">Démarrer</button>
+          <button class="btn sm" id="treset">Reset</button>
+        </div>
+      </div>
+      <div class="tool">
+        <span class="tool-h">Humeur</span>
+        <div class="mood-row">
+          <span class="mood-face" id="moodFace">🙂</span>
+          <span class="mood-bar"><i id="moodMark"></i></span>
+          <span class="mood-lbl" id="moodLbl">Neutre</span>
+        </div>
+      </div>
+      <div class="tool">
+        <span class="tool-h">Au hasard</span>
+        <div class="rand-row">
+          <button class="btn sm" id="rand">Tirer</button>
+          <span class="rand-name" id="randName">—</span>
+        </div>
+      </div>
+    </section>
   </div>
 
   <div class="gauge">
     <div class="row">
-      <div class="meta">
-        <span class="lbl">Participation de la classe</span>
-        <span class="num"><b id="count">0</b> / <span id="cap">0</span></span>
+      <div class="meter p">
+        <div class="top"><span class="lbl"><span class="dot"></span>Croix positives</span><span class="num"><b id="cp">0</b> / <span id="capp">0</span></span></div>
+        <div class="track" role="progressbar" id="pbp" aria-label="Croix positives"><i id="fp"></i></div>
       </div>
-      <div class="track" role="progressbar" aria-label="Participation de la classe" aria-valuemin="0" aria-valuenow="0" id="pb"><i id="fill"></i></div>
-      <button class="btn" id="mute" title="Couper le son" aria-pressed="false">
-        <svg id="ico-sound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>
-        <span id="mute-lbl">Son</span>
-      </button>
-      <button class="btn" id="reset" title="Remettre tous les compteurs à zéro">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
-        Réinitialiser
-      </button>
+      <div class="meter n">
+        <div class="top"><span class="lbl"><span class="dot"></span>Croix négatives</span><span class="num"><b id="cn">0</b> / <span id="capn">0</span></span></div>
+        <div class="track" role="progressbar" id="pbn" aria-label="Croix négatives"><i id="fn"></i></div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="mute" title="Couper le son" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>
+          <span id="mute-lbl">Son</span>
+        </button>
+        <button class="btn" id="reset" title="Remettre les compteurs de cette classe à zéro">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+          Réinitialiser
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="modalBg" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h3 id="modalTitle">Modifier l'élève</h3>
+      <label for="mName">Prénom</label>
+      <input id="mName" type="text" autocomplete="off">
+      <label for="mPron">Prononciation (optionnel)</label>
+      <input id="mPron" type="text" autocomplete="off" placeholder="ex : é-na-el">
+      <div class="ex">Laisse vide pour lire le prénom tel quel. Ex. « Enael » → « é-na-el ».</div>
+      <div class="modal-actions">
+        <button class="btn sm" id="mTest">🔊 Tester</button>
+        <button class="btn sm danger" id="mDelete">Retirer</button>
+        <span class="spacer"></span>
+        <button class="btn sm" id="mCancel">Annuler</button>
+        <button class="btn sm primary" id="mSave">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="helpBg" hidden>
+    <div class="modal help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <h3 id="helpTitle">Plan de classe — aide</h3>
+      <p>Page autonome pour gérer le plan en direct : interroger les élèves, donner des croix et piloter quelques outils de séance. Fonctionne hors-ligne, données sauvegardées dans le navigateur.</p>
+      <h4>Le plan</h4>
+      <ul>
+        <li><b>Onglets</b> = une classe chacun (5 par défaut). <b>+</b> ajoute, <b>✎</b> renomme, <b>✕</b> supprime.</li>
+        <li>Chaque <b>case = un élève</b>. Le plan se redimensionne pour tenir à l'écran sans défilement. <b>Tableau</b>/<b>Bureau</b> marquent le devant.</li>
+      </ul>
+      <h4>Les croix (clic sur un élève)</h4>
+      <ul>
+        <li><b style="color:var(--neg)">Clic gauche</b> = croix négative : case blanc→noir (jusqu'à 10) + prénom <b>prononcé</b>.</li>
+        <li><b style="color:var(--pos)">Clic droit</b> = croix positive : case jaune→bleu→vert (jusqu'à 10), <b>sans son</b>.</li>
+        <li>Compteurs <b>indépendants</b> ; badges <b>+N</b> (vert) / <b>×N</b> (rouge) par élève ; jauges en bas = totaux de la classe. <i>Réinitialiser</i> = classe active ; <i>Son</i> coupe la voix.</li>
+      </ul>
+      <h4>Modifier le plan</h4>
+      <ul>
+        <li>Bouton <b>Modifier le plan</b> → les cases frétillent.</li>
+        <li><b>Glisser-déposer</b> pour déplacer un élève (ses croix suivent), <b>✕</b> retire, <b>case « + »</b> ajoute.</li>
+        <li><b>Toucher une case</b> = fiche élève : <b>prénom + prononciation</b> (ex. « Enael » → « é-na-el »), bouton <i>Tester</i>. Vide = lit le prénom tel quel.</li>
+        <li><b>+ Rangée</b> / <b>+ Colonne</b> pour agrandir la grille.</li>
+      </ul>
+      <h4>Outils</h4>
+      <ul>
+        <li><b>Consigne</b> (notes par classe), <b>Minuteur</b> (bip de fin), <b>Humeur</b> (auto selon le solde positives − négatives), <b>Au hasard</b> (tire un élève et l'annonce).</li>
+      </ul>
+      <h4>Import / Export</h4>
+      <ul>
+        <li><b>Importer Excel</b> : <code>.xlsx</code>/<code>.csv</code> (couloirs et places vides conservés ; un fichier multi-feuilles peut recharger toutes les classes).</li>
+        <li><b>Exporter classes</b> : <code>.xlsx</code> ré-importable. <b>Exporter croix</b> : <code>.xlsx</code>/<code>.csv</code> (Classe, Élève, Positives, Négatives, Solde).</li>
+      </ul>
+      <h4>Sauvegarde</h4>
+      <p>Plans, prénoms, prononciations, croix et notes restent dans le navigateur (local ou GitHub Pages). La bibliothèque Excel se charge depuis Internet au premier import/export ; dans l'aperçu intégré de Claude, le stockage peut être bloqué (bascule en mémoire, sans sauvegarde entre rechargements).</p>
+      <div class="modal-actions"><span class="spacer"></span><button class="btn sm primary" id="helpClose">Fermer</button></div>
     </div>
   </div>
 
 <script>
 (function(){
   "use strict";
-  // Plan repris du tableur : 3 îlots (colonnes A-B | D-E-F | H-I), 3 rangées.
-  // null = place vide (les "." et "…" du fichier).
-  const CLUSTERS = [
-    { cols:2, rows:[ ["Ethan", null],      ["Iyad","Lama"],            ["Sekou","Godelive"] ] },
-    { cols:3, rows:[ ["Yunus", null, "Quentin"], ["Zohra","Mathilde","Elizabeth"], ["Enael","Varnika","Yashika"] ] },
-    { cols:2, rows:[ ["Leya","Babanding"], ["Francine","Victoria"],    ["Kevin","Ahmed"] ] },
-  ];
-  const STEPS = 5;                    // 5 appels : blanc -> noir
-  const LV = ["--l0","--l1","--l2","--l3","--l4","--l5"];
-  const root = getComputedStyle(document.documentElement);
-  const seats = [];                   // {el, name, count}
-  let total = 0, capacity = 0, muted = false;
+  const LS_KEY="pdc_state_v2";
+  const MAX=10;
 
-  const room  = document.getElementById("room");
-  const elCnt = document.getElementById("count");
-  const elCap = document.getElementById("cap");
-  const elFill= document.getElementById("fill");
-  const elPb  = document.getElementById("pb");
+  // couleurs
+  const Y=[244,196,0], B=[37,125,210], G=[31,168,90];
+  const lerp=(a,b,t)=>Math.round(a+(b-a)*t);
+  const mix=(c1,c2,t)=>[lerp(c1[0],c2[0],t),lerp(c1[1],c2[1],t),lerp(c1[2],c2[2],t)];
+  const rgb=c=>"rgb("+c[0]+","+c[1]+","+c[2]+")";
+  const textOn=c=>(0.2126*c[0]+0.7152*c[1]+0.0722*c[2])<150 ? "#f4f3ec" : "var(--ink)";
+  const posColor=p=>{const t=(p-1)/(MAX-1);return t<=0.5?mix(Y,B,t/0.5):mix(B,G,(t-0.5)/0.5);};
+  const negColor=n=>{const v=Math.round(255-(255-20)*(n/MAX));return [v,v,v];};
+  const cellColor=c=> c.neg>0?negColor(c.neg):(c.pos>0?posColor(c.pos):[255,255,255]);
 
-  // ---- voix (français) ----
-  let voice = null, warmed = false;
-  function pickVoice(){
-    const v = window.speechSynthesis ? speechSynthesis.getVoices() : [];
-    voice = v.find(x=>/^fr(-|_|$)/i.test(x.lang)) || v.find(x=>/fran|french/i.test(x.name)) || voice;
-  }
-  if (window.speechSynthesis){
-    pickVoice();
-    speechSynthesis.onvoiceschanged = pickVoice;
-  }
-  function warm(){ // débloque la synthèse au 1er geste (iOS/Safari)
-    if (warmed || !window.speechSynthesis) return;
-    warmed = true;
-    try{ const u=new SpeechSynthesisUtterance(" "); u.volume=0; u.lang="fr-FR"; speechSynthesis.speak(u);}catch(e){}
-  }
-  document.addEventListener("pointerdown", warm, {once:true});
+  // état
+  const mk=name=>({name:name,pos:0,neg:0,pron:""});
+  function seedGrid(){const _=null;return [
+    [mk("Ahmed"),mk("Kevin"),_,mk("Yashika"),mk("Varnika"),mk("Enael"),_,mk("Godelive"),mk("Sekou")],
+    [mk("Victoria"),mk("Francine"),_,mk("Elizabeth"),mk("Mathilde"),mk("Zohra"),_,mk("Lama"),mk("Iyad")],
+    [mk("Babanding"),mk("Leya"),_,mk("Quentin"),mk("Kurtis"),mk("Yunus"),_,mk("Aymé"),mk("Ethan")],
+    [mk("Fredo"),mk("Jean"),_,mk("Bibou"),mk("Boubi"),mk("Polo"),_,mk("Amar"),mk("Amir")],
+  ];}
+  const emptyGrid=(r,c)=>Array.from({length:r||4},()=>Array.from({length:c||9},()=>null));
+  function defaultState(){return {active:0, classes:[
+    {name:"Classe 1",grid:seedGrid()},{name:"Classe 2",grid:emptyGrid()},{name:"Classe 3",grid:emptyGrid()},
+    {name:"Classe 4",grid:emptyGrid()},{name:"Classe 5",grid:emptyGrid()},
+  ]};}
+  const valid=s=>s&&Array.isArray(s.classes)&&s.classes.length>0&&typeof s.active==="number"&&s.classes.every(k=>k&&Array.isArray(k.grid));
+  function load(){try{const r=localStorage.getItem(LS_KEY);if(r){const s=JSON.parse(r);if(valid(s)){s.active=Math.min(s.active,s.classes.length-1);return s;}}}catch(e){}return defaultState();}
+  let state=load();
+  function persist(){try{localStorage.setItem(LS_KEY,JSON.stringify(state));}catch(e){}}
+  const cls=()=>state.classes[state.active];
+  const grid=()=>cls().grid;
+  let editing=false, muted=false;
 
-  function say(name){
-    if (muted || !window.speechSynthesis) return;
-    try{
-      speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(name);
-      u.lang = "fr-FR"; u.rate = 1; u.pitch = 1;
-      if (voice) u.voice = voice;
-      speechSynthesis.speak(u);
-    }catch(e){}
+  // DOM
+  const tabsEl=document.getElementById("tabs"), gridEl=document.getElementById("grid"), stageEl=document.querySelector(".stage"), planEl=document.querySelector(".plan");
+  const boardEl=document.querySelector(".board"), bureauRowEl=document.querySelector(".bureau-row");
+  const elCp=document.getElementById("cp"), elCn=document.getElementById("cn"), elCapp=document.getElementById("capp"), elCapn=document.getElementById("capn");
+  const elFp=document.getElementById("fp"), elFn=document.getElementById("fn");
+  const noteEl=document.getElementById("note"), randNameEl=document.getElementById("randName");
+  const moodFace=document.getElementById("moodFace"), moodMark=document.getElementById("moodMark"), moodLbl=document.getElementById("moodLbl");
+
+  // voix
+  let voice=null, warmed=false;
+  function pickVoice(){const v=window.speechSynthesis?speechSynthesis.getVoices():[];voice=v.find(x=>/^fr(-|_|$)/i.test(x.lang))||v.find(x=>/fran|french/i.test(x.name))||voice;}
+  if(window.speechSynthesis){pickVoice();speechSynthesis.onvoiceschanged=pickVoice;}
+  function warm(){if(warmed||!window.speechSynthesis)return;warmed=true;try{const u=new SpeechSynthesisUtterance(" ");u.volume=0;u.lang="fr-FR";speechSynthesis.speak(u);}catch(e){}}
+  document.addEventListener("pointerdown",warm,{once:true});
+  function say(text){if(muted||!text||!window.speechSynthesis)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="fr-FR";u.rate=1;u.pitch=1;if(voice)u.voice=voice;speechSynthesis.speak(u);}catch(e){}}
+  const spoken=c=>(c&&c.pron&&c.pron.trim())?c.pron.trim():(c?c.name:"");
+
+  // rendu case
+  function paintSeat(el,c){
+    const col=cellColor(c); el.style.backgroundColor=rgb(col); el.style.color=textOn(col);
+    const bp=el.querySelector(".badge.p"), bn=el.querySelector(".badge.n");
+    bp.textContent="+"+c.pos; bp.classList.toggle("on",c.pos>0);
+    bn.textContent="×"+c.neg; bn.classList.toggle("on",c.neg>0);
+    el.setAttribute("aria-label",c.name+" — "+c.pos+" positives, "+c.neg+" négatives");
+  }
+  function bloom(el,kind){el.classList.remove("bp","bn");void el.offsetWidth;el.classList.add(kind);}
+  function penalize(c,el){ if(editing)return; say(spoken(c)); if(c.neg<MAX){c.neg++;paintSeat(el,c);updateGauges();persist();} bloom(el,"bn"); }
+  function reward(c,el){ if(editing)return; if(c.pos<MAX){c.pos++;paintSeat(el,c);updateGauges();persist();} bloom(el,"bp"); }
+
+  // édition cellule (pop-up)
+  const modalBg=document.getElementById("modalBg"), mName=document.getElementById("mName"), mPron=document.getElementById("mPron");
+  const mTitle=document.getElementById("modalTitle"), mDelete=document.getElementById("mDelete");
+  let modalRC=null;
+  function openCellModal(r,col){
+    const c=grid()[r][col]; modalRC={r:r,c:col};
+    mTitle.textContent=c?"Modifier l'élève":"Ajouter un élève";
+    mName.value=c?c.name:""; mPron.value=(c&&c.pron)?c.pron:"";
+    mDelete.style.display=c?"":"none";
+    modalBg.hidden=false; setTimeout(()=>{mName.focus();mName.select();},30);
+  }
+  function closeModal(){ modalBg.hidden=true; modalRC=null; }
+  function saveModal(){
+    if(!modalRC)return; const r=modalRC.r,col=modalRC.c; const nm=mName.value.trim(), pr=mPron.value.trim();
+    if(nm===""){ closeModal(); return; }
+    let c=grid()[r][col];
+    if(c){ c.name=nm; c.pron=pr; } else { c=mk(nm); c.pron=pr; grid()[r][col]=c; }
+    persist(); closeModal(); render();
+  }
+  document.getElementById("mSave").addEventListener("click",saveModal);
+  document.getElementById("mCancel").addEventListener("click",closeModal);
+  document.getElementById("mTest").addEventListener("click",()=>say(mPron.value.trim()||mName.value.trim()));
+  mDelete.addEventListener("click",()=>{ if(!modalRC)return; grid()[modalRC.r][modalRC.c]=null; persist(); closeModal(); render(); });
+  modalBg.addEventListener("click",e=>{ if(e.target===modalBg)closeModal(); });
+  [mName,mPron].forEach(inp=>inp.addEventListener("keydown",e=>{ if(e.key==="Enter"){e.preventDefault();saveModal();} else if(e.key==="Escape"){e.preventDefault();closeModal();} }));
+
+  function delCell(r,col){ grid()[r][col]=null; persist(); render(); }
+  function swapCells(r1,c1,r2,c2){ const g=grid(); const t=g[r1][c1]; g[r1][c1]=g[r2][c2]; g[r2][c2]=t; persist(); render(); }
+  function addRow(){ const cols=(grid()[0]||[]).length||9; grid().push(Array.from({length:cols},()=>null)); persist(); render(); }
+  function addCol(){ if(grid().length===0)grid().push([]); grid().forEach(row=>row.push(null)); persist(); render(); }
+
+  // glisser-déposer
+  let drag=null;
+  function cellAt(x,y){const el=document.elementFromPoint(x,y); if(!el)return null; const cell=el.closest("[data-cell]"); if(!cell||!gridEl.contains(cell))return null; return {r:+cell.dataset.r,c:+cell.dataset.c,el:cell};}
+  function onPointerDown(e,r,col,el){
+    if(!editing||e.button===2)return;
+    drag={r:r,c:col,el:el,sx:e.clientX,sy:e.clientY,moved:false,ghost:null,dx:0,dy:0,over:null};
+    const rect=el.getBoundingClientRect(); drag.dx=e.clientX-rect.left; drag.dy=e.clientY-rect.top; drag.rect=rect;
+    window.addEventListener("pointermove",onPointerMove); window.addEventListener("pointerup",onPointerUp); window.addEventListener("pointercancel",onPointerUp);
+  }
+  function onPointerMove(e){
+    if(!drag)return;
+    if(!drag.moved){ if(Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)<6)return; drag.moved=true; startGhost(); }
+    e.preventDefault();
+    drag.ghost.style.left=(e.clientX-drag.dx)+"px"; drag.ghost.style.top=(e.clientY-drag.dy)+"px";
+    const t=cellAt(e.clientX,e.clientY);
+    if(drag.over&&(!t||t.el!==drag.over)){drag.over.classList.remove("cell-over");drag.over=null;}
+    if(t&&t.el!==drag.el){t.el.classList.add("cell-over");drag.over=t.el;}
+  }
+  function startGhost(){
+    const c=grid()[drag.r][drag.c]; const col=cellColor(c);
+    const g=document.createElement("div"); g.className="ghost"; g.textContent=c?c.name:"";
+    g.style.width=drag.rect.width+"px"; g.style.height=drag.rect.height+"px"; g.style.fontSize=getComputedStyle(planEl).getPropertyValue("--seatfs");
+    g.style.background=rgb(col); g.style.color=textOn(col); g.style.left=(drag.sx-drag.dx)+"px"; g.style.top=(drag.sy-drag.dy)+"px";
+    document.body.appendChild(g); drag.ghost=g; drag.el.classList.add("dragging");
+  }
+  function onPointerUp(e){
+    window.removeEventListener("pointermove",onPointerMove); window.removeEventListener("pointerup",onPointerUp); window.removeEventListener("pointercancel",onPointerUp);
+    if(!drag)return;
+    if(drag.over)drag.over.classList.remove("cell-over");
+    if(!drag.moved){ const r=drag.r,c=drag.c; drag=null; openCellModal(r,c); return; }
+    const t=cellAt(e.clientX,e.clientY);
+    if(drag.ghost)drag.ghost.remove();
+    if(t&&(t.r!==drag.r||t.c!==drag.c)){ swapCells(drag.r,drag.c,t.r,t.c); } else { drag.el.classList.remove("dragging"); }
+    drag=null;
   }
 
-  // ---- couleurs & tally ----
-  function paint(s){
-    const lvl = s.count;
-    s.el.style.backgroundColor = root.getPropertyValue(LV[lvl]).trim();
-    s.el.style.color = lvl >= 3 ? "#f4f3ec" : "var(--ink)";
-    s.el.setAttribute("aria-label", s.name + " — interrogé " + lvl + " fois sur " + STEPS);
-    const t = s.el.querySelector(".tally");
-    t.innerHTML = "";
-    const verticals = lvl === STEPS ? 4 : lvl;
-    for (let i=0;i<verticals;i++){ const b=document.createElement("i"); b.className="bar"; t.appendChild(b); }
-    if (lvl === STEPS){ const d=document.createElement("i"); d.className="bar diag"; t.appendChild(d); }
+  // construction
+  function makeSeat(c,r,col){
+    const b=document.createElement("button"); b.type="button"; b.className="seat";
+    b.dataset.cell="1"; b.dataset.r=r; b.dataset.c=col;
+    b.innerHTML='<span class="nm"></span><span class="badge p" aria-hidden="true"></span><span class="badge n" aria-hidden="true"></span><span class="del" title="Retirer" aria-hidden="true">✕</span>';
+    b.querySelector(".nm").textContent=c.name; paintSeat(b,c);
+    b.addEventListener("click",e=>{ if(editing)return; e.shiftKey?reward(c,b):penalize(c,b); });
+    b.addEventListener("contextmenu",e=>{ e.preventDefault(); reward(c,b); });
+    b.addEventListener("keydown",e=>{ if(editing)return; if(e.key==="+"||e.key==="="||e.key==="p"||e.key==="P"){e.preventDefault();reward(c,b);} });
+    b.addEventListener("pointerdown",e=>onPointerDown(e,r,col,b));
+    const del=b.querySelector(".del"); del.addEventListener("click",e=>{ e.stopPropagation(); delCell(r,col); }); del.addEventListener("pointerdown",e=>e.stopPropagation());
+    return b;
+  }
+  function makeEmpty(r,col){
+    const d=document.createElement("div"); d.className="empty-cell"; d.textContent="+"; d.dataset.cell="1"; d.dataset.r=r; d.dataset.c=col;
+    d.addEventListener("click",()=>{ if(editing)openCellModal(r,col); });
+    return d;
   }
 
-  function refreshGauge(){
-    elCnt.textContent = total;
-    const pct = capacity ? Math.round((total/capacity)*100) : 0;
-    elFill.style.width = pct + "%";
-    elPb.setAttribute("aria-valuenow", total);
-    elPb.setAttribute("aria-valuetext", total + " sur " + capacity);
-  }
-
-  function hit(s){
-    say(s.name);
-    if (s.count < STEPS){ s.count++; total++; paint(s); refreshGauge(); }
-    s.el.classList.remove("bloom"); void s.el.offsetWidth; s.el.classList.add("bloom");
-  }
-
-  // ---- construction ----
-  CLUSTERS.forEach(cl=>{
-    const g = document.createElement("div");
-    g.className = "cluster c" + cl.cols;
-    cl.rows.forEach(rowArr=>{
-      rowArr.forEach(name=>{
-        if (name == null){
-          const d = document.createElement("div");
-          d.className = "seat empty"; d.setAttribute("aria-hidden","true"); d.textContent="·";
-          g.appendChild(d);
-        } else {
-          const b = document.createElement("button");
-          b.type = "button"; b.className = "seat";
-          b.innerHTML = '<span class="nm"></span><span class="tally" aria-hidden="true"></span>';
-          b.querySelector(".nm").textContent = name;
-          const s = { el:b, name:name, count:0 };
-          seats.push(s); capacity += STEPS;
-          paint(s);
-          b.addEventListener("click", ()=>hit(s));
-          g.appendChild(b);
-        }
-      });
+  function render(){
+    document.body.classList.toggle("editing",editing);
+    tabsEl.innerHTML="";
+    state.classes.forEach((k,i)=>{
+      const t=document.createElement("div"); t.className="tab"+(i===state.active?" active":""); t.setAttribute("role","button");
+      const e=document.createElement("span"); e.className="ic e"; e.textContent="✎"; e.title="Renommer"; e.addEventListener("click",ev=>{ev.stopPropagation();renameClass(i);});
+      const nm=document.createElement("span"); nm.className="nm"; nm.textContent=k.name;
+      const x=document.createElement("span"); x.className="ic x"; x.textContent="✕"; x.title="Supprimer la classe"; x.addEventListener("click",ev=>{ev.stopPropagation();delClass(i);});
+      t.appendChild(e); t.appendChild(nm); t.appendChild(x);
+      t.addEventListener("click",()=>switchTo(i)); t.addEventListener("dblclick",()=>renameClass(i));
+      tabsEl.appendChild(t);
     });
-    room.appendChild(g);
-  });
-  elCap.textContent = capacity;
-  elPb.setAttribute("aria-valuemax", capacity);
-  refreshGauge();
+    const add=document.createElement("div"); add.className="tab add"; add.textContent="+"; add.title="Ajouter une classe"; add.addEventListener("click",addClass); tabsEl.appendChild(add);
 
-  // ---- contrôles ----
-  document.getElementById("reset").addEventListener("click", ()=>{
-    if (total>0 && !confirm("Réinitialiser tous les compteurs ?")) return;
-    seats.forEach(s=>{ s.count=0; paint(s); });
-    total = 0; refreshGauge();
-    if (window.speechSynthesis) try{ speechSynthesis.cancel(); }catch(e){}
-  });
+    const g=grid(); const cols=(g[0]||[]).length||1;
+    gridEl.style.gridTemplateColumns="repeat("+cols+", var(--w))";
+    gridEl.innerHTML="";
+    g.forEach((row,r)=>{ for(let col=0;col<cols;col++){ const c=row[col]; gridEl.appendChild(c?makeSeat(c,r,col):makeEmpty(r,col)); } });
 
-  const muteBtn = document.getElementById("mute");
-  const muteLbl = document.getElementById("mute-lbl");
-  muteBtn.addEventListener("click", ()=>{
-    muted = !muted;
-    muteBtn.classList.toggle("muted", muted);
-    muteBtn.setAttribute("aria-pressed", String(muted));
-    muteBtn.title = muted ? "Activer le son" : "Couper le son";
-    muteLbl.textContent = muted ? "Muet" : "Son";
-    if (muted && window.speechSynthesis) try{ speechSynthesis.cancel(); }catch(e){}
+    if(noteEl) noteEl.value=cls().note||"";
+    if(randNameEl) randNameEl.textContent="—";
+    updateGauges();
+    requestAnimationFrame(fitPlan);
+  }
+
+  // ajuste les cases pour tenir dans la hauteur sans scroll
+  function fitPlan(){
+    const g=grid(); const cols=(g[0]||[]).length||1; const rows=g.length||1;
+    const cs=getComputedStyle(gridEl); const gap=parseFloat(cs.columnGap)||8;
+    const availW=stageEl.clientWidth; const availH=stageEl.clientHeight;
+    const chrome=(boardEl?boardEl.offsetHeight:0)+(bureauRowEl?bureauRowEl.offsetHeight:0)+18;
+    const gridH=Math.max(60, availH-chrome);
+    let w=Math.floor((availW-(cols-1)*gap)/cols);
+    let h=Math.floor((gridH-(rows-1)*gap)/rows);
+    w=Math.max(36,Math.min(w,118)); h=Math.max(30,Math.min(h,98)); w=Math.min(w,Math.round(h*1.7));
+    const fs=Math.max(9,Math.min(16,Math.round(Math.min(w,h)*0.27)));
+    planEl.style.setProperty("--w",w+"px"); planEl.style.setProperty("--h",h+"px"); planEl.style.setProperty("--seatfs",fs+"px");
+  }
+  window.addEventListener("resize",()=>requestAnimationFrame(fitPlan));
+  window.addEventListener("orientationchange",()=>setTimeout(fitPlan,200));
+  window.addEventListener("load",()=>setTimeout(fitPlan,150));
+
+  function updateGauges(){
+    let p=0,n=0,cnt=0; grid().forEach(row=>row.forEach(c=>{ if(c){cnt++;p+=c.pos;n+=c.neg;} }));
+    const cap=cnt*MAX;
+    elCp.textContent=p; elCn.textContent=n; elCapp.textContent=cap; elCapn.textContent=cap;
+    elFp.style.width=(cap?Math.round(p/cap*100):0)+"%"; elFn.style.width=(cap?Math.round(n/cap*100):0)+"%";
+    updateMood(p-n);
+  }
+
+  // classes
+  function switchTo(i){ if(i===state.active)return; state.active=i; persist(); render(); }
+  function addClass(){ state.classes.push({name:"Classe "+(state.classes.length+1),grid:emptyGrid()}); state.active=state.classes.length-1; persist(); render(); }
+  function renameClass(i){ const v=prompt("Nom de la classe :",state.classes[i].name); if(v===null)return; const t=v.trim(); if(t==="")return; state.classes[i].name=t; persist(); render(); }
+  function delClass(i){ if(state.classes.length<=1){alert("Au moins une classe est nécessaire.");return;} if(!confirm("Supprimer « "+state.classes[i].name+" » ?"))return; state.classes.splice(i,1); if(state.active>=state.classes.length)state.active=state.classes.length-1; persist(); render(); }
+
+  // import
+  function parseCSV(text){
+    const rows=[]; let row=[],f="",i=0,q=false;
+    while(i<text.length){const ch=text[i];
+      if(q){ if(ch==='"'){ if(text[i+1]==='"'){f+='"';i++;} else q=false; } else f+=ch; }
+      else{ if(ch==='"')q=true; else if(ch===',' || ch===';'){row.push(f);f="";} else if(ch==='\n'){row.push(f);rows.push(row);row=[];f="";} else if(ch==='\r'){} else f+=ch; }
+      i++;
+    }
+    row.push(f); rows.push(row);
+    if(rows.length && rows[rows.length-1].length===1 && rows[rows.length-1][0]==="") rows.pop();
+    return rows;
+  }
+  function aoaToGrid(aoa){
+    const LABELS=/^(tableau|bureau)$/i; const EMPTY=new Set([".","…","...",""]);
+    const M=aoa.map(r=>(r||[]).map(v=>(v==null?"":String(v)).trim()));
+    let cols=M.reduce((m,r)=>Math.max(m,r.length),0); if(cols===0)return null;
+    const cell=v=>(v===""||EMPTY.has(v)||LABELS.test(v))?null:mk(v);
+    let G=M.map(r=>{const row=[];for(let c=0;c<cols;c++)row.push(cell(r[c]||""));return row;});
+    G=G.filter(row=>row.some(c=>c!==null)); if(G.length===0)return null;
+    let first=cols,last=-1; G.forEach(row=>row.forEach((c,i)=>{ if(c!==null){ if(i<first)first=i; if(i>last)last=i; } }));
+    return G.map(row=>row.slice(first,last+1));
+  }
+  function applyImport(g,sheetName){
+    if(!g||!g.length){alert("Aucun élève détecté dans le fichier.");return;}
+    const has=grid().some(r=>r.some(c=>c));
+    if(has && !confirm("Remplacer le plan de « "+cls().name+" » par l'import ?"))return;
+    cls().grid=g; if(sheetName && /^Classe \d+$/.test(cls().name)) cls().name=String(sheetName).trim();
+    persist(); render();
+  }
+  function importAllSheets(wb){
+    const cl=wb.SheetNames.map(sn=>{ const aoa=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,blankrows:true,defval:""}); return {name:String(sn).trim()||"Classe", grid:aoaToGrid(aoa)||emptyGrid()}; });
+    if(!cl.length){alert("Aucune feuille exploitable.");return;}
+    state.classes=cl; state.active=0; persist(); render();
+  }
+  function handleFile(file){
+    const name=(file.name||"").toLowerCase(); const reader=new FileReader();
+    if(name.endsWith(".csv")||name.endsWith(".tsv")){
+      reader.onload=()=>{try{applyImport(aoaToGrid(parseCSV(reader.result)));}catch(e){alert("Import impossible : "+e.message);}};
+      reader.readAsText(file);
+    }else{
+      if(typeof XLSX==="undefined"){alert("Bibliothèque Excel non chargée (connexion requise au premier import). Réessayez en ligne, ou importez un .csv.");return;}
+      reader.onload=()=>{try{
+        const wb=XLSX.read(new Uint8Array(reader.result),{type:"array"});
+        if(wb.SheetNames.length>1 && confirm("Le fichier contient "+wb.SheetNames.length+" feuilles.\nLes importer comme "+wb.SheetNames.length+" classes (remplace toutes les classes) ?\n\nAnnuler = importer seulement « "+wb.SheetNames[0]+" » dans la classe active.")){ importAllSheets(wb); return; }
+        const ws=wb.Sheets[wb.SheetNames[0]]; const aoa=XLSX.utils.sheet_to_json(ws,{header:1,blankrows:true,defval:""}); applyImport(aoaToGrid(aoa), wb.SheetNames[0]);
+      }catch(e){alert("Import impossible : "+e.message);}};
+      reader.readAsArrayBuffer(file);
+    }
+  }
+
+  // outils
+  function updateMood(net){
+    if(!moodFace)return; let face="😐",lbl="Neutre";
+    if(net>=8){face="😄";lbl="Excellente";} else if(net>=3){face="🙂";lbl="Bonne";} else if(net>=-2){face="😐";lbl="Neutre";} else if(net>=-7){face="😟";lbl="Tendue";} else{face="😠";lbl="Difficile";}
+    moodFace.textContent=face; moodLbl.textContent=lbl; moodMark.style.left=Math.max(0,Math.min(100,50+net*5))+"%";
+  }
+  if(noteEl){ let nt; noteEl.addEventListener("input",()=>{ cls().note=noteEl.value; clearTimeout(nt); nt=setTimeout(persist,300); }); }
+
+  let tSec=300,tRun=false,tInt=null;
+  const timeEl=document.getElementById("time"),tmin=document.getElementById("tmin"),tstart=document.getElementById("tstart"),treset=document.getElementById("treset");
+  const fmt=s=>{const m=Math.floor(s/60),x=s%60;return (m<10?"0":"")+m+":"+(x<10?"0":"")+x;};
+  const drawTime=()=>{ if(timeEl)timeEl.textContent=fmt(Math.max(0,tSec)); };
+  const minVal=()=>Math.max(1,Math.min(180,parseInt((tmin&&tmin.value)||"5",10)||5));
+  function beep(){ try{const A=window.AudioContext||window.webkitAudioContext; if(!A)return; const ctx=new A(),o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g);g.connect(ctx.destination); o.type="sine";o.frequency.value=880;g.gain.value=.16;o.start(); let n=0;const iv=setInterval(()=>{o.frequency.value=n%2?660:880;if(++n>6){o.stop();clearInterval(iv);ctx.close();}},170);}catch(e){} }
+  function tStop(){ tRun=false; if(tInt){clearInterval(tInt);tInt=null;} if(tstart)tstart.textContent="Démarrer"; }
+  function tTick(){ tSec--; drawTime(); if(tSec<=0){ tStop(); if(timeEl)timeEl.classList.add("done"); beep(); if(!muted)say("Temps écoulé"); } }
+  if(tstart)tstart.addEventListener("click",()=>{ if(tRun){tStop();return;} if(tSec<=0)tSec=minVal()*60; if(timeEl)timeEl.classList.remove("done"); tRun=true; tstart.textContent="Pause"; tInt=setInterval(tTick,1000); });
+  if(treset)treset.addEventListener("click",()=>{ tStop(); if(timeEl)timeEl.classList.remove("done"); tSec=minVal()*60; drawTime(); });
+  if(tmin)tmin.addEventListener("change",()=>{ if(!tRun){ tSec=minVal()*60; drawTime(); } });
+  drawTime();
+
+  function pickRandom(){
+    const list=[]; grid().forEach((row,r)=>row.forEach((c,col)=>{ if(c)list.push({r:r,c:col,cell:c}); }));
+    if(!list.length){ if(randNameEl)randNameEl.textContent="—"; return; }
+    const pick=list[Math.floor(Math.random()*list.length)];
+    if(randNameEl)randNameEl.textContent=pick.cell.name; say(spoken(pick.cell));
+    const el=gridEl.querySelector('[data-r="'+pick.r+'"][data-c="'+pick.c+'"]');
+    if(el){ document.querySelectorAll(".seat.picked").forEach(s=>s.classList.remove("picked")); el.classList.add("picked"); setTimeout(()=>el.classList.remove("picked"),1500); }
+  }
+  const randBtn=document.getElementById("rand"); if(randBtn)randBtn.addEventListener("click",pickRandom);
+
+  // exports
+  function downloadBlob(filename,text,mime){ try{ const b=new Blob([text],{type:mime||"text/plain;charset=utf-8"}); const u=URL.createObjectURL(b); const a=document.createElement("a"); a.href=u; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),1500); }catch(e){ alert("Téléchargement impossible : "+e.message); } }
+  function sheetNm(name,used){ let s=String(name||"Classe").replace(/[\\\/\?\*\[\]:]/g," ").trim().slice(0,28)||"Classe"; const base=s.slice(0,26); let i=2; while(used.has(s.toLowerCase())){ s=base+" "+i; i++; } used.add(s.toLowerCase()); return s; }
+  function exportClasses(){
+    if(typeof XLSX==="undefined"){ alert("Export Excel indisponible (connexion requise au premier usage). Réessayez en ligne."); return; }
+    try{ const wb=XLSX.utils.book_new(); const used=new Set();
+      state.classes.forEach(k=>{ const aoa=(k.grid&&k.grid.length?k.grid:[[null]]).map(row=>row.map(c=>c?c.name:"")); const ws=XLSX.utils.aoa_to_sheet(aoa.length?aoa:[[""]]); XLSX.utils.book_append_sheet(wb,ws,sheetNm(k.name,used)); });
+      XLSX.writeFile(wb,"plan-classes.xlsx");
+    }catch(e){ alert("Export impossible : "+e.message); }
+  }
+  function exportCrosses(){
+    const rows=[["Classe","Élève","Positives","Négatives","Solde"]];
+    state.classes.forEach(k=>k.grid.forEach(row=>row.forEach(c=>{ if(c)rows.push([k.name,c.name,c.pos,c.neg,c.pos-c.neg]); })));
+    if(rows.length<=1){ alert("Aucun élève à exporter."); return; }
+    if(typeof XLSX!=="undefined"){ try{ const ws=XLSX.utils.aoa_to_sheet(rows); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Croix"); XLSX.writeFile(wb,"croix.xlsx"); return; }catch(e){} }
+    const esc=v=>{ v=String(v); return /[";\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+    downloadBlob("croix.csv","\uFEFF"+rows.map(r=>r.map(esc).join(";")).join("\r\n"),"text/csv;charset=utf-8");
+  }
+
+  // contrôles
+  const editBtn=document.getElementById("edit");
+  editBtn.addEventListener("click",()=>{ editing=!editing; editBtn.textContent=editing?"Terminer":"Modifier le plan"; editBtn.classList.toggle("primary",!editing); if(editing&&window.speechSynthesis)try{speechSynthesis.cancel();}catch(e){} render(); });
+  document.getElementById("addrow").addEventListener("click",addRow);
+  document.getElementById("addcol").addEventListener("click",addCol);
+  const fileEl=document.getElementById("file");
+  document.getElementById("importBtn").addEventListener("click",()=>fileEl.click());
+  fileEl.addEventListener("change",e=>{ const f=e.target.files&&e.target.files[0]; if(f)handleFile(f); fileEl.value=""; });
+  document.getElementById("expClasses").addEventListener("click",exportClasses);
+  document.getElementById("expCrosses").addEventListener("click",exportCrosses);
+  document.getElementById("reset").addEventListener("click",()=>{
+    const has=grid().some(r=>r.some(c=>c&&(c.pos||c.neg))); if(has && !confirm("Réinitialiser les compteurs de « "+cls().name+" » ?"))return;
+    grid().forEach(row=>row.forEach(c=>{ if(c){c.pos=0;c.neg=0;} })); persist(); render(); if(window.speechSynthesis)try{speechSynthesis.cancel();}catch(e){}
   });
+  const mute=document.getElementById("mute"), mlbl=document.getElementById("mute-lbl");
+  mute.addEventListener("click",()=>{ muted=!muted; mute.classList.toggle("muted",muted); mute.setAttribute("aria-pressed",String(muted)); mute.title=muted?"Activer le son":"Couper le son"; mlbl.textContent=muted?"Muet":"Son"; if(muted&&window.speechSynthesis)try{speechSynthesis.cancel();}catch(e){} });
+  const helpBg=document.getElementById("helpBg");
+  document.getElementById("helpBtn").addEventListener("click",()=>{ helpBg.hidden=false; });
+  document.getElementById("helpClose").addEventListener("click",()=>{ helpBg.hidden=true; });
+  helpBg.addEventListener("click",e=>{ if(e.target===helpBg)helpBg.hidden=true; });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!helpBg.hidden)helpBg.hidden=true; });
+
+  gridEl.addEventListener("contextmenu",e=>e.preventDefault());
+
+  render();
 })();
 </script>
 </body>
 </html>
-
