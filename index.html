@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PluiePro v1.41</title>
+<title>PluiePro v1.44</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -128,6 +128,13 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 
 
   #oragesPanel{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);z-index:9999;overflow-y:auto;padding:16px}
+  #helpPanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:10000;overflow-y:auto;padding:16px}
+  #helpPanel.open{display:block}
+  #helpPanel table{width:100%;border-collapse:collapse;font-size:11px;font-family:'Courier New',monospace}
+  #helpPanel th{text-align:left;color:#66aaff;border-bottom:1px solid #2a4a6a;padding:6px 5px;font-size:10px;letter-spacing:0.5px}
+  #helpPanel td{border-bottom:1px solid #1a1a1a;padding:6px 5px;color:#bbb;vertical-align:top}
+  #helpPanel .mc{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:middle;margin-right:5px}
+  #helpPanel .flag{font-size:13px}
   #oragesPanel.open{display:block}
   .op-card{background:#0d0d0d;border:1px solid #2a2a2a;border-radius:8px;padding:14px;margin-bottom:10px;max-width:700px;margin-left:auto;margin-right:auto}
   .orage-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:6px;margin-bottom:7px;cursor:pointer;border:.5px solid #3a1a00;background:#1a0800;transition:background .15s}
@@ -159,8 +166,10 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
     <button id="pollenBtn" onclick="findPollenCity()" title="Ville avec alerte pollen">🌼</button>
     <button id="gpsBtn" onclick="loadGPS()" title="Ma position GPS">📍</button>
     <button id="diceBtn"   onclick="randomCity()"  title="Ville aléatoire dans le monde">🎲</button>
+    <button id="hotBtn" onclick="findHottest()" title="Ville/village le plus chaud de France (max-max)" style="color:#ff6622">🌡️</button>
     <button id="rainHuntBtn" onclick="findRainiest()" title="Trouver la ville la plus pluvieuse">💧</button>
     <button id="oragesBtn" onclick="openOragesPanel()" title="Villes avec alertes orages (CAPE > 400)" style="color:#ff5500">⚡</button>
+    <button id="helpBtn" onclick="openHelpPanel()" title="Aide : les modèles météo" style="color:#66aaff">❓</button>
     <button id="homeBtn"  onclick="goHome()" title="Retour Juvisy-sur-Orge">🏠</button>
     <button id="clearBtn" onclick="clearSearch()">✕</button>
     <button id="searchBtn" onclick="load()">GO</button>
@@ -711,6 +720,7 @@ async function findWindy(){
 
 /* ── Ville avec pollen ── */
 let _pollenRanking=[],_pollenRankIdx=0;
+let _hotRanking=[],_hotRankIdx=0;
 async function findPollenCity(){
   if(_pollenRanking.length&&_pollenRankIdx<_pollenRanking.length){
     const city=_pollenRanking[_pollenRankIdx++];
@@ -853,10 +863,104 @@ async function findRainiest(){
   document.getElementById('clearBtn').style.display='block';
   await load();
 }
+
+/* ── Ville/village le plus chaud de France (max-max multi-modèles) ── */
+async function findHottest(){
+  const btn=document.getElementById('hotBtn');
+  /* Classement déjà calculé → ville suivante */
+  if(_hotRanking.length>0){
+    _hotRankIdx=(_hotRankIdx+1)%_hotRanking.length;
+    const next=_hotRanking[_hotRankIdx];
+    document.getElementById('cityInput').value=next.name;
+    document.getElementById('clearBtn').style.display='block';
+    await load();
+    showStatus('🌡️ '+(_hotRankIdx+1)+'/'+_hotRanking.length+' · '+next.name+' '+Math.round(next.t)+'°','#ff6622');
+    return;
+  }
+  /* Villes & villages français répartis, points chauds connus inclus */
+  const villes=[
+    {name:'Paris',lat:48.85,lon:2.35},{name:'Marseille',lat:43.30,lon:5.37},
+    {name:'Lyon',lat:45.76,lon:4.84},{name:'Toulouse',lat:43.60,lon:1.44},
+    {name:'Nice',lat:43.70,lon:7.27},{name:'Nantes',lat:47.22,lon:-1.55},
+    {name:'Montpellier',lat:43.61,lon:3.88},{name:'Strasbourg',lat:48.57,lon:7.75},
+    {name:'Bordeaux',lat:44.84,lon:-0.58},{name:'Lille',lat:50.63,lon:3.06},
+    {name:'Rennes',lat:48.11,lon:-1.68},{name:'Reims',lat:49.26,lon:4.03},
+    {name:'Le Havre',lat:49.49,lon:0.11},{name:'Saint-Étienne',lat:45.44,lon:4.39},
+    {name:'Toulon',lat:43.12,lon:5.93},{name:'Grenoble',lat:45.19,lon:5.72},
+    {name:'Dijon',lat:47.32,lon:5.04},{name:'Angers',lat:47.47,lon:-0.55},
+    {name:'Nîmes',lat:43.84,lon:4.36},{name:'Clermont-Ferrand',lat:45.78,lon:3.08},
+    {name:'Perpignan',lat:42.69,lon:2.90},{name:'Avignon',lat:43.95,lon:4.81},
+    {name:'Béziers',lat:43.34,lon:3.22},{name:'Carcassonne',lat:43.21,lon:2.35},
+    {name:'Narbonne',lat:43.18,lon:3.00},{name:'Arles',lat:43.68,lon:4.63},
+    {name:'Aix-en-Provence',lat:43.53,lon:5.45},{name:'Orange',lat:44.14,lon:4.81},
+    {name:'Salon-de-Provence',lat:43.64,lon:5.10},{name:'Montélimar',lat:44.56,lon:4.75},
+    {name:'Valence',lat:44.93,lon:4.89},{name:'Cavaillon',lat:43.84,lon:5.04},
+    {name:'Conqueyrac',lat:43.93,lon:3.88},{name:'Pau',lat:43.30,lon:-0.37},
+    {name:'Bayonne',lat:43.49,lon:-1.48},{name:'Biarritz',lat:43.48,lon:-1.56},
+    {name:'Tarbes',lat:43.23,lon:0.07},{name:'Albi',lat:43.93,lon:2.15},
+    {name:'Montauban',lat:44.02,lon:1.35},{name:'Agen',lat:44.20,lon:0.62},
+    {name:'Cahors',lat:44.45,lon:1.44},{name:'Rodez',lat:44.35,lon:2.57},
+    {name:'Mende',lat:44.52,lon:3.50},{name:'Le Puy-en-Velay',lat:45.04,lon:3.88},
+    {name:'Aurillac',lat:44.93,lon:2.44},{name:'Brive',lat:45.16,lon:1.53},
+    {name:'Limoges',lat:45.83,lon:1.26},{name:'Poitiers',lat:46.58,lon:0.34},
+    {name:'Niort',lat:46.32,lon:-0.46},{name:'La Rochelle',lat:46.16,lon:-1.15},
+    {name:'Angoulême',lat:45.65,lon:0.16},{name:'Périgueux',lat:45.18,lon:0.72},
+    {name:'Bergerac',lat:44.85,lon:0.48},{name:'Mont-de-Marsan',lat:43.89,lon:-0.50},
+    {name:'Ajaccio',lat:41.92,lon:8.74},{name:'Bastia',lat:42.70,lon:9.45},
+    {name:'Calvi',lat:42.57,lon:8.76},{name:'Porto-Vecchio',lat:41.59,lon:9.28},
+    {name:'Sète',lat:43.40,lon:3.70},{name:'Menton',lat:43.78,lon:7.50},
+    {name:'Cannes',lat:43.55,lon:7.02},{name:'Fréjus',lat:43.43,lon:6.74},
+    {name:'Draguignan',lat:43.54,lon:6.47},{name:'Manosque',lat:43.83,lon:5.78},
+    {name:'Gap',lat:44.56,lon:6.08},{name:'Digne-les-Bains',lat:44.09,lon:6.24},
+    {name:'Sisteron',lat:44.20,lon:5.94},{name:'Apt',lat:43.88,lon:5.40},
+    {name:'Uzès',lat:44.01,lon:4.42},{name:'Alès',lat:44.13,lon:4.08},
+    {name:'Millau',lat:44.10,lon:3.08},{name:'Castres',lat:43.60,lon:2.24},
+    {name:'Auch',lat:43.65,lon:0.59},{name:'Libourne',lat:44.91,lon:-0.24},
+    {name:'Bourges',lat:47.08,lon:2.40},{name:'Châteauroux',lat:46.81,lon:1.69},
+    {name:'Nevers',lat:46.99,lon:3.16},{name:'Mâcon',lat:46.31,lon:4.83},
+    {name:'Chalon-sur-Saône',lat:46.78,lon:4.85},{name:'Roanne',lat:46.04,lon:4.07},
+    {name:'Vienne',lat:45.52,lon:4.88},{name:'Romans',lat:45.05,lon:5.05},
+    {name:'Orléans',lat:47.90,lon:1.90},{name:'Tours',lat:47.39,lon:0.69},
+    {name:'Blois',lat:47.59,lon:1.33},{name:'Le Mans',lat:48.00,lon:0.20},
+  ];
+  btn.classList.add('searching');
+  showStatus('🌡️ Scan '+villes.length+' villes…','#ff6622');
+  /* Modèles larges pour le max-max */
+  const models='icon_seamless,gfs_seamless,ecmwf_ifs025,ecmwf_aifs025_single,meteofrance_seamless,meteofrance_arpege_europe,gem_seamless,knmi_seamless,ukmo_seamless,jma_seamless';
+  const batchSize=8;
+  let allResults=[];
+  for(let i=0;i<villes.length;i+=batchSize){
+    const batch=villes.slice(i,i+batchSize);
+    const results=await Promise.allSettled(batch.map(v=>
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${v.lat}&longitude=${v.lon}&daily=temperature_2m_max&models=${models}&forecast_days=7&timezone=auto`)
+        .then(r=>r.json())
+        .then(d=>{
+          /* max-max = température max parmi tous modèles ET tous jours (7j) */
+          const keys=Object.keys(d?.daily||{}).filter(k=>k.startsWith('temperature_2m_max'));
+          let mx=null;
+          keys.forEach(k=>{(d.daily[k]||[]).forEach(val=>{if(val!=null&&isFinite(val)&&(mx===null||val>mx))mx=val;});});
+          return {...v,t:mx??-99};
+        })
+        .catch(()=>({...v,t:-99}))
+    ));
+    results.forEach(res=>{if(res.status==='fulfilled')allResults.push(res.value);});
+  }
+  btn.classList.remove('searching');
+  _hotRanking=allResults.filter(c=>c.t>-90).sort((a,b)=>b.t-a.t);
+  _hotRankIdx=0;
+  if(!_hotRanking.length){showStatus('❌ Scan échoué','#ff3d57');return;}
+  const best=_hotRanking[0];
+  document.getElementById('cityInput').value=best.name;
+  document.getElementById('clearBtn').style.display='block';
+  await load();
+  showStatus('🌡️ Le + chaud : '+best.name+' '+Math.round(best.t)+'° (sur 7j)','#ff6622');
+}
+
 /* ── retour ville par défaut ── */
 function goHome(){
   _windRanking=[];_windRankIdx=0;
   _pollenRanking=[];_pollenRankIdx=0;
+  _hotRanking=[];_hotRankIdx=0;
   const inp=document.getElementById('cityInput');
   inp.value='Juvisy-sur-Orge';
   document.getElementById('clearBtn').style.display='block';
@@ -868,6 +972,7 @@ function goHome(){
 function clearSearch(){
   _windRanking=[];_windRankIdx=0;
   _pollenRanking=[];_pollenRankIdx=0;
+  _hotRanking=[];_hotRankIdx=0;
   const inp=document.getElementById('cityInput');
   inp.value='';inp.focus();
   document.getElementById('clearBtn').style.display='none';
@@ -876,7 +981,7 @@ function clearSearch(){
 document.addEventListener('DOMContentLoaded',()=>{
   const inp=document.getElementById('cityInput');
   const btn=document.getElementById('clearBtn');
-  inp.addEventListener('input',()=>{btn.style.display=inp.value?'block':'none';_rainRanking=[];_rainRankIdx=0;});
+  inp.addEventListener('input',()=>{btn.style.display=inp.value?'block':'none';_rainRanking=[];_rainRankIdx=0;_hotRanking=[];_hotRankIdx=0;});
   if(inp.value)btn.style.display='block';
 });
 
@@ -940,13 +1045,16 @@ function renderMfChart(){
   /* Si toutes les valeurs sont identiques → bruit radar, signaler */
   /* Arrondir au-dessous de 0.05mm/h → bruit numérique */
   const values2=values.map(function(v){return v<0.05?0:v;});
+  var _maxRaw=Math.max.apply(null,values2.concat([0]));
+  var _minRaw=Math.min.apply(null,values2.concat([_maxRaw]));
+  if(_maxRaw<0.3||(_maxRaw===_minRaw&&_maxRaw<1)){for(var _z=0;_z<values2.length;_z++)values2[_z]=0;}
   const allZero=values2.every(function(v){return v===0;});
   /* Remplacer values par values2 */
   for(var _vi=0;_vi<values.length;_vi++)values[_vi]=values2[_vi];
   const el0=document.getElementById('mfTime');
   if(allZero){if(el0)el0.textContent='sec';}
   const colors=values.map(function(v){
-    if(v<=0)return 'rgba(68,136,255,0.12)';
+    if(v<=0)return 'transparent';
     if(v<0.5)return 'rgba(68,136,255,0.55)';
     if(v<2)return 'rgba(68,136,255,0.8)';
     if(v<7)return 'rgba(100,180,255,0.95)';
@@ -964,7 +1072,7 @@ function renderMfChart(){
       }},
       scales:{
         x:{ticks:{color:'#4488ff',font:{family:"'Courier New',monospace",size:8,weight:'bold'},maxRotation:0,autoSkip:true,maxTicksLimit:10},grid:{display:false}},
-        y:{beginAtZero:true,max:maxV>0?maxV*1.15:1,
+        y:{beginAtZero:true,max:Math.max(maxV*1.15,1),
            ticks:{color:'#4488ff',font:{family:"'Courier New',monospace",size:9,weight:'bold'},callback:function(v){return v.toFixed(1);},maxTicksLimit:3},
            grid:{color:'rgba(68,136,255,0.08)'},border:{color:'transparent'}}
       }
@@ -1305,7 +1413,7 @@ async function fetchMfRain(lat,lon){
     if(!d?.properties?.forecast?.length)return;
     _mfRainNow=d.properties.forecast;
     /* Recalculer _mfByMin immédiatement */
-    const mfIntensToMmh=[0,0.05,0.2,0.5]; /* 0=sec 1=bruine 2=faible 3=modéré */
+    const mfIntensToMmh=[0,0,0.2,0.5]; /* 0=sec 1=bruine 2=faible 3=modéré */
     _mfByMin={};
     const t0=new Date(_mfRainNow[0].time);
     _mfRainNow.forEach(function(f){
@@ -1860,7 +1968,7 @@ function processData(omMain,omM15,rainMx,probMx){
     return vals.length ? Math.max(...vals) : 0;
   });
   /* Fusionner m15 avec données MF si disponibles */
-  const mfIntensToMmh=[0,0.05,0.2,0.5]; /* 0=sec 1=bruine 2=faible 3=modéré */ /* 0=sec,1=faible,2=modéré,3=fort */
+  const mfIntensToMmh=[0,0,0.2,0.5]; /* 0=sec 1=bruine 2=faible 3=modéré */ /* 0=sec,1=faible,2=modéré,3=fort */
   _mfByMin={}; /* reset global */
   if(_mfRainNow?.length){
     const t0=new Date(_mfRainNow[0].time);
@@ -2869,62 +2977,7 @@ function render(pts,mods){
           cv.globalAlpha=1;cv.restore();
         });
       }},
-      /* ── Mini widget MF pluie dans l'heure — barres colorées visibles ── */
-      {id:'mfRainWidget',afterDraw(chart){
-        if(!_mfRainNow?.length)return;
-        const {ctx:cv,scales:{x},chartArea:{top,bottom}}=chart;
-        const minuteIdxs=pts.map((p,i)=>p.t.includes("'")?i:-1).filter(i=>i>=0);
-        if(!minuteIdxs.length)return;
-        const firstIdx=minuteIdxs[0];
-        const lastIdx=minuteIdxs[minuteIdxs.length-1];
-        const x0=x.getPixelForValue(firstIdx);
-        const x1=x.getPixelForValue(lastIdx);
-        if(x1<x.left||x0>x.right)return;
-        const cx0=Math.max(x0,x.left), cx1=Math.min(x1,x.right);
-        /* Hauteur et position : DANS la zone graphe, juste au-dessus du bas */
-        const H=isMob?16:22;
-        const barY=bottom-H-2; /* au-dessus des ticks mais dans chartArea */
-        /* Fond semi-transparent derrière le widget */
-        cv.save();
-        cv.fillStyle='rgba(0,0,30,0.92)';
-        cv.fillRect(cx0,barY-1,cx1-cx0,H+2);
-        /* Couleurs vives sur fond sombre */
-        const colors=['#0a0a1a','#00ccff','#0044ff','#ff2200'];
-        minuteIdxs.forEach((gi,mi)=>{
-          const xPx=x.getPixelForValue(gi);
-          if(xPx<x.left||xPx>x.right)return;
-          const nextPx=x.getPixelForValue(gi+1);
-          const slotW=Math.max(2,Math.abs(nextPx-xPx)-1);
-          const o=parseInt(pts[gi].t); /* "+5'" → 5 */
-          const mfKeys=Object.keys(_mfByMin).map(Number);
-          let intens=0;
-          if(mfKeys.length){
-            const nk=mfKeys.reduce((a,b)=>Math.abs(b-o)<Math.abs(a-o)?b:a,mfKeys[0]);
-            const v=_mfByMin[nk]??0;
-            intens=v>=5?3:v>=1.5?2:v>0?1:0;
-          }
-          cv.fillStyle=colors[intens];
-          cv.fillRect(xPx,barY,slotW,H);
-          /* Glow sur les barres colorées */
-          if(intens>0){
-            cv.shadowColor=colors[intens];
-            cv.shadowBlur=4;
-            cv.fillRect(xPx,barY,slotW,H);
-            cv.shadowBlur=0;
-          }
-        });
-        /* Bordure fine */
-        cv.strokeStyle='rgba(100,180,255,0.5)';
-        cv.lineWidth=1;
-        cv.strokeRect(cx0,barY-1,cx1-cx0,H+2);
-        /* Label "MF" */
-        const fs=isMob?7:8;
-        cv.font=`900 ${fs}px 'Courier New',monospace`;
-        cv.fillStyle='rgba(100,180,255,0.9)';
-        cv.textAlign='left';cv.textBaseline='middle';
-        cv.fillText('MF',cx0+2,barY+H/2);
-        cv.restore();
-      }},
+      
 
       /* ── Voyant pluie actuelle à H=0 ── */
       {id:'nowIndicator',afterDraw(chart){
@@ -3698,6 +3751,40 @@ async function fetchOrageData(city){
   }catch{return null;}
 }
 
+/* ── Panneau d'aide : tableau des modèles ── */
+const MODEL_INFO={
+  'icon':  ['DWD','🇩🇪 Allemagne','11 km','16 j','Référence Europe, très fiable, 4×/jour'],
+  'gfs':   ['NOAA','🇺🇸 États-Unis','25 km','16 j','Modèle global de référence mondiale'],
+  'ifs':   ['ECMWF','🇪🇺 Europe','9 km','15 j','Le plus précis au monde, open-data 2025'],
+  'aifs':  ['ECMWF','🇪🇺 Europe (IA)','28 km','15 j','Modèle par intelligence artificielle'],
+  'mf':    ['Météo-France','🇫🇷 France','1.3 km','4 j','AROME : maille fine, excellent sur la France'],
+  'mfhd':  ['Météo-France','🇫🇷 France','1.3 km','2 j','AROME HD : haute définition courte échéance'],
+  'gem':   ['ECCC','🇨🇦 Canada','15 km','10 j','Bon aux hautes latitudes'],
+  'knmi':  ['KNMI','🇳🇱 Pays-Bas','2 km','2.5 j','HARMONIE-AROME, Europe de l\'Ouest'],
+  'ukmo':  ['Met Office','🇬🇧 Royaume-Uni','10 km','7 j','Modèle britannique global+régional'],
+  'metno': ['MET Norway','🇳🇴 Norvège','1 km','—','Nowcast nordique haute fréquence']
+};
+function openHelpPanel(){
+  let html='';
+  SOURCES.forEach(s=>{
+    const m=MODEL_INFO[s.key];
+    if(!m)return;
+    const flag=m[1].match(/^\S+/)?m[1].split(' ')[0]:'';
+    const country=m[1].replace(/^\S+\s/,'');
+    html+='<tr>'
+      +'<td><span class="mc" style="background:'+s.color+'"></span><b style="color:#eee">'+s.label+'</b></td>'
+      +'<td>'+m[0]+'</td>'
+      +'<td><span class="flag">'+flag+'</span> '+country+'</td>'
+      +'<td style="color:#88ccff">'+m[2]+'</td>'
+      +'<td style="color:#88ccff">'+m[3]+'</td>'
+      +'<td style="color:#999">'+m[4]+'</td>'
+      +'</tr>';
+  });
+  document.getElementById('helpModelBody').innerHTML=html;
+  document.getElementById('helpPanel').classList.add('open');
+}
+function closeHelpPanel(){document.getElementById('helpPanel').classList.remove('open');}
+
 async function openOragesPanel(){
   if(_oragesScanRunning)return;
   document.getElementById('oragesPanel').classList.add('open');
@@ -3812,6 +3899,27 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
     <div class="op-progress"><div class="op-progress-fill" id="opFill" style="width:0%"></div></div>
     <div id="opStatus" class="op-scanning">Initialisation du scan...</div>
     <div id="opResults"></div>
+  </div>
+</div>
+
+<div id="helpPanel">
+  <div class="op-card" style="max-width:860px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#66aaff">❓ LES MODÈLES MÉTÉO DE PLUIEPRO</div>
+      <button onclick="closeHelpPanel()" style="background:none;border:1px solid #444;border-radius:4px;color:#888;padding:4px 10px;cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <div style="font-size:11px;color:#999;line-height:1.6;margin-bottom:12px;font-family:'Courier New',monospace">PluiePro agrège <b style="color:#ccc">10 sources</b> de prévision. La courbe jaune <b style="color:#ffe600">P80</b> est le 80ᵉ percentile : 8 sources sur 10 prévoient moins. Les modèles <b style="color:#ff8844">régionaux</b> (1–2 km) sont précis à court terme ; les <b style="color:#44aaff">globaux</b> (9–25 km) portent jusqu'à 16 jours.</div>
+    <div style="overflow-x:auto">
+      <table id="helpModelTable"><thead><tr><th>Modèle</th><th>Organisme</th><th>Pays</th><th>Résol.</th><th>Portée</th><th>Spécialité</th></tr></thead><tbody id="helpModelBody"></tbody></table>
+    </div>
+    <div style="margin-top:14px;padding-top:10px;border-top:1px solid #222;color:#888;font-size:10px;line-height:1.7;font-family:'Courier New',monospace">
+      <b style="color:#aaa">Observations temps réel</b> (en plus des modèles) :<br>
+      • <b style="color:#ff44aa">Radar Météo-France</b> 🇫🇷 — pluie minute par minute sur la France<br>
+      • <b style="color:#44ff88">MET Norway Nowcast</b> 🇳🇴 — nowcast nordique haute fréquence<br>
+      • <b style="color:#ffcc00">RainViewer</b> 🌍 — imagerie radar mondiale animée<br>
+      • <b style="color:#88ccff">lameteoagricole.net</b> 🇫🇷 — pluie minute (scraping)<br><br>
+      <b style="color:#aaa">Sources de données</b> : Open-Meteo (licence CC-BY 4.0) · webservice Météo-France · api.met.no · RainViewer · Open-Meteo Geocoding
+    </div>
   </div>
 </div>
 
