@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PluiePro v1.46</title>
+<title>PluiePro v1.48</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -31,6 +31,29 @@ body{background:#000;color:#fff;font-family:'Courier New',monospace;padding:3px;
 @keyframes spin{from{transform:translateY(-50%) rotate(0deg)}to{transform:translateY(-50%) rotate(360deg)}}
 .search{display:flex;gap:8px}
   .search{display:flex;gap:6px;align-items:stretch}
+  
+  
+  #layersWrap{position:relative;flex:0 0 auto}
+  #layersMenuBtn{background:#1a1a2a;border:1px solid #3a3a5a;border-radius:8px;color:#ddd;font-family:'Courier New',monospace;font-size:clamp(9px,3vw,12px);font-weight:900;cursor:pointer;padding:6px 12px;white-space:nowrap}
+  #layersMenuBtn:hover,#layersMenuBtn.on{background:#222238;border-color:#00ffff}
+  #layersMenu{display:none;position:absolute;top:calc(100% + 5px);left:0;z-index:9998;background:#0d0d0d;border:1px solid #333;border-radius:10px;padding:6px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.6)}
+  #layersMenu.open{display:block}
+  #layersMenu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;color:#888;font-family:'Courier New',monospace;font-size:13px;font-weight:700;text-align:left;padding:9px 10px;border-radius:7px;cursor:pointer}
+  #layersMenu button:hover{background:#1e2a3a}
+  #layersMenu button.ton{color:#00ffff;background:rgba(0,255,255,.08)}
+  #layersMenu button span{flex:1}
+
+  #viewWrap{position:relative;flex:0 0 auto}
+  #viewMenuBtn{background:#1a1a2a;border:1px solid #3a3a5a;border-radius:8px;color:#ddd;font-family:'Courier New',monospace;font-size:clamp(9px,3vw,12px);font-weight:900;cursor:pointer;padding:6px 12px;white-space:nowrap}
+  #viewMenuBtn:hover{background:#222238}
+  #viewMenu{display:none;position:absolute;top:calc(100% + 5px);left:0;z-index:9998;background:#0d0d0d;border:1px solid #333;border-radius:10px;padding:6px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.6)}
+  #viewMenu.open{display:block}
+  #viewMenu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;color:#ddd;font-family:'Courier New',monospace;font-size:13px;font-weight:900;text-align:left;padding:9px 10px;border-radius:7px;cursor:pointer}
+  #viewMenu button:hover{background:#1e2a3a}
+  #viewMenu button.active{background:#1e3a5a;color:#fff}
+  #viewMenu button span{flex:1;font-weight:400;font-size:10px;color:#888}
+  #viewMenu .vm-sep{font-size:9px;color:#555;text-align:center;padding:7px 0 4px;letter-spacing:0.5px}
+
   #exploreWrap{position:relative;flex-shrink:0;display:flex}
   #exploreBtn,#helpBtn{background:#161616;border:1px solid #333;border-radius:10px;color:#ccc;font-size:17px;cursor:pointer;padding:0 11px;line-height:1;transition:background .15s}
   #exploreBtn:hover,#helpBtn:hover{background:#222}
@@ -209,26 +232,38 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   </div>
   <div id="sourcesBar"></div>
   <div id="viewBtns">
-    <button class="view-btn"        id="btnJm7" onclick="setView('jm7')">J-7</button>
-    <button class="view-btn"        id="btnJm1" onclick="setView('jm1')">J-1</button>
-    <button class="view-btn"        id="btnJ0"  onclick="setView('j0')">J</button>
-    <button class="view-btn active" id="btnJ1"  onclick="setView('j1')">J+1</button>
-    <button class="view-btn"        id="btnJ5"  onclick="setView('j5')">◂ J+5</button>
-    <button class="view-btn"        id="btnJ8"  onclick="setView('j8')">◂ J+8</button>
-    <button class="view-btn"        id="btnJ14" onclick="setView('j14')">◂ J+14</button>
-    <button class="view-btn" id="btnExt30" onclick="openExt30()" title="Tendance J+15 → J+30 (ensemble)" style="flex:0 0 auto;color:#88aaff;font-weight:900">⤢</button>
-    <button id="tbWind"   class="view-btn" onclick="tgl('wind',this)">💨 VENT</button>
-    <button id="tbUV"     class="view-btn" onclick="tgl('uv',this)">☀ UV</button>
-    <button id="tbPollen" class="view-btn" onclick="tgl('pollen',this)">🌼 POLLEN</button>
-    <button id="tbPoll"   class="view-btn" onclick="tgl('poll',this)">💨 POLLUTION</button>
-    <button id="tbTemp"   class="view-btn" onclick="tgl('temp',this)">🌡 TEMPÉRATURE</button>
-    <button id="tbHumid"  class="view-btn" onclick="tgl('humidity',this)">💦 HUMIDITÉ</button>
-    <button id="tbOrage"  class="view-btn" onclick="tgl('orage',this)" style="color:#ff8800">⚡ ORAGE</button>
-    <button id="tbSoleil" class="view-btn" onclick="tgl('soleil',this)" style="color:#aadd00">☀ SOLEIL</button>
-    <button id="tbProba"  class="view-btn" onclick="tgl('proba',this)">〰 PROBA</button>
-    <button id="tbNuage"  class="view-btn" onclick="tgl('nuage',this)">☁ NUAGE</button>
-    <button id="tbModels" class="view-btn" onclick="tgl('models',this)">📊 MODÈLES</button>
-    <button id="tbTout"   class="view-btn" onclick="tglAll()">◎ TOUT</button>
+    <div id="viewWrap">
+      <button id="viewMenuBtn" onclick="toggleViewMenu(event)" title="Choisir l'échéance">📅 <span id="viewMenuLabel">J+1</span> ▾</button>
+      <div id="viewMenu">
+        <button id="btnJm7" onclick="setView('jm7');closeViewMenu()">J-7 <span>il y a 7 jours</span></button>
+        <button id="btnJm1" onclick="setView('jm1');closeViewMenu()">J-1 <span>hier</span></button>
+        <button id="btnJ0"  onclick="setView('j0');closeViewMenu()">J <span>aujourd'hui</span></button>
+        <button id="btnJ1"  onclick="setView('j1');closeViewMenu()">J+1 <span>demain</span></button>
+        <button id="btnJ5"  onclick="setView('j5');closeViewMenu()">J+5 <span>dans 5 jours</span></button>
+        <button id="btnJ8"  onclick="setView('j8');closeViewMenu()">J+8 <span>dans 8 jours</span></button>
+        <button id="btnJ14" onclick="setView('j14');closeViewMenu()">J+14 <span>dans 14 jours</span></button>
+        <div class="vm-sep">— tendance longue —</div>
+        <button id="btnExt30" onclick="openExt30();closeViewMenu()" style="color:#88aaff">⤢ J+15 → J+30 <span>ensemble</span></button>
+      </div>
+    </div>
+    <div id="layersWrap">
+      <button id="layersMenuBtn" onclick="toggleLayersMenu(event)" title="Couches à afficher">🔲 COUCHES ▾</button>
+      <div id="layersMenu">
+        <button id="tbWind"   onclick="tgl('wind',this)">💨 <span>Vent</span></button>
+        <button id="tbUV"     onclick="tgl('uv',this)">☀ <span>UV</span></button>
+        <button id="tbPollen" onclick="tgl('pollen',this)">🌼 <span>Pollen</span></button>
+        <button id="tbPoll"   onclick="tgl('poll',this)">💨 <span>Pollution</span></button>
+        <button id="tbTemp"   onclick="tgl('temp',this)">🌡 <span>Température</span></button>
+        <button id="tbHumid"  onclick="tgl('humidity',this)">💦 <span>Humidité</span></button>
+        <button id="tbOrage"  onclick="tgl('orage',this)" style="color:#ff8800">⚡ <span>Orages</span></button>
+        <button id="tbSoleil" onclick="tgl('soleil',this)" style="color:#aadd00">☀ <span>Soleil</span></button>
+        <button id="tbProba"  onclick="tgl('proba',this)">〰 <span>Proba pluie</span></button>
+        <button id="tbNuage"  onclick="tgl('nuage',this)">☁ <span>Nuages</span></button>
+        <button id="tbModels" onclick="tgl('models',this)">📊 <span>Modèles</span></button>
+        <div class="vm-sep"></div>
+        <button id="tbTout"   onclick="tglAll()">◎ <span>Tout activer / désactiver</span></button>
+      </div>
+    </div>
   </div>
   <div class="card">
     <div class="header">
@@ -520,6 +555,9 @@ function highlightSource(key){
 function tgl(name, btn){
   _layers[name]=!_layers[name];
   btn.classList.toggle('ton', _layers[name]);
+  /* Reflet sur le bouton-chapeau Couches */
+  const lb=document.getElementById('layersMenuBtn');
+  if(lb)lb.classList.toggle('on',Object.values(_layers).some(Boolean));
   document.getElementById('tbTout').classList.remove('ton');
   applyLayers();
   /* Légende interactive visible seulement quand MODÈLES est ON */
@@ -2080,6 +2118,7 @@ function updateBtnState(){
   document.getElementById('btnJ1').classList.toggle('active',_viewMode==='j1');
   document.getElementById('btnJ8').classList.toggle('active',_viewMode==='j8');
   if(document.getElementById('btnJ5')) document.getElementById('btnJ5').classList.toggle('active',_viewMode==='j5');
+  const _vl=document.getElementById('viewMenuLabel');if(_vl)_vl.textContent=_viewLabels[_viewMode]||_viewMode;
   if(document.getElementById('btnJ14'))document.getElementById('btnJ14').classList.toggle('active',_viewMode==='j14');
 }
 
@@ -2095,6 +2134,19 @@ function _updateURL(){
     history.replaceState(null,'',newURL);
   }catch(e){}
 }
+
+
+/* Menu déroulant des échéances */
+const _viewLabels={jm7:'J-7',jm1:'J-1',j0:'Aujourd\'hui',j1:'J+1',j5:'J+5',j8:'J+8',j14:'J+14'};
+
+/* Menu Couches */
+function toggleLayersMenu(e){if(e)e.stopPropagation();const m=document.getElementById('layersMenu');if(m)m.classList.toggle('open');}
+function closeLayersMenu(){const m=document.getElementById('layersMenu');if(m)m.classList.remove('open');}
+document.addEventListener('click',function(e){const w=document.getElementById('layersWrap');if(w&&!w.contains(e.target))closeLayersMenu();});
+
+function toggleViewMenu(e){if(e)e.stopPropagation();const m=document.getElementById('viewMenu');if(m)m.classList.toggle('open');}
+function closeViewMenu(){const m=document.getElementById('viewMenu');if(m)m.classList.remove('open');}
+document.addEventListener('click',function(e){const w=document.getElementById('viewWrap');if(w&&!w.contains(e.target))closeViewMenu();});
 
 function setView(mode){
   if(_viewMode===mode)return;
