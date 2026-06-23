@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PluiePro v1.44</title>
+<title>PluiePro v1.46</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -12,24 +12,36 @@
 body{background:#000;color:#fff;font-family:'Courier New',monospace;padding:3px;min-height:100dvh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
 .wrap{width:100%;display:flex;flex-direction:column;gap:3px}
 .search{position:relative}
-#clearBtn{position:absolute;right:70px;top:50%;transform:translateY(-50%);background:none;border:none;color:#555;font-size:16px;cursor:pointer;padding:4px 6px;line-height:1;display:none}
+#clearBtn{background:none;border:none;color:#666;font-size:16px;cursor:pointer;padding:0 4px;line-height:1;display:none;flex-shrink:0}
 #clearBtn:hover{color:#fff}
-#gpsBtn{position:absolute;right:310px;top:50%;transform:translateY(-50%);background:none;border:none;color:#555;font-size:15px;cursor:pointer;padding:4px 6px;line-height:1;transition:color .2s}
+
 #gpsBtn:hover{color:#44ff88}
-#homeBtn{position:absolute;right:110px;top:50%;transform:translateY(-50%);background:none;border:none;color:#555;font-size:15px;cursor:pointer;padding:4px 6px;line-height:1;display:block}
+#homeBtn{background:none;border:none;color:#666;font-size:17px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0}
 #homeBtn:hover{color:#ffe600}
-#diceBtn{position:absolute;right:190px;top:50%;transform:translateY(-50%);background:none;border:none;color:#555;font-size:15px;cursor:pointer;padding:4px 6px;line-height:1}
+
 #diceBtn:hover{color:#fff}
-#windBtn{position:absolute;right:270px;top:50%;transform:translateY(-50%);background:none;border:none;color:#555;font-size:15px;cursor:pointer;padding:4px 6px;line-height:1}
+
 #windBtn:hover{color:#fff}
-#pollenBtn{position:absolute;right:230px;top:50%;transform:translateY(-50%);background:none;border:none;color:#555;font-size:15px;cursor:pointer;padding:4px 6px;line-height:1}
+
 #pollenBtn:hover{color:#fff}
 
-#rainHuntBtn{position:absolute;right:150px;top:50%;transform:translateY(-50%);background:none;border:none;color:#336699;font-size:15px;cursor:pointer;padding:4px 6px;line-height:1}
+
 #rainHuntBtn:hover{color:#00ccff}
 #rainHuntBtn.searching{animation:spin 1s linear infinite;color:#00ccff}
 @keyframes spin{from{transform:translateY(-50%) rotate(0deg)}to{transform:translateY(-50%) rotate(360deg)}}
 .search{display:flex;gap:8px}
+  .search{display:flex;gap:6px;align-items:stretch}
+  #exploreWrap{position:relative;flex-shrink:0;display:flex}
+  #exploreBtn,#helpBtn{background:#161616;border:1px solid #333;border-radius:10px;color:#ccc;font-size:17px;cursor:pointer;padding:0 11px;line-height:1;transition:background .15s}
+  #exploreBtn:hover,#helpBtn:hover{background:#222}
+  #exploreBtn.searching{animation:spin 1s linear infinite}
+  #exploreMenu{display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:9998;background:#0d0d0d;border:1px solid #333;border-radius:10px;padding:6px;min-width:215px;box-shadow:0 8px 24px rgba(0,0,0,0.6)}
+  #exploreMenu.open{display:block}
+  #exploreMenu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;color:#ddd;font-family:'Courier New',monospace;font-size:13px;font-weight:700;text-align:left;padding:9px 10px;border-radius:7px;cursor:pointer}
+  #exploreMenu button:hover{background:#1e2a3a}
+  #exploreMenu button span{flex:1}
+  #exploreMenu .em-sep{font-size:9px;color:#555;text-align:center;padding:7px 0 4px;letter-spacing:0.5px}
+
 input{flex:1;min-width:0;background:#0d0d0d;border:2px solid #555;border-radius:10px;padding:9px 12px;color:#fff;font-size:clamp(13px,3.5vw,16px);font-weight:900;font-family:'Courier New',monospace;outline:none;-webkit-appearance:none}
 input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 #searchBtn{background:#00ffff;color:#000;border:none;padding:0 14px;border-radius:10px;font-weight:900;cursor:pointer;flex-shrink:0;font-family:'Courier New',monospace;font-size:clamp(11px,3vw,14px);min-height:40px;min-width:46px;-webkit-appearance:none;transition:background .15s}
@@ -128,6 +140,21 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 
 
   #oragesPanel{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);z-index:9999;overflow-y:auto;padding:16px}
+  
+  #ext30Panel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.96);z-index:10001;overflow-y:auto;padding:16px}
+  #ext30Panel.open{display:block}
+  #ext30Card{background:#0d0d0d;border:1px solid #2a2a2a;border-radius:10px;padding:14px;max-width:680px;margin:0 auto}
+  .ext30-warn{background:#2a1a00;border:1px solid #553300;border-radius:7px;padding:8px 10px;font-size:10px;color:#ffaa55;line-height:1.5;margin-bottom:12px}
+  .ext30-row{display:flex;align-items:center;gap:8px;padding:9px 6px;border-bottom:1px solid #1a1a1a;font-family:'Courier New',monospace}
+  .ext30-row:hover{background:#141414}
+  .ext30-date{flex:0 0 58px;font-size:11px;font-weight:900;color:#aaa}
+  .ext30-temp{flex:0 0 128px;font-size:12px;font-weight:900;white-space:nowrap}
+  .ext30-bar{flex:1;height:8px;background:#1a1a2a;border-radius:4px;position:relative;min-width:40px}
+  .ext30-bar span{position:absolute;height:100%;border-radius:4px;background:linear-gradient(90deg,#4488ff,#ff8844)}
+  .ext30-rain{flex:0 0 88px;font-size:11px;font-weight:900;text-align:right;white-space:nowrap}
+  .ext30-dot{flex:0 0 18px;text-align:center;font-size:11px}
+  #ext30Status{text-align:center;color:#888;font-size:12px;font-family:'Courier New',monospace;padding:30px 0}
+
   #helpPanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:10000;overflow-y:auto;padding:16px}
   #helpPanel.open{display:block}
   #helpPanel table{width:100%;border-collapse:collapse;font-size:11px;font-family:'Courier New',monospace}
@@ -162,16 +189,22 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
     <input id="cityInput" value="Juvisy-sur-Orge"
            onkeypress="if(event.key==='Enter'){this.blur();load()}"
            autocomplete="off" autocorrect="off" spellcheck="false">
-    <button id="windBtn"   onclick="findWindy()"   title="Ville venteuse">💨</button>
-    <button id="pollenBtn" onclick="findPollenCity()" title="Ville avec alerte pollen">🌼</button>
-    <button id="gpsBtn" onclick="loadGPS()" title="Ma position GPS">📍</button>
-    <button id="diceBtn"   onclick="randomCity()"  title="Ville aléatoire dans le monde">🎲</button>
-    <button id="hotBtn" onclick="findHottest()" title="Ville/village le plus chaud de France (max-max)" style="color:#ff6622">🌡️</button>
-    <button id="rainHuntBtn" onclick="findRainiest()" title="Trouver la ville la plus pluvieuse">💧</button>
-    <button id="oragesBtn" onclick="openOragesPanel()" title="Villes avec alertes orages (CAPE > 400)" style="color:#ff5500">⚡</button>
-    <button id="helpBtn" onclick="openHelpPanel()" title="Aide : les modèles météo" style="color:#66aaff">❓</button>
+    <button id="clearBtn" onclick="clearSearch()" title="Effacer">✕</button>
+    <div id="exploreWrap">
+      <button id="exploreBtn" onclick="toggleExploreMenu(event)" title="Explorer : position, aléatoire, villes extrêmes">🎲</button>
+      <div id="exploreMenu">
+        <button onclick="loadGPS();closeExploreMenu()">📍 <span>Ma position GPS</span></button>
+        <button onclick="randomCity();closeExploreMenu()">🎲 <span>Ville aléatoire</span></button>
+        <div class="em-sep">— Villes extrêmes (France) —</div>
+        <button onclick="findHottest();closeExploreMenu()">🌡️ <span>La plus chaude</span></button>
+        <button onclick="findRainiest();closeExploreMenu()">💧 <span>La plus pluvieuse</span></button>
+        <button onclick="findWindy();closeExploreMenu()">💨 <span>La plus venteuse</span></button>
+        <button onclick="openOragesPanel();closeExploreMenu()">⚡ <span>Alertes orages</span></button>
+        <button onclick="findPollenCity();closeExploreMenu()">🌼 <span>Alerte pollen</span></button>
+      </div>
+    </div>
+    <button id="helpBtn" onclick="openHelpPanel()" title="Aide : les modèles météo">❓</button>
     <button id="homeBtn"  onclick="goHome()" title="Retour Juvisy-sur-Orge">🏠</button>
-    <button id="clearBtn" onclick="clearSearch()">✕</button>
     <button id="searchBtn" onclick="load()">GO</button>
   </div>
   <div id="sourcesBar"></div>
@@ -183,6 +216,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
     <button class="view-btn"        id="btnJ5"  onclick="setView('j5')">◂ J+5</button>
     <button class="view-btn"        id="btnJ8"  onclick="setView('j8')">◂ J+8</button>
     <button class="view-btn"        id="btnJ14" onclick="setView('j14')">◂ J+14</button>
+    <button class="view-btn" id="btnExt30" onclick="openExt30()" title="Tendance J+15 → J+30 (ensemble)" style="flex:0 0 auto;color:#88aaff;font-weight:900">⤢</button>
     <button id="tbWind"   class="view-btn" onclick="tgl('wind',this)">💨 VENT</button>
     <button id="tbUV"     class="view-btn" onclick="tgl('uv',this)">☀ UV</button>
     <button id="tbPollen" class="view-btn" onclick="tgl('pollen',this)">🌼 POLLEN</button>
@@ -300,6 +334,8 @@ const SOURCES=[
   {key:'gem',  label:'GEM',     color:'#44dddd',omModel:'gem_seamless'},
   {key:'knmi', label:'KNMI',    color:'#88ff44',omModel:'knmi_seamless'},
   {key:'ukmo', label:'UKMO',    color:'#ff4488',omModel:'ukmo_seamless'},
+  {key:'chch', label:'ICON-CH', color:'#ffaadd',omModel:'meteoswiss_icon_ch1'},
+  {key:'itme', label:'ItaliaM', color:'#aaffcc',omModel:'italia_meteo_arpae_icon_2i'},
   {key:'metno',label:'MET-NO',  color:'#ff44aa',omModel:null},
 ];
 
@@ -340,7 +376,9 @@ let _cloudData=null;
 let _humidityHourly=null;
 let _sunshineHourly=null;
 let _firstLoad=true; /* 1er chargement → ignore cache, fetch frais */
-let _tempMaxByDay=null; /* max température parmi TOUS les modèles, par jour */ /* durée ensoleillement s/h (0-3600) */ /* humidité relative % horaire */
+let _tempMaxByDay=null;
+let _tempMaxModelByDay=null;
+let _tempConfByDay=null; /* dispersion modèles (°C) */ /* max température parmi TOUS les modèles, par jour */ /* durée ensoleillement s/h (0-3600) */ /* humidité relative % horaire */
 let _lastPts=null; /* derniers pts du chart pour recalcul humidité */
 let _sunriseJ0=6,_sunsetJ0=21,_sunriseJ1=6,_sunsetJ1=21; /* heures décimales */
 let _currentRain=null; /* précipitation actuelle temps réel */
@@ -674,6 +712,106 @@ function applyComplexity(){
 
 /* ── Ville venteuse ── */
 let _windRanking=[],_windRankIdx=0;
+
+/* Menu Explorer */
+function toggleExploreMenu(e){if(e)e.stopPropagation();const m=document.getElementById('exploreMenu');if(m)m.classList.toggle('open');}
+function closeExploreMenu(){const m=document.getElementById('exploreMenu');if(m)m.classList.remove('open');}
+document.addEventListener('click',function(e){const w=document.getElementById('exploreWrap');if(w&&!w.contains(e.target))closeExploreMenu();});
+
+
+/* ── Extension Tendance J+15 → J+30 (ensemble GEFS) ── */
+let _ext30Loaded=false;
+function closeExt30(){const p=document.getElementById('ext30Panel');if(p)p.classList.remove('open');}
+async function openExt30(){
+  const p=document.getElementById('ext30Panel');
+  if(p)p.classList.add('open');
+  if(_ext30Loaded)return;
+  const status=document.getElementById('ext30Status');
+  const list=document.getElementById('ext30List');
+  if(typeof _cityLat==='undefined'||_cityLat==null){if(status)status.textContent='Cherchez une ville d\'abord.';return;}
+  if(status){status.style.display='block';status.textContent='⏳ Chargement des 31 scénarios…';}
+  if(list)list.innerHTML='';
+  try{
+    const début=15;
+    const models=['gfs05','gfs025','ecmwf_ifs025'];
+    let dly=null,used='',bestLen=0,diag=[];
+    for(const mdl of models){
+      try{
+        const url=`https://ensemble-api.open-meteo.com/v1/ensemble?latitude=${_cityLat}&longitude=${_cityLon}`
+          +`&hourly=temperature_2m,precipitation&models=${mdl}&forecast_days=35&timezone=auto`;
+        const r=await fetch(url);
+        if(!r.ok){diag.push(mdl+':HTTP'+r.status);continue;}
+        const d=await r.json();
+        const len=d?.hourly?.time?.length||0;
+        diag.push(mdl+':'+len+'h');
+        if(len>bestLen){bestLen=len;dly=d.hourly;used=mdl;}
+        if(len>=384)break;
+      }catch(_){diag.push(mdl+':err');}
+    }
+    if(!dly||bestLen<24)throw new Error('ensemble indisponible — '+diag.join(', '));
+    const maxDay=Math.floor(bestLen/24)-1;
+    if(maxDay<16)throw new Error('seulement J+'+maxDay+' dispo — '+diag.join(', '));
+    /* Agréger les heures en jours : index jour = floor(heure/24) depuis aujourd'hui */
+    const tKeys=Object.keys(dly).filter(k=>k.startsWith('temperature_2m'));
+    const pKeys=Object.keys(dly).filter(k=>k.startsWith('precipitation'));
+    const nH=dly.time.length;
+    const dn=['dim','lun','mar','mer','jeu','ven','sam'];
+    const med=a=>{const s=[...a].sort((x,y)=>x-y);const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;};
+    /* Pour chaque jour début..fin : pour chaque membre, calculer tmax/tmin/somme pluie du jour */
+    const days=[];
+    const fin=Math.min(30,maxDay);
+    for(let day=début;day<=fin;day++){
+      const h0=day*24, h1=Math.min(nH,h0+24);
+      if(h0>=nH)break;
+      const memberMax=[],memberMin=[],memberSum=[];
+      tKeys.forEach(tk=>{
+        let mx=-99,mn=99,ok=false;
+        for(let h=h0;h<h1;h++){const v=dly[tk][h];if(v!=null&&isFinite(v)){if(v>mx)mx=v;if(v<mn)mn=v;ok=true;}}
+        if(ok){memberMax.push(mx);memberMin.push(mn);}
+      });
+      pKeys.forEach(pk=>{
+        let s=0,ok=false;
+        for(let h=h0;h<h1;h++){const v=dly[pk][h];if(v!=null&&isFinite(v)){s+=v;ok=true;}}
+        if(ok)memberSum.push(s);
+      });
+      if(!memberMax.length)continue;
+      const dt=new Date(dly.time[h0]);
+      days.push({day,dt,memberMax,memberMin,memberSum});
+    }
+    if(!days.length)throw new Error('pas assez de données horaires');
+    /* Échelle globale pour les barres */
+    let gMin=99,gMax=-99;
+    days.forEach(o=>{gMax=Math.max(gMax,...o.memberMax);gMin=Math.min(gMin,...o.memberMin);});
+    const span=Math.max(1,gMax-gMin);
+    let html='';
+    days.forEach(o=>{
+      const tMaxMed=med(o.memberMax),tMinMed=med(o.memberMin);
+      const tMaxHi=Math.max(...o.memberMax),tMinLo=Math.min(...o.memberMin);
+      const pRain=o.memberSum.length?Math.round(100*o.memberSum.filter(v=>v>=1).length/o.memberSum.length):0;
+      const rMed=o.memberSum.length?med(o.memberSum):0;
+      const mAvg=o.memberMax.reduce((a,b)=>a+b,0)/o.memberMax.length;
+      const sd=Math.sqrt(o.memberMax.reduce((s,x)=>s+(x-mAvg)*(x-mAvg),0)/o.memberMax.length);
+      const dot=sd<2?'🟢':(sd<3.5?'🟡':'🟠');
+      const barL=Math.round(100*(tMinLo-gMin)/span);
+      const barW=Math.max(4,Math.round(100*(tMaxHi-tMinLo)/span));
+      const rainTxt=pRain>=20?('💧 '+pRain+'% · '+rMed.toFixed(1)+'mm'):'☀️ sec';
+      const rainColor=pRain>=50?'#4db8ff':(pRain>=20?'#88aaff':'#888');
+      html+='<div class="ext30-row">'
+        +'<div class="ext30-date">J+'+o.day+'<br><span style="font-size:9px;color:#666">'+dn[o.dt.getDay()]+' '+o.dt.getDate()+'/'+(o.dt.getMonth()+1)+'</span></div>'
+        +'<div class="ext30-temp"><span style="color:#88aaff">'+Math.round(tMinMed)+'°</span>/<span style="color:#ff8844">'+Math.round(tMaxMed)+'°</span> <span style="color:#666;font-size:0.85em">['+Math.round(tMinLo)+'°–'+Math.round(tMaxHi)+'°]</span></div>'
+        +'<div class="ext30-bar"><span style="left:'+barL+'%;width:'+barW+'%"></span></div>'
+        +'<div class="ext30-rain" style="color:'+rainColor+'">'+rainTxt+'</div>'
+        +'<div class="ext30-dot" title="dispersion ±'+sd.toFixed(1)+'° · '+o.memberMax.length+' membres">'+dot+'</div>'
+        +'</div>';
+    });
+    if(status)status.style.display='none';
+    if(list)list.innerHTML=html;
+    _ext30Loaded=true;
+  }catch(e){
+    if(status){status.style.display='block';status.textContent='✕ '+e.message;}
+  }
+}
+
 async function findWindy(){
   if(_windRanking.length&&_windRankIdx<_windRanking.length){
     const city=_windRanking[_windRankIdx++];
@@ -781,7 +919,7 @@ async function randomCity(){
 
 /* ── Recherche de la ville la plus pluvieuse ── */
 async function findRainiest(){
-  const btn=document.getElementById('rainHuntBtn');
+  const btn=document.getElementById('exploreBtn');
 
   /* Si on a déjà un classement, avancer au suivant sans re-scanner */
   if(_rainRanking.length>0){
@@ -866,7 +1004,7 @@ async function findRainiest(){
 
 /* ── Ville/village le plus chaud de France (max-max multi-modèles) ── */
 async function findHottest(){
-  const btn=document.getElementById('hotBtn');
+  const btn=document.getElementById('exploreBtn');
   /* Classement déjà calculé → ville suivante */
   if(_hotRanking.length>0){
     _hotRankIdx=(_hotRankIdx+1)%_hotRanking.length;
@@ -1331,6 +1469,46 @@ function smoothCloudData(arr){
 /* ── Fetch dédié températures (robuste, séparé du batch principal) ── */
 
 /* Récupère temperature_2m_max sur tous les modèles → garde le MAX par jour */
+/* ── Helpers synthèse température ── */
+function _median(arr){
+  const v=arr.filter(x=>x!=null&&isFinite(x)).sort((a,b)=>a-b);
+  if(!v.length)return null;
+  const m=Math.floor(v.length/2);
+  return v.length%2?v[m]:(v[m-1]+v[m])/2;
+}
+function _stdev(arr){
+  const v=arr.filter(x=>x!=null&&isFinite(x));
+  if(v.length<2)return 0;
+  const m=v.reduce((a,b)=>a+b,0)/v.length;
+  return Math.sqrt(v.reduce((s,x)=>s+(x-m)*(x-m),0)/v.length);
+}
+/* Poids d'un modèle selon l'échéance (jour) : régionaux forts à court terme, globaux à long terme */
+function _modelWeight(key,day){
+  const k=key.toLowerCase();
+  const isRegional=/arome|icon_d2|icon_eu|harmonie|meteoswiss|italia|knmi/.test(k);
+  const isTopGlobal=/ifs|aifs|icon_seamless|icon_global/.test(k);
+  if(day<=1)return isRegional?2.2:(isTopGlobal?1.3:1);
+  if(day<=3)return isRegional?1.5:(isTopGlobal?1.4:1);
+  if(day<=6)return isRegional?0.7:(isTopGlobal?1.6:1.1);
+  return isRegional?0.3:(isTopGlobal?1.7:1.2); /* J+7+ : globaux dominent */
+}
+/* Médiane pondérée : on duplique les valeurs selon le poids (×10 arrondi) puis médiane */
+function _weightedMedian(pairs){ /* pairs=[{v,w}] */
+  const exp=[];
+  pairs.forEach(p=>{if(p.v==null||!isFinite(p.v))return;const n=Math.max(1,Math.round(p.w*10));for(let i=0;i<n;i++)exp.push(p.v);});
+  return _median(exp);
+}
+function prettyModelName(key){
+  const map={'icon_d2':'ICON-D2 🇩🇪','icon_eu':'ICON-EU 🇩🇪','icon_global':'ICON 🇩🇪','icon':'ICON 🇩🇪',
+    'gfs':'GFS 🇺🇸','ecmwf_ifs':'IFS 🇪🇺','ifs':'IFS 🇪🇺','aifs':'AIFS 🇪🇺',
+    'arome':'AROME 🇫🇷','arpege':'ARPEGE 🇫🇷','meteofrance':'MF 🇫🇷',
+    'gem':'GEM 🇨🇦','knmi':'KNMI 🇳🇱','harmonie':'HARMONIE 🇳🇱','ukmo':'UKMO 🇬🇧',
+    'jma':'JMA 🇯🇵','metno':'MET 🇳🇴','dmi':'DMI 🇩🇰','cma':'CMA 🇨🇳',
+    'meteoswiss':'ICON-CH 🇨🇭','italia':'ItaliaMeteo 🇮🇹'};
+  for(const x in map){if(key.includes(x))return map[x];}
+  return key.replace(/temperature_2m_(max|min)_?/,'').replace(/_/g,' ')||'modèle';
+}
+
 async function fetchDailyTemps(lat,lon){
   /* Synthèse multi-modèles : min/max = MOYENNE des modèles, maxMax = MAX absolu.
      Liste large de modèles globaux + régionaux pour couverture maximale. */
@@ -1342,7 +1520,8 @@ async function fetchDailyTemps(lat,lon){
     'gem_seamless','gem_global',
     'knmi_seamless','knmi_harmonie_arome_europe',
     'ukmo_seamless','ukmo_global_deterministic_10km',
-    'jma_seamless','metno_seamless','dmi_seamless','cma_grapes_global'
+    'jma_seamless','metno_seamless','dmi_seamless','cma_grapes_global',
+    'meteoswiss_icon_ch1','meteoswiss_icon_ch2','italia_meteo_arpae_icon_2i'
   ].join(',');
   const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&models=${models}&forecast_days=16&timezone=auto`;
   for(let attempt=0;attempt<4;attempt++){
@@ -1358,23 +1537,32 @@ async function fetchDailyTemps(lat,lon){
       const maxKeys=Object.keys(d.daily).filter(k=>k.startsWith('temperature_2m_max'));
       const minKeys=Object.keys(d.daily).filter(k=>k.startsWith('temperature_2m_min'));
       const nDays=d.daily.time.length;
-      const byDay=[],maxMax=[];
+      const byDay=[],maxMax=[],maxModel=[],conf=[];
       let nMaxModels=0;
       for(let di=0;di<nDays;di++){
-        const maxVals=maxKeys.map(k=>d.daily[k]?.[di]).filter(v=>v!=null&&isFinite(v));
-        const minVals=minKeys.map(k=>d.daily[k]?.[di]).filter(v=>v!=null&&isFinite(v));
-        nMaxModels=Math.max(nMaxModels,maxVals.length);
-        /* Synthèse : moyenne des modèles (plus robuste que le blend seul) */
-        const avgMax=maxVals.length?maxVals.reduce((a,b)=>a+b,0)/maxVals.length:null;
-        const avgMin=minVals.length?minVals.reduce((a,b)=>a+b,0)/minVals.length:null;
-        /* Max absolu = scénario le plus chaud parmi TOUS les modèles */
-        const absMax=maxVals.length?Math.max(...maxVals):null;
-        byDay.push({max:avgMax,min:avgMin});
+        /* Paires {valeur, poids} pondérées par échéance */
+        const maxPairs=maxKeys.map(k=>({v:d.daily[k]?.[di],w:_modelWeight(k,di)})).filter(p=>p.v!=null&&isFinite(p.v));
+        const minPairs=minKeys.map(k=>({v:d.daily[k]?.[di],w:_modelWeight(k,di)})).filter(p=>p.v!=null&&isFinite(p.v));
+        const maxValsRaw=maxPairs.map(p=>p.v);
+        nMaxModels=Math.max(nMaxModels,maxValsRaw.length);
+        /* Synthèse : MÉDIANE PONDÉRÉE (régionaux prioritaires court terme, globaux long terme) */
+        const synMax=maxPairs.length?_weightedMedian(maxPairs):null;
+        const synMin=minPairs.length?_weightedMedian(minPairs):null;
+        /* Max absolu + quel modèle le donne */
+        let absMax=null,absKey=null;
+        maxKeys.forEach(k=>{const v=d.daily[k]?.[di];if(v!=null&&isFinite(v)&&(absMax===null||v>absMax)){absMax=v;absKey=k;}});
+        /* Confiance = écart-type des modèles (faible = consensus) */
+        const sd=_stdev(maxValsRaw);
+        byDay.push({max:synMax,min:synMin});
         maxMax.push(absMax);
+        maxModel.push(absKey?prettyModelName(absKey):null);
+        conf.push(sd);
       }
       _tempByDay=byDay;
       _tempMaxByDay=maxMax;
-      console.log('[temp] OK',nDays,'jours · synthèse de',nMaxModels,'modèles');
+      _tempMaxModelByDay=maxModel;
+      _tempConfByDay=conf;
+      console.log('[temp] OK',nDays,'j · médiane pondérée de',nMaxModels,'modèles');
       if(myChart){lastW=0;myChart.update('none');}
       return;
     }catch(e){
@@ -1434,7 +1622,7 @@ async function fetchMfRain(lat,lon){
 
 /* ── GPS : charger la ville la plus proche ── */
 async function loadGPS(){
-  const btn=document.getElementById('gpsBtn');
+  const btn=document.getElementById('exploreBtn');
   if(btn){btn.textContent='⏳';btn.disabled=true;}
   try{
     const pos=await new Promise(function(res,rej){
@@ -1656,7 +1844,7 @@ async function _loadWithCoords(lat,lon,displayName){
 
 async function load(){
   /* Nouvelle ville → invalider le cache J-1/J-7 */
-  _cachedJm1=null;_cachedJm7=null;
+  _cachedJm1=null;_cachedJm7=null;_ext30Loaded=false;
   const city=document.getElementById('cityInput').value.trim();if(!city)return;
   const btn=document.getElementById('searchBtn');btn.disabled=true;btn.textContent='…';
   /* Reset : supprimer seulement le cache de la ville précédente, pas tout */
@@ -2000,6 +2188,7 @@ function processData(omMain,omM15,rainMx,probMx){
       const slotIdx=Math.min(Math.round(slotF+o/15),m15.length-1);
       const rArome=Math.max(0,omM15?.minutely_15?.precipitation_meteofrance_arome_france_hd?.[slotIdx]??0);
       const rIcon2=Math.max(0,omM15?.minutely_15?.precipitation_icon_d2?.[slotIdx]??0);
+      const rChch=Math.max(0,omM15?.minutely_15?.precipitation_meteoswiss_icon_ch1?.[slotIdx]??0);
       const rBest=Math.max(0,omM15?.minutely_15?.precipitation?.[slotIdx]??0);
 
       /* ── Proposition A : priorité MF radar sur H+0→H+55' ────────────
@@ -2010,7 +2199,9 @@ function processData(omMain,omM15,rainMx,probMx){
       const rMF=nearestMf!=null?(_mfByMin[nearestMf]??0):0;
 
       /* Collecter toutes les sources */
-      const mVals=[rArome,rIcon2,rBest].filter(v=>v>0);
+      const mVals=[rArome,rIcon2,rChch,rBest].filter(v=>v>0);
+      /* Synthèse pondérée court terme : AROME-HD & ICON-CH (1km) prioritaires */
+      const mPairs=[{v:rArome,w:2.5},{v:rIcon2,w:1.5},{v:rChch,w:2.2},{v:rBest,w:1}].filter(p=>p.v>0);
       if(_owmMinutely?.length){
         const now2=Date.now()+o*60000;
         const nearestOwm=_owmMinutely.reduce((a,b)=>Math.abs(b.dt-now2)<Math.abs(a.dt-now2)?b:a,_owmMinutely[0]);
@@ -2023,7 +2214,7 @@ function processData(omMain,omM15,rainMx,probMx){
       const rAnchor=anchor*decayFactor;
 
       /* Proposition A : si MF radar disponible, l'utiliser comme plancher fort */
-      const modelR=mVals.length?p80(mVals):rBest;
+      const modelR=mPairs.length?_weightedMedian(mPairs):(mVals.length?p80(mVals):rBest);
       /* Scraping lameteoagricole : plancher prioritaire si dispo
          Tolérance élargie à ±6min pour absorber les décalages d'horloge     */
       const rScrape=(()=>{
@@ -3373,9 +3564,14 @@ function buildSummary(chart,pts,days,xp){
     const dt=_tempByDay?.[daysFromToday];
     const tMax=dt?.max??null,tMin=dt?.min??null;
     const tMaxMod=_tempMaxByDay?.[daysFromToday]??null;
+    const tMaxModel=_tempMaxModelByDay?.[daysFromToday]??'';
+    const tConf=_tempConfByDay?.[daysFromToday]??null;
+    /* 🟢 consensus (<1.5°) · 🟡 léger désaccord (<3°) · 🟠 divergence */
+    const confDot=tConf==null?'':(tConf<1.5?'🟢':(tConf<3?'🟡':'🟠'));
+    const confTxt=tConf==null?'':(tConf<1.5?'Consensus des modèles':(tConf<3?'Léger désaccord':'Forte divergence'))+' (±'+tConf.toFixed(1)+'°)';
     const showMaxMod=tMaxMod!==null&&tMax!==null;
     const tempHTML=tMax!==null
-      ?'<div style="font-size:clamp(10px,2.3vw,13px);font-weight:900;white-space:nowrap;line-height:1.4;text-align:center"><span style="color:#88aaff">'+Math.round(tMin??0)+'°</span><span style="color:#ff8844">/'+Math.round(tMax)+'°</span></div>'+(showMaxMod?'<div style="font-size:clamp(8px,1.9vw,11px);font-weight:900;color:#ffaa44;white-space:nowrap;line-height:1.3;text-align:center">('+Math.round(tMaxMod)+'°)</div>':'')
+      ?'<div style="font-size:clamp(10px,2.3vw,13px);font-weight:900;white-space:nowrap;line-height:1.4;text-align:center"><span style="color:#88aaff">'+Math.round(tMin??0)+'°</span><span style="color:#ff8844">/'+Math.round(tMax)+'°</span></div>'+(showMaxMod?'<div title="Plus chaud : '+tMaxModel+' '+Math.round(tMaxMod)+'° · '+confTxt+'" style="font-size:clamp(8px,1.9vw,11px);font-weight:900;color:#ffaa44;white-space:nowrap;line-height:1.3;text-align:center;cursor:help">('+Math.round(tMaxMod)+'°) '+confDot+'</div>':'')
       :'';
     const div=document.createElement('div');
     div.style.cssText=
@@ -3762,6 +3958,8 @@ const MODEL_INFO={
   'gem':   ['ECCC','🇨🇦 Canada','15 km','10 j','Bon aux hautes latitudes'],
   'knmi':  ['KNMI','🇳🇱 Pays-Bas','2 km','2.5 j','HARMONIE-AROME, Europe de l\'Ouest'],
   'ukmo':  ['Met Office','🇬🇧 Royaume-Uni','10 km','7 j','Modèle britannique global+régional'],
+  'chch':  ['MeteoSwiss','🇨🇭 Suisse','1 km','33 h','ICON-CH1 : Alpes & Est France, ultra-fin'],
+  'itme':  ['ItaliaMeteo','🇮🇹 Italie','2 km','60 h','ICON-2I ARPAE : Sud-Est France & Médit.'],
   'metno': ['MET Norway','🇳🇴 Norvège','1 km','—','Nowcast nordique haute fréquence']
 };
 function openHelpPanel(){
@@ -3908,7 +4106,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
       <div style="font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#66aaff">❓ LES MODÈLES MÉTÉO DE PLUIEPRO</div>
       <button onclick="closeHelpPanel()" style="background:none;border:1px solid #444;border-radius:4px;color:#888;padding:4px 10px;cursor:pointer;font-size:16px">✕</button>
     </div>
-    <div style="font-size:11px;color:#999;line-height:1.6;margin-bottom:12px;font-family:'Courier New',monospace">PluiePro agrège <b style="color:#ccc">10 sources</b> de prévision. La courbe jaune <b style="color:#ffe600">P80</b> est le 80ᵉ percentile : 8 sources sur 10 prévoient moins. Les modèles <b style="color:#ff8844">régionaux</b> (1–2 km) sont précis à court terme ; les <b style="color:#44aaff">globaux</b> (9–25 km) portent jusqu'à 16 jours.</div>
+    <div style="font-size:11px;color:#999;line-height:1.6;margin-bottom:12px;font-family:'Courier New',monospace">PluiePro agrège <b style="color:#ccc">10 sources</b> de prévision. La courbe jaune <b style="color:#ffe600">P80</b> est le 80ᵉ percentile : 8 sources sur 10 prévoient moins. Les modèles <b style="color:#ff8844">régionaux</b> (1–2 km : AROME, ICON-CH, ItaliaMeteo) sont précis à court terme ; les <b style="color:#44aaff">globaux</b> (9–25 km) portent jusqu'à 16 jours. ICON-CH 🇨🇭 et ItaliaMeteo 🇮🇹 ne couvrent que l'Est/Sud-Est de la France (sinon valeur absente).</div>
     <div style="overflow-x:auto">
       <table id="helpModelTable"><thead><tr><th>Modèle</th><th>Organisme</th><th>Pays</th><th>Résol.</th><th>Portée</th><th>Spécialité</th></tr></thead><tbody id="helpModelBody"></tbody></table>
     </div>
@@ -3920,6 +4118,19 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
       • <b style="color:#88ccff">lameteoagricole.net</b> 🇫🇷 — pluie minute (scraping)<br><br>
       <b style="color:#aaa">Sources de données</b> : Open-Meteo (licence CC-BY 4.0) · webservice Météo-France · api.met.no · RainViewer · Open-Meteo Geocoding
     </div>
+  </div>
+</div>
+
+<div id="ext30Panel">
+  <div id="ext30Card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#88aaff">⤢ TENDANCE J+15 → J+30</div>
+      <button onclick="closeExt30()" style="background:none;border:1px solid #444;border-radius:4px;color:#888;padding:4px 10px;cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <div class="ext30-warn">⚠️ Au-delà de 15 jours, la prévision jour-par-jour n'est pas fiable (limite physique ~10-15j). Valeurs = <b>médiane de 31 scénarios</b> GFS-Ensemble (~50 km). La fourchette [min–max] montre l'incertitude. 🟢 consensus · 🟡 incertain · 🟠 très incertain. À lire comme une <b>tendance</b>.</div>
+    <div id="ext30Status">Cliquez pour charger…</div>
+    <div id="ext30List"></div>
+    <div style="margin-top:10px;font-size:9px;color:#555;font-family:'Courier New',monospace;text-align:center">Source : GFS Ensemble (NOAA, 31 membres) via Open-Meteo</div>
   </div>
 </div>
 
