@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PluiePro v1.49</title>
+<title>PluiePro v1.50</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -164,19 +164,31 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 
   #oragesPanel{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);z-index:9999;overflow-y:auto;padding:16px}
   
+
+  #scenPanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:10002;overflow-y:auto;padding:16px}
+  #scenPanel.open{display:block}
+  #scenCard{background:#0d0d0d;border:1px solid #2a2a2a;border-radius:10px;padding:14px;max-width:560px;margin:0 auto}
+  .scen-row{display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid #1f1f1f;font-family:'Courier New',monospace;font-size:13px}
+  .scen-rank{flex:0 0 26px;color:#666;font-size:11px;font-weight:900}
+  .scen-model{flex:1;color:#ccc;font-weight:700}
+  .scen-temp{flex:0 0 90px;text-align:right;font-weight:900;white-space:nowrap}
+  .scen-rain{flex:0 0 70px;text-align:right;font-size:11px;font-weight:700;white-space:nowrap}
+
   #ext30Panel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.96);z-index:10001;overflow-y:auto;padding:16px}
   #ext30Panel.open{display:block}
   #ext30Card{background:#0d0d0d;border:1px solid #2a2a2a;border-radius:10px;padding:14px;max-width:680px;margin:0 auto}
   .ext30-warn{background:#2a1a00;border:1px solid #553300;border-radius:7px;padding:8px 10px;font-size:10px;color:#ffaa55;line-height:1.5;margin-bottom:12px}
-  .ext30-row{display:flex;align-items:center;gap:8px;padding:9px 6px;border-bottom:1px solid #1a1a1a;font-family:'Courier New',monospace}
+  .ext30-row{display:flex;align-items:center;gap:10px;padding:11px 8px;border-bottom:1px solid #2a2a2a;font-family:'Courier New',monospace}
   .ext30-row:hover{background:#141414}
-  .ext30-date{flex:0 0 58px;font-size:11px;font-weight:900;color:#aaa}
-  .ext30-temp{flex:0 0 128px;font-size:12px;font-weight:900;white-space:nowrap}
+  .ext30-date{flex:0 0 62px;font-size:13px;font-weight:900;color:#fff}
+  .ext30-temp{flex:0 0 150px;font-size:14px;font-weight:900;white-space:nowrap}
   .ext30-bar{flex:1;height:8px;background:#1a1a2a;border-radius:4px;position:relative;min-width:40px}
   .ext30-bar span{position:absolute;height:100%;border-radius:4px;background:linear-gradient(90deg,#4488ff,#ff8844)}
-  .ext30-rain{flex:0 0 88px;font-size:11px;font-weight:900;text-align:right;white-space:nowrap}
-  .ext30-dot{flex:0 0 18px;text-align:center;font-size:11px}
-  #ext30Status{text-align:center;color:#888;font-size:12px;font-family:'Courier New',monospace;padding:30px 0}
+  .ext30-rain{flex:0 0 96px;font-size:13px;font-weight:900;text-align:right;white-space:nowrap}
+  .ext30-dot{flex:0 0 20px;text-align:center;font-size:13px}
+  .ext30-model{flex:0 0 116px;font-size:12px;font-weight:900;color:#ffe600;white-space:nowrap;text-align:right;cursor:pointer;text-decoration:underline;text-decoration-style:dotted}
+  .ext30-model:hover{color:#fff}
+  #ext30Status{text-align:center;color:#aaa;font-size:14px;font-family:'Courier New',monospace;padding:30px 0}
 
   #helpPanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:10000;overflow-y:auto;padding:16px}
   #helpPanel.open{display:block}
@@ -253,12 +265,12 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
         <button id="tbUV"     onclick="tgl('uv',this)">☀ <span>UV</span></button>
         <button id="tbPollen" onclick="tgl('pollen',this)">🌼 <span>Pollen</span></button>
         <button id="tbPoll"   onclick="tgl('poll',this)">💨 <span>Pollution</span></button>
-        <button id="tbTemp"   onclick="tgl('temp',this)">🌡 <span>Température</span></button>
         <button id="tbHumid"  onclick="tgl('humidity',this)">💦 <span>Humidité</span></button>
         <button id="tbOrage"  onclick="tgl('orage',this)" style="color:#ff8800">⚡ <span>Orages</span></button>
         <button id="tbSoleil" onclick="tgl('soleil',this)" style="color:#aadd00">☀ <span>Soleil</span></button>
       </div>
     </div>
+    <button id="tbTemp"   class="view-btn" onclick="tgl('temp',this)" title="Température">🌡 TEMP</button>
     <button id="tbProba"  class="view-btn" onclick="tgl('proba',this)" title="Probabilité de pluie">〰 PROBA</button>
     <button id="tbNuage"  class="view-btn" onclick="tgl('nuage',this)" title="Couverture nuageuse">☁ NUAGE</button>
     <button id="tbModels" class="view-btn" onclick="tgl('models',this)" title="Courbes des modèles">📊 MODÈLES</button>
@@ -562,7 +574,7 @@ function tgl(name, btn){
   /* Légende interactive visible seulement quand MODÈLES est ON */
   if(name==='models'){
     const eli=document.getElementById('modelLegendInline');
-    if(eli)eli.style.display=_layers.models?'flex':'none';
+    if(eli)eli.style.display='none'; /* légende remplacée par survol */
   }
 }
 function tglAll(){
@@ -758,6 +770,32 @@ document.addEventListener('click',function(e){const w=document.getElementById('e
 
 /* ── Extension Tendance J+15 → J+30 (ensemble GEFS) ── */
 let _ext30Loaded=false;
+
+function closeScenarios(){const p=document.getElementById('scenPanel');if(p)p.classList.remove('open');}
+function showScenarios(di){
+  const days=window._ext30Days;
+  if(!days||!days[di])return;
+  const o=days[di];
+  const dn=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+  document.getElementById('scenTitle').textContent='J+'+o.day+' — '+dn[o.dt.getDay()]+' '+o.dt.getDate()+'/'+(o.dt.getMonth()+1);
+  const sc=[...o.scenarios].sort((a,b)=>b.tmax-a.tmax);
+  document.getElementById('scenSub').textContent=sc.length+' scénarios · triés du plus chaud au plus froid';
+  let html='';
+  sc.forEach((s,i)=>{
+    const t=s.tmax;
+    const col=t>=32?'#ff5522':t>=26?'#ff9955':t>=18?'#ffcc44':t>=10?'#88ccff':'#aaddff';
+    const rainTxt=s.rain==null?'—':(s.rain>=1?'💧'+s.rain.toFixed(1)+'mm':'·');
+    html+='<div class="scen-row">'
+      +'<div class="scen-rank">#'+(i+1)+'</div>'
+      +'<div class="scen-model">'+s.model+'</div>'
+      +'<div class="scen-temp"><span style="color:#7ab8ff">'+Math.round(s.tmin)+'°</span> / <span style="color:'+col+'">'+Math.round(s.tmax)+'°</span></div>'
+      +'<div class="scen-rain" style="color:'+(s.rain>=1?'#5bc0ff':'#666')+'">'+rainTxt+'</div>'
+      +'</div>';
+  });
+  document.getElementById('scenList').innerHTML=html;
+  document.getElementById('scenPanel').classList.add('open');
+}
+
 function closeExt30(){const p=document.getElementById('ext30Panel');if(p)p.classList.remove('open');}
 async function openExt30(){
   const p=document.getElementById('ext30Panel');
@@ -766,79 +804,89 @@ async function openExt30(){
   const status=document.getElementById('ext30Status');
   const list=document.getElementById('ext30List');
   if(typeof _cityLat==='undefined'||_cityLat==null){if(status)status.textContent='Cherchez une ville d\'abord.';return;}
-  if(status){status.style.display='block';status.textContent='⏳ Chargement des 31 scénarios…';}
+  if(status){status.style.display='block';status.textContent='⏳ Chargement des modèles d\'ensemble…';}
   if(list)list.innerHTML='';
   try{
     const début=15;
-    const models=['gfs05','gfs025','ecmwf_ifs025'];
-    let dly=null,used='',bestLen=0,diag=[];
-    for(const mdl of models){
-      try{
-        const url=`https://ensemble-api.open-meteo.com/v1/ensemble?latitude=${_cityLat}&longitude=${_cityLon}`
-          +`&hourly=temperature_2m,precipitation&models=${mdl}&forecast_days=35&timezone=auto`;
-        const r=await fetch(url);
-        if(!r.ok){diag.push(mdl+':HTTP'+r.status);continue;}
-        const d=await r.json();
-        const len=d?.hourly?.time?.length||0;
-        diag.push(mdl+':'+len+'h');
-        if(len>bestLen){bestLen=len;dly=d.hourly;used=mdl;}
-        if(len>=384)break;
-      }catch(_){diag.push(mdl+':err');}
-    }
-    if(!dly||bestLen<24)throw new Error('ensemble indisponible — '+diag.join(', '));
-    const maxDay=Math.floor(bestLen/24)-1;
-    if(maxDay<16)throw new Error('seulement J+'+maxDay+' dispo — '+diag.join(', '));
-    /* Agréger les heures en jours : index jour = floor(heure/24) depuis aujourd'hui */
-    const tKeys=Object.keys(dly).filter(k=>k.startsWith('temperature_2m'));
-    const pKeys=Object.keys(dly).filter(k=>k.startsWith('precipitation'));
-    const nH=dly.time.length;
+    /* Plusieurs modèles d'ensemble : nom lisible → identifiant Open-Meteo */
+    const ENS=[
+      {id:'gfs05',     name:'GFS-Ens 🇺🇸'},
+      {id:'ecmwf_ifs025',name:'ECMWF-Ens 🇪🇺'},
+      {id:'icon_eu',   name:'ICON-Ens 🇩🇪'},
+      {id:'gem_global',name:'GEM-Ens 🇨🇦'}
+    ];
     const dn=['dim','lun','mar','mer','jeu','ven','sam'];
     const med=a=>{const s=[...a].sort((x,y)=>x-y);const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;};
-    /* Pour chaque jour début..fin : pour chaque membre, calculer tmax/tmin/somme pluie du jour */
-    const days=[];
-    const fin=Math.min(30,maxDay);
+    /* Récupérer chaque ensemble en parallèle */
+    const results=await Promise.all(ENS.map(async m=>{
+      try{
+        const url=`https://ensemble-api.open-meteo.com/v1/ensemble?latitude=${_cityLat}&longitude=${_cityLon}`
+          +`&hourly=temperature_2m,precipitation&models=${m.id}&forecast_days=35&timezone=auto`;
+        const r=await fetch(url);
+        if(!r.ok)return null;
+        const d=await r.json();
+        if(!d?.hourly?.time)return null;
+        return {name:m.name, hourly:d.hourly, len:d.hourly.time.length};
+      }catch(_){return null;}
+    }));
+    const ok=results.filter(Boolean);
+    if(!ok.length)throw new Error('aucun modèle d\'ensemble disponible');
+    /* Profondeur max dispo (le plus long) */
+    const maxLen=Math.max(...ok.map(m=>m.len));
+    const maxDay=Math.floor(maxLen/24)-1;
+    if(maxDay<16)throw new Error('données jusqu\'à J+'+maxDay+' seulement');
+    const fin=Math.min(28,maxDay);
+    let html='', gMin=99, gMax=-99;
+    const dayData=[];
     for(let day=début;day<=fin;day++){
-      const h0=day*24, h1=Math.min(nH,h0+24);
-      if(h0>=nH)break;
-      const memberMax=[],memberMin=[],memberSum=[];
-      tKeys.forEach(tk=>{
-        let mx=-99,mn=99,ok=false;
-        for(let h=h0;h<h1;h++){const v=dly[tk][h];if(v!=null&&isFinite(v)){if(v>mx)mx=v;if(v<mn)mn=v;ok=true;}}
-        if(ok){memberMax.push(mx);memberMin.push(mn);}
+      const h0=day*24, h1=h0+24;
+      const allMax=[], allMin=[], allSum=[], scenarios=[];
+      let hottest=-99, hottestModel='';
+      ok.forEach(mdl=>{
+        const dly=mdl.hourly;
+        if(h0>=dly.time.length)return;
+        const tKeys=Object.keys(dly).filter(k=>k.startsWith('temperature_2m'));
+        const pKeys=Object.keys(dly).filter(k=>k.startsWith('precipitation'));
+        tKeys.forEach((tk,mi)=>{
+          let mx=-99,mn=99,okv=false;
+          for(let h=h0;h<Math.min(h1,dly.time.length);h++){const v=dly[tk][h];if(v!=null&&isFinite(v)){if(v>mx)mx=v;if(v<mn)mn=v;okv=true;}}
+          if(okv){
+            allMax.push(mx);allMin.push(mn);
+            if(mx>hottest){hottest=mx;hottestModel=mdl.name;}
+            let s=0,sok=false;const pk=pKeys[mi];
+            if(pk){for(let h=h0;h<Math.min(h1,dly.time.length);h++){const v=dly[pk][h];if(v!=null&&isFinite(v)){s+=v;sok=true;}}}
+            scenarios.push({model:mdl.name,tmax:mx,tmin:mn,rain:sok?s:null});
+          }
+        });
+        pKeys.forEach(pk=>{
+          let s=0,okv=false;
+          for(let h=h0;h<Math.min(h1,dly.time.length);h++){const v=dly[pk][h];if(v!=null&&isFinite(v)){s+=v;okv=true;}}
+          if(okv)allSum.push(s);
+        });
       });
-      pKeys.forEach(pk=>{
-        let s=0,ok=false;
-        for(let h=h0;h<h1;h++){const v=dly[pk][h];if(v!=null&&isFinite(v)){s+=v;ok=true;}}
-        if(ok)memberSum.push(s);
-      });
-      if(!memberMax.length)continue;
-      const dt=new Date(dly.time[h0]);
-      days.push({day,dt,memberMax,memberMin,memberSum});
+      if(!allMax.length)continue;
+      const dt=new Date(ok[0].hourly.time[h0]);
+      gMax=Math.max(gMax,...allMax);gMin=Math.min(gMin,...allMin);
+      dayData.push({day,dt,allMax,allMin,allSum,hottest,hottestModel,scenarios});
     }
-    if(!days.length)throw new Error('pas assez de données horaires');
-    /* Échelle globale pour les barres */
-    let gMin=99,gMax=-99;
-    days.forEach(o=>{gMax=Math.max(gMax,...o.memberMax);gMin=Math.min(gMin,...o.memberMin);});
-    const span=Math.max(1,gMax-gMin);
-    let html='';
-    days.forEach(o=>{
-      const tMaxMed=med(o.memberMax),tMinMed=med(o.memberMin);
-      const tMaxHi=Math.max(...o.memberMax),tMinLo=Math.min(...o.memberMin);
-      const pRain=o.memberSum.length?Math.round(100*o.memberSum.filter(v=>v>=1).length/o.memberSum.length):0;
-      const rMed=o.memberSum.length?med(o.memberSum):0;
-      const mAvg=o.memberMax.reduce((a,b)=>a+b,0)/o.memberMax.length;
-      const sd=Math.sqrt(o.memberMax.reduce((s,x)=>s+(x-mAvg)*(x-mAvg),0)/o.memberMax.length);
+    window._ext30Days=dayData;
+    if(!dayData.length)throw new Error('pas assez de données');
+    dayData.forEach((o,di)=>{
+      const tMaxMed=med(o.allMax),tMinMed=med(o.allMin);
+      const tMaxHi=Math.max(...o.allMax),tMinLo=Math.min(...o.allMin);
+      const pRain=o.allSum.length?Math.round(100*o.allSum.filter(v=>v>=1).length/o.allSum.length):0;
+      const rMed=o.allSum.length?o.allSum.reduce((a,b)=>a+b,0)/o.allSum.length:0; /* MOYENNE (médiane=0 trop souvent sur la pluie) */
+      const mAvg=o.allMax.reduce((a,b)=>a+b,0)/o.allMax.length;
+      const sd=Math.sqrt(o.allMax.reduce((s,x)=>s+(x-mAvg)*(x-mAvg),0)/o.allMax.length);
       const dot=sd<2?'🟢':(sd<3.5?'🟡':'🟠');
-      const barL=Math.round(100*(tMinLo-gMin)/span);
-      const barW=Math.max(4,Math.round(100*(tMaxHi-tMinLo)/span));
-      const rainTxt=pRain>=20?('💧 '+pRain+'% · '+rMed.toFixed(1)+'mm'):'☀️ sec';
-      const rainColor=pRain>=50?'#4db8ff':(pRain>=20?'#88aaff':'#888');
+      const rainTxt='💧 '+pRain+'% · '+rMed.toFixed(1)+'mm';
+      const rainColor=pRain>=50?'#5bc0ff':(pRain>=20?'#9cc4ff':((pRain>0||rMed>=0.05)?'#88aaff':'#999'));
       html+='<div class="ext30-row">'
-        +'<div class="ext30-date">J+'+o.day+'<br><span style="font-size:9px;color:#666">'+dn[o.dt.getDay()]+' '+o.dt.getDate()+'/'+(o.dt.getMonth()+1)+'</span></div>'
-        +'<div class="ext30-temp"><span style="color:#88aaff">'+Math.round(tMinMed)+'°</span>/<span style="color:#ff8844">'+Math.round(tMaxMed)+'°</span> <span style="color:#666;font-size:0.85em">['+Math.round(tMinLo)+'°–'+Math.round(tMaxHi)+'°]</span></div>'
-        +'<div class="ext30-bar"><span style="left:'+barL+'%;width:'+barW+'%"></span></div>'
+        +'<div class="ext30-date">J+'+o.day+'<br><span style="font-size:10px;color:#999">'+dn[o.dt.getDay()]+' '+o.dt.getDate()+'/'+(o.dt.getMonth()+1)+'</span></div>'
+        +'<div class="ext30-temp"><span style="color:#7ab8ff">'+Math.round(tMinMed)+'°</span>/<span style="color:#ff9955">'+Math.round(tMaxMed)+'°</span></div>'
+        +'<div class="ext30-model" onclick="showScenarios('+di+')" title="Voir tous les scénarios">↑'+Math.round(o.hottest)+'° '+o.hottestModel+'</div>'
         +'<div class="ext30-rain" style="color:'+rainColor+'">'+rainTxt+'</div>'
-        +'<div class="ext30-dot" title="dispersion ±'+sd.toFixed(1)+'° · '+o.memberMax.length+' membres">'+dot+'</div>'
+        +'<div class="ext30-dot" title="dispersion ±'+sd.toFixed(1)+'° · '+o.allMax.length+' scénarios">'+dot+'</div>'
         +'</div>';
     });
     if(status)status.style.display='none';
@@ -2830,6 +2878,7 @@ function renderJm1(pts,mods,realPrecip){
     },
     options:{
       responsive:true,maintainAspectRatio:false,animation:false,
+      
       scales:{
         x:{ticks:{color:'#bbb',font:{weight:'bold',size:isMob?8:10,family:'Courier New'},maxRotation:0,autoSkip:false,callback(v){const l=this.getLabelForValue(v);return l||null;}},grid:{display:false},border:{color:'#555'}},
         y:{position:'left',beginAtZero:true,grace:'5%',grid:{color:'#181818',lineWidth:1},ticks:{color:'#ffe600',font:{weight:'bold',size:isMob?8:11,family:'Courier New'}},border:{color:'#555'},title:{display:!isMob,text:'mm/h',color:'#ffe600',font:{size:9,family:'Courier New'}}},
@@ -3563,17 +3612,71 @@ function updateLazyDatasets(){
   if((dsH||dsO)&&myChart)myChart.update('none');
 }
 
+
+/* Cacher l'étiquette modèle quand la souris quitte le graphe */
+document.addEventListener('DOMContentLoaded',function(){
+  const handler=function(e){
+    const cv=document.getElementById('mainChart');
+    const tip=document.getElementById('modelHoverTip');
+    if(!cv||!tip||!myChart)return;
+    const pt=e.touches&&e.touches[0]?e.touches[0]:e;
+    const r=cv.getBoundingClientRect();
+    const mx=pt.clientX-r.left, my=pt.clientY-r.top;
+    /* Hors du graphe ou modèles désactivés → cacher */
+    if(!_layers.models||mx<0||mx>r.width||my<0||my>r.height){tip.style.display='none';return;}
+    const ca=myChart.chartArea, ys=myChart.scales.y;
+    if(!ca||!ys||mx<ca.left||mx>ca.right){tip.style.display='none';return;}
+    const n=myChart.data.labels.length;
+    if(!n){tip.style.display='none';return;}
+    let xi=Math.round(((mx-ca.left)/(ca.right-ca.left))*(n-1));
+    xi=Math.max(0,Math.min(n-1,xi));
+    let found=null,bestDist=Infinity;
+    myChart.data.datasets.forEach(ds=>{
+      if(!ds._modelKey)return;
+      const v=ds.data[xi];
+      if(v==null||!isFinite(v))return;
+      const py=ys.getPixelForValue(v);
+      const d=Math.abs(py-my);
+      if(d<bestDist){bestDist=d;found=ds._modelKey;}
+    });
+    if(found&&bestDist<=35){
+      const src=SOURCES.find(s=>s.key===found);
+      tip.textContent=src?src.label:found;
+      tip.style.color=src?src.color:'#fff';
+      tip.style.borderColor=src?src.color:'#444';
+      tip.style.left=(pt.clientX+12)+'px';
+      tip.style.top=(pt.clientY-10)+'px';
+      tip.style.display='block';
+      /* Mettre en évidence la courbe (forcer visible même en mode simple) */
+      myChart.data.datasets.forEach(d=>{
+        if(d._modelKey){
+          const s2=SOURCES.find(x=>x.key===d._modelKey);
+          if(d._modelKey===found){d.borderColor=s2?s2.color:'#fff';d.borderWidth=_isMob?2.5:3.5;}
+          else{d.borderColor=(s2?s2.color:'#888')+'40';d.borderWidth=_isMob?.8:1.2;}
+        }
+      });
+      myChart.update('none');
+    }else{
+      tip.style.display='none';
+    }
+  };
+  document.addEventListener('mousemove',handler);
+  document.addEventListener('touchmove',handler,{passive:true});
+});
+
 function buildModelLegend(pts){
+  /* Légende inline désactivée : le nom du modèle s'affiche au survol de sa courbe */
   const el=document.getElementById('modelLegendInline');
-  if(!el)return;
-  if(!_layers.models){el.classList.remove('active');return;}
+  if(el){el.classList.remove('active');el.style.display='none';el.innerHTML='';}
+  return;
+  /* (ancien code conservé mais inatteignable)
   el.classList.add('active');
   let html='';
   SOURCES.filter(s=>s.omModel).forEach(s=>{
     const hidden=_hiddenModels.has(s.key);
     html+=`<span class="mib${hidden?' hidden':''}" data-key="${s.key}" onclick="toggleModel('${s.key}')" onmouseenter="highlightModel('${s.key}',true)" onmouseleave="highlightModel('${s.key}',false)"><span class="mdot" style="background:${s.color}"></span>${s.label}</span>`;
   });
-  el.innerHTML=html;
+  el.innerHTML=html; */
 }
 
 
@@ -4175,15 +4278,28 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
 <div id="ext30Panel">
   <div id="ext30Card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#88aaff">⤢ TENDANCE J+15 → J+30</div>
+      <div style="font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#88aaff">⤢ TENDANCE J+15 → J+28</div>
       <button onclick="closeExt30()" style="background:none;border:1px solid #444;border-radius:4px;color:#888;padding:4px 10px;cursor:pointer;font-size:16px">✕</button>
     </div>
-    <div class="ext30-warn">⚠️ Au-delà de 15 jours, la prévision jour-par-jour n'est pas fiable (limite physique ~10-15j). Valeurs = <b>médiane de 31 scénarios</b> GFS-Ensemble (~50 km). La fourchette [min–max] montre l'incertitude. 🟢 consensus · 🟡 incertain · 🟠 très incertain. À lire comme une <b>tendance</b>.</div>
+    <div style="font-size:11px;color:#888;font-family:'Courier New',monospace;margin-bottom:10px">Médiane de plusieurs modèles d'ensemble · fourchette [min–max] = incertitude · 🟢🟡🟠 = dispersion</div>
     <div id="ext30Status">Cliquez pour charger…</div>
     <div id="ext30List"></div>
     <div style="margin-top:10px;font-size:9px;color:#555;font-family:'Courier New',monospace;text-align:center">Source : GFS Ensemble (NOAA, 31 membres) via Open-Meteo</div>
   </div>
 </div>
+
+<div id="scenPanel">
+  <div id="scenCard">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div id="scenTitle" style="font-family:'Courier New',monospace;font-size:14px;font-weight:700;color:#ffe600">Scénarios</div>
+      <button onclick="closeScenarios()" style="background:none;border:1px solid #444;border-radius:4px;color:#888;padding:4px 10px;cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <div id="scenSub" style="font-size:10px;color:#777;font-family:'Courier New',monospace;margin-bottom:10px"></div>
+    <div id="scenList"></div>
+  </div>
+</div>
+
+<div id="modelHoverTip" style="display:none;position:fixed;z-index:9997;background:rgba(10,10,15,0.95);border:1px solid #444;border-radius:6px;padding:4px 9px;font-family:'Courier New',monospace;font-size:12px;font-weight:900;pointer-events:none;white-space:nowrap"></div>
 
 </body>
 </html>
