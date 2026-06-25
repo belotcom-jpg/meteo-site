@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PluiePro v1.50</title>
+<title>PluiePro v1.54</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -174,23 +174,31 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   .scen-temp{flex:0 0 90px;text-align:right;font-weight:900;white-space:nowrap}
   .scen-rain{flex:0 0 70px;text-align:right;font-size:11px;font-weight:700;white-space:nowrap}
 
-  #ext30Panel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.96);z-index:10001;overflow-y:auto;padding:16px}
+  #ext30Panel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.96);z-index:10001;overflow-y:auto;padding:8px}
   #ext30Panel.open{display:block}
-  #ext30Card{background:#0d0d0d;border:1px solid #2a2a2a;border-radius:10px;padding:14px;max-width:680px;margin:0 auto}
+  #ext30Card{background:#0d0d0d;border:1px solid #2a2a2a;border-radius:10px;padding:10px;max-width:470px;margin:0 auto}
   .ext30-warn{background:#2a1a00;border:1px solid #553300;border-radius:7px;padding:8px 10px;font-size:10px;color:#ffaa55;line-height:1.5;margin-bottom:12px}
-  .ext30-row{display:flex;align-items:center;gap:10px;padding:7px 8px;border-bottom:1px solid #222;font-family:'Courier New',monospace}
+  .ext30-row{display:flex;align-items:center;gap:6px;padding:4px 6px;border-bottom:1px solid #222;font-family:'Courier New',monospace}
   .ext30-row:hover{background:#141414}
-  .ext30-date{flex:0 0 62px;font-size:13px;font-weight:900;color:#fff}
-  .ext30-temp{flex:0 0 150px;font-size:14px;font-weight:900;white-space:nowrap}
+  .ext30-date{flex:0 0 52px;line-height:1.04}
+  .ext30-temp{flex:0 0 56px;font-size:13px;font-weight:900;white-space:nowrap}
   .ext30-bar{flex:1;height:8px;background:#1a1a2a;border-radius:4px;position:relative;min-width:40px}
   .ext30-bar span{position:absolute;height:100%;border-radius:4px;background:linear-gradient(90deg,#4488ff,#ff8844)}
-  .ext30-rainbar{flex:0 0 110px;height:8px;background:#15202e;border-radius:4px;overflow:hidden}
+  .ext30-rainbar{flex:1 1 60px;min-width:40px;height:8px;background:#15202e;border-radius:4px;overflow:hidden}
   .ext30-rainbar span{display:block;height:100%;background:linear-gradient(90deg,#4db8ff,#1e88ff);border-radius:4px}
-  .ext30-rain{flex:0 0 96px;font-size:13px;font-weight:900;text-align:right;white-space:nowrap}
-  .ext30-dot{flex:0 0 20px;text-align:center;font-size:13px}
-  .ext30-model{flex:0 0 116px;font-size:12px;font-weight:900;color:#ffe600;white-space:nowrap;text-align:right;cursor:pointer;text-decoration:underline;text-decoration-style:dotted}
+  .ext30-rain{flex:0 0 74px;font-size:10px;font-weight:900;text-align:right;white-space:nowrap}
+  .ext30-dot{flex:0 0 16px;text-align:center;font-size:12px}
+  .ext30-model{flex:0 1 auto;min-width:0;font-size:10px;font-weight:900;color:#ffe600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;cursor:pointer;text-decoration:underline;text-decoration-style:dotted}
   .ext30-model:hover{color:#fff}
   #ext30Status{text-align:center;color:#aaa;font-size:14px;font-family:'Courier New',monospace;padding:30px 0}
+  #graphPanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:10001;overflow-y:auto;padding:10px}
+  #graphPanel.open{display:block}
+  #graphCard{background:#0d0d0d;border:1px solid #2a2a2a;border-radius:10px;padding:12px;max-width:920px;margin:0 auto}
+  #graphWrap{position:relative;width:100%;height:calc(100vh - 128px);height:calc(100dvh - 128px);min-height:320px}
+  #graphTitle{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:78%}
+  #graphStatus{text-align:center;color:#aaa;font-size:14px;font-family:'Courier New',monospace;padding:40px 0}
+  .graph-leg{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:10px;font-family:'Courier New',monospace;font-size:11px;color:#aaa}
+  .graph-leg b{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
 
   #helpPanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:10000;overflow-y:auto;padding:16px}
   #helpPanel.open{display:block}
@@ -257,7 +265,8 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
         <button id="btnJ8"  onclick="setView('j8');closeViewMenu()">J+8 <span>dans 8 jours</span></button>
         <button id="btnJ14" onclick="setView('j14');closeViewMenu()">J+14 <span>dans 14 jours</span></button>
         <div class="vm-sep">— tendance longue —</div>
-        <button id="btnExt30" onclick="openExt30();closeViewMenu()" style="color:#88aaff">⤢ J+15 → J+28 <span>ensemble</span></button>
+        <button id="btnExt30" onclick="openExt30();closeViewMenu()" style="color:#88aaff">⤢ J+28 <span>ensemble</span></button>
+        <button id="btnGraph" onclick="openGraph();closeViewMenu()" style="color:#7ec97e">📈 GRAPH <span>J→J+14</span></button>
       </div>
     </div>
     <div id="layersWrap">
@@ -770,7 +779,7 @@ function closeExploreMenu(){const m=document.getElementById('exploreMenu');if(m)
 document.addEventListener('click',function(e){const w=document.getElementById('exploreWrap');if(w&&!w.contains(e.target))closeExploreMenu();});
 
 
-/* ── Extension Tendance J+15 → J+30 (ensemble GEFS) ── */
+/* ── Extension Tendance J+15 → J+28 (ensemble GEFS) ── */
 let _ext30Loaded=false;
 
 
@@ -899,10 +908,10 @@ async function openExt30(){
       const mAvg=o.allMax.reduce((a,b)=>a+b,0)/o.allMax.length;
       const sd=Math.sqrt(o.allMax.reduce((s,x)=>s+(x-mAvg)*(x-mAvg),0)/o.allMax.length);
       const dot=sd<2?'🟢':(sd<3.5?'🟡':'🟠');
-      const rainTxt='💧 '+pRain+'% · '+rMed.toFixed(1)+'mm';
+      const rainTxt=pRain+'% · '+rMed.toFixed(1)+'mm';
       const rainColor=pRain>=50?'#5bc0ff':(pRain>=20?'#9cc4ff':((pRain>0||rMed>=0.05)?'#88aaff':'#999'));
       let rowHtml='<div class="ext30-row">'
-        +'<div class="ext30-date">J+'+o.day+'<br><span style="font-size:10px;color:#999">'+dn[o.dt.getDay()]+' '+o.dt.getDate()+'/'+(o.dt.getMonth()+1)+'</span></div>'
+        +'<div class="ext30-date"><span style="font-size:9px;color:#888;font-weight:700;letter-spacing:-.3px">J+'+o.day+' '+dn[o.dt.getDay()]+'</span><br><b style="font-size:14px;color:#fff;letter-spacing:-.3px">'+o.dt.getDate()+'/'+(o.dt.getMonth()+1)+'</b></div>'
         +'<div class="ext30-temp"><span style="color:#7ab8ff">'+Math.round(tMinMed)+'°</span>/<span style="color:#ff9955">'+Math.round(tMaxMed)+'°</span></div>'
         +'<div class="ext30-model" onclick="showScenarios('+di+')" title="Voir tous les scénarios">↑'+Math.round(o.hottest)+'° '+o.hottestModel+'</div>'
         +'<div class="ext30-rain" style="color:'+rainColor+'">'+rainTxt+'</div>'
@@ -919,6 +928,147 @@ async function openExt30(){
     if(tabs)tabs.style.display=(html2?'flex':'none');
     showExt30Page(1);
     _ext30Loaded=true;
+  }catch(e){
+    if(status){status.style.display='block';status.textContent='✕ '+e.message;}
+  }
+}
+
+/* ══════ GRAPHIQUE journalier J→J+14 (style prévisions) ══════ */
+let _graphChart=null;
+function closeGraph(){const p=document.getElementById('graphPanel');if(p)p.classList.remove('open');}
+function _wmoEmoji(c){
+  if(c==null)return '';
+  if(c===0)return '☀️';
+  if(c===1)return '🌤️';
+  if(c===2)return '⛅';
+  if(c===3)return '☁️';
+  if(c===45||c===48)return '🌫️';
+  if(c>=51&&c<=57)return '🌦️';
+  if(c>=61&&c<=67)return '🌧️';
+  if(c>=71&&c<=77)return '🌨️';
+  if(c>=80&&c<=82)return '🌧️';
+  if(c>=85&&c<=86)return '🌨️';
+  if(c>=95)return '⛈️';
+  return '☁️';
+}
+function _tBandColor(t){var hh=Math.max(0,Math.min(230,230-(t-5)/40*230));return 'hsla('+hh+',78%,55%,0.13)';}
+async function openGraph(){
+  const p=document.getElementById('graphPanel');
+  if(p)p.classList.add('open');
+  const status=document.getElementById('graphStatus');
+  const wrap=document.getElementById('graphWrap');
+  const leg=document.getElementById('graphLeg');
+  const ttl=document.getElementById('graphTitle');
+  const hide=()=>{if(wrap)wrap.style.display='none';if(leg)leg.style.display='none';};
+  if(typeof _cityLat==='undefined'||_cityLat==null){if(status){status.style.display='block';status.textContent='Cherchez une ville d\'abord.';}hide();return;}
+  if(status){status.style.display='block';status.textContent='⏳ Chargement…';}
+  hide();
+  if(ttl)ttl.textContent='📈 '+((typeof cityName!=='undefined'&&cityName)?cityName+' — ':'')+'J → J+14';
+  try{
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${_cityLat}&longitude=${_cityLon}`
+      +`&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode&forecast_days=15&timezone=auto`;
+    const r=await fetch(url);
+    if(!r.ok)throw new Error('API '+r.status);
+    const d=await r.json();
+    const dy=d&&d.daily;
+    if(!dy||!dy.time)throw new Error('pas de données');
+    const dn=['dim','lun','mar','mer','jeu','ven','sam'];
+    const labels=dy.time.map(t=>{const dt=new Date(t+'T12:00:00');return [dn[dt.getDay()],String(dt.getDate())];});
+    const tmax=dy.temperature_2m_max.map(v=>v==null?null:Math.round(v));
+    const tmin=dy.temperature_2m_min.map(v=>v==null?null:Math.round(v));
+    const rain=dy.precipitation_sum.map(v=>v==null?0:Math.round(v*10)/10);
+    const codes=dy.weathercode||[];
+    const isMob=window.innerWidth<600;
+    const vmax=tmax.filter(v=>v!=null),vmin=tmin.filter(v=>v!=null);
+    const _lo=(vmin.length?Math.min.apply(null,vmin):0),_hi=(vmax.length?Math.max.apply(null,vmax):30);
+    const yMin=Math.floor((_lo-3)/5)*5;
+    const yMax=Math.ceil((_hi+5)/5)*5;
+    const maxRain=Math.max.apply(null,[2].concat(rain));
+    const N=labels.length;
+    const tempBandsPlugin={
+      id:'tempBands',
+      beforeDraw(chart){
+        const yT=chart.scales.yT,area=chart.chartArea;
+        if(!yT||!area)return;
+        const ctx=chart.ctx;ctx.save();
+        const lo=Math.floor(yMin/5)*5,hi=Math.ceil(yMax/5)*5;
+        for(let t=lo;t<hi;t+=5){
+          let yTop=yT.getPixelForValue(t+5),yBot=yT.getPixelForValue(t);
+          yTop=Math.max(area.top,Math.min(area.bottom,yTop));
+          yBot=Math.max(area.top,Math.min(area.bottom,yBot));
+          if(yBot-yTop<=0)continue;
+          ctx.fillStyle=_tBandColor(t+2.5);
+          ctx.fillRect(area.left,yTop,area.right-area.left,yBot-yTop);
+        }
+        ctx.restore();
+      }
+    };
+    const bandsPlugin={
+      id:'graphBands',
+      beforeDraw(chart){
+        const x=chart.scales.x,area=chart.chartArea;
+        if(!x||!area||x.ticks.length<2)return;
+        const ctx=chart.ctx;
+        const bw=x.getPixelForValue(1)-x.getPixelForValue(0);
+        ctx.save();
+        for(let i=0;i<N;i++){
+          if(i%2===0)continue;
+          const cx=x.getPixelForValue(i);
+          const l=Math.max(cx-bw/2,area.left),rgt=Math.min(cx+bw/2,area.right);
+          ctx.fillStyle='rgba(255,255,255,0.07)';
+          ctx.fillRect(l,area.top,rgt-l,area.bottom-area.top);
+        }
+        ctx.restore();
+      }
+    };
+    const labelPlugin={
+      id:'graphLabels',
+      afterDatasetsDraw(chart){
+        const ctx=chart.ctx;
+        const mMax=chart.getDatasetMeta(0),mMin=chart.getDatasetMeta(1);
+        ctx.save();ctx.textAlign='center';ctx.textBaseline='alphabetic';
+        mMax.data.forEach((pt,i)=>{
+          if(tmax[i]==null)return;
+          ctx.font=(isMob?14:18)+'px serif';
+          ctx.fillText(_wmoEmoji(codes[i]),pt.x,pt.y-(isMob?20:26));
+          ctx.font='700 '+(isMob?10:12)+'px "Courier New",monospace';
+          ctx.fillStyle='#e23b3b';
+          ctx.fillText(tmax[i]+'°',pt.x,pt.y-(isMob?6:8));
+        });
+        ctx.font='700 '+(isMob?10:12)+'px "Courier New",monospace';
+        ctx.fillStyle='#5b9bff';
+        mMin.data.forEach((pt,i)=>{
+          if(tmin[i]==null)return;
+          ctx.fillText(tmin[i]+'°',pt.x,pt.y+(isMob?15:17));
+        });
+        ctx.restore();
+      }
+    };
+    if(_graphChart){_graphChart.destroy();_graphChart=null;}
+    const cv=document.getElementById('graphCanvas');
+    _graphChart=new Chart(cv.getContext('2d'),{
+      type:'line',
+      data:{labels,datasets:[
+        {label:'Max',data:tmax,borderColor:'#e23b3b',backgroundColor:'#e23b3b',borderWidth:isMob?2:3,tension:0.4,pointRadius:isMob?2:3,pointBackgroundColor:'#e23b3b',yAxisID:'yT',order:1,spanGaps:true},
+        {label:'Min',data:tmin,borderColor:'#3b7ce2',backgroundColor:'#3b7ce2',borderWidth:isMob?2:3,tension:0.4,pointRadius:isMob?2:3,pointBackgroundColor:'#3b7ce2',yAxisID:'yT',order:2,spanGaps:true},
+        {type:'bar',label:'Pluie',data:rain,backgroundColor:'#2196f3',borderRadius:3,maxBarThickness:26,yAxisID:'yP',order:3}
+      ]},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        layout:{padding:{top:isMob?30:38}},
+        interaction:{mode:'index',intersect:false},
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label==='Pluie'?('Pluie : '+c.parsed.y+' mm'):(c.dataset.label+' : '+c.parsed.y+'°')}}},
+        scales:{
+          x:{grid:{display:false},ticks:{color:'#d2d2d2',font:{size:isMob?12:15,weight:'700',family:'Courier New'},maxRotation:0,autoSkip:false}},
+          yT:{position:'left',grid:{color:'#1c1c1c'},ticks:{stepSize:5,color:'#e08a8a',font:{size:isMob?9:11,family:'Courier New'},callback:v=>v+'°'},min:yMin,max:yMax},
+          yP:{position:'right',grid:{drawOnChartArea:false},ticks:{color:'#5b9bff',font:{size:isMob?9:11,family:'Courier New'}},min:0,suggestedMax:Math.ceil(maxRain*1.4),title:{display:true,text:'mm',color:'#5b9bff',font:{size:10}}}
+        }
+      },
+      plugins:[tempBandsPlugin,bandsPlugin,labelPlugin]
+    });
+    if(status)status.style.display='none';
+    if(wrap)wrap.style.display='block';
+    if(leg)leg.style.display='flex';
   }catch(e){
     if(status){status.style.display='block';status.textContent='✕ '+e.message;}
   }
@@ -2079,6 +2229,7 @@ async function load(){
     if(omCurrent?.current?.pressure_msl) _pressureMSL=omCurrent.current.pressure_msl;
     if(omCurrent?.hourly?.uv_index) _uvHourlyData=omCurrent.hourly.uv_index;
     if(omCurrent?.hourly?.temperature_2m) _tempHourly=omCurrent.hourly.temperature_2m;
+    if(omDaily?.hourly?.temperature_2m) _tempHourly=omDaily.hourly.temperature_2m; /* J0→J+15 : badges temp au-delà de J+1 */
     _saveCache(lat,lon,{omMain,omM15,omCurrent,metno,omDaily,_tempByDayCached:_tempByDay,_uvCached:_uvHourlyData}); /* O */
     /* Températures J+1 (index 1 dans daily = demain) */
     /* Températures J0→J+14 */
@@ -2412,11 +2563,15 @@ function processData(omMain,omM15,rainMx,probMx){
   if(_viewMode==='j0'){
   } else if(_viewMode==='j1'){
     for(let hr=0;hr<24;hr++){const idx=24+hr;if(idx<N_HRS)push(hr+'h',1,idx);}
-  } else if(_viewMode==='j5'||_viewMode==='j8'||_viewMode==='j14'){
+  } else if(_viewMode==='j5'){
+    for(let hr=0;hr<24;hr++){const idx=24+hr;if(idx<N_HRS)push(hr+'h',1,idx);}
+    for(let d=2;d<=5;d++)for(let hr=0;hr<24;hr+=3){const idx=d*24+hr;if(idx<N_HRS)push(hr+'h',d,idx);}
+  } else if(_viewMode==='j8'||_viewMode==='j14'){
     for(let hr=0;hr<24;hr++){const idx=24+hr;if(idx<N_HRS)push(hr+'h',1,idx);}
     for(let d=2;d<=4;d++)for(let hr=0;hr<24;hr+=3){const idx=d*24+hr;if(idx<N_HRS)push(hr+'h',d,idx);}
-    const maxD=_viewMode==='j14'?14:_viewMode==='j5'?5:8;
+    const maxD=_viewMode==='j14'?14:8;
     for(let d=5;d<=maxD;d++)for(let hr=0;hr<24;hr+=8){const idx=d*24+hr;if(idx<N_HRS)push(hr+'h',d,idx);}
+    const _sentIdx=(maxD+1)*24;if(_sentIdx<N_HRS)push('0h',maxD+1,_sentIdx); /* borne droite : rend le dernier jour pleine largeur (sinon masqué par le garde-fou cellW<50) */
   }
 
 
@@ -4250,17 +4405,33 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
 <div id="ext30Panel">
   <div id="ext30Card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#88aaff">⤢ TENDANCE J+15 → J+28</div>
+      <div style="font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#88aaff">⤢ TENDANCE J+28</div>
       <button onclick="closeExt30()" style="background:none;border:1px solid #444;border-radius:4px;color:#888;padding:4px 10px;cursor:pointer;font-size:16px">✕</button>
     </div>
-    <div style="font-size:11px;color:#888;font-family:'Courier New',monospace;margin-bottom:10px">Médiane de plusieurs modèles d'ensemble · fourchette [min–max] = incertitude · 🟢🟡🟠 = dispersion</div>
-    <div id="ext30Tabs" style="display:none;gap:6px;margin-bottom:10px">
-      <button id="ext30Tab1" onclick="showExt30Page(1)" style="flex:1;background:#1a2a3a;border:1px solid #3a5a7a;border-radius:8px;color:#fff;font-family:'Courier New',monospace;font-size:12px;font-weight:900;padding:8px;cursor:pointer">J → J+14</button>
-      <button id="ext30Tab2" onclick="showExt30Page(2)" style="flex:1;background:#141414;border:1px solid #333;border-radius:8px;color:#888;font-family:'Courier New',monospace;font-size:12px;font-weight:900;padding:8px;cursor:pointer">J+15 → J+28</button>
+    <div style="font-size:9px;color:#777;font-family:'Courier New',monospace;margin-bottom:6px;line-height:1.3">Médiane multi-modèles d'ensemble · 🟢🟡🟠 = dispersion</div>
+    <div id="ext30Tabs" style="display:none;gap:6px;margin-bottom:6px">
+      <button id="ext30Tab1" onclick="showExt30Page(1)" style="flex:1;background:#1a2a3a;border:1px solid #3a5a7a;border-radius:8px;color:#fff;font-family:'Courier New',monospace;font-size:12px;font-weight:900;padding:6px;cursor:pointer">J → J+14</button>
+      <button id="ext30Tab2" onclick="showExt30Page(2)" style="flex:1;background:#141414;border:1px solid #333;border-radius:8px;color:#888;font-family:'Courier New',monospace;font-size:12px;font-weight:900;padding:6px;cursor:pointer">J+15 → J+28</button>
     </div>
     <div id="ext30Status">Cliquez pour charger…</div>
     <div id="ext30List"></div>
-    <div style="margin-top:10px;font-size:9px;color:#555;font-family:'Courier New',monospace;text-align:center">Source : GFS Ensemble (NOAA, 31 membres) via Open-Meteo</div>
+    <div style="margin-top:6px;font-size:8px;color:#555;font-family:'Courier New',monospace;text-align:center">Source : GFS Ensemble (NOAA, 31 membres) via Open-Meteo</div>
+  </div>
+</div>
+
+<div id="graphPanel">
+  <div id="graphCard">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div id="graphTitle" style="font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#7ec97e">📈 GRAPHIQUE J → J+14</div>
+      <button onclick="closeGraph()" style="background:none;border:1px solid #444;border-radius:4px;color:#888;padding:4px 10px;cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <div id="graphStatus">Chargement…</div>
+    <div id="graphWrap" style="display:none"><canvas id="graphCanvas"></canvas></div>
+    <div class="graph-leg" id="graphLeg" style="display:none">
+      <span><b style="background:#e23b3b"></b>Maximum</span>
+      <span><b style="background:#3b7ce2"></b>Minimum</span>
+      <span><b style="background:#2196f3"></b>Pr\u00e9cipitations (mm)</span>
+    </div>
   </div>
 </div>
 
