@@ -178,12 +178,14 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   #ext30Panel.open{display:block}
   #ext30Card{background:#0d0d0d;border:1px solid #2a2a2a;border-radius:10px;padding:14px;max-width:680px;margin:0 auto}
   .ext30-warn{background:#2a1a00;border:1px solid #553300;border-radius:7px;padding:8px 10px;font-size:10px;color:#ffaa55;line-height:1.5;margin-bottom:12px}
-  .ext30-row{display:flex;align-items:center;gap:10px;padding:11px 8px;border-bottom:1px solid #2a2a2a;font-family:'Courier New',monospace}
+  .ext30-row{display:flex;align-items:center;gap:10px;padding:7px 8px;border-bottom:1px solid #222;font-family:'Courier New',monospace}
   .ext30-row:hover{background:#141414}
   .ext30-date{flex:0 0 62px;font-size:13px;font-weight:900;color:#fff}
   .ext30-temp{flex:0 0 150px;font-size:14px;font-weight:900;white-space:nowrap}
   .ext30-bar{flex:1;height:8px;background:#1a1a2a;border-radius:4px;position:relative;min-width:40px}
   .ext30-bar span{position:absolute;height:100%;border-radius:4px;background:linear-gradient(90deg,#4488ff,#ff8844)}
+  .ext30-rainbar{flex:0 0 110px;height:8px;background:#15202e;border-radius:4px;overflow:hidden}
+  .ext30-rainbar span{display:block;height:100%;background:linear-gradient(90deg,#4db8ff,#1e88ff);border-radius:4px}
   .ext30-rain{flex:0 0 96px;font-size:13px;font-weight:900;text-align:right;white-space:nowrap}
   .ext30-dot{flex:0 0 20px;text-align:center;font-size:13px}
   .ext30-model{flex:0 0 116px;font-size:12px;font-weight:900;color:#ffe600;white-space:nowrap;text-align:right;cursor:pointer;text-decoration:underline;text-decoration-style:dotted}
@@ -255,7 +257,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
         <button id="btnJ8"  onclick="setView('j8');closeViewMenu()">J+8 <span>dans 8 jours</span></button>
         <button id="btnJ14" onclick="setView('j14');closeViewMenu()">J+14 <span>dans 14 jours</span></button>
         <div class="vm-sep">— tendance longue —</div>
-        <button id="btnExt30" onclick="openExt30();closeViewMenu()" style="color:#88aaff">⤢ J+15 → J+30 <span>ensemble</span></button>
+        <button id="btnExt30" onclick="openExt30();closeViewMenu()" style="color:#88aaff">⤢ J+15 → J+28 <span>ensemble</span></button>
       </div>
     </div>
     <div id="layersWrap">
@@ -574,7 +576,7 @@ function tgl(name, btn){
   /* Légende interactive visible seulement quand MODÈLES est ON */
   if(name==='models'){
     const eli=document.getElementById('modelLegendInline');
-    if(eli)eli.style.display='none'; /* légende remplacée par survol */
+    if(eli)eli.style.display=_layers.models?'flex':'none';
   }
 }
 function tglAll(){
@@ -771,6 +773,23 @@ document.addEventListener('click',function(e){const w=document.getElementById('e
 /* ── Extension Tendance J+15 → J+30 (ensemble GEFS) ── */
 let _ext30Loaded=false;
 
+
+/* Basculer entre les 2 pages de la tendance */
+function showExt30Page(n){
+  const list=document.getElementById('ext30List');
+  const t1=document.getElementById('ext30Tab1'), t2=document.getElementById('ext30Tab2');
+  if(!list)return;
+  if(n===2){
+    list.innerHTML=window._ext30Html2||'';
+    if(t2){t2.style.background='#1a2a3a';t2.style.borderColor='#3a5a7a';t2.style.color='#fff';}
+    if(t1){t1.style.background='#141414';t1.style.borderColor='#333';t1.style.color='#888';}
+  }else{
+    list.innerHTML=window._ext30Html1||'';
+    if(t1){t1.style.background='#1a2a3a';t1.style.borderColor='#3a5a7a';t1.style.color='#fff';}
+    if(t2){t2.style.background='#141414';t2.style.borderColor='#333';t2.style.color='#888';}
+  }
+}
+
 function closeScenarios(){const p=document.getElementById('scenPanel');if(p)p.classList.remove('open');}
 function showScenarios(di){
   const days=window._ext30Days;
@@ -807,7 +826,7 @@ async function openExt30(){
   if(status){status.style.display='block';status.textContent='⏳ Chargement des modèles d\'ensemble…';}
   if(list)list.innerHTML='';
   try{
-    const début=15;
+    const début=0;
     /* Plusieurs modèles d'ensemble : nom lisible → identifiant Open-Meteo */
     const ENS=[
       {id:'gfs05',     name:'GFS-Ens 🇺🇸'},
@@ -834,7 +853,7 @@ async function openExt30(){
     /* Profondeur max dispo (le plus long) */
     const maxLen=Math.max(...ok.map(m=>m.len));
     const maxDay=Math.floor(maxLen/24)-1;
-    if(maxDay<16)throw new Error('données jusqu\'à J+'+maxDay+' seulement');
+    if(maxDay<1)throw new Error('aucune donnée disponible');
     const fin=Math.min(28,maxDay);
     let html='', gMin=99, gMax=-99;
     const dayData=[];
@@ -871,6 +890,7 @@ async function openExt30(){
     }
     window._ext30Days=dayData;
     if(!dayData.length)throw new Error('pas assez de données');
+    let html1='',html2='';
     dayData.forEach((o,di)=>{
       const tMaxMed=med(o.allMax),tMinMed=med(o.allMin);
       const tMaxHi=Math.max(...o.allMax),tMinLo=Math.min(...o.allMin);
@@ -881,16 +901,23 @@ async function openExt30(){
       const dot=sd<2?'🟢':(sd<3.5?'🟡':'🟠');
       const rainTxt='💧 '+pRain+'% · '+rMed.toFixed(1)+'mm';
       const rainColor=pRain>=50?'#5bc0ff':(pRain>=20?'#9cc4ff':((pRain>0||rMed>=0.05)?'#88aaff':'#999'));
-      html+='<div class="ext30-row">'
+      let rowHtml='<div class="ext30-row">'
         +'<div class="ext30-date">J+'+o.day+'<br><span style="font-size:10px;color:#999">'+dn[o.dt.getDay()]+' '+o.dt.getDate()+'/'+(o.dt.getMonth()+1)+'</span></div>'
         +'<div class="ext30-temp"><span style="color:#7ab8ff">'+Math.round(tMinMed)+'°</span>/<span style="color:#ff9955">'+Math.round(tMaxMed)+'°</span></div>'
         +'<div class="ext30-model" onclick="showScenarios('+di+')" title="Voir tous les scénarios">↑'+Math.round(o.hottest)+'° '+o.hottestModel+'</div>'
         +'<div class="ext30-rain" style="color:'+rainColor+'">'+rainTxt+'</div>'
         +'<div class="ext30-dot" title="dispersion ±'+sd.toFixed(1)+'° · '+o.allMax.length+' scénarios">'+dot+'</div>'
+        +'<div class="ext30-rainbar"><span style="width:'+Math.min(100,Math.round(rMed*12))+'%"></span></div>'
         +'</div>';
+      if(o.day<=14)html1+=rowHtml; else html2+=rowHtml;
     });
     if(status)status.style.display='none';
-    if(list)list.innerHTML=html;
+    /* 2 pages : J→J+14 et J+15→J+28 */
+    window._ext30Html1=html1;
+    window._ext30Html2=html2||'<div style="text-align:center;color:#888;padding:20px">Pas de données au-delà de J+14</div>';
+    const tabs=document.getElementById('ext30Tabs');
+    if(tabs)tabs.style.display=(html2?'flex':'none');
+    showExt30Page(1);
     _ext30Loaded=true;
   }catch(e){
     if(status){status.style.display='block';status.textContent='✕ '+e.message;}
@@ -2878,7 +2905,6 @@ function renderJm1(pts,mods,realPrecip){
     },
     options:{
       responsive:true,maintainAspectRatio:false,animation:false,
-      
       scales:{
         x:{ticks:{color:'#bbb',font:{weight:'bold',size:isMob?8:10,family:'Courier New'},maxRotation:0,autoSkip:false,callback(v){const l=this.getLabelForValue(v);return l||null;}},grid:{display:false},border:{color:'#555'}},
         y:{position:'left',beginAtZero:true,grace:'5%',grid:{color:'#181818',lineWidth:1},ticks:{color:'#ffe600',font:{weight:'bold',size:isMob?8:11,family:'Courier New'}},border:{color:'#555'},title:{display:!isMob,text:'mm/h',color:'#ffe600',font:{size:9,family:'Courier New'}}},
@@ -3612,71 +3638,17 @@ function updateLazyDatasets(){
   if((dsH||dsO)&&myChart)myChart.update('none');
 }
 
-
-/* Cacher l'étiquette modèle quand la souris quitte le graphe */
-document.addEventListener('DOMContentLoaded',function(){
-  const handler=function(e){
-    const cv=document.getElementById('mainChart');
-    const tip=document.getElementById('modelHoverTip');
-    if(!cv||!tip||!myChart)return;
-    const pt=e.touches&&e.touches[0]?e.touches[0]:e;
-    const r=cv.getBoundingClientRect();
-    const mx=pt.clientX-r.left, my=pt.clientY-r.top;
-    /* Hors du graphe ou modèles désactivés → cacher */
-    if(!_layers.models||mx<0||mx>r.width||my<0||my>r.height){tip.style.display='none';return;}
-    const ca=myChart.chartArea, ys=myChart.scales.y;
-    if(!ca||!ys||mx<ca.left||mx>ca.right){tip.style.display='none';return;}
-    const n=myChart.data.labels.length;
-    if(!n){tip.style.display='none';return;}
-    let xi=Math.round(((mx-ca.left)/(ca.right-ca.left))*(n-1));
-    xi=Math.max(0,Math.min(n-1,xi));
-    let found=null,bestDist=Infinity;
-    myChart.data.datasets.forEach(ds=>{
-      if(!ds._modelKey)return;
-      const v=ds.data[xi];
-      if(v==null||!isFinite(v))return;
-      const py=ys.getPixelForValue(v);
-      const d=Math.abs(py-my);
-      if(d<bestDist){bestDist=d;found=ds._modelKey;}
-    });
-    if(found&&bestDist<=35){
-      const src=SOURCES.find(s=>s.key===found);
-      tip.textContent=src?src.label:found;
-      tip.style.color=src?src.color:'#fff';
-      tip.style.borderColor=src?src.color:'#444';
-      tip.style.left=(pt.clientX+12)+'px';
-      tip.style.top=(pt.clientY-10)+'px';
-      tip.style.display='block';
-      /* Mettre en évidence la courbe (forcer visible même en mode simple) */
-      myChart.data.datasets.forEach(d=>{
-        if(d._modelKey){
-          const s2=SOURCES.find(x=>x.key===d._modelKey);
-          if(d._modelKey===found){d.borderColor=s2?s2.color:'#fff';d.borderWidth=_isMob?2.5:3.5;}
-          else{d.borderColor=(s2?s2.color:'#888')+'40';d.borderWidth=_isMob?.8:1.2;}
-        }
-      });
-      myChart.update('none');
-    }else{
-      tip.style.display='none';
-    }
-  };
-  document.addEventListener('mousemove',handler);
-  document.addEventListener('touchmove',handler,{passive:true});
-});
-
 function buildModelLegend(pts){
-  /* Légende inline désactivée : le nom du modèle s'affiche au survol de sa courbe */
   const el=document.getElementById('modelLegendInline');
-  if(el){el.classList.remove('active');el.style.display='none';el.innerHTML='';}
-  return;
-  /* (ancien code conservé mais inatteignable)
+  if(!el)return;
+  if(!_layers.models){el.classList.remove('active');return;}
   el.classList.add('active');
   let html='';
   SOURCES.filter(s=>s.omModel).forEach(s=>{
     const hidden=_hiddenModels.has(s.key);
     html+=`<span class="mib${hidden?' hidden':''}" data-key="${s.key}" onclick="toggleModel('${s.key}')" onmouseenter="highlightModel('${s.key}',true)" onmouseleave="highlightModel('${s.key}',false)"><span class="mdot" style="background:${s.color}"></span>${s.label}</span>`;
   });
-  el.innerHTML=html; */
+  el.innerHTML=html;
 }
 
 
@@ -4282,6 +4254,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
       <button onclick="closeExt30()" style="background:none;border:1px solid #444;border-radius:4px;color:#888;padding:4px 10px;cursor:pointer;font-size:16px">✕</button>
     </div>
     <div style="font-size:11px;color:#888;font-family:'Courier New',monospace;margin-bottom:10px">Médiane de plusieurs modèles d'ensemble · fourchette [min–max] = incertitude · 🟢🟡🟠 = dispersion</div>
+    <div id="ext30Tabs" style="display:none;gap:6px;margin-bottom:10px">
+      <button id="ext30Tab1" onclick="showExt30Page(1)" style="flex:1;background:#1a2a3a;border:1px solid #3a5a7a;border-radius:8px;color:#fff;font-family:'Courier New',monospace;font-size:12px;font-weight:900;padding:8px;cursor:pointer">J → J+14</button>
+      <button id="ext30Tab2" onclick="showExt30Page(2)" style="flex:1;background:#141414;border:1px solid #333;border-radius:8px;color:#888;font-family:'Courier New',monospace;font-size:12px;font-weight:900;padding:8px;cursor:pointer">J+15 → J+28</button>
+    </div>
     <div id="ext30Status">Cliquez pour charger…</div>
     <div id="ext30List"></div>
     <div style="margin-top:10px;font-size:9px;color:#555;font-family:'Courier New',monospace;text-align:center">Source : GFS Ensemble (NOAA, 31 membres) via Open-Meteo</div>
@@ -4298,8 +4274,6 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
     <div id="scenList"></div>
   </div>
 </div>
-
-<div id="modelHoverTip" style="display:none;position:fixed;z-index:9997;background:rgba(10,10,15,0.95);border:1px solid #444;border-radius:6px;padding:4px 9px;font-family:'Courier New',monospace;font-size:12px;font-weight:900;pointer-events:none;white-space:nowrap"></div>
 
 </body>
 </html>
