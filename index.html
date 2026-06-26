@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>PluiePro v1.61</title>
+<title>PluiePro v1.63</title>
+<meta name="theme-color" content="#0d0d0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PluiePro">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -202,6 +207,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   #scrapeBar a:active,#scrapeBar button:active{background:#262626}
   #scrapeFrame{flex:1;border:0;width:100%;background:#fff}
   #scrapeHint{font-size:11px;color:#999;background:#111;padding:6px 12px;text-align:center;border-bottom:1px solid #2a2a2a;flex-shrink:0;line-height:1.3}
+  :focus-visible{outline:2px solid #4a9eff;outline-offset:2px;border-radius:3px}
   #graphWrap{position:relative;width:100%;height:calc(100vh - 128px);height:calc(100dvh - 128px);min-height:320px}
   #graphTitle{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:78%}
   #graphStatus{text-align:center;color:#aaa;font-size:14px;font-family:'Courier New',monospace;padding:40px 0}
@@ -244,7 +250,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
            autocomplete="off" autocorrect="off" spellcheck="false">
     <button id="clearBtn" onclick="clearSearch()" title="Effacer">✕</button>
     <div id="exploreWrap">
-      <button id="exploreBtn" onclick="toggleExploreMenu(event)" title="Explorer : position, aléatoire, villes extrêmes">🎲</button>
+      <button id="exploreBtn" onclick="toggleExploreMenu(event)" aria-label="Explorer : position, aléatoire, villes extrêmes" title="Explorer : position, aléatoire, villes extrêmes">🎲</button>
       <div id="exploreMenu">
         <button onclick="loadGPS();closeExploreMenu()">📍 <span>Ma position GPS</span></button>
         <button id="geoScopeBtn" onclick="toggleGeoScope()" style="color:#7ec97e">🇫🇷 <span>France</span></button>
@@ -327,7 +333,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   <div id="radarCard">
     <div id="radarInner">
       <!-- Colonne gauche : histogramme scraping -->
-      <div id="scrapeCol" onclick="openScrapePage()" style="cursor:pointer" title="Voir lameteoagricole.net">
+      <div id="scrapeCol" onclick="openScrapePage()" role="button" tabindex="0" aria-label="Voir la pluie minute par minute (lameteoagricole)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openScrapePage();}" style="cursor:pointer" title="Voir lameteoagricole.net">
         <div id="scrapeHeader">
           <span>🌧 PLUIE DANS L'HEURE ↗</span>
           <span id="scrapeTime" style="color:#666;font-weight:400">—</span>
@@ -415,6 +421,20 @@ let _uvHourlyData=null;
 let _pollenHourly=null;
 let _aqiHourly=null;
 let _viewMode='j1',_cachedData=null,_cachedJm1=null,_cachedJm7=null,_simpleMode=true,_ultraMode=true,_gradCache=null;
+/* Desktop (souris) vs tactile : réactive les tooltips de graphe seulement à la souris */
+const _hasMouse=!!(window.matchMedia&&window.matchMedia('(pointer:fine)').matches);
+/* PWA : icône (goutte) + manifest injectés au runtime (installable / plein écran) */
+(function(){
+  try{
+    const svg="<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='96' fill='#0d0d0d'/><path d='M256 92C198 198 148 282 148 342a108 108 0 0 0 216 0C364 282 314 198 256 92Z' fill='#3aa0ff'/></svg>";
+    const iconUrl="data:image/svg+xml;utf8,"+encodeURIComponent(svg);
+    const ai=document.createElement('link');ai.rel='apple-touch-icon';ai.href=iconUrl;document.head.appendChild(ai);
+    const fav=document.createElement('link');fav.rel='icon';fav.href=iconUrl;document.head.appendChild(fav);
+    const mani={name:'PluiePro',short_name:'PluiePro',display:'standalone',background_color:'#0d0d0d',theme_color:'#0d0d0d',start_url:'.',icons:[{src:iconUrl,sizes:'512x512',type:'image/svg+xml',purpose:'any maskable'}]};
+    const mUrl=URL.createObjectURL(new Blob([JSON.stringify(mani)],{type:'application/json'}));
+    const ml=document.createElement('link');ml.rel='manifest';ml.href=mUrl;document.head.appendChild(ml);
+  }catch(e){}
+})();
 let _layers={wind:false,uv:false,pollen:false,poll:false,proba:false,nuage:false,temp:false,humidity:false,orage:false,soleil:false,models:false};
 let _loadDebounce=null;
 const _hiddenModels=new Set(); /* modèles masqués par clic légende */
@@ -1014,6 +1034,7 @@ async function openGraph(mode){
   if(status){status.style.display='block';status.textContent='⏳ Chargement…';}
   hide();
   if(ttl)ttl.textContent='📈 '+((typeof cityName!=='undefined'&&cityName)?cityName+' — ':'')+(mode==='28'?'J+15 → J+28':'J → J+14');
+  const _gn=document.getElementById('graphNote');if(_gn)_gn.style.display=(mode==='28')?'block':'none';
   {const _gp=document.getElementById('graphPrev'),_gn=document.getElementById('graphNext');if(_gp)_gp.style.visibility=(mode==='28')?'visible':'hidden';if(_gn)_gn.style.visibility=(mode==='14')?'visible':'hidden';}
   try{
     const dn=['dim','lun','mar','mer','jeu','ven','sam'];
@@ -1144,7 +1165,7 @@ async function openGraph(mode){
         responsive:true,maintainAspectRatio:false,
         layout:{padding:{top:isMob?30:38}},
         interaction:{mode:'index',intersect:false},
-        plugins:{legend:{display:false},tooltip:{enabled:false}},
+        plugins:{legend:{display:false},tooltip:{enabled:_hasMouse}},
         scales:{
           x:{grid:{display:false},ticks:{color:'#d2d2d2',font:{size:isMob?12:15,weight:'700',family:'Courier New'},maxRotation:0,autoSkip:false}},
           yT:{position:'left',grid:{color:'#1c1c1c'},ticks:{stepSize:5,color:'#e08a8a',font:{size:isMob?9:11,family:'Courier New'},callback:v=>v+'°'},min:yMin,max:yMax},
@@ -3152,7 +3173,7 @@ function renderJm1(pts,mods,realPrecip){
         y:{position:'left',beginAtZero:true,grace:'5%',grid:{color:'#181818',lineWidth:1},ticks:{color:'#ffe600',font:{weight:'bold',size:isMob?8:11,family:'Courier New'}},border:{color:'#555'},title:{display:!isMob,text:'mm/h',color:'#ffe600',font:{size:9,family:'Courier New'}}},
         yProb:{position:'right',min:0,max:100,display:!_ultraMode,grid:{display:false},ticks:{color:'rgba(255,255,255,0.4)',font:{weight:'bold',size:isMob?8:11,family:'Courier New'},callback:v=>v+'%',stepSize:25},border:{color:'#555'},title:{display:!isMob,text:'prob.',color:'rgba(255,255,255,0.4)',font:{size:9,family:'Courier New'}}}
       },
-      plugins:{legend:{display:false},tooltip:{enabled:false}}
+      plugins:{legend:{display:false},tooltip:{enabled:_hasMouse}}
     },
     plugins:[ {id:'overlay',afterDraw(chart){if(chart.width!==lastW){lastW=chart.width;buildOverlays(chart,pts);}else{updateOverlayPositions(chart,pts);}drawUncertaintyBadge(chart,pts);}},
       {id:'realLegend',afterDraw(chart){
@@ -3405,7 +3426,7 @@ function render(pts,mods){
           border:{color:'#555'},title:{display:!isMob,text:'prob.',color:'rgba(255,255,255,0.4)',font:{size:9,family:'Courier New'}}
         }
       },
-      plugins:{legend:{display:false},tooltip:{enabled:false}}
+      plugins:{legend:{display:false},tooltip:{enabled:_hasMouse}}
     },
     plugins:[ {id:'overlay',afterDraw(chart){if(chart.width!==lastW){lastW=chart.width;buildOverlays(chart,pts);}else{updateOverlayPositions(chart,pts);}drawUncertaintyBadge(chart,pts);}},  
       {id:'drySlots',afterDatasetsDraw(chart){
@@ -4241,8 +4262,8 @@ function startAutoRefresh(){
   setInterval(()=>{if(_cachedData&&!_isOffline)load();},30*60*1000);
 }
 
-let rt;
-window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{lastW=0;if(myChart)myChart.update();},250);});
+let rt,_lastInnerWb=window.innerWidth;
+window.addEventListener('resize',()=>{if((window.visualViewport&&window.visualViewport.scale>1.01)||window.innerWidth===_lastInnerWb)return;_lastInnerWb=window.innerWidth;clearTimeout(rt);rt=setTimeout(()=>{lastW=0;if(myChart)myChart.update();},250);});
 
 /* ── Paramètre URL ?ville=xxx &j=8 ── */
 (function(){
@@ -4443,6 +4464,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
   /* ResizeObserver sur le container du canvas */
   if(typeof ResizeObserver!=='undefined'){
     const _ro=new ResizeObserver(()=>{
+      if(window.visualViewport&&window.visualViewport.scale>1.01)return; /* pinch-zoom natif en cours : ne pas redimensionner le graphe (sinon le zoom rebondit) */
       clearTimeout(_roTimer);
       _roTimer=setTimeout(_forceResize,80);
     });
@@ -4450,7 +4472,11 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
     if(cc)_ro.observe(cc);
   }
   /* Fallback window resize */
+  let _lastInnerW=window.innerWidth;
   window.addEventListener('resize',()=>{
+    /* iOS : le pinch-zoom natif déclenche 'resize' sans changer innerWidth → ignorer (sinon myChart.resize() casse le zoom et il "rebondit" à 1) */
+    if((window.visualViewport&&window.visualViewport.scale>1.01)||window.innerWidth===_lastInnerW)return;
+    _lastInnerW=window.innerWidth;
     clearTimeout(_roTimer);
     _roTimer=setTimeout(_forceResize,80);
   });
@@ -4497,9 +4523,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
   <div id="ext30Card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div style="font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#88aaff">⤢ TENDANCE J+28</div>
-      <button onclick="closeExt30()" style="background:none;border:1px solid #444;border-radius:4px;color:#888;padding:4px 10px;cursor:pointer;font-size:16px">✕</button>
+      <button onclick="closeExt30()" aria-label="Fermer" style="background:none;border:1px solid #444;border-radius:4px;color:#888;padding:4px 10px;cursor:pointer;font-size:16px">✕</button>
     </div>
-    <div style="font-size:9px;color:#777;font-family:'Courier New',monospace;margin-bottom:6px;line-height:1.3">Médiane multi-modèles d'ensemble · 🟢🟡🟠 = dispersion</div>
+    <div style="font-size:9px;color:#777;font-family:'Courier New',monospace;margin-bottom:6px;line-height:1.3"><b style="color:#e0b84c">⚠ Tendance — fiabilité limitée.</b> Médiane multi-modèles d'ensemble · 🟢🟡🟠 = dispersion</div>
     <div id="ext30Tabs" style="display:none;gap:6px;margin-bottom:6px">
       <button id="ext30Tab1" onclick="showExt30Page(1)" style="flex:1;background:#1a2a3a;border:1px solid #3a5a7a;border-radius:8px;color:#fff;font-family:'Courier New',monospace;font-size:12px;font-weight:900;padding:6px;cursor:pointer">J → J+14</button>
       <button id="ext30Tab2" onclick="showExt30Page(2)" style="flex:1;background:#141414;border:1px solid #333;border-radius:8px;color:#888;font-family:'Courier New',monospace;font-size:12px;font-weight:900;padding:6px;cursor:pointer">J+15 → J+28</button>
@@ -4514,7 +4540,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
   <div id="scrapeBar">
     <span class="ttl" id="scrapeBarTitle">🌧 Pluie minute</span>
     <a id="scrapeOpenExt" href="#" target="_blank" rel="noopener">↗ Navigateur</a>
-    <button onclick="closeScrapePage()">✕</button>
+    <button onclick="closeScrapePage()" aria-label="Fermer">✕</button>
   </div>
   <div id="scrapeHint">💡 Rien ne s'affiche ? Ce site bloque l'affichage intégré — touchez ↗ Navigateur.</div>
   <iframe id="scrapeFrame" src="about:blank"></iframe>
@@ -4522,11 +4548,12 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
 <div id="graphPanel">
   <div id="graphCard">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      <button id="graphPrev" onclick="openGraph('14')" title="GRAPH14 (J→J+14)" style="background:none;border:1px solid #444;border-radius:4px;color:#7ec97e;padding:4px 11px;cursor:pointer;font-size:18px;font-weight:900;line-height:1">‹</button>
+      <button id="graphPrev" onclick="openGraph('14')" aria-label="Graphe J à J+14" title="GRAPH14 (J→J+14)" style="background:none;border:1px solid #444;border-radius:4px;color:#7ec97e;padding:4px 11px;cursor:pointer;font-size:18px;font-weight:900;line-height:1">‹</button>
       <div id="graphTitle" style="flex:1;text-align:center;font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#7ec97e">📈 GRAPHIQUE J → J+14</div>
-      <button id="graphNext" onclick="openGraph('28')" title="GRAPH28 (J+15→J+28)" style="background:none;border:1px solid #444;border-radius:4px;color:#7ec97e;padding:4px 11px;cursor:pointer;font-size:18px;font-weight:900;line-height:1">›</button>
-      <button onclick="closeGraph()" style="background:none;border:1px solid #444;border-radius:4px;color:#888;padding:4px 10px;cursor:pointer;font-size:16px">✕</button>
+      <button id="graphNext" onclick="openGraph('28')" aria-label="Graphe J+15 à J+28" title="GRAPH28 (J+15→J+28)" style="background:none;border:1px solid #444;border-radius:4px;color:#7ec97e;padding:4px 11px;cursor:pointer;font-size:18px;font-weight:900;line-height:1">›</button>
+      <button onclick="closeGraph()" aria-label="Fermer" style="background:none;border:1px solid #444;border-radius:4px;color:#888;padding:4px 10px;cursor:pointer;font-size:16px">✕</button>
     </div>
+    <div id="graphNote" style="display:none;text-align:center;font-size:11px;color:#e0b84c;margin:-2px 0 8px;font-weight:700;line-height:1.3">⚠ Tendance long terme (ensemble) — fiabilité limitée, à lire comme une orientation, pas une prévision exacte.</div>
     <div id="graphStatus">Chargement…</div>
     <div id="graphWrap" style="display:none"><canvas id="graphCanvas"></canvas></div>
     <div class="graph-leg" id="graphLeg" style="display:none">
