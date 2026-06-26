@@ -2,8 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PluiePro v1.54</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<title>PluiePro v1.61</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -194,6 +194,14 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   #graphPanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:10001;overflow-y:auto;padding:10px}
   #graphPanel.open{display:block}
   #graphCard{background:#0d0d0d;border:1px solid #2a2a2a;border-radius:10px;padding:12px;max-width:920px;margin:0 auto}
+  #scrapePanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:10002;flex-direction:column}
+  #scrapePanel.open{display:flex}
+  #scrapeBar{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#0d0d0d;border-bottom:1px solid #2a2a2a;flex-shrink:0}
+  #scrapeBar .ttl{font-size:12px;font-weight:900;color:#ffe600;letter-spacing:.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #scrapeBar a,#scrapeBar button{background:#1a1a1a;border:1px solid #333;color:#ddd;font-size:12px;font-weight:700;padding:6px 11px;border-radius:6px;cursor:pointer;text-decoration:none;white-space:nowrap}
+  #scrapeBar a:active,#scrapeBar button:active{background:#262626}
+  #scrapeFrame{flex:1;border:0;width:100%;background:#fff}
+  #scrapeHint{font-size:11px;color:#999;background:#111;padding:6px 12px;text-align:center;border-bottom:1px solid #2a2a2a;flex-shrink:0;line-height:1.3}
   #graphWrap{position:relative;width:100%;height:calc(100vh - 128px);height:calc(100dvh - 128px);min-height:320px}
   #graphTitle{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:78%}
   #graphStatus{text-align:center;color:#aaa;font-size:14px;font-family:'Courier New',monospace;padding:40px 0}
@@ -239,8 +247,9 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
       <button id="exploreBtn" onclick="toggleExploreMenu(event)" title="Explorer : position, aléatoire, villes extrêmes">🎲</button>
       <div id="exploreMenu">
         <button onclick="loadGPS();closeExploreMenu()">📍 <span>Ma position GPS</span></button>
+        <button id="geoScopeBtn" onclick="toggleGeoScope()" style="color:#7ec97e">🇫🇷 <span>France</span></button>
         <button onclick="randomCity();closeExploreMenu()">🎲 <span>Ville aléatoire</span></button>
-        <div class="em-sep">— Villes extrêmes (France) —</div>
+        <div class="em-sep" id="geoScopeSep">— Villes extrêmes (France) —</div>
         <button onclick="findHottest();closeExploreMenu()">🌡️ <span>La plus chaude</span></button>
         <button onclick="findRainiest();closeExploreMenu()">💧 <span>La plus pluvieuse</span></button>
         <button onclick="findWindy();closeExploreMenu()">💨 <span>La plus venteuse</span></button>
@@ -266,7 +275,8 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
         <button id="btnJ14" onclick="setView('j14');closeViewMenu()">J+14 <span>dans 14 jours</span></button>
         <div class="vm-sep">— tendance longue —</div>
         <button id="btnExt30" onclick="openExt30();closeViewMenu()" style="color:#88aaff">⤢ J+28 <span>ensemble</span></button>
-        <button id="btnGraph" onclick="openGraph();closeViewMenu()" style="color:#7ec97e">📈 GRAPH <span>J→J+14</span></button>
+        <button id="btnGraph" onclick="openGraph('14');closeViewMenu()" style="color:#7ec97e">📈 GRAPH <span>J→J+28</span></button>
+        <button id="btnSeason" onclick="openSeason();closeViewMenu()" style="color:#d9a3ff">🗓 SAISON <span>3 mois</span></button>
       </div>
     </div>
     <div id="layersWrap">
@@ -291,6 +301,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
     <div class="header">
       <div class="header-left">
         <div id="displayTz" class="city-tz"></div>
+        <div id="updateStamp" style="font-size:10px;font-weight:700;font-family:'Courier New',monospace;letter-spacing:.5px;margin-top:1px"></div>
         <div id="nextRainBadge"></div>
         <div id="modelLegendInline" style="display:none;flex-wrap:wrap;gap:3px;margin-top:1px"></div>
         <div id="reliabilityScore" style="display:none;font-size:10px;font-weight:700;font-family:'Courier New';letter-spacing:.5px;margin-top:2px"></div>
@@ -316,9 +327,9 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   <div id="radarCard">
     <div id="radarInner">
       <!-- Colonne gauche : histogramme scraping -->
-      <div id="scrapeCol">
+      <div id="scrapeCol" onclick="openScrapePage()" style="cursor:pointer" title="Voir lameteoagricole.net">
         <div id="scrapeHeader">
-          <span>🌧 PLUIE DANS L'HEURE</span>
+          <span>🌧 PLUIE DANS L'HEURE ↗</span>
           <span id="scrapeTime" style="color:#666;font-weight:400">—</span>
         </div>
         <div id="scrapeChart">
@@ -448,7 +459,7 @@ let _mfByMin={};
 let _nowcastByMin={}; /* MET Norway nowcast 5min */
 let _m15ByMin={};   /* Open-Meteo minutely15 */
 let _scrapedByMin={};
-let cityName=''; /* données scrapées lameteoagricole, clé=offset minutes */ /* slots MF par offset-minutes, global */
+let _scrapeUrl=null; /* URL lameteoagricole valide (canonique) pour le clic */ /* données scrapées lameteoagricole, clé=offset minutes */ /* slots MF par offset-minutes, global */
 let _radarMap=null,_radarLayer=null,_radarMarker=null,_radarFrames=[],_radarIdx=0,_radarPlaying=false,_radarTimer=null;
 let _cityLat=48.6869,_cityLon=2.3814; /* défaut Juvisy */
 let _isMob=false;
@@ -936,6 +947,43 @@ async function openExt30(){
 /* ══════ GRAPHIQUE journalier J→J+14 (style prévisions) ══════ */
 let _graphChart=null;
 function closeGraph(){const p=document.getElementById('graphPanel');if(p)p.classList.remove('open');}
+function buildLameteoUrl(name,postcode){
+  if(!name)return null;
+  const slug=String(name).trim().replace(/\s+/g,'-');
+  return 'https://www.lameteoagricole.net/meteo-minute-par-minute/'+slug+'-'+(postcode||'')+'.html';
+}
+function openScrapePage(){
+  let url=_scrapeUrl;
+  if(!url){
+    const slug=(cityName||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9\s-]/g,'').trim().replace(/\s+/g,'-');
+    url='https://www.lameteoagricole.net/meteo-minute-par-minute/'+slug+'-.html';
+  }
+  const p=document.getElementById('scrapePanel');
+  const fr=document.getElementById('scrapeFrame');
+  const ext=document.getElementById('scrapeOpenExt');
+  const ttl=document.getElementById('scrapeBarTitle');
+  if(ttl)ttl.textContent='🌧 '+(cityName||'Pluie minute');
+  if(ext)ext.href=url;
+  if(fr)fr.src=url;
+  if(p)p.classList.add('open');
+}
+function closeScrapePage(){
+  const p=document.getElementById('scrapePanel');
+  const fr=document.getElementById('scrapeFrame');
+  if(p)p.classList.remove('open');
+  if(fr)fr.src='about:blank';
+}
+function openSeason(){
+  const url='https://www.meteo-paris.com/france/previsions-saisonnieres';
+  const p=document.getElementById('scrapePanel');
+  const fr=document.getElementById('scrapeFrame');
+  const ext=document.getElementById('scrapeOpenExt');
+  const ttl=document.getElementById('scrapeBarTitle');
+  if(ttl)ttl.textContent='🗓 Prévisions saisonnières (météo-paris)';
+  if(ext)ext.href=url;
+  if(fr)fr.src=url;
+  if(p)p.classList.add('open');
+}
 function _wmoEmoji(c){
   if(c==null)return '';
   if(c===0)return '☀️';
@@ -952,7 +1000,9 @@ function _wmoEmoji(c){
   return '☁️';
 }
 function _tBandColor(t){var hh=Math.max(0,Math.min(230,230-(t-5)/40*230));return 'hsla('+hh+',78%,55%,0.13)';}
-async function openGraph(){
+function _rainToCode(mm){if(mm<0.2)return 2;if(mm<1)return 3;if(mm<5)return 61;if(mm<15)return 63;return 65;}
+async function openGraph(mode){
+  mode=(mode==='28')?'28':'14';
   const p=document.getElementById('graphPanel');
   if(p)p.classList.add('open');
   const status=document.getElementById('graphStatus');
@@ -963,21 +1013,58 @@ async function openGraph(){
   if(typeof _cityLat==='undefined'||_cityLat==null){if(status){status.style.display='block';status.textContent='Cherchez une ville d\'abord.';}hide();return;}
   if(status){status.style.display='block';status.textContent='⏳ Chargement…';}
   hide();
-  if(ttl)ttl.textContent='📈 '+((typeof cityName!=='undefined'&&cityName)?cityName+' — ':'')+'J → J+14';
+  if(ttl)ttl.textContent='📈 '+((typeof cityName!=='undefined'&&cityName)?cityName+' — ':'')+(mode==='28'?'J+15 → J+28':'J → J+14');
+  {const _gp=document.getElementById('graphPrev'),_gn=document.getElementById('graphNext');if(_gp)_gp.style.visibility=(mode==='28')?'visible':'hidden';if(_gn)_gn.style.visibility=(mode==='14')?'visible':'hidden';}
   try{
-    const url=`https://api.open-meteo.com/v1/forecast?latitude=${_cityLat}&longitude=${_cityLon}`
-      +`&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode&forecast_days=15&timezone=auto`;
-    const r=await fetch(url);
-    if(!r.ok)throw new Error('API '+r.status);
-    const d=await r.json();
-    const dy=d&&d.daily;
-    if(!dy||!dy.time)throw new Error('pas de données');
     const dn=['dim','lun','mar','mer','jeu','ven','sam'];
-    const labels=dy.time.map(t=>{const dt=new Date(t+'T12:00:00');return [dn[dt.getDay()],String(dt.getDate())];});
-    const tmax=dy.temperature_2m_max.map(v=>v==null?null:Math.round(v));
-    const tmin=dy.temperature_2m_min.map(v=>v==null?null:Math.round(v));
-    const rain=dy.precipitation_sum.map(v=>v==null?0:Math.round(v*10)/10);
-    const codes=dy.weathercode||[];
+    let labels,tmax,tmin,rain,codes;
+    if(mode==='28'){
+      /* J+15→J+28 : ensemble GFS (le forecast classique s'arrête à ~J+15) */
+      const url=`https://ensemble-api.open-meteo.com/v1/ensemble?latitude=${_cityLat}&longitude=${_cityLon}`
+        +`&hourly=temperature_2m,precipitation&models=gfs05&forecast_days=29&timezone=auto`;
+      const r=await fetch(url);
+      if(!r.ok)throw new Error('API '+r.status);
+      const d=await r.json();
+      const hh=d&&d.hourly;
+      if(!hh||!hh.time)throw new Error('pas de données');
+      const tKeys=Object.keys(hh).filter(k=>k.startsWith('temperature_2m'));
+      const pKeys=Object.keys(hh).filter(k=>k.startsWith('precipitation'));
+      const med=a=>{const s=[...a].sort((x,y)=>x-y);const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;};
+      labels=[];tmax=[];tmin=[];rain=[];codes=[];
+      const maxDay=Math.min(28,Math.floor(hh.time.length/24)-1);
+      for(let day=15;day<=maxDay;day++){
+        const h0=day*24,h1=Math.min(h0+24,hh.time.length);
+        if(h0>=hh.time.length)break;
+        const mxs=[],mns=[],sums=[];
+        tKeys.forEach((tk,mi)=>{
+          let mx=-99,mn=99,okv=false;
+          for(let hr=h0;hr<h1;hr++){const v=hh[tk][hr];if(v!=null&&isFinite(v)){if(v>mx)mx=v;if(v<mn)mn=v;okv=true;}}
+          if(okv){mxs.push(mx);mns.push(mn);}
+          const pk=pKeys[mi];
+          if(pk){let s=0,sok=false;for(let hr=h0;hr<h1;hr++){const v=hh[pk][hr];if(v!=null&&isFinite(v)){s+=v;sok=true;}}if(sok)sums.push(s);}
+        });
+        if(!mxs.length)break;
+        const dt=new Date(hh.time[h0]);
+        labels.push([dn[dt.getDay()],String(dt.getDate())]);
+        tmax.push(Math.round(med(mxs)));tmin.push(Math.round(med(mns)));
+        const rm=sums.length?sums.reduce((a,b)=>a+b,0)/sums.length:0;
+        rain.push(Math.round(rm*10)/10);codes.push(_rainToCode(rm));
+      }
+      if(!labels.length)throw new Error('pas de données');
+    }else{
+      const url=`https://api.open-meteo.com/v1/forecast?latitude=${_cityLat}&longitude=${_cityLon}`
+        +`&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode&forecast_days=15&timezone=auto`;
+      const r=await fetch(url);
+      if(!r.ok)throw new Error('API '+r.status);
+      const d=await r.json();
+      const dy=d&&d.daily;
+      if(!dy||!dy.time)throw new Error('pas de données');
+      labels=dy.time.map(t=>{const dt=new Date(t+'T12:00:00');return [dn[dt.getDay()],String(dt.getDate())];});
+      tmax=dy.temperature_2m_max.map(v=>v==null?null:Math.round(v));
+      tmin=dy.temperature_2m_min.map(v=>v==null?null:Math.round(v));
+      rain=dy.precipitation_sum.map(v=>v==null?0:Math.round(v*10)/10);
+      codes=dy.weathercode||[];
+    }
     const isMob=window.innerWidth<600;
     const vmax=tmax.filter(v=>v!=null),vmin=tmin.filter(v=>v!=null);
     const _lo=(vmin.length?Math.min.apply(null,vmin):0),_hi=(vmax.length?Math.max.apply(null,vmax):30);
@@ -1057,7 +1144,7 @@ async function openGraph(){
         responsive:true,maintainAspectRatio:false,
         layout:{padding:{top:isMob?30:38}},
         interaction:{mode:'index',intersect:false},
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label==='Pluie'?('Pluie : '+c.parsed.y+' mm'):(c.dataset.label+' : '+c.parsed.y+'°')}}},
+        plugins:{legend:{display:false},tooltip:{enabled:false}},
         scales:{
           x:{grid:{display:false},ticks:{color:'#d2d2d2',font:{size:isMob?12:15,weight:'700',family:'Courier New'},maxRotation:0,autoSkip:false}},
           yT:{position:'left',grid:{color:'#1c1c1c'},ticks:{stepSize:5,color:'#e08a8a',font:{size:isMob?9:11,family:'Courier New'},callback:v=>v+'°'},min:yMin,max:yMax},
@@ -1074,211 +1161,7 @@ async function openGraph(){
   }
 }
 
-async function findWindy(){
-  if(_windRanking.length&&_windRankIdx<_windRanking.length){
-    const city=_windRanking[_windRankIdx++];
-    document.getElementById('cityInput').value=city.name;
-    document.getElementById('clearBtn').style.display='block';
-    _rainRanking=[];_rainRankIdx=0;
-    await load();return;
-  }
-  const candidates=[
-    {name:'Wellington',lat:-41.29,lon:174.78},{name:'Chicago',lat:41.88,lon:-87.63},
-    {name:'Buenos Aires',lat:-34.61,lon:-58.38},{name:'Reykjavik',lat:64.13,lon:-21.93},
-    {name:'Brest',lat:48.39,lon:-4.49},{name:'Bordeaux',lat:44.84,lon:-0.58},
-    {name:'Marseille',lat:43.30,lon:5.37},{name:'Perpignan',lat:42.70,lon:2.90},
-    {name:'Nice',lat:43.70,lon:7.27},{name:'Strasbourg',lat:48.57,lon:7.75},
-    {name:'Nantes',lat:47.22,lon:-1.55},{name:'Caen',lat:49.18,lon:-0.37},
-    {name:'La Rochelle',lat:46.16,lon:-1.15},{name:'Cherbourg',lat:49.63,lon:-1.62},
-    {name:'Bergen',lat:60.39,lon:5.32},{name:'Dublin',lat:53.33,lon:-6.25},
-    {name:'Glasgow',lat:55.86,lon:-4.25},{name:'Amsterdam',lat:52.37,lon:4.90},
-    {name:'Bilbao',lat:43.26,lon:-2.93},{name:'Casablanca',lat:33.59,lon:-7.62},
-    {name:'Istanbul',lat:41.01,lon:28.97},{name:'Athenes',lat:37.98,lon:23.73},
-  ];
-  const results=[];
-  for(const city of candidates){
-    try{
-      const url=`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=windspeed_10m&timezone=auto`;
-      const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),8000);
-      const resp=await fetch(url,{signal:ctrl.signal});clearTimeout(tid);
-      if(!resp.ok)continue;
-      const d=await resp.json();
-      const wind=d?.current?.windspeed_10m??0;
-      if(wind>0)results.push({name:city.name,wind});
-    }catch(e){}
-  }
-  results.sort((a,b)=>b.wind-a.wind);
-  _windRanking=results;_windRankIdx=0;
-  if(!results.length)return;
-  const best=results[_windRankIdx++];
-  document.getElementById('cityInput').value=best.name;
-  document.getElementById('clearBtn').style.display='block';
-  _rainRanking=[];_rainRankIdx=0;
-  _scrapedByMin={};
-  await load();
-}
-
-/* ── Ville avec pollen ── */
-let _pollenRanking=[],_pollenRankIdx=0;
-let _hotRanking=[],_hotRankIdx=0;
-async function findPollenCity(){
-  if(_pollenRanking.length&&_pollenRankIdx<_pollenRanking.length){
-    const city=_pollenRanking[_pollenRankIdx++];
-    document.getElementById('cityInput').value=city.name;
-    document.getElementById('clearBtn').style.display='block';
-    _rainRanking=[];_rainRankIdx=0;
-    await load();return;
-  }
-  const pollenCities=[
-    {name:'Paris',lat:48.85,lon:2.35},{name:'Lyon',lat:45.75,lon:4.85},
-    {name:'Bordeaux',lat:44.84,lon:-0.58},{name:'Toulouse',lat:43.60,lon:1.44},
-    {name:'Marseille',lat:43.30,lon:5.37},{name:'Strasbourg',lat:48.57,lon:7.75},
-    {name:'Nantes',lat:47.22,lon:-1.55},{name:'Rennes',lat:48.11,lon:-1.68},
-    {name:'Montpellier',lat:43.61,lon:3.88},{name:'Grenoble',lat:45.19,lon:5.72},
-    {name:'Nice',lat:43.70,lon:7.27},{name:'Lille',lat:50.63,lon:3.06},
-    {name:'Berlin',lat:52.52,lon:13.40},{name:'Madrid',lat:40.42,lon:-3.70},
-    {name:'Rome',lat:41.90,lon:12.50},{name:'Amsterdam',lat:52.37,lon:4.90},
-  ];
-  /* API pollen : hourly uniquement, on prend le max sur 24h */
-  const pollenKeys=['alder_pollen','birch_pollen','grass_pollen','mugwort_pollen','olive_pollen','ragweed_pollen'];
-  const results=[];
-  for(const city of pollenCities){
-    try{
-      const url=`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${city.lat}&longitude=${city.lon}&hourly=${pollenKeys.join(',')}&forecast_days=1&timezone=auto`;
-      const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),8000);
-      const resp=await fetch(url,{signal:ctrl.signal});clearTimeout(tid);
-      if(!resp.ok)continue;
-      const d=await resp.json();
-      /* Max sur toutes les especes et les 24 prochaines heures */
-      const maxPollen=pollenKeys.reduce((mx,k)=>{
-        const arr=d?.hourly?.[k]||[];
-        const dayMax=arr.slice(0,24).reduce((m,v)=>Math.max(m,v??0),0);
-        return dayMax>mx?dayMax:mx;
-      },0);
-      if(maxPollen>0)results.push({name:city.name,pollen:maxPollen});
-    }catch(e){}
-  }
-  results.sort((a,b)=>b.pollen-a.pollen);
-  _pollenRanking=results;_pollenRankIdx=0;
-  if(!results.length){showStatus('\u274c Pollen : donn\u00e9es indisponibles','#ff3d57');return;}
-  const best=results[_pollenRankIdx++];
-  document.getElementById('cityInput').value=best.name;
-  document.getElementById('clearBtn').style.display='block';
-  _rainRanking=[];_rainRankIdx=0;
-  _scrapedByMin={};
-  await load();
-}
-
-async function randomCity(){
-  const cities=['Tokyo','Delhi','Shanghai','São Paulo','Mexico City','Cairo','Mumbai','Beijing','Dhaka','Osaka','New York','Karachi','Buenos Aires','Istanbul','Kolkata','Manila','Lagos','Rio de Janeiro','Kinshasa','Guangzhou','Los Angeles','Moscow','Lahore','Bangalore','Paris','Bogotá','Jakarta','Chennai','Lima','Bangkok','Seoul','London','Tehran','Chicago','Ho Chi Minh','Luanda','Kuala Lumpur','Hong Kong','Riyadh','Baghdad','Santiago','Madrid','Houston','Dubai','Dar es Salaam','Johannesburg','Singapore','Addis Ababa','Barcelona','Nairobi','Cape Town','Sydney','Melbourne','Montreal','Toronto','Casablanca','Algiers','Accra','Abidjan','Dakar','Tunis','Amsterdam','Berlin','Rome','Vienna','Warsaw','Lisbon','Athens','Prague','Budapest','Reykjavik','Oslo','Stockholm','Helsinki','Copenhagen','Brussels','Zurich','Dublin','Auckland','Wellington','Brisbane','Perth','Vancouver','Calgary','Havana','Panama City','Caracas','Quito','La Paz','Kathmandu','Colombo','Yangon','Phnom Penh','Ulaanbaatar','Tashkent','Tbilisi','Amman','Beirut','Damascus','Kuwait City','Muscat','Doha','Seattle','San Francisco','Miami','New Orleans','Boston','Honolulu','Monterrey','Guadalajara','Mawsynram','Cherrapunji','Hilo','Bergen','Brest','Buenaventura','Freetown','Conakry','Douala','Libreville','Bordeaux','Lyon','Marseille','Nantes','Toulouse','Strasbourg','Zürich','Genève','Bruxelles'];
-  const city=cities[Math.floor(Math.random()*cities.length)];
-  document.getElementById('cityInput').value=city;
-  document.getElementById('clearBtn').style.display='block';
-  _rainRanking=[];_rainRankIdx=0;
-  _scrapedByMin={};
-  await load();
-}
-
-/* ── Recherche de la ville la plus pluvieuse ── */
-async function findRainiest(){
-  const btn=document.getElementById('exploreBtn');
-
-  /* Si on a déjà un classement, avancer au suivant sans re-scanner */
-  if(_rainRanking.length>0){
-    _rainRankIdx=(_rainRankIdx+1)%_rainRanking.length;
-    const next=_rainRanking[_rainRankIdx];
-    
-    document.getElementById('cityInput').value=next.name;
-    document.getElementById('clearBtn').style.display='block';
-    await load();
-    return;
-  }
-
-  /* Premier clic : scanner toutes les villes */
-  btn.classList.add('searching');
-  
-
-  const candidates=[
-    {name:'Mawsynram',lat:25.30,lon:91.58},{name:'Cherrapunji',lat:25.27,lon:91.73},
-    {name:'Buenaventura',lat:3.88,lon:-77.03},{name:'Quibdó',lat:5.69,lon:-76.66},
-    {name:'Hilo',lat:19.72,lon:-155.09},{name:'Monrovia',lat:6.30,lon:-10.80},
-    {name:'Freetown',lat:8.49,lon:-13.23},{name:'Conakry',lat:9.54,lon:-13.68},
-    {name:'Abidjan',lat:5.35,lon:-4.00},{name:'Douala',lat:4.05,lon:9.70},
-    {name:'Libreville',lat:0.39,lon:9.45},{name:'Singapore',lat:1.35,lon:103.82},
-    {name:'Kuala Lumpur',lat:3.14,lon:101.69},{name:'Jakarta',lat:-6.21,lon:106.85},
-    {name:'Manila',lat:14.60,lon:120.98},{name:'Mumbai',lat:19.08,lon:72.88},
-    {name:'Kolkata',lat:22.57,lon:88.36},{name:'Dhaka',lat:23.72,lon:90.41},
-    {name:'Rangoon',lat:16.87,lon:96.19},{name:'Bangkok',lat:13.76,lon:100.50},
-    {name:'Ho Chi Minh',lat:10.82,lon:106.63},{name:'Guangzhou',lat:23.13,lon:113.26},
-    {name:'Hong Kong',lat:22.32,lon:114.17},{name:'Taipei',lat:25.03,lon:121.56},
-    {name:'Tokyo',lat:35.68,lon:139.69},{name:'Osaka',lat:34.69,lon:135.50},
-    {name:'Sydney',lat:-33.87,lon:151.21},{name:'Darwin',lat:-12.46,lon:130.84},
-    {name:'Cairns',lat:-16.92,lon:145.77},{name:'Auckland',lat:-36.87,lon:174.77},
-    {name:'Lagos',lat:6.46,lon:3.39},{name:'Accra',lat:5.56,lon:-0.20},
-    {name:'Kinshasa',lat:-4.32,lon:15.32},{name:'Nairobi',lat:-1.29,lon:36.82},
-    {name:'Dar es Salaam',lat:-6.79,lon:39.20},{name:'Antananarivo',lat:-18.91,lon:47.54},
-    {name:'London',lat:51.51,lon:-0.13},{name:'Bergen',lat:60.39,lon:5.32},
-    {name:'Dublin',lat:53.33,lon:-6.25},{name:'Amsterdam',lat:52.37,lon:4.90},
-    {name:'Paris',lat:48.85,lon:2.35},{name:'Bordeaux',lat:44.84,lon:-0.58},
-    {name:'Brest',lat:48.39,lon:-4.49},{name:'Glasgow',lat:55.86,lon:-4.25},
-    {name:'Zurich',lat:47.38,lon:8.54},{name:'Vienna',lat:48.21,lon:16.37},
-    {name:'Caracas',lat:10.48,lon:-66.88},{name:'Bogotá',lat:4.71,lon:-74.07},
-    {name:'Lima',lat:-12.05,lon:-77.04},{name:'São Paulo',lat:-23.55,lon:-46.63},
-    {name:'Rio de Janeiro',lat:-22.91,lon:-43.17},{name:'Buenos Aires',lat:-34.61,lon:-58.38},
-    {name:'Miami',lat:25.77,lon:-80.19},{name:'New Orleans',lat:29.95,lon:-90.07},
-    {name:'Seattle',lat:47.61,lon:-122.33},{name:'Vancouver',lat:49.25,lon:-123.12},
-    {name:'Mexico City',lat:19.43,lon:-99.13},{name:'Havana',lat:23.14,lon:-82.36},
-    {name:'San Juan',lat:18.47,lon:-66.11},{name:'Reykjavik',lat:64.14,lon:-21.94},
-  ];
-
-  const batchSize=10;
-  let allResults=[];
-
-  for(let i=0;i<candidates.length;i+=batchSize){
-    const batch=candidates.slice(i,i+batchSize);
-    const results=await Promise.allSettled(batch.map(city=>
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=precipitation,rain&forecast_days=1&timezone=auto`)
-        .then(r=>r.json())
-        .then(d=>({...city,rain:d?.current?.precipitation??d?.current?.rain??0}))
-        .catch(()=>({...city,rain:0}))
-    ));
-    results.forEach(res=>{if(res.status==='fulfilled') allResults.push(res.value);});
-    
-  }
-
-  btn.classList.remove('searching');
-
-  /* Trier par pluie décroissante, garder seulement celles avec pluie > 0 */
-  _rainRanking=allResults.filter(c=>c.rain>0).sort((a,b)=>b.rain-a.rain);
-  _rainRankIdx=0;
-
-  if(!_rainRanking.length){
-    
-    return;
-  }
-
-  const best=_rainRanking[0];
-  
-  document.getElementById('cityInput').value=best.name;
-  document.getElementById('clearBtn').style.display='block';
-  await load();
-}
-
-/* ── Ville/village le plus chaud de France (max-max multi-modèles) ── */
-async function findHottest(){
-  const btn=document.getElementById('exploreBtn');
-  /* Classement déjà calculé → ville suivante */
-  if(_hotRanking.length>0){
-    _hotRankIdx=(_hotRankIdx+1)%_hotRanking.length;
-    const next=_hotRanking[_hotRankIdx];
-    document.getElementById('cityInput').value=next.name;
-    document.getElementById('clearBtn').style.display='block';
-    await load();
-    showStatus('🌡️ '+(_hotRankIdx+1)+'/'+_hotRanking.length+' · '+next.name+' '+Math.round(next.t)+'°','#ff6622');
-    return;
-  }
-  /* Villes & villages français répartis, points chauds connus inclus */
-  const villes=[
+const _GEO_FR=[
     {name:'Paris',lat:48.85,lon:2.35},{name:'Marseille',lat:43.30,lon:5.37},
     {name:'Lyon',lat:45.76,lon:4.84},{name:'Toulouse',lat:43.60,lon:1.44},
     {name:'Nice',lat:43.70,lon:7.27},{name:'Nantes',lat:47.22,lon:-1.55},
@@ -1323,6 +1206,195 @@ async function findHottest(){
     {name:'Orléans',lat:47.90,lon:1.90},{name:'Tours',lat:47.39,lon:0.69},
     {name:'Blois',lat:47.59,lon:1.33},{name:'Le Mans',lat:48.00,lon:0.20},
   ];
+const _GEO_WORLD=[
+    {name:'Mawsynram',lat:25.30,lon:91.58},{name:'Cherrapunji',lat:25.27,lon:91.73},
+    {name:'Buenaventura',lat:3.88,lon:-77.03},{name:'Quibdó',lat:5.69,lon:-76.66},
+    {name:'Hilo',lat:19.72,lon:-155.09},{name:'Monrovia',lat:6.30,lon:-10.80},
+    {name:'Freetown',lat:8.49,lon:-13.23},{name:'Conakry',lat:9.54,lon:-13.68},
+    {name:'Abidjan',lat:5.35,lon:-4.00},{name:'Douala',lat:4.05,lon:9.70},
+    {name:'Libreville',lat:0.39,lon:9.45},{name:'Singapore',lat:1.35,lon:103.82},
+    {name:'Kuala Lumpur',lat:3.14,lon:101.69},{name:'Jakarta',lat:-6.21,lon:106.85},
+    {name:'Manila',lat:14.60,lon:120.98},{name:'Mumbai',lat:19.08,lon:72.88},
+    {name:'Kolkata',lat:22.57,lon:88.36},{name:'Dhaka',lat:23.72,lon:90.41},
+    {name:'Rangoon',lat:16.87,lon:96.19},{name:'Bangkok',lat:13.76,lon:100.50},
+    {name:'Ho Chi Minh',lat:10.82,lon:106.63},{name:'Guangzhou',lat:23.13,lon:113.26},
+    {name:'Hong Kong',lat:22.32,lon:114.17},{name:'Taipei',lat:25.03,lon:121.56},
+    {name:'Tokyo',lat:35.68,lon:139.69},{name:'Osaka',lat:34.69,lon:135.50},
+    {name:'Sydney',lat:-33.87,lon:151.21},{name:'Darwin',lat:-12.46,lon:130.84},
+    {name:'Cairns',lat:-16.92,lon:145.77},{name:'Auckland',lat:-36.87,lon:174.77},
+    {name:'Lagos',lat:6.46,lon:3.39},{name:'Accra',lat:5.56,lon:-0.20},
+    {name:'Kinshasa',lat:-4.32,lon:15.32},{name:'Nairobi',lat:-1.29,lon:36.82},
+    {name:'Dar es Salaam',lat:-6.79,lon:39.20},{name:'Antananarivo',lat:-18.91,lon:47.54},
+    {name:'London',lat:51.51,lon:-0.13},{name:'Bergen',lat:60.39,lon:5.32},
+    {name:'Dublin',lat:53.33,lon:-6.25},{name:'Amsterdam',lat:52.37,lon:4.90},
+    {name:'Paris',lat:48.85,lon:2.35},{name:'Bordeaux',lat:44.84,lon:-0.58},
+    {name:'Brest',lat:48.39,lon:-4.49},{name:'Glasgow',lat:55.86,lon:-4.25},
+    {name:'Zurich',lat:47.38,lon:8.54},{name:'Vienna',lat:48.21,lon:16.37},
+    {name:'Caracas',lat:10.48,lon:-66.88},{name:'Bogotá',lat:4.71,lon:-74.07},
+    {name:'Lima',lat:-12.05,lon:-77.04},{name:'São Paulo',lat:-23.55,lon:-46.63},
+    {name:'Rio de Janeiro',lat:-22.91,lon:-43.17},{name:'Buenos Aires',lat:-34.61,lon:-58.38},
+    {name:'Miami',lat:25.77,lon:-80.19},{name:'New Orleans',lat:29.95,lon:-90.07},
+    {name:'Seattle',lat:47.61,lon:-122.33},{name:'Vancouver',lat:49.25,lon:-123.12},
+    {name:'Mexico City',lat:19.43,lon:-99.13},{name:'Havana',lat:23.14,lon:-82.36},
+    {name:'San Juan',lat:18.47,lon:-66.11},{name:'Reykjavik',lat:64.14,lon:-21.94},
+  ];
+let _geoScope='fr';
+function _setGeoScope(s){_geoScope=s;_hotRanking=[];_hotRankIdx=0;_rainRanking=[];_rainRankIdx=0;_windRanking=[];_windRankIdx=0;_pollenRanking=[];_pollenRankIdx=0;}
+function toggleGeoScope(){_setGeoScope(_geoScope==='fr'?'world':'fr');const isFr=_geoScope==='fr';const b=document.getElementById('geoScopeBtn');if(b)b.innerHTML=(isFr?'🇫🇷':'🌍')+' <span>'+(isFr?'France':'Monde')+'</span>';const sep=document.getElementById('geoScopeSep');if(sep)sep.textContent='— Villes extrêmes ('+(isFr?'France':'Monde')+') —';}
+
+async function findWindy(){
+  if(_windRanking.length&&_windRankIdx<_windRanking.length){
+    const city=_windRanking[_windRankIdx++];
+    document.getElementById('cityInput').value=city.name;
+    document.getElementById('clearBtn').style.display='block';
+    _rainRanking=[];_rainRankIdx=0;
+    await load();return;
+  }
+  const candidates=(_geoScope==='fr')?_GEO_FR:_GEO_WORLD;
+  const results=[];
+  for(const city of candidates){
+    try{
+      const url=`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=windspeed_10m&timezone=auto`;
+      const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),8000);
+      const resp=await fetch(url,{signal:ctrl.signal});clearTimeout(tid);
+      if(!resp.ok)continue;
+      const d=await resp.json();
+      const wind=d?.current?.windspeed_10m??0;
+      if(wind>0)results.push({name:city.name,wind});
+    }catch(e){}
+  }
+  results.sort((a,b)=>b.wind-a.wind);
+  _windRanking=results;_windRankIdx=0;
+  if(!results.length)return;
+  const best=results[_windRankIdx++];
+  document.getElementById('cityInput').value=best.name;
+  document.getElementById('clearBtn').style.display='block';
+  _rainRanking=[];_rainRankIdx=0;
+  _scrapedByMin={};
+  await load();
+}
+
+/* ── Ville avec pollen ── */
+let _pollenRanking=[],_pollenRankIdx=0;
+let _hotRanking=[],_hotRankIdx=0;
+async function findPollenCity(){
+  if(_pollenRanking.length&&_pollenRankIdx<_pollenRanking.length){
+    const city=_pollenRanking[_pollenRankIdx++];
+    document.getElementById('cityInput').value=city.name;
+    document.getElementById('clearBtn').style.display='block';
+    _rainRanking=[];_rainRankIdx=0;
+    await load();return;
+  }
+  const pollenCities=(_geoScope==='fr')?_GEO_FR:_GEO_WORLD;
+  /* API pollen : hourly uniquement, on prend le max sur 24h */
+  const pollenKeys=['alder_pollen','birch_pollen','grass_pollen','mugwort_pollen','olive_pollen','ragweed_pollen'];
+  const results=[];
+  for(const city of pollenCities){
+    try{
+      const url=`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${city.lat}&longitude=${city.lon}&hourly=${pollenKeys.join(',')}&forecast_days=1&timezone=auto`;
+      const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),8000);
+      const resp=await fetch(url,{signal:ctrl.signal});clearTimeout(tid);
+      if(!resp.ok)continue;
+      const d=await resp.json();
+      /* Max sur toutes les especes et les 24 prochaines heures */
+      const maxPollen=pollenKeys.reduce((mx,k)=>{
+        const arr=d?.hourly?.[k]||[];
+        const dayMax=arr.slice(0,24).reduce((m,v)=>Math.max(m,v??0),0);
+        return dayMax>mx?dayMax:mx;
+      },0);
+      if(maxPollen>0)results.push({name:city.name,pollen:maxPollen});
+    }catch(e){}
+  }
+  results.sort((a,b)=>b.pollen-a.pollen);
+  _pollenRanking=results;_pollenRankIdx=0;
+  if(!results.length){showStatus('\u274c Pollen : donn\u00e9es indisponibles','#ff3d57');return;}
+  const best=results[_pollenRankIdx++];
+  document.getElementById('cityInput').value=best.name;
+  document.getElementById('clearBtn').style.display='block';
+  _rainRanking=[];_rainRankIdx=0;
+  _scrapedByMin={};
+  await load();
+}
+
+async function randomCity(){
+  const cities=(_geoScope==='fr'?_GEO_FR:_GEO_WORLD).map(c=>c.name);
+  const city=cities[Math.floor(Math.random()*cities.length)];
+  document.getElementById('cityInput').value=city;
+  document.getElementById('clearBtn').style.display='block';
+  _rainRanking=[];_rainRankIdx=0;
+  _scrapedByMin={};
+  await load();
+}
+
+/* ── Recherche de la ville la plus pluvieuse ── */
+async function findRainiest(){
+  const btn=document.getElementById('exploreBtn');
+
+  /* Si on a déjà un classement, avancer au suivant sans re-scanner */
+  if(_rainRanking.length>0){
+    _rainRankIdx=(_rainRankIdx+1)%_rainRanking.length;
+    const next=_rainRanking[_rainRankIdx];
+    
+    document.getElementById('cityInput').value=next.name;
+    document.getElementById('clearBtn').style.display='block';
+    await load();
+    return;
+  }
+
+  /* Premier clic : scanner toutes les villes */
+  btn.classList.add('searching');
+  
+
+  const candidates=(_geoScope==='fr')?_GEO_FR:_GEO_WORLD;
+
+  const batchSize=10;
+  let allResults=[];
+
+  for(let i=0;i<candidates.length;i+=batchSize){
+    const batch=candidates.slice(i,i+batchSize);
+    const results=await Promise.allSettled(batch.map(city=>
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&daily=precipitation_sum&forecast_days=2&timezone=auto`)
+        .then(r=>r.json())
+        .then(d=>({...city,rain:(d?.daily?.precipitation_sum||[]).reduce((s,v)=>s+(v||0),0)}))
+        .catch(()=>({...city,rain:0}))
+    ));
+    results.forEach(res=>{if(res.status==='fulfilled') allResults.push(res.value);});
+    
+  }
+
+  btn.classList.remove('searching');
+
+  /* Trier par pluie décroissante, garder seulement celles avec pluie > 0 */
+  _rainRanking=allResults.filter(c=>c.rain>0).sort((a,b)=>b.rain-a.rain);
+  _rainRankIdx=0;
+
+  if(!_rainRanking.length){
+    showStatus('💧 Aucune pluie prévue sur 48h ('+(_geoScope==='fr'?'France':'Monde')+')','#5b9bff');
+    return;
+  }
+
+  const best=_rainRanking[0];
+  
+  document.getElementById('cityInput').value=best.name;
+  document.getElementById('clearBtn').style.display='block';
+  await load();
+}
+
+/* ── Ville/village le plus chaud de France (max-max multi-modèles) ── */
+async function findHottest(){
+  const btn=document.getElementById('exploreBtn');
+  /* Classement déjà calculé → ville suivante */
+  if(_hotRanking.length>0){
+    _hotRankIdx=(_hotRankIdx+1)%_hotRanking.length;
+    const next=_hotRanking[_hotRankIdx];
+    document.getElementById('cityInput').value=next.name;
+    document.getElementById('clearBtn').style.display='block';
+    await load();
+    showStatus('🌡️ '+(_hotRankIdx+1)+'/'+_hotRanking.length+' · '+next.name+' '+Math.round(next.t)+'°','#ff6622');
+    return;
+  }
+  /* Villes & villages français répartis, points chauds connus inclus */
+  const villes=(_geoScope==='fr')?_GEO_FR:_GEO_WORLD;
   btn.classList.add('searching');
   showStatus('🌡️ Scan '+villes.length+' villes…','#ff6622');
   /* Modèles larges pour le max-max */
@@ -1568,6 +1640,8 @@ async function fetchScrapedRain(name){
         let html=ct.includes('json')?(await resp.json()).contents||'':(await resp.text());
         if(html&&html.length>5000&&html.includes('dansHeure')){
           console.log('[scrape] OK',siteUrl);
+          const mCanon=html.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i);
+          if(!_scrapeUrl)_scrapeUrl=(mCanon&&mCanon[1])?mCanon[1]:siteUrl;
           const mLabels=html.match(/labels:\s*(\[[^\]]+\])/);
           const mData=html.match(/data:\s*(\[\d[\d.,\s]*\])/);
           if(!mLabels||!mData)continue;
@@ -1863,13 +1937,13 @@ async function fetchMfRain(lat,lon){
     if(!d?.properties?.forecast?.length)return;
     _mfRainNow=d.properties.forecast;
     /* Recalculer _mfByMin immédiatement */
-    const mfIntensToMmh=[0,0,0.2,0.5]; /* 0=sec 1=bruine 2=faible 3=modéré */
+    const mfIntensToMmh=[0,0,0.2,0.5,2.5]; /* 1=sec 2=faible 3=modéré 4=fort */
     _mfByMin={};
     const t0=new Date(_mfRainNow[0].time);
     _mfRainNow.forEach(function(f){
       const tF=new Date(f.time);
       const diffMin=Math.round((tF-t0)/60000);
-      _mfByMin[diffMin]=mfIntensToMmh[Math.min(f.rain_intensity??0,3)];
+      _mfByMin[diffMin]=mfIntensToMmh[Math.min(f.rain_intensity??0,4)];
     });
     console.log('[MF] rain OK, '+Object.keys(_mfByMin).length+' slots');
     renderMfChart();
@@ -1962,6 +2036,15 @@ async function refreshMFToken(){
 
 
 /* ── O : Cache sessionStorage 5min ── */
+let _lastCacheTs=0;
+function setUpdateStamp(source,ts){
+  const el=document.getElementById('updateStamp');
+  if(!el)return;
+  const t=ts?new Date(ts):new Date();
+  const hh=String(t.getHours()).padStart(2,'0'),mm=String(t.getMinutes()).padStart(2,'0');
+  if(source==='cache'){el.textContent='Cache · '+hh+':'+mm;el.style.color='#cc8844';}
+  else{el.textContent='Mis à jour '+hh+':'+mm;el.style.color='#66bb66';}
+}
 function _cacheKey(lat,lon){return 'pp_'+lat.toFixed(3)+'_'+lon.toFixed(3);}
 function _saveCache(lat,lon,data){
   try{sessionStorage.setItem(_cacheKey(lat,lon),JSON.stringify({ts:Date.now(),data}));}catch(e){}
@@ -1972,6 +2055,7 @@ function _loadCache(lat,lon){
     if(!s)return null;
     const obj=JSON.parse(s);
     if(Date.now()-obj.ts>8*60*1000)return null; /* expiré après 8min */
+    _lastCacheTs=obj.ts;
     return obj.data;
   }catch(e){return null;}
 }
@@ -2137,6 +2221,7 @@ async function load(){
     if(!geo.results?.length){showStatus('❌ Aucune ville trouvée près de "'+city+'"','#ff3d57');return;}
     /* Prendre le résultat le plus proche si coordonnées dispo, sinon le premier */
     const best=geo.results[0];
+    _scrapeUrl=buildLameteoUrl(best.name,best.postcodes&&best.postcodes[0]);
     if(best.name.toLowerCase()!==city.toLowerCase()){
       document.getElementById('cityInput').value=best.name;
       document.getElementById('clearBtn').style.display='block';
@@ -2197,6 +2282,7 @@ async function load(){
         initBar();initRadar(lat,lon);
         const rc=document.getElementById('radarCard');
         if(rc)rc.style.display='block';
+        setUpdateStamp('cache',_lastCacheTs);
         return; /* cache hit : pas de fetch réseau */
       }
     }
@@ -2231,6 +2317,7 @@ async function load(){
     if(omCurrent?.hourly?.temperature_2m) _tempHourly=omCurrent.hourly.temperature_2m;
     if(omDaily?.hourly?.temperature_2m) _tempHourly=omDaily.hourly.temperature_2m; /* J0→J+15 : badges temp au-delà de J+1 */
     _saveCache(lat,lon,{omMain,omM15,omCurrent,metno,omDaily,_tempByDayCached:_tempByDay,_uvCached:_uvHourlyData}); /* O */
+    setUpdateStamp('fresh');
     /* Températures J+1 (index 1 dans daily = demain) */
     /* Températures J0→J+14 */
     if(omDaily?.daily?.temperature_2m_max) _tempByDay=omDaily.daily.temperature_2m_max.map(function(mx,di){return{max:mx,min:omDaily.daily.temperature_2m_min?.[di]??null};});
@@ -2433,14 +2520,14 @@ function processData(omMain,omM15,rainMx,probMx){
     return vals.length ? Math.max(...vals) : 0;
   });
   /* Fusionner m15 avec données MF si disponibles */
-  const mfIntensToMmh=[0,0,0.2,0.5]; /* 0=sec 1=bruine 2=faible 3=modéré */ /* 0=sec,1=faible,2=modéré,3=fort */
+  const mfIntensToMmh=[0,0,0.2,0.5,2.5]; /* 1=sec 2=faible 3=modéré 4=fort */
   _mfByMin={}; /* reset global */
   if(_mfRainNow?.length){
     const t0=new Date(_mfRainNow[0].time);
     _mfRainNow.forEach(f=>{
       const tF=new Date(f.time);
       const diffMin=Math.round((tF-t0)/60000);
-      _mfByMin[diffMin]=mfIntensToMmh[Math.min(f.rain_intensity??0,3)];
+      _mfByMin[diffMin]=mfIntensToMmh[Math.min(f.rain_intensity??0,4)];
     });
   }
 
@@ -3202,8 +3289,12 @@ function updateNextRain(pts){
   var now=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz||'UTC'}));
   var nowTotalMin=now.getHours()*60+now.getMinutes();
   function ptToMin(p){
-    /* hourIdx = index horaire absolu depuis H0 du jour courant */
-    return p.hourIdx*60 - nowTotalMin;
+    /* Points horaires : hourIdx = index horaire absolu depuis H0 du jour courant */
+    if(p.hourIdx>=0) return p.hourIdx*60 - nowTotalMin;
+    /* Points court terme (+5', +20'...) : hourIdx=-1, le délai est dans le label */
+    var mm=/^\+(\d+)'$/.exec(p.t||'');
+    if(mm) return parseInt(mm[1],10);
+    return 999999;
   }
   function fmtDelai(min){
     if(min<=2)return 'maintenant';
@@ -4419,10 +4510,21 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
   </div>
 </div>
 
+<div id="scrapePanel">
+  <div id="scrapeBar">
+    <span class="ttl" id="scrapeBarTitle">🌧 Pluie minute</span>
+    <a id="scrapeOpenExt" href="#" target="_blank" rel="noopener">↗ Navigateur</a>
+    <button onclick="closeScrapePage()">✕</button>
+  </div>
+  <div id="scrapeHint">💡 Rien ne s'affiche ? Ce site bloque l'affichage intégré — touchez ↗ Navigateur.</div>
+  <iframe id="scrapeFrame" src="about:blank"></iframe>
+</div>
 <div id="graphPanel">
   <div id="graphCard">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div id="graphTitle" style="font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#7ec97e">📈 GRAPHIQUE J → J+14</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <button id="graphPrev" onclick="openGraph('14')" title="GRAPH14 (J→J+14)" style="background:none;border:1px solid #444;border-radius:4px;color:#7ec97e;padding:4px 11px;cursor:pointer;font-size:18px;font-weight:900;line-height:1">‹</button>
+      <div id="graphTitle" style="flex:1;text-align:center;font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#7ec97e">📈 GRAPHIQUE J → J+14</div>
+      <button id="graphNext" onclick="openGraph('28')" title="GRAPH28 (J+15→J+28)" style="background:none;border:1px solid #444;border-radius:4px;color:#7ec97e;padding:4px 11px;cursor:pointer;font-size:18px;font-weight:900;line-height:1">›</button>
       <button onclick="closeGraph()" style="background:none;border:1px solid #444;border-radius:4px;color:#888;padding:4px 10px;cursor:pointer;font-size:16px">✕</button>
     </div>
     <div id="graphStatus">Chargement…</div>
