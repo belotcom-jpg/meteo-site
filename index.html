@@ -274,6 +274,8 @@ html.simple .graph-leg{font-size:9px!important;padding:2px 0!important;margin-to
       try{
         var gp=document.getElementById('graphPanel'),cw=document.getElementById('chartWrapper');
         if(gp&&cw&&cw.parentNode){cw.parentNode.insertBefore(gp,cw);gp.classList.add('open');}
+        var sb=document.getElementById('simpleBtn');
+        if(sb){sb.textContent='🖥';sb.title='Revenir à la version complète';sb.style.color='#00ffff';sb.style.fontWeight='900';sb.style.fontSize='18px';}
       }catch(e){}
     });
   }catch(e){}
@@ -1072,6 +1074,8 @@ function _wmoEmoji(c){
 }
 function _tBandColor(t){var hh=Math.max(0,Math.min(230,230-(t-5)/40*230));return 'hsla('+hh+',78%,55%,0.13)';}
 function _rainToCode(mm){if(mm<0.2)return 2;if(mm<1)return 3;if(mm<5)return 61;if(mm<15)return 63;return 65;}
+/* ── Tendance des révisions : flèches dans le GRAPH = écart entre la prévision d'hier (run précédent, API previous-runs Open-Meteo) et la prévision actuelle ── */
+function _isoDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 async function openGraph(mode){
   mode=(mode==='28')?'28':'14';
   const p=document.getElementById('graphPanel');
@@ -1165,6 +1169,32 @@ async function openGraph(mode){
       rain=dy.precipitation_sum.map(v=>v==null?0:Math.round(v*10)/10);
       codes=dy.weathercode||[];
     }
+    /* ── Flèches de tendance : prévision d'hier (run précédent) vs actuelle, via l'API previous-runs. Mode 14 uniquement, jamais en vue simplifiée. ── */
+    let deltaT=[],deltaR=[];
+    if(mode!=='28'&&!document.documentElement.classList.contains('simple')){
+      try{
+        const _pru=`https://previous-runs-api.open-meteo.com/v1/forecast?latitude=${_cityLat}&longitude=${_cityLon}&daily=temperature_2m_max,temperature_2m_max_previous_day1,precipitation_sum,precipitation_sum_previous_day1&forecast_days=15&timezone=auto`;
+        const _ac=new AbortController();const _tid=setTimeout(()=>_ac.abort(),5000);
+        const _pr=await fetch(_pru,{signal:_ac.signal});clearTimeout(_tid);
+        if(_pr.ok){
+          const _pd=await _pr.json(),_dy=_pd&&_pd.daily;
+          if(_dy&&_dy.time){
+            const _map={};
+            for(let j=0;j<_dy.time.length;j++){
+              const _cMx=_dy.temperature_2m_max&&_dy.temperature_2m_max[j],_pMx=_dy.temperature_2m_max_previous_day1&&_dy.temperature_2m_max_previous_day1[j];
+              const _cR=_dy.precipitation_sum&&_dy.precipitation_sum[j],_pR=_dy.precipitation_sum_previous_day1&&_dy.precipitation_sum_previous_day1[j];
+              _map[_dy.time[j]]={dt:(_cMx!=null&&_pMx!=null)?(_cMx-_pMx):null,dr:(_cR!=null&&_pR!=null)?(_cR-_pR):null};
+            }
+            const _base=new Date();_base.setHours(12,0,0,0);
+            for(let i=0;i<labels.length;i++){
+              const _dt=new Date(_base);_dt.setDate(_base.getDate()+i);
+              const _m=_map[_isoDate(_dt)];
+              deltaT[i]=_m?_m.dt:null;deltaR[i]=_m?_m.dr:null;
+            }
+          }
+        }
+      }catch(e){deltaT=[];deltaR=[];}
+    }
     const isMob=window.innerWidth<600;
     const vmax=tmax.filter(v=>v!=null),vmin=tmin.filter(v=>v!=null);
     const _lo=(vmin.length?Math.min.apply(null,vmin):0),_hi=(vmax.length?Math.max.apply(null,vmax):30);
@@ -1233,6 +1263,33 @@ async function openGraph(mode){
     };
     if(_graphChart){_graphChart.destroy();_graphChart=null;}
     const cv=document.getElementById('graphCanvas');
+    const _drawArrow=(ctx,x,y,delta,kind)=>{
+      const aMax=(kind==='temp')?5:8,thr=(kind==='temp')?0.5:0.4;
+      const m=Math.min(Math.abs(delta),aMax);
+      if(m<thr)return;
+      const up=delta>0;
+      const h=(isMob?6:7)+(m/aMax)*(isMob?9:12);
+      const w=(isMob?3.2:4)+(m/aMax)*(isMob?1.8:2.4);
+      const col=(kind==='temp')?(up?'#ff6a3d':'#46a4ff'):(up?'#29a3ff':'#9a9a9a');
+      ctx.save();
+      ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=isMob?1.6:2;ctx.lineCap='round';ctx.lineJoin='round';
+      const yTail=up?y+h/2:y-h/2,yHead=up?y-h/2:y+h/2;
+      ctx.beginPath();ctx.moveTo(x,yTail);ctx.lineTo(x,yHead);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(x,yHead);ctx.lineTo(x-w,yHead+(up?w*1.2:-w*1.2));ctx.lineTo(x+w,yHead+(up?w*1.2:-w*1.2));ctx.closePath();ctx.fill();
+      ctx.restore();
+    };
+    const trendArrowPlugin={
+      id:'trendArrows',
+      afterDatasetsDraw(chart){
+        if(document.documentElement.classList.contains('simple'))return;
+        const ctx=chart.ctx;
+        const mMax=chart.getDatasetMeta(0),mRain=chart.getDatasetMeta(2);
+        for(let i=0;i<labels.length;i++){
+          if(deltaT[i]!=null&&mMax.data&&mMax.data[i]){const pt=mMax.data[i];_drawArrow(ctx,pt.x+(isMob?11:14),pt.y-(isMob?17:21),deltaT[i],'temp');}
+          if(deltaR[i]!=null&&mRain.data&&mRain.data[i]){const b=mRain.data[i];const by=(b.y!=null)?b.y:(chart.chartArea?chart.chartArea.bottom:0);_drawArrow(ctx,b.x,by-(isMob?9:11),deltaR[i],'rain');}
+        }
+      }
+    };
     _graphChart=new Chart(cv.getContext('2d'),{
       type:'line',
       data:{labels,datasets:[
@@ -1251,7 +1308,7 @@ async function openGraph(mode){
           yP:{position:'right',grid:{drawOnChartArea:false},ticks:{color:'#5b9bff',font:{size:isMob?9:11,family:'Courier New'}},min:0,suggestedMax:Math.ceil(maxRain*1.4),title:{display:true,text:'mm',color:'#5b9bff',font:{size:10}}}
         }
       },
-      plugins:[tempBandsPlugin,bandsPlugin,labelPlugin]
+      plugins:[tempBandsPlugin,bandsPlugin,labelPlugin,trendArrowPlugin]
     });
     if(status)status.style.display='none';
     if(wrap)wrap.style.display='block';
@@ -2492,7 +2549,7 @@ async function load(){
     fetchMinutely15(lat,lon);
     /* Redraw de sécurité : 1s, 3s, 8s */
     [1000,3000,8000].forEach(function(t){setTimeout(function(){if(myChart){lastW=0;myChart.update();}},t);});
-    if(document.documentElement.classList.contains('simple')){try{openGraph('14');}catch(e){}[1300,4200].forEach(function(t){setTimeout(function(){if(document.documentElement.classList.contains('simple')){try{openGraph('14');}catch(e){}}},t);});}
+    if(document.documentElement.classList.contains('simple')){try{openGraph('14');}catch(e){}}
   }catch(e){console.warn('[load]',e.message);showStatus('❌ '+e.message,'#ff3d57');}
   finally{btn.disabled=false;btn.textContent='GO';}
 }
@@ -4703,7 +4760,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
     <div class="graph-leg" id="graphLeg" style="display:none">
       <span><b style="background:#e23b3b"></b>Maximum</span>
       <span><b style="background:#3b7ce2"></b>Minimum</span>
-      <span><b style="background:#2196f3"></b>Pr\u00e9cipitations (mm)</span>
+      <span><b style="background:#2196f3"></b>Précipitations (mm)</span>
+      <span style="opacity:.85">↑↓ tendance vs dernière consultation</span>
     </div>
   </div>
 </div>
