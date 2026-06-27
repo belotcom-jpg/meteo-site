@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>PluiePro v1.64</title>
+<title>PluiePro v2.0</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -21,7 +21,7 @@ body{background:#000;color:#fff;font-family:'Courier New',monospace;padding:3px;
 #clearBtn:hover{color:#fff}
 
 #gpsBtn:hover{color:#44ff88}
-#homeBtn{background:none;border:none;color:#666;font-size:17px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0}
+#homeBtn,#simpleBtn{background:none;border:none;color:#666;font-size:17px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0}
 #homeBtn:hover{color:#ffe600}
 
 #diceBtn:hover{color:#fff}
@@ -246,9 +246,39 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   #modelLegendInline .mib.hidden{opacity:.2}
   #modelLegendInline .mdot{width:16px;height:2px;border-radius:1px;display:inline-block;vertical-align:middle}
 
+/* ===== Mode simplifié iPhone (?simple=ok) : GRAPH (J→J+14) en haut + vue J+1 en bas ===== */
+html.simple #clearBtn,
+html.simple #exploreWrap,
+html.simple #sourcesBar,
+html.simple #radarCard,
+html.simple #viewBtns{display:none!important}
+html.simple #graphPanel{display:flex!important;position:relative!important;inset:auto!important;z-index:auto!important;background:transparent!important;padding:0!important;overflow:visible!important;height:42vh;margin:6px 0 0}
+html.simple #graphCard{flex:1;display:flex;flex-direction:column;max-width:100%;margin:0;padding:6px 8px;min-height:0}
+html.simple #graphWrap{flex:1!important;min-height:0;display:block!important}
+html.simple #graphCanvas{height:100%!important;width:100%!important}
+html.simple #graphPanel button[aria-label="Fermer"]{display:none!important}
+html.simple #graphNote{display:none!important}
+html.simple #graphStatus{padding:3px;font-size:11px}
+html.simple .canvas-container{height:30vh!important;max-height:30vh!important;min-height:150px}
+html.simple .graph-leg{font-size:9px!important;padding:2px 0!important;margin-top:2px!important}
 </style>
 </head>
 <body>
+<script>
+/* Mode simplifié (?simple=ok) : GRAPH en haut, vue J+1 en bas, UI minimale */
+(function(){
+  try{
+    if(new URLSearchParams(location.search).get('simple')!=='ok')return;
+    document.documentElement.classList.add('simple');
+    document.addEventListener('DOMContentLoaded',function(){
+      try{
+        var gp=document.getElementById('graphPanel'),cw=document.getElementById('chartWrapper');
+        if(gp&&cw&&cw.parentNode){cw.parentNode.insertBefore(gp,cw);gp.classList.add('open');}
+      }catch(e){}
+    });
+  }catch(e){}
+})();
+</script>
 <div class="wrap">
   <div class="search">
     <input id="cityInput" value="Juvisy-sur-Orge"
@@ -269,6 +299,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
         <button onclick="findPollenCity();closeExploreMenu()">🌼 <span>Alerte pollen</span></button>
       </div>
     </div>
+    <button id="simpleBtn" onclick="toggleSimple()" title="Vue simplifiée (GRAPH + J+1)">📱</button>
     <button id="helpBtn" onclick="openHelpPanel()" title="Aide : les modèles météo">❓</button>
     <button id="homeBtn"  onclick="goHome()" title="Retour Juvisy-sur-Orge">🏠</button>
     <button id="searchBtn" onclick="load()">GO</button>
@@ -467,6 +498,8 @@ let _windData=null;
 let _windGustData=null;
 let _solarData=null;
 let _tempByDay=null; /* températures par jour J0..J+14 */
+let _rainByDay=null; /* pluie synthèse (p80 multi-modèles) sommée par jour J0..J+14 — cohérence vue principale ↔ GRAPH */
+let _probByDay=null; /* proba de pluie synthèse (max horaire) par jour J0..J+14 — cohérence vue principale ↔ tendance */
 let _pressureMSL=null; /* pression au niveau de la mer (hPa) */
 let _capeHourly=null; /* CAPE J/kg heure par heure */
 let _wcodeHourly=null; /* code météo WMO horaire (95/96/99 = orage) */
@@ -942,10 +975,18 @@ async function openExt30(){
     if(!dayData.length)throw new Error('pas assez de données');
     let html1='',html2='';
     dayData.forEach((o,di)=>{
-      const tMaxMed=med(o.allMax),tMinMed=med(o.allMin);
+      let tMaxMed=med(o.allMax),tMinMed=med(o.allMin);
       const tMaxHi=Math.max(...o.allMax),tMinLo=Math.min(...o.allMin);
-      const pRain=o.allSum.length?Math.round(100*o.allSum.filter(v=>v>=1).length/o.allSum.length):0;
-      const rMed=o.allSum.length?o.allSum.reduce((a,b)=>a+b,0)/o.allSum.length:0; /* MOYENNE (médiane=0 trop souvent sur la pluie) */
+      let pRain=o.allSum.length?Math.round(100*o.allSum.filter(v=>v>=1).length/o.allSum.length):0;
+      let rMed=o.allSum.length?o.allSum.reduce((a,b)=>a+b,0)/o.allSum.length:0; /* MOYENNE (médiane=0 trop souvent sur la pluie) */
+      /* Cohérence J0→J+14 : on affiche EXACTEMENT la prévision principale (médiane pondérée déterministe + pluie/proba synthèse). L'ensemble ne sert que pour J+15→J+28. */
+      if(o.day<=14&&_tempByDay&&_tempByDay[o.day]){
+        if(_tempByDay[o.day].max!=null)tMaxMed=_tempByDay[o.day].max;
+        if(_tempByDay[o.day].min!=null)tMinMed=_tempByDay[o.day].min;
+        if(_rainByDay&&_rainByDay[o.day]!=null)rMed=_rainByDay[o.day];
+        if(_probByDay&&_probByDay[o.day]!=null)pRain=_probByDay[o.day];
+        if(_tempMaxByDay&&_tempMaxByDay[o.day]!=null){o.hottest=_tempMaxByDay[o.day];o.hottestModel=(_tempMaxModelByDay&&_tempMaxModelByDay[o.day])||o.hottestModel;}
+      }
       const mAvg=o.allMax.reduce((a,b)=>a+b,0)/o.allMax.length;
       const sd=Math.sqrt(o.allMax.reduce((s,x)=>s+(x-mAvg)*(x-mAvg),0)/o.allMax.length);
       const dot=sd<2?'🟢':(sd<3.5?'🟡':'🟠');
@@ -1050,36 +1091,64 @@ async function openGraph(mode){
     const dn=['dim','lun','mar','mer','jeu','ven','sam'];
     let labels,tmax,tmin,rain,codes;
     if(mode==='28'){
-      /* J+15→J+28 : ensemble GFS (le forecast classique s'arrête à ~J+15) */
-      const url=`https://ensemble-api.open-meteo.com/v1/ensemble?latitude=${_cityLat}&longitude=${_cityLon}`
-        +`&hourly=temperature_2m,precipitation&models=gfs05&forecast_days=29&timezone=auto`;
-      const r=await fetch(url);
-      if(!r.ok)throw new Error('API '+r.status);
-      const d=await r.json();
-      const hh=d&&d.hourly;
-      if(!hh||!hh.time)throw new Error('pas de données');
-      const tKeys=Object.keys(hh).filter(k=>k.startsWith('temperature_2m'));
-      const pKeys=Object.keys(hh).filter(k=>k.startsWith('precipitation'));
+      /* J+15→J+28 : MÊMES 4 modèles d'ensemble que la popup tendance (ext30) → valeurs identiques */
+      const ENS28=['gfs05','ecmwf_ifs025','icon_eu','gem_global'];
       const med=a=>{const s=[...a].sort((x,y)=>x-y);const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;};
+      const res28=await Promise.all(ENS28.map(async id=>{
+        try{
+          const u=`https://ensemble-api.open-meteo.com/v1/ensemble?latitude=${_cityLat}&longitude=${_cityLon}`
+            +`&hourly=temperature_2m,precipitation&models=${id}&forecast_days=29&timezone=auto`;
+          const rr=await fetch(u);if(!rr.ok)return null;
+          const dd=await rr.json();if(!dd?.hourly?.time)return null;
+          return dd.hourly;
+        }catch(_){return null;}
+      }));
+      const oks=res28.filter(Boolean);
+      if(!oks.length)throw new Error('aucun modèle d\'ensemble disponible');
+      const maxLen=Math.max(...oks.map(h=>h.time.length));
+      const maxDay=Math.min(28,Math.floor(maxLen/24)-1);
       labels=[];tmax=[];tmin=[];rain=[];codes=[];
-      const maxDay=Math.min(28,Math.floor(hh.time.length/24)-1);
       for(let day=15;day<=maxDay;day++){
-        const h0=day*24,h1=Math.min(h0+24,hh.time.length);
-        if(h0>=hh.time.length)break;
-        const mxs=[],mns=[],sums=[];
-        tKeys.forEach((tk,mi)=>{
-          let mx=-99,mn=99,okv=false;
-          for(let hr=h0;hr<h1;hr++){const v=hh[tk][hr];if(v!=null&&isFinite(v)){if(v>mx)mx=v;if(v<mn)mn=v;okv=true;}}
-          if(okv){mxs.push(mx);mns.push(mn);}
-          const pk=pKeys[mi];
-          if(pk){let s=0,sok=false;for(let hr=h0;hr<h1;hr++){const v=hh[pk][hr];if(v!=null&&isFinite(v)){s+=v;sok=true;}}if(sok)sums.push(s);}
+        const h0=day*24,h1=h0+24;
+        const allMax=[],allMin=[],allSum=[];
+        let ref=null;
+        oks.forEach(hh=>{
+          if(h0>=hh.time.length)return;
+          if(!ref)ref=hh;
+          const tKeys=Object.keys(hh).filter(k=>k.startsWith('temperature_2m'));
+          const pKeys=Object.keys(hh).filter(k=>k.startsWith('precipitation'));
+          tKeys.forEach(tk=>{
+            let mx=-99,mn=99,okv=false;
+            for(let h=h0;h<Math.min(h1,hh.time.length);h++){const v=hh[tk][h];if(v!=null&&isFinite(v)){if(v>mx)mx=v;if(v<mn)mn=v;okv=true;}}
+            if(okv){allMax.push(mx);allMin.push(mn);}
+          });
+          pKeys.forEach(pk=>{
+            let s=0,okv=false;
+            for(let h=h0;h<Math.min(h1,hh.time.length);h++){const v=hh[pk][h];if(v!=null&&isFinite(v)){s+=v;okv=true;}}
+            if(okv)allSum.push(s);
+          });
         });
-        if(!mxs.length)break;
-        const dt=new Date(hh.time[h0]);
+        if(!allMax.length||!ref)continue;
+        const dt=new Date(ref.time[h0]);
         labels.push([dn[dt.getDay()],String(dt.getDate())]);
-        tmax.push(Math.round(med(mxs)));tmin.push(Math.round(med(mns)));
-        const rm=sums.length?sums.reduce((a,b)=>a+b,0)/sums.length:0;
+        tmax.push(Math.round(med(allMax)));tmin.push(Math.round(med(allMin)));
+        const rm=allSum.length?allSum.reduce((a,b)=>a+b,0)/allSum.length:0;
         rain.push(Math.round(rm*10)/10);codes.push(_rainToCode(rm));
+      }
+      if(!labels.length)throw new Error('pas de données');
+    }else if(_tempByDay&&_tempByDay.length&&_rainByDay&&_rainByDay.length){
+      /* Cohérence : MÊMES données que la vue principale (synthèse multi-modèles) plutôt qu'une requête best_match séparée */
+      labels=[];tmax=[];tmin=[];rain=[];codes=[];
+      const today=new Date();
+      const N15=Math.min(15,_tempByDay.length,_rainByDay.length);
+      for(let d=0;d<N15;d++){
+        const dt=new Date(today);dt.setDate(today.getDate()+d);
+        labels.push([dn[dt.getDay()],String(dt.getDate())]);
+        const tb=_tempByDay[d]||{};
+        tmax.push(tb.max==null?null:Math.round(tb.max));
+        tmin.push(tb.min==null?null:Math.round(tb.min));
+        const rr=_rainByDay[d]||0;
+        rain.push(rr);codes.push(_rainToCode(rr));
       }
       if(!labels.length)throw new Error('pas de données');
     }else{
@@ -1460,6 +1529,10 @@ async function findHottest(){
 }
 
 /* ── retour ville par défaut ── */
+function toggleSimple(){
+  try{var u=new URL(location.href);if(u.searchParams.get('simple')==='ok')u.searchParams.delete('simple');else u.searchParams.set('simple','ok');location.href=u.toString();}
+  catch(e){location.href=location.pathname+'?simple=ok';}
+}
 function goHome(){
   _windRanking=[];_windRankIdx=0;
   _pollenRanking=[];_pollenRankIdx=0;
@@ -2419,6 +2492,7 @@ async function load(){
     fetchMinutely15(lat,lon);
     /* Redraw de sécurité : 1s, 3s, 8s */
     [1000,3000,8000].forEach(function(t){setTimeout(function(){if(myChart){lastW=0;myChart.update();}},t);});
+    if(document.documentElement.classList.contains('simple')){try{openGraph('14');}catch(e){}[1300,4200].forEach(function(t){setTimeout(function(){if(document.documentElement.classList.contains('simple')){try{openGraph('14');}catch(e){}}},t);});}
   }catch(e){console.warn('[load]',e.message);showStatus('❌ '+e.message,'#ff3d57');}
   finally{btn.disabled=false;btn.textContent='GO';}
 }
@@ -2565,6 +2639,10 @@ function setView(mode){
 
 /* ── points ── */
 function processData(omMain,omM15,rainMx,probMx){
+  /* Pluie synthèse (p80 multi-modèles) sommée par jour J0..J14 = exactement ce que la vue principale cumule → la vue GRAPH lira les mêmes chiffres */
+  try{_rainByDay=[];for(let _d=0;_d<15;_d++){let _s=0,_any=false;for(let _h=0;_h<24;_h++){const _v=synthR(_d*24+_h,rainMx);if(_v!=null&&isFinite(_v)){_s+=_v;_any=true;}}_rainByDay[_d]=_any?Math.round(_s*10)/10:0;}}catch(e){}
+  /* Proba de pluie synthèse par jour = MAX horaire (comme la carte résumé) → la tendance lira la même chose */
+  try{_probByDay=[];for(let _d=0;_d<15;_d++){let _mx=0;for(let _h=0;_h<24;_h++){const _v=synthP(_d*24+_h,probMx);if(_v!=null&&isFinite(_v)&&_v>_mx)_mx=_v;}_probByDay[_d]=Math.round(_mx);}}catch(e){}
   const pts=[],mods=SOURCES.map(()=>[]);
   const now=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz}));
   const h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
