@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>PluiePro v1.63</title>
+<title>PluiePro v1.64</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -121,10 +121,10 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 .view-btn.active{border-bottom:2px solid #00ffff;color:#00ffff;background:rgba(0,255,255,.04)}
 .view-btn.ton{border-bottom:2px solid #00ffff;color:#00ffff;background:rgba(0,255,255,.08)}
 .card{background:#080808;border:2px solid #333;border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
-.header{display:flex;justify-content:space-between;align-items:center;padding:5px 10px;border-bottom:1px solid #2a2a2a;gap:8px}
-.header-left{display:flex;flex-direction:column;gap:2px;min-width:0}
+.header{display:flex;justify-content:space-between;align-items:center;padding:4px 10px;border-bottom:1px solid #2a2a2a;gap:8px}
+.header-left{display:flex;flex-direction:column;gap:1px;min-width:0}
 .city-tz{font-size:clamp(9px,2vw,11px);color:#ddd;letter-spacing:1px;font-weight:700}
-#nextRainBadge{font-size:clamp(9px,2vw,10px);font-weight:900;font-family:'Courier New',monospace;margin-top:2px;letter-spacing:1px;transition:color .3s}
+#nextRainBadge{font-size:clamp(9px,2vw,10px);font-weight:900;font-family:'Courier New',monospace;letter-spacing:.5px;transition:color .3s;white-space:nowrap}
 .legend{display:flex;flex-direction:row;gap:8px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
 .leg{display:flex;align-items:center;gap:5px}
 .leg-dot{width:20px;height:3px;border-radius:2px;flex-shrink:0}
@@ -208,6 +208,12 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   #scrapeFrame{flex:1;border:0;width:100%;background:#fff}
   #scrapeHint{font-size:11px;color:#999;background:#111;padding:6px 12px;text-align:center;border-bottom:1px solid #2a2a2a;flex-shrink:0;line-height:1.3}
   :focus-visible{outline:2px solid #4a9eff;outline-offset:2px;border-radius:3px}
+  #favBar{display:flex;gap:6px;overflow-x:auto;padding:6px 2px 0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  #favBar::-webkit-scrollbar{display:none}
+  .fav-chip{flex:0 0 auto;background:#1a1a1a;border:1px solid #333;color:#ccc;font-size:12px;font-weight:600;padding:5px 11px;border-radius:14px;cursor:pointer;white-space:nowrap;font-family:'Courier New',monospace}
+  .fav-chip:active{background:#262626}
+  .fav-chip.active{border-color:#4a9eff;color:#fff;background:#15273a}
+  .fav-add{flex:0 0 auto;background:#1a1a1a;border:1px dashed #555;color:#e0b84c;font-size:14px;font-weight:700;padding:5px 10px;border-radius:14px;cursor:pointer;line-height:1.1}
   #graphWrap{position:relative;width:100%;height:calc(100vh - 128px);height:calc(100dvh - 128px);min-height:320px}
   #graphTitle{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:78%}
   #graphStatus{text-align:center;color:#aaa;font-size:14px;font-family:'Courier New',monospace;padding:40px 0}
@@ -267,6 +273,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
     <button id="homeBtn"  onclick="goHome()" title="Retour Juvisy-sur-Orge">🏠</button>
     <button id="searchBtn" onclick="load()">GO</button>
   </div>
+  <div id="favBar"></div>
   <div id="sourcesBar"></div>
   <div id="viewBtns">
     <div id="viewWrap">
@@ -306,9 +313,11 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   <div class="card">
     <div class="header">
       <div class="header-left">
-        <div id="displayTz" class="city-tz"></div>
-        <div id="updateStamp" style="font-size:10px;font-weight:700;font-family:'Courier New',monospace;letter-spacing:.5px;margin-top:1px"></div>
-        <div id="nextRainBadge"></div>
+        <div style="display:flex;align-items:baseline;gap:7px;min-width:0;flex-wrap:wrap">
+          <div id="displayTz" class="city-tz"></div>
+          <div id="updateStamp" style="font-size:9px;font-weight:700;font-family:'Courier New',monospace;letter-spacing:.3px;white-space:nowrap"></div>
+          <div id="nextRainBadge"></div>
+        </div>
         <div id="modelLegendInline" style="display:none;flex-wrap:wrap;gap:3px;margin-top:1px"></div>
         <div id="reliabilityScore" style="display:none;font-size:10px;font-weight:700;font-family:'Courier New';letter-spacing:.5px;margin-top:2px"></div>
       </div>
@@ -460,6 +469,7 @@ let _solarData=null;
 let _tempByDay=null; /* températures par jour J0..J+14 */
 let _pressureMSL=null; /* pression au niveau de la mer (hPa) */
 let _capeHourly=null; /* CAPE J/kg heure par heure */
+let _wcodeHourly=null; /* code météo WMO horaire (95/96/99 = orage) */
 let _cloudData=null;
 let _humidityHourly=null;
 let _sunshineHourly=null;
@@ -1165,7 +1175,7 @@ async function openGraph(mode){
         responsive:true,maintainAspectRatio:false,
         layout:{padding:{top:isMob?30:38}},
         interaction:{mode:'index',intersect:false},
-        plugins:{legend:{display:false},tooltip:{enabled:_hasMouse}},
+        plugins:{legend:{display:false},tooltip:{enabled:false}},
         scales:{
           x:{grid:{display:false},ticks:{color:'#d2d2d2',font:{size:isMob?12:15,weight:'700',family:'Courier New'},maxRotation:0,autoSkip:false}},
           yT:{position:'left',grid:{color:'#1c1c1c'},ticks:{stepSize:5,color:'#e08a8a',font:{size:isMob?9:11,family:'Courier New'},callback:v=>v+'°'},min:yMin,max:yMax},
@@ -2066,6 +2076,36 @@ function setUpdateStamp(source,ts){
   if(source==='cache'){el.textContent='Cache · '+hh+':'+mm;el.style.color='#cc8844';}
   else{el.textContent='Mis à jour '+hh+':'+mm;el.style.color='#66bb66';}
 }
+/* ── Villes favorites ── */
+const _FAV_KEY='pp_favs';
+const _FAV_DEFAULT=['Juvisy-sur-Orge','Meylan','Chamrousse','Ajaccio','Pornic'];
+function _loadFavs(){try{const s=localStorage.getItem(_FAV_KEY);if(s){const a=JSON.parse(s);if(Array.isArray(a)&&a.length)return a;}}catch(e){}return _FAV_DEFAULT.slice();}
+function _saveFavs(a){try{localStorage.setItem(_FAV_KEY,JSON.stringify(a));}catch(e){}}
+let _favs=_loadFavs();
+function renderFavs(){
+  const bar=document.getElementById('favBar');if(!bar)return;
+  const cur=(typeof cityName!=='undefined'&&cityName)?cityName:'';
+  bar.innerHTML='';
+  _favs.forEach(function(n){
+    const chip=document.createElement('div');
+    chip.className='fav-chip'+((cur&&n.toLowerCase()===cur.toLowerCase())?' active':'');
+    chip.textContent=n;chip.title=n+'  (clic droit = retirer)';
+    chip.addEventListener('click',function(){loadFav(n);});
+    chip.addEventListener('contextmenu',function(ev){ev.preventDefault();removeFav(n);});
+    bar.appendChild(chip);
+  });
+  const add=document.createElement('div');
+  const isFav=cur&&_favs.some(function(n){return n.toLowerCase()===cur.toLowerCase();});
+  add.className='fav-add';add.textContent=isFav?'★':'☆';
+  add.title=isFav?'Retirer cette ville des favoris':'Ajouter cette ville aux favoris';
+  add.setAttribute('role','button');add.setAttribute('aria-label',add.title);
+  add.addEventListener('click',toggleFavCurrent);
+  bar.appendChild(add);
+}
+function loadFav(n){const inp=document.getElementById('cityInput');if(inp)inp.value=n;load();}
+function toggleFavCurrent(){const cur=(typeof cityName!=='undefined'&&cityName)?cityName:'';if(!cur)return;const i=_favs.findIndex(function(n){return n.toLowerCase()===cur.toLowerCase();});if(i>=0)_favs.splice(i,1);else _favs.push(cur);_saveFavs(_favs);renderFavs();}
+function removeFav(n){const i=_favs.findIndex(function(x){return x.toLowerCase()===String(n).toLowerCase();});if(i<0)return;if(confirm('Retirer "'+n+'" des favoris ?')){_favs.splice(i,1);_saveFavs(_favs);renderFavs();}}
+try{renderFavs();}catch(e){}
 function _cacheKey(lat,lon){return 'pp_'+lat.toFixed(3)+'_'+lon.toFixed(3);}
 function _saveCache(lat,lon,data){
   try{sessionStorage.setItem(_cacheKey(lat,lon),JSON.stringify({ts:Date.now(),data}));}catch(e){}
@@ -2124,7 +2164,7 @@ async function _loadWithCoords(lat,lon,displayName){
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&models=meteofrance_arome_france_hd,icon_d2&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain,pressure_msl&hourly=uv_index,temperature_2m&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover,windgusts_10m,uv_index,temperature_2m,relative_humidity_2m,sunshine_duration&forecast_days=16&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover,windgusts_10m,uv_index,temperature_2m,relative_humidity_2m,sunshine_duration,weathercode&forecast_days=16&timezone=auto`),
     ]);
     const [omMain,omM15,omCurrent,metno,omDaily]=[_r0,_r1,_r2,_r3,_r4].map(r=>r.status==='fulfilled'?r.value:null);
     const rainMx=buildRainMx(omMain,metno,0);
@@ -2190,6 +2230,7 @@ async function _loadWithCoords(lat,lon,displayName){
     if(omDaily?.hourly?.temperature_2m) _tempHourly=omDaily.hourly.temperature_2m;
     if(omDaily?.hourly?.relative_humidity_2m){_humidityHourly=omDaily.hourly.relative_humidity_2m;updateLazyDatasets();}
     if(omDaily?.hourly?.sunshine_duration) _sunshineHourly=omDaily.hourly.sunshine_duration;
+    if(omDaily?.hourly?.weathercode) _wcodeHourly=omDaily.hourly.weathercode;
     if(omDaily?.hourly?.uv_index) _uvHourlyData=omDaily.hourly.uv_index;
     if(omDaily?.daily?.temperature_2m_max) _tempByDay=omDaily.daily.temperature_2m_max.map(function(mx,di){return{max:mx,min:omDaily.daily.temperature_2m_min?.[di]??null};});
     _sunriseJ0=omDaily?.daily?.sunrise?.[0]?new Date(omDaily.daily.sunrise[0]).getHours()+(new Date(omDaily.daily.sunrise[0]).getMinutes()/60):6;
@@ -2285,6 +2326,7 @@ async function load(){
     if(omDaily?.hourly?.temperature_2m) _tempHourly=omDaily.hourly.temperature_2m;
     if(omDaily?.hourly?.relative_humidity_2m){_humidityHourly=omDaily.hourly.relative_humidity_2m;updateLazyDatasets();}
     if(omDaily?.hourly?.sunshine_duration) _sunshineHourly=omDaily.hourly.sunshine_duration;
+    if(omDaily?.hourly?.weathercode) _wcodeHourly=omDaily.hourly.weathercode;
     if(omDaily?.hourly?.uv_index) _uvHourlyData=omDaily.hourly.uv_index;
         if(omDaily?.daily?.temperature_2m_max) _tempByDay=omDaily.daily.temperature_2m_max.map(function(mx,di){return{max:mx,min:omDaily.daily.temperature_2m_min?.[di]??null};});
         _sunriseJ0=omDaily?.daily?.sunrise?.[0]?new Date(omDaily.daily.sunrise[0]).getHours()+(new Date(omDaily.daily.sunrise[0]).getMinutes()/60):6;
@@ -2304,6 +2346,7 @@ async function load(){
         const rc=document.getElementById('radarCard');
         if(rc)rc.style.display='block';
         setUpdateStamp('cache',_lastCacheTs);
+        try{renderFavs();}catch(e){}
         return; /* cache hit : pas de fetch réseau */
       }
     }
@@ -2313,7 +2356,7 @@ async function load(){
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&models=meteofrance_arome_france_hd,icon_d2&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain,pressure_msl&hourly=uv_index,temperature_2m&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover,windgusts_10m,uv_index,temperature_2m,relative_humidity_2m,sunshine_duration&forecast_days=16&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover,windgusts_10m,uv_index,temperature_2m,relative_humidity_2m,sunshine_duration,weathercode&forecast_days=16&timezone=auto`),
     ]);
     const [omMain,omM15,omCurrent,metno,omDaily]=_res2.map(r=>r.status==='fulfilled'?r.value:null);
     if(!omMain?.hourly?.time){showStatus('❌ Open-Meteo inaccessible — réessaie dans quelques secondes','#ff3d57');return;}
@@ -2339,6 +2382,7 @@ async function load(){
     if(omDaily?.hourly?.temperature_2m) _tempHourly=omDaily.hourly.temperature_2m; /* J0→J+15 : badges temp au-delà de J+1 */
     _saveCache(lat,lon,{omMain,omM15,omCurrent,metno,omDaily,_tempByDayCached:_tempByDay,_uvCached:_uvHourlyData}); /* O */
     setUpdateStamp('fresh');
+    try{renderFavs();}catch(e){}
     /* Températures J+1 (index 1 dans daily = demain) */
     /* Températures J0→J+14 */
     if(omDaily?.daily?.temperature_2m_max) _tempByDay=omDaily.daily.temperature_2m_max.map(function(mx,di){return{max:mx,min:omDaily.daily.temperature_2m_min?.[di]??null};});
@@ -3173,7 +3217,7 @@ function renderJm1(pts,mods,realPrecip){
         y:{position:'left',beginAtZero:true,grace:'5%',grid:{color:'#181818',lineWidth:1},ticks:{color:'#ffe600',font:{weight:'bold',size:isMob?8:11,family:'Courier New'}},border:{color:'#555'},title:{display:!isMob,text:'mm/h',color:'#ffe600',font:{size:9,family:'Courier New'}}},
         yProb:{position:'right',min:0,max:100,display:!_ultraMode,grid:{display:false},ticks:{color:'rgba(255,255,255,0.4)',font:{weight:'bold',size:isMob?8:11,family:'Courier New'},callback:v=>v+'%',stepSize:25},border:{color:'#555'},title:{display:!isMob,text:'prob.',color:'rgba(255,255,255,0.4)',font:{size:9,family:'Courier New'}}}
       },
-      plugins:{legend:{display:false},tooltip:{enabled:_hasMouse}}
+      plugins:{legend:{display:false},tooltip:{enabled:false}}
     },
     plugins:[ {id:'overlay',afterDraw(chart){if(chart.width!==lastW){lastW=chart.width;buildOverlays(chart,pts);}else{updateOverlayPositions(chart,pts);}drawUncertaintyBadge(chart,pts);}},
       {id:'realLegend',afterDraw(chart){
@@ -3426,7 +3470,7 @@ function render(pts,mods){
           border:{color:'#555'},title:{display:!isMob,text:'prob.',color:'rgba(255,255,255,0.4)',font:{size:9,family:'Courier New'}}
         }
       },
-      plugins:{legend:{display:false},tooltip:{enabled:_hasMouse}}
+      plugins:{legend:{display:false},tooltip:{enabled:false}}
     },
     plugins:[ {id:'overlay',afterDraw(chart){if(chart.width!==lastW){lastW=chart.width;buildOverlays(chart,pts);}else{updateOverlayPositions(chart,pts);}drawUncertaintyBadge(chart,pts);}},  
       {id:'drySlots',afterDatasetsDraw(chart){
@@ -3782,9 +3826,24 @@ function drawUncertaintyBadge(chart,pts){
       if(capeFinite.length)capeMax=Math.round(Math.max(...capeFinite));
     }
 
-    /* ── Seuil : CAPE>400+prob>50 uniquement ── */
-    const alerte=capeMax>400&&probMax>50;
-    if(!alerte)return;
+    /* ── Risque orage gradué (CAPE + proba convective) ── */
+    let stormLvl=0; /* 0=aucun 1=faible 2=modéré 3=fort */
+    if(probMax>30){
+      if(capeMax>1500)stormLvl=3;else if(capeMax>800)stormLvl=2;else if(capeMax>300)stormLvl=1;
+    }
+    /* Code météo WMO orage (95 orage, 96 grêle légère, 99 grêle forte) sur ~7 j → garantit l'affichage même sans CAPE */
+    if(_wcodeHourly&&_wcodeHourly.length){
+      const _w=_wcodeHourly.slice(0,168).filter(Number.isFinite);
+      if(_w.some(c=>c>=99))stormLvl=Math.max(stormLvl,3);
+      else if(_w.some(c=>c>=95))stormLvl=Math.max(stormLvl,2);
+    }
+    /* Indice orage = exactement la courbe orange pointillée affichée (pluie × proba /5, 0-100) → le badge suit ce que tu vois */
+    let oIdx=0;
+    for(let _i=0;_i<pts.length;_i++){const _v=Math.min((pts[_i].r||0)*(pts[_i].p||0)/5,100);if(_v>oIdx)oIdx=_v;}
+    if(oIdx>=45)stormLvl=Math.max(stormLvl,3);else if(oIdx>=25)stormLvl=Math.max(stormLvl,2);else if(oIdx>=10)stormLvl=Math.max(stormLvl,1);
+    const alerte=stormLvl>0;
+    const _badPre=pts.filter(p=>p.hourIdx>=0&&p.spread>2);
+    if(!alerte&&!_badPre.length)return;
 
     ctx.save();
 
@@ -3799,18 +3858,23 @@ function drawUncertaintyBadge(chart,pts){
       ctx.closePath();
     }
 
-    const bx=left+8,by=top+8,bw=180,bh=20;
+    const bx=left+8,by=top+8,bh=20;
 
     if(alerte){
-      /* Badge rouge clignotant */
-      const alpha=0.78+0.22*Math.sin(Date.now()/280);
-      ctx.fillStyle='rgba(200,15,15,'+alpha+')';
-      ctx.strokeStyle='#ff3333';ctx.lineWidth=1.5;
+      ctx.font='bold 10px Courier New';ctx.textAlign='left';ctx.textBaseline='middle';
+      const bolts='⚡'.repeat(stormLvl);
+      const lbl=stormLvl===3?'ORAGE FORT':stormLvl===2?'ORAGE MODÉRÉ':'RISQUE ORAGE';
+      const txt=bolts+' '+lbl+(capeMax>0?(' — CAPE '+capeMax+' J/kg'):'');
+      const bw=Math.max(150,ctx.measureText(txt).width+14);
+      const fill=[[0,0,0],[150,100,0],[190,90,0],[200,15,15]][stormLvl];
+      const bord=['#000','#ffcc44','#ff8800','#ff3333'][stormLvl];
+      const alpha=stormLvl>=2?(0.78+0.22*Math.sin(Date.now()/280)):0.88;
+      ctx.fillStyle='rgba('+fill[0]+','+fill[1]+','+fill[2]+','+alpha+')';
+      ctx.strokeStyle=bord;ctx.lineWidth=1.5;
       rRect(bx,by,bw,bh,4);ctx.fill();ctx.stroke();
       ctx.fillStyle='#ffffff';
-      ctx.font='bold 10px Courier New';ctx.textAlign='left';ctx.textBaseline='middle';
-      ctx.fillText('⚡ ALERTE ORAGE — CAPE '+capeMax+' J/kg',bx+6,by+10);
-      if(!drawUncertaintyBadge._t)
+      ctx.fillText(txt,bx+6,by+10);
+      if(stormLvl>=2&&!drawUncertaintyBadge._t)
         drawUncertaintyBadge._t=setInterval(()=>{try{if(myChart)myChart.render();}catch(e){}},280);
     }
 
@@ -4154,7 +4218,7 @@ function initScrollbar(){
 /* ── Zoom tactile + molette ── */
 (function(){
   const wrapper=()=>document.getElementById('chartWrapper');
-  let startDist=0,startRange=null,startPan=null,startX=0;
+  let startDist=0,startRange=null,startPan=null,startX=0,_lastMulti=0;
 
   function getTouches(e){return Array.from(e.touches);}
   function dist(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);}
@@ -4162,7 +4226,7 @@ function initScrollbar(){
   document.addEventListener('touchstart',e=>{
     if(!wrapper()||!wrapper().contains(e.target))return;
     const t=getTouches(e);
-    if(t.length===2){e.preventDefault();startDist=dist(t[0],t[1]);startRange=[zoomMin,zoomMax];}
+    if(t.length===2){e.preventDefault();_lastMulti=Date.now();startDist=dist(t[0],t[1]);startRange=[zoomMin,zoomMax];}
     else if(t.length===1){startPan=[zoomMin,zoomMax];startX=t[0].clientX;}
   },{passive:false});
 
@@ -4170,7 +4234,7 @@ function initScrollbar(){
     if(!wrapper()||!wrapper().contains(e.target))return;
     const t=getTouches(e);
     if(t.length===2&&startRange){
-      e.preventDefault();
+      e.preventDefault();_lastMulti=Date.now();
       const d=dist(t[0],t[1]);const scale=startDist/d;
       const [lo,hi]=startRange;const center=(lo+hi)/2;const half=(hi-lo)*scale/2;
       zoomMin=Math.max(0,center-half);zoomMax=Math.min(1,center+half);
@@ -4208,6 +4272,8 @@ function initScrollbar(){
   let lastTap=0;
   document.addEventListener('touchend',e=>{
     if(!wrapper()||!wrapper().contains(e.target))return;
+    /* Ne PAS confondre la fin d'un pinch (les 2 doigts qui se lèvent) avec un double-tap : sinon le zoom se réinitialise dès qu'on lâche */
+    if(Date.now()-_lastMulti<500||e.touches.length>0){lastTap=0;return;}
     const now=Date.now();
     if(now-lastTap<300){zoomMin=0;zoomMax=1;if(myChart){delete myChart.options.scales.x.min;delete myChart.options.scales.x.max;myChart.update('none');updateScrollbar();}}
     lastTap=now;
