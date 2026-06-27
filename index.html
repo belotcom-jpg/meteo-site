@@ -261,6 +261,9 @@ html.simple #graphNote{display:none!important}
 html.simple #graphStatus{padding:3px;font-size:11px}
 html.simple .canvas-container{height:30vh!important;max-height:30vh!important;min-height:150px}
 html.simple .graph-leg{font-size:9px!important;padding:2px 0!important;margin-top:2px!important}
+/* Bouton bascule simple/complète (état enfoncé quand la vue simplifiée est active) */
+#simpleBtn{border:1px solid #3a3a3a!important;border-radius:9px!important;padding:0 8px!important;color:#7ff!important;font-size:15px!important;min-height:34px}
+html.simple #simpleBtn{background:#00ffff!important;color:#000!important;box-shadow:inset 0 2px 5px rgba(0,0,0,.5)!important;border-color:#0cc!important}
 </style>
 </head>
 <body>
@@ -274,8 +277,10 @@ html.simple .graph-leg{font-size:9px!important;padding:2px 0!important;margin-to
       try{
         var gp=document.getElementById('graphPanel'),cw=document.getElementById('chartWrapper');
         if(gp&&cw&&cw.parentNode){cw.parentNode.insertBefore(gp,cw);gp.classList.add('open');}
+      }catch(e){}
+      try{
         var sb=document.getElementById('simpleBtn');
-        if(sb){sb.textContent='🖥';sb.title='Revenir à la version complète';sb.style.color='#00ffff';sb.style.fontWeight='900';sb.style.fontSize='18px';}
+        if(sb){sb.textContent='🖥';sb.title='Revenir à la version complète (vue simplifiée active)';}
       }catch(e){}
     });
   }catch(e){}
@@ -1169,27 +1174,30 @@ async function openGraph(mode){
       rain=dy.precipitation_sum.map(v=>v==null?0:Math.round(v*10)/10);
       codes=dy.weathercode||[];
     }
-    /* ── Flèches de tendance : prévision d'hier (run précédent) vs actuelle, via l'API previous-runs. Mode 14 uniquement, jamais en vue simplifiée. ── */
+    /* ── Flèches de tendance : prévision d'hier (run précédent) vs actuelle, via l'API previous-runs (variables HORAIRES, agrégées par jour). Mode 14 uniquement, jamais en vue simplifiée. ── */
     let deltaT=[],deltaR=[];
     if(mode!=='28'&&!document.documentElement.classList.contains('simple')){
       try{
-        const _pru=`https://previous-runs-api.open-meteo.com/v1/forecast?latitude=${_cityLat}&longitude=${_cityLon}&daily=temperature_2m_max,temperature_2m_max_previous_day1,precipitation_sum,precipitation_sum_previous_day1&forecast_days=15&timezone=auto`;
-        const _ac=new AbortController();const _tid=setTimeout(()=>_ac.abort(),5000);
+        const _pru=`https://previous-runs-api.open-meteo.com/v1/forecast?latitude=${_cityLat}&longitude=${_cityLon}&hourly=temperature_2m,temperature_2m_previous_day1,precipitation,precipitation_previous_day1&forecast_days=15&timezone=auto`;
+        const _ac=new AbortController();const _tid=setTimeout(()=>_ac.abort(),6000);
         const _pr=await fetch(_pru,{signal:_ac.signal});clearTimeout(_tid);
         if(_pr.ok){
-          const _pd=await _pr.json(),_dy=_pd&&_pd.daily;
-          if(_dy&&_dy.time){
-            const _map={};
-            for(let j=0;j<_dy.time.length;j++){
-              const _cMx=_dy.temperature_2m_max&&_dy.temperature_2m_max[j],_pMx=_dy.temperature_2m_max_previous_day1&&_dy.temperature_2m_max_previous_day1[j];
-              const _cR=_dy.precipitation_sum&&_dy.precipitation_sum[j],_pR=_dy.precipitation_sum_previous_day1&&_dy.precipitation_sum_previous_day1[j];
-              _map[_dy.time[j]]={dt:(_cMx!=null&&_pMx!=null)?(_cMx-_pMx):null,dr:(_cR!=null&&_pR!=null)?(_cR-_pR):null};
-            }
-            const _base=new Date();_base.setHours(12,0,0,0);
-            for(let i=0;i<labels.length;i++){
-              const _dt=new Date(_base);_dt.setDate(_base.getDate()+i);
-              const _m=_map[_isoDate(_dt)];
-              deltaT[i]=_m?_m.dt:null;deltaR[i]=_m?_m.dr:null;
+          const _pd=await _pr.json(),_h=_pd&&_pd.hourly;
+          if(_h&&_h.time){
+            const _cT=_h.temperature_2m||[],_pT=_h.temperature_2m_previous_day1||[];
+            const _cR=_h.precipitation||[],_pR=_h.precipitation_previous_day1||[];
+            const _nD=Math.floor(_h.time.length/24);
+            for(let i=0;i<labels.length&&i<_nD;i++){
+              let _cmx=-999,_pmx=-999,_cs=0,_ps=0,_okC=false,_okP=false,_okCs=false,_okPs=false;
+              for(let hh=i*24;hh<(i+1)*24&&hh<_h.time.length;hh++){
+                const _a=_cT[hh],_b=_pT[hh],_e=_cR[hh],_f=_pR[hh];
+                if(_a!=null&&isFinite(_a)){if(_a>_cmx)_cmx=_a;_okC=true;}
+                if(_b!=null&&isFinite(_b)){if(_b>_pmx)_pmx=_b;_okP=true;}
+                if(_e!=null&&isFinite(_e)){_cs+=_e;_okCs=true;}
+                if(_f!=null&&isFinite(_f)){_ps+=_f;_okPs=true;}
+              }
+              deltaT[i]=(_okC&&_okP)?(_cmx-_pmx):null;
+              deltaR[i]=(_okCs&&_okPs)?(_cs-_ps):null;
             }
           }
         }
@@ -1264,12 +1272,12 @@ async function openGraph(mode){
     if(_graphChart){_graphChart.destroy();_graphChart=null;}
     const cv=document.getElementById('graphCanvas');
     const _drawArrow=(ctx,x,y,delta,kind)=>{
-      const aMax=(kind==='temp')?5:8,thr=(kind==='temp')?0.5:0.4;
+      const aMax=(kind==='temp')?6:10,thr=(kind==='temp')?0.15:0.1;
       const m=Math.min(Math.abs(delta),aMax);
       if(m<thr)return;
       const up=delta>0;
-      const h=(isMob?6:7)+(m/aMax)*(isMob?9:12);
-      const w=(isMob?3.2:4)+(m/aMax)*(isMob?1.8:2.4);
+      const h=(isMob?7:9)+(m/aMax)*(isMob?8:11);
+      const w=(isMob?3.4:4.2)+(m/aMax)*(isMob?1.6:2.2);
       const col=(kind==='temp')?(up?'#ff6a3d':'#46a4ff'):(up?'#29a3ff':'#9a9a9a');
       ctx.save();
       ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=isMob?1.6:2;ctx.lineCap='round';ctx.lineJoin='round';
@@ -1587,8 +1595,9 @@ async function findHottest(){
 
 /* ── retour ville par défaut ── */
 function toggleSimple(){
-  try{var u=new URL(location.href);if(u.searchParams.get('simple')==='ok')u.searchParams.delete('simple');else u.searchParams.set('simple','ok');location.href=u.toString();}
-  catch(e){location.href=location.pathname+'?simple=ok';}
+  var bare=location.href.split('#')[0].split('?')[0];
+  var simple=document.documentElement.classList.contains('simple')||location.search.indexOf('simple=ok')>=0;
+  location.href=simple?bare:(bare+'?simple=ok');
 }
 function goHome(){
   _windRanking=[];_windRankIdx=0;
