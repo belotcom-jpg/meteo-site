@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>PluiePro v2.2</title>
+<title>PluiePro v2.3</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -83,6 +83,16 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 .src-dot{width:6px;height:6px;border-radius:50%;background:#222;transition:all .3s;flex-shrink:0}
 .src-badge.loading .src-dot{animation:pulse .8s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+/* ── Vigilance Météo-France : badges cliquables clignotants en haut à gauche ── */
+#vigilanceBadges{display:none;flex-wrap:wrap;gap:5px;align-items:center}
+.vig-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:14px;font-size:11px;font-weight:900;color:#111;text-decoration:none;font-family:Arial,Helvetica,sans-serif;box-shadow:0 2px 7px rgba(0,0,0,.55);white-space:nowrap}
+.vig-badge .vig-ic{font-size:13px;line-height:1}
+.vig-c2{background:#ffd400}
+.vig-c3{background:#ff8a00}
+.vig-c4{background:#ff1e1e;color:#fff}
+.vig-link{background:#39414f;color:#d6dde8}
+.vig-diag{font-size:8px;color:#888;background:#000;border:1px solid #333;border-radius:8px;padding:2px 6px;font-family:'Courier New',monospace;animation:none;white-space:nowrap}
+@keyframes vigblink{0%,100%{opacity:1}50%{opacity:.2}}
 #viewBtns{display:none;gap:0;justify-content:flex-start;align-items:flex-end;border-bottom:1px solid #333;flex-wrap:wrap}
 @media(max-width:500px){
   #viewBtns{border-bottom:none}
@@ -298,6 +308,7 @@ html.simple #simpleBtn{background:#00ffff!important;color:#000!important;box-sha
 /* Affiche la version (lue depuis le titre, source unique) à côté de P80 */
 document.addEventListener('DOMContentLoaded',function(){try{var vt=document.getElementById('versionTag');if(vt){var m=(document.title||'').match(/v[\d.]+/i);vt.textContent=m?m[0]:'';}}catch(e){}});
 </script>
+<div id="vigilanceBadges" aria-label="Vigilance Météo-France"></div>
 <div class="wrap">
   <div class="search">
     <input id="cityInput" value="Juvisy-sur-Orge"
@@ -2413,10 +2424,94 @@ async function _loadWithCoords(lat,lon,displayName){
   finally{btn.disabled=false;btn.textContent='GO';}
 }
 
+/* ══════ Vigilance Météo-France du département (badges cliquables, haut à gauche) ══════ */
+var _VIG_PHEN={1:['Vent','💨'],2:['Pluie-inond.','🌧️'],3:['Orages','⛈️'],4:['Crues','🌊'],5:['Neige-verglas','❄️'],6:['Canicule','🌡️'],7:['Grand froid','🥶'],8:['Avalanches','🏔️'],9:['Vagues-subm.','🌊']};
+function _deptSlug(name){var s=(name||'').toLowerCase();var from='àâäéèêëîïôöùûüÿç',to='aaaeeeeiioouuuyc';s=s.replace(/./g,function(c){var i=from.indexOf(c);return i>=0?to[i]:c;});return s.replace(/['’\s]+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-').replace(/^-|-$/g,'');}
+function renderVigilanceBadges(items,deptName,slug,diag){
+  var box=document.getElementById('vigilanceBadges');if(!box)return;
+  /* placer le badge SOUS le nom de la ville (displayTz), dans la zone du graphe */
+  try{var dtz=document.getElementById('displayTz');if(dtz&&dtz.parentNode&&box.previousSibling!==dtz){dtz.parentNode.insertBefore(box,dtz.nextSibling);}}catch(e){}
+  if(box._vigBlink){clearInterval(box._vigBlink);box._vigBlink=null;}
+  var url='https://vigilance.meteofrance.fr/fr/'+slug;
+  box.innerHTML='';
+  function mkBadge(html,cls){var a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.className='vig-badge '+cls;a.innerHTML=html;return a;}
+  if(items&&items.length){
+    /* alerte colorée : couleur = niveau le plus élevé (orange/rouge), texte = causes */
+    var maxCol=3;items.forEach(function(it){if((it.color||3)>maxCol)maxCol=it.color;});
+    var causes=items.map(function(it){var ph=_VIG_PHEN[it.id]||['Alerte','⚠️'];return ph[1]+' '+ph[0];}).join('  ·  ');
+    var be=mkBadge('<span class="vig-ic">⚠️</span> '+causes,'vig-c'+maxCol);
+    box.appendChild(be);
+    if(maxCol>=4){/* ROUGE : clignotement en JS (indépendant du CSS/navigateur) */
+      be.style.transition='opacity .25s ease-in-out';var _on=true;
+      box._vigBlink=setInterval(function(){_on=!_on;be.style.opacity=_on?'1':'0.25';},500);
+    }
+  } else {
+    /* pas d'alerte orange/rouge connue : badge-lien neutre cliquable vers le site officiel */
+    box.appendChild(mkBadge('<span class="vig-ic">⚠️</span> Vigilance '+deptName,'vig-link'));
+  }
+  if(diag){var d=document.createElement('span');d.className='vig-diag';d.textContent='🔧 '+diag;box.appendChild(d);}
+  box.style.display='flex';
+}
+/* Cascade CORS : direct, puis proxies publics (comme Multi Search), avec timeout */
+async function _corsFetch(url,timeoutMs){
+  var builders=[
+    ['direct',function(u){return u;}],
+    ['codetabs',function(u){return 'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u);}],
+    ['allorig',function(u){return 'https://api.allorigins.win/raw?url='+encodeURIComponent(u);}],
+    ['cors.io',function(u){return 'https://corsproxy.io/?url='+encodeURIComponent(u);}]
+  ];
+  var lastStatus=0;
+  for(var i=0;i<builders.length;i++){
+    try{
+      var ac=new AbortController();var tid=setTimeout(function(){try{ac.abort();}catch(e){}},timeoutMs||8000);
+      var r=await fetch(builders[i][1](url),{signal:ac.signal});
+      clearTimeout(tid);
+      if(r){lastStatus=r.status;if(r.ok){r._via=builders[i][0];return r;}}
+    }catch(e){}
+  }
+  _corsFetch._last=lastStatus;
+  return null;
+}
+async function fetchVigilance(lat,lon,deptName,countryCode){
+  var box=document.getElementById('vigilanceBadges');if(!box)return;
+  if((countryCode||'').toUpperCase()!=='FR'||!deptName){box.style.display='none';box.innerHTML='';return;}
+  var slug=_deptSlug(deptName);if(!slug){box.style.display='none';return;}
+  /* Mode test local : ?vigtest=rouge ou ?vigtest=orange pour vérifier le rendu sans l'API */
+  var _vt=(new URLSearchParams(location.search).get('vigtest')||'').toLowerCase();
+  if(_vt==='rouge'){renderVigilanceBadges([{id:6,color:4},{id:3,color:4}],deptName,slug,'TEST rouge');return;}
+  if(_vt==='orange'){renderVigilanceBadges([{id:6,color:3},{id:3,color:3}],deptName,slug,'TEST orange');return;}
+  renderVigilanceBadges(null,deptName,slug,null); /* badge-lien cliquable, toujours affiché */
+  /* En local (file://), origin "null" → tous les proxies refusent : on s'arrête au badge-lien (console propre). */
+  if(location.protocol==='file:')return;
+  var diag='';
+  try{
+    var dep=null;
+    try{
+      var gr=await fetch('https://geo.api.gouv.fr/communes?lat='+lat+'&lon='+lon+'&fields=codeDepartement&format=json');
+      if(gr.ok){var gj=await gr.json();dep=(gj&&gj[0]&&gj[0].codeDepartement)||null;diag+='geo:'+(dep||'?')+' ';}
+      else diag+='geo:HTTP'+gr.status+' ';
+    }catch(e){diag+='geo:ERR ';}
+    if(dep){
+      var vu='https://rpcache-aa.meteofrance.com/internet2018client/2.0/warning/currentPhenomenons?domain=DEP'+dep+'&depth=1&warning_type=vigilance';
+      var vr=await _corsFetch(vu,9000);
+      if(vr&&vr.ok){
+        try{
+          var vj=await vr.json();
+          var raw=(vj&&(vj.phenomenons_items||vj.phenomenons||(vj.product&&vj.product.periods&&vj.product.periods[0]&&vj.product.periods[0].per_phenomenon_items)))||[];
+          var items=[];
+          (raw||[]).forEach(function(p){var id=parseInt(p.phenomenon_id||p.phenomenonId||p.id);var col=parseInt(p.phenomenon_max_color_id||p.phenomenon_color_id||p.max_color_id||p.color);if(id&&col&&col>=3)items.push({id:id,color:col});});
+          diag+='vig:OK('+vr._via+') '+items.length+'ph';
+          renderVigilanceBadges(items,deptName,slug,diag);
+        }catch(e){diag+='vig:PARSE';renderVigilanceBadges(null,deptName,slug,diag);}
+      } else {diag+='vig:FAIL'+(_corsFetch._last?('/'+_corsFetch._last):'');renderVigilanceBadges(null,deptName,slug,diag);}
+    } else {renderVigilanceBadges(null,deptName,slug,diag);}
+  }catch(e){renderVigilanceBadges(null,deptName,slug,'FATAL');}
+}
 async function load(){
-  /* Nouvelle ville → invalider le cache J-1/J-7 */
-  _cachedJm1=null;_cachedJm7=null;_ext30Loaded=false;
+  /* Nouvelle ville → invalider le cache J-1/J-7 */_cachedJm1=null;_cachedJm7=null;_ext30Loaded=false;
   const city=document.getElementById('cityInput').value.trim();if(!city)return;
+  /* Test du badge sans changer l'URL : taper "vigtest rouge" ou "vigtest orange" dans le champ ville */
+  if(/^\s*vigtest/i.test(city)){var _tc=/orange/i.test(city)?3:4;try{renderVigilanceBadges([{id:6,color:_tc},{id:3,color:_tc}],'Essonne','essonne','TEST '+(_tc===4?'rouge (doit clignoter)':'orange (fixe)'));}catch(e){}return;}
   const btn=document.getElementById('searchBtn');btn.disabled=true;btn.textContent='…';
   /* Reset : supprimer seulement le cache de la ville précédente, pas tout */
   if(typeof _cityLat!=='undefined')try{sessionStorage.removeItem(_cacheKey(_cityLat,_cityLon));}catch(e){}
@@ -2504,6 +2599,7 @@ async function load(){
         clearInterval(_autoRefreshTimer);zoomMin=0;zoomMax=1;
         fetchNowcast(lat,lon);fetchMinutely15(lat,lon);
         fetchJm1Data(lat,lon);fetchJmNData(lat,lon,7);
+        try{fetchVigilance(lat,lon,best.admin2,best.country_code);}catch(e){}
         if(_viewMode==='jm1'||_viewMode==='jm7'){const _m=_viewMode;_viewMode='j1';setView(_m);}
         initBar();initRadar(lat,lon);
         const rc=document.getElementById('radarCard');
@@ -2578,6 +2674,7 @@ async function load(){
     fetchAirQuality(lat,lon);
     fetchMfRain(lat,lon);
     fetchDailyTemps(lat,lon);
+    try{fetchVigilance(lat,lon,best.admin2,best.country_code);}catch(e){}
     fetchNowcast(lat,lon);
     fetchMinutely15(lat,lon);
     /* Redraw de sécurité : 1s, 3s, 8s */
@@ -2882,7 +2979,7 @@ function processData(omMain,omM15,rainMx,probMx){
   /* Jours suivants selon la vue */
   if(_viewMode==='j0'){
   } else if(_viewMode==='j1'){
-    for(let hr=0;hr<24;hr++){const idx=24+hr;if(idx<N_HRS)push(hr+'h',1,idx);}
+    for(let hr=0;hr<=24;hr++){const idx=24+hr;if(idx<N_HRS)push((hr===24?'24h':hr+'h'),1,idx);}
   } else if(_viewMode==='j5'){
     for(let hr=0;hr<24;hr++){const idx=24+hr;if(idx<N_HRS)push(hr+'h',1,idx);}
     for(let d=2;d<=5;d++)for(let hr=0;hr<24;hr+=3){const idx=d*24+hr;if(idx<N_HRS)push(hr+'h',d,idx);}
