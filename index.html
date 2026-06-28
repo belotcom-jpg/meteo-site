@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>PluiePro v2.0</title>
+<title>PluiePro v2.2</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -246,21 +246,28 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   #modelLegendInline .mib.hidden{opacity:.2}
   #modelLegendInline .mdot{width:16px;height:2px;border-radius:1px;display:inline-block;vertical-align:middle}
 
-/* ===== Mode simplifié iPhone (?simple=ok) : GRAPH (J→J+14) en haut + vue J+1 en bas ===== */
+/* ===== Mode simplifié iPhone (?simple=ok) : vue J+1 en haut + GRAPH (J→J+8) en bas ===== */
 html.simple #clearBtn,
 html.simple #exploreWrap,
 html.simple #sourcesBar,
 html.simple #radarCard,
 html.simple #viewBtns{display:none!important}
-html.simple #graphPanel{display:flex!important;position:relative!important;inset:auto!important;z-index:auto!important;background:transparent!important;padding:0!important;overflow:visible!important;height:42vh;margin:6px 0 0}
-html.simple #graphCard{flex:1;display:flex;flex-direction:column;max-width:100%;margin:0;padding:6px 8px;min-height:0}
+html.simple #graphPanel{display:flex!important;position:relative!important;inset:auto!important;z-index:auto!important;background:transparent!important;padding:0!important;overflow:visible!important;flex:1.3 1 0!important;height:auto!important;min-height:0!important;margin:2px 0 0}
+html.simple #graphHeader{display:none!important}
+html.simple #graphCard{flex:1;display:flex;flex-direction:column;max-width:100%;margin:0;padding:6px 1px;min-height:0}
 html.simple #graphWrap{flex:1!important;min-height:0;display:block!important}
 html.simple #graphCanvas{height:100%!important;width:100%!important}
 html.simple #graphPanel button[aria-label="Fermer"]{display:none!important}
 html.simple #graphNote{display:none!important}
 html.simple #graphStatus{padding:3px;font-size:11px}
-html.simple .canvas-container{height:30vh!important;max-height:30vh!important;min-height:150px}
-html.simple .graph-leg{font-size:9px!important;padding:2px 0!important;margin-top:2px!important}
+html.simple .canvas-container{flex:1 1 0!important;height:auto!important;max-height:none!important;min-height:0!important}
+html.simple .graph-leg{display:none!important}
+/* Chaîne flex : on remplit exactement la hauteur d'écran, sans vide ni ascenseur */
+html.simple body{padding:0!important;overflow:hidden!important;height:100vh!important;height:100dvh!important;min-height:0!important}
+html.simple .wrap{height:100vh!important;height:100dvh!important;overflow:hidden!important;gap:2px!important}
+html.simple .card{flex:1 1 0!important;display:flex!important;flex-direction:column!important;min-height:0!important;margin:0!important}
+html.simple #chartWrapper{flex:1 1 0!important;display:flex!important;flex-direction:column!important;min-height:0!important}
+html.simple #summaryRow{flex:0 0 auto!important}
 /* Bouton bascule simple/complète (état enfoncé quand la vue simplifiée est active) */
 #simpleBtn{border:1px solid #3a3a3a!important;border-radius:9px!important;padding:0 8px!important;color:#7ff!important;font-size:15px!important;min-height:34px}
 html.simple #simpleBtn{background:#00ffff!important;color:#000!important;box-shadow:inset 0 2px 5px rgba(0,0,0,.5)!important;border-color:#0cc!important}
@@ -268,15 +275,18 @@ html.simple #simpleBtn{background:#00ffff!important;color:#000!important;box-sha
 </head>
 <body>
 <script>
-/* Mode simplifié (?simple=ok) : GRAPH en haut, vue J+1 en bas, UI minimale */
+/* Mode simplifié : PAR DÉFAUT sur iPhone. ?simple=no force la vue complète, ?simple=ok la force ailleurs. Vue J+1 en haut, GRAPH (J→J+8) en bas, UI minimale */
 (function(){
   try{
-    if(new URLSearchParams(location.search).get('simple')!=='ok')return;
+    var _p=new URLSearchParams(location.search).get('simple');
+    var _isIPhone=/iPhone|iPod/.test(navigator.userAgent||'');
+    var _simple=(_p==='ok')?true:((_p==='no')?false:_isIPhone);
+    if(!_simple)return;
     document.documentElement.classList.add('simple');
     document.addEventListener('DOMContentLoaded',function(){
       try{
         var gp=document.getElementById('graphPanel'),cw=document.getElementById('chartWrapper');
-        if(gp&&cw&&cw.parentNode){cw.parentNode.insertBefore(gp,cw);gp.classList.add('open');}
+        if(gp&&cw&&cw.parentNode){cw.parentNode.insertBefore(gp,cw.nextSibling);gp.classList.add('open');}
       }catch(e){}
       try{
         var sb=document.getElementById('simpleBtn');
@@ -285,6 +295,8 @@ html.simple #simpleBtn{background:#00ffff!important;color:#000!important;box-sha
     });
   }catch(e){}
 })();
+/* Affiche la version (lue depuis le titre, source unique) à côté de P80 */
+document.addEventListener('DOMContentLoaded',function(){try{var vt=document.getElementById('versionTag');if(vt){var m=(document.title||'').match(/v[\d.]+/i);vt.textContent=m?m[0]:'';}}catch(e){}});
 </script>
 <div class="wrap">
   <div class="search">
@@ -361,7 +373,7 @@ html.simple #simpleBtn{background:#00ffff!important;color:#000!important;box-sha
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
       <div id="legendBar" class="legend" style="flex-direction:row;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
-        <div class="leg" id="legP80"><div class="leg-dot" style="background:#ffe600;box-shadow:0 0 6px rgba(255,230,0,.5)"></div><div class="p80-info"><span class="leg-txt" style="color:#ffe600;cursor:help;border-bottom:1px dotted rgba(255,230,0,.4)">P80 ⓘ</span><div class="p80-tooltip">P80 = 80ᵉ percentile sur tous les modèles actifs.<br>Traduction : 80% des modèles prévoient moins de cette valeur — estimation pessimiste-réaliste, ni la médiane ni le pire cas.</div></div></div>
+        <div class="leg" id="legP80"><div class="leg-dot" style="background:#ffe600;box-shadow:0 0 6px rgba(255,230,0,.5)"></div><div class="p80-info"><span class="leg-txt" style="color:#ffe600;cursor:help;border-bottom:1px dotted rgba(255,230,0,.4)">P80 ⓘ</span><div class="p80-tooltip">P80 = 80ᵉ percentile sur tous les modèles actifs.<br>Traduction : 80% des modèles prévoient moins de cette valeur — estimation pessimiste-réaliste, ni la médiane ni le pire cas.</div></div></div><span id="versionTag" title="Version de PluiePro" style="font-size:9px;font-weight:700;color:#666;font-family:'Courier New',monospace;letter-spacing:.3px;align-self:center;white-space:nowrap"></span>
         <div class="leg" id="legMax"><div class="leg-dot" style="background:#4488ff;height:2px"></div><span class="leg-txt" style="color:#4488ff">MAX</span></div>
         <div class="leg" id="legProb"><div class="leg-dot dashed" style="opacity:.4;background:repeating-linear-gradient(90deg,#fff 0,#fff 6px,transparent 6px,transparent 10px)"></div><span class="leg-txt" style="color:#fff;opacity:.4">PROBA</span></div>
         <div class="leg" id="legCloud"><div class="leg-dot" style="background:repeating-linear-gradient(90deg,#ff3333 0,#ff3333 4px,transparent 4px,transparent 10px,#ff3333 10px,#ff3333 14px,transparent 14px,transparent 18px);height:2px"></div><span class="leg-txt" style="color:#ff3333">☁</span></div>
@@ -1079,7 +1091,7 @@ function _wmoEmoji(c){
 }
 function _tBandColor(t){var hh=Math.max(0,Math.min(230,230-(t-5)/40*230));return 'hsla('+hh+',78%,55%,0.13)';}
 function _rainToCode(mm){if(mm<0.2)return 2;if(mm<1)return 3;if(mm<5)return 61;if(mm<15)return 63;return 65;}
-/* ── Tendance des révisions : flèches dans le GRAPH = écart entre la prévision d'hier (run précédent, API previous-runs Open-Meteo) et la prévision actuelle ── */
+/* ── Tendance : on lit EN DIRECT les runs précédents des modèles (API previous-runs Open-Meteo), aucun stockage local ── */
 function _isoDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 async function openGraph(mode){
   mode=(mode==='28')?'28':'14';
@@ -1093,7 +1105,7 @@ async function openGraph(mode){
   if(typeof _cityLat==='undefined'||_cityLat==null){if(status){status.style.display='block';status.textContent='Cherchez une ville d\'abord.';}hide();return;}
   if(status){status.style.display='block';status.textContent='⏳ Chargement…';}
   hide();
-  if(ttl)ttl.textContent='📈 '+((typeof cityName!=='undefined'&&cityName)?cityName+' — ':'')+(mode==='28'?'J+15 → J+28':'J → J+14');
+  if(ttl)ttl.textContent='📈 '+((typeof cityName!=='undefined'&&cityName)?cityName+' — ':'')+(mode==='28'?'J+15 → J+28':(document.documentElement.classList.contains('simple')?'J → J+8':'J → J+14'));
   const _gn=document.getElementById('graphNote');if(_gn)_gn.style.display=(mode==='28')?'block':'none';
   {const _gp=document.getElementById('graphPrev'),_gn=document.getElementById('graphNext');if(_gp)_gp.style.visibility=(mode==='28')?'visible':'hidden';if(_gn)_gn.style.visibility=(mode==='14')?'visible':'hidden';}
   try{
@@ -1174,30 +1186,41 @@ async function openGraph(mode){
       rain=dy.precipitation_sum.map(v=>v==null?0:Math.round(v*10)/10);
       codes=dy.weathercode||[];
     }
-    /* ── Flèches de tendance : prévision d'hier (run précédent) vs actuelle, via l'API previous-runs (variables HORAIRES, agrégées par jour). Mode 14 uniquement, jamais en vue simplifiée. ── */
+    /* Vue simplifiée : on limite le GRAPH à J+8 (9 jours) — plus lisible et plus large */
+    if(mode!=='28' && document.documentElement.classList.contains('simple') && labels.length>9){
+      labels=labels.slice(0,9);tmax=tmax.slice(0,9);tmin=tmin.slice(0,9);rain=rain.slice(0,9);codes=codes.slice(0,9);
+    }
+    /* ── Flèches de tendance : on lit EN DIRECT les runs précédents du modèle best_match (API previous-runs Open-Meteo), aucun stockage. Régression run-par-run (run actuel + previous_day1..4) = tendance des révisions, là où elle a du sens (jours proches). Jamais en vue simplifiée ni sur la page long terme. ── */
     let deltaT=[],deltaR=[];
-    if(mode!=='28'&&!document.documentElement.classList.contains('simple')){
+    if(!document.documentElement.classList.contains('simple') && mode!=='28'){
       try{
-        const _pru=`https://previous-runs-api.open-meteo.com/v1/forecast?latitude=${_cityLat}&longitude=${_cityLon}&hourly=temperature_2m,temperature_2m_previous_day1,precipitation,precipitation_previous_day1&forecast_days=15&timezone=auto`;
+        const _now=Date.now();
+        const _prevF={};
+        const _slope=(pts)=>{const n=pts.length;if(n<2)return null;let sx=0,sy=0,sxx=0,sxy=0;pts.forEach(p=>{sx+=p.x;sy+=p.y;sxx+=p.x*p.x;sxy+=p.x*p.y;});const dd=n*sxx-sx*sx;return dd===0?null:(n*sxy-sx*sy)/dd;};
+        const _eat=(arr,di)=>{let mx=-999,ok=false;if(arr)for(let hh=di*24;hh<(di+1)*24&&hh<arr.length;hh++){const v=arr[hh];if(v!=null&&isFinite(v)){if(v>mx)mx=v;ok=true;}}return ok?mx:null;};
+        const _eap=(arr,di)=>{let s=0,ok=false;if(arr)for(let hh=di*24;hh<(di+1)*24&&hh<arr.length;hh++){const v=arr[hh];if(v!=null&&isFinite(v)){s+=v;ok=true;}}return ok?s:null;};
+        const _NR=4;let _tv='temperature_2m',_pv='precipitation';
+        for(let k=1;k<=_NR;k++){_tv+=',temperature_2m_previous_day'+k;_pv+=',precipitation_previous_day'+k;}
+        const _pru=`https://previous-runs-api.open-meteo.com/v1/forecast?latitude=${_cityLat}&longitude=${_cityLon}&hourly=${_tv},${_pv}&forecast_days=16&timezone=auto`;
         const _ac=new AbortController();const _tid=setTimeout(()=>_ac.abort(),6000);
         const _pr=await fetch(_pru,{signal:_ac.signal});clearTimeout(_tid);
         if(_pr.ok){
           const _pd=await _pr.json(),_h=_pd&&_pd.hourly;
           if(_h&&_h.time){
-            const _cT=_h.temperature_2m||[],_pT=_h.temperature_2m_previous_day1||[];
-            const _cR=_h.precipitation||[],_pR=_h.precipitation_previous_day1||[];
             const _nD=Math.floor(_h.time.length/24);
-            for(let i=0;i<labels.length&&i<_nD;i++){
-              let _cmx=-999,_pmx=-999,_cs=0,_ps=0,_okC=false,_okP=false,_okCs=false,_okPs=false;
-              for(let hh=i*24;hh<(i+1)*24&&hh<_h.time.length;hh++){
-                const _a=_cT[hh],_b=_pT[hh],_e=_cR[hh],_f=_pR[hh];
-                if(_a!=null&&isFinite(_a)){if(_a>_cmx)_cmx=_a;_okC=true;}
-                if(_b!=null&&isFinite(_b)){if(_b>_pmx)_pmx=_b;_okP=true;}
-                if(_e!=null&&isFinite(_e)){_cs+=_e;_okCs=true;}
-                if(_f!=null&&isFinite(_f)){_ps+=_f;_okPs=true;}
-              }
-              deltaT[i]=(_okC&&_okP)?(_cmx-_pmx):null;
-              deltaR[i]=(_okCs&&_okPs)?(_cs-_ps):null;
+            const _series=[{t:_h['temperature_2m'],p:_h['precipitation'],age:0}];
+            for(let k=1;k<=_NR;k++)_series.push({t:_h['temperature_2m_previous_day'+k],p:_h['precipitation_previous_day'+k],age:k});
+            for(let i=0;i<labels.length;i++){
+              const _di=i; if(_di>=_nD)break; const pts=[];
+              _series.forEach(s=>{const mx=_eat(s.t,_di),r=_eap(s.p,_di);if(mx!=null||r!=null)pts.push({ts:_now-s.age*86400000,mx,r});});
+              if(pts.length)_prevF[i]=pts;
+            }
+            for(let i=0;i<labels.length;i++){
+              const src=_prevF[i]||[];const _tPts=[],_rPts=[];
+              src.forEach(p=>{if(p.mx!=null)_tPts.push({x:(p.ts-_now)/3600000,y:p.mx});if(p.r!=null)_rPts.push({x:(p.ts-_now)/3600000,y:p.r});});
+              const _spT=_slope(_tPts),_spR=_slope(_rPts);
+              deltaT[i]=(_spT!=null)?_spT*24:null;
+              deltaR[i]=(_spR!=null)?_spR*24:null;
             }
           }
         }
@@ -1272,7 +1295,7 @@ async function openGraph(mode){
     if(_graphChart){_graphChart.destroy();_graphChart=null;}
     const cv=document.getElementById('graphCanvas');
     const _drawArrow=(ctx,x,y,delta,kind)=>{
-      const aMax=(kind==='temp')?6:10,thr=(kind==='temp')?0.15:0.1;
+      const aMax=(kind==='temp')?2.5:5,thr=(kind==='temp')?0.03:0.02;
       const m=Math.min(Math.abs(delta),aMax);
       if(m<thr)return;
       const up=delta>0;
@@ -1596,8 +1619,9 @@ async function findHottest(){
 /* ── retour ville par défaut ── */
 function toggleSimple(){
   var bare=location.href.split('#')[0].split('?')[0];
-  var simple=document.documentElement.classList.contains('simple')||location.search.indexOf('simple=ok')>=0;
-  location.href=simple?bare:(bare+'?simple=ok');
+  var simple=document.documentElement.classList.contains('simple');
+  /* on force explicitement, pour pouvoir aussi quitter la vue simplifiée quand elle est le défaut (iPhone) */
+  location.href=bare+(simple?'?simple=no':'?simple=ok');
 }
 function goHome(){
   _windRanking=[];_windRankIdx=0;
@@ -4134,8 +4158,9 @@ function buildSummary(chart,pts,days,xp){
   const cn=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz||'Europe/Paris'}));
   const todayMidnight=new Date(cn.getFullYear(),cn.getMonth(),cn.getDate());
   row.innerHTML='';
+  const _simple=document.documentElement.classList.contains('simple');
   row.style.cssText='display:flex;flex-direction:row;align-items:stretch;border-top:2px solid #444;background:#060606;overflow:hidden;'+
-    (days.length>2?'min-height:clamp(94px,19vw,112px)':'min-height:clamp(78px,16vw,92px)');
+    (_simple?'min-height:26px':(days.length>2?'min-height:clamp(94px,19vw,112px)':'min-height:clamp(78px,16vw,92px)'));
   /* Spacer gauche = axe Y */
   const sL=document.createElement('div');
   sL.style.cssText='flex:0 0 '+chartArea.left+'px';
@@ -4175,10 +4200,9 @@ function buildSummary(chart,pts,days,xp){
       ?'<div style="font-size:clamp(10px,2.3vw,13px);font-weight:900;white-space:nowrap;line-height:1.4;text-align:center"><span style="color:#88aaff">'+Math.round(tMin??0)+'°</span><span style="color:#ff8844">/'+Math.round(tMax)+'°</span></div>'+(showMaxMod?'<div title="Plus chaud : '+tMaxModel+' '+Math.round(tMaxMod)+'° · '+confTxt+'" style="font-size:clamp(8px,1.9vw,11px);font-weight:900;color:#ffaa44;white-space:nowrap;line-height:1.3;text-align:center;cursor:help">('+Math.round(tMaxMod)+'°) '+confDot+'</div>':'')
       :'';
     const div=document.createElement('div');
-    div.style.cssText=
-      'flex:0 0 '+cellW+'px;overflow:hidden;box-sizing:border-box;padding:1px 2px;'+
-      'display:flex;flex-direction:column;align-items:center;justify-content:center;'+
-      'text-align:center;gap:1px;border-left:1px solid #1a1a1a;';
+    div.style.cssText=_simple
+      ?'flex:0 0 '+cellW+'px;overflow:hidden;box-sizing:border-box;padding:0 3px;display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:7px;text-align:center;border-left:1px solid #1a1a1a;'
+      :'flex:0 0 '+cellW+'px;overflow:hidden;box-sizing:border-box;padding:1px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1px;border-left:1px solid #1a1a1a;';
     div.innerHTML=
       '<div style="font-size:clamp(8px,1.9vw,11px);font-weight:900;color:#888;letter-spacing:0.3px;white-space:nowrap;line-height:1.4">'+lbl+'</div>'+
       '<div style="font-size:clamp(9px,2.1vw,12px);font-weight:900;color:#ffe600;white-space:nowrap;line-height:1.5">'+total.toFixed(1)+'<span style="font-size:8px;opacity:.6">mm</span>\u00a0'+Math.round(maxP)+'<span style="font-size:8px;opacity:.6">%</span></div>'+
@@ -4757,7 +4781,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
 </div>
 <div id="graphPanel">
   <div id="graphCard">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+    <div id="graphHeader" style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
       <button id="graphPrev" onclick="openGraph('14')" aria-label="Graphe J à J+14" title="GRAPH14 (J→J+14)" style="background:none;border:1px solid #444;border-radius:4px;color:#7ec97e;padding:4px 11px;cursor:pointer;font-size:18px;font-weight:900;line-height:1">‹</button>
       <div id="graphTitle" style="flex:1;text-align:center;font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#7ec97e">📈 GRAPHIQUE J → J+14</div>
       <button id="graphNext" onclick="openGraph('28')" aria-label="Graphe J+15 à J+28" title="GRAPH28 (J+15→J+28)" style="background:none;border:1px solid #444;border-radius:4px;color:#7ec97e;padding:4px 11px;cursor:pointer;font-size:18px;font-weight:900;line-height:1">›</button>
@@ -4770,7 +4794,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
       <span><b style="background:#e23b3b"></b>Maximum</span>
       <span><b style="background:#3b7ce2"></b>Minimum</span>
       <span><b style="background:#2196f3"></b>Précipitations (mm)</span>
-      <span style="opacity:.85">↑↓ tendance vs dernière consultation</span>
+      <span style="opacity:.85">↑↓ tendance (évolution des prévisions dans le temps)</span>
     </div>
   </div>
 </div>
