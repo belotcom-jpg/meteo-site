@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>PluiePro v2.5</title>
+<title>PluiePro v2.8</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -69,6 +69,12 @@ body{background:#000;color:#fff;font-family:'Courier New',monospace;padding:3px;
   #exploreMenu button:hover{background:#1e2a3a}
   #exploreMenu button span{flex:1}
   #exploreMenu .em-sep{font-size:9px;color:#555;text-align:center;padding:7px 0 4px;letter-spacing:0.5px}
+  #helpWrap{position:relative;flex-shrink:0;display:flex}
+  #helpMenu{display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:9998;background:#0d0d0d;border:1px solid #333;border-radius:10px;padding:6px;min-width:250px;box-shadow:0 8px 24px rgba(0,0,0,0.6)}
+  #helpMenu.open{display:block}
+  #helpMenu button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;background:none;border:none;color:#ddd;font-family:'Courier New',monospace;font-size:13px;font-weight:700;text-align:left;padding:9px 10px;border-radius:7px;cursor:pointer}
+  #helpMenu button:hover{background:#1e2a3a}
+  #helpMenu button span{font-weight:400;font-size:10px;color:#888;line-height:1.2}
 
 input{flex:1;min-width:0;background:#0d0d0d;border:2px solid #555;border-radius:10px;padding:9px 12px;color:#fff;font-size:clamp(13px,3.5vw,16px);font-weight:900;font-family:'Courier New',monospace;outline:none;-webkit-appearance:none}
 input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
@@ -216,7 +222,6 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   #scrapeBar a,#scrapeBar button{background:#1a1a1a;border:1px solid #333;color:#ddd;font-size:12px;font-weight:700;padding:6px 11px;border-radius:6px;cursor:pointer;text-decoration:none;white-space:nowrap}
   #scrapeBar a:active,#scrapeBar button:active{background:#262626}
   #scrapeFrame{flex:1;border:0;width:100%;background:#fff}
-  #scrapeHint{font-size:11px;color:#999;background:#111;padding:6px 12px;text-align:center;border-bottom:1px solid #2a2a2a;flex-shrink:0;line-height:1.3}
   :focus-visible{outline:2px solid #4a9eff;outline-offset:2px;border-radius:3px}
   #favBar{display:flex;gap:6px;overflow-x:auto;padding:6px 2px 0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
   #favBar::-webkit-scrollbar{display:none}
@@ -233,9 +238,37 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   #graphStatus{text-align:center;color:#aaa;font-size:14px;font-family:'Courier New',monospace;padding:40px 0}
   .graph-leg{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:10px;font-family:'Courier New',monospace;font-size:11px;color:#aaa}
   .graph-leg b{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+  #optPanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:10003;overflow-y:auto;padding:16px}
+  #optPanel.open{display:flex;align-items:flex-start;justify-content:center}
+  #optCard{background:#0d0d0d;border:1px solid #2a2a2a;border-radius:12px;padding:16px;max-width:460px;width:100%;margin:auto;font-family:'Courier New',monospace}
+  .opt-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .opt-ttl{flex:1;font-size:15px;font-weight:900;color:#e0b84c}
+  .opt-x{background:none;border:1px solid #444;border-radius:4px;color:#888;padding:4px 10px;cursor:pointer;font-size:16px}
+  .opt-toggle{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#ddd;cursor:pointer;margin-bottom:6px}
+  .opt-toggle input{width:16px;height:16px;cursor:pointer;flex:0 0 auto}
+  .opt-hint{font-size:11px;color:#888;line-height:1.4;margin-bottom:10px}
+  .opt-row{display:flex;align-items:center;gap:9px;padding:9px 0;border-top:1px solid #1c1c1c}
+  .opt-sw{flex:0 0 16px;width:16px;height:16px;border-radius:4px;border:1px solid #444}
+  .opt-name{flex:0 0 56px;font-size:12px;font-weight:900;color:#ccc}
+  .opt-cond{flex:1;font-size:12px;color:#bbb;white-space:nowrap;text-align:right}
+  .opt-cond input{width:46px;background:#161616;border:1px solid #333;border-radius:5px;color:#fff;font-family:'Courier New',monospace;font-size:13px;font-weight:700;padding:4px 5px;text-align:center;margin:0 2px}
+  .opt-actions{display:flex;gap:8px;margin-top:14px}
+  .opt-reset{flex:1;background:#1a1a1a;border:1px solid #444;border-radius:8px;color:#bbb;font-family:'Courier New',monospace;font-size:12px;font-weight:900;padding:9px;cursor:pointer}
+  .opt-apply{flex:1.4;background:#1e3a5a;border:1px solid #3a5a7a;border-radius:8px;color:#fff;font-family:'Courier New',monospace;font-size:13px;font-weight:900;padding:9px;cursor:pointer}
 
-  #helpPanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:10000;overflow-y:auto;padding:16px}
-  #helpPanel.open{display:block}
+  #helpPanel,#aboutPanel,#detailPanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:10000;overflow-y:auto;padding:16px}
+  #helpPanel.open,#aboutPanel.open,#detailPanel.open{display:block}
+  #detailPanel h4{color:#7ec97e;font-size:13px;font-weight:900;margin:20px 0 7px;border-bottom:1px solid #1e2a1e;padding-bottom:4px}
+  #detailPanel p{margin:0 0 9px}
+  #detailPanel ul{margin:0 0 10px;padding-left:17px}
+  #detailPanel li{margin-bottom:4px}
+  #detailPanel code{background:#1a1a1a;color:#9cdcfe;padding:1px 5px;border-radius:4px;font-size:11px}
+  #detailPanel .hd-shot{background:#0a0a0a;border:1px solid #2a2a2a;border-radius:8px;padding:11px 12px;margin:10px 0}
+  #detailPanel .hd-cap{font-size:9px;color:#666;text-align:center;margin-top:7px;font-style:italic;letter-spacing:.3px}
+  #detailPanel .hd-btn{display:inline-block;background:#161616;border:1px solid #333;border-radius:8px;padding:4px 9px;margin:2px;font-size:13px;color:#ddd}
+  #detailPanel .hd-sw{display:inline-block;width:15px;height:15px;border-radius:4px;vertical-align:-2px;margin-right:6px;border:1px solid #555}
+  #detailPanel .hd-toc{background:#0a0a0a;border:1px solid #222;border-radius:8px;padding:10px 14px;margin:0 0 4px;columns:2;column-gap:18px;font-size:11px;line-height:1.9}
+  #detailPanel .hd-ex{background:#10160f;border-left:3px solid #7ec97e;border-radius:0 6px 6px 0;padding:8px 11px;margin:9px 0;font-size:11px;color:#bcd}
   #helpPanel table{width:100%;border-collapse:collapse;font-size:11px;font-family:'Courier New',monospace}
   #helpPanel th{text-align:left;color:#66aaff;border-bottom:1px solid #2a4a6a;padding:6px 5px;font-size:10px;letter-spacing:0.5px}
   #helpPanel td{border-bottom:1px solid #1a1a1a;padding:6px 5px;color:#bbb;vertical-align:top}
@@ -334,7 +367,14 @@ document.addEventListener('DOMContentLoaded',function(){try{var vt=document.getE
       </div>
     </div>
     <button id="simpleBtn" onclick="toggleSimple()" title="Vue simplifiée (GRAPH + J+1)">📱</button>
-    <button id="helpBtn" onclick="openHelpPanel()" title="Aide : les modèles météo">❓</button>
+    <div id="helpWrap">
+      <button id="helpBtn" onclick="toggleHelpMenu(event)" title="Aide & explications">❓</button>
+      <div id="helpMenu">
+        <button onclick="openAbout();closeHelpMenu()">👁️ Vue d'ensemble <span>à quoi sert l'appli, en bref</span></button>
+        <button onclick="openDetail();closeHelpMenu()">📖 Fonctionnement détaillé <span>toutes les fonctions, en détail</span></button>
+        <button onclick="openHelpPanel();closeHelpMenu()">🌐 Les modèles météo <span>les 10 sources de prévision</span></button>
+      </div>
+    </div>
     <button id="homeBtn"  onclick="goHome()" title="Retour Juvisy-sur-Orge">🏠</button>
     <button id="searchBtn" onclick="load()">GO</button>
   </div>
@@ -354,6 +394,7 @@ document.addEventListener('DOMContentLoaded',function(){try{var vt=document.getE
         <div class="vm-sep">— tendance longue —</div>
         <button id="btnExt30" onclick="openExt30();closeViewMenu()" style="color:#88aaff">⤢ J+28 <span>ensemble</span></button>
         <button id="btnGraph" onclick="openGraph();closeViewMenu()" style="color:#7ec97e">📈 GRAPH <span>J→J+28</span></button>
+        <button id="btnCanic" onclick="openOpt();closeViewMenu()" style="color:#e0b84c">⚙ OPTIONS <span>zones canicule</span></button>
         <button id="btnSeason" onclick="openSeason();closeViewMenu()" style="color:#d9a3ff">🗓 SAISON <span>3 mois</span></button>
       </div>
     </div>
@@ -1052,6 +1093,34 @@ async function openExt30(){
 /* ══════ GRAPHIQUE journalier J→J+14 (style prévisions) ══════ */
 let _gCharts={};
 function closeGraph(){const p=document.getElementById('graphPanel');if(p)p.classList.remove('open');}
+function _canicOpaque(c){return c.replace(/[\d.]+\)\s*$/,'1)');}
+function renderOptForm(){
+  const on=document.getElementById('optOn');if(on)on.checked=_canicOpts.on;
+  const body=document.getElementById('optBody');if(!body)return;
+  body.innerHTML='';
+  _canicOpts.levels.forEach((lv)=>{
+    const row=document.createElement('div');row.className='opt-row';
+    row.innerHTML='<span class="opt-sw" style="background:'+_canicOpaque(lv.color)+'"></span>'
+      +'<span class="opt-name">'+lv.name+'</span>'
+      +'<span class="opt-cond">min ≥ <input type="number" inputmode="numeric" class="opt-mn" value="'+lv.mn+'">°  ·  max ≥ <input type="number" inputmode="numeric" class="opt-mx" value="'+lv.mx+'">°</span>';
+    body.appendChild(row);
+  });
+}
+function openOpt(){renderOptForm();const p=document.getElementById('optPanel');if(p)p.classList.add('open');}
+function closeOpt(){const p=document.getElementById('optPanel');if(p)p.classList.remove('open');}
+function _redrawGraphCanic(){const ch=_gCharts&&_gCharts['graphCanvas'];if(ch){try{ch.update();}catch(_){}}}
+function saveOpt(){
+  const on=document.getElementById('optOn');if(on)_canicOpts.on=on.checked;
+  const rows=document.querySelectorAll('#optBody .opt-row');
+  rows.forEach((r,i)=>{
+    if(!_canicOpts.levels[i])return;
+    const mn=r.querySelector('.opt-mn'),mx=r.querySelector('.opt-mx');
+    if(mn&&mn.value!==''&&isFinite(parseFloat(mn.value)))_canicOpts.levels[i].mn=parseFloat(mn.value);
+    if(mx&&mx.value!==''&&isFinite(parseFloat(mx.value)))_canicOpts.levels[i].mx=parseFloat(mx.value);
+  });
+  _canicSave();_redrawGraphCanic();closeOpt();
+}
+function resetOpt(){_canicOpts.on=true;_canicOpts.levels=JSON.parse(JSON.stringify(_CANIC_DEF));renderOptForm();_canicSave();_redrawGraphCanic();}
 function buildLameteoUrl(name,postcode){
   if(!name)return null;
   const slug=String(name).trim().replace(/\s+/g,'-');
@@ -1089,6 +1158,18 @@ function openSeason(){
   if(fr)fr.src=url;
   if(p)p.classList.add('open');
 }
+function openRadarPage(){
+  const lat=(typeof _cityLat!=='undefined'&&_cityLat!=null)?_cityLat:46.6,lon=(typeof _cityLon!=='undefined'&&_cityLon!=null)?_cityLon:2.4;
+  const url='https://embed.windy.com/embed2.html?lat='+lat+'&lon='+lon+'&detailLat='+lat+'&detailLon='+lon+'&zoom=7&level=surface&overlay=radar&product=radar&menu=&message=&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1';
+  const p=document.getElementById('scrapePanel');
+  const fr=document.getElementById('scrapeFrame');
+  const ext=document.getElementById('scrapeOpenExt');
+  const ttl=document.getElementById('scrapeBarTitle');
+  if(ttl)ttl.textContent='📡 Radar '+(cityName||'');
+  if(ext)ext.href='https://www.windy.com/?radar,'+lat+','+lon+',8';
+  if(fr)fr.src=url;
+  if(p)p.classList.add('open');
+}
 function _wmoEmoji(c){
   if(c==null)return '';
   if(c===0)return '☀️';
@@ -1106,6 +1187,22 @@ function _wmoEmoji(c){
 }
 function _tBandColor(t){var hh=Math.max(0,Math.min(230,230-(t-5)/40*230));return 'hsla('+hh+',78%,55%,0.13)';}
 function _rainToCode(mm){if(mm<0.2)return 2;if(mm<1)return 3;if(mm<5)return 61;if(mm<15)return 63;return 65;}
+/* ── Zones de canicule sur le GRAPH : colonne colorée par jour selon (min,max). Niveau le plus haut atteint = couleur retenue. Seuils paramétrables (menu OPTIONS), persistés en localStorage. ── */
+const _CANIC_DEF=[
+  {mn:20,mx:30,color:'rgba(255,222,0,0.80)',name:'Jaune'},
+  {mn:23,mx:35,color:'rgba(255,140,0,0.78)',name:'Orange'},
+  {mn:25,mx:37,color:'rgba(255,50,45,0.72)',name:'Rouge'},
+  {mn:27,mx:40,color:'rgba(255,255,255,0.66)',name:'Blanc'}
+];
+let _canicOpts={on:true,levels:JSON.parse(JSON.stringify(_CANIC_DEF))};
+try{const _cs=localStorage.getItem('pp_canic_v1');if(_cs){const o=JSON.parse(_cs);if(o){if(o.on===false)_canicOpts.on=false;if(Array.isArray(o.levels))o.levels.forEach((lv,i)=>{if(_canicOpts.levels[i]&&lv){if(typeof lv.mn==='number')_canicOpts.levels[i].mn=lv.mn;if(typeof lv.mx==='number')_canicOpts.levels[i].mx=lv.mx;}});}}}catch(_){}
+function _canicLevel(mn,mx){
+  if(!_canicOpts.on||mn==null||mx==null)return 0;
+  const L=_canicOpts.levels;
+  for(let k=L.length-1;k>=0;k--){if(mn>=L[k].mn&&mx>=L[k].mx)return k+1;}
+  return 0;
+}
+function _canicSave(){try{localStorage.setItem('pp_canic_v1',JSON.stringify({on:_canicOpts.on,levels:_canicOpts.levels.map(l=>({mn:l.mn,mx:l.mx}))}));}catch(_){}}
 /* ── Tendance : on lit EN DIRECT les runs précédents des modèles (API previous-runs Open-Meteo), aucun stockage local ── */
 function _isoDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 async function openGraph(){
@@ -1263,6 +1360,28 @@ async function openGraph(){
         ctx.restore();
       }
     };
+    const canicBandsPlugin={
+      id:'canicBands',
+      beforeDatasetsDraw(chart){
+        if(!_canicOpts.on)return;
+        const x=chart.scales.x,area=chart.chartArea;
+        if(!x||!area)return;
+        const ctx=chart.ctx;ctx.save();
+        const n=labels.length;
+        const w=n>1?Math.abs(x.getPixelForValue(1)-x.getPixelForValue(0)):(area.right-area.left);
+        for(let i=0;i<n;i++){
+          const lv=_canicLevel(tmin[i],tmax[i]);
+          if(!lv)continue;
+          const cx=x.getPixelForValue(i);
+          let x0=cx-w/2,x1=cx+w/2;
+          x0=Math.max(area.left,x0);x1=Math.min(area.right,x1);
+          if(x1-x0<=0)continue;
+          ctx.fillStyle=_canicOpts.levels[lv-1].color;
+          ctx.fillRect(x0,area.top,x1-x0,area.bottom-area.top);
+        }
+        ctx.restore();
+      }
+    };
     const bandsPlugin={
       id:'graphBands',
       beforeDraw(chart){
@@ -1286,20 +1405,31 @@ async function openGraph(){
       afterDatasetsDraw(chart){
         const ctx=chart.ctx;
         const mMax=chart.getDatasetMeta(0),mMin=chart.getDatasetMeta(1);
+        const fs=(isMob?10:12);
+        const chip=(txt,x,y)=>{
+          const w=ctx.measureText(txt).width,padX=3,padY=1,rw=w+padX*2,rh=fs+padY*2,rx=x-rw/2,ry=y-fs*0.80-padY,r=4;
+          ctx.fillStyle='rgba(245,245,245,0.92)';
+          ctx.beginPath();
+          ctx.moveTo(rx+r,ry);ctx.arcTo(rx+rw,ry,rx+rw,ry+rh,r);ctx.arcTo(rx+rw,ry+rh,rx,ry+rh,r);ctx.arcTo(rx,ry+rh,rx,ry,r);ctx.arcTo(rx,ry,rx+rw,ry,r);ctx.closePath();ctx.fill();
+        };
         ctx.save();ctx.textAlign='center';ctx.textBaseline='alphabetic';
         mMax.data.forEach((pt,i)=>{
           if(tmax[i]==null)return;
           ctx.font=(isMob?14:18)+'px serif';
           ctx.fillText(_wmoEmoji(codes[i]),pt.x,pt.y-(isMob?20:26));
-          ctx.font='700 '+(isMob?10:12)+'px "Courier New",monospace';
-          ctx.fillStyle='#e23b3b';
-          ctx.fillText(tmax[i]+'°',pt.x,pt.y-(isMob?6:8));
+          ctx.font='700 '+fs+'px "Courier New",monospace';
+          const t=tmax[i]+'°',ty=pt.y-(isMob?6:8);
+          chip(t,pt.x,ty);
+          ctx.fillStyle='#d62828';
+          ctx.fillText(t,pt.x,ty);
         });
-        ctx.font='700 '+(isMob?10:12)+'px "Courier New",monospace';
-        ctx.fillStyle='#5b9bff';
+        ctx.font='700 '+fs+'px "Courier New",monospace';
         mMin.data.forEach((pt,i)=>{
           if(tmin[i]==null)return;
-          ctx.fillText(tmin[i]+'°',pt.x,pt.y+(isMob?15:17));
+          const t=tmin[i]+'°',ty=pt.y+(isMob?15:17);
+          chip(t,pt.x,ty);
+          ctx.fillStyle='#1f6feb';
+          ctx.fillText(t,pt.x,ty);
         });
         ctx.restore();
       }
@@ -1351,7 +1481,7 @@ async function openGraph(){
           yP:{position:'right',grid:{drawOnChartArea:false},ticks:{color:'#5b9bff',font:{size:isMob?9:11,family:'Courier New'}},min:0,suggestedMax:Math.ceil(maxRain*1.4),title:{display:true,text:'mm',color:'#5b9bff',font:{size:10}}}
         }
       },
-      plugins:[tempBandsPlugin,bandsPlugin,labelPlugin,trendArrowPlugin]
+      plugins:[canicBandsPlugin,bandsPlugin,labelPlugin,trendArrowPlugin]
     });
     if(status)status.style.display='none';
     if(wrap)wrap.style.display='block';
@@ -4320,7 +4450,7 @@ function initRadar(lat,lon){
     _radarMap=L.map('radarMap',{center:[lat,lon],zoom:(_viewMode==='j0'||_viewMode==='j1')?7:5,minZoom:3,maxZoom:7,zoomControl:true,attributionControl:false});
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:7,tileSize:256}).addTo(_radarMap);
     _radarMarker=L.circleMarker([lat,lon],{radius:6,color:'#ffe600',weight:2,fillColor:'#ffe600',fillOpacity:0.9}).addTo(_radarMap);
-    _radarMap.on('click',e=>reverseGeocode(e.latlng.lat,e.latlng.lng));
+    _radarMap.on('click',openRadarPage);
   } else {
     _radarMap.setView([lat,lon],(_viewMode==='j0'||_viewMode==='j1')?7:5);
     if(_radarMarker)_radarMarker.setLatLng([lat,lon]);
@@ -4706,6 +4836,13 @@ function openHelpPanel(){
   document.getElementById('helpPanel').classList.add('open');
 }
 function closeHelpPanel(){document.getElementById('helpPanel').classList.remove('open');}
+function toggleHelpMenu(e){if(e)e.stopPropagation();const m=document.getElementById('helpMenu');if(m)m.classList.toggle('open');}
+function closeHelpMenu(){const m=document.getElementById('helpMenu');if(m)m.classList.remove('open');}
+document.addEventListener('click',function(e){const w=document.getElementById('helpWrap');if(w&&!w.contains(e.target))closeHelpMenu();});
+function openAbout(){document.getElementById('aboutPanel').classList.add('open');}
+function closeAbout(){document.getElementById('aboutPanel').classList.remove('open');}
+function openDetail(){document.getElementById('detailPanel').classList.add('open');}
+function closeDetail(){document.getElementById('detailPanel').classList.remove('open');}
 
 async function openOragesPanel(){
   if(_oragesScanRunning)return;
@@ -4850,6 +4987,174 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
   </div>
 </div>
 
+<div id="aboutPanel">
+  <div class="op-card" style="max-width:760px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#7ec97e">👁️ PLUIEPRO EN BREF</div>
+      <button onclick="closeAbout()" style="background:none;border:1px solid #444;border-radius:4px;color:#888;padding:4px 10px;cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <div style="font-size:13px;color:#ccc;line-height:1.7;font-family:'Courier New',monospace">
+      <p style="margin:0 0 12px"><b style="color:#fff">PluiePro</b> est une appli météo pour la <b style="color:#7ec97e">France</b>, centrée sur la <b style="color:#5b9bff">pluie</b> et la <b style="color:#e07a7a">température</b>. Son principe : ne pas se fier à un seul modèle météo, mais en interroger <b style="color:#ffe600">10 en même temps</b> et en faire une synthèse — un consensus est plus fiable qu'une prévision isolée.</p>
+      <p style="margin:0 0 7px;color:#88ccff;font-weight:700">Comment l'utiliser</p>
+      <ul style="margin:0 0 13px;padding-left:18px">
+        <li style="margin-bottom:5px">Tapez une ville dans la barre du haut (ou 🎲 pour votre position GPS, une ville au hasard, la plus chaude…).</li>
+        <li style="margin-bottom:5px">Choisissez l'échéance avec le menu 📅 : de <b>J‑7</b> (passé) à <b>J+28</b> (tendance long terme).</li>
+        <li style="margin-bottom:5px">Lisez la prévision : pluie et températures du jour choisi, heure par heure.</li>
+      </ul>
+      <p style="margin:0 0 7px;color:#88ccff;font-weight:700">Les vues principales</p>
+      <ul style="margin:0 0 13px;padding-left:18px">
+        <li style="margin-bottom:5px"><b style="color:#7ec97e">📈 GRAPH</b> — un graphe continu sur <b>28 jours</b> : températures max/min + pluie, avec des <b style="color:#ffd000">zones de canicule</b> colorées.</li>
+        <li style="margin-bottom:5px"><b style="color:#ff8844">📡 RADAR</b> — la pluie en temps réel sur une carte ; un clic l'ouvre en grand.</li>
+        <li style="margin-bottom:5px"><b style="color:#88ccff">Pluie minute par minute</b> — ce qui tombe dans l'heure qui vient.</li>
+        <li style="margin-bottom:5px"><b style="color:#d9a3ff">🗓 Saison</b> — la tendance des 3 prochains mois.</li>
+      </ul>
+      <p style="margin:0">Un badge <b style="color:#e0b84c">⚠️ Vigilance</b> renvoie aux alertes officielles Météo‑France de votre département, et vous pouvez garder vos villes en <b style="color:#ffe600">favoris</b> ⭐ pour les retrouver d'un geste. Le bouton 📱 bascule en vue simplifiée (pratique sur téléphone).</p>
+    </div>
+  </div>
+</div>
+
+<div id="detailPanel">
+  <div class="op-card" style="max-width:840px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#66aaff">📖 FONCTIONNEMENT DÉTAILLÉ</div>
+      <button onclick="closeDetail()" style="background:none;border:1px solid #444;border-radius:4px;color:#888;padding:4px 10px;cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <div style="font-size:12px;color:#bbb;line-height:1.65;font-family:'Courier New',monospace">
+
+      <p style="margin:0 0 10px">Ce guide passe en revue <b style="color:#fff">toutes</b> les fonctions de PluiePro, avec des exemples et le détail de chaque réglage. Les encadrés sombres sont des <b>illustrations</b> des éléments de l'interface.</p>
+      <div class="hd-toc">
+        <div>1 — La barre d'outils</div>
+        <div>2 — La prévision principale</div>
+        <div>3 — Le consensus multi‑modèles</div>
+        <div>4 — Les échéances J‑7 → J+28</div>
+        <div>5 — Le GRAPH</div>
+        <div>6 — Les flèches de tendance</div>
+        <div>7 — Les zones de canicule</div>
+        <div>8 — Régler la canicule (OPTIONS)</div>
+        <div>9 — Le RADAR</div>
+        <div>10 — Pluie minute par minute</div>
+        <div>11 — Vigilance Météo‑France</div>
+        <div>12 — Tendance saison</div>
+        <div>13 — Vue simplifiée</div>
+        <div>14 — Favoris</div>
+        <div>15 — Mémoire, sources, technique</div>
+      </div>
+
+      <h4>1 — La barre d'outils</h4>
+      <p>En haut de l'écran, de gauche à droite :</p>
+      <div class="hd-shot">
+        <span class="hd-btn">🔎 ville…</span><span class="hd-btn">✕</span><span class="hd-btn">🎲</span><span class="hd-btn">📅 J+1 ▾</span><span class="hd-btn">📱</span><span class="hd-btn">🏠</span><span class="hd-btn">❓</span><span class="hd-btn" style="color:#7ec97e;font-weight:900">GO</span>
+        <div class="hd-cap">La barre d'outils (reconstitution)</div>
+      </div>
+      <ul>
+        <li><b style="color:#ddd">Champ de recherche</b> : tapez une ville, validez par <code>GO</code> ou la touche Entrée. La croix <b>✕</b> efface le champ.</li>
+        <li><b style="color:#ddd">🎲 Explorer</b> : ouvre un menu — <b>📍 Ma position GPS</b>, basculer <b>🇫🇷 France / 🌍 Monde</b>, <b>🎲 Ville aléatoire</b>, et (en France) les villes extrêmes <b>🌡️ la plus chaude</b> / <b>💧 la plus pluvieuse</b> du moment.</li>
+        <li><b style="color:#ddd">📅 Échéances</b> : choisit le jour affiché, de J‑7 à J+28 (voir §4). C'est aussi là que se trouvent <b>📈 GRAPH</b>, <b>⚙ OPTIONS</b>, <b>⤢ J+28</b> et <b>🗓 SAISON</b>.</li>
+        <li><b style="color:#ddd">📱 Vue simplifiée</b> : bascule en affichage allégé pour téléphone (voir §13).</li>
+        <li><b style="color:#ddd">🏠 Accueil</b> : revient à votre ville d'accueil.</li>
+        <li><b style="color:#ddd">❓ Aide</b> : ce menu (vue d'ensemble · détaillé · modèles).</li>
+      </ul>
+      <div class="hd-ex">▸ <b>Exemple</b> : tapez « Lyon », GO → la prévision de Lyon s'affiche. Cliquez 🎲 puis « La plus chaude » → l'appli saute sur la ville française la plus chaude aujourd'hui.</div>
+
+      <h4>2 — La prévision principale</h4>
+      <p>C'est la vue par défaut : pour le jour choisi, elle montre la <b style="color:#5b9bff">pluie</b> et les <b style="color:#e07a7a">températures</b> heure par heure, plus une synthèse du ciel. Tout est issu du consensus des modèles (§3). Sous le nom de la ville, une ligne rappelle le fuseau horaire, l'heure de mise à jour et l'état de la pluie ; c'est là qu'apparaît le badge de vigilance (§11).</p>
+
+      <h4>3 — Le consensus multi‑modèles</h4>
+      <p>PluiePro n'utilise pas un seul modèle mais <b style="color:#fff">10 sources</b>, interrogées en direct via Open‑Meteo, puis combinées. C'est le cœur de l'appli.</p>
+      <ul>
+        <li><b style="color:#ff8844">Modèles régionaux</b> (résolution 1–2 km) : AROME 🇫🇷, ICON‑CH 🇨🇭, ItaliaMeteo 🇮🇹. Très précis à courte échéance, mais portée limitée — et ICON‑CH / ItaliaMeteo ne couvrent que l'<b>Est et Sud‑Est</b> de la France (ailleurs, valeur absente, c'est normal).</li>
+        <li><b style="color:#44aaff">Modèles globaux</b> (9–25 km) : GFS, ECMWF, ICON, GEM… Moins fins, mais portent jusqu'à <b>16 jours</b>.</li>
+      </ul>
+      <p>De ces sources, l'appli tire une <b>médiane pondérée</b> (les modèles fins pèsent plus à court terme). La courbe jaune <b style="color:#ffe600">P80</b> est le 80ᵉ percentile : 8 sources sur 10 prévoient <b>moins</b> que cette valeur — une lecture « prudente » du risque de pluie. Un <b>indice de confiance</b> traduit l'accord entre modèles : élevé quand ils sont d'accord, plus faible quand ils divergent.</p>
+      <div class="hd-ex">▸ <b>Exemple</b> : si 8 modèles annoncent 1 mm et 2 annoncent 6 mm, la médiane reste basse mais le P80 grimpe — signe d'un risque d'averse plus marqué qu'il n'y paraît, et d'une confiance réduite.</div>
+
+      <h4>4 — Les échéances (J‑7 → J+28)</h4>
+      <ul>
+        <li><b>J‑7 à J‑1</b> : jours <b>passés</b> (pour comparer / vérifier).</li>
+        <li><b>J</b> : aujourd'hui.</li>
+        <li><b>J+1 à J+14</b> : prévision <b>déterministe</b> (la synthèse des modèles).</li>
+        <li><b>J+15 à J+28</b> : <b style="color:#e0b84c">tendance d'ensemble</b> — orientation générale, pas une prévision exacte. La fiabilité chute à cette distance.</li>
+      </ul>
+
+      <h4>5 — Le GRAPH</h4>
+      <p>Accessible par <b>📅 → 📈 GRAPH</b>. C'est une <b>seule courbe continue de J à J+28</b> :</p>
+      <div class="hd-shot">
+        <span style="color:#e23b3b;font-weight:900">━●━</span> température maximale &nbsp;·&nbsp; <span style="color:#3b7ce2;font-weight:900">━●━</span> température minimale &nbsp;·&nbsp; <span style="color:#2196f3">▮▮</span> pluie (mm)
+        <div class="hd-cap">Les trois séries du graphe</div>
+      </div>
+      <p>Chaque valeur est posée sur une petite <b>étiquette claire</b> pour rester lisible, même sur les colonnes de canicule colorées. L'axe des températures est à gauche (°C), celui de la pluie à droite (mm). Sur PC le graphe occupe toute la largeur ; sur téléphone il défile horizontalement.</p>
+
+      <h4>6 — Les flèches de tendance</h4>
+      <p>Sur les jours proches, de petites flèches indiquent comment la prévision a <b>évolué d'une mise à jour à l'autre</b> (l'appli compare les derniers « runs » des modèles). Ce n'est pas la météo qui monte ou descend, c'est la <b>prévision</b> qui est révisée.</p>
+      <div class="hd-shot">
+        <span style="color:#ff6a3d;font-weight:900;font-size:15px">↑</span> prévision revue à la <b>hausse</b> depuis les jours précédents &nbsp;·&nbsp; <span style="color:#46a4ff;font-weight:900;font-size:15px">↓</span> revue à la <b>baisse</b>
+        <div class="hd-cap">Plus la flèche est grande, plus la révision est forte</div>
+      </div>
+      <div class="hd-ex">▸ <b>Exemple</b> : une flèche ↑ sur la pluie de après‑demain = les modèles ont rehaussé la quantité de pluie attendue par rapport à hier — la tendance se confirme à la hausse.</div>
+
+      <h4>7 — Les zones de canicule</h4>
+      <p>Sur le GRAPH, chaque jour peut être <b>colorié</b> selon ses températures. Le niveau retenu est <b>le plus élevé atteint</b>, et il faut que <b>le minimum ET le maximum</b> dépassent tous les deux les seuils.</p>
+      <div class="hd-shot">
+        <div style="margin-bottom:5px"><span class="hd-sw" style="background:rgba(255,222,0,0.8)"></span><b style="color:#eee">Jaune</b> — min ≥ 20° <b>et</b> max ≥ 30°</div>
+        <div style="margin-bottom:5px"><span class="hd-sw" style="background:rgba(255,140,0,0.8)"></span><b style="color:#eee">Orange</b> — min ≥ 23° <b>et</b> max ≥ 35°</div>
+        <div style="margin-bottom:5px"><span class="hd-sw" style="background:rgba(255,50,45,0.85)"></span><b style="color:#eee">Rouge</b> — min ≥ 25° <b>et</b> max ≥ 37°</div>
+        <div><span class="hd-sw" style="background:rgba(255,255,255,0.85)"></span><b style="color:#eee">Blanc</b> — min ≥ 27° <b>et</b> max ≥ 40°</div>
+        <div class="hd-cap">Les 4 niveaux et leurs seuils par défaut</div>
+      </div>
+      <div class="hd-ex">▸ <b>Exemple</b> : un jour à min 26° / max 39° est <b style="color:#ff5a5a">rouge</b> (min ≥ 25 et max ≥ 37 ✓), mais pas blanc car le minimum (26°) n'atteint pas 27°.</div>
+
+      <h4>8 — Régler la canicule (⚙ OPTIONS)</h4>
+      <p>Tous les seuils sont <b>modifiables</b>. Ouvrez OPTIONS via le bouton <b style="color:#e0b84c">⚙</b> en haut du GRAPH, ou via <b>📅 → ⚙ OPTIONS</b> (utile sur téléphone, où l'en‑tête du graphe est masqué).</p>
+      <div class="hd-shot">
+        <label style="display:block;margin-bottom:8px"><span style="vertical-align:2px">☑</span> <b style="color:#ddd">Afficher les zones de canicule</b></label>
+        <div style="display:flex;align-items:center;gap:8px;border-top:1px solid #1c1c1c;padding-top:7px">
+          <span class="hd-sw" style="background:rgba(255,222,0,0.8);margin:0"></span><b style="color:#ccc;width:54px;display:inline-block">Jaune</b>
+          <span style="color:#bbb">min ≥ <span style="background:#161616;border:1px solid #333;border-radius:5px;padding:2px 7px;color:#fff">20</span>° · max ≥ <span style="background:#161616;border:1px solid #333;border-radius:5px;padding:2px 7px;color:#fff">30</span>°</span>
+        </div>
+        <div style="margin-top:9px"><span style="background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:5px 10px;color:#bbb;font-weight:900">↺ Valeurs par défaut</span> <span style="background:#1e3a5a;border:1px solid #3a5a7a;border-radius:8px;padding:5px 12px;color:#fff;font-weight:900">Appliquer</span></div>
+        <div class="hd-cap">Le panneau OPTIONS (reconstitution d'une ligne)</div>
+      </div>
+      <ul>
+        <li><b style="color:#ddd">La case en haut</b> active ou masque complètement les zones de canicule.</li>
+        <li><b style="color:#ddd">Pour chaque couleur</b>, réglez le seuil <b>min</b> et le seuil <b>max</b> (les deux doivent être franchis).</li>
+        <li><b style="color:#ddd">↺ Valeurs par défaut</b> rétablit les seuils d'origine ci‑dessus.</li>
+        <li><b style="color:#ddd">Appliquer</b> redessine le graphe immédiatement, sans le recharger.</li>
+        <li>Vos réglages sont <b>mémorisés</b> sur l'appareil : on les retrouve à la prochaine ouverture.</li>
+      </ul>
+      <div class="hd-ex">▸ <b>Exemple</b> : pour repérer les nuits chaudes, montez le min du Jaune à 22° et baissez son max à 28° → seuls les jours à nuit douce et après‑midi tiède ressortiront en jaune.</div>
+
+      <h4>9 — Le RADAR</h4>
+      <p>La carte 📡 RADAR montre l'imagerie de pluie animée. Le bouton <b>▶ PLAY</b> rejoue les dernières images. Vous pouvez déplacer / zoomer la petite carte.</p>
+      <div class="hd-shot"><b style="color:#ddd">Cliquez sur la carte</b> → un radar plein écran (Windy) s'ouvre, centré sur la ville, avec un bouton <b>↗ Navigateur</b> pour l'ouvrir dans un onglet.<div class="hd-cap">Le clic agrandit le radar</div></div>
+      <p style="color:#888;font-size:11px">À noter : le clic sur la carte sert désormais à l'agrandir (et non plus à choisir une ville en pointant un lieu).</p>
+
+      <h4>10 — Pluie minute par minute</h4>
+      <p>À côté du radar, l'aperçu « pluie dans l'heure » indique ce qui va tomber dans les prochaines minutes (données lameteoagricole + radar Météo‑France). Un clic ouvre la page complète, plein écran, avec le bouton ↗ Navigateur.</p>
+
+      <h4>11 — Vigilance Météo‑France</h4>
+      <p>Pour les villes françaises, un badge <b style="color:#e0b84c">⚠️ Vigilance {département}</b> apparaît sous le nom de la ville. Il ouvre la <b>page officielle</b> des vigilances Météo‑France du bon département (canicule, orages, crues…).</p>
+
+      <h4>12 — Tendance saison</h4>
+      <p>Via <b>📅 → 🗓 SAISON</b> : les prévisions saisonnières (tendance des 3 prochains mois). À lire comme une orientation, pas un détail jour par jour.</p>
+
+      <h4>13 — Vue simplifiée</h4>
+      <p>Le bouton <b>📱</b> bascule en affichage allégé, pensé pour le téléphone : le GRAPH et la prévision du lendemain, en plus grand. Le même bouton fait revenir à la vue complète.</p>
+
+      <h4>14 — Favoris</h4>
+      <p>Ajoutez la ville affichée à vos favoris (bouton ⭐ / « + ») : elle apparaît en <b>pastille</b> sous la barre de recherche et se recharge d'un simple appui. Re‑cliquer retire le favori.</p>
+
+      <h4>15 — Mémoire, sources, technique</h4>
+      <ul>
+        <li><b style="color:#ddd">Mémoire locale</b> : favoris et options de canicule sont stockés <b>sur votre appareil</b> — rien n'est envoyé ailleurs, aucun compte requis.</li>
+        <li><b style="color:#ddd">Fichier autonome</b> : PluiePro est une seule page HTML. Elle marche en ouvrant le fichier, ou hébergée (ex. GitHub Pages).</li>
+        <li><b style="color:#ddd">Données</b> : Open‑Meteo (licence CC‑BY 4.0), webservice Météo‑France, MET Norway (api.met.no), RainViewer, Windy, Open‑Meteo Geocoding.</li>
+        <li><b style="color:#ddd">Astuce</b> : si un changement « ne s'affiche pas » après une mise à jour, forcez le rechargement (Ctrl+Maj+R sur PC, ou rouvrez l'onglet).</li>
+      </ul>
+
+    </div>
+  </div>
+</div>
+
 <div id="ext30Panel">
   <div id="ext30Card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -4873,15 +5178,15 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
     <a id="scrapeOpenExt" href="#" target="_blank" rel="noopener">↗ Navigateur</a>
     <button onclick="closeScrapePage()" aria-label="Fermer">✕</button>
   </div>
-  <div id="scrapeHint">💡 Rien ne s'affiche ? Ce site bloque l'affichage intégré — touchez ↗ Navigateur.</div>
   <iframe id="scrapeFrame" src="about:blank"></iframe>
 </div>
 <div id="graphPanel">
   <div id="graphCard">
     <div id="graphHeader" style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      <button id="graphPrev" onclick="openGraph('14')" aria-label="Graphe J à J+14" title="GRAPH14 (J→J+14)" style="background:none;border:1px solid #444;border-radius:4px;color:#7ec97e;padding:4px 11px;cursor:pointer;font-size:18px;font-weight:900;line-height:1">‹</button>
-      <div id="graphTitle" style="flex:1;text-align:center;font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#7ec97e">📈 GRAPHIQUE J → J+14</div>
-      <button id="graphNext" onclick="openGraph('28')" aria-label="Graphe J+15 à J+28" title="GRAPH28 (J+15→J+28)" style="background:none;border:1px solid #444;border-radius:4px;color:#7ec97e;padding:4px 11px;cursor:pointer;font-size:18px;font-weight:900;line-height:1">›</button>
+      <button id="graphPrev" style="display:none">‹</button>
+      <div id="graphTitle" style="flex:1;text-align:center;font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#7ec97e">📈 GRAPHIQUE J → J+28</div>
+      <button id="graphNext" style="display:none">›</button>
+      <button onclick="openOpt()" aria-label="Options" title="Options : zones de canicule" style="background:none;border:1px solid #444;border-radius:4px;color:#e0b84c;padding:4px 10px;cursor:pointer;font-size:15px">⚙</button>
       <button onclick="closeGraph()" aria-label="Fermer" style="background:none;border:1px solid #444;border-radius:4px;color:#888;padding:4px 10px;cursor:pointer;font-size:16px">✕</button>
     </div>
     <div id="graphStatus">Chargement…</div>
@@ -4891,6 +5196,22 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
       <span><b style="background:#3b7ce2"></b>Minimum</span>
       <span><b style="background:#2196f3"></b>Précipitations (mm)</span>
       <span style="opacity:.85">↑↓ tendance (évolution des prévisions dans le temps)</span>
+    </div>
+  </div>
+</div>
+
+<div id="optPanel">
+  <div id="optCard">
+    <div class="opt-head">
+      <div class="opt-ttl">⚙ OPTIONS — Zones de canicule</div>
+      <button onclick="closeOpt()" aria-label="Fermer" class="opt-x">✕</button>
+    </div>
+    <label class="opt-toggle"><input type="checkbox" id="optOn"> Afficher les zones de canicule sur le graphe</label>
+    <div class="opt-hint">Chaque jour est coloré selon le niveau le plus élevé atteint — les deux conditions (min ET max) doivent être remplies.</div>
+    <div id="optBody"></div>
+    <div class="opt-actions">
+      <button onclick="resetOpt()" class="opt-reset">↺ Valeurs par défaut</button>
+      <button onclick="saveOpt()" class="opt-apply">Appliquer</button>
     </div>
   </div>
 </div>
