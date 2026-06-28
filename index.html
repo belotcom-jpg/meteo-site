@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>PluiePro v2.8</title>
+<title>PluiePro v2.9</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -60,8 +60,9 @@ body{background:#000;color:#fff;font-family:'Courier New',monospace;padding:3px;
   #viewMenu .vm-sep{font-size:9px;color:#555;text-align:center;padding:7px 0 4px;letter-spacing:0.5px}
 
   #exploreWrap{position:relative;flex-shrink:0;display:flex}
-  #exploreBtn,#helpBtn{background:#161616;border:1px solid #333;border-radius:10px;color:#ccc;font-size:17px;cursor:pointer;padding:0 11px;line-height:1;transition:background .15s}
-  #exploreBtn:hover,#helpBtn:hover{background:#222}
+  #exploreBtn,#helpBtn,#optBtn{background:#161616;border:1px solid #333;border-radius:10px;color:#ccc;font-size:17px;cursor:pointer;padding:0 11px;line-height:1;transition:background .15s}
+  #exploreBtn:hover,#helpBtn:hover,#optBtn:hover{background:#222}
+  #optBtn{color:#e0b84c}
   #exploreBtn.searching{animation:spin 1s linear infinite}
   #exploreMenu{display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:9998;background:#0d0d0d;border:1px solid #333;border-radius:10px;padding:6px;min-width:215px;box-shadow:0 8px 24px rgba(0,0,0,0.6)}
   #exploreMenu.open{display:block}
@@ -128,7 +129,9 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 .radar-crosshair::before,.radar-crosshair::after{content:'';position:absolute;background:rgba(255,230,0,0.8)}
 .radar-crosshair::before{width:1px;height:100%;left:50%;top:0}
 .radar-crosshair::after{width:100%;height:1px;top:50%;left:0}
-#radarPlayBtn{background:#0d0d0d;border:1.5px solid #333;border-radius:6px;color:#888;font-family:'Courier New',monospace;font-size:9px;font-weight:900;padding:3px 8px;cursor:pointer;transition:all .15s}
+#radarPlayBtn,#radarFsBtn{background:#0d0d0d;border:1.5px solid #333;border-radius:6px;color:#888;font-family:'Courier New',monospace;font-size:9px;font-weight:900;padding:3px 8px;cursor:pointer;transition:all .15s}
+#radarFsBtn{font-size:12px;padding:2px 8px}
+#radarFsBtn:hover{border-color:#00ffff;color:#00ffff}
 #radarPlayBtn.playing{border-color:#00ffff;color:#00ffff}
 #modeToggle{background:#0d0d0d;border:1.5px solid #444;border-radius:7px;color:#888;font-family:'Courier New',monospace;font-size:9px;font-weight:900;padding:4px 10px;cursor:pointer;letter-spacing:1px;transition:all .15s;white-space:nowrap}
 #modeToggle.simple{border-color:#ffe600;color:#ffe600;background:rgba(255,230,0,0.07)}
@@ -375,6 +378,7 @@ document.addEventListener('DOMContentLoaded',function(){try{var vt=document.getE
         <button onclick="openHelpPanel();closeHelpMenu()">🌐 Les modèles météo <span>les 10 sources de prévision</span></button>
       </div>
     </div>
+    <button id="optBtn" onclick="openOpt()" aria-label="Options : zones de canicule" title="Options : zones de canicule">⚙</button>
     <button id="homeBtn"  onclick="goHome()" title="Retour Juvisy-sur-Orge">🏠</button>
     <button id="searchBtn" onclick="load()">GO</button>
   </div>
@@ -484,6 +488,7 @@ document.addEventListener('DOMContentLoaded',function(){try{var vt=document.getE
           <div style="display:flex;gap:6px;align-items:center">
             <span id="radarTime">—</span>
             <button id="radarPlayBtn" onclick="toggleRadarPlay()">▶ PLAY</button>
+            <button id="radarFsBtn" onclick="openRadarPage()" title="Ouvrir le radar en plein écran">⤢</button>
           </div>
         </div>
         <div id="radarMap">
@@ -508,8 +513,6 @@ if(_widgetMode){
     });
     /* Réduire les marges */
     document.body.style.padding='0';
-    var main=document.getElementById('main');
-    if(main)main.style.padding='4px';
   });
 }
 
@@ -605,27 +608,6 @@ let _isMob=false;
 /* ── maths ── */
 
 /* Pondération adaptative des modèles (historique 7j localStorage) */
-function _getModelWeights(){
-  try{
-    const stored=localStorage.getItem('pp_model_weights');
-    if(!stored)return null;
-    const obj=JSON.parse(stored);
-    if(Date.now()-obj.ts>7*24*3600*1000)return null; /* expire après 7j */
-    return obj.weights;
-  }catch{return null;}
-}
-function _updateModelWeight(modelKey,mae){
-  try{
-    const stored=localStorage.getItem('pp_model_mae_hist');
-    const hist=stored?JSON.parse(stored):{};
-    if(!hist[modelKey])hist[modelKey]=[];
-    hist[modelKey].push({mae,ts:Date.now()});
-    /* Garder 7 jours */
-    const cutoff=Date.now()-7*24*3600*1000;
-    hist[modelKey]=hist[modelKey].filter(e=>e.ts>cutoff).slice(-14);
-    localStorage.setItem('pp_model_mae_hist',JSON.stringify(hist));
-  }catch{}
-}
 
 function p80(arr){
   const v=arr.filter(x=>x!=null&&isFinite(x)&&x>=0);
@@ -653,7 +635,6 @@ function _isTropical(){
 
 
 function maxOf(arr){const v=arr.filter(x=>x!=null&&isFinite(x)&&x>=0);return v.length?Math.max(...v):0}
-function interpM15(m15,slotF,off){const t=slotF+off/15,si=Math.floor(t),f=t-si;return Math.max(0,(m15[si]??0)*(1-f)+(m15[si+1]??m15[si]??0)*f)}
 function localKey(utcStr){
   const l=new Date(new Date(utcStr).toLocaleString('en-US',{timeZone:cityTz}));
   const p=n=>String(n).padStart(2,'0');
@@ -1185,7 +1166,6 @@ function _wmoEmoji(c){
   if(c>=95)return '⛈️';
   return '☁️';
 }
-function _tBandColor(t){var hh=Math.max(0,Math.min(230,230-(t-5)/40*230));return 'hsla('+hh+',78%,55%,0.13)';}
 function _rainToCode(mm){if(mm<0.2)return 2;if(mm<1)return 3;if(mm<5)return 61;if(mm<15)return 63;return 65;}
 /* ── Zones de canicule sur le GRAPH : colonne colorée par jour selon (min,max). Niveau le plus haut atteint = couleur retenue. Seuils paramétrables (menu OPTIONS), persistés en localStorage. ── */
 const _CANIC_DEF=[
@@ -1204,7 +1184,6 @@ function _canicLevel(mn,mx){
 }
 function _canicSave(){try{localStorage.setItem('pp_canic_v1',JSON.stringify({on:_canicOpts.on,levels:_canicOpts.levels.map(l=>({mn:l.mn,mx:l.mx}))}));}catch(_){}}
 /* ── Tendance : on lit EN DIRECT les runs précédents des modèles (API previous-runs Open-Meteo), aucun stockage local ── */
-function _isoDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 async function openGraph(){
   const canvasId='graphCanvas';
   const p=document.getElementById('graphPanel');
@@ -1214,8 +1193,6 @@ async function openGraph(){
   const leg=document.getElementById('graphLeg');
   const ttl=document.getElementById('graphTitle');
   const hide=()=>{if(wrap)wrap.style.display='none';if(leg)leg.style.display='none';};
-  /* un seul graphe continu J → J+28 : pas de navigation */
-  {const _gp=document.getElementById('graphPrev'),_gnx=document.getElementById('graphNext');if(_gp)_gp.style.display='none';if(_gnx)_gnx.style.display='none';}
   if(typeof _cityLat==='undefined'||_cityLat==null){if(status){status.style.display='block';status.textContent='Cherchez une ville d\'abord.';}hide();return;}
   if(status){status.style.display='block';status.textContent='⏳ Chargement…';}
   hide();
@@ -1342,24 +1319,6 @@ async function openGraph(){
     const yMax=Math.ceil((_hi+5)/5)*5;
     const maxRain=Math.max.apply(null,[2].concat(rain));
     const N=labels.length;
-    const tempBandsPlugin={
-      id:'tempBands',
-      beforeDraw(chart){
-        const yT=chart.scales.yT,area=chart.chartArea;
-        if(!yT||!area)return;
-        const ctx=chart.ctx;ctx.save();
-        const lo=Math.floor(yMin/5)*5,hi=Math.ceil(yMax/5)*5;
-        for(let t=lo;t<hi;t+=5){
-          let yTop=yT.getPixelForValue(t+5),yBot=yT.getPixelForValue(t);
-          yTop=Math.max(area.top,Math.min(area.bottom,yTop));
-          yBot=Math.max(area.top,Math.min(area.bottom,yBot));
-          if(yBot-yTop<=0)continue;
-          ctx.fillStyle=_tBandColor(t+2.5);
-          ctx.fillRect(area.left,yTop,area.right-area.left,yBot-yTop);
-        }
-        ctx.restore();
-      }
-    };
     const canicBandsPlugin={
       id:'canicBands',
       beforeDatasetsDraw(chart){
@@ -2348,12 +2307,6 @@ async function fetchAirQuality(lat,lon){
     setTimeout(function(){if(myChart){lastW=0;myChart.update();}},300);
   }
 }
-function fetchOwmMinutely(lat,lon){
-  /* Les données minutely sont déjà dans omM15 (precipitation_meteofrance_arome_france_hd
-     et precipitation_icon_d2). On reconstitue _owmMinutely depuis omM15 si disponible.
-     Cette fonction est gardée vide — l'alimentation se fait dans processData via _mfByMin */
-  /* Suppression de la clé OWM publique invalide */
-}
 
 /* ── Pluie dans l'heure MF ── */
 let MF_TOKEN='__Wj7dVSTjV9YGu1guveLyDq0g7S7TfTjaHBTPTpO0kj8__';
@@ -3193,68 +3146,6 @@ function processJmN(jmData,nDays){
 }
 
 /* ── traitement J-1 ── */
-function processJm1(jm1){
-  if(!jm1?.pastForecast?.hourly?.time){
-    showStatus('❌ Données J-1 indisponibles','#ff3d57');return;
-  }
-  
-  const h=jm1.pastForecast.hourly;
-  const dateStr=jm1.dateStr;
-  const omSources=SOURCES.filter(s=>s.omModel);
-  const pts=[],mods=SOURCES.map(()=>[]);
-
-  /* Parcourir les 24h d'hier dans la réponse */
-  h.time.forEach((t,idx)=>{
-    /* t est en heure locale grâce à timezone=auto */
-    if(!t.startsWith(dateStr)) return;
-    const hr=parseInt(t.slice(11,13));
-
-    /* P80 sur les modèles OM uniquement */
-    const rainVals=omSources.map(s=>{
-      const k=`precipitation_${s.omModel}`;
-      const v=h[k]?.[idx];
-      return (v!=null&&isFinite(v)&&v>=0)?v:null;
-    });
-    const r=p80(rainVals);
-    const mx=maxOf(rainVals);
-    const probVals=omSources.map(s=>{
-      const k=`precipitation_probability_${s.omModel}`;
-      const v=h[k]?.[idx];
-      return (v!=null&&isFinite(v)&&v>=0)?v:null;
-    });
-    const prob=Math.min(100,maxOf(probVals));
-
-    pts.push({t:hr+'h',d:0,r,mx,p:prob,hourIdx:idx});
-
-    /* mods : une entrée par source dans SOURCES (metno = null) */
-    SOURCES.forEach(src=>{
-      if(!src.omModel){mods[SOURCES.indexOf(src)].push(null);return;}
-      const k=`precipitation_${src.omModel}`;
-      const v=h[k]?.[idx];
-      mods[SOURCES.indexOf(src)].push((v!=null&&isFinite(v))?v:null);
-    });
-  });
-
-  if(!pts.length){showStatus('❌ Aucune donnée J-1 pour cette date','#ff3d57');return;}
-
-  /* Précipitations réelles */
-  const realArr=new Array(24).fill(null);
-  if(jm1.realData?.hourly?.time){
-    jm1.realData.hourly.time.forEach((t,i)=>{
-      if(!t.startsWith(dateStr))return;
-      const hr=parseInt(t.slice(11,13));
-      const v=jm1.realData.hourly.precipitation?.[i];
-      if(v!=null&&isFinite(v)) realArr[hr]=v;
-    });
-  }
-  /* Aligner realArr sur pts */
-  const realPts=pts.map(p=>{
-    const hr=parseInt(p.t);
-    return isNaN(hr)?null:realArr[hr];
-  });
-
-  renderJm1(pts,mods,realPts);
-}
 
 /* ── détection pics ── */
 function detectPeaks(values,labels,threshold,minDist){
@@ -3441,129 +3332,12 @@ function drawRainCloud(cv,cx,cy,r,mmh){
 }
 
 /* ── soleil canvas ── */
-function drawSunIcon(cv,cx,cy,r,opacity){
-  cv.save();cv.globalAlpha=(opacity??1)*0.85;
-  /* Corps jaune */
-  cv.beginPath();cv.arc(cx,cy,r*0.5,0,Math.PI*2);
-  cv.fillStyle='#ffe600';
-  cv.shadowColor='rgba(255,220,0,0.8)';cv.shadowBlur=r*0.6;
-  cv.fill();cv.shadowBlur=0;
-  /* Rayons */
-  cv.strokeStyle='#ffe600';cv.lineWidth=r*0.15;cv.lineCap='round';
-  for(let i=0;i<8;i++){
-    const a=i*Math.PI/4;
-    const r1=r*0.65,r2=r*0.95;
-    cv.beginPath();
-    cv.moveTo(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1);
-    cv.lineTo(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2);
-    cv.stroke();
-  }
-  cv.restore();
-}
 
 /* ── vélo canvas pour le trait 8h ── */
 /* ── vélo canvas propre pour le trait 8h ── */
-function drawBike8h(cv,cx,cy,r){
-  cv.save();
-  /* Fond noir circulaire */
-  cv.beginPath();cv.arc(cx,cy,r+4,0,Math.PI*2);
-  cv.fillStyle='rgba(0,0,0,0.72)';cv.fill();
-
-  const col='#ffe600';
-  cv.strokeStyle=col;cv.fillStyle=col;cv.lineCap='round';cv.lineJoin='round';
-
-  const rw=r*0.72;   /* rayon roue */
-  const sep=r*1.85;  /* écart entre roues */
-  const lx=cx-sep/2, rx=cx+sep/2; /* centres roues */
-  const lw=r*0.13;
-
-  /* Roues */
-  cv.lineWidth=lw;
-  cv.beginPath();cv.arc(lx,cy,rw,0,Math.PI*2);cv.stroke();
-  cv.beginPath();cv.arc(rx,cy,rw,0,Math.PI*2);cv.stroke();
-
-  /* Rayons roue gauche */
-  cv.lineWidth=lw*0.6;
-  for(let i=0;i<4;i++){const a=i*Math.PI/4;cv.beginPath();cv.moveTo(lx+Math.cos(a)*rw*0.25,cy+Math.sin(a)*rw*0.25);cv.lineTo(lx+Math.cos(a)*rw*0.85,cy+Math.sin(a)*rw*0.85);cv.stroke();}
-  for(let i=0;i<4;i++){const a=i*Math.PI/4+Math.PI/8;cv.beginPath();cv.moveTo(rx+Math.cos(a)*rw*0.25,cy+Math.sin(a)*rw*0.25);cv.lineTo(rx+Math.cos(a)*rw*0.85,cy+Math.sin(a)*rw*0.85);cv.stroke();}
-
-  /* Pédalier */
-  const pedX=cx, pedY=cy+rw*0.05;
-  cv.lineWidth=lw;
-  cv.beginPath();cv.arc(pedX,pedY,rw*0.18,0,Math.PI*2);cv.stroke();
-
-  /* Cadre : triangle roue arr → pédalier → roue av */
-  cv.lineWidth=lw;
-  cv.beginPath();cv.moveTo(lx,cy);cv.lineTo(pedX,pedY);cv.lineTo(rx,cy);cv.stroke();
-
-  /* Tube selle */
-  const selX=cx-r*0.15, selY=cy-rw*0.9;
-  cv.beginPath();cv.moveTo(pedX,pedY);cv.lineTo(selX,selY);cv.stroke();
-  cv.beginPath();cv.moveTo(selX,selY);cv.lineTo(lx,cy);cv.stroke();
-
-  /* Fourche + tube top */
-  const hdX=rx-r*0.07, hdY=cy-rw*0.82;
-  cv.beginPath();cv.moveTo(rx,cy);cv.lineTo(hdX,hdY);cv.stroke();
-  cv.beginPath();cv.moveTo(selX,selY);cv.lineTo(hdX,hdY);cv.stroke();
-
-  /* Selle */
-  cv.lineWidth=lw*1.2;
-  cv.beginPath();cv.moveTo(selX-rw*0.3,selY-rw*0.05);cv.lineTo(selX+rw*0.18,selY-rw*0.05);cv.stroke();
-
-  /* Guidon */
-  cv.beginPath();cv.moveTo(hdX,hdY);cv.lineTo(hdX+rw*0.26,hdY-rw*0.28);cv.stroke();
-  cv.beginPath();cv.arc(hdX+rw*0.26,hdY-rw*0.28,rw*0.1,0,Math.PI);cv.stroke();
-
-  /* Pédales */
-  cv.lineWidth=lw;
-  cv.beginPath();cv.moveTo(pedX-rw*0.3,pedY+rw*0.05);cv.lineTo(pedX+rw*0.3,pedY+rw*0.05);cv.stroke();
-
-  cv.restore();
-}
 
 
 /* ── icône météo canvas : soleil / nuage / pluie selon intensité ── */
-function drawWeatherIcon(c,cx,cy,r,rainMm,prob){
-  c.save();
-  c.lineCap='round';c.lineJoin='round';
-  if(rainMm<0.3&&prob<30){
-    /* ── SOLEIL ── */
-    const sr=r*0.42;
-    c.beginPath();c.arc(cx,cy,sr,0,Math.PI*2);
-    c.fillStyle='#ffe600';c.fill();
-    c.strokeStyle='#ffe600';c.lineWidth=r*0.12;
-    for(let i=0;i<8;i++){
-      const a=i*Math.PI/4,r1=sr+r*0.18,r2=sr+r*0.38;
-      c.beginPath();c.moveTo(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1);
-      c.lineTo(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2);c.stroke();
-    }
-  } else {
-    const cw=r*0.9,ch=r*0.45,cbx=cx-cw*0.1,cby=cy+r*0.05;
-    c.beginPath();
-    c.arc(cbx-cw*0.18,cby,ch*0.7,Math.PI,0);
-    c.arc(cbx+cw*0.12,cby-ch*0.3,ch*0.95,Math.PI,0);
-    c.arc(cbx+cw*0.42,cby,ch*0.6,Math.PI,0);
-    c.lineTo(cbx+cw*0.42+ch*0.6,cby+ch*0.5);
-    c.lineTo(cbx-cw*0.18-ch*0.7,cby+ch*0.5);
-    c.closePath();
-    const intensity=Math.min(rainMm/5,1);
-    const gray=Math.round(180-intensity*130);
-    c.fillStyle=`rgb(${gray},${gray},${gray+10})`;c.fill();
-    c.strokeStyle='rgba(255,255,255,0.3)';c.lineWidth=r*0.07;c.stroke();
-    if(rainMm>=0.3){
-      const drops=rainMm<1?2:rainMm<3?3:4;
-      const dropColor=rainMm<1?'rgba(120,180,255,0.7)':rainMm<3?'rgba(80,140,255,0.85)':'rgba(60,100,255,1)';
-      c.strokeStyle=dropColor;c.lineWidth=r*0.12;
-      const dropLen=r*(0.2+Math.min(rainMm/4,0.25));
-      for(let i=0;i<drops;i++){
-        const dx=cx-cw*0.3+i*(cw*0.55/(drops-1||1));
-        const dy0=cby+ch*0.6+r*0.1;
-        c.beginPath();c.moveTo(dx,dy0);c.lineTo(dx-r*0.08,dy0+dropLen);c.stroke();
-      }
-    }
-  }
-  c.restore();
-}
 
 /* ── renderJm1 ── */
 function renderJm1(pts,mods,realPrecip){
@@ -4450,7 +4224,8 @@ function initRadar(lat,lon){
     _radarMap=L.map('radarMap',{center:[lat,lon],zoom:(_viewMode==='j0'||_viewMode==='j1')?7:5,minZoom:3,maxZoom:7,zoomControl:true,attributionControl:false});
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:7,tileSize:256}).addTo(_radarMap);
     _radarMarker=L.circleMarker([lat,lon],{radius:6,color:'#ffe600',weight:2,fillColor:'#ffe600',fillOpacity:0.9}).addTo(_radarMap);
-    _radarMap.on('click',openRadarPage);
+    _radarMap.on('click',e=>reverseGeocode(e.latlng.lat,e.latlng.lng));
+    _radarMap.on('contextmenu',e=>{if(e.originalEvent&&e.originalEvent.preventDefault)e.originalEvent.preventDefault();openRadarPage();});
   } else {
     _radarMap.setView([lat,lon],(_viewMode==='j0'||_viewMode==='j1')?7:5);
     if(_radarMarker)_radarMarker.setLatLng([lat,lon]);
@@ -5004,7 +4779,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
       <p style="margin:0 0 7px;color:#88ccff;font-weight:700">Les vues principales</p>
       <ul style="margin:0 0 13px;padding-left:18px">
         <li style="margin-bottom:5px"><b style="color:#7ec97e">📈 GRAPH</b> — un graphe continu sur <b>28 jours</b> : températures max/min + pluie, avec des <b style="color:#ffd000">zones de canicule</b> colorées.</li>
-        <li style="margin-bottom:5px"><b style="color:#ff8844">📡 RADAR</b> — la pluie en temps réel sur une carte ; un clic l'ouvre en grand.</li>
+        <li style="margin-bottom:5px"><b style="color:#ff8844">📡 RADAR</b> — la pluie en temps réel sur une carte ; cliquez un point pour viser cette ville, ou le bouton <b>⤢</b> pour l'ouvrir en grand.</li>
         <li style="margin-bottom:5px"><b style="color:#88ccff">Pluie minute par minute</b> — ce qui tombe dans l'heure qui vient.</li>
         <li style="margin-bottom:5px"><b style="color:#d9a3ff">🗓 Saison</b> — la tendance des 3 prochains mois.</li>
       </ul>
@@ -5125,8 +4900,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
 
       <h4>9 — Le RADAR</h4>
       <p>La carte 📡 RADAR montre l'imagerie de pluie animée. Le bouton <b>▶ PLAY</b> rejoue les dernières images. Vous pouvez déplacer / zoomer la petite carte.</p>
-      <div class="hd-shot"><b style="color:#ddd">Cliquez sur la carte</b> → un radar plein écran (Windy) s'ouvre, centré sur la ville, avec un bouton <b>↗ Navigateur</b> pour l'ouvrir dans un onglet.<div class="hd-cap">Le clic agrandit le radar</div></div>
-      <p style="color:#888;font-size:11px">À noter : le clic sur la carte sert désormais à l'agrandir (et non plus à choisir une ville en pointant un lieu).</p>
+      <div class="hd-shot"><b style="color:#ddd">Cliquez un point de la carte</b> → l'appli vise cette ville (recherche d'adresse). Le bouton <b>⤢</b> ouvre un radar plein écran (Windy), avec <b>↗ Navigateur</b> pour l'ouvrir dans un onglet.<div class="hd-cap">Clic = ville · bouton ⤢ = radar plein écran</div></div>
+      <p style="color:#888;font-size:11px">À noter : sur ordinateur, un clic droit sur la carte ouvre aussi le radar plein écran.</p>
 
       <h4>10 — Pluie minute par minute</h4>
       <p>À côté du radar, l'aperçu « pluie dans l'heure » indique ce qui va tomber dans les prochaines minutes (données lameteoagricole + radar Météo‑France). Un clic ouvre la page complète, plein écran, avec le bouton ↗ Navigateur.</p>
@@ -5183,10 +4958,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
 <div id="graphPanel">
   <div id="graphCard">
     <div id="graphHeader" style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      <button id="graphPrev" style="display:none">‹</button>
       <div id="graphTitle" style="flex:1;text-align:center;font-family:'Courier New',monospace;font-size:15px;font-weight:700;color:#7ec97e">📈 GRAPHIQUE J → J+28</div>
-      <button id="graphNext" style="display:none">›</button>
-      <button onclick="openOpt()" aria-label="Options" title="Options : zones de canicule" style="background:none;border:1px solid #444;border-radius:4px;color:#e0b84c;padding:4px 10px;cursor:pointer;font-size:15px">⚙</button>
       <button onclick="closeGraph()" aria-label="Fermer" style="background:none;border:1px solid #444;border-radius:4px;color:#888;padding:4px 10px;cursor:pointer;font-size:16px">✕</button>
     </div>
     <div id="graphStatus">Chargement…</div>
