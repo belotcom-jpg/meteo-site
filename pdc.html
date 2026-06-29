@@ -1,10 +1,10 @@
 <!doctype html>
-<!-- ClassroomPDC — V1.11 (pages + widgets) -->
+<!-- ClassroomPDC — V1.18 (pages + widgets) -->
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ClassroomPDC · V1.11</title>
+<title>ClassroomPDC · V1.18</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hanken+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -304,6 +304,55 @@
   .ipick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px;max-height:46vh;overflow:auto}
   .ipick-grid button{padding:0;border:1.5px solid var(--edge);border-radius:8px;background:#fff;cursor:pointer;overflow:hidden;aspect-ratio:1/1}
   .ipick-grid img{width:100%;height:100%;object-fit:cover;display:block}
+  .plot-wrap{display:flex;flex-direction:column;height:100%;gap:5px;padding:6px;box-sizing:border-box}
+  .plot-fns{display:flex;flex-direction:column;gap:3px}
+  .plot-fn{display:flex;align-items:center;gap:5px}
+  .plot-dot{width:11px;height:11px;border-radius:50%;flex:none}
+  .plot-lab{font-weight:800;font-size:.78rem;color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .plot-fn input{flex:1;min-width:0;border:1.5px solid var(--edge);border-radius:7px;padding:.26rem .4rem;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;background:#fff;color:var(--ink)}
+  .plot-fn input.bad{border-color:#e23b2e;background:#fff2f0}
+  .plot-x{border:none;background:transparent;cursor:pointer;font-weight:800;color:#aaa;font-size:.85rem;padding:.1rem .25rem}
+  .plot-x:hover{color:#e23b2e}
+  .plot-add{align-self:flex-start;border:1.5px dashed var(--edge);background:#fff;border-radius:7px;font-family:inherit;font-weight:700;font-size:.74rem;padding:.2rem .5rem;cursor:pointer;color:var(--ink)}
+  .plot-cv{flex:1;min-height:60px;border:1.5px solid var(--edge);border-radius:9px;overflow:hidden;background:#fff;position:relative}
+  .plot-cv canvas{display:block;touch-action:none;cursor:grab}
+  .plot-cv canvas:active{cursor:grabbing}
+  .plot-params{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px}
+  .plot-par{display:flex;align-items:center;gap:5px}
+  .plot-parlab{font-weight:800;font-size:.74rem;width:30px;color:var(--ink)}
+  .plot-par input{flex:1;min-width:0;accent-color:var(--ink)}
+  .plot-parval{font-weight:700;font-size:.72rem;width:34px;text-align:right;font-variant-numeric:tabular-nums;color:#5a5a4c}
+  .plot-ctrls{display:flex;align-items:center;gap:5px}
+  .plot-cbtn{border:1.5px solid var(--edge);background:#fff;border-radius:7px;font-family:inherit;font-weight:800;font-size:.8rem;min-width:30px;padding:.2rem .45rem;cursor:pointer;color:var(--ink)}
+  .plot-cbtn:hover{background:rgba(27,27,23,.05)}
+  .plot-info{font-size:.7rem;color:#8a8a7c;margin-left:auto;font-variant-numeric:tabular-nums}
+  .calc-wrap{display:flex;flex-direction:column;height:100%;gap:5px;padding:6px;box-sizing:border-box}
+  .calc-modes{display:flex;gap:3px}
+  .calc-mode{flex:1;border:1.5px solid var(--edge);background:#fff;font-family:inherit;font-weight:700;font-size:.7rem;border-radius:7px;padding:.28rem .1rem;cursor:pointer;color:var(--ink)}
+  .calc-mode.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .calc-screen{background:#0f1411;color:#e8f0e8;border-radius:9px;padding:.45rem .6rem;min-height:52px;display:flex;flex-direction:column;justify-content:center;gap:2px;overflow:hidden}
+  .calc-expr{font-size:.84rem;opacity:.65;font-family:ui-monospace,Menlo,Consolas,monospace;text-align:right;white-space:nowrap;overflow-x:auto}
+  .calc-res{font-size:1.45rem;font-weight:800;text-align:right;font-family:ui-monospace,Menlo,Consolas,monospace;white-space:nowrap;overflow-x:auto;line-height:1.15}
+  .calc-res.prev{opacity:.5;font-size:1.05rem}
+  .calc-res.err{color:#ff8a7a;font-size:1.1rem}
+  .calc-res .calc-dec{font-size:.78rem;opacity:.7;font-weight:600}
+  .calc-input{background:#0f1411;color:#e8f0e8;border:1.5px solid #2a352c;border-radius:7px;padding:.42rem .5rem;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.92rem;width:100%;box-sizing:border-box}
+  .calc-input:focus{outline:none;border-color:#3f7a52}
+  .calc-base{font-size:.64rem;color:#7e9c8a;text-align:right;font-family:ui-monospace,Menlo,Consolas,monospace;overflow-x:auto;white-space:nowrap}
+  .calc-pad{flex:1;display:grid;gap:4px;min-height:0}
+  .calc-key{border:1.5px solid var(--edge);background:#fff;border-radius:8px;font-family:inherit;font-weight:700;font-size:.92rem;cursor:pointer;color:var(--ink);display:flex;align-items:center;justify-content:center;min-height:0;padding:2px;line-height:1}
+  .calc-key:hover{background:rgba(27,27,23,.05)}
+  .calc-key:active{transform:translateY(1px)}
+  .calc-key.op{background:#eef3ff;border-color:#cdddff;color:#2456c8;font-size:1.05rem}
+  .calc-key.eq{background:#1fa85a;border-color:#1fa85a;color:#fff;font-size:1.15rem}
+  .calc-key.act{color:#e23b2e}
+  .calc-key.fn{font-size:.74rem;font-weight:700}
+  .calc-expert-pal{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;align-content:start}
+  .calc-fkey{border:1.5px solid var(--edge);background:#fff;border-radius:7px;font-family:inherit;font-weight:700;font-size:.72rem;cursor:pointer;color:var(--ink);padding:.32rem 0}
+  .calc-fkey:hover{background:rgba(27,27,23,.05)}
+  .calc-expert-eq{display:flex;gap:4px;margin-top:4px}
+  .calc-expert-eq .calc-fkey{flex:1;font-size:.8rem}
+  .calc-eq{flex:2;border:1.5px solid #1fa85a;background:#1fa85a;color:#fff;border-radius:7px;font-weight:800;font-size:1.05rem;cursor:pointer}
   .modal h3{font-family:"Bricolage Grotesque",serif;font-weight:800;font-size:1.15rem;margin:0 0 .8rem}
   .modal label{display:block;font-weight:700;font-size:.8rem;color:#3c3c33;margin:.6rem 0 .25rem}
   .modal input{width:100%;border:1.5px solid rgba(27,27,23,.22);border-radius:9px;padding:.55rem .7rem;font-family:inherit;font-size:1rem;color:var(--ink);background:#fff}
@@ -314,6 +363,27 @@
   .modal.help p{font-size:.9rem;color:#46463d;margin:.4rem 0;line-height:1.45}
   .modal.help h4{font-family:"Bricolage Grotesque",serif;font-weight:800;font-size:.95rem;margin:.95rem 0 .3rem}
   .modal.help ul{margin:.2rem 0;padding-left:1.1rem} .modal.help li{font-size:.88rem;color:#3c3c33;line-height:1.4;margin:.18rem 0}
+  .help-head{position:sticky;top:-1.05rem;background:var(--paper);padding:.1rem 0 .5rem;margin-bottom:.4rem;border-bottom:1.5px solid var(--edge);z-index:2}
+  .help-head h3{margin:0}
+  .help-ver{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.66rem;font-weight:700;background:var(--ink);color:#fff;border-radius:6px;padding:.08rem .38rem;vertical-align:middle;margin-left:.35rem}
+  .help-tabs{display:flex;gap:5px;margin-top:.6rem}
+  .help-tab{flex:1;border:1.5px solid var(--edge);background:#fff;font-family:inherit;font-weight:700;font-size:.82rem;border-radius:8px;padding:.42rem;cursor:pointer;color:var(--ink)}
+  .help-tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .help-body[hidden]{display:none}
+  .help-intro{font-size:.92rem;color:#46463d;line-height:1.5}
+  .help-grid{display:grid;grid-template-columns:1fr 1fr;gap:.25rem .8rem;margin:.5rem 0}
+  .help-grid span{font-size:.84rem;color:#3c3c33}
+  .help-tip{background:#fff8e6;border:1.5px solid #f0dca0;border-radius:9px;padding:.5rem .7rem;font-size:.84rem;color:#6a5a24;margin:.6rem 0 .2rem;line-height:1.4}
+  .modal.help details{border:1.5px solid var(--edge);border-radius:9px;margin:.4rem 0;overflow:hidden;background:#fff}
+  .modal.help summary{font-family:"Bricolage Grotesque",serif;font-weight:800;font-size:.92rem;padding:.5rem .7rem;cursor:pointer;list-style:none;color:var(--ink);background:rgba(27,27,23,.03)}
+  .modal.help summary::-webkit-details-marker{display:none}
+  .modal.help summary::before{content:"▸ ";color:#9a9a8c}
+  .modal.help details[open] summary::before{content:"▾ "}
+  .modal.help details[open] summary{border-bottom:1.5px solid var(--edge)}
+  .modal.help details > ul,.modal.help details > p{margin-left:.7rem;margin-right:.7rem}
+  .modal.help details > p{font-size:.88rem}
+  .modal.help details > p:first-of-type{margin-top:.5rem}
+  .modal.help details .help-tip{margin-left:.7rem;margin-right:.7rem}
 
   @media (prefers-reduced-motion:reduce){ .seat,.seat.bp,.seat.bn,.seat.picked,.pw.editing .seat,.t.done{animation:none;transition:none} }
 </style>
@@ -321,7 +391,7 @@
 <body>
   <div class="app">
     <nav class="tabs" id="tabs" aria-label="Pages">
-      <span class="brand">ClassroomPDC <span class="ver">V1.11</span></span>
+      <span class="brand">ClassroomPDC <span class="ver">V1.18</span></span>
     </nav>
     <div class="toolbar">
       <button class="btn primary" id="addW">+ Widget</button>
@@ -354,6 +424,8 @@
     <button data-type="image"><span>🖼️</span> Image / GIF</button>
     <button data-type="wheel"><span>🎡</span> Roue / sélecteur</button>
     <button data-type="sand"><span>⏳</span> Sablier</button>
+    <button data-type="plot"><span>📈</span> Traceur de fonctions</button>
+    <button data-type="calc"><span>🧮</span> Calculatrice</button>
   </div>
 
   <div class="popover" id="themePop" hidden></div>
@@ -370,20 +442,125 @@
 
   <div class="modal-bg" id="helpBg" hidden>
     <div class="modal help" role="dialog" aria-modal="true">
-      <h3>ClassroomPDC — aide</h3>
-      <p>Un tableau d'affichage de classe : sur chaque <b>page</b>, ajoute librement des <b>widgets</b> (plan de classe, vidéo, minuteur, texte, horloge). Déplace-les par leur barre de titre, redimensionne par le coin. Tout est sauvegardé dans le navigateur.</p>
-      <h4>Pages & widgets</h4>
-      <ul>
-        <li><b>+ Widget</b> ajoute un widget à la page active. La croix <b>✕</b> du widget le retire.</li>
-        <li><b>Gérer les pages</b> fait apparaître <b>✎</b> (renommer) et <b>✕</b> (supprimer) sur les onglets ; le <b>+</b> ajoute une page.</li>
-        <li><b>Sauver / Charger config</b> : sauvegarde complète en <code>.json</code>.</li>
-      </ul>
-      <h4>Widget Plan de classe</h4>
-      <ul>
-        <li>Il a ses <b>propres onglets de classes</b> (Classe 1, 2…). <b>Clic gauche</b> sur un élève = croix négative (case blanc→noir, prénom <b>prononcé d'un ton ferme</b>) ; <b>clic droit</b> = croix positive (jaune→bleu→vert, muet).</li>
-        <li><b>Modifier</b> (dans le widget) : glisser-déposer un élève, <b>✕</b> retirer, <b>case « + »</b> ajouter, <b>+Rg/+Col</b> agrandir, et toucher une case pour éditer <b>prénom + prononciation</b>. <b>Importer</b> un <code>.xlsx</code>/<code>.csv</code>, <b>exporter</b> classes/croix.</li>
-        <li><b>Tirer</b> = élève au hasard (annoncé), <b>↺</b> remet les croix à zéro.</li>
-      </ul>
+      <div class="help-head">
+        <h3>ClassroomPDC — aide <span class="help-ver">V1.18</span></h3>
+        <div class="help-tabs">
+          <button class="help-tab on" data-view="over" type="button">Vue d'ensemble</button>
+          <button class="help-tab" data-view="detail" type="button">Vue détaillée</button>
+        </div>
+      </div>
+      <div class="help-body" id="helpOver">
+        <p class="help-intro"><b>ClassroomPDC</b> est un tableau d'affichage pour la classe, à projeter. Tu organises ton affichage en <b>pages</b>, et sur chaque page tu poses librement des <b>widgets</b> (outils) que tu déplaces et redimensionnes. Par-dessus, un <b>calque d'annotation</b> plein écran permet de dessiner et de faire de la géométrie. Tout est <b>enregistré dans le navigateur</b> et fonctionne <b>hors connexion</b>.</p>
+        <h4>En 4 gestes</h4>
+        <ul>
+          <li><b>+ Widget</b> → pose un outil sur la page. On le déplace par sa <b>barre de titre</b>, on le redimensionne par le <b>coin</b>, et la <b>✕</b> le retire.</li>
+          <li><b>Gérer les pages</b> → renommer / supprimer / ajouter des pages (onglets en haut).</li>
+          <li><b>✏️ Annoter</b> → stylo, surligneur, laser, et <b>📐 Formes</b> pour la géométrie, par-dessus toute la page.</li>
+          <li><b>Sauver / Charger</b> → toute ta configuration dans un fichier <code>.json</code>.</li>
+        </ul>
+        <h4>Les widgets disponibles</h4>
+        <div class="help-grid">
+          <span>🪑 Plan de classe</span><span>▶ Vidéo YouTube</span>
+          <span>⏱ Minuteur</span><span>⏲ Chronomètre</span>
+          <span>⏳ Sablier</span><span>🕒 Horloge</span>
+          <span>📅 Calendrier</span><span>🚦 Feu tricolore</span>
+          <span>✋ Symboles de travail</span><span>🎲 Dé</span>
+          <span>🎡 Roue / sélecteur</span><span>📝 Texte / consigne</span>
+          <span>🖼️ Image / GIF</span><span>🌐 Site web intégré</span>
+          <span>📈 Traceur de fonctions</span><span>🧮 Calculatrice Numéo</span>
+        </div>
+        <div class="help-tip">💡 Pour le détail de chaque outil et de la géométrie, passe en <b>Vue détaillée</b> (en haut).</div>
+      </div>
+      <div class="help-body" id="helpDetail" hidden>
+        <details open><summary>Pages &amp; configuration</summary>
+          <ul>
+            <li><b>Onglets de pages</b> en haut : clique pour changer de page. <b>Gérer les pages</b> affiche <b>✎</b> (renommer) et <b>✕</b> (supprimer) sur chaque onglet ; le <b>+</b> crée une page.</li>
+            <li><b>+ Widget</b> ajoute l'outil choisi à la page active.</li>
+            <li><b>Thème</b> de page : change l'ambiance de fond.</li>
+            <li><b>Sauver / Charger la config</b> : exporte/importe tout (pages, widgets, contenus) en <code>.json</code>, pour sauvegarder ou passer d'un PC à l'autre.</li>
+            <li>Sans rien faire, tout est <b>auto-enregistré dans le navigateur</b>. Vider les données du navigateur efface la configuration → garde un <code>.json</code> de secours.</li>
+          </ul>
+        </details>
+        <details><summary>🪑 Plan de classe</summary>
+          <ul>
+            <li>Possède ses <b>propres onglets de classes</b> (Classe 1, 2…), indépendants des pages.</li>
+            <li><b>Clic gauche</b> sur un élève = croix négative (case blanc→noir, prénom <b>prononcé fermement</b>). <b>Clic droit</b> = croix positive (jaune→bleu→vert, sans son).</li>
+            <li><b>Modifier</b> : glisser-déposer pour réorganiser, <b>✕</b> retirer, case <b>« + »</b> ajouter, <b>+Rg / +Col</b> agrandir. Touche une case pour éditer <b>prénom + prononciation</b>.</li>
+            <li><b>Importer</b> une classe depuis <code>.xlsx</code> / <code>.csv</code> (une feuille = une classe). <b>Exporter</b> classes et croix.</li>
+            <li><b>Tirer</b> = un élève au hasard (annoncé). <b>↺</b> remet les croix à zéro.</li>
+            <li><b>Groupes / Équipes / Roue</b> : forme des groupes, des équipes, ou tire un élève depuis la classe.</li>
+          </ul>
+        </details>
+        <details><summary>⏱ Temps (minuteur, chrono, sablier, horloge, calendrier)</summary>
+          <ul>
+            <li><b>⏱ Minuteur</b> : règle les minutes, <b>Démarrer / Pause</b>, <b>Reset</b>. Sonnerie + « Temps écoulé » à la fin.</li>
+            <li><b>⏲ Chronomètre</b> : temps qui monte, départ/arrêt, remise à zéro.</li>
+            <li><b>⏳ Sablier</b> : minuteur visuel, le sable s'écoule, sonnerie en fin.</li>
+            <li><b>🕒 Horloge</b> : heure + date du jour en toutes lettres. <b>📅 Calendrier</b> : mois courant, jour repéré.</li>
+          </ul>
+        </details>
+        <details><summary>✋ Animation de classe (feu, symboles, dé, roue)</summary>
+          <ul>
+            <li><b>🚦 Feu tricolore</b> : clique une couleur pour signaler le niveau sonore / l'état de la classe.</li>
+            <li><b>✋ Symboles de travail</b> : affiche le mode de travail attendu (seul, à deux, en groupe, silence…).</li>
+            <li><b>🎲 Dé</b> : lance un ou plusieurs dés. <b>🎡 Roue</b> : saisis des items, la roue en désigne un (option retirer le gagnant).</li>
+          </ul>
+        </details>
+        <details><summary>📝 Contenu (texte, image, vidéo, site web)</summary>
+          <ul>
+            <li><b>📝 Texte / consigne</b> : zone de texte libre, redimensionnable.</li>
+            <li><b>🖼️ Image / GIF</b> : par <b>recherche</b> (Wikimedia Commons, Giphy si clé), <b>import</b> de fichier, ou <b>URL</b>.</li>
+            <li><b>▶ Vidéo YouTube</b> : colle un lien. <b>🌐 Site web</b> : affiche une page dans le widget (si le site l'autorise).</li>
+          </ul>
+        </details>
+        <details><summary>📈 Traceur de fonctions</summary>
+          <ul>
+            <li>Jusqu'à <b>4 courbes</b> <code>f(x)=</code> de couleurs différentes (<b>+ fonction</b>).</li>
+            <li>Écris avec <code>x</code>, les paramètres <code>a b c k</code>, <code>^</code> pour les puissances, et <code>sin cos tan sqrt exp ln log abs</code>…, <code>PI</code>. <code>log</code> = base 10, <code>ln</code> = népérien. Mets le <code>*</code> (ex. <code>2*x</code>).</li>
+            <li><b>Curseurs a / b / c / k</b> : bouge-les, les courbes se redessinent en direct (ex. <code>a*x+b</code>, <code>a*sin(b*x)</code>).</li>
+            <li><b>Zoom</b> (boutons +/– et molette), <b>déplacement</b> en glissant, <b>Réinit.</b>. Asymptotes coupées, hors-domaine non tracé.</li>
+          </ul>
+        </details>
+        <details><summary>🧮 Calculatrice Numéo</summary>
+          <ul>
+            <li><b>4 modes</b> (onglets) : <b>Simple</b>, <b>Collège</b>, <b>Lycée</b>, <b>Expert</b>.</li>
+            <li><b>Collège</b> : fractions <b>exactes</b> (<code>1/2+1/3</code> → <b>5/6</b>), <code>x²</code>, <code>√</code>, <code>π</code>, <code>sin/cos/tan</code> en degrés, <code>Ans</code>, bascule <b>DEG/RAD</b>.</li>
+            <li><b>Lycée</b> : trig + inverses, <code>ln/log/exp</code>, <code>10ˣ</code>, factorielle <code>!</code>, notation scientifique <code>EE</code>, <code>e</code>.</li>
+            <li><b>Expert</b> : tu <b>tapes l'expression</b> (<code>2*sin(30)+sqrt(5)</code>, <code>gcd(24,36)</code>, <code>0xFF+1</code>) ; conversions <b>bin/oct/hex</b> auto pour les entiers.</li>
+            <li><b>=</b> garde le résultat comme <code>Ans</code>. <i>Limite :</i> pas de calcul formel (résoudre/dériver/factoriser).</li>
+          </ul>
+        </details>
+        <details><summary>✏️ Annotation &amp; géométrie (par-dessus la page)</summary>
+          <p>Le bouton <b>✏️ Annoter</b> ouvre un <b>calque plein écran</b>. La palette propose le <b>dessin libre</b> (stylo, surligneur, laser, gomme, couleur, épaisseur) et <b>📐 Formes</b> pour la géométrie.</p>
+          <p><b>Tracés</b> (1 carreau = 1 unité) :</p>
+          <ul>
+            <li><b>Objets</b> : point (étiqueté A, B, C…), segment, demi-droite, droite, vecteur, cercle, <b>compas</b>, <b>arc</b> et <b>secteur</b>, ellipse, rectangle, carré, triangles (quelconque, équilatéral, isocèle, rectangle), polygone régulier (3–12) et <b>libre</b>, angle droit ⦜ et <b>angle mesuré ∠°</b>.</li>
+            <li><b>Constructions</b> : <b>milieu</b>, <b>médiatrice</b>, <b>perpendiculaire</b>, <b>parallèle</b>, <b>texte mathématique</b>.</li>
+            <li><b>Transformations</b> : <b>translation</b>, <b>rotation</b>, <b>symétrie axiale</b>, <b>symétrie centrale</b> (l'image est créée, l'original conservé).</li>
+          </ul>
+          <p><b>Mises en forme &amp; mesures</b> :</p>
+          <ul>
+            <li><b>Codages</b> : marques d'égalité, angles droits, angles égaux — bouton <b>Codage</b>, ou <b>🔎 Scan codage</b> pour tout coder.</li>
+            <li><b>Long.</b> (longueurs), <b>Coord.</b> (coordonnées, repère au centre), <b>🎨 Colorier</b> (couleur, opacité, motif).</li>
+            <li><b>Repère</b>, <b>Grille</b>, <b>Aimanter</b>. <b>Figures</b> : <b>💾 Enregistrer / Charger</b> (navigateur), <b>⬇ Exporter / ⬆ Importer</b> en <code>.json</code>.</li>
+          </ul>
+          <div class="help-tip">⚠️ Les figures sont <b>statiques</b> : déplacer un point ne recalcule pas la construction (ce n'est pas GeoGebra). Pour partager entre PC, passe par l'<b>export .json</b>.</div>
+        </details>
+        <details><summary>⌨️ Raccourcis clavier</summary>
+          <ul>
+            <li><b>Échap</b> : ferme l'aide / une fenêtre / l'annotation, ou annule un polygone en cours.</li>
+            <li><b>Entrée</b> : termine un polygone libre. <b>Suppr / ⌫</b> : supprime la forme sélectionnée.</li>
+            <li><b>Ctrl/Cmd + C / V</b> : copier / coller une forme.</li>
+          </ul>
+        </details>
+        <details><summary>💾 Sauvegarde &amp; déploiement</summary>
+          <ul>
+            <li>Fichier <b>unique</b> <code>ClassroomPDC.html</code> : double-clic (file://) ou hébergé sur <b>GitHub Pages</b>.</li>
+            <li>Données <b>locales au navigateur</b> ; pour migrer/sauvegarder, utilise <b>Sauver / Charger la config</b>.</li>
+            <li>La recherche d'images et l'import Excel nécessitent une connexion ; le reste marche hors-ligne.</li>
+          </ul>
+        </details>
+      </div>
       <div class="modal-actions"><span class="sp"></span><button class="btn sm primary" id="helpClose">Fermer</button></div>
     </div>
   </div>
@@ -451,6 +628,9 @@
     <button data-shape="vector" title="Vecteur">Vecteur</button>
     <span class="sep"></span>
     <button data-shape="circle" title="Cercle (centre → rayon)">Cercle</button>
+    <button data-shape="compass" title="Compas : cercle défini par 2 clics (centre, puis un point du cercle)">Compas</button>
+    <button data-shape="arc" title="Arc de cercle (3 clics : centre, début, fin)">Arc</button>
+    <button data-shape="sector" title="Secteur / part de camembert (3 clics : centre, début, fin) — remplissable">Secteur</button>
     <button data-shape="ellipse" title="Ellipse">Ellipse</button>
     <button data-shape="rect" title="Rectangle">Rectangle</button>
     <button data-shape="square" title="Carré">Carré</button>
@@ -466,10 +646,17 @@
     <button data-shape="rangle" title="Marque d'angle droit (3 clics : sommet, côté, côté)">⦜</button>
     <button data-shape="angle" title="Mesure d'angle (3 clics : sommet, côté, côté)">∠°</button>
     <span class="sep"></span>
+    <button data-shape="midpoint" title="Milieu de deux points (2 clics)">Milieu</button>
+    <button data-shape="mediatrice" title="Médiatrice d'un segment (2 clics : les 2 extrémités)">Médiatrice</button>
+    <button data-shape="perp" title="Perpendiculaire (3 clics : 2 points de la direction, puis le point par où passer)">⊥ Perp.</button>
+    <button data-shape="parallel" title="Parallèle (3 clics : 2 points de la direction, puis le point par où passer)">∥ Para.</button>
+    <button data-shape="mtext" title="Texte / formule (clic pour placer ; ^ exposant, _ indice, sqrt())">🔤 Texte</button>
+    <span class="sep"></span>
     <button id="annoImgBtn" title="Insérer une image ou un GIF (recherche, import ou URL), déplaçable et réglable en transparence">🖼 Image/GIF</button>
     <span class="sep"></span>
     <button id="annoLen" title="Afficher / masquer les longueurs (segment, vecteur, triangle, polygone, rectangle, cercle)">Long.</button>
     <button id="annoTick" title="Codages (bouton unique) — segment : 0→1→2→3 traits ; triangle/polygone/rectangle : marque automatiquement les côtés égaux, les angles droits et les angles égaux">Codage</button>
+    <button id="annoScan" title="Scan : code automatiquement TOUTES les formes (côtés égaux, angles droits, angles égaux) + repère les segments de même longueur entre eux. Re-clic = tout retirer">🔎 Scan codage</button>
     <button id="annoCoord" title="Afficher / masquer les coordonnées du point sélectionné">Coord.</button>
     <span class="sep"></span>
     <button id="annoFillApply" title="Colorier la forme sélectionnée (couleur + motif choisis ci-contre)">🎨 Colorier</button>
@@ -495,6 +682,9 @@
     <select id="annoFigSel" title="Figures enregistrées"></select>
     <button id="annoFigLoad" title="Charger la figure sélectionnée">Charger</button>
     <button id="annoFigDel" title="Supprimer la figure sélectionnée">✕</button>
+    <button id="annoFigExport" title="Exporter la figure courante en fichier .json (pour la transporter d'un poste à l'autre)">⬇ Exporter</button>
+    <button id="annoFigImport" title="Importer une figure depuis un fichier .json">⬆ Importer</button>
+    <input type="file" id="annoFigFile" accept="application/json,.json" style="display:none">
     <span class="anno-hint" id="annoHint"></span>
   </div>
 
@@ -537,6 +727,8 @@
   const imageW=(x,y)=>({id:uid(),type:"image",x:x==null?90:x,y:y==null?90:y,w:360,h:320,src:"",title:"",searchMode:"images",query:""});
   const wheelW=(x,y)=>({id:uid(),type:"wheel",x:x==null?70:x,y:y==null?70:y,w:340,h:390,entries:["Léa","Tom","Sam","Noa","Mia","Eli","Zoé","Naël"],removeWinner:false});
   const sandW=(x,y)=>({id:uid(),type:"sand",x:x==null?90:x,y:y==null?90:y,w:220,h:310,minutes:5});
+  const plotW=(x,y)=>({id:uid(),type:"plot",x:x==null?80:x,y:y==null?80:y,w:430,h:440,fns:[{expr:"x^2",color:"#2563d2"}],win:{xmin:-10,xmax:10,ymin:-7,ymax:7},params:{a:1,b:1,c:1,k:1}});
+  const calcW=(x,y)=>({id:uid(),type:"calc",x:x==null?100:x,y:y==null?100:y,w:300,h:440,mode:"college",expr:"",ans:0,deg:true});
   function defaultState(){return {active:0,pages:[{id:uid(),name:"Page 1",widgets:[planW(defaultClasses(),16,16)]}]};}
 
   function migrateToV3(s){
@@ -612,8 +804,8 @@
   };
   function applyTheme(){ const key=(page()&&page().theme)||"paper"; const t=THEMES[key]||THEMES.paper; canvas.style.background=t.bg; canvas.classList.toggle("dark",!!t.dark); }
   function clampW(w){ const cw=canvas.clientWidth,ch=canvas.clientHeight; w.w=Math.max(170,Math.min(w.w,cw)); w.h=Math.max(120,Math.min(w.h,ch)); w.x=Math.max(0,Math.min(w.x,cw-w.w)); w.y=Math.max(0,Math.min(w.y,ch-w.h)); }
-  const TITLES={plan:"Plan de classe",video:"Vidéo",timer:"Minuteur",text:"Texte",clock:"Horloge",feu:"Feu tricolore",symbols:"Travail",dice:"Dé",chrono:"Chronomètre",calendar:"Calendrier",embed:"Site web",image:"Image",wheel:"Roue",sand:"Sablier"};
-  const ICONS={plan:"🪑",video:"▶",timer:"⏱",text:"📝",clock:"🕒",feu:"🚦",symbols:"✋",dice:"🎲",chrono:"⏲",calendar:"📅",embed:"🌐",image:"🖼️",wheel:"🎡",sand:"⏳"};
+  const TITLES={plan:"Plan de classe",video:"Vidéo",timer:"Minuteur",text:"Texte",clock:"Horloge",feu:"Feu tricolore",symbols:"Travail",dice:"Dé",chrono:"Chronomètre",calendar:"Calendrier",embed:"Site web",image:"Image",wheel:"Roue",sand:"Sablier",plot:"Traceur de fonctions",calc:"Calculatrice Numéo"};
+  const ICONS={plan:"🪑",video:"▶",timer:"⏱",text:"📝",clock:"🕒",feu:"🚦",symbols:"✋",dice:"🎲",chrono:"⏲",calendar:"📅",embed:"🌐",image:"🖼️",wheel:"🎡",sand:"⏳",plot:"📈",calc:"🧮"};
   function buildWidget(w){
     clampW(w);
     const el=document.createElement("div"); el.className="widget"; el.dataset.wid=w.id;
@@ -648,6 +840,8 @@
     else if(w.type==="image") fillImage(w,body,el);
     else if(w.type==="wheel") fillWheel(w,body,el);
     else if(w.type==="sand") fillSand(w,body,el);
+    else if(w.type==="plot") fillPlot(w,body,el);
+    else if(w.type==="calc") fillCalc(w,body,el);
   }
   function refreshPlan(w){ const el=canvas.querySelector('[data-wid="'+w.id+'"]'); if(el){ const body=el.querySelector(".w-body"); fillBody(w,body,el); } }
 
@@ -1154,6 +1348,159 @@
     [inp,start,reset].forEach(x=>x.addEventListener("pointerdown",e=>e.stopPropagation()));
     draw();
   }
+  // ---------- widget TRACEUR DE FONCTIONS ----------
+  const PLOTCOL=["#2563d2","#e23b2e","#1fa85a","#f1b500"];
+  const MNAMES=["sin","cos","tan","asin","acos","atan","sqrt","cbrt","abs","exp","ln","log","log2","log10","pow","min","max","floor","ceil","round","sign","sinh","cosh","tanh","PI","E"];
+  const MVALS=[Math.sin,Math.cos,Math.tan,Math.asin,Math.acos,Math.atan,Math.sqrt,Math.cbrt,Math.abs,Math.exp,Math.log,Math.log10,Math.log2,Math.log10,Math.pow,Math.min,Math.max,Math.floor,Math.ceil,Math.round,Math.sign,Math.sinh,Math.cosh,Math.tanh,Math.PI,Math.E];
+  function compileExpr(expr){ let e=String(expr||"").trim(); if(!e)return null; e=e.replace(/\^/g,"**"); let f; try{ f=new Function(["x","a","b","c","k"].concat(MNAMES).join(","),"return ("+e+");"); }catch(_){ return null; } return function(x,a,b,c,k){ try{ const v=f.apply(null,[x,a,b,c,k].concat(MVALS)); return (typeof v==="number"&&isFinite(v))?v:NaN; }catch(_){ return NaN; } }; }
+  function fillPlot(w,body,el){
+    if(!Array.isArray(w.fns)||!w.fns.length)w.fns=[{expr:"x^2",color:PLOTCOL[0]}];
+    if(!w.win)w.win={xmin:-10,xmax:10,ymin:-7,ymax:7};
+    if(!w.params)w.params={a:1,b:1,c:1,k:1};
+    const wrap=mkEl("div","plot-wrap"); body.appendChild(wrap);
+    const fnsBox=mkEl("div","plot-fns"); const cvWrap=mkEl("div","plot-cv"); const cv=document.createElement("canvas"); cvWrap.appendChild(cv); const ctx=cv.getContext("2d");
+    const parsBox=mkEl("div","plot-params"); const ctr=mkEl("div","plot-ctrls");
+    wrap.appendChild(fnsBox); wrap.appendChild(cvWrap); wrap.appendChild(parsBox); wrap.appendChild(ctr);
+    const fmtP=v=>(Math.round(v*10)/10).toString().replace(".",",");
+    const fmtLbl=v=>{ const r=Math.round(v*100)/100; return (Math.abs(r)<1e-9?"0":String(r)).replace(".",","); };
+    function renderFns(){ fnsBox.innerHTML=""; w.fns.forEach((fn,i)=>{ if(!fn.color)fn.color=PLOTCOL[i%4]; const row=mkEl("div","plot-fn"); const dot=mkEl("span","plot-dot"); dot.style.background=fn.color; const lab=mkEl("span","plot-lab","f"+(i+1)+"(x)="); const inp=document.createElement("input"); inp.type="text"; inp.value=fn.expr||""; inp.placeholder="ex. a*x+b, x^2, sin(x)"; inp.spellcheck=false; inp.addEventListener("pointerdown",e=>e.stopPropagation()); inp.addEventListener("input",()=>{ fn.expr=inp.value; inp.classList.toggle("bad",inp.value.trim()!==""&&!compileExpr(inp.value)); persist(); redraw(); });
+        row.appendChild(dot); row.appendChild(lab); row.appendChild(inp);
+        if(w.fns.length>1){ const rm=mkEl("button","plot-x","✕"); rm.title="Retirer cette courbe"; rm.addEventListener("pointerdown",e=>e.stopPropagation()); rm.addEventListener("click",()=>{ w.fns.splice(i,1); persist(); renderFns(); redraw(); }); row.appendChild(rm); }
+        fnsBox.appendChild(row);
+      });
+      if(w.fns.length<4){ const add=mkEl("button","plot-add","+ fonction"); add.addEventListener("pointerdown",e=>e.stopPropagation()); add.addEventListener("click",()=>{ w.fns.push({expr:"",color:PLOTCOL[w.fns.length%4]}); persist(); renderFns(); }); fnsBox.appendChild(add); }
+    }
+    function renderParams(){ parsBox.innerHTML=""; ["a","b","c","k"].forEach(nm=>{ if(w.params[nm]==null)w.params[nm]=1; const row=mkEl("div","plot-par"); const lab=mkEl("span","plot-parlab",nm+" ="); const sl=document.createElement("input"); sl.type="range"; sl.min="-10"; sl.max="10"; sl.step="0.1"; sl.value=w.params[nm]; const val=mkEl("span","plot-parval",fmtP(w.params[nm])); sl.addEventListener("pointerdown",e=>e.stopPropagation()); sl.addEventListener("input",()=>{ w.params[nm]=parseFloat(sl.value); val.textContent=fmtP(w.params[nm]); persist(); redraw(); }); row.appendChild(lab); row.appendChild(sl); row.appendChild(val); parsBox.appendChild(row); }); }
+    const zo=mkEl("button","plot-cbtn","–"),zi=mkEl("button","plot-cbtn","+"),rs=mkEl("button","plot-cbtn","Réinit."),info=mkEl("span","plot-info","");
+    zo.title="Zoom arrière"; zi.title="Zoom avant"; rs.title="Réinitialiser la vue";
+    [zo,zi,rs].forEach(b=>b.addEventListener("pointerdown",e=>e.stopPropagation()));
+    zi.addEventListener("click",()=>zoomAt(0.8)); zo.addEventListener("click",()=>zoomAt(1.25)); rs.addEventListener("click",()=>{ w.win={xmin:-10,xmax:10,ymin:-7,ymax:7}; persist(); redraw(); });
+    ctr.appendChild(zo); ctr.appendChild(zi); ctr.appendChild(rs); ctr.appendChild(info);
+    renderFns(); renderParams();
+    let CW=10,CH=10;
+    function sx(x){ const W=w.win; return (x-W.xmin)/(W.xmax-W.xmin)*CW; }
+    function sy(y){ const W=w.win; return CH-(y-W.ymin)/(W.ymax-W.ymin)*CH; }
+    function ix(px){ const W=w.win; return W.xmin+px/CW*(W.xmax-W.xmin); }
+    function iy(py){ const W=w.win; return W.ymin+(CH-py)/CH*(W.ymax-W.ymin); }
+    function niceStep(range,target){ const raw=range/Math.max(1,target),p=Math.pow(10,Math.floor(Math.log10(raw))),n=raw/p; let s; if(n<1.5)s=1; else if(n<3)s=2; else if(n<7)s=5; else s=10; return s*p; }
+    function redraw(){ const W=w.win; ctx.clearRect(0,0,CW,CH);
+      const xs=niceStep(W.xmax-W.xmin,CW/64),ys=niceStep(W.ymax-W.ymin,CH/46);
+      ctx.lineWidth=1; ctx.strokeStyle="rgba(80,110,170,.15)"; ctx.beginPath();
+      for(let g=Math.ceil(W.xmin/xs)*xs;g<=W.xmax;g+=xs){ const px=sx(g); ctx.moveTo(px,0); ctx.lineTo(px,CH); }
+      for(let g=Math.ceil(W.ymin/ys)*ys;g<=W.ymax;g+=ys){ const py=sy(g); ctx.moveTo(0,py); ctx.lineTo(CW,py); }
+      ctx.stroke();
+      const x0=sx(0),y0=sy(0),ay=Math.max(0,Math.min(CH,y0)),ax=Math.max(0,Math.min(CW,x0));
+      ctx.strokeStyle="#23231d"; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(0,ay); ctx.lineTo(CW,ay); ctx.moveTo(ax,0); ctx.lineTo(ax,CH); ctx.stroke();
+      ctx.fillStyle="#5a5a4c"; ctx.font="10px system-ui,-apple-system,sans-serif"; ctx.textBaseline="top";
+      for(let g=Math.ceil(W.xmin/xs)*xs;g<=W.xmax;g+=xs){ if(Math.abs(g)<1e-9)continue; ctx.fillText(fmtLbl(g),sx(g)+2,Math.min(CH-12,Math.max(1,ay+2))); }
+      for(let g=Math.ceil(W.ymin/ys)*ys;g<=W.ymax;g+=ys){ if(Math.abs(g)<1e-9)continue; ctx.fillText(fmtLbl(g),Math.min(CW-24,Math.max(1,ax+3)),sy(g)+1); }
+      w.fns.forEach(fn=>{ const f=compileExpr(fn.expr); if(!f)return; ctx.strokeStyle=fn.color; ctx.lineWidth=2.1; ctx.beginPath(); let pen=false,prev=null;
+        for(let px=0;px<=CW;px++){ const yy=f(ix(px),w.params.a,w.params.b,w.params.c,w.params.k); if(!isFinite(yy)){ pen=false; prev=null; continue; } const py=sy(yy); if(pen&&prev!=null&&Math.abs(py-prev)>CH*1.8)pen=false; if(!pen){ ctx.moveTo(px,py); pen=true; } else ctx.lineTo(px,py); prev=py; }
+        ctx.stroke();
+      });
+      info.textContent="x ∈ ["+fmtLbl(W.xmin)+" ; "+fmtLbl(W.xmax)+"]";
+    }
+    function zoomAt(factor,cxp,cyp){ const W=w.win,cx=(cxp!=null)?ix(cxp):(W.xmin+W.xmax)/2,cy=(cyp!=null)?iy(cyp):(W.ymin+W.ymax)/2; W.xmin=cx+(W.xmin-cx)*factor; W.xmax=cx+(W.xmax-cx)*factor; W.ymin=cy+(W.ymin-cy)*factor; W.ymax=cy+(W.ymax-cy)*factor; persist(); redraw(); }
+    cv.addEventListener("pointerdown",e=>{ e.stopPropagation(); e.preventDefault(); const sxp=e.clientX,syp=e.clientY,ox0=w.win.xmin,ox1=w.win.xmax,oy0=w.win.ymin,oy1=w.win.ymax; try{cv.setPointerCapture(e.pointerId);}catch(_){ }
+      function mv(ev){ const dx=(ev.clientX-sxp)/CW*(ox1-ox0),dy=(ev.clientY-syp)/CH*(oy1-oy0); w.win.xmin=ox0-dx; w.win.xmax=ox1-dx; w.win.ymin=oy0+dy; w.win.ymax=oy1+dy; redraw(); }
+      function up(){ window.removeEventListener("pointermove",mv); window.removeEventListener("pointerup",up); persist(); }
+      window.addEventListener("pointermove",mv); window.addEventListener("pointerup",up);
+    });
+    cv.addEventListener("wheel",e=>{ e.preventDefault(); e.stopPropagation(); const r=cv.getBoundingClientRect(); zoomAt(e.deltaY>0?1.1:0.9,e.clientX-r.left,e.clientY-r.top); },{passive:false});
+    function fit(){ const dpr=window.devicePixelRatio||1; CW=Math.max(60,cvWrap.clientWidth); CH=Math.max(50,cvWrap.clientHeight); cv.width=Math.floor(CW*dpr); cv.height=Math.floor(CH*dpr); cv.style.width=CW+"px"; cv.style.height=CH+"px"; ctx.setTransform(dpr,0,0,dpr,0,0); redraw(); }
+    el._refit=fit; requestAnimationFrame(fit);
+  }
+  // ---------- widget CALCULATRICE (Numéo) ----------
+  function calcGcd(a,b){ a=Math.abs(Math.round(a)); b=Math.abs(Math.round(b)); while(b){ const t=a%b; a=b; b=t; } return a||0; }
+  function calcFactN(n){ if(n<0||!Number.isInteger(n))return NaN; if(n>170)return Infinity; let r=1; for(let k=2;k<=n;k++)r*=k; return r; }
+  function cfrac(n,d){ if(d===0)return null; if(d<0){n=-n;d=-d;} const g=calcGcd(n,d)||1; return {n:Math.round(n/g),d:Math.round(d/g)}; }
+  function cfAdd(x,y){return cfrac(x.n*y.d+y.n*x.d,x.d*y.d);}
+  function cfSub(x,y){return cfrac(x.n*y.d-y.n*x.d,x.d*y.d);}
+  function cfMul(x,y){return cfrac(x.n*y.n,x.d*y.d);}
+  function cfDiv(x,y){ if(y.n===0)return null; return cfrac(x.n*y.d,x.d*y.n); }
+  function cfPow(x,e){ if(e>=0)return cfrac(Math.pow(x.n,e),Math.pow(x.d,e)); return cfrac(Math.pow(x.d,-e),Math.pow(x.n,-e)); }
+  function cNumFrac(str){ if(/[eE]/.test(str))return null; if(str.indexOf(".")>=0){ const p=str.split("."); const fp=p[1]||""; return cfrac(parseInt((p[0]||"0")+fp,10),Math.pow(10,fp.length)); } return cfrac(parseInt(str,10),1); }
+  function calcTok(src){ let s=String(src).replace(/×/g,"*").replace(/÷/g,"/").replace(/−/g,"-").replace(/√/g,"sqrt").replace(/π/g,"pi").replace(/²/g,"^2").replace(/³/g,"^3").replace(/%/g,"/100"); const T=[]; let i=0; const D=c=>c>="0"&&c<="9";
+    while(i<s.length){ const c=s[i]; if(c<=" "){i++;continue;}
+      if(c==="0"&&(s[i+1]==="x"||s[i+1]==="X"||s[i+1]==="b"||s[i+1]==="B"||s[i+1]==="o"||s[i+1]==="O")){ const bl=s[i+1].toLowerCase(),base=bl==="x"?16:(bl==="b"?2:8); let j=i+2,n=""; while(j<s.length&&/[0-9a-fA-F]/.test(s[j]))n+=s[j++]; T.push({t:"num",v:String(parseInt(n||"0",base))}); i=j; continue; }
+      if(D(c)||(c==="."&&D(s[i+1]))){ let n=""; while(i<s.length&&(D(s[i])||s[i]==="."))n+=s[i++]; if((s[i]==="e"||s[i]==="E")&&(D(s[i+1])||((s[i+1]==="+"||s[i+1]==="-")&&D(s[i+2])))){ n+=s[i++]; if(s[i]==="+"||s[i]==="-")n+=s[i++]; while(i<s.length&&D(s[i]))n+=s[i++]; } T.push({t:"num",v:n}); continue; }
+      if(/[a-zA-Z_]/.test(c)){ let id=""; while(i<s.length&&/[a-zA-Z0-9_]/.test(s[i]))id+=s[i++]; T.push({t:"id",v:id.toLowerCase()}); continue; }
+      if("+-*/^(),!".indexOf(c)>=0){ T.push({t:"op",v:c}); i++; continue; }
+      throw new Error("car"); }
+    return T; }
+  function calcParse(T){ let i=0; const pk=()=>T[i], adv=()=>T[i++];
+    function expr(){ return add(); }
+    function add(){ let a=mul(); while(pk()&&pk().t==="op"&&(pk().v==="+"||pk().v==="-")){ const op=adv().v,b=mul(); a={t:"bin",op:op,a:a,b:b}; } return a; }
+    function mul(){ let a=un(); while(pk()&&pk().t==="op"&&(pk().v==="*"||pk().v==="/")){ const op=adv().v,b=un(); a={t:"bin",op:op,a:a,b:b}; } return a; }
+    function un(){ if(pk()&&pk().t==="op"&&pk().v==="-"){ adv(); return {t:"neg",a:un()}; } if(pk()&&pk().t==="op"&&pk().v==="+"){ adv(); return un(); } return pw(); }
+    function pw(){ const a=post(); if(pk()&&pk().t==="op"&&pk().v==="^"){ adv(); return {t:"pow",a:a,b:un()}; } return a; }
+    function post(){ let a=atom(); while(pk()&&pk().t==="op"&&pk().v==="!"){ adv(); a={t:"fact",a:a}; } return a; }
+    function atom(){ const t=pk(); if(!t)throw new Error("fin");
+      if(t.t==="num"){ adv(); return {t:"num",v:t.v}; }
+      if(t.t==="op"&&t.v==="("){ adv(); const e=expr(); if(!pk()||pk().v!==")")throw new Error(")"); adv(); return e; }
+      if(t.t==="id"){ adv(); if(pk()&&pk().t==="op"&&pk().v==="("){ adv(); const args=[expr()]; while(pk()&&pk().t==="op"&&pk().v===","){ adv(); args.push(expr()); } if(!pk()||pk().v!==")")throw new Error(")"); adv(); return {t:"fn",name:t.v,args:args}; } return {t:"const",name:t.v}; }
+      throw new Error("inattendu"); }
+    const e=expr(); if(i<T.length)throw new Error("reste"); return e; }
+  function calcFn(name,a,D){ const x=a[0],y=a[1]; switch(name){
+    case "sin":return Math.sin(x*D); case "cos":return Math.cos(x*D); case "tan":return Math.tan(x*D);
+    case "asin":return Math.asin(x)/D; case "acos":return Math.acos(x)/D; case "atan":return Math.atan(x)/D;
+    case "sinh":return Math.sinh(x); case "cosh":return Math.cosh(x); case "tanh":return Math.tanh(x);
+    case "sqrt":return Math.sqrt(x); case "cbrt":return Math.cbrt(x); case "abs":return Math.abs(x); case "exp":return Math.exp(x);
+    case "ln":return Math.log(x); case "log":return Math.log10(x); case "log2":return Math.log2(x); case "log10":return Math.log10(x);
+    case "floor":return Math.floor(x); case "ceil":return Math.ceil(x); case "round":return Math.round(x); case "sign":return Math.sign(x);
+    case "gcd":return calcGcd(x,y); case "lcm":return (x===0||y===0)?0:Math.abs(x*y)/calcGcd(x,y); case "mod":return ((x%y)+y)%y; case "pow":return Math.pow(x,y);
+    case "max":return Math.max.apply(null,a); case "min":return Math.min.apply(null,a);
+    case "ncr": case "combin": return calcFactN(x)/(calcFactN(y)*calcFactN(x-y)); case "npr": case "arrang": return calcFactN(x)/calcFactN(x-y);
+    default: throw new Error("fn"); } }
+  function calcEF(n,D,ans){ switch(n.t){
+    case "num": return parseFloat(n.v);
+    case "neg": return -calcEF(n.a,D,ans);
+    case "bin": { const a=calcEF(n.a,D,ans),b=calcEF(n.b,D,ans); return n.op==="+"?a+b:n.op==="-"?a-b:n.op==="*"?a*b:a/b; }
+    case "pow": return Math.pow(calcEF(n.a,D,ans),calcEF(n.b,D,ans));
+    case "fact": return calcFactN(calcEF(n.a,D,ans));
+    case "const": { const m={pi:Math.PI,e:Math.E,tau:2*Math.PI,phi:(1+Math.sqrt(5))/2,ans:ans}; if(n.name in m)return m[n.name]; throw new Error("const"); }
+    case "fn": return calcFn(n.name,n.args.map(z=>calcEF(z,D,ans)),D); } }
+  function calcER(n,ans){ switch(n.t){
+    case "num": return cNumFrac(n.v);
+    case "neg": { const a=calcER(n.a,ans); return a?cfrac(-a.n,a.d):null; }
+    case "bin": { const a=calcER(n.a,ans),b=calcER(n.b,ans); if(!a||!b)return null; return n.op==="+"?cfAdd(a,b):n.op==="-"?cfSub(a,b):n.op==="*"?cfMul(a,b):cfDiv(a,b); }
+    case "pow": { const a=calcER(n.a,ans),b=calcER(n.b,ans); if(!a||!b||b.d!==1||Math.abs(b.n)>40)return null; return cfPow(a,b.n); }
+    case "fact": { const a=calcER(n.a,ans); if(!a||a.d!==1||a.n<0||a.n>20)return null; return cfrac(calcFactN(a.n),1); }
+    case "const": { if(n.name==="ans"&&Number.isInteger(ans))return cfrac(ans,1); return null; }
+    case "fn": return null; } }
+  function calcEvaluate(expr,deg,ans){ const e=String(expr).trim(); if(!e)return {empty:true}; let ast; try{ ast=calcParse(calcTok(e)); }catch(err){ return {err:true}; } let v; try{ v=calcEF(ast,deg?Math.PI/180:1,ans); }catch(err){ return {err:true}; } let fr=null; try{ const r=calcER(ast,ans); if(r&&r.d!==1&&Math.abs(r.n)<1e15&&r.d<1e7)fr={n:r.n,d:r.d}; }catch(err){} return {val:v,frac:fr}; }
+  function calcFmt(v){ if(typeof v!=="number"||Number.isNaN(v))return "Erreur"; if(!isFinite(v))return v<0?"−∞":"∞"; if(Math.abs(v)<1e-12)v=0; let s; const a=Math.abs(v); if(a!==0&&(a>=1e12||a<1e-6)){ s=v.toExponential(8).replace(/(\.\d*?)0+e/,"$1e").replace(/\.e/,"e"); } else { s=String(Math.round(v*1e12)/1e12); } return s.replace("-","−").replace(".",","); }
+  function calcBaseStr(v){ if(!isFinite(v)||!Number.isInteger(v)||Math.abs(v)>=9e15)return ""; const sg=v<0?"−":"",u=Math.abs(v); return "HEX "+sg+u.toString(16).toUpperCase()+" · OCT "+sg+u.toString(8)+" · BIN "+sg+u.toString(2); }
+  const CALC_KEYS={
+    simple:[["C","⌫","%","÷"],["7","8","9","×"],["4","5","6","−"],["1","2","3","+"],["±","0",".","="]],
+    college:[["C","⌫","(",")","÷"],["sin","cos","tan","x²","×"],["√","xʸ","π","Ans","−"],["7","8","9",".","+"],["4","5","6","±","="],["1","2","3","0","DEG"]],
+    lycee:[["sin","cos","tan","(",")","C"],["sin⁻¹","cos⁻¹","tan⁻¹","x²","xʸ","⌫"],["ln","log","exp","√","³√","÷"],["7","8","9","!","π","×"],["4","5","6","10ˣ","e","−"],["1","2","3","EE","Ans","+"],["0",".","±","DEG","%","="]]
+  };
+  const CALC_INS={"×":"×","÷":"÷","−":"−","+":"+",".":".","(":"(",")":")","%":"%","π":"π","x²":"²","xʸ":"^","√":"√(","³√":"cbrt(","10ˣ":"10^","!":"!","e":"e","EE":"×10^","sin":"sin(","cos":"cos(","tan":"tan(","sin⁻¹":"asin(","cos⁻¹":"acos(","tan⁻¹":"atan(","ln":"ln(","log":"log(","exp":"exp("};
+  function fillCalc(w,body,el){
+    if(!w.mode)w.mode="college"; if(w.expr==null)w.expr=""; if(w.ans==null)w.ans=0; if(w.deg==null)w.deg=true;
+    let justEval=false, exprInput=null, exprL=null, resL=null, baseL=null;
+    const wrap=mkEl("div","calc-wrap"); body.appendChild(wrap);
+    function showRes(r,cls){ if(w.mode==="college"&&r.frac){ resL.innerHTML="<b>"+r.frac.n+"/"+r.frac.d+"</b> <span class='calc-dec'>= "+calcFmt(r.val)+"</span>"; } else resL.textContent=calcFmt(r.val); resL.className="calc-res "+cls; }
+    function refresh(){ if(exprL)exprL.textContent=w.expr||"0"; if(!w.expr){ if(resL){resL.textContent="";resL.className="calc-res";} if(baseL)baseL.textContent=""; return; } const r=calcEvaluate(w.expr,w.deg,w.ans); if(r.err){ if(resL){resL.textContent="…";resL.className="calc-res prev";} if(baseL)baseL.textContent=""; } else { showRes(r,"prev"); if(baseL)baseL.textContent=calcBaseStr(r.val); } }
+    function commit(){ const r=calcEvaluate(w.expr,w.deg,w.ans); if(r.empty)return; if(r.err){ resL.textContent="Erreur"; resL.className="calc-res err"; return; } w.ans=r.val; showRes(r,"done"); if(baseL)baseL.textContent=calcBaseStr(r.val); w.expr=(r.frac&&w.mode==="college")?(r.frac.n+"/"+r.frac.d):String(r.val); if(exprInput)exprInput.value=w.expr; if(exprL)exprL.textContent=w.expr; justEval=true; persist(); }
+    function insert(txt){ if(justEval){ const c=txt[0]; if(/[0-9.]/.test(c)||/[a-zπ√(]/i.test(c))w.expr=""; justEval=false; } w.expr=(w.expr||"")+txt; if(exprInput)exprInput.value=w.expr; persist(); refresh(); }
+    function insertAtCursor(txt){ if(exprInput){ const a=exprInput.selectionStart!=null?exprInput.selectionStart:exprInput.value.length, b=exprInput.selectionEnd!=null?exprInput.selectionEnd:a; exprInput.value=exprInput.value.slice(0,a)+txt+exprInput.value.slice(b); w.expr=exprInput.value; const np=a+txt.length; try{exprInput.focus();exprInput.setSelectionRange(np,np);}catch(_){ } persist(); refresh(); } else insert(txt); }
+    function toggleSign(){ if(!w.expr||justEval){ insert("−"); return; } if(w.expr[0]==="−")w.expr=w.expr.slice(1); else w.expr="−"+w.expr; justEval=false; if(exprInput)exprInput.value=w.expr; persist(); refresh(); }
+    function key(lbl){ if(lbl==="C"){ w.expr=""; justEval=false; if(exprInput)exprInput.value=""; persist(); refresh(); return; } if(lbl==="⌫"){ w.expr=(w.expr||"").slice(0,-1); justEval=false; if(exprInput)exprInput.value=w.expr; persist(); refresh(); return; } if(lbl==="="){ commit(); return; } if(lbl==="Ans"){ insert("Ans"); return; } if(lbl==="DEG"||lbl==="RAD"){ w.deg=!w.deg; persist(); build(); return; } if(lbl==="±"){ toggleSign(); return; } const ins=(CALC_INS[lbl]!=null)?CALC_INS[lbl]:(/^[0-9]$/.test(lbl)?lbl:null); if(ins!=null)insert(ins); }
+    function build(){ wrap.innerHTML="";
+      const tabs=mkEl("div","calc-modes"); [["simple","Simple"],["college","Collège"],["lycee","Lycée"],["expert","Expert"]].forEach(pair=>{ const b=mkEl("button","calc-mode"+(w.mode===pair[0]?" on":""),pair[1]); b.addEventListener("pointerdown",e=>e.stopPropagation()); b.addEventListener("click",()=>{ w.mode=pair[0]; w.expr=""; justEval=false; persist(); build(); }); tabs.appendChild(b); }); wrap.appendChild(tabs);
+      const screen=mkEl("div","calc-screen");
+      if(w.mode==="expert"){ exprInput=document.createElement("input"); exprInput.type="text"; exprInput.className="calc-input"; exprInput.value=w.expr||""; exprInput.placeholder="ex. 2*sin(30)+sqrt(5) · gcd(24,36) · 0xFF+1"; exprInput.spellcheck=false; exprInput.addEventListener("pointerdown",e=>e.stopPropagation()); exprInput.addEventListener("input",()=>{ w.expr=exprInput.value; justEval=false; persist(); refresh(); }); exprInput.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); commit(); } e.stopPropagation(); }); resL=mkEl("div","calc-res"); baseL=mkEl("div","calc-base"); screen.appendChild(exprInput); screen.appendChild(resL); screen.appendChild(baseL); exprL=null; }
+      else { exprInput=null; baseL=null; exprL=mkEl("div","calc-expr"); resL=mkEl("div","calc-res"); screen.appendChild(exprL); screen.appendChild(resL); }
+      wrap.appendChild(screen);
+      const pad=mkEl("div","calc-pad");
+      if(w.mode==="expert"){ pad.style.gridTemplateColumns="1fr"; const PAL=["sin(","cos(","tan(","sinh(","cosh(","tanh(","ln(","log(","exp(","sqrt(","cbrt(","abs(","gcd(","lcm(","mod(","ncr(","^","!","pi","e","(",")","√","Ans"]; const palBox=mkEl("div","calc-expert-pal"); PAL.forEach(p=>{ const lbl=p==="Ans"?"Ans":(p==="√"?"√":p.replace("(","")); const b=mkEl("button","calc-fkey",lbl); b.addEventListener("pointerdown",e=>e.stopPropagation()); b.addEventListener("click",()=>insertAtCursor(p==="√"?"√(":p)); palBox.appendChild(b); }); const eqRow=mkEl("div","calc-expert-eq"); const degB=mkEl("button","calc-fkey",w.deg?"DEG":"RAD"); degB.addEventListener("pointerdown",e=>e.stopPropagation()); degB.addEventListener("click",()=>{ w.deg=!w.deg; persist(); build(); }); const bk=mkEl("button","calc-fkey","⌫"); bk.addEventListener("pointerdown",e=>e.stopPropagation()); bk.addEventListener("click",()=>{ w.expr=(w.expr||"").slice(0,-1); if(exprInput)exprInput.value=w.expr; persist(); refresh(); }); const cl=mkEl("button","calc-fkey","C"); cl.addEventListener("pointerdown",e=>e.stopPropagation()); cl.addEventListener("click",()=>{ w.expr=""; if(exprInput)exprInput.value=""; persist(); refresh(); }); const eq=mkEl("button","calc-eq","="); eq.addEventListener("pointerdown",e=>e.stopPropagation()); eq.addEventListener("click",commit); eqRow.appendChild(degB); eqRow.appendChild(bk); eqRow.appendChild(cl); eqRow.appendChild(eq); pad.appendChild(palBox); pad.appendChild(eqRow); }
+      else { const keys=CALC_KEYS[w.mode],cols=keys[0].length; pad.style.gridTemplateColumns="repeat("+cols+",1fr)"; keys.forEach(row=>row.forEach(lbl=>{ const disp=(lbl==="DEG")?(w.deg?"DEG":"RAD"):lbl; const b=mkEl("button","calc-key",disp); if(lbl==="=")b.classList.add("eq"); else if("÷×−+".indexOf(lbl)>=0)b.classList.add("op"); else if(lbl==="C"||lbl==="⌫")b.classList.add("act"); else if(!/^[0-9.]$/.test(lbl)&&lbl!=="±")b.classList.add("fn"); b.addEventListener("pointerdown",e=>e.stopPropagation()); b.addEventListener("click",()=>key(lbl)); pad.appendChild(b); })); }
+      wrap.appendChild(pad); refresh();
+    }
+    build();
+  }
   function fillTimer(w,body,el){
     const tw=document.createElement("div"); tw.className="tw";
     const disp=document.createElement("div"); disp.className="t";
@@ -1313,6 +1660,8 @@
     else if(type==="image")w=imageW(off,off);
     else if(type==="wheel")w=wheelW(off,off);
     else if(type==="sand")w=sandW(off,off);
+    else if(type==="plot")w=plotW(off,off);
+    else if(type==="calc")w=calcW(off,off);
     else w=clockW(off,off);
     page().widgets.push(w); persist(); renderCanvas(); }
 
@@ -1352,6 +1701,7 @@
   document.getElementById("helpBtn").addEventListener("click",()=>helpBg.hidden=false);
   document.getElementById("helpClose").addEventListener("click",()=>helpBg.hidden=true);
   helpBg.addEventListener("click",e=>{if(e.target===helpBg)helpBg.hidden=true;});
+  helpBg.querySelectorAll(".help-tab").forEach(t=>t.addEventListener("click",()=>{ const v=t.dataset.view; helpBg.querySelectorAll(".help-tab").forEach(x=>x.classList.toggle("on",x===t)); document.getElementById("helpOver").hidden=(v!=="over"); document.getElementById("helpDetail").hidden=(v!=="detail"); const m=helpBg.querySelector(".modal.help"); if(m)m.scrollTop=0; }));
   document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(!helpBg.hidden)helpBg.hidden=true; if(!modalBg.hidden)closeModal(); if(!addPop.hidden)addPop.hidden=true; if(!grpBg.hidden)grpBg.hidden=true; if(!scoreBg.hidden)scoreBg.hidden=true; if(!themePop.hidden)themePop.hidden=true; if(!wheelBg.hidden)wheelBg.hidden=true; } });
   canvas.addEventListener("contextmenu",e=>{ if(e.target.closest(".seat"))e.preventDefault(); });
   window.addEventListener("resize",()=>{ canvas.querySelectorAll(".widget").forEach(el=>{ const w=page().widgets.find(x=>x.id===el.dataset.wid); if(w){clampW(w);el.style.left=w.x+"px";el.style.top=w.y+"px";el.style.width=w.w+"px";el.style.height=w.h+"px";if(el._refit)el._refit();} }); });
@@ -1398,6 +1748,18 @@
     function rAngleMark(v,a,b,m){ const ua=unit(v,a),ub=unit(v,b),p1={x:v.x+ua.x*m,y:v.y+ua.y*m},p3={x:v.x+ub.x*m,y:v.y+ub.y*m},p2={x:p1.x+ub.x*m,y:p1.y+ub.y*m}; return "M"+p1.x.toFixed(1)+" "+p1.y.toFixed(1)+"L"+p2.x.toFixed(1)+" "+p2.y.toFixed(1)+"L"+p3.x.toFixed(1)+" "+p3.y.toFixed(1); }
     function angleDeg(v,a,b){ let d=Math.abs(Math.atan2(a.y-v.y,a.x-v.x)-Math.atan2(b.y-v.y,b.x-v.x))*180/Math.PI; d=d%360; if(d>180)d=360-d; return Math.round(d); }
     function arcInfo(v,a,b,rr){ let a1=Math.atan2(a.y-v.y,a.x-v.x),a2=Math.atan2(b.y-v.y,b.x-v.x); let d=((a2-a1)%(2*Math.PI)+2*Math.PI)%(2*Math.PI); if(d>Math.PI){ a1=a2; d=2*Math.PI-d; } const p1={x:v.x+rr*Math.cos(a1),y:v.y+rr*Math.sin(a1)},p2={x:v.x+rr*Math.cos(a1+d),y:v.y+rr*Math.sin(a1+d)},ma=a1+d/2,mid={x:v.x+(rr+13)*Math.cos(ma),y:v.y+(rr+13)*Math.sin(ma)}; return {d:"M"+p1.x.toFixed(1)+" "+p1.y.toFixed(1)+" A"+rr+" "+rr+" 0 0 1 "+p2.x.toFixed(1)+" "+p2.y.toFixed(1),mid:mid}; }
+    function arcPath(C,A,B){ const r=Math.hypot(A.x-C.x,A.y-C.y),a0=Math.atan2(A.y-C.y,A.x-C.x),a1=Math.atan2(B.y-C.y,B.x-C.x); let dPos=((a1-a0)%(2*Math.PI)+2*Math.PI)%(2*Math.PI); const sweep=(dPos<=Math.PI)?1:0,p1={x:C.x+r*Math.cos(a0),y:C.y+r*Math.sin(a0)},p2={x:C.x+r*Math.cos(a1),y:C.y+r*Math.sin(a1)}; return {r:r,p1:p1,p2:p2,sweep:sweep,d:"M"+p1.x.toFixed(1)+" "+p1.y.toFixed(1)+" A"+r.toFixed(1)+" "+r.toFixed(1)+" 0 0 "+sweep+" "+p2.x.toFixed(1)+" "+p2.y.toFixed(1)}; }
+    function buildMathTspans(str){ str=String(str).replace(/<=/g,"≤").replace(/>=/g,"≥").replace(/!=/g,"≠").replace(/\+-/g,"±").replace(/->/g,"→").replace(/\bpi\b/g,"π").replace(/\*/g,"×"); const out=[]; let i=0;
+      function grp(){ if(str[i]==="{"){ i++; let s=""; while(i<str.length&&str[i]!=="}")s+=str[i++]; if(str[i]==="}")i++; return s; } return str[i++]||""; }
+      while(i<str.length){ const c=str[i];
+        if(c==="^"){ i++; out.push({t:grp(),dy:-5,size:0.72}); }
+        else if(c==="_"){ i++; out.push({t:grp(),dy:4,size:0.72}); }
+        else if(str.substr(i,5)==="sqrt("){ i+=5; let dep=1,s=""; while(i<str.length){ const ch=str[i]; if(ch==="("){ dep++; s+=ch; i++; } else if(ch===")"){ dep--; if(dep===0){ i++; break; } s+=ch; i++; } else { s+=ch; i++; } } out.push({t:"√"}); out.push({t:s,deco:"overline"}); }
+        else { let s=""; while(i<str.length&&str[i]!=="^"&&str[i]!=="_"&&str.substr(i,5)!=="sqrt(")s+=str[i++]; out.push({t:s}); }
+      }
+      return out;
+    }
+    function drawMathText(s,g){ const x=s.pts[0].x,y=s.pts[0].y,col=s.color||"#1b1b17",size=16,segs=buildMathTspans(s.text||""); const t=E("text",{x:x,y:y,"font-weight":700,fill:col,"font-size":size}); let cur=0; segs.forEach(seg=>{ const off=seg.dy||0,dy=off-cur; cur=off; const ts=E("tspan",{}); if(dy)ts.setAttribute("dy",dy); ts.setAttribute("font-size",seg.size?Math.round(size*seg.size):size); if(seg.deco)ts.setAttribute("text-decoration",seg.deco); ts.textContent=seg.t; t.appendChild(ts); }); const est=Math.max(16,(s.text||"").length*9); g.appendChild(E("rect",{x:x-3,y:y-size,width:est,height:size+8,fill:"transparent"})); g.appendChild(t); }
     function polyForShape(s){ if(s.type==="trieq")return triEqVerts(s.pts[0],s.pts[1]); if(s.type==="triright")return triRightVerts(s.pts[0],s.pts[1]); if(s.type==="triiso")return triIsoVerts(s.pts[0],s.pts[1]); return s.pts; }
     function origin(){ return {x:Math.round(W()/2/STEP)*STEP, y:Math.round(H()/2/STEP)*STEP}; }
     function fmtN(v){ v=Math.round(v*10)/10; const s=(Math.abs(v-Math.round(v))<1e-9)?String(Math.round(v)):v.toFixed(1); return s.replace(".",","); }
@@ -1430,6 +1792,9 @@
       else if(s.type==="image"){ const a=P[0],b=P[1],x=Math.min(a.x,b.x),y=Math.min(a.y,b.y),w=Math.abs(b.x-a.x),h=Math.abs(b.y-a.y); const im=E("image",{x:x,y:y,width:w,height:h,opacity:(s.opacity!=null?s.opacity:1),preserveAspectRatio:"none"}); im.setAttribute("href",s.href); im.setAttributeNS("http://www.w3.org/1999/xlink","href",s.href); g.appendChild(im); }
       else if(s.type==="rangle"){ const v=P[0],a=P[1],b=P[2]; g.appendChild(st(E("line",{x1:v.x,y1:v.y,x2:a.x,y2:a.y}))); g.appendChild(st(E("line",{x1:v.x,y1:v.y,x2:b.x,y2:b.y}))); g.appendChild(st(E("path",{d:rAngleMark(v,a,b,16)}))); }
       else if(s.type==="angle"){ const v=P[0],a=P[1],b=P[2]; g.appendChild(st(E("line",{x1:v.x,y1:v.y,x2:a.x,y2:a.y}))); g.appendChild(st(E("line",{x1:v.x,y1:v.y,x2:b.x,y2:b.y}))); const ar=arcInfo(v,a,b,30); g.appendChild(st(E("path",{d:ar.d}))); const t=E("text",{x:ar.mid.x,y:ar.mid.y,"font-size":13,"font-weight":800,fill:col,"text-anchor":"middle","dominant-baseline":"middle"}); t.textContent=angleDeg(v,a,b)+"°"; g.appendChild(t); }
+      else if(s.type==="arc"){ const ar=arcPath(P[0],P[1],P[2]); g.appendChild(st(E("path",{d:ar.d}))); g.appendChild(E("circle",{cx:P[0].x,cy:P[0].y,r:2.5,fill:col})); }
+      else if(s.type==="sector"){ const ar=arcPath(P[0],P[1],P[2]),d="M"+P[0].x.toFixed(1)+" "+P[0].y.toFixed(1)+" L"+ar.p1.x.toFixed(1)+" "+ar.p1.y.toFixed(1)+" A"+ar.r.toFixed(1)+" "+ar.r.toFixed(1)+" 0 0 "+ar.sweep+" "+ar.p2.x.toFixed(1)+" "+ar.p2.y.toFixed(1)+" Z"; const el=st(E("path",{d:d})); applyFill(el); g.appendChild(el); }
+      else if(s.type==="mtext"){ drawMathText(s,g); }
       if(s.showLen){
         if(s.type==="segment"||s.type==="vector"){ const u=unit(P[0],P[1]); lenLabel(P[0],P[1],{x:-u.y,y:u.x}); }
         else if(s.type==="circle"){ const c=P[0],r=Math.hypot(P[1].x-c.x,P[1].y-c.y),t=E("text",{x:((c.x+P[1].x)/2).toFixed(1),y:((c.y+P[1].y)/2-7).toFixed(1),"font-size":12.5,"font-weight":700,fill:col,"text-anchor":"middle"}); t.textContent="r = "+fmtN(r/STEP); g.appendChild(t); }
@@ -1448,7 +1813,7 @@
       if(s.type==="point"&&s.showCoord){ const o=origin(),t=E("text",{x:(P[0].x+7).toFixed(1),y:(P[0].y+16).toFixed(1),"font-size":12,"font-weight":700,fill:col}); t.textContent="("+fmtN((P[0].x-o.x)/STEP)+" ; "+fmtN((o.y-P[0].y)/STEP)+")"; g.appendChild(t); }
       return g;
     }
-    function handlesOf(s){ if(s.type==="point")return [s.pts[0]]; if(s.type==="tri"||s.type==="rangle"||s.type==="angle")return [s.pts[0],s.pts[1],s.pts[2]]; if(s.type==="polyfree")return s.pts; if(s.type==="image")return [s.pts[1]]; return [s.pts[0],s.pts[1]]; }
+    function handlesOf(s){ if(s.type==="point"||s.type==="mtext")return [s.pts[0]]; if(s.type==="tri"||s.type==="rangle"||s.type==="angle"||s.type==="arc"||s.type==="sector")return [s.pts[0],s.pts[1],s.pts[2]]; if(s.type==="polyfree")return s.pts; if(s.type==="image")return [s.pts[1]]; return [s.pts[0],s.pts[1]]; }
     function renderShapes(){ shapeSvg.innerHTML=""; shapeSvg.appendChild(E("rect",{x:0,y:0,width:"100%",height:"100%",fill:"transparent"}));
       const draw1=s=>{ const g=drawShape(s); g.setAttribute("data-sid",s.id); shapeSvg.appendChild(g); };
       shapes.forEach(s=>{ if(s.type==="image")draw1(s); });
@@ -1461,10 +1826,16 @@
       if(bL)bL.classList.toggle("on",!!(sel&&sel.showLen)); if(bC)bC.classList.toggle("on",!!(sel&&sel.type==="point"&&sel.showCoord)); if(bT)bT.classList.toggle("on",!!(sel&&((sel.type==="segment"&&sel.ticks)||sel.coded)));
       if(sel&&sel.fill){ const fi=document.getElementById("annoFill"),fo=document.getElementById("annoFillOp"),fp=document.getElementById("annoFillPat"); if(fi)fi.value=sel.fill; if(fo)fo.value=Math.round((sel.fillOp!=null?sel.fillOp:0.4)*100); if(fp)fp.value=sel.fillPat||"solid"; }
       if(sel&&sel.type==="image"){ const fo=document.getElementById("annoFillOp"); if(fo)fo.value=Math.round((sel.opacity!=null?sel.opacity:1)*100); }
+      const bScan=document.getElementById("annoScan"); if(bScan){ const cl=shapes.filter(closedType); bScan.classList.toggle("on",cl.length>0&&cl.every(s=>s.coded)); }
     }
     function nextLabel(){ const n=shapes.filter(s=>s.type==="point").length; return String.fromCharCode(65+(n%26)); }
     function cloneShape(s){ return JSON.parse(JSON.stringify(s)); }
-    function closedType(s){ return !!s&&["circle","ellipse","rect","square","tri","trieq","triright","triiso","rpoly","polyfree"].indexOf(s.type)>=0; }
+    function closedType(s){ return !!s&&["circle","ellipse","rect","square","tri","trieq","triright","triiso","rpoly","polyfree","sector"].indexOf(s.type)>=0; }
+    function scanCoding(){ const closed=shapes.filter(closedType); const allCoded=closed.length>0&&closed.every(s=>s.coded);
+      if(allCoded){ closed.forEach(s=>{ s.coded=false; }); shapes.filter(s=>s.type==="segment").forEach(s=>{ s.ticks=0; }); }
+      else { closed.forEach(s=>{ s.coded=true; }); const segs=shapes.filter(s=>s.type==="segment"),groups=[]; segs.forEach(s=>{ const L=Math.hypot(s.pts[1].x-s.pts[0].x,s.pts[1].y-s.pts[0].y); let G=null; for(const g of groups){ if(Math.abs(g.len-L)<Math.max(2,L*0.02)){ G=g; break; } } if(!G){ G={len:L,items:[]}; groups.push(G); } G.items.push(s); }); let tk=0; groups.forEach(G=>{ if(G.items.length>=2){ tk++; const n=Math.min(tk,3); G.items.forEach(s=>{ s.ticks=n; }); } else G.items.forEach(s=>{ s.ticks=0; }); }); }
+      renderShapes(); updateHint();
+    }
     function addImageFromHref(href){ if(!href)return; const probe=new Image(); function place(asp){ const w=Math.min(360,W()*0.42),h=w/(asp||1.4),cx=W()/2,cy=H()/2; const s={id:++sid,type:"image",href:href,aspect:(asp||1.4),opacity:1,pts:[{x:cx-w/2,y:cy-h/2},{x:cx+w/2,y:cy+h/2}]}; shapes.push(s); sel=s; renderShapes(); updateHint(); } probe.onload=()=>place((probe.naturalWidth&&probe.naturalHeight)?probe.naturalWidth/probe.naturalHeight:1.4); probe.onerror=()=>place(1.4); probe.src=href; }
     const ipBg=document.getElementById("imgPickBg");
     function openImgPick(){ if(ipBg){ ipBg.hidden=false; const q=document.getElementById("ipQ"); if(q)setTimeout(()=>{ try{q.focus();}catch(_){ } },30); } }
@@ -1507,6 +1878,8 @@
     function saveFigure(){ const name=(prompt("Nom de la figure :","")||"").trim(); if(!name)return; const o=loadFigs(); o[name]={shapes:shapes,grid:gridOn,axes:axesOn,snap:snapOn}; saveFigs(o); refreshFigSel(); const selEl=document.getElementById("annoFigSel"); if(selEl)selEl.value=name; }
     function loadFigure(){ const selEl=document.getElementById("annoFigSel"); if(!selEl||!selEl.value)return; const o=loadFigs(),f=o[selEl.value]; if(!f)return; if(shapes.length&&!confirm("Remplacer les formes actuelles par « "+selEl.value+" » ?"))return; shapes=(f.shapes||[]).map(cloneShape); shapes.forEach(s=>{ if((s.id||0)>sid)sid=s.id||0; }); sel=null; pfree=null; pmouse=null; mclick=null; xpts=null; gridOn=!!f.grid; axesOn=!!f.axes; snapOn=!!f.snap; renderGrid(); renderShapes(); applyTool(); }
     function delFigure(){ const selEl=document.getElementById("annoFigSel"); if(!selEl||!selEl.value)return; const nm=selEl.value; if(!confirm("Supprimer la figure « "+nm+" » ?"))return; const o=loadFigs(); delete o[nm]; saveFigs(o); refreshFigSel(); }
+    function exportFigure(){ const data={app:"ClassroomPDC",kind:"figure",v:1,shapes:shapes,grid:gridOn,axes:axesOn,snap:snapOn}; let str; try{ str=JSON.stringify(data); }catch(_){ alert("Export impossible."); return; } const blob=new Blob([str],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a"); a.href=url; a.download="figure-classroompdc.json"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>{ try{ URL.revokeObjectURL(url); }catch(_){ } },2000); }
+    function importFigureFile(file){ const r=new FileReader(); r.onload=()=>{ let data; try{ data=JSON.parse(r.result); }catch(_){ alert("Fichier illisible (JSON invalide)."); return; } if(!data||!Array.isArray(data.shapes)){ alert("Ce fichier n'est pas une figure ClassroomPDC."); return; } if(shapes.length&&!confirm("Remplacer les formes actuelles par le fichier importé ?"))return; shapes=data.shapes.map(cloneShape); shapes.forEach(s=>{ if((s.id||0)>sid)sid=s.id||0; }); sel=null; pfree=null; pmouse=null; mclick=null; xpts=null; gridOn=!!data.grid; axesOn=!!data.axes; snapOn=!!data.snap; renderGrid(); renderShapes(); applyTool(); }; r.readAsText(file); }
     function mkShape(type,p){ const s={id:++sid,type:type,color:color,pts:[{x:p.x,y:p.y},{x:p.x,y:p.y}]}; if(type==="point"){ s.pts=[{x:p.x,y:p.y}]; s.label=nextLabel(); } if(type==="rpoly")s.n=polyN; return s; }
     function sq(s){ const a=s.pts[0],q=s.pts[1],dx=q.x-a.x,dy=q.y-a.y,side=Math.max(Math.abs(dx),Math.abs(dy)); s.pts[1]={x:a.x+(dx<0?-1:1)*side,y:a.y+(dy<0?-1:1)*side}; }
     function finalize(s){ if(s.type==="trieq"){ s.pts=triEqVerts(s.pts[0],s.pts[1]); s.type="tri"; s.coded=true; } else if(s.type==="triright"){ s.pts=triRightVerts(s.pts[0],s.pts[1]); s.type="tri"; s.coded=true; } else if(s.type==="triiso"){ s.pts=triIsoVerts(s.pts[0],s.pts[1]); s.type="tri"; s.coded=true; } else if(s.type==="square"||s.type==="rect"){ s.coded=true; } if(s.type!=="point"&&s.type!=="tri"&&s.pts.length>=2){ const a=s.pts[0],b=s.pts[1]; if(Math.hypot(b.x-a.x,b.y-a.y)<4){ shapes=shapes.filter(x=>x!==s); if(sel===s)sel=null; } } }
@@ -1529,8 +1902,20 @@
       function u(){ window.removeEventListener("pointermove",mv); window.removeEventListener("pointerup",u); }
       window.addEventListener("pointermove",mv); window.addEventListener("pointerup",u);
     }
-    function multiClick(p){ if(!mclick||mclick.type!==shapeTool)mclick={type:shapeTool,pts:[]}; mclick.pts.push({x:p.x,y:p.y});
-      if(mclick.pts.length>=3){ const s={id:++sid,type:shapeTool,color:color,pts:mclick.pts.slice()}; shapes.push(s); sel=s; mclick=null; } renderShapes(); updateHint();
+    const MULTI={
+      tri:{n:3,build:p=>({type:"tri",pts:p})},
+      rangle:{n:3,build:p=>({type:"rangle",pts:p})},
+      angle:{n:3,build:p=>({type:"angle",pts:p})},
+      arc:{n:3,build:p=>({type:"arc",pts:p})},
+      sector:{n:3,build:p=>({type:"sector",pts:p})},
+      compass:{n:2,build:p=>({type:"circle",pts:[p[0],p[1]]})},
+      midpoint:{n:2,build:p=>({type:"point",pts:[{x:(p[0].x+p[1].x)/2,y:(p[0].y+p[1].y)/2}],label:nextLabel()})},
+      mediatrice:{n:2,build:p=>{ const M={x:(p[0].x+p[1].x)/2,y:(p[0].y+p[1].y)/2},d=unit(p[0],p[1]),pp={x:-d.y,y:d.x}; return {type:"line",pts:[{x:M.x-pp.x*40,y:M.y-pp.y*40},{x:M.x+pp.x*40,y:M.y+pp.y*40}]}; }},
+      perp:{n:3,build:p=>{ const d=unit(p[0],p[1]),pp={x:-d.y,y:d.x},P=p[2]; return {type:"line",pts:[{x:P.x-pp.x*40,y:P.y-pp.y*40},{x:P.x+pp.x*40,y:P.y+pp.y*40}]}; }},
+      parallel:{n:3,build:p=>{ const d=unit(p[0],p[1]),P=p[2]; return {type:"line",pts:[{x:P.x-d.x*40,y:P.y-d.y*40},{x:P.x+d.x*40,y:P.y+d.y*40}]}; }}
+    };
+    function multiClick(p){ const def=MULTI[shapeTool]; if(!def)return; if(!mclick||mclick.type!==shapeTool)mclick={type:shapeTool,pts:[]}; mclick.pts.push({x:p.x,y:p.y});
+      if(mclick.pts.length>=def.n){ const s=def.build(mclick.pts.slice()); s.id=++sid; if(s.color==null)s.color=color; shapes.push(s); sel=s; mclick=null; } renderShapes(); updateHint();
     }
     function freeClick(p){ if(!pfree){ pfree={pts:[{x:p.x,y:p.y}]}; pmouse={x:p.x,y:p.y}; renderShapes(); updateHint(); return; }
       const f=pfree.pts[0]; if(pfree.pts.length>=3 && Math.hypot(p.x-f.x,p.y-f.y)<12){ finishFree(); return; }
@@ -1539,7 +1924,7 @@
     function finishFree(){ if(pfree && pfree.pts.length>=3){ const s={id:++sid,type:"polyfree",color:color,pts:pfree.pts.map(q=>({x:q.x,y:q.y}))}; shapes.push(s); sel=s; } pfree=null; pmouse=null; renderShapes(); updateHint(); }
     function cancelFree(){ pfree=null; pmouse=null; renderShapes(); updateHint(); }
     function onShapeDown(e){ const p=snap(pt(e));
-      if(shapeTool!=="select"){ e.preventDefault(); if(shapeTool==="point"){ const s=mkShape("point",p); shapes.push(s); sel=s; renderShapes(); return; } if(shapeTool==="polyfree"){ freeClick(p); return; } if(shapeTool==="tri"||shapeTool==="rangle"||shapeTool==="angle"){ multiClick(p); return; } if(shapeTool==="xlate"||shapeTool==="rotate"||shapeTool==="reflect"||shapeTool==="pointsym"){ xformClick(p); return; } startCreate(shapeTool,p); return; }
+      if(shapeTool!=="select"){ e.preventDefault(); if(shapeTool==="point"){ const s=mkShape("point",p); shapes.push(s); sel=s; renderShapes(); return; } if(shapeTool==="mtext"){ const txt=prompt("Texte (ex. x^2, A_1, sqrt(a^2+b^2)) :",""); if(txt!=null&&txt!==""){ const s={id:++sid,type:"mtext",text:txt,color:color,pts:[{x:p.x,y:p.y}]}; shapes.push(s); sel=s; renderShapes(); } return; } if(shapeTool==="polyfree"){ freeClick(p); return; } if(MULTI[shapeTool]){ multiClick(p); return; } if(shapeTool==="xlate"||shapeTool==="rotate"||shapeTool==="reflect"||shapeTool==="pointsym"){ xformClick(p); return; } startCreate(shapeTool,p); return; }
       const ht=e.target.closest("[data-h]"); if(ht){ startHandle(parseInt(ht.getAttribute("data-h"),10)); return; }
       const gg=e.target.closest("[data-sid]"); if(gg){ sel=shapes.find(s=>s.id===+gg.getAttribute("data-sid"))||null; renderShapes(); startMove(); updateHint(); return; }
       sel=null; renderShapes(); updateHint();
@@ -1552,6 +1937,13 @@
       else if(shapeTool==="reflect"){ hintEl.textContent=!sel?"Choisissez d'abord une forme (↖)":((xpts&&xpts.length)?"Cliquez le 2e point de l'axe":"Symétrie axiale : cliquez le 1er point de l'axe"); }
       else if(shapeTool==="rotate"){ hintEl.textContent=!sel?"Choisissez d'abord une forme (↖)":"Rotation : cliquez le centre"; }
       else if(shapeTool==="pointsym"){ hintEl.textContent=!sel?"Choisissez d'abord une forme (↖)":"Symétrie centrale : cliquez le centre"; }
+      else if(shapeTool==="arc"||shapeTool==="sector"){ hintEl.textContent=["Cliquez le centre","Cliquez le début de l'arc","Cliquez la fin de l'arc"][(mclick?mclick.pts.length:0)]||""; }
+      else if(shapeTool==="compass"){ hintEl.textContent=["Compas : cliquez le centre","Cliquez un point du cercle"][(mclick?mclick.pts.length:0)]||""; }
+      else if(shapeTool==="midpoint"){ hintEl.textContent=["Milieu : cliquez le 1er point","Cliquez le 2e point"][(mclick?mclick.pts.length:0)]||""; }
+      else if(shapeTool==="mediatrice"){ hintEl.textContent=["Médiatrice : cliquez le 1er point","Cliquez le 2e point"][(mclick?mclick.pts.length:0)]||""; }
+      else if(shapeTool==="perp"){ hintEl.textContent=["Perpendiculaire : 1er point de la direction","2e point de la direction","Point par où passe la perpendiculaire"][(mclick?mclick.pts.length:0)]||""; }
+      else if(shapeTool==="parallel"){ hintEl.textContent=["Parallèle : 1er point de la direction","2e point de la direction","Point par où passe la parallèle"][(mclick?mclick.pts.length:0)]||""; }
+      else if(shapeTool==="mtext"){ hintEl.textContent="Cliquez où placer le texte (^ = exposant, _ = indice, sqrt())"; }
       else if(shapeTool==="select"){ hintEl.textContent=sel?"Sélection — glissez la forme ou les poignées":"Cliquez une forme"; }
       else hintEl.textContent="Glissez pour tracer";
     }
@@ -1597,6 +1989,11 @@
     annoFillOp.addEventListener("input",()=>{ if(closedType(sel)&&sel.fill){ sel.fillOp=(+annoFillOp.value)/100; renderShapes(); } else if(sel&&sel.type==="image"){ sel.opacity=(+annoFillOp.value)/100; renderShapes(); } });
     annoFillPat.addEventListener("change",()=>{ if(closedType(sel)&&sel.fill){ sel.fillPat=annoFillPat.value; renderShapes(); } });
     document.getElementById("annoImgBtn").addEventListener("click",openImgPick);
+    document.getElementById("annoScan").addEventListener("click",scanCoding);
+    document.getElementById("annoFigExport").addEventListener("click",exportFigure);
+    document.getElementById("annoFigImport").addEventListener("click",()=>document.getElementById("annoFigFile").click());
+    document.getElementById("annoFigFile").addEventListener("change",e=>{ const f=e.target.files&&e.target.files[0]; if(f)importFigureFile(f); e.target.value=""; });
+    shapeSvg.addEventListener("dblclick",e=>{ const gg=e.target.closest&&e.target.closest("[data-sid]"); if(!gg)return; const s=shapes.find(x=>x.id===+gg.getAttribute("data-sid")); if(s&&s.type==="mtext"){ const t=prompt("Modifier le texte :",s.text||""); if(t!=null){ s.text=t; renderShapes(); } } });
     window.addEventListener("resize",()=>{ if(on){ sizeAll(true); renderGrid(); renderShapes(); } });
     const grip=document.getElementById("annoGrip");
     grip.addEventListener("pointerdown",e=>{ e.preventDefault(); const r=pal.getBoundingClientRect(); pal.style.transform="none"; pal.style.left=r.left+"px"; pal.style.top=r.top+"px"; const sx=e.clientX,sy=e.clientY,ox=r.left,oy=r.top;
