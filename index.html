@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>PluiePro v2.14</title>
+<title>PluiePro v2.15</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -296,6 +296,9 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   .dv-sum.dv-ok{background:rgba(58,208,122,0.10);border:1px solid #2e5a3e;color:#9ad9a0}
   .dv-sum.dv-warn{background:rgba(224,184,76,0.10);border:1px solid #5a4e2e;color:#e0c87a}
   .dv-sum.dv-err{background:rgba(255,107,61,0.12);border:1px solid #5a3a2e;color:#ff9b7d}
+  .dv-block{margin-bottom:18px}
+  .dv-block:last-of-type{margin-bottom:4px}
+  .dv-h2{font-size:13px;font-weight:800;color:#d8d8d8;margin:4px 0 9px;padding-bottom:5px;border-bottom:1px solid #242424}
   .dv-intro{font-size:11.5px;color:#9a9a9a;line-height:1.55;margin-bottom:14px}
   .dv-intro b{color:#cfcfcf}
   .dv-scale{display:flex;justify-content:space-between;font-size:10px;color:#777;padding:0 2px 5px;border-bottom:1px solid #1e1e1e;margin-bottom:6px}
@@ -645,6 +648,7 @@ let _firstLoad=true; /* 1er chargement → ignore cache, fetch frais */
 let _tempMaxByDay=null;
 let _tempMaxModelByDay=null;
 let _tempModelsByDay=null; /* détail température par modèle et par jour — tableau « Accord des modèles » */
+let _rainModelsByDay=null; /* détail pluie (cumul/jour) par modèle — tableau « Accord des modèles » */
 let _tempConfByDay=null; /* dispersion modèles (°C) */ /* max température parmi TOUS les modèles, par jour */ /* durée ensoleillement s/h (0-3600) */ /* humidité relative % horaire */
 let _lastPts=null; /* derniers pts du chart pour recalcul humidité */
 let _sunriseJ0=6,_sunsetJ0=21,_sunriseJ1=6,_sunsetJ1=21; /* heures décimales */
@@ -1304,52 +1308,68 @@ function rerunHealth(btn){
    et alerte si la dispersion est forte. 100% hors-ligne, pas de LLM.
    ═══════════════════════════════════════════════════════════════ */
 function _divLvl(amp){return amp>=6?'err':amp>=3?'warn':'ok';}
-function renderDivergence(){
-  const body=document.getElementById('divBody');if(!body)return;
-  const M=_tempModelsByDay;
-  if(!Array.isArray(M)||!M.length){
-    body.innerHTML='<div class="dv-empty">Synthèse multi-modèles indisponible pour le moment.<br>Cherchez une ville et patientez quelques secondes (le temps que les modèles se chargent), puis rouvrez ce panneau.</div>';
-    return;
-  }
-  const days=M.slice(0,10); /* J0 → J+9 */
+function _divLvlRain(amp){return amp>=10?'err':amp>=3?'warn':'ok';}
+function _divBlock(title,type,M,scaleCaption){
+  const isRain=(type==='rain');
+  if(!Array.isArray(M)||!M.length)return '';
+  const days=M.slice(0,14); /* J0 → J+13 */
+  const getMed=d=>isRain?d.med:d.medMax;
+  const getMod=m=>isRain?m.val:m.max;
+  const unit=isRain?' mm':'°';
+  const lvlFn=isRain?_divLvlRain:_divLvl;
   let gLo=Infinity,gHi=-Infinity;
   days.forEach(d=>{if(_hlFin(d.lo))gLo=Math.min(gLo,d.lo);if(_hlFin(d.hi))gHi=Math.max(gHi,d.hi);});
-  if(!isFinite(gLo)||!isFinite(gHi)||gHi<=gLo){gLo=0;gHi=1;}
-  const pad=Math.max(1,(gHi-gLo)*0.06);gLo-=pad;gHi+=pad;
-  const span=gHi-gLo,pct=v=>((v-gLo)/span*100);
+  if(isRain){gLo=0;if(!isFinite(gHi)||gHi<=0)gHi=1;}
+  else{if(!isFinite(gLo)||!isFinite(gHi)||gHi<=gLo){gLo=0;gHi=1;}const pad=Math.max(1,(gHi-gLo)*0.06);gLo-=pad;gHi+=pad;}
+  const span=(gHi-gLo)||1,pct=v=>((v-gLo)/span*100);
   const n=days[0]&&days[0].n?days[0].n:'?';
-
+  const fmt=v=>isRain?(Math.round(v*10)/10).toFixed(1):String(Math.round(v));
   let rows='';
   days.forEach((d,idx)=>{
     const amp=(_hlFin(d.hi)&&_hlFin(d.lo))?(d.hi-d.lo):0;
-    const lvl=_divLvl(amp);
+    const lvl=lvlFn(amp);
     const col=lvl==='err'?'#ff6b3d':lvl==='warn'?'#e0b84c':'#3ad07a';
     const dt=new Date(d.date+'T00:00:00');
     const lbl=isNaN(dt)?('J+'+idx):(_hlDOW[dt.getDay()]+' '+dt.getDate());
-    const loP=pct(d.lo),hiP=pct(d.hi),medP=pct(d.medMax);
-    const sorted=d.models.slice().sort((a,b)=>b.max-a.max);
-    let det='';sorted.forEach(m=>{det+='<span class="dv-mod"><b>'+m.name+'</b> '+Math.round(m.max)+'°</span>';});
+    const loP=pct(d.lo),hiP=pct(d.hi),medP=pct(getMed(d));
+    const sorted=d.models.slice().sort((a,b)=>getMod(b)-getMod(a));
+    let det='';sorted.forEach(m=>{det+='<span class="dv-mod"><b>'+m.name+'</b> '+fmt(getMod(m))+unit+'</span>';});
     rows+='<div class="dv-row" onclick="this.classList.toggle(\'open\')" title="Toucher pour voir chaque modèle">'
       +'<div class="dv-day">'+lbl+'</div>'
       +'<div class="dv-bar"><div class="dv-track"></div>'
-        +'<div class="dv-range" style="left:'+loP.toFixed(1)+'%;width:'+(hiP-loP).toFixed(1)+'%;background:'+col+'"></div>'
-        +'<div class="dv-med" style="left:'+medP.toFixed(1)+'%" title="Médiane affichée dans l\'app"></div>'
+        +'<div class="dv-range" style="left:'+loP.toFixed(1)+'%;width:'+Math.max(0,(hiP-loP)).toFixed(1)+'%;background:'+col+'"></div>'
+        +'<div class="dv-med" style="left:'+medP.toFixed(1)+'%" title="Valeur affichée dans l\'app"></div>'
       +'</div>'
-      +'<div class="dv-amp" style="color:'+col+'">'+Math.round(d.lo)+'–'+Math.round(d.hi)+'°<small>±'+amp.toFixed(amp<10?1:0)+'</small></div>'
+      +'<div class="dv-amp" style="color:'+col+'">'+fmt(d.lo)+'–'+fmt(d.hi)+unit+'<small>±'+amp.toFixed(amp<10?1:0)+'</small></div>'
       +'<div class="dv-det">'+det+'</div>'
       +'</div>';
   });
-
   const amps=days.map(d=>(_hlFin(d.hi)&&_hlFin(d.lo))?(d.hi-d.lo):0);
   const maxAmp=amps.length?Math.max.apply(null,amps):0;
-  const sumCls=maxAmp>=6?'dv-err':maxAmp>=3?'dv-warn':'dv-ok';
-  const sumTxt=maxAmp>=6?'⚠️ Forte divergence des modèles':maxAmp>=3?'Divergence modérée':'✅ Bon accord des modèles';
-
-  let html='<div class="dv-sum '+sumCls+'">'+sumTxt+' — éventail maximum '+Math.round(maxAmp)+'° sur 10 jours.</div>';
-  html+='<div class="dv-intro">Comparaison des <b>'+n+' modèles</b> météo déjà téléchargés (ICON, GFS, ECMWF, ARPEGE, UKMO, GEM, JMA, Met.no…). Plus l\'éventail est large, plus la prévision est incertaine. La barre va du modèle le plus <b>froid</b> au plus <b>chaud</b> ; le trait clair = <b>médiane</b> (la valeur affichée partout dans l\'app). Touchez une ligne pour le détail par modèle.</div>';
-  html+='<div class="dv-scale"><span>'+Math.round(gLo)+'°</span><span>température max prévue</span><span>'+Math.round(gHi)+'°</span></div>';
+  const sumCls=lvlFn(maxAmp)==='err'?'dv-err':lvlFn(maxAmp)==='warn'?'dv-warn':'dv-ok';
+  const sumTxt=lvlFn(maxAmp)==='err'?'⚠️ Forte divergence':lvlFn(maxAmp)==='warn'?'Divergence modérée':'✅ Bon accord';
+  let html='<div class="dv-block">';
+  html+='<div class="dv-h2">'+title+'</div>';
+  html+='<div class="dv-sum '+sumCls+'">'+sumTxt+' — éventail max '+fmt(maxAmp)+unit+' sur '+days.length+' j.</div>';
+  if(isRain)html+='<div class="dv-scale"><span>0</span><span>'+scaleCaption+'</span><span>'+fmt(gHi)+' mm</span></div>';
+  else html+='<div class="dv-scale"><span>'+fmt(gLo)+'°</span><span>'+scaleCaption+'</span><span>'+fmt(gHi)+'°</span></div>';
   html+=rows;
-  html+='<div class="dv-foot">Source : Open-Meteo (multi-modèles) + Met.no — les mêmes modèles que ceux derrière la plupart des sites météo grand public. Calcul local, sans appel supplémentaire.</div>';
+  html+='</div>';
+  return html;
+}
+function renderDivergence(){
+  const body=document.getElementById('divBody');if(!body)return;
+  const hasT=Array.isArray(_tempModelsByDay)&&_tempModelsByDay.length;
+  const hasR=Array.isArray(_rainModelsByDay)&&_rainModelsByDay.length;
+  if(!hasT&&!hasR){
+    body.innerHTML='<div class="dv-empty">Synthèse multi-modèles indisponible pour le moment.<br>Cherchez une ville et patientez quelques secondes (le temps que les modèles se chargent), puis rouvrez ce panneau.</div>';
+    return;
+  }
+  const n=(hasT&&_tempModelsByDay[0].n)||(hasR&&_rainModelsByDay[0].n)||'?';
+  let html='<div class="dv-intro">Comparaison des <b>'+n+' modèles</b> météo déjà téléchargés (ICON, GFS, ECMWF, ARPEGE, UKMO, GEM…). Plus l\'éventail est large, plus la prévision est incertaine. Le trait clair = <b>valeur affichée</b> dans l\'app. Touchez une ligne pour le détail modèle par modèle.</div>';
+  html+=_divBlock('🌡️ Température maximale','temp',_tempModelsByDay,'température max prévue');
+  html+=_divBlock('🌧️ Pluie (cumul / jour)','rain',_rainModelsByDay,'cumul de pluie prévu');
+  html+='<div class="dv-foot">Source : Open-Meteo (multi-modèles) + Met.no — les mêmes modèles que derrière la plupart des sites météo grand public. Calcul local, sans appel supplémentaire. La pluie d\'aujourd\'hui ne compte que les heures à venir.</div>';
   body.innerHTML=html;
 }
 function openDiv(){renderDivergence();const p=document.getElementById('divPanel');if(p)p.classList.add('open');}
@@ -3193,9 +3213,11 @@ function setView(mode){
 /* ── points ── */
 function processData(omMain,omM15,rainMx,probMx){
   /* Pluie synthèse (p80 multi-modèles) sommée par jour J0..J14 = exactement ce que la vue principale cumule → la vue GRAPH lira les mêmes chiffres */
-  try{_rainByDay=[];for(let _d=0;_d<15;_d++){let _s=0,_any=false;for(let _h=0;_h<24;_h++){const _v=synthR(_d*24+_h,rainMx);if(_v!=null&&isFinite(_v)){_s+=_v;_any=true;}}_rainByDay[_d]=_any?Math.round(_s*10)/10:0;}}catch(e){}
+  try{const _rnNow=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz}));const _hNow=_rnNow.getHours();_rainByDay=[];for(let _d=0;_d<15;_d++){let _s=0,_any=false;const _h0=(_d===0)?_hNow:0;for(let _h=_h0;_h<24;_h++){const _v=synthR(_d*24+_h,rainMx);if(_v!=null&&isFinite(_v)){_s+=_v;_any=true;}}_rainByDay[_d]=_any?Math.round(_s*10)/10:0;}}catch(e){}
   /* Proba de pluie synthèse par jour = MAX horaire (comme la carte résumé) → la tendance lira la même chose */
-  try{_probByDay=[];for(let _d=0;_d<15;_d++){let _mx=0;for(let _h=0;_h<24;_h++){const _v=synthP(_d*24+_h,probMx);if(_v!=null&&isFinite(_v)&&_v>_mx)_mx=_v;}_probByDay[_d]=Math.round(_mx);}}catch(e){}
+  try{const _pbNow=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz}));const _hNp=_pbNow.getHours();_probByDay=[];for(let _d=0;_d<15;_d++){let _mx=0;const _h0=(_d===0)?_hNp:0;for(let _h=_h0;_h<24;_h++){const _v=synthP(_d*24+_h,probMx);if(_v!=null&&isFinite(_v)&&_v>_mx)_mx=_v;}_probByDay[_d]=Math.round(_mx);}}catch(e){}
+  /* Détail pluie par modèle et par jour (même plage que _rainByDay : J0 = heures à venir) → tableau « Accord des modèles » */
+  try{const _rmN=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz}));const _hN2=_rmN.getHours();_rainModelsByDay=[];for(let _d=0;_d<15;_d++){const _h0=(_d===0)?_hN2:0;const _md=[];for(const s of SOURCES){let _sm=0,_ok=false;for(let _h=_h0;_h<24;_h++){const _v=rainMx[s.key]?.[_d*24+_h];if(_v!=null&&isFinite(_v)){_sm+=_v;_ok=true;}}if(_ok)_md.push({name:s.label,val:Math.round(_sm*10)/10});}const _vl=_md.map(m=>m.val);const _dt=new Date(_rmN);_dt.setDate(_rmN.getDate()+_d);_rainModelsByDay[_d]={date:_dt.getFullYear()+'-'+String(_dt.getMonth()+1).padStart(2,'0')+'-'+String(_dt.getDate()).padStart(2,'0'),models:_md,med:(_rainByDay&&_rainByDay[_d]!=null)?_rainByDay[_d]:0,lo:_vl.length?Math.min.apply(null,_vl):0,hi:_vl.length?Math.max.apply(null,_vl):0,n:_vl.length};}}catch(e){}
   const pts=[],mods=SOURCES.map(()=>[]);
   const now=new Date(new Date().toLocaleString('en-US',{timeZone:cityTz}));
   const h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
@@ -4466,8 +4488,8 @@ function buildSummary(chart,pts,days,xp){
     const daysFromToday=Math.round((dateMidnight-todayMidnight)/86400000);
     /* Cumuls */
     const dd=pts.filter(p=>p.d===d);
-    const total=dd.reduce((s,p)=>s+p.mx,0);
-    const maxP=Math.max(...dd.map(p=>p.p),0);
+    const total=(_rainByDay&&daysFromToday>=0&&_rainByDay[daysFromToday]!=null)?_rainByDay[daysFromToday]:dd.reduce((s,p)=>s+p.r,0);
+    const maxP=(_probByDay&&daysFromToday>=0&&_probByDay[daysFromToday]!=null)?_probByDay[daysFromToday]:Math.max(...dd.map(p=>p.p),0);
     /* Label */
     const isToday=dateMidnight.getTime()===todayMidnight.getTime();
     const lbl=(isToday?'AUJ.':dn[date.getDay()])+' '+date.getDate()+'/'+(date.getMonth()+1);
