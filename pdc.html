@@ -1,10 +1,10 @@
 <!doctype html>
-<!-- ClassroomPDC — V1.22 (pages + widgets) -->
+<!-- ClassroomPDC — V1.25 (pages + widgets) -->
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ClassroomPDC · V1.22</title>
+<title>ClassroomPDC · V1.25</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hanken+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -57,12 +57,20 @@
   .w-ic{font-size:.82rem;opacity:.85}
   .w-title{font-weight:800;font-size:.76rem;color:#5a5142;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .w-x{width:19px;height:19px;border-radius:50%;border:1.5px solid var(--neg);color:var(--neg);background:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;cursor:pointer;flex:0 0 auto}
+  .w-lock{cursor:pointer;font-size:.74rem;opacity:.6;padding:0 1px;flex:0 0 auto;user-select:none}.w-lock:hover{opacity:1}
+  .widget.locked .w-resize{display:none}.widget.locked .w-head{cursor:default}
   .w-body{flex:1;min-height:0;position:relative;overflow:hidden;display:flex;flex-direction:column}
   .w-resize{position:absolute;right:0;bottom:0;width:18px;height:18px;cursor:nwse-resize;touch-action:none;z-index:6}
   .w-resize::after{content:"";position:absolute;right:3px;bottom:3px;width:8px;height:8px;border-right:2px solid rgba(27,27,23,.4);border-bottom:2px solid rgba(27,27,23,.4);border-radius:0 0 3px 0}
 
   /* widget plan */
   .pw{display:flex;flex-direction:column;height:100%;overflow:auto}
+  .pw-dispbar{display:none;gap:8px;align-items:center;flex-wrap:wrap;padding:6px;border-bottom:1px solid rgba(27,27,23,.12);flex:0 0 auto;background:linear-gradient(#fff,#f6f3ea)}
+  .pw-dispname{font-weight:800;font-size:1.05rem;color:var(--ink);min-width:40px}
+  .pw-dispclass{font-weight:800;font-size:.82rem;color:#6a6a5f}
+  .pw.pw-display .pw-tabs,.pw.pw-display .pw-hint,.pw.pw-display .pw-bar,.pw.pw-display .pw-board,.pw.pw-display .pw-bureau,.pw.pw-display .pw-tools,.pw.pw-display .pw-gauges{display:none!important}
+  .pw.pw-display .pw-dispbar{display:flex}
+  .pw.pw-display .pw-gridwrap{flex:1 1 auto;align-items:center}
   .pw-hint{font-size:.66rem;color:#6a6a5f;padding:2px 6px;flex:0 0 auto;line-height:1.3}
   .pw-hint b.p{color:var(--pos)} .pw-hint b.n{color:var(--neg)}
   .pw-bar{display:flex;flex-wrap:wrap;gap:5px;padding:4px 6px 6px;flex:0 0 auto}
@@ -416,6 +424,142 @@
   .cd-addhere{align-self:flex-start;background:rgba(224,138,0,.85)}
   .cd-blockly{flex:1;min-height:0;border:1.5px solid var(--edge);border-radius:10px;overflow:hidden}
   .cd-note{font-size:.74rem;color:#8a8a7c;padding:10px;border:1.5px dashed var(--edge);border-radius:10px;background:#fff}
+  .cd-err{display:none;font-size:.72rem;color:#c0392b;font-weight:700;padding:1px 4px}
+  .plot-table{max-height:42%;overflow:auto;margin-top:2px}
+  .plot-tbl{border-collapse:collapse;font-size:.7rem;width:100%}
+  .plot-tbl th,.plot-tbl td{border:1px solid rgba(27,27,23,.12);padding:2px 5px;text-align:center;white-space:nowrap}
+  .plot-tbl th{background:#f1efe6;font-weight:800;color:#5a5142}
+  .plot-cbtn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .exo{display:flex;flex-direction:column;height:100%;gap:8px;padding:8px;box-sizing:border-box}
+  .exo-bar,.exo-lvl{display:flex;gap:5px;flex-wrap:wrap}
+  .exo-k,.exo-lb{border:1.5px solid var(--edge);background:#fff;font-family:inherit;font-weight:700;font-size:.78rem;border-radius:8px;padding:.26rem .55rem;cursor:pointer;color:var(--ink)}
+  .exo-k.on,.exo-lb.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .exo-q{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;font-family:"Bricolage Grotesque",serif;font-weight:800;font-size:clamp(1.6rem,7vw,2.8rem);color:var(--ink);text-align:center}
+  .exo-a{min-height:1.6em;text-align:center;font-weight:800;font-size:clamp(1.1rem,4vw,1.6rem);color:#1fa85a;opacity:0;transition:opacity .2s}
+  .exo-a.on{opacity:1}
+  .exo-act{display:flex;gap:6px}
+  .exo-btn{flex:1;border:1.5px solid var(--edge);background:#fff;font-family:inherit;font-weight:800;font-size:.84rem;border-radius:9px;padding:.5rem;cursor:pointer;color:var(--ink)}
+  .exo-btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .qrw{display:flex;flex-direction:column;height:100%;gap:8px;padding:8px;box-sizing:border-box;align-items:stretch}
+  .qrw-inp{border:1.5px solid var(--edge);border-radius:8px;padding:.42rem .55rem;font-family:inherit;font-size:.84rem;background:#fff;color:var(--ink)}
+  .qrw-box{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#fff;border:1.5px solid var(--edge);border-radius:10px;padding:8px}
+  .qrw-box img,.qrw-box canvas{max-width:100%;height:auto}
+  .qrw-note{font-size:.72rem;color:#8a8a7c;text-align:center;min-height:1em}
+  .rv{display:flex;flex-direction:column;height:100%;gap:6px;padding:6px;box-sizing:border-box}
+  .rv-bar{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+  .rv-mode,.rv-nav{border:1.5px solid var(--edge);background:#fff;font-family:inherit;font-weight:700;font-size:.74rem;border-radius:7px;padding:.24rem .5rem;cursor:pointer;color:var(--ink)}
+  .rv-mode.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .rv-cnt{font-size:.72rem;color:#8a8a7c;margin-left:auto}
+  .rv-area{flex:1;min-height:0;overflow:auto;border:1.5px solid var(--edge);border-radius:10px;background:#fff;padding:10px}
+  .rv-ta{width:100%;height:100%;border:none;outline:none;resize:none;font-family:inherit;font-size:.88rem;line-height:1.5;color:var(--ink);box-sizing:border-box}
+  .rv-steps{display:flex;flex-direction:column;gap:10px}
+  .rv-step{font-size:.95rem;line-height:1.55;color:var(--ink);padding-bottom:8px;border-bottom:1px dashed rgba(27,27,23,.1)}
+  .rv-step:last-child{border-bottom:none}
+  .rv-spoiler{background:#1b1b17;color:transparent;border-radius:4px;padding:0 5px;cursor:pointer;user-select:none;transition:color .15s,background .15s}
+  .rv-spoiler.shown{background:#fff3c4;color:var(--ink)}
+  .mz{display:flex;flex-direction:column;height:100%;gap:6px;padding:6px;box-sizing:border-box}
+  .mz-tabs{display:flex;gap:4px;flex-wrap:wrap;flex:0 0 auto}
+  .mz-tab{border:1.5px solid var(--edge);background:#fff;font-family:inherit;font-weight:700;font-size:.76rem;border-radius:8px;padding:.26rem .6rem;cursor:pointer;color:var(--ink)}
+  .mz-tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .mz-content{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:8px}
+  .mz-ctrls{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .mz-step{display:inline-flex;align-items:center;gap:3px;border:1.5px solid var(--edge);border-radius:8px;padding:.1rem .3rem;background:#fff}
+  .mz-slbl{font-size:.72rem;font-weight:700;color:#5a5142}
+  .mz-sb{border:none;background:#efece3;border-radius:5px;width:22px;height:22px;font-weight:900;cursor:pointer;color:var(--ink)}
+  .mz-sv{min-width:20px;text-align:center;font-weight:800;font-size:.82rem}
+  .mz-tg,.mz-btn{border:1.5px solid var(--edge);background:#fff;font-family:inherit;font-weight:700;font-size:.74rem;border-radius:8px;padding:.26rem .5rem;cursor:pointer;color:var(--ink)}
+  .mz-tg.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .mz-sel{border:1.5px solid var(--edge);border-radius:8px;padding:.22rem .3rem;font-family:inherit;font-weight:700;font-size:.74rem;background:#fff;color:var(--ink)}
+  .mz-hint{font-size:.7rem;color:#8a8a7c}
+  .mz-palette{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .mz-palitem{display:flex;flex-direction:column;align-items:center;gap:0;cursor:grab;user-select:none;touch-action:none;padding:2px 7px 3px;border:1.5px solid var(--edge);border-radius:11px;background:#fff}
+  .mz-palitem:active{cursor:grabbing}
+  .mz-mini{width:38px;height:38px;pointer-events:none}
+  .mz-plab{font-size:.66rem;font-weight:800;color:#7a3b12}
+  .mz-trash{display:flex;align-items:center;justify-content:center;width:44px;height:38px;border:2px dashed var(--neg);border-radius:11px;color:var(--neg);font-size:1.15rem;background:#fff;transition:background .12s}
+  .mz-trash.aim{background:#ffe0e0;border-style:solid}
+  .mz-board{position:relative;flex:1;min-height:300px;border:1.5px solid var(--edge);border-radius:12px;background:radial-gradient(circle at 28% 18%,#fdfbf4,#f3ebd9);overflow:hidden}
+  .mz-slice{touch-action:none}
+  .mz-wsvg{width:100%;height:100%;display:block;overflow:visible}
+  .mz-cheese{fill:#efc24a;stroke:#e0a93a;stroke-width:.6}
+  .mz-crustarc{fill:none;stroke:#c4863a;stroke-width:4;stroke-linecap:round;pointer-events:none}
+  .mz-pep{fill:#b5371f;stroke:#8f2a16;stroke-width:.5;pointer-events:none}
+  .mz-ploutline{fill:rgba(255,255,255,.4);stroke:#c9a44e;stroke-width:1.7;stroke-dasharray:4 3;pointer-events:none}
+  .mz-plate{position:absolute;cursor:grab;touch-action:none}
+  .mz-plate .mz-cheese{cursor:grab}
+  .mz-plate.aim .mz-ploutline{stroke:#2e9e4f;stroke-width:2.6;stroke-dasharray:none;fill:rgba(123,179,106,.2)}
+  .mz-plate.complete .mz-ploutline{stroke:#e0a93a;stroke-width:3;stroke-dasharray:none;fill:none}
+  .mz-plate.complete{filter:drop-shadow(0 0 11px rgba(224,150,40,.9))}
+  .mz-grab{cursor:grabbing}
+  .mz-loose{position:absolute;pointer-events:none}
+  .mz-loose .mz-cheese{pointer-events:auto;cursor:grab}
+  .mz-loose .mz-wsvg{filter:drop-shadow(0 3px 4px rgba(0,0,0,.24))}
+  .mz-floating .mz-wsvg{filter:drop-shadow(0 11px 16px rgba(0,0,0,.36))}
+  .mz-cap{position:absolute;left:0;right:0;bottom:-3px;text-align:center;font-weight:800;font-size:.82rem;color:var(--ink);pointer-events:none;text-shadow:0 1px 2px #fff,0 0 3px #fff}
+  .mz-badge{position:absolute;top:-7px;left:50%;transform:translateX(-50%);color:#fff;font-weight:800;font-size:.68rem;border-radius:20px;padding:1px 8px;pointer-events:none;white-space:nowrap;box-shadow:0 2px 5px rgba(0,0,0,.2)}
+  .mz-badge.need{background:#8a8275}
+  .mz-badge.half{background:#1f8a3b}
+  .mz-badge.win{background:#e0892b}
+  @keyframes mz-pop{0%{transform:scale(.82);opacity:.25}70%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+  .mz-anim{animation:mz-pop .16s ease-out}
+  .mz-seg{border:1.5px solid var(--edge);background:#fff;font-family:inherit;font-weight:700;font-size:.74rem;border-radius:8px;padding:.24rem .55rem;cursor:pointer;color:var(--ink)}
+  .mz-seg.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .mz-rap{width:100%;height:auto;display:block;max-height:230px}
+  .mz-rapdisc{fill:rgba(110,150,200,.10);stroke:#9bb4d6;stroke-width:1}
+  .mz-raptickM{stroke:#5a6a82;stroke-width:1.4}
+  .mz-raptickm{stroke:#9aa7ba;stroke-width:.7}
+  .mz-raplbl{fill:#48566c;font:600 11px system-ui,sans-serif;text-anchor:middle}
+  .mz-raparm0{stroke:#23231d;stroke-width:3;stroke-linecap:round}
+  .mz-raparm{stroke:#2f6bd6;stroke-width:3.4;stroke-linecap:round}
+  .mz-rapind{fill:none;stroke:#2f6bd6;stroke-width:2}
+  .mz-raphandle{fill:#2f6bd6;stroke:#fff;stroke-width:2;cursor:grab}
+  .mz-bal-eq{font-weight:800;font-size:1rem;color:var(--ink);text-align:center}
+  .mz-bal{display:flex;justify-content:center}
+  .mz-bal-pans{display:flex;align-items:flex-end;gap:8px;justify-content:center;width:100%}
+  .mz-panwrap{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1 1 0;max-width:46%}
+  .mz-pan2{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;align-content:flex-end;min-height:54px;min-width:84px;border-bottom:3px solid #b9a05a;padding:5px;background:rgba(0,0,0,.02);border-radius:8px 8px 0 0;width:100%;box-sizing:border-box}
+  .mz-panlbl{font-size:.7rem;color:#8a8a7c;font-weight:700}
+  .mz-bal-ful{font-size:1.4rem;color:#b9a05a;align-self:flex-end;line-height:1}
+  .mz-tile{min-width:22px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.74rem;padding:0 4px}
+  .mz-tx{background:#cfe0fb;border:1.5px solid #6f9bea;color:#1d3f7a}
+  .mz-tu{background:#d6f0cf;border:1.5px solid #7bb36a;color:#2f6a26}
+  .mz-tu.mz-neg{background:#fbd6d6;border-color:#e08a8a;color:#a23a3a}
+  .mz-tz{background:#eee;border:1.5px solid #ccc;color:#777}
+  .mz-grid{width:100%;height:auto;display:block;max-height:260px}
+  .mz-gridln{stroke:#e3dcc9;stroke-width:.04}
+  .mz-gridax{stroke:#b9b09a;stroke-width:.08}
+  .mz-shape{fill:rgba(123,179,106,.32);stroke:#3f9650;stroke-width:.1}
+  .mz-ptab{border-collapse:collapse;margin:2px auto}
+  .mz-pcell{border:1.6px solid #c9a13f;padding:.3rem .8rem;text-align:center;font-weight:800;font-size:.98rem;min-width:42px;color:var(--ink)}
+  .mz-px{background:#fff3c4;color:#a06a00}
+  .mz-chart{display:flex;gap:6px;align-items:flex-end;justify-content:center;padding:4px;min-height:120px}
+  .mz-ccol{flex:1 1 0;max-width:60px;display:flex;flex-direction:column;align-items:center;gap:2px}
+  .mz-cbarwrap{height:88px;width:72%;display:flex;align-items:flex-end}
+  .mz-cbar{width:100%;background:linear-gradient(#7bb36a,#5f9650);border-radius:5px 5px 0 0;min-height:2px;transition:height .15s}
+  .mz-cval{font-size:.7rem;font-weight:800;color:var(--ink)}
+  .mz-cface{font-size:.82rem;font-weight:800;color:var(--ink)}
+  .mz-cfreq{font-size:.66rem;color:#8a8a7c;font-weight:700}
+  .mz-pyth{width:100%;height:auto;display:block;max-height:290px}
+  .mz-sqa{fill:rgba(111,155,234,.38);stroke:#3f63b0;stroke-width:.05}
+  .mz-sqb{fill:rgba(224,150,40,.34);stroke:#b97a2a;stroke-width:.05}
+  .mz-sqc{fill:rgba(123,179,106,.36);stroke:#3f9650;stroke-width:.05}
+  .mz-trip{fill:#23231d;opacity:.82;stroke:#23231d;stroke-width:.04}
+  .mz-sqlbl{fill:#23231d;font-weight:800}
+  .mz-frac{font-family:"Bricolage Grotesque",serif;font-weight:800;font-size:1.3rem;color:var(--ink)}
+  .mz-out{font-size:.92rem;color:var(--ink);text-align:center;padding:2px}
+  .mz-wall{display:flex;flex-direction:column;gap:4px}
+  .mz-wrow{display:flex;align-items:center;gap:6px}
+  .mz-wlbl{width:40px;font-weight:800;font-size:.74rem;text-align:right;color:#5a5142;flex:0 0 auto}
+  .mz-wbar{flex:1;display:flex;gap:2px;height:26px}
+  .mz-wcell{flex:1;border:1.5px solid #c9a13f;border-radius:4px;background:#fdf3e0;cursor:pointer;transition:background .12s}
+  .mz-wcell.on{background:#7bb36a;border-color:#5f9650}
+  .mz-wcell:hover{background:#f0e6c8}
+  .mz-line{width:100%;height:auto;display:block;margin-top:4px}
+  .mz-axis{stroke:#23231d;stroke-width:2}
+  .mz-tickM{stroke:#23231d;stroke-width:2} .mz-tickm{stroke:#8a8a7c;stroke-width:1}
+  .mz-tlbl{fill:#5a5a4c;font:600 16px system-ui,sans-serif;text-anchor:middle}
+  .mz-mark{fill:#d23b6b;stroke:#fff;stroke-width:2}
+  .mz-mlbl{fill:#d23b6b;font:800 17px system-ui,sans-serif;text-anchor:middle}
   .modal h3{font-family:"Bricolage Grotesque",serif;font-weight:800;font-size:1.15rem;margin:0 0 .8rem}
   .modal label{display:block;font-weight:700;font-size:.8rem;color:#3c3c33;margin:.6rem 0 .25rem}
   .modal input{width:100%;border:1.5px solid rgba(27,27,23,.22);border-radius:9px;padding:.55rem .7rem;font-family:inherit;font-size:1rem;color:var(--ink);background:#fff}
@@ -466,12 +610,13 @@
 <body>
   <div class="app">
     <nav class="tabs" id="tabs" aria-label="Pages">
-      <span class="brand">ClassroomPDC <span class="ver">V1.22</span></span>
+      <span class="brand">ClassroomPDC <span class="ver">V1.25</span></span>
     </nav>
     <div class="toolbar">
       <button class="btn primary" id="addW">+ Widget</button>
       <button class="btn" id="editPages">Gérer les pages</button>
       <button class="btn" id="expandBtn" title="Agrandir la zone de travail">⤢ 1×1</button>
+      <button class="btn" id="fsBtn" title="Plein écran (vidéoprojection)">⛶ Plein écran</button>
       <button class="btn" id="saveBtn">💾 Sauvegarde</button>
       <input type="file" id="xlsFile" accept=".xlsx,.xls,.csv" hidden>
       <span class="spacer"></span>
@@ -502,6 +647,10 @@
     <button data-type="calc"><span>🧮</span> Calculatrice</button>
     <button data-type="tableur"><span>▦</span> Tableur</button>
     <button data-type="code"><span>🐢</span> Atelier code</button>
+    <button data-type="exo"><span>🔢</span> Exercices</button>
+    <button data-type="reveal"><span>📖</span> Cours à révélation</button>
+    <button data-type="manip"><span>🍕</span> Manip’ maths</button>
+    <button data-type="qr"><span>🔳</span> QR code</button>
   </div>
 
   <div class="popover" id="themePop" hidden></div>
@@ -519,7 +668,7 @@
   <div class="modal-bg" id="helpBg" hidden>
     <div class="modal help" role="dialog" aria-modal="true">
       <div class="help-head">
-        <h3>ClassroomPDC — aide <span class="help-ver">V1.22</span></h3>
+        <h3>ClassroomPDC — aide <span class="help-ver">V1.25</span></h3>
         <div class="help-tabs">
           <button class="help-tab on" data-view="over" type="button">Vue d'ensemble</button>
           <button class="help-tab" data-view="detail" type="button">Vue détaillée</button>
@@ -545,6 +694,8 @@
           <span>🖼️ Image / GIF</span><span>🌐 Site web intégré</span>
           <span>📈 Traceur de fonctions</span><span>🧮 Calculatrice Numéo</span>
           <span>▦ Tableur</span><span>🐢 Atelier code</span>
+          <span>🔢 Exercices</span><span>📖 Cours à révélation</span><span>🔳 QR code</span>
+          <span>🍕 Manip’ maths</span>
         </div>
         <div class="help-tip">💡 Pour le détail de chaque outil et de la géométrie, passe en <b>Vue détaillée</b> (en haut).</div>
       </div>
@@ -554,6 +705,9 @@
             <li><b>Onglets de pages</b> en haut : clique pour changer de page. <b>Gérer les pages</b> affiche <b>✎</b> (renommer) et <b>✕</b> (supprimer) sur chaque onglet ; le <b>+</b> crée une page.</li>
             <li><b>+ Widget</b> ajoute l'outil choisi à la page active.</li>
             <li><b>⤢ Agrandir</b> : agrandit la zone de travail par paliers (1×1 → 2×2 → 3×3). La page s'étend <b>à droite et vers le bas</b> (défilement), avec des repères qui marquent chaque « écran ». Chaque page garde son propre niveau.</li>
+            <li><b>⛶ Plein écran</b> : passe l'appli en plein écran pour vidéoprojeter (re-cliquer pour quitter).</li>
+            <li><b>🔓 / 🔒</b> sur chaque widget : verrouille sa position (impossible de le déplacer ou redimensionner par erreur).</li>
+            <li><b>Ctrl+Z / Ctrl+Y</b> : annuler / rétablir (ajout, déplacement, redimensionnement, suppression de widgets, agrandissement de page).</li>
             <li><b>Thème</b> de page : change l'ambiance de fond.</li>
             <li><b>Sauver / Charger la config</b> : exporte/importe tout (pages, widgets, contenus) en <code>.json</code>, pour sauvegarder ou passer d'un PC à l'autre.</li>
             <li>Sans rien faire, tout est <b>auto-enregistré dans le navigateur</b>. Vider les données du navigateur efface la configuration → garde un <code>.json</code> de secours.</li>
@@ -562,10 +716,12 @@
         <details><summary>🪑 Plan de classe</summary>
           <ul>
             <li>Possède ses <b>propres onglets de classes</b> (Classe 1, 2…), indépendants des pages.</li>
-            <li><b>Clic gauche</b> sur un élève = croix négative (case blanc→noir, prénom <b>prononcé fermement</b>). <b>Clic droit</b> = croix positive (jaune→bleu→vert, sans son).</li>
+            <li><b>Clic gauche</b> sur un élève = croix négative (case blanc→noir, prénom <b>prononcé d'une voix grave et autoritaire</b>). <b>Clic droit</b> = croix positive (jaune→bleu→vert, sans son).</li>
+            <li><b>× Retirer une croix</b> : bascule en <b>mode retrait</b> — clic gauche enlève une croix négative, clic droit une positive (sans voix). Recliquer le bouton pour revenir au mode normal.</li>
+            <li><b>📺 Affichage</b> : masque tout le superflu et <b>agrandit la grille</b> (idéal vidéoprojecteur) ; une mini-barre <b>Tirer / Quitter</b> reste en haut.</li>
             <li><b>Modifier</b> : glisser-déposer pour réorganiser, <b>✕</b> retirer, case <b>« + »</b> ajouter, <b>+Rg / +Col</b> agrandir. Touche une case pour éditer <b>prénom + prononciation</b>.</li>
             <li><b>Importer</b> une classe depuis <code>.xlsx</code> / <code>.csv</code> (une feuille = une classe). <b>Exporter</b> classes et croix.</li>
-            <li><b>Tirer</b> = un élève au hasard (annoncé). <b>↺</b> remet les croix à zéro.</li>
+            <li><b>Tirer</b> = un élève au hasard (annoncé fermement). <b>↺</b> remet les croix à zéro.</li>
             <li><b>Groupes / Équipes / Roue</b> : forme des groupes, des équipes, ou tire un élève depuis la classe.</li>
           </ul>
         </details>
@@ -596,6 +752,7 @@
             <li>Jusqu'à <b>4 courbes</b> <code>f(x)=</code> de couleurs différentes (<b>+ fonction</b>).</li>
             <li>Écris avec <code>x</code>, les paramètres <code>a b c k</code>, <code>^</code> pour les puissances, et <code>sin cos tan sqrt exp ln log abs</code>…, <code>PI</code>. <code>log</code> = base 10, <code>ln</code> = népérien. Mets le <code>*</code> (ex. <code>2*x</code>).</li>
             <li><b>Curseurs a / b / c / k</b> : bouge-les, les courbes se redessinent en direct (ex. <code>a*x+b</code>, <code>a*sin(b*x)</code>).</li>
+            <li><b>Tableau</b> : affiche un tableau de valeurs des fonctions. Les <b>zéros</b> (intersections avec l'axe des x) sont marqués d'un point sur chaque courbe.</li>
             <li><b>Zoom</b> (boutons +/– et molette), <b>déplacement</b> en glissant, <b>Réinit.</b>. Asymptotes coupées, hors-domaine non tracé.</li>
           </ul>
         </details>
@@ -611,11 +768,37 @@
         <details><summary>🐢 Atelier code</summary>
           <ul>
             <li><b>Deux modes</b> : <b>Blocs</b> (palette maison, fonctionne hors-ligne) et <b>Blockly</b> (vrais blocs à glisser, chargé depuis Internet à la 1<sup>re</sup> ouverture).</li>
-            <li>Une <b>tortue</b> se déplace sur la scène et laisse une trace. Blocs disponibles : avancer/reculer, tourner ↻/↺, crayon haut/bas, couleur, dire, effacer, <b>Répéter n fois</b> et <b>Si … (touche le bord)</b>.</li>
+            <li>Une <b>tortue</b> se déplace sur la scène et laisse une trace. Blocs disponibles : avancer/reculer, tourner ↻/↺, crayon haut/bas, couleur, <b>épaisseur</b>, dire, effacer, <b>Répéter n fois</b>, <b>Répéter jusqu'au bord</b> et <b>Si … (touche le bord)</b>. <b>🖼 PNG</b> exporte le dessin.</li>
             <li>Mode Blocs : clique un bloc pour l'ajouter ; règle les nombres directement ; <b>↑ ↓ ✕</b> pour ordonner/supprimer ; <b>＋ ajouter ici</b> pour remplir une boucle/un Si. <b>▶ Exécuter</b>, <b>↺</b> réinitialise la scène, <b>🗑</b> efface le programme, curseur <b>Vitesse</b>.</li>
             <li>Mode Blockly : palettes Mouvement / Stylo / Contrôle (boucles, si, tant que) / Capteurs / Nombres ; le programme génère et anime la même tortue. Une sécurité stoppe les boucles infinies.</li>
             <li>Le programme est <b>sauvegardé</b> avec la config (blocs maison et montage Blockly). Hors-ligne, seul le mode Blocs est disponible.</li>
           </ul>
+        </details>
+        <details><summary>🍕 Manip’ maths</summary>
+          <ul>
+            <li><b>Widget multi-outils</b> : choisis l'outil dans les onglets en haut.</li>
+            <li><b>🍕 Pizzas</b> : des <b>assiettes en pointillé</b> (les pizzas à reconstituer). Glisse une part (½, ⅓, ¼, ⅙, ⅛, 1/12) de la palette sur une assiette : elle <b>s'aimante</b> et la pizza se remplit ; l'assiette affiche <b>ce qui manque</b> et <b>fête</b> la pizza entière (ou la demie). Tu peux poser des parts <b>à côté</b> sur le plan, en <b>cliquer</b> une pour la pivoter, en déplacer d'une assiette à l'autre, ou en jeter dans la <b>🗑</b>. « ➕ assiette » pour ajouter une pizza, les assiettes se déplacent aussi.</li>
+            <li><b>▭ Barres</b> : mur de fractions (1, 1/2, 1/3, 1/4, 1/6, 1/8, 1/12). Clique des morceaux pour voir les équivalences et additionner (somme affichée).</li>
+            <li><b>📏 Droite graduée</b> : règle min / max et le pas (1/2, 1/4…), clique pour placer des points (fractions, décimaux, relatifs). Avec 2 points, la <b>distance</b> s'affiche.</li>
+            <li><b>📐 Angles</b> : un rapporteur ; glisse le bras bleu pour mesurer un angle (aigu / droit / obtus / plat).</li>
+            <li><b>⚖️ Équation</b> : résous <i>a·x + b = c</i> comme une balance, étape par étape (enlever b, diviser par a), avec les jetons x et 1.</li>
+            <li><b>⬜ Aire & périmètre</b> : rectangle, triangle rectangle ou disque sur quadrillage ; aire et périmètre calculés.</li>
+            <li><b>📊 Proportion</b> : tableau de proportionnalité, trouve la 4ᵉ valeur par produit en croix.</li>
+            <li><b>🎲 Dés</b> : lance un dé ou une pièce (×1, ×10, ×100), observe les <b>fréquences</b> se rapprocher de la probabilité.</li>
+            <li><b>△ Pythagore</b> : triangle rectangle avec les carrés sur les côtés ; visualise <i>a² + b² = c²</i>.</li>
+          </ul>
+        </details>
+        <details><summary>🔢 Exercices</summary>
+          <ul><li>Génère des exercices de calcul : <b>+ − × ÷</b> et <b>fractions</b>, sur <b>3 niveaux</b>. <b>Nouvelle ▸</b> tire un nouvel énoncé, <b>Voir la réponse</b> l'affiche. Idéal pour les rituels de début d'heure.</li></ul>
+        </details>
+        <details><summary>📖 Cours à révélation</summary>
+          <ul>
+            <li>Mode <b>✎ Éditer</b> : rédige ton cours, sépare les étapes par une ligne <code>---</code>, masque une réponse avec <code>[[doubles crochets]]</code>.</li>
+            <li>Mode <b>▶ Présenter</b> : dévoile les étapes une à une (<b>◀ / Suivant ▶ / Tout</b>) ; clique une zone masquée pour la révéler. Parfait pour reprendre tes cours Google Docs (copier-coller le texte).</li>
+          </ul>
+        </details>
+        <details><summary>🔳 QR code</summary>
+          <ul><li>Affiche un QR code depuis une URL ou un texte : les élèves le scannent (lien d'activité, site…). Le générateur se télécharge à la 1ʳᵉ ouverture (nécessite Internet).</li></ul>
         </details>
         <details><summary>▦ Tableur</summary>
           <ul>
@@ -624,6 +807,7 @@
             <li>En mode <b>Formules</b>, une cellule qui commence par <b>=</b> est calculée : références (<code>A1</code>, <code>B2</code>), plages (<code>A1:A5</code>), opérations <code>+ − * / ^</code> et parenthèses.</li>
             <li>Fonctions : <code>SOMME</code>, <code>MOYENNE</code>, <code>MIN</code>, <code>MAX</code>, <code>NB</code>, <code>NBVAL</code>, <code>PRODUIT</code>, <code>SI</code>, <code>ABS</code>, <code>RACINE</code>, <code>PUISSANCE</code>, <code>ARRONDI</code>, <code>ENT</code>, <code>MOD</code>, <code>PI</code> (noms anglais aussi acceptés).</li>
             <li><b>Convention française</b> : séparateur d'arguments <b>;</b> et décimale <b>,</b> — ex. <code>=SI(A1&gt;=10;"ok";"-")</code>, <code>=MOYENNE(B1:B9)</code>. Le contenu est sauvegardé avec la config.</li>
+            <li><b>⬆ Importer</b> un fichier <b>.xlsx</b> ou <b>.csv</b> (ex. ton classroom Google Sheet exporté). <b>⬇ Excel / ⬇ CSV</b> pour exporter. <b>Recopie ↓</b> copie la cellule sélectionnée vers le bas en ajustant les références (B1=A1*2 → B2=A2*2…).</li>
           </ul>
         </details>
         <details><summary>✏️ Annotation &amp; géométrie (par-dessus la page)</summary>
@@ -871,6 +1055,10 @@
   const calcW=(x,y)=>({id:uid(),type:"calc",x:x==null?100:x,y:y==null?100:y,w:300,h:440,mode:"college",expr:"",ans:0,deg:true});
   const tableurW=(x,y)=>({id:uid(),type:"tableur",x:x==null?100:x,y:y==null?100:y,w:480,h:360,mode:"simple",rows:8,cols:5,cells:{}});
   const codeW=(x,y)=>({id:uid(),type:"code",x:x==null?100:x,y:y==null?100:y,w:580,h:480,mode:"blocks",script:[],speed:180,bxml:""});
+  const exoW=(x,y)=>({id:uid(),type:"exo",x:x==null?100:x,y:y==null?100:y,w:340,h:300,kind:"add",level:2,q:null});
+  const qrW=(x,y)=>({id:uid(),type:"qr",x:x==null?100:x,y:y==null?100:y,w:300,h:340,text:"https://"});
+  const revealW=(x,y)=>({id:uid(),type:"reveal",x:x==null?100:x,y:y==null?100:y,w:500,h:400,text:"",pos:0,editing:false});
+  const manipW=(x,y)=>({id:uid(),type:"manip",x:x==null?100:x,y:y==null?100:y,w:470,h:440,tool:"pizza",pizza:{plates:[{slices:[]},{slices:[]}],loose:[]},barres:{sel:{}},droite:{min:0,max:4,sub:4,marks:[]}});
   function defaultState(){return {active:0,pages:[{id:uid(),name:"Page 1",widgets:[planW(defaultClasses(),16,16)]}]};}
 
   function migrateToV3(s){
@@ -887,20 +1075,33 @@
   function load(){try{const r=localStorage.getItem(LS_KEY)||localStorage.getItem("pdc_state_v2");if(r){let s=migrateToV3(JSON.parse(r));if(valid(s)){s.active=Math.min(Math.max(0,s.active),s.pages.length-1);return s;}}}catch(e){}return defaultState();}
   let state=load();
   function persist(){try{localStorage.setItem(LS_KEY,JSON.stringify(state));}catch(e){}}
+  const undoStack=[],redoStack=[];
+  function snapshot(){ try{ const s=JSON.stringify(state); if(undoStack.length&&undoStack[undoStack.length-1]===s)return; undoStack.push(s); if(undoStack.length>50)undoStack.shift(); redoStack.length=0; }catch(_){ } }
+  function applySnap(s){ try{ const ns=JSON.parse(s); if(valid(ns)){ state=ns; state.active=Math.min(Math.max(0,state.active),state.pages.length-1); persist(); renderAll(); return true; } }catch(_){ } return false; }
+  function undo(){ if(!undoStack.length)return; let cur; try{ cur=JSON.stringify(state); }catch(_){ return; } const s=undoStack.pop(); if(applySnap(s))redoStack.push(cur); }
+  function redo(){ if(!redoStack.length)return; let cur; try{ cur=JSON.stringify(state); }catch(_){ return; } const s=redoStack.pop(); if(applySnap(s))undoStack.push(cur); }
+  window.addEventListener("keydown",e=>{ const t=e.target,tag=((t&&t.tagName)||"").toLowerCase(); if(tag==="input"||tag==="textarea"||tag==="select"||(t&&t.isContentEditable))return; if(!(e.ctrlKey||e.metaKey))return; const k=(e.key||"").toLowerCase(); if(k==="z"&&!e.shiftKey){ e.preventDefault(); undo(); } else if(k==="y"||(k==="z"&&e.shiftKey)){ e.preventDefault(); redo(); } });
   const page=()=>state.pages[state.active];
   let editPages=false, muted=false;
   const editW=new Set();      // ids des widgets plan en mode édition
+  const eraseW=new Set();     // ids des plans en mode retrait de croix
+  const showW=new Set();      // ids des plans en mode affichage (épuré)
   const intervals=new Map();  // id widget -> intervalId (minuteur/horloge)
 
   const tabsEl=document.getElementById("tabs"), canvas=document.getElementById("canvas"), stage=canvas.parentNode;
 
   // voix
   let voice=null,warmed=false;
-  function pickVoice(){const v=window.speechSynthesis?speechSynthesis.getVoices():[];voice=v.find(x=>/^fr(-|_|$)/i.test(x.lang))||v.find(x=>/fran|french/i.test(x.name))||voice;}
+  function pickVoice(){ if(!window.speechSynthesis)return; const v=speechSynthesis.getVoices(); if(!v||!v.length)return;
+    const fr=v.filter(x=>/^fr(-|_|$)/i.test(x.lang)||/fran|french/i.test(x.name));
+    const male=/(thomas|paul|henri|claude|nicolas|mathieu|guillaume|sebastien|male|homme|man|daniel|diego|jacques|pierre)/i;
+    const female=/(amelie|am[ée]lie|audrey|aur[ée]lie|marie|virginie|julie|c[ée]line|chlo[ée]|sandy|hortense|female|femme|woman|girl)/i;
+    voice = fr.find(x=>male.test(x.name)) || fr.find(x=>!female.test(x.name)) || fr[0] || voice;
+  }
   if(window.speechSynthesis){pickVoice();speechSynthesis.onvoiceschanged=pickVoice;}
   function warm(){if(warmed||!window.speechSynthesis)return;warmed=true;try{const u=new SpeechSynthesisUtterance(" ");u.volume=0;u.lang="fr-FR";speechSynthesis.speak(u);}catch(e){}}
   document.addEventListener("pointerdown",warm,{once:true});
-  function say(text,firm){if(muted||!text||!window.speechSynthesis)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(firm?text+" !":text);u.lang="fr-FR";u.rate=firm?0.92:1;u.pitch=firm?0.6:1;u.volume=1;if(voice)u.voice=voice;speechSynthesis.speak(u);}catch(e){}}
+  function say(text,firm){if(muted||!text||!window.speechSynthesis)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(firm?text+" !":text);u.lang="fr-FR";u.rate=firm?0.85:1;u.pitch=firm?0.5:1;u.volume=1;if(voice)u.voice=voice;speechSynthesis.speak(u);}catch(e){}}
   const spoken=c=>(c&&c.pron&&c.pron.trim())?c.pron.trim():(c?c.name:"");
 
   // ---------- onglets de pages ----------
@@ -960,17 +1161,18 @@
     tableau:{name:"Tableau",bg:"linear-gradient(160deg,#2f5039,#243f2c)",dark:true}
   };
   function applyTheme(){ const key=(page()&&page().theme)||"paper"; const t=THEMES[key]||THEMES.paper; canvas.style.background=t.bg; canvas.classList.toggle("dark",!!t.dark); }
-  function clampW(w){ const cw=canvas.clientWidth,ch=canvas.clientHeight; w.w=Math.max(170,Math.min(w.w,cw)); w.h=Math.max(120,Math.min(w.h,ch)); w.x=Math.max(0,Math.min(w.x,cw-w.w)); w.y=Math.max(0,Math.min(w.y,ch-w.h)); }
-  const TITLES={plan:"Plan de classe",video:"Vidéo",timer:"Minuteur",text:"Texte",clock:"Horloge",feu:"Feu tricolore",symbols:"Travail",dice:"Dé",chrono:"Chronomètre",calendar:"Calendrier",embed:"Site web",image:"Image",wheel:"Roue",sand:"Sablier",plot:"Traceur de fonctions",calc:"Calculatrice Numéo",tableur:"Tableur",code:"Atelier code"};
-  const ICONS={plan:"🪑",video:"▶",timer:"⏱",text:"📝",clock:"🕒",feu:"🚦",symbols:"✋",dice:"🎲",chrono:"⏲",calendar:"📅",embed:"🌐",image:"🖼️",wheel:"🎡",sand:"⏳",plot:"📈",calc:"🧮",tableur:"▦",code:"🐢"};
+  function clampW(w){ const cw=canvas.clientWidth,ch=canvas.clientHeight; if(!isFinite(w.w))w.w=260; if(!isFinite(w.h))w.h=200; if(!isFinite(w.x))w.x=20; if(!isFinite(w.y))w.y=20; w.w=Math.max(170,Math.min(w.w,cw)); w.h=Math.max(120,Math.min(w.h,ch)); w.x=Math.max(0,Math.min(w.x,cw-w.w)); w.y=Math.max(0,Math.min(w.y,ch-w.h)); }
+  const TITLES={plan:"Plan de classe",video:"Vidéo",timer:"Minuteur",text:"Texte",clock:"Horloge",feu:"Feu tricolore",symbols:"Travail",dice:"Dé",chrono:"Chronomètre",calendar:"Calendrier",embed:"Site web",image:"Image",wheel:"Roue",sand:"Sablier",plot:"Traceur de fonctions",calc:"Calculatrice Numéo",tableur:"Tableur",code:"Atelier code",exo:"Exercices",qr:"QR code",reveal:"Cours à révélation",manip:"Manip’ maths"};
+  const ICONS={plan:"🪑",video:"▶",timer:"⏱",text:"📝",clock:"🕒",feu:"🚦",symbols:"✋",dice:"🎲",chrono:"⏲",calendar:"📅",embed:"🌐",image:"🖼️",wheel:"🎡",sand:"⏳",plot:"📈",calc:"🧮",tableur:"▦",code:"🐢",exo:"🔢",qr:"🔳",reveal:"📖",manip:"🍕"};
   function buildWidget(w){
     clampW(w);
-    const el=document.createElement("div"); el.className="widget"; el.dataset.wid=w.id;
+    const el=document.createElement("div"); el.className="widget"; el.dataset.wid=w.id; if(w.locked)el.classList.add("locked");
     el.style.left=w.x+"px"; el.style.top=w.y+"px"; el.style.width=w.w+"px"; el.style.height=w.h+"px";
     const head=document.createElement("div"); head.className="w-head";
     head.innerHTML='<span class="w-ic">'+ICONS[w.type]+'</span><span class="w-title">'+TITLES[w.type]+'</span>';
+    const lk=document.createElement("span"); lk.className="w-lock"; lk.textContent=w.locked?"🔒":"🔓"; lk.title=w.locked?"Déverrouiller":"Verrouiller (empêche de déplacer)"; lk.addEventListener("pointerdown",e=>e.stopPropagation()); lk.addEventListener("click",()=>{ w.locked=!w.locked; lk.textContent=w.locked?"🔒":"🔓"; lk.title=w.locked?"Déverrouiller":"Verrouiller (empêche de déplacer)"; el.classList.toggle("locked",!!w.locked); persist(); }); head.appendChild(lk);
     const x=document.createElement("span"); x.className="w-x"; x.textContent="✕"; x.title="Retirer le widget";
-    x.addEventListener("click",()=>{ if(confirm("Retirer ce widget ?")){ const a=page().widgets; const idx=a.indexOf(w); if(idx>=0)a.splice(idx,1); editW.delete(w.id); persist(); renderCanvas(); } });
+    x.addEventListener("click",()=>{ if(confirm("Retirer ce widget ?")){ snapshot(); const a=page().widgets; const idx=a.indexOf(w); if(idx>=0)a.splice(idx,1); editW.delete(w.id); persist(); renderCanvas(); } });
     x.addEventListener("pointerdown",e=>e.stopPropagation());
     head.appendChild(x);
     const body=document.createElement("div"); body.className="w-body";
@@ -1001,22 +1203,30 @@
     else if(w.type==="calc") fillCalc(w,body,el);
     else if(w.type==="tableur") fillTableur(w,body,el);
     else if(w.type==="code") fillCode(w,body,el);
+    else if(w.type==="exo") fillExo(w,body,el);
+    else if(w.type==="qr") fillQR(w,body,el);
+    else if(w.type==="reveal") fillReveal(w,body,el);
+    else if(w.type==="manip") fillManip(w,body,el);
   }
   function refreshPlan(w){ const el=canvas.querySelector('[data-wid="'+w.id+'"]'); if(el){ const body=el.querySelector(".w-body"); fillBody(w,body,el); } }
 
   // déplacement
   function dragWidget(handle,el,w){
-    handle.addEventListener("pointerdown",e=>{ if(e.target.closest(".w-x"))return; e.preventDefault(); bringFront(el);
+    handle.addEventListener("pointerdown",e=>{ if(e.target.closest(".w-x"))return; if(w.locked)return; e.preventDefault(); bringFront(el);
       const sx=e.clientX,sy=e.clientY,ox=w.x,oy=w.y; const cw=canvas.clientWidth,ch=canvas.clientHeight;
-      function mv(ev){ w.x=Math.max(0,Math.min(ox+ev.clientX-sx,cw-w.w)); w.y=Math.max(0,Math.min(oy+ev.clientY-sy,ch-w.h)); el.style.left=w.x+"px"; el.style.top=w.y+"px"; }
-      function up(){ window.removeEventListener("pointermove",mv); window.removeEventListener("pointerup",up); persist(); }
+      let lastX=e.clientX,lastY=e.clientY,autoX=0,autoY=0,moved=false;
+      function apply(){ w.x=Math.max(0,Math.min(ox+(lastX-sx)+autoX,cw-w.w)); w.y=Math.max(0,Math.min(oy+(lastY-sy)+autoY,ch-w.h)); el.style.left=w.x+"px"; el.style.top=w.y+"px"; }
+      function edgeScroll(){ const sr=stage.getBoundingClientRect(),M=40,step=18; let dx=0,dy=0; if(lastX>sr.right-M)dx=step; else if(lastX<sr.left+M)dx=-step; if(lastY>sr.bottom-M)dy=step; else if(lastY<sr.top+M)dy=-step; if(dx||dy){ const pl=stage.scrollLeft,pt=stage.scrollTop; stage.scrollLeft+=dx; stage.scrollTop+=dy; autoX+=(stage.scrollLeft-pl); autoY+=(stage.scrollTop-pt); apply(); } }
+      const asTimer=setInterval(edgeScroll,30);
+      function mv(ev){ if(!moved){ moved=true; snapshot(); } lastX=ev.clientX; lastY=ev.clientY; apply(); }
+      function up(){ clearInterval(asTimer); window.removeEventListener("pointermove",mv); window.removeEventListener("pointerup",up); persist(); }
       window.addEventListener("pointermove",mv); window.addEventListener("pointerup",up);
     });
   }
   function resizeWidget(handle,el,w){
-    handle.addEventListener("pointerdown",e=>{ e.preventDefault(); e.stopPropagation(); bringFront(el);
-      const sx=e.clientX,sy=e.clientY,ow=w.w,oh=w.h; const cw=canvas.clientWidth,ch=canvas.clientHeight;
-      function mv(ev){ w.w=Math.max(170,Math.min(ow+ev.clientX-sx,cw-w.x)); w.h=Math.max(120,Math.min(oh+ev.clientY-sy,ch-w.y)); el.style.width=w.w+"px"; el.style.height=w.h+"px"; if(el._refit)el._refit(); }
+    handle.addEventListener("pointerdown",e=>{ if(w.locked)return; e.preventDefault(); e.stopPropagation(); bringFront(el);
+      const sx=e.clientX,sy=e.clientY,ow=w.w,oh=w.h; const cw=canvas.clientWidth,ch=canvas.clientHeight; let moved=false;
+      function mv(ev){ if(!moved){ moved=true; snapshot(); } w.w=Math.max(170,Math.min(ow+ev.clientX-sx,cw-w.x)); w.h=Math.max(120,Math.min(oh+ev.clientY-sy,ch-w.y)); el.style.width=w.w+"px"; el.style.height=w.h+"px"; if(el._refit)el._refit(); }
       function up(){ window.removeEventListener("pointermove",mv); window.removeEventListener("pointerup",up); persist(); }
       window.addEventListener("pointermove",mv); window.addEventListener("pointerup",up);
     });
@@ -1025,7 +1235,7 @@
   // ---------- widget PLAN ----------
   function curGrid(w){ return w.classes[w.active].grid; }
   function fillPlan(w,body,el){
-    const pw=document.createElement("div"); pw.className="pw"+(editW.has(w.id)?" editing":"");
+    const pw=document.createElement("div"); pw.className="pw"+(editW.has(w.id)?" editing":"")+(showW.has(w.id)?" pw-display":"");
     // onglets de classes
     const tabs=document.createElement("div"); tabs.className="pw-tabs";
     w.classes.forEach((c,i)=>{
@@ -1061,8 +1271,10 @@
       +'<div class="g n"><div class="gt"><span class="gl"><span class="d"></span>Croix négatives</span><span class="gn"><b>0</b>/<span class="gc">0</span></span></div><div class="gtr"><i></i></div></div>';
     const rstWrap=document.createElement("div"); rstWrap.style.cssText="display:flex;align-items:flex-end;flex:0 0 auto";
     ga.appendChild(rstWrap);
+    // barre minimale du mode affichage
+    const dispbar=document.createElement("div"); dispbar.className="pw-dispbar";
 
-    pw.appendChild(tabs); pw.appendChild(hint); pw.appendChild(bar); pw.appendChild(board); pw.appendChild(bureau); pw.appendChild(wrap); pw.appendChild(tools); pw.appendChild(ga);
+    pw.appendChild(dispbar); pw.appendChild(tabs); pw.appendChild(hint); pw.appendChild(bar); pw.appendChild(board); pw.appendChild(bureau); pw.appendChild(wrap); pw.appendChild(tools); pw.appendChild(ga);
     body.appendChild(pw);
 
     function paintSeat(seat,c){ const col=cellColor(c); seat.style.backgroundColor=rgb(col); seat.style.color=textOn(col);
@@ -1079,6 +1291,8 @@
     }
     function penalize(c,seat){ if(editW.has(w.id))return; say(spoken(c),true); if(c.neg<MAX){c.neg++;paintSeat(seat,c);gauges();persist();} bloom(seat,"bn"); }
     function reward(c,seat){ if(editW.has(w.id))return; if(c.pos<MAX){c.pos++;paintSeat(seat,c);gauges();persist();} bloom(seat,"bp"); }
+    function unpenalize(c,seat){ if(editW.has(w.id))return; if(c.neg>0){c.neg--;paintSeat(seat,c);gauges();persist();bloom(seat,"bp");} }
+    function unreward(c,seat){ if(editW.has(w.id))return; if(c.pos>0){c.pos--;paintSeat(seat,c);gauges();persist();bloom(seat,"bn");} }
 
     // glisser-déposer d'élèves (mode édition)
     let drag=null;
@@ -1097,8 +1311,8 @@
         if(c){ const b=document.createElement("button"); b.type="button"; b.className="seat"; b.dataset.cell="1"; b.dataset.r=r; b.dataset.c=col;
           b.innerHTML='<span class="nm"></span><span class="badge p"></span><span class="badge n"></span><span class="del">✕</span>';
           b.querySelector(".nm").textContent=c.name; paintSeat(b,c);
-          b.addEventListener("click",e=>{ if(editW.has(w.id))return; e.shiftKey?reward(c,b):penalize(c,b); });
-          b.addEventListener("contextmenu",e=>{ e.preventDefault(); reward(c,b); });
+          b.addEventListener("click",e=>{ if(editW.has(w.id))return; if(eraseW.has(w.id)){ unpenalize(c,b); } else { e.shiftKey?reward(c,b):penalize(c,b); } });
+          b.addEventListener("contextmenu",e=>{ e.preventDefault(); if(editW.has(w.id))return; if(eraseW.has(w.id)){ unreward(c,b); } else { reward(c,b); } });
           b.addEventListener("pointerdown",e=>seatDown(e,r,col,b));
           const del=b.querySelector(".del"); del.addEventListener("click",e=>{e.stopPropagation();curGrid(w)[r][col]=null;persist();refreshPlan(w);}); del.addEventListener("pointerdown",e=>e.stopPropagation());
           grid.appendChild(b);
@@ -1107,10 +1321,10 @@
       fitGrid();
     }
     function fitGrid(){ const g=curGrid(w); const cols=(g[0]||[]).length||1; const gap=parseFloat(getComputedStyle(grid).columnGap)||6;
-      const availW=Math.max(120,wrap.clientWidth-12);
-      let cwd=Math.floor((availW-(cols-1)*gap)/cols); cwd=Math.max(40,Math.min(cwd,104));
-      let ch=Math.round(cwd*0.72); ch=Math.max(40,Math.min(ch,80));
-      grid.style.setProperty("--w",cwd+"px"); grid.style.setProperty("--h",ch+"px"); grid.style.setProperty("--gap",gap+"px"); grid.style.setProperty("--seatfs",Math.max(9,Math.min(15,Math.round(cwd*0.2)))+"px");
+      const availW=Math.max(120,wrap.clientWidth-12); const disp=showW.has(w.id);
+      let cwd=Math.floor((availW-(cols-1)*gap)/cols); cwd=Math.max(40,Math.min(cwd,disp?168:104));
+      let ch=Math.round(cwd*0.72); ch=Math.max(40,Math.min(ch,disp?126:80));
+      grid.style.setProperty("--w",cwd+"px"); grid.style.setProperty("--h",ch+"px"); grid.style.setProperty("--gap",gap+"px"); grid.style.setProperty("--seatfs",Math.max(9,Math.min(disp?22:15,Math.round(cwd*0.2)))+"px");
     }
     el._refit=fitGrid;
 
@@ -1121,7 +1335,9 @@
         addBtn(bar,"+ Rangée",()=>{ const cols=(curGrid(w)[0]||[]).length||9; curGrid(w).push(Array.from({length:cols},()=>null)); persist(); refreshPlan(w); });
         addBtn(bar,"+ Colonne",()=>{ curGrid(w).forEach(r=>r.push(null)); persist(); refreshPlan(w); });
       } else {
-        addBtn(bar,"Modifier le plan",()=>{ editW.add(w.id); refreshPlan(w); },"primary");
+        addBtn(bar,"Modifier le plan",()=>{ showW.delete(w.id); eraseW.delete(w.id); editW.add(w.id); refreshPlan(w); },"primary");
+        addBtn(bar, eraseW.has(w.id)?"× Retrait : actif":"× Retirer une croix", ()=>{ if(eraseW.has(w.id))eraseW.delete(w.id); else eraseW.add(w.id); refreshPlan(w); }, eraseW.has(w.id)?"primary":"");
+        addBtn(bar,"📺 Affichage",()=>{ editW.delete(w.id); eraseW.delete(w.id); showW.add(w.id); refreshPlan(w); });
         addBtn(bar,"Importer Excel",()=>{ importTarget=w; xlsFile.click(); });
         addBtn(bar,"Exporter classes",()=>exportClasses(w));
         addBtn(bar,"Exporter croix",()=>exportCrosses(w));
@@ -1146,12 +1362,16 @@
       ta.addEventListener("pointerdown",e=>e.stopPropagation());
     }
     function addBtn(parent,label,fn,cls){ const b=document.createElement("button"); b.className="btn sm"+(cls?" "+cls:""); b.textContent=label; b.addEventListener("click",fn); b.addEventListener("pointerdown",e=>e.stopPropagation()); parent.appendChild(b); return b; }
+    function buildDisp(){ dispbar.innerHTML=""; const tb=document.createElement("button"); tb.className="btn sm primary"; tb.textContent="🎲 Tirer au sort"; tb.addEventListener("pointerdown",e=>e.stopPropagation()); const nm=document.createElement("span"); nm.className="pw-dispname"; nm.textContent="—"; tb.addEventListener("click",()=>{ const r=pickRandom(w,grid); nm.textContent=r||"—"; }); dispbar.appendChild(tb); dispbar.appendChild(nm); const sp=document.createElement("span"); sp.style.flex="1"; dispbar.appendChild(sp); const cl=document.createElement("span"); cl.className="pw-dispclass"; cl.textContent=w.classes[w.active].name; dispbar.appendChild(cl); const q=document.createElement("button"); q.className="btn sm"; q.textContent="Quitter l'affichage"; q.addEventListener("pointerdown",e=>e.stopPropagation()); q.addEventListener("click",()=>{ showW.delete(w.id); refreshPlan(w); }); dispbar.appendChild(q); }
+    function syncHint(){ hint.innerHTML = eraseW.has(w.id)
+      ? '<b>Mode retrait actif</b> · <b class="n">clic gauche</b> = enlever une croix négative · <b class="p">clic droit</b> = enlever une positive · recliquer « × Retrait » pour revenir.'
+      : '<b class="n">Clic gauche</b> = négative (parlée) · <b class="p">clic droit</b> = positive (muet) · 0–10, compteurs indépendants · <b>Modifier le plan</b> pour renommer / prononciation.'; }
 
-    buildBar(); buildGrid(); buildTools(); gauges();
+    buildBar(); buildGrid(); buildTools(); buildDisp(); syncHint(); gauges();
     requestAnimationFrame(fitGrid);
   }
 
-  function pickRandom(w,grid){ const list=[]; curGrid(w).forEach((row,r)=>row.forEach((c,col)=>{if(c)list.push({r:r,c:col,cell:c});})); if(!list.length)return null; const pk=list[Math.floor(Math.random()*list.length)]; say(spoken(pk.cell)); const el=grid.querySelector('[data-r="'+pk.r+'"][data-c="'+pk.c+'"]'); if(el){ grid.querySelectorAll(".seat.picked").forEach(s=>s.classList.remove("picked")); el.classList.add("picked"); setTimeout(()=>el.classList.remove("picked"),1500); } return pk.cell.name; }
+  function pickRandom(w,grid){ const list=[]; curGrid(w).forEach((row,r)=>row.forEach((c,col)=>{if(c)list.push({r:r,c:col,cell:c});})); if(!list.length)return null; const pk=list[Math.floor(Math.random()*list.length)]; say(spoken(pk.cell),true); const el=grid.querySelector('[data-r="'+pk.r+'"][data-c="'+pk.c+'"]'); if(el){ grid.querySelectorAll(".seat.picked").forEach(s=>s.classList.remove("picked")); el.classList.add("picked"); setTimeout(()=>el.classList.remove("picked"),1500); } return pk.cell.name; }
   function renameClass(w,i){ const v=prompt("Nom de la classe :",w.classes[i].name); if(v===null)return; const t=v.trim(); if(t)w.classes[i].name=t; persist(); refreshPlan(w); }
   function delClass(w,i){ if(w.classes.length<=1){alert("Au moins une classe.");return;} if(!confirm("Supprimer « "+w.classes[i].name+" » ?"))return; w.classes.splice(i,1); if(w.active>=w.classes.length)w.active=w.classes.length-1; persist(); refreshPlan(w); }
 
@@ -1534,11 +1754,11 @@
   function fillPlot(w,body,el){
     if(!Array.isArray(w.fns)||!w.fns.length)w.fns=[{expr:"x^2",color:PLOTCOL[0]}];
     if(!w.win)w.win={xmin:-10,xmax:10,ymin:-7,ymax:7};
-    if(!w.params)w.params={a:1,b:1,c:1,k:1};
+    if(!w.params)w.params={a:1,b:1,c:1,k:1}; if(typeof w.showTable!=="boolean")w.showTable=false;
     const wrap=mkEl("div","plot-wrap"); body.appendChild(wrap);
     const fnsBox=mkEl("div","plot-fns"); const cvWrap=mkEl("div","plot-cv"); const cv=document.createElement("canvas"); cvWrap.appendChild(cv); const ctx=cv.getContext("2d");
     const parsBox=mkEl("div","plot-params"); const ctr=mkEl("div","plot-ctrls");
-    wrap.appendChild(fnsBox); wrap.appendChild(cvWrap); wrap.appendChild(parsBox); wrap.appendChild(ctr);
+    const tableBox=mkEl("div","plot-table"); wrap.appendChild(fnsBox); wrap.appendChild(cvWrap); wrap.appendChild(parsBox); wrap.appendChild(ctr); wrap.appendChild(tableBox); tableBox.style.display=w.showTable?"":"none";
     const fmtP=v=>(Math.round(v*10)/10).toString().replace(".",",");
     const fmtLbl=v=>{ const r=Math.round(v*100)/100; return (Math.abs(r)<1e-9?"0":String(r)).replace(".",","); };
     function renderFns(){ fnsBox.innerHTML=""; w.fns.forEach((fn,i)=>{ if(!fn.color)fn.color=PLOTCOL[i%4]; const row=mkEl("div","plot-fn"); const dot=mkEl("span","plot-dot"); dot.style.background=fn.color; const lab=mkEl("span","plot-lab","f"+(i+1)+"(x)="); const inp=document.createElement("input"); inp.type="text"; inp.value=fn.expr||""; inp.placeholder="ex. a*x+b, x^2, sin(x)"; inp.spellcheck=false; inp.addEventListener("pointerdown",e=>e.stopPropagation()); inp.addEventListener("input",()=>{ fn.expr=inp.value; inp.classList.toggle("bad",inp.value.trim()!==""&&!compileExpr(inp.value)); persist(); redraw(); });
@@ -1553,7 +1773,8 @@
     zo.title="Zoom arrière"; zi.title="Zoom avant"; rs.title="Réinitialiser la vue";
     [zo,zi,rs].forEach(b=>b.addEventListener("pointerdown",e=>e.stopPropagation()));
     zi.addEventListener("click",()=>zoomAt(0.8)); zo.addEventListener("click",()=>zoomAt(1.25)); rs.addEventListener("click",()=>{ w.win={xmin:-10,xmax:10,ymin:-7,ymax:7}; persist(); redraw(); });
-    ctr.appendChild(zo); ctr.appendChild(zi); ctr.appendChild(rs); ctr.appendChild(info);
+    const tg=mkEl("button","plot-cbtn","Tableau"); tg.title="Tableau de valeurs"; tg.classList.toggle("on",!!w.showTable); tg.addEventListener("pointerdown",e=>e.stopPropagation()); tg.addEventListener("click",()=>{ w.showTable=!w.showTable; tg.classList.toggle("on",w.showTable); tableBox.style.display=w.showTable?"":"none"; persist(); renderTable(); });
+    ctr.appendChild(zo); ctr.appendChild(zi); ctr.appendChild(rs); ctr.appendChild(tg); ctr.appendChild(info);
     renderFns(); renderParams();
     let CW=10,CH=10;
     function sx(x){ const W=w.win; return (x-W.xmin)/(W.xmax-W.xmin)*CW; }
@@ -1575,8 +1796,10 @@
       w.fns.forEach(fn=>{ const f=compileExpr(fn.expr); if(!f)return; ctx.strokeStyle=fn.color; ctx.lineWidth=2.1; ctx.beginPath(); let pen=false,prev=null;
         for(let px=0;px<=CW;px++){ const yy=f(ix(px),w.params.a,w.params.b,w.params.c,w.params.k); if(!isFinite(yy)){ pen=false; prev=null; continue; } const py=sy(yy); if(pen&&prev!=null&&Math.abs(py-prev)>CH*1.8)pen=false; if(!pen){ ctx.moveTo(px,py); pen=true; } else ctx.lineTo(px,py); prev=py; }
         ctx.stroke();
+        let pv=NaN,pp=0; for(let px=0;px<=CW;px+=2){ const yy=f(ix(px),w.params.a,w.params.b,w.params.c,w.params.k); if(isFinite(yy)){ if(isFinite(pv)&&pv*yy<0){ const t=pv/(pv-yy),zx=pp+(px-pp)*t; ctx.fillStyle=fn.color; ctx.beginPath(); ctx.arc(zx,sy(0),3.2,0,6.2832); ctx.fill(); ctx.lineWidth=1; ctx.strokeStyle="#fff"; ctx.stroke(); } pv=yy; pp=px; } else pv=NaN; }
       });
       info.textContent="x ∈ ["+fmtLbl(W.xmin)+" ; "+fmtLbl(W.xmax)+"]";
+      if(w.showTable)renderTable();
     }
     function zoomAt(factor,cxp,cyp){ const W=w.win,cx=(cxp!=null)?ix(cxp):(W.xmin+W.xmax)/2,cy=(cyp!=null)?iy(cyp):(W.ymin+W.ymax)/2; W.xmin=cx+(W.xmin-cx)*factor; W.xmax=cx+(W.xmax-cx)*factor; W.ymin=cy+(W.ymin-cy)*factor; W.ymax=cy+(W.ymax-cy)*factor; persist(); redraw(); }
     cv.addEventListener("pointerdown",e=>{ e.stopPropagation(); e.preventDefault(); const sxp=e.clientX,syp=e.clientY,ox0=w.win.xmin,ox1=w.win.xmax,oy0=w.win.ymin,oy1=w.win.ymax; try{cv.setPointerCapture(e.pointerId);}catch(_){ }
@@ -1585,6 +1808,11 @@
       window.addEventListener("pointermove",mv); window.addEventListener("pointerup",up);
     });
     cv.addEventListener("wheel",e=>{ e.preventDefault(); e.stopPropagation(); const r=cv.getBoundingClientRect(); zoomAt(e.deltaY>0?1.1:0.9,e.clientX-r.left,e.clientY-r.top); },{passive:false});
+    function renderTable(){ if(!w.showTable){ tableBox.innerHTML=""; return; } const W=w.win,N=11,xs=[]; for(let i=0;i<N;i++)xs.push(W.xmin+(W.xmax-W.xmin)*i/(N-1));
+      const tbl=document.createElement("table"); tbl.className="plot-tbl";
+      const hr=document.createElement("tr"); const xh=document.createElement("th"); xh.textContent="x"; hr.appendChild(xh); xs.forEach(xv=>{ const th=document.createElement("th"); th.textContent=fmtLbl(xv); hr.appendChild(th); }); tbl.appendChild(hr);
+      w.fns.forEach((fn,i)=>{ const f=compileExpr(fn.expr); if(!f)return; const tr=document.createElement("tr"); const lh=document.createElement("th"); lh.textContent="f"+(i+1); lh.style.color=fn.color; tr.appendChild(lh); xs.forEach(xv=>{ const td=document.createElement("td"); const yv=f(xv,w.params.a,w.params.b,w.params.c,w.params.k); td.textContent=isFinite(yv)?fmtLbl(yv):"—"; tr.appendChild(td); }); tbl.appendChild(tr); });
+      tableBox.innerHTML=""; tableBox.appendChild(tbl); }
     function fit(){ const dpr=window.devicePixelRatio||1; CW=Math.max(60,cvWrap.clientWidth); CH=Math.max(50,cvWrap.clientHeight); cv.width=Math.floor(CW*dpr); cv.height=Math.floor(CH*dpr); cv.style.width=CW+"px"; cv.style.height=CH+"px"; ctx.setTransform(dpr,0,0,dpr,0,0); redraw(); }
     el._refit=fit; requestAnimationFrame(fit);
   }
@@ -1747,18 +1975,27 @@
     mForm.addEventListener("click",()=>{ w.mode="formula"; mForm.classList.add("on"); mSimple.classList.remove("on"); hint.style.display=""; persist(); refreshValues(); });
     modes.appendChild(mSimple); modes.appendChild(mForm);
     const bAddR=mkEl("button","tblr-btn","+ ligne"),bAddC=mkEl("button","tblr-btn","+ col"),bDelR=mkEl("button","tblr-btn","− ligne"),bDelC=mkEl("button","tblr-btn","− col");
+    const bImp=mkEl("button","tblr-btn","⬆ Importer"),bXlsx=mkEl("button","tblr-btn","⬇ Excel"),bCsv=mkEl("button","tblr-btn","⬇ CSV"),bFill=mkEl("button","tblr-btn","Recopie ↓");
+    const impInput=document.createElement("input"); impInput.type="file"; impInput.accept=".xlsx,.xls,.csv"; impInput.style.display="none"; impInput.addEventListener("change",()=>{ if(impInput.files&&impInput.files[0]){ importFile(impInput.files[0]); impInput.value=""; } });
     [bAddR,bAddC,bDelR,bDelC].forEach(b=>b.addEventListener("pointerdown",e=>e.stopPropagation()));
     bAddR.addEventListener("click",()=>{ if(w.rows<40){ w.rows++; persist(); buildTable(); } });
     bAddC.addEventListener("click",()=>{ if(w.cols<40){ w.cols++; persist(); buildTable(); } });
     bDelR.addEventListener("click",()=>{ if(w.rows>1){ Object.keys(w.cells).forEach(k=>{ if(refToRC(k).r===w.rows)delete w.cells[k]; }); w.rows--; persist(); buildTable(); } });
     bDelC.addEventListener("click",()=>{ if(w.cols>1){ Object.keys(w.cells).forEach(k=>{ if(refToRC(k).c===w.cols)delete w.cells[k]; }); w.cols--; persist(); buildTable(); } });
-    bar.appendChild(modes); bar.appendChild(bAddR); bar.appendChild(bAddC); bar.appendChild(bDelR); bar.appendChild(bDelC);
+    [bImp,bXlsx,bCsv,bFill].forEach(b=>b.addEventListener("pointerdown",e=>e.stopPropagation()));
+    bImp.addEventListener("click",()=>{ if(typeof XLSX==="undefined"){ alert("Module Excel non chargé (vérifie la connexion)."); return; } impInput.click(); });
+    bXlsx.addEventListener("click",()=>exportFile("xlsx")); bCsv.addEventListener("click",()=>exportFile("csv")); bFill.addEventListener("click",fillDown);
+    bar.appendChild(modes); bar.appendChild(bAddR); bar.appendChild(bAddC); bar.appendChild(bDelR); bar.appendChild(bDelC); bar.appendChild(bImp); bar.appendChild(bXlsx); bar.appendChild(bCsv); bar.appendChild(bFill); bar.appendChild(impInput);
     wrap.appendChild(bar);
     const hint=mkEl("div","tblr-hint",'Formules (commencent par =) : =SOMME(A1:A5), =MOYENNE(B1:B9), =MIN/MAX, =NB, =SI(A1>=10;"ok";"-"), + − * / ^ et parenthèses. Séparateur ; décimale ,');
     hint.style.display=w.mode==="formula"?"":"none";
     wrap.appendChild(hint);
     const scroll=mkEl("div","tblr-scroll"); wrap.appendChild(scroll);
-    let inputs=[];
+    let inputs=[]; let lastRef=null;
+    function dl(blob,name){ const u=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),2000); }
+    function importFile(file){ const rd=new FileReader(); rd.onload=()=>{ try{ const data=new Uint8Array(rd.result); const wb=XLSX.read(data,{type:"array"}); const sh=wb.Sheets[wb.SheetNames[0]]; const aoa=XLSX.utils.sheet_to_json(sh,{header:1,raw:true,defval:""}); const cells={}; let maxc=1,maxr=1; aoa.forEach((row,r)=>{ if(r>=40)return; (row||[]).forEach((v,c)=>{ if(c>=40)return; let val=(v==null)?"":(typeof v==="number"?String(v):String(v)); if(val!==""){ cells[colLetter(c+1)+(r+1)]=val; maxc=Math.max(maxc,c+1); maxr=Math.max(maxr,r+1); } }); }); w.cells=cells; w.rows=Math.max(8,Math.min(40,maxr)); w.cols=Math.max(5,Math.min(40,maxc)); persist(); buildTable(); }catch(e){ alert("Import impossible : "+(e&&e.message||e)); } }; rd.readAsArrayBuffer(file); }
+    function exportFile(kind){ if(typeof XLSX==="undefined"){ alert("Module Excel non chargé."); return; } const C=(w.mode==="formula")?compute():null; const aoa=[]; for(let r=1;r<=w.rows;r++){ const row=[]; for(let c=1;c<=w.cols;c++){ const ref=colLetter(c)+r; const raw=(w.cells[ref]||""); let out=""; if(w.mode==="formula"&&raw.trim()[0]==="="){ const v=C.val(ref); out=(typeof v==="number"&&isFinite(v))?v:(typeof v==="string"?v:""); } else if(raw!==""){ const n=frNum(raw); out=isNaN(n)?raw:n; } row.push(out); } aoa.push(row); } const sh=XLSX.utils.aoa_to_sheet(aoa); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,sh,"Feuille1"); if(kind==="csv"){ dl(new Blob(["\ufeff"+XLSX.utils.sheet_to_csv(sh,{FS:";"})],{type:"text/csv;charset=utf-8"}),"tableur.csv"); } else { const out=XLSX.write(wb,{bookType:"xlsx",type:"array"}); dl(new Blob([out],{type:"application/octet-stream"}),"tableur.xlsx"); } }
+    function fillDown(){ if(!lastRef){ alert("Clique d'abord la cellule à recopier vers le bas."); return; } const rc=refToRC(lastRef); const src=(w.cells[lastRef]||""); if(src===""){ return; } for(let rr=rc.r+1; rr<=w.rows; rr++){ const dest=colLetter(rc.c)+rr; let val=src; if(src.trim()[0]==="="){ const delta=rr-rc.r; val="="+src.slice(1).replace(/([A-Za-z]+)(\d+)/g,(m,col,dig)=>col+(parseInt(dig,10)+delta)); } w.cells[dest]=val; } persist(); buildTable(); }
     function focusCell(c,r){ if(r<1||r>w.rows||c<1||c>w.cols)return; const ref=colLetter(c)+r; const inp=inputs.find(i=>i.dataset.ref===ref); if(inp)inp.focus(); }
     function refreshValues(){ let C=null; if(w.mode==="formula")C=compute(); inputs.forEach(inp=>{ if(inp===document.activeElement)return; const ref=inp.dataset.ref; const raw=(w.cells[ref]||""); if(w.mode!=="formula"){ inp.value=raw; inp.classList.remove("is-formula"); return; } if(raw.trim()[0]==="="){ const v=C.val(ref); inp.value=(typeof v==="string")?v:fmtCell(v); inp.classList.add("is-formula"); } else { inp.value=raw; inp.classList.remove("is-formula"); } }); }
     function buildTable(){ scroll.innerHTML=""; inputs=[]; const table=document.createElement("table"); table.className="tbl";
@@ -1766,7 +2003,7 @@
       for(let r=1;r<=w.rows;r++){ const tr=document.createElement("tr"); const rh=document.createElement("th"); rh.className="tbl-rh"; rh.textContent=String(r); tr.appendChild(rh);
         for(let c=1;c<=w.cols;c++){ const ref=colLetter(c)+r; const td=document.createElement("td"); const inp=document.createElement("input"); inp.className="tbl-cell"; inp.dataset.ref=ref; inp.spellcheck=false; inp.autocomplete="off"; inp.value=(w.mode==="formula")?"":(w.cells[ref]||"");
           inp.addEventListener("pointerdown",e=>e.stopPropagation());
-          inp.addEventListener("focus",()=>{ inp.value=(w.cells[ref]||""); inp.classList.add("foc"); inp.classList.remove("is-formula"); const ip=inp; setTimeout(()=>{ try{ ip.select(); }catch(_){ } },0); });
+          inp.addEventListener("focus",()=>{ lastRef=ref; inp.value=(w.cells[ref]||""); inp.classList.add("foc"); inp.classList.remove("is-formula"); const ip=inp; setTimeout(()=>{ try{ ip.select(); }catch(_){ } },0); });
           inp.addEventListener("input",()=>{ const v=inp.value; if(v==="")delete w.cells[ref]; else w.cells[ref]=v; persist(); if(w.mode==="formula")refreshValues(); });
           inp.addEventListener("blur",()=>{ inp.classList.remove("foc"); refreshValues(); });
           inp.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); focusCell(c,e.shiftKey?r-1:r+1); } else if(e.key==="Escape"){ e.preventDefault(); inp.blur(); } e.stopPropagation(); });
@@ -1792,6 +2029,8 @@
     JS['t_pen']=b=>b.getFieldValue("P")==="down"?"T.pendown();\n":"T.penup();\n";
     B['t_color']={init(){this.jsonInit({message0:"couleur %1",args0:[{type:"field_dropdown",name:"C",options:[["rouge","#d11e2a"],["bleu","#1b3a8a"],["vert","#1f8a3b"],["orange","#e08a00"],["violet","#7a3cc8"],["noir","#1b1b17"]]}],previousStatement:null,nextStatement:null,colour:120});}};
     JS['t_color']=b=>'T.color("'+b.getFieldValue("C")+'");\n';
+    B['t_width']={init(){this.jsonInit({message0:"épaisseur %1",args0:[{type:"input_value",name:"N",check:"Number"}],inputsInline:true,previousStatement:null,nextStatement:null,colour:120});}};
+    JS['t_width']=b=>"T.width("+(JS.valueToCode(b,"N",O)||"1")+");\n";
     B['t_clear']={init(){this.jsonInit({message0:"effacer le dessin",previousStatement:null,nextStatement:null,colour:120});}};
     JS['t_clear']=()=>"T.clear();\n";
     B['t_say']={init(){this.jsonInit({message0:"dire %1",args0:[{type:"input_value",name:"T",check:"String"}],inputsInline:true,previousStatement:null,nextStatement:null,colour:270});}};
@@ -1799,27 +2038,27 @@
     B['sensor_edge']={init(){this.jsonInit({message0:"touche le bord",output:"Boolean",colour:170});}};
     JS['sensor_edge']=()=>["T.edge()",A];
   }
-  const CD_TOOLBOX='<xml><category name="Mouvement" colour="210"><block type="t_forward"><value name="N"><shadow type="math_number"><field name="NUM">50</field></shadow></value></block><block type="t_back"><value name="N"><shadow type="math_number"><field name="NUM">50</field></shadow></value></block><block type="t_turn"><value name="N"><shadow type="math_number"><field name="NUM">90</field></shadow></value></block></category><category name="Stylo" colour="120"><block type="t_pen"></block><block type="t_color"></block><block type="t_clear"></block></category><category name="Dire" colour="270"><block type="t_say"><value name="T"><shadow type="text"><field name="TEXT">Bravo !</field></shadow></value></block></category><category name="Contrôle" colour="30"><block type="controls_repeat_ext"><value name="TIMES"><shadow type="math_number"><field name="NUM">4</field></shadow></value></block><block type="controls_if"></block><block type="controls_whileUntil"></block></category><category name="Capteurs" colour="170"><block type="sensor_edge"></block><block type="logic_compare"></block><block type="logic_boolean"></block><block type="logic_operation"></block></category><category name="Nombres" colour="230"><block type="math_number"><field name="NUM">10</field></block><block type="math_arithmetic"></block></category></xml>';
+  const CD_TOOLBOX='<xml><category name="Mouvement" colour="210"><block type="t_forward"><value name="N"><shadow type="math_number"><field name="NUM">50</field></shadow></value></block><block type="t_back"><value name="N"><shadow type="math_number"><field name="NUM">50</field></shadow></value></block><block type="t_turn"><value name="N"><shadow type="math_number"><field name="NUM">90</field></shadow></value></block></category><category name="Stylo" colour="120"><block type="t_pen"></block><block type="t_color"></block><block type="t_width"><value name="N"><shadow type="math_number"><field name="NUM">4</field></shadow></value></block><block type="t_clear"></block></category><category name="Dire" colour="270"><block type="t_say"><value name="T"><shadow type="text"><field name="TEXT">Bravo !</field></shadow></value></block></category><category name="Contrôle" colour="30"><block type="controls_repeat_ext"><value name="TIMES"><shadow type="math_number"><field name="NUM">4</field></shadow></value></block><block type="controls_if"></block><block type="controls_whileUntil"></block></category><category name="Capteurs" colour="170"><block type="sensor_edge"></block><block type="logic_compare"></block><block type="logic_boolean"></block><block type="logic_operation"></block></category><category name="Nombres" colour="230"><block type="math_number"><field name="NUM">10</field></block><block type="math_arithmetic"></block></category></xml>';
   function fillCode(w,body,el){
     if(!w.mode)w.mode="blocks"; if(!Array.isArray(w.script))w.script=[]; if(!w.speed)w.speed=180;
     // ---- moteur tortue (enregistreur synchrone) + interprète ----
-    function makeRunner(Wd,Hd){ const MAX=60000; let ops=0,x=0,y=0,a=0,pen=true,color="#1b3a8a"; const steps=[]; const rad=d=>d*Math.PI/180; function bump(){ if(++ops>MAX)throw new Error("maxops"); }
-      const T={ forward(d){ bump(); const nx=x+d*Math.sin(rad(a)),ny=y+d*Math.cos(rad(a)); steps.push({k:"move",x1:x,y1:y,x2:nx,y2:ny,pen:pen,color:color}); x=nx;y=ny; }, back(d){ T.forward(-d); },
+    function makeRunner(Wd,Hd){ const MAX=60000; let ops=0,x=0,y=0,a=0,pen=true,color="#1b3a8a",wcur=3; const steps=[]; const rad=d=>d*Math.PI/180; function bump(){ if(++ops>MAX)throw new Error("maxops"); }
+      const T={ forward(d){ bump(); const nx=x+d*Math.sin(rad(a)),ny=y+d*Math.cos(rad(a)); steps.push({k:"move",x1:x,y1:y,x2:nx,y2:ny,pen:pen,color:color,width:wcur}); x=nx;y=ny; }, back(d){ T.forward(-d); },
         right(d){ bump(); steps.push({k:"turn",a2:a+d}); a+=d; }, left(d){ T.right(-d); },
         penup(){ bump(); pen=false; steps.push({k:"pen",down:false}); }, pendown(){ bump(); pen=true; steps.push({k:"pen",down:true}); },
-        color(c){ bump(); color=c; steps.push({k:"color",color:c}); }, say(t){ bump(); steps.push({k:"say",text:String(t)}); }, clear(){ bump(); steps.push({k:"clear"}); },
+        color(c){ bump(); color=c; steps.push({k:"color",color:c}); }, width(n){ bump(); wcur=Math.max(1,Math.min(20,n||1)); steps.push({k:"width",w:wcur}); }, say(t){ bump(); steps.push({k:"say",text:String(t)}); }, clear(){ bump(); steps.push({k:"clear"}); },
         edge(){ bump(); const m=18; return Math.abs(x)>=Wd/2-m||Math.abs(y)>=Hd/2-m; }, _steps:steps };
       return T; }
-    function runTree(script,T){ function ex(b){ switch(b.t){ case "forward":T.forward(b.n);break; case "back":T.back(b.n);break; case "right":T.right(b.n);break; case "left":T.left(b.n);break; case "penup":T.penup();break; case "pendown":T.pendown();break; case "color":T.color(b.c||"#1b3a8a");break; case "say":T.say(b.text||"");break; case "clear":T.clear();break; case "repeat":{ const n=Math.max(0,Math.min(1000,b.n|0)); for(let k=0;k<n;k++)(b.body||[]).forEach(ex); break; } case "if":{ const c=(b.sensor==="!edge")?!T.edge():T.edge(); if(c)(b.body||[]).forEach(ex); break; } } } (script||[]).forEach(ex); }
+    function runTree(script,T){ function ex(b){ switch(b.t){ case "forward":T.forward(b.n);break; case "back":T.back(b.n);break; case "right":T.right(b.n);break; case "left":T.left(b.n);break; case "penup":T.penup();break; case "pendown":T.pendown();break; case "color":T.color(b.c||"#1b3a8a");break; case "width":T.width(b.n);break; case "say":T.say(b.text||"");break; case "clear":T.clear();break; case "repeat":{ const n=Math.max(0,Math.min(1000,b.n|0)); for(let k=0;k<n;k++)(b.body||[]).forEach(ex); break; } case "until":{ let guard=0; while(!T.edge()&&guard<5000){ (b.body||[]).forEach(ex); guard++; } break; } case "if":{ const c=(b.sensor==="!edge")?!T.edge():T.edge(); if(c)(b.body||[]).forEach(ex); break; } } } (script||[]).forEach(ex); }
     // ---- structure UI ----
     body.innerHTML=""; const root=mkEl("div","cd"); body.appendChild(root);
     const bar=mkEl("div","cd-bar");
     const modes=mkEl("div","cd-modes"); const mB=mkEl("button","cd-mode"+(w.mode==="blocks"?" on":""),"Blocs"); const mK=mkEl("button","cd-mode"+(w.mode==="blockly"?" on":""),"Blockly"); modes.appendChild(mB); modes.appendChild(mK);
-    const runBtn=mkEl("button","cd-run","▶ Exécuter"); const resetBtn=mkEl("button","cd-btn","↺"); const eraseBtn=mkEl("button","cd-btn","🗑");
-    const spdl=mkEl("span","cd-spdl","Vitesse"); const spd=mkEl("input","cd-spd"); spd.type="range"; spd.min="20"; spd.max="400"; spd.value=String(w.speed); spd.title="Vitesse (gauche = rapide)";
-    [mB,mK,runBtn,resetBtn,eraseBtn,spd].forEach(b=>b.addEventListener("pointerdown",e=>e.stopPropagation()));
-    bar.appendChild(modes); bar.appendChild(runBtn); bar.appendChild(resetBtn); bar.appendChild(eraseBtn); bar.appendChild(spdl); bar.appendChild(spd); root.appendChild(bar);
-    const main=mkEl("div","cd-main"); root.appendChild(main);
+    const runBtn=mkEl("button","cd-run","▶ Exécuter"); const resetBtn=mkEl("button","cd-btn","↺"); const eraseBtn=mkEl("button","cd-btn","🗑"); const pngBtn=mkEl("button","cd-btn","🖼 PNG");
+    const spdl=mkEl("span","cd-spdl","Vitesse"); const spd=mkEl("input","cd-spd"); spd.type="range"; spd.min="20"; spd.max="400"; spd.value=String(w.speed); spd.title="Vitesse (droite = rapide)";
+    [mB,mK,runBtn,resetBtn,eraseBtn,pngBtn,spd].forEach(b=>b.addEventListener("pointerdown",e=>e.stopPropagation()));
+    bar.appendChild(modes); bar.appendChild(runBtn); bar.appendChild(resetBtn); bar.appendChild(eraseBtn); bar.appendChild(pngBtn); bar.appendChild(spdl); bar.appendChild(spd); root.appendChild(bar);
+    const main=mkEl("div","cd-main"); root.appendChild(main); const errBar=mkEl("div","cd-err"); root.appendChild(errBar);
     const left=mkEl("div","cd-left"), right=mkEl("div","cd-right"); main.appendChild(left); main.appendChild(right);
     const pal=mkEl("div","cd-pal"), scriptBox=mkEl("div","cd-script"); left.appendChild(pal); left.appendChild(scriptBox);
     const bk=mkEl("div","cd-blockly"), bkNote=mkEl("div","cd-note"); bk.style.display="none"; bkNote.style.display="none"; left.appendChild(bk); left.appendChild(bkNote);
@@ -1831,7 +2070,7 @@
     function drawScene(){ ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,VW,VH); ctx.fillStyle="#fbfaf5"; ctx.fillRect(0,0,VW,VH);
       ctx.strokeStyle="rgba(27,27,23,.07)"; ctx.lineWidth=1; const g=40; for(let gx=(VW/2)%g; gx<VW; gx+=g){ ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,VH);ctx.stroke(); } for(let gy=(VH/2)%g; gy<VH; gy+=g){ ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(VW,gy);ctx.stroke(); }
       ctx.strokeStyle="rgba(27,27,23,.15)"; ctx.beginPath();ctx.moveTo(0,VH/2);ctx.lineTo(VW,VH/2);ctx.moveTo(VW/2,0);ctx.lineTo(VW/2,VH);ctx.stroke();
-      rendered.forEach(s=>{ const a=W2C(s.x1,s.y1),b=W2C(s.x2,s.y2); ctx.strokeStyle=s.color; ctx.lineWidth=2.4; ctx.lineCap="round"; ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke(); });
+      rendered.forEach(s=>{ const a=W2C(s.x1,s.y1),b=W2C(s.x2,s.y2); ctx.strokeStyle=s.color; ctx.lineWidth=s.width||2.4; ctx.lineCap="round"; ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke(); });
       const p=W2C(pose.x,pose.y), ar=pose.a*Math.PI/180; const tip=[p[0]+Math.sin(ar)*13,p[1]-Math.cos(ar)*13], l=[p[0]+Math.sin(ar+2.5)*9,p[1]-Math.cos(ar+2.5)*9], rg=[p[0]+Math.sin(ar-2.5)*9,p[1]-Math.cos(ar-2.5)*9];
       ctx.fillStyle=penNow?colNow:"#9a9a8c"; ctx.beginPath();ctx.moveTo(tip[0],tip[1]);ctx.lineTo(l[0],l[1]);ctx.lineTo(rg[0],rg[1]);ctx.closePath();ctx.fill(); ctx.strokeStyle="rgba(0,0,0,.25)";ctx.lineWidth=1;ctx.stroke();
       if(bubble){ ctx.font="13px sans-serif"; const tw=ctx.measureText(bubble).width+14, bx=Math.max(4,Math.min(VW-tw-4,p[0]+10)), by=Math.max(4,p[1]-30); ctx.fillStyle="#fff"; ctx.strokeStyle="rgba(27,27,23,.3)"; ctx.lineWidth=1; rr(bx,by,tw,20,6); ctx.fill(); ctx.stroke(); ctx.fillStyle="#1b1b17"; ctx.fillText(bubble,bx+7,by+14); } }
@@ -1840,26 +2079,28 @@
     function resetScene(){ stopRun(); rendered=[]; pose={x:0,y:0,a:0}; penNow=true; colNow="#1b3a8a"; bubble=""; drawScene(); }
     function applyStep(s){ switch(s.k){ case "move": if(s.pen)rendered.push({x1:s.x1,y1:s.y1,x2:s.x2,y2:s.y2,color:s.color}); pose={x:s.x2,y:s.y2,a:pose.a}; break; case "turn": pose={x:pose.x,y:pose.y,a:s.a2}; break; case "pen": penNow=s.down; break; case "color": colNow=s.color; break; case "say": bubble=s.text; break; case "clear": rendered=[]; bubble=""; break; } }
     function play(list){ resetScene(); steps=list||[]; si=0; if(!steps.length){ drawScene(); return; } running=true; runBtn.textContent="⏹ Stop"; runBtn.classList.add("on"); const delay=Math.max(20,420-(+w.speed||180)+20); intervals.set(w.id,setInterval(()=>{ if(si>=steps.length){ stopRun(); drawScene(); return; } applyStep(steps[si++]); drawScene(); },delay)); }
-    function execute(){ if(running){ stopRun(); drawScene(); return; } const T=makeRunner(VW,VH); let err=null;
+    function execute(){ if(running){ stopRun(); drawScene(); return; } errBar.style.display="none"; const T=makeRunner(VW,VH); let err=null;
       try{ if(w.mode==="blocks"){ runTree(w.script,T); } else { if(ws&&window.Blockly&&Blockly.JavaScript){ try{ Blockly.JavaScript.INFINITE_LOOP_TRAP="if(--__g<0)throw new Error('maxops');\n"; }catch(_){ } let code=""; try{ code=Blockly.JavaScript.workspaceToCode(ws); }catch(e){ code=""; } const fn=new Function("T","var __g=200000;\n"+code); fn(T); } else { err="Passe en mode Blockly une fois chargé."; } } }
       catch(e){ if(e&&e.message==="maxops")err="Programme trop long ou boucle infinie — arrêté."; }
-      play(T._steps); if(err&&typeof say==="function")say(err); }
-    runBtn.addEventListener("click",execute); resetBtn.addEventListener("click",()=>{ resetScene(); }); eraseBtn.addEventListener("click",()=>{ if(w.mode==="blocks"){ w.script=[]; activeContainer=null; persist(); renderScript(); } else if(ws){ ws.clear(); saveXml(); } });
+      play(T._steps); if(err){ errBar.textContent="⚠ "+err; errBar.style.display=""; } }
+    function exportPNG(){ const c=document.createElement("canvas"); c.width=Math.round(VW*dpr); c.height=Math.round(VH*dpr); const cx=c.getContext("2d"); cx.setTransform(dpr,0,0,dpr,0,0); cx.fillStyle="#ffffff"; cx.fillRect(0,0,VW,VH); rendered.forEach(s=>{ const a=W2C(s.x1,s.y1),b=W2C(s.x2,s.y2); cx.strokeStyle=s.color; cx.lineWidth=s.width||2.4; cx.lineCap="round"; cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke(); }); try{ const url=c.toDataURL("image/png"); const a=document.createElement("a"); a.href=url; a.download="dessin-tortue.png"; document.body.appendChild(a); a.click(); a.remove(); }catch(_){ } }
+    runBtn.addEventListener("click",execute); resetBtn.addEventListener("click",()=>{ resetScene(); }); pngBtn.addEventListener("click",exportPNG); eraseBtn.addEventListener("click",()=>{ if(w.mode==="blocks"){ w.script=[]; activeContainer=null; persist(); renderScript(); } else if(ws){ ws.clear(); saveXml(); } });
     spd.addEventListener("input",()=>{ w.speed=+spd.value; persist(); });
     // ---- palette + script (mode Blocs) ----
     let activeContainer=null;
-    function cat(t){ if(t==="forward"||t==="back"||t==="left"||t==="right")return "move"; if(t==="penup"||t==="pendown"||t==="color")return "pen"; if(t==="say")return "say"; if(t==="clear")return "util"; return "control"; }
-    function newBlock(t){ if(t==="repeat")return {t:"repeat",n:4,body:[]}; if(t==="if")return {t:"if",sensor:"edge",body:[]}; if(t==="color")return {t:"color",c:"#d11e2a"}; if(t==="say")return {t:"say",text:"Bravo !"}; if(t==="forward"||t==="back")return {t:t,n:80}; if(t==="left"||t==="right")return {t:t,n:90}; return {t:t}; }
-    function addBlock(type){ const isC=(type==="repeat"||type==="if"); if(isC){ activeContainer=null; w.script.push(newBlock(type)); } else { (activeContainer?activeContainer.body:w.script).push(newBlock(type)); } persist(); renderScript(); }
-    const PAL=[["Mouvement",[["forward","Avancer"],["back","Reculer"],["right","Tourner ↻"],["left","Tourner ↺"]]],["Stylo",[["pendown","Crayon bas"],["penup","Crayon haut"],["color","Couleur"]]],["Dire",[["say","Dire"]]],["Contrôle",[["repeat","Répéter"],["if","Si"]]],["Divers",[["clear","Effacer"]]]];
+    function cat(t){ if(t==="forward"||t==="back"||t==="left"||t==="right")return "move"; if(t==="penup"||t==="pendown"||t==="color"||t==="width")return "pen"; if(t==="say")return "say"; if(t==="clear")return "util"; return "control"; }
+    function newBlock(t){ if(t==="repeat")return {t:"repeat",n:4,body:[]}; if(t==="until")return {t:"until",body:[]}; if(t==="if")return {t:"if",sensor:"edge",body:[]}; if(t==="color")return {t:"color",c:"#d11e2a"}; if(t==="width")return {t:"width",n:4}; if(t==="say")return {t:"say",text:"Bravo !"}; if(t==="forward"||t==="back")return {t:t,n:80}; if(t==="left"||t==="right")return {t:t,n:90}; return {t:t}; }
+    function addBlock(type){ const isC=(type==="repeat"||type==="if"||type==="until"); if(isC){ activeContainer=null; w.script.push(newBlock(type)); } else { (activeContainer?activeContainer.body:w.script).push(newBlock(type)); } persist(); renderScript(); }
+    const PAL=[["Mouvement",[["forward","Avancer"],["back","Reculer"],["right","Tourner ↻"],["left","Tourner ↺"]]],["Stylo",[["pendown","Crayon bas"],["penup","Crayon haut"],["color","Couleur"],["width","Épaisseur"]]],["Dire",[["say","Dire"]]],["Contrôle",[["repeat","Répéter"],["until","Jusqu'au bord"],["if","Si"]]],["Divers",[["clear","Effacer"]]]];
     PAL.forEach(grp=>{ const g=mkEl("div","cd-palg"); g.appendChild(mkEl("span","cd-palc",grp[0])); grp[1].forEach(it=>{ const bt=mkEl("button","cd-pb cd-"+cat(it[0]),it[1]); bt.addEventListener("pointerdown",e=>e.stopPropagation()); bt.addEventListener("click",()=>addBlock(it[0])); g.appendChild(bt); }); pal.appendChild(g); });
     function numInput(b,key,mn,mx){ const ip=mkEl("input","cd-num"); ip.type="number"; ip.value=b[key]; if(mn!=null)ip.min=mn; if(mx!=null)ip.max=mx; ip.addEventListener("pointerdown",e=>e.stopPropagation()); ip.addEventListener("input",()=>{ b[key]=parseFloat(ip.value)||0; persist(); }); return ip; }
     function ctrlBtns(arr,idx,b){ const wrap=mkEl("span","cd-ctrls"); const up=mkEl("button","cd-mini","↑"),dn=mkEl("button","cd-mini","↓"),rm=mkEl("button","cd-mini","✕"); [up,dn,rm].forEach(x=>x.addEventListener("pointerdown",e=>e.stopPropagation())); up.addEventListener("click",()=>{ if(idx>0){ const t=arr[idx-1];arr[idx-1]=arr[idx];arr[idx]=t; persist(); renderScript(); } }); dn.addEventListener("click",()=>{ if(idx<arr.length-1){ const t=arr[idx+1];arr[idx+1]=arr[idx];arr[idx]=t; persist(); renderScript(); } }); rm.addEventListener("click",()=>{ arr.splice(idx,1); if(b===activeContainer)activeContainer=null; persist(); renderScript(); }); wrap.appendChild(up);wrap.appendChild(dn);wrap.appendChild(rm); return wrap; }
-    function labelOf(b){ switch(b.t){ case "forward":return "avancer de"; case "back":return "reculer de"; case "right":return "tourner ↻"; case "left":return "tourner ↺"; case "penup":return "crayon ⤴ haut"; case "pendown":return "crayon ⤵ bas"; case "color":return "couleur"; case "say":return "dire"; case "clear":return "effacer dessin"; } return b.t; }
-    function paramCtrl(b){ switch(b.t){ case "forward": case "back": return numInput(b,"n",0,2000); case "left": case "right": { const sp=mkEl("span","cd-pp"); sp.appendChild(numInput(b,"n",0,360)); sp.appendChild(mkEl("span","cd-unit","°")); return sp; } case "color": { const ip=mkEl("input","cd-col"); ip.type="color"; ip.value=b.c||"#d11e2a"; ip.addEventListener("pointerdown",e=>e.stopPropagation()); ip.addEventListener("input",()=>{ b.c=ip.value; persist(); }); return ip; } case "say": { const ip=mkEl("input","cd-txt"); ip.type="text"; ip.value=b.text||""; ip.addEventListener("pointerdown",e=>e.stopPropagation()); ip.addEventListener("input",()=>{ b.text=ip.value; persist(); }); return ip; } } return null; }
+    function labelOf(b){ switch(b.t){ case "forward":return "avancer de"; case "back":return "reculer de"; case "right":return "tourner ↻"; case "left":return "tourner ↺"; case "penup":return "crayon ⤴ haut"; case "pendown":return "crayon ⤵ bas"; case "color":return "couleur"; case "width":return "épaisseur"; case "say":return "dire"; case "clear":return "effacer dessin"; } return b.t; }
+    function paramCtrl(b){ switch(b.t){ case "forward": case "back": return numInput(b,"n",0,2000); case "left": case "right": { const sp=mkEl("span","cd-pp"); sp.appendChild(numInput(b,"n",0,360)); sp.appendChild(mkEl("span","cd-unit","°")); return sp; } case "width": { const sp=mkEl("span","cd-pp"); sp.appendChild(numInput(b,"n",1,20)); sp.appendChild(mkEl("span","cd-unit","px")); return sp; } case "color": { const ip=mkEl("input","cd-col"); ip.type="color"; ip.value=b.c||"#d11e2a"; ip.addEventListener("pointerdown",e=>e.stopPropagation()); ip.addEventListener("input",()=>{ b.c=ip.value; persist(); }); return ip; } case "say": { const ip=mkEl("input","cd-txt"); ip.type="text"; ip.value=b.text||""; ip.addEventListener("pointerdown",e=>e.stopPropagation()); ip.addEventListener("input",()=>{ b.text=ip.value; persist(); }); return ip; } } return null; }
     function renderRow(b,arr,idx){
-      if(b.t==="repeat"||b.t==="if"){ const box=mkEl("div","cd-cont"+(b===activeContainer?" act":"")); const head=mkEl("div","cd-row cd-control");
+      if(b.t==="repeat"||b.t==="if"||b.t==="until"){ const box=mkEl("div","cd-cont"+(b===activeContainer?" act":"")); const head=mkEl("div","cd-row cd-control");
         if(b.t==="repeat"){ head.appendChild(mkEl("span","cd-lbl","Répéter")); head.appendChild(numInput(b,"n",0,1000)); head.appendChild(mkEl("span","cd-lbl","fois")); }
+        else if(b.t==="until"){ head.appendChild(mkEl("span","cd-lbl","Répéter jusqu'au bord")); }
         else { head.appendChild(mkEl("span","cd-lbl","Si")); const sel=mkEl("select","cd-sel"); [["edge","touche le bord"],["!edge","ne touche pas le bord"]].forEach(o=>{ const op=document.createElement("option"); op.value=o[0]; op.textContent=o[1]; if(b.sensor===o[0])op.selected=true; sel.appendChild(op); }); sel.addEventListener("pointerdown",e=>e.stopPropagation()); sel.addEventListener("change",()=>{ b.sensor=sel.value; persist(); }); head.appendChild(sel); }
         head.appendChild(ctrlBtns(arr,idx,b)); box.appendChild(head);
         const kids=mkEl("div","cd-children"); (b.body||[]).forEach((cb,j)=>kids.appendChild(renderRow(cb,b.body,j)));
@@ -1878,6 +2119,230 @@
     mB.addEventListener("click",()=>setMode("blocks")); mK.addEventListener("click",()=>setMode("blockly"));
     el._refit=function(){ fit(); if(ws&&w.mode==="blockly"){ try{ Blockly.svgResize(ws); }catch(_){ } } };
     setMode(w.mode); requestAnimationFrame(fit);
+  }
+  // ---------- widget GÉNÉRATEUR D'EXERCICES ----------
+  function exoGcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ const t=a%b; a=b; b=t; } return a||1; }
+  function exoGen(kind,level){ const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+    if(kind==="add"){ const m=level===1?10:level===2?100:1000; const a=R(1,m),b=R(1,m); return {q:a+" + "+b+" =",a:String(a+b)}; }
+    if(kind==="sub"){ const m=level===1?10:level===2?100:1000; let a=R(1,m),b=R(1,m); if(b>a){const t=a;a=b;b=t;} return {q:a+" − "+b+" =",a:String(a-b)}; }
+    if(kind==="mul"){ const m=level===1?5:level===2?10:12; const a=R(2,m),b=R(2,m); return {q:a+" × "+b+" =",a:String(a*b)}; }
+    if(kind==="div"){ const m=level===1?5:level===2?10:12; const b=R(2,m),res=R(2,m); return {q:(b*res)+" ÷ "+b+" =",a:String(res)}; }
+    if(kind==="frac"){ const m=level===3?12:6; const d1=R(2,m),d2=R(2,m),n1=R(1,d1-1),n2=R(1,d2-1); const dd=d1*d2,nn=n1*d2+n2*d1,g=exoGcd(nn,dd); return {q:n1+"/"+d1+" + "+n2+"/"+d2+" =",a:(nn/g)+"/"+(dd/g)}; }
+    return {q:"?",a:"?"}; }
+  const EXO_KINDS=[["add","+"],["sub","−"],["mul","×"],["div","÷"],["frac","fractions"]];
+  function fillExo(w,body){ if(!w.kind)w.kind="add"; if(!w.level)w.level=2; if(!w.q)w.q=exoGen(w.kind,w.level);
+    const root=mkEl("div","exo"); body.appendChild(root);
+    const bar=mkEl("div","exo-bar"); EXO_KINDS.forEach(k=>{ const b=mkEl("button","exo-k"+(w.kind===k[0]?" on":""),k[1]); b.addEventListener("pointerdown",e=>e.stopPropagation()); b.addEventListener("click",()=>{ w.kind=k[0]; w.q=exoGen(w.kind,w.level); persist(); render(); }); bar.appendChild(b); });
+    const lvl=mkEl("div","exo-lvl"); [1,2,3].forEach(L=>{ const b=mkEl("button","exo-lb"+(w.level===L?" on":""),"Niv "+L); b.addEventListener("pointerdown",e=>e.stopPropagation()); b.addEventListener("click",()=>{ w.level=L; w.q=exoGen(w.kind,w.level); persist(); render(); }); lvl.appendChild(b); });
+    root.appendChild(bar); root.appendChild(lvl);
+    const qd=mkEl("div","exo-q"); const ans=mkEl("div","exo-a"); root.appendChild(qd); root.appendChild(ans);
+    const act=mkEl("div","exo-act"); const rev=mkEl("button","exo-btn","Voir la réponse"); const nw=mkEl("button","exo-btn primary","Nouvelle ▸");
+    [rev,nw].forEach(b=>b.addEventListener("pointerdown",e=>e.stopPropagation()));
+    rev.addEventListener("click",()=>{ w.q.shown=true; persist(); render(); });
+    nw.addEventListener("click",()=>{ w.q=exoGen(w.kind,w.level); persist(); render(); });
+    act.appendChild(rev); act.appendChild(nw); root.appendChild(act);
+    function render(){ root.querySelectorAll(".exo-k").forEach((b,i)=>b.classList.toggle("on",w.kind===EXO_KINDS[i][0])); root.querySelectorAll(".exo-lb").forEach((b,i)=>b.classList.toggle("on",w.level===i+1)); qd.textContent=w.q.q; ans.textContent=w.q.shown?("= "+w.q.a):""; ans.classList.toggle("on",!!w.q.shown); }
+    render(); }
+
+  // ---------- widget QR CODE ----------
+  function loadQR(cb){ if(typeof window.QRCode!=="undefined"){ cb(true); return; } if(window.__qrLoad){ window.__qrLoad.push(cb); return; } window.__qrLoad=[cb]; const s=document.createElement("script"); s.src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"; s.onload=()=>{ const q=window.__qrLoad||[]; window.__qrLoad=null; q.forEach(f=>f(true)); }; s.onerror=()=>{ const q=window.__qrLoad||[]; window.__qrLoad=null; q.forEach(f=>f(false)); }; document.head.appendChild(s); }
+  function fillQR(w,body,el){ if(!w.text)w.text="https://"; const root=mkEl("div","qrw"); body.appendChild(root);
+    const inp=document.createElement("input"); inp.type="text"; inp.className="qrw-inp"; inp.value=w.text; inp.placeholder="https://… ou texte"; inp.addEventListener("pointerdown",e=>e.stopPropagation());
+    const box=mkEl("div","qrw-box"); const note=mkEl("div","qrw-note");
+    root.appendChild(inp); root.appendChild(box); root.appendChild(note);
+    function gen(){ if(typeof window.QRCode==="undefined")return; box.innerHTML=""; const sz=Math.max(120,Math.min(240,Math.min(box.clientWidth,box.clientHeight)-6)); try{ new QRCode(box,{text:w.text||" ",width:sz,height:sz,correctLevel:QRCode.CorrectLevel.M}); note.textContent=""; }catch(e){ note.textContent="QR impossible."; } }
+    let t; inp.addEventListener("input",()=>{ w.text=inp.value; persist(); clearTimeout(t); t=setTimeout(gen,250); });
+    note.textContent="Chargement du générateur QR…";
+    loadQR(ok=>{ if(!ok||typeof window.QRCode==="undefined"){ note.innerHTML="Générateur QR indisponible (hors-ligne)."; return; } note.textContent=""; gen(); });
+    el._refit=()=>{ if(typeof window.QRCode!=="undefined")gen(); };
+  }
+
+  // ---------- widget COURS À RÉVÉLATION PROGRESSIVE ----------
+  function fillReveal(w,body){ if(typeof w.text!=="string")w.text="Titre du cours\n\nQuestion : combien font 6 × 7 ?\nRéponse : [[42]]\n---\nÉtape suivante : on continue…\nIndice masqué : [[clique pour révéler]]"; if(typeof w.pos!=="number")w.pos=0; if(typeof w.editing!=="boolean")w.editing=false;
+    const root=mkEl("div","rv"); body.appendChild(root);
+    const bar=mkEl("div","rv-bar"); const tEdit=mkEl("button","rv-mode","✎ Éditer"); const tShow=mkEl("button","rv-mode","▶ Présenter"); const prev=mkEl("button","rv-nav","◀"); const next=mkEl("button","rv-nav","Suivant ▶"); const allb=mkEl("button","rv-nav","Tout"); const counter=mkEl("span","rv-cnt","");
+    [tEdit,tShow,prev,next,allb].forEach(b=>b.addEventListener("pointerdown",e=>e.stopPropagation()));
+    bar.appendChild(tEdit); bar.appendChild(tShow); bar.appendChild(prev); bar.appendChild(next); bar.appendChild(allb); bar.appendChild(counter); root.appendChild(bar);
+    const area=mkEl("div","rv-area"); root.appendChild(area);
+    function steps(){ return w.text.split(/\n-{3,}\n/); }
+    function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+    function stepHTML(txt){ return esc(txt).replace(/\[\[([^\]]*?)\]\]/g,'<span class="rv-spoiler" tabindex="0">$1</span>').replace(/\n/g,"<br>"); }
+    function render(){ tEdit.classList.toggle("on",w.editing); tShow.classList.toggle("on",!w.editing); area.innerHTML="";
+      const nav=w.editing?"none":""; prev.style.display=nav; next.style.display=nav; allb.style.display=nav; counter.style.display=nav;
+      if(w.editing){ const ta=document.createElement("textarea"); ta.className="rv-ta"; ta.value=w.text; ta.placeholder="Rédige ton cours.\nSépare les étapes par une ligne contenant ---\nMasque une réponse avec [[doubles crochets]] (clic pour révéler)."; ta.addEventListener("pointerdown",e=>e.stopPropagation()); ta.addEventListener("input",()=>{ w.text=ta.value; persist(); }); area.appendChild(ta); }
+      else { const st=steps(); w.pos=Math.max(0,Math.min(w.pos,st.length-1)); const cont=mkEl("div","rv-steps"); for(let i=0;i<=w.pos;i++){ const sd=mkEl("div","rv-step"); sd.innerHTML=stepHTML(st[i]); cont.appendChild(sd); } area.appendChild(cont); counter.textContent=(w.pos+1)+" / "+st.length; cont.querySelectorAll(".rv-spoiler").forEach(sp=>{ sp.addEventListener("click",()=>sp.classList.add("shown")); sp.addEventListener("pointerdown",e=>e.stopPropagation()); }); } }
+    tEdit.addEventListener("click",()=>{ w.editing=true; persist(); render(); });
+    tShow.addEventListener("click",()=>{ w.editing=false; persist(); render(); });
+    prev.addEventListener("click",()=>{ w.pos=Math.max(0,w.pos-1); persist(); render(); });
+    next.addEventListener("click",()=>{ const st=steps(); w.pos=Math.min(st.length-1,w.pos+1); persist(); render(); });
+    allb.addEventListener("click",()=>{ const st=steps(); w.pos=st.length-1; persist(); render(); });
+    render(); }
+  // ---------- widget MANIP' MATHS (multi-outils) ----------
+  function fillManip(w,body){
+    if(!w.tool)w.tool="pizza"; if(!w.pizza||!Array.isArray(w.pizza.plates))w.pizza={plates:[{slices:[]},{slices:[]}],loose:[]}; if(!w.barres)w.barres={sel:{}}; if(!w.droite)w.droite={min:0,max:4,sub:4,marks:[]}; if(!w.rapporteur)w.rapporteur={angle:60}; if(!w.balance)w.balance={a:2,b:3,c:7,step:0}; if(!w.aires)w.aires={shape:"rect",w:4,h:3,r:3}; if(!w.proportion)w.proportion={a:2,b:5,c:8}; if(!w.lancers)w.lancers={faces:6,counts:[0,0,0,0,0,0],total:0}; if(!w.pythagore)w.pythagore={a:3,b:4};
+    const NS="http://www.w3.org/2000/svg";
+    function gcd(a,b){ a=Math.abs(a);b=Math.abs(b); while(b){ const t=a%b; a=b; b=t; } return a||1; }
+    function simplify(n,d){ if(n===0)return [0,1]; const g=gcd(n,d); return [n/g,d/g]; }
+    function fracStr(n,d){ if(n===0)return "0"; const s=simplify(n,d); return s[1]===1?String(s[0]):s[0]+"/"+s[1]; }
+    function fmtVal(v){ return String(Math.round(v*1000)/1000).replace(".",","); }
+    function stepper(label,get,set,mn,mx){ const wrap=mkEl("div","mz-step"); wrap.appendChild(mkEl("span","mz-slbl",label)); const dec=mkEl("button","mz-sb","−"),val=mkEl("span","mz-sv",String(get())),inc=mkEl("button","mz-sb","+"); [dec,inc].forEach(b=>b.addEventListener("pointerdown",e=>e.stopPropagation())); dec.addEventListener("click",()=>set(Math.max(mn,get()-1))); inc.addEventListener("click",()=>set(Math.min(mx,get()+1))); wrap.appendChild(dec); wrap.appendChild(val); wrap.appendChild(inc); return wrap; }
+    const DENS=[[2,"½"],[3,"⅓"],[4,"¼"],[6,"⅙"],[8,"⅛"],[12,"1/12"]];
+    function fracLabel(d){ const f=DENS.find(x=>x[0]===d); return f?f[1]:("1/"+d); }
+    const SLICE_PX=128;
+    function wedgeSVG(d){ const sweep=2*Math.PI/d,a0=-Math.PI/2-sweep/2,a1=-Math.PI/2+sweep/2,cx=50,cy=50,R=42,large=sweep>Math.PI?1:0; const x0=cx+R*Math.cos(a0),y0=cy+R*Math.sin(a0),x1=cx+R*Math.cos(a1),y1=cy+R*Math.sin(a1);
+      const svg=document.createElementNS(NS,"svg"); svg.setAttribute("viewBox","0 0 100 100"); svg.setAttribute("class","mz-wsvg");
+      const p=document.createElementNS(NS,"path"); p.setAttribute("d","M"+cx+" "+cy+" L"+x0.toFixed(2)+" "+y0.toFixed(2)+" A"+R+" "+R+" 0 "+large+" 1 "+x1.toFixed(2)+" "+y1.toFixed(2)+" Z"); p.setAttribute("class","mz-cheese"); svg.appendChild(p);
+      const X0=cx+44*Math.cos(a0),Y0=cy+44*Math.sin(a0),X1=cx+44*Math.cos(a1),Y1=cy+44*Math.sin(a1); const cr=document.createElementNS(NS,"path"); cr.setAttribute("d","M"+X0.toFixed(2)+" "+Y0.toFixed(2)+" A44 44 0 "+large+" 1 "+X1.toFixed(2)+" "+Y1.toFixed(2)); cr.setAttribute("class","mz-crustarc"); svg.appendChild(cr);
+      const k=Math.max(1,Math.min(3,Math.round(sweep/(Math.PI/4)))); for(let j=0;j<k;j++){ const aa=a0+(j+1)/(k+1)*sweep,rr=26,px=cx+rr*Math.cos(aa),py=cy+rr*Math.sin(aa); const pep=document.createElementNS(NS,"circle"); pep.setAttribute("cx",px.toFixed(2)); pep.setAttribute("cy",py.toFixed(2)); pep.setAttribute("r",3.4); pep.setAttribute("class","mz-pep"); svg.appendChild(pep); }
+      return svg; }
+    function sliceDiv(d,rot){ const el=mkEl("div","mz-slice"); el.appendChild(wedgeSVG(d)); el.style.transform="rotate("+rot+"deg)"; return el; }
+    const root=mkEl("div","mz"); body.appendChild(root);
+    const tabs=mkEl("div","mz-tabs"); const TOOLS=[["pizza","🍕 Pizzas"],["barres","▭ Barres"],["droite","📏 Droite"],["rapporteur","📐 Angles"],["balance","⚖️ Équation"],["aires","⬜ Aire"],["proportion","📊 Proportion"],["lancers","🎲 Dés"],["pythagore","△ Pythagore"]];
+    TOOLS.forEach(t=>{ const b=mkEl("button","mz-tab"+(w.tool===t[0]?" on":""),t[1]); b.addEventListener("pointerdown",e=>e.stopPropagation()); b.addEventListener("click",()=>{ w.tool=t[0]; persist(); tabs.querySelectorAll(".mz-tab").forEach((x,i)=>x.classList.toggle("on",TOOLS[i][0]===w.tool)); renderTool(); }); tabs.appendChild(b); });
+    root.appendChild(tabs);
+    const content=mkEl("div","mz-content"); root.appendChild(content);
+    function renderPizza(){ content.innerHTML="";
+      if(!w.pizza||!Array.isArray(w.pizza.plates))w.pizza={plates:[{slices:[]},{slices:[]}],loose:[]};
+      if(!Array.isArray(w.pizza.loose))w.pizza.loose=[];
+      const plates=w.pizza.plates, BOX=SLICE_PX;
+      function sum24(arr){ let s=0; arr.forEach(d=>s+=24/d); return s; }
+      function fits(pl,d){ return sum24(pl.slices)+24/d<=24+1e-6; }
+      const ctrls=mkEl("div","mz-ctrls"); const pal=mkEl("div","mz-palette");
+      DENS.forEach(dd=>{ const item=mkEl("div","mz-palitem"); const mini=sliceDiv(dd[0],0); mini.classList.add("mz-mini"); item.appendChild(mini); item.appendChild(mkEl("span","mz-plab",dd[1])); item.title="Glisser sur une assiette ou à côté"; item.addEventListener("pointerdown",e=>{ e.stopPropagation(); startDrag(e,dd[0],{type:"pal"}); }); pal.appendChild(item); });
+      ctrls.appendChild(pal); content.appendChild(ctrls);
+      const ctrls2=mkEl("div","mz-ctrls");
+      const addPl=mkEl("button","mz-btn","➕ assiette"); addPl.title="Ajouter une pizza vide"; addPl.addEventListener("pointerdown",e=>e.stopPropagation()); addPl.addEventListener("click",()=>{ if(plates.length<6){ plates.push({slices:[]}); persist(); renderPizza(); } }); ctrls2.appendChild(addPl);
+      const trash=mkEl("div","mz-trash","🗑"); trash.setAttribute("data-trash","1"); trash.title="Glisser une part ici pour la jeter"; ctrls2.appendChild(trash);
+      const clr=mkEl("button","mz-btn","Tout vider"); clr.addEventListener("pointerdown",e=>e.stopPropagation()); clr.addEventListener("click",()=>{ plates.forEach(p=>p.slices=[]); w.pizza.loose=[]; persist(); renderPizza(); }); ctrls2.appendChild(clr);
+      content.appendChild(ctrls2);
+      content.appendChild(mkEl("div","mz-hint","Glisse une part sur une assiette en pointillé : elle s'aimante et la pizza se remplit. Pose-en à côté, clique une part posée pour la pivoter, jette-en dans la 🗑."));
+      const board=mkEl("div","mz-board"); content.appendChild(board);
+      const br0=board.getBoundingClientRect(); const W=br0.width||320,H=br0.height||300; const perRow=Math.max(1,Math.floor((W-20)/150));
+      plates.forEach((p,i)=>{ if(p.x==null||p.y==null){ const col=i%perRow,rw=Math.floor(i/perRow); p.x=Math.max(BOX/2,Math.min(W-BOX/2,82+col*150)); p.y=Math.max(BOX/2,Math.min(H-BOX/2,84+rw*162)); } });
+      function pointFromEv(ev,br){ let x=ev.clientX-br.left,y=ev.clientY-br.top; x=Math.max(BOX/2,Math.min(br.width-BOX/2,x)); y=Math.max(BOX/2,Math.min(br.height-BOX/2,y)); return {x:x,y:y}; }
+      function removeLoose(o){ const i=w.pizza.loose.indexOf(o); if(i>=0)w.pizza.loose.splice(i,1); }
+      function startDrag(e,d,src){ const ghost=sliceDiv(d,src.type==="loose"?src.obj.rot:0); ghost.classList.add("mz-floating"); ghost.style.position="fixed"; ghost.style.width=BOX+"px"; ghost.style.height=BOX+"px"; ghost.style.pointerEvents="none"; ghost.style.zIndex="4000"; document.body.appendChild(ghost);
+        let moved=false; const sx=e.clientX,sy=e.clientY; const pos=ev=>{ ghost.style.left=(ev.clientX-BOX/2)+"px"; ghost.style.top=(ev.clientY-BOX/2)+"px"; }; pos(e);
+        function aim(ev){ const t=document.elementFromPoint(ev.clientX,ev.clientY); const pe=t&&t.closest?t.closest("[data-plate]"):null; board.querySelectorAll(".mz-plate").forEach(pl=>{ const ok=pe===pl&&fits(plates[+pl.getAttribute("data-plate")],d); pl.classList.toggle("aim",!!ok); }); const te=t&&t.closest?t.closest("[data-trash]"):null; trash.classList.toggle("aim",!!te); }
+        function mv(ev){ if(!moved){ if(Math.hypot(ev.clientX-sx,ev.clientY-sy)<4)return; moved=true; } ev.preventDefault(); pos(ev); aim(ev); }
+        function up(ev){ window.removeEventListener("pointermove",mv); window.removeEventListener("pointerup",up); ghost.remove(); trash.classList.remove("aim");
+          if(!moved){ if(src.type==="loose"){ src.obj.rot=(src.obj.rot+360/src.obj.d)%360; persist(); renderPizza(); } else if(src.type==="pal"){ for(let i=0;i<plates.length;i++){ if(fits(plates[i],d)){ plates[i].slices.push(d); persist(); renderPizza(); break; } } } return; }
+          const br=board.getBoundingClientRect(); const t=document.elementFromPoint(ev.clientX,ev.clientY); const te=t&&t.closest?t.closest("[data-trash]"):null; const pe=t&&t.closest?t.closest("[data-plate]"):null;
+          if(te){ if(src.type==="loose")removeLoose(src.obj); else if(src.type==="plate")src.plate.slices.splice(src.idx,1); persist(); renderPizza(); return; }
+          if(pe){ const tp=plates[+pe.getAttribute("data-plate")]; if(src.type==="plate"&&src.plate===tp){ renderPizza(); return; } if(fits(tp,d)){ if(src.type==="loose")removeLoose(src.obj); else if(src.type==="plate")src.plate.slices.splice(src.idx,1); tp.slices.push(d); persist(); renderPizza(); return; } renderPizza(); return; }
+          const inB=ev.clientX>=br.left&&ev.clientX<=br.right&&ev.clientY>=br.top&&ev.clientY<=br.bottom; if(!inB){ renderPizza(); return; }
+          const pt=pointFromEv(ev,br);
+          if(src.type==="loose"){ src.obj.x=pt.x; src.obj.y=pt.y; persist(); renderPizza(); return; }
+          if(src.type==="plate")src.plate.slices.splice(src.idx,1);
+          w.pizza.loose.push({id:uid(),d:d,x:pt.x,y:pt.y,rot:0}); persist(); renderPizza(); }
+        window.addEventListener("pointermove",mv); window.addEventListener("pointerup",up); }
+      function startPlateMove(e,plate,el){ const br=board.getBoundingClientRect(); let moved=false; const sx=e.clientX,sy=e.clientY;
+        function mv(ev){ if(!moved){ if(Math.hypot(ev.clientX-sx,ev.clientY-sy)<4)return; moved=true; el.style.zIndex="40"; el.classList.add("mz-grab"); } ev.preventDefault(); el.style.left=(ev.clientX-br.left-BOX/2)+"px"; el.style.top=(ev.clientY-br.top-BOX/2)+"px"; }
+        function up(ev){ window.removeEventListener("pointermove",mv); window.removeEventListener("pointerup",up); if(!moved)return; const pt=pointFromEv(ev,br); plate.x=pt.x; plate.y=pt.y; persist(); renderPizza(); }
+        window.addEventListener("pointermove",mv); window.addEventListener("pointerup",up); }
+      plates.forEach((plate,i)=>{ const el=mkEl("div","mz-plate mz-anim"); el.setAttribute("data-plate",i); el.style.width=BOX+"px"; el.style.height=BOX+"px"; el.style.left=(plate.x-BOX/2)+"px"; el.style.top=(plate.y-BOX/2)+"px";
+        const svg=document.createElementNS(NS,"svg"); svg.setAttribute("viewBox","0 0 100 100"); svg.setAttribute("class","mz-wsvg");
+        const o=document.createElementNS(NS,"circle"); o.setAttribute("cx",50); o.setAttribute("cy",50); o.setAttribute("r",46); o.setAttribute("class","mz-ploutline"); svg.appendChild(o);
+        let ang=-Math.PI/2; plate.slices.forEach((d,idx)=>{ const sweep=2*Math.PI/d,a0=ang,a1=ang+sweep,large=sweep>Math.PI?1:0,R=42; const x0=50+R*Math.cos(a0),y0=50+R*Math.sin(a0),x1=50+R*Math.cos(a1),y1=50+R*Math.sin(a1);
+          const p=document.createElementNS(NS,"path"); p.setAttribute("d","M50 50 L"+x0.toFixed(2)+" "+y0.toFixed(2)+" A"+R+" "+R+" 0 "+large+" 1 "+x1.toFixed(2)+" "+y1.toFixed(2)+" Z"); p.setAttribute("class","mz-cheese"); p.addEventListener("pointerdown",ev=>{ ev.stopPropagation(); startDrag(ev,d,{type:"plate",plate:plate,idx:idx}); }); svg.appendChild(p);
+          const X0=50+44*Math.cos(a0),Y0=50+44*Math.sin(a0),X1=50+44*Math.cos(a1),Y1=50+44*Math.sin(a1); const cr=document.createElementNS(NS,"path"); cr.setAttribute("d","M"+X0.toFixed(2)+" "+Y0.toFixed(2)+" A44 44 0 "+large+" 1 "+X1.toFixed(2)+" "+Y1.toFixed(2)); cr.setAttribute("class","mz-crustarc"); svg.appendChild(cr);
+          const k=Math.max(1,Math.min(3,Math.round(sweep/(Math.PI/4)))); for(let j=0;j<k;j++){ const aa=a0+(j+1)/(k+1)*sweep,rr=25,qx=50+rr*Math.cos(aa),qy=50+rr*Math.sin(aa); const pep=document.createElementNS(NS,"circle"); pep.setAttribute("cx",qx.toFixed(2)); pep.setAttribute("cy",qy.toFixed(2)); pep.setAttribute("r",3.3); pep.setAttribute("class","mz-pep"); svg.appendChild(pep); }
+          ang=a1; });
+        el.appendChild(svg);
+        const s=sum24(plate.slices),full=Math.abs(s-24)<1e-6,half=Math.abs(s-12)<1e-6; if(full)el.classList.add("complete");
+        el.appendChild(mkEl("div","mz-cap",s===0?"vide":fracStr(s,24)));
+        if(full)el.appendChild(mkEl("div","mz-badge win","🎉 entière !")); else if(half)el.appendChild(mkEl("div","mz-badge half","½ pizza")); else if(s>0){ const b=mkEl("div","mz-badge need","manque "+fracStr(24-s,24)); el.appendChild(b); }
+        el.addEventListener("pointerdown",e=>{ e.stopPropagation(); startPlateMove(e,plate,el); });
+        board.appendChild(el); });
+      w.pizza.loose.forEach(ob=>{ const el=mkEl("div","mz-loose mz-anim"); el.style.width=BOX+"px"; el.style.height=BOX+"px"; el.style.left=(ob.x-BOX/2)+"px"; el.style.top=(ob.y-BOX/2)+"px"; el.style.transform="rotate("+ob.rot+"deg)"; el.style.transformOrigin="center center"; const svg=wedgeSVG(ob.d); el.appendChild(svg); const ch=svg.querySelector(".mz-cheese"); if(ch)ch.addEventListener("pointerdown",e=>{ e.stopPropagation(); startDrag(e,ob.d,{type:"loose",obj:ob}); }); board.appendChild(el); });
+      const nf=plates.filter(p=>Math.abs(sum24(p.slices)-24)<1e-6).length; let tot24=0; plates.forEach(p=>tot24+=sum24(p.slices)); w.pizza.loose.forEach(ob=>tot24+=24/ob.d);
+      const out=mkEl("div","mz-out"); out.innerHTML="Pizzas complètes : <b>"+nf+"</b> &nbsp;·&nbsp; total sur le plan : <b>"+fracStr(tot24,24)+"</b>"; content.appendChild(out); }
+    function renderBarres(){ content.innerHTML=""; const B=w.barres; if(!B.sel)B.sel={}; const D=[1,2,3,4,6,8,12];
+      const ctrls=mkEl("div","mz-ctrls"); ctrls.appendChild(mkEl("span","mz-hint","Clique des morceaux : vois les équivalences et additionne.")); const clr=mkEl("button","mz-btn","Effacer"); clr.addEventListener("pointerdown",e=>e.stopPropagation()); clr.addEventListener("click",()=>{ B.sel={}; persist(); renderBarres(); }); ctrls.appendChild(clr); content.appendChild(ctrls);
+      const wall=mkEl("div","mz-wall"); D.forEach(d=>{ const r=mkEl("div","mz-wrow"); r.appendChild(mkEl("span","mz-wlbl",d===1?"1":"1/"+d)); const bar=mkEl("div","mz-wbar"); for(let i=0;i<d;i++){ const key=d+"-"+i; const cell=mkEl("div","mz-wcell"+(B.sel[key]?" on":"")); cell.addEventListener("pointerdown",e=>e.stopPropagation()); cell.addEventListener("click",()=>{ if(B.sel[key])delete B.sel[key]; else B.sel[key]=true; persist(); renderBarres(); }); bar.appendChild(cell); } r.appendChild(bar); wall.appendChild(r); }); content.appendChild(wall);
+      let num24=0; Object.keys(B.sel).forEach(k=>{ const d=parseInt(k.split("-")[0],10); num24+=24/d; }); const out=mkEl("div","mz-out"); out.innerHTML="Sélection : <b>"+(num24===0?"0":fracStr(num24,24))+"</b>"+(num24?" ≈ "+fmtVal(num24/24):""); content.appendChild(out); }
+    function renderDroite(){ content.innerHTML=""; const Dr=w.droite; if(!Array.isArray(Dr.marks))Dr.marks=[];
+      const ctrls=mkEl("div","mz-ctrls");
+      ctrls.appendChild(stepper("min",()=>Dr.min,v=>{ if(v<Dr.max){ Dr.min=v; Dr.marks=Dr.marks.filter(x=>x>=v&&x<=Dr.max); persist(); renderDroite(); } },-20,20));
+      ctrls.appendChild(stepper("max",()=>Dr.max,v=>{ if(v>Dr.min){ Dr.max=v; Dr.marks=Dr.marks.filter(x=>x>=Dr.min&&x<=v); persist(); renderDroite(); } },-20,20));
+      ctrls.appendChild(mkEl("span","mz-slbl","Pas")); const gsel=mkEl("select","mz-sel"); [1,2,4,5,10].forEach(s=>{ const o=document.createElement("option"); o.value=s; o.textContent="1/"+s; if(Dr.sub===s)o.selected=true; gsel.appendChild(o); }); gsel.addEventListener("pointerdown",e=>e.stopPropagation()); gsel.addEventListener("change",()=>{ Dr.sub=parseInt(gsel.value,10); persist(); renderDroite(); }); ctrls.appendChild(gsel);
+      const clr=mkEl("button","mz-btn","Effacer"); clr.addEventListener("pointerdown",e=>e.stopPropagation()); clr.addEventListener("click",()=>{ Dr.marks=[]; persist(); renderDroite(); }); ctrls.appendChild(clr); content.appendChild(ctrls);
+      const svg=document.createElementNS(NS,"svg"); svg.setAttribute("viewBox","0 0 1000 120"); svg.setAttribute("class","mz-line"); const X0=44,X1=956,Y=72,span=Dr.max-Dr.min; const vx=v=>X0+(v-Dr.min)/span*(X1-X0);
+      const ax=document.createElementNS(NS,"line"); ax.setAttribute("x1",X0); ax.setAttribute("y1",Y); ax.setAttribute("x2",X1); ax.setAttribute("y2",Y); ax.setAttribute("class","mz-axis"); svg.appendChild(ax);
+      const step=1/Dr.sub; for(let v=Dr.min; v<=Dr.max+1e-9; v+=step){ const x=vx(v),isInt=Math.abs(v-Math.round(v))<1e-9; const tk=document.createElementNS(NS,"line"); tk.setAttribute("x1",x); tk.setAttribute("x2",x); tk.setAttribute("y1",Y-(isInt?12:6)); tk.setAttribute("y2",Y+(isInt?12:6)); tk.setAttribute("class",isInt?"mz-tickM":"mz-tickm"); svg.appendChild(tk); if(isInt){ const tx=document.createElementNS(NS,"text"); tx.setAttribute("x",x); tx.setAttribute("y",Y+28); tx.setAttribute("class","mz-tlbl"); tx.textContent=String(Math.round(v)); svg.appendChild(tx); } }
+      Dr.marks.forEach(m=>{ const x=vx(m); const c=document.createElementNS(NS,"circle"); c.setAttribute("cx",x); c.setAttribute("cy",Y); c.setAttribute("r",7); c.setAttribute("class","mz-mark"); svg.appendChild(c); const tx=document.createElementNS(NS,"text"); tx.setAttribute("x",x); tx.setAttribute("y",Y-16); tx.setAttribute("class","mz-mlbl"); tx.textContent=fmtVal(m); svg.appendChild(tx); });
+      const ov=document.createElementNS(NS,"rect"); ov.setAttribute("x",X0-6); ov.setAttribute("y",Y-26); ov.setAttribute("width",X1-X0+12); ov.setAttribute("height",52); ov.setAttribute("fill","transparent"); ov.style.cursor="pointer"; ov.addEventListener("pointerdown",e=>e.stopPropagation()); ov.addEventListener("click",e=>{ const rect=svg.getBoundingClientRect(); const xvb=(e.clientX-rect.left)/rect.width*1000; let val=Dr.min+(xvb-X0)/(X1-X0)*span; val=Math.round(val/step)*step; val=Math.max(Dr.min,Math.min(Dr.max,val)); val=Math.round(val*1000)/1000; const idx=Dr.marks.findIndex(x=>Math.abs(x-val)<step/2); if(idx>=0)Dr.marks.splice(idx,1); else Dr.marks.push(val); persist(); renderDroite(); }); svg.appendChild(ov);
+      content.appendChild(svg);
+      if(Dr.marks.length===2){ const out=mkEl("div","mz-out"); out.innerHTML="Distance : <b>"+fmtVal(Math.abs(Dr.marks[1]-Dr.marks[0]))+"</b>"; content.appendChild(out); } else if(Dr.marks.length){ const out=mkEl("div","mz-out"); out.textContent="Points : "+Dr.marks.slice().sort((a,b)=>a-b).map(fmtVal).join(" ; "); content.appendChild(out); } }
+    function renderRapporteur(){ content.innerHTML=""; const A=w.rapporteur; if(typeof A.angle!=="number")A.angle=60;
+      const ctrls=mkEl("div","mz-ctrls"); ctrls.appendChild(stepper("Angle",()=>Math.round(A.angle),v=>{ A.angle=Math.max(0,Math.min(180,v)); persist(); renderRapporteur(); },0,180)); ctrls.appendChild(mkEl("span","mz-hint","Glisse le bras bleu pour mesurer.")); content.appendChild(ctrls);
+      const cx=180,cy=180,R=150; const svg=document.createElementNS(NS,"svg"); svg.setAttribute("viewBox","0 0 360 200"); svg.setAttribute("class","mz-rap");
+      const P=ang=>[cx+R*Math.cos(ang*Math.PI/180), cy-R*Math.sin(ang*Math.PI/180)];
+      const disc=document.createElementNS(NS,"path"); disc.setAttribute("d","M"+(cx-R)+" "+cy+" A"+R+" "+R+" 0 0 0 "+(cx+R)+" "+cy+" Z"); disc.setAttribute("class","mz-rapdisc"); svg.appendChild(disc);
+      for(let a=0;a<=180;a+=10){ const big=a%30===0; const o=P(a); const ii=[cx+(R-(big?16:9))*Math.cos(a*Math.PI/180), cy-(R-(big?16:9))*Math.sin(a*Math.PI/180)]; const tk=document.createElementNS(NS,"line"); tk.setAttribute("x1",o[0]);tk.setAttribute("y1",o[1]);tk.setAttribute("x2",ii[0]);tk.setAttribute("y2",ii[1]); tk.setAttribute("class",big?"mz-raptickM":"mz-raptickm"); svg.appendChild(tk); if(big){ const l=[cx+(R-30)*Math.cos(a*Math.PI/180), cy-(R-30)*Math.sin(a*Math.PI/180)]; const t=document.createElementNS(NS,"text"); t.setAttribute("x",l[0]);t.setAttribute("y",l[1]+4);t.setAttribute("class","mz-raplbl"); t.textContent=a; svg.appendChild(t); } }
+      const b0=P(0); const base=document.createElementNS(NS,"line"); base.setAttribute("x1",cx);base.setAttribute("y1",cy);base.setAttribute("x2",b0[0]);base.setAttribute("y2",b0[1]); base.setAttribute("class","mz-raparm0"); svg.appendChild(base);
+      const mm=P(A.angle); const arm=document.createElementNS(NS,"line"); arm.setAttribute("x1",cx);arm.setAttribute("y1",cy);arm.setAttribute("x2",mm[0]);arm.setAttribute("y2",mm[1]); arm.setAttribute("class","mz-raparm"); svg.appendChild(arm);
+      const ind=document.createElementNS(NS,"path"); const setInd=()=>{ const p1=[cx+42,cy], p2=[cx+42*Math.cos(A.angle*Math.PI/180), cy-42*Math.sin(A.angle*Math.PI/180)]; ind.setAttribute("d","M"+p1[0]+" "+p1[1]+" A42 42 0 0 0 "+p2[0]+" "+p2[1]); }; setInd(); ind.setAttribute("class","mz-rapind"); svg.appendChild(ind);
+      const h=document.createElementNS(NS,"circle"); h.setAttribute("cx",mm[0]);h.setAttribute("cy",mm[1]);h.setAttribute("r",9); h.setAttribute("class","mz-raphandle"); svg.appendChild(h);
+      const cls=a=>{ a=Math.round(a); return a===0?"nul":a<90?"aigu":a===90?"droit":a<180?"obtus":"plat"; };
+      h.addEventListener("pointerdown",e=>{ e.stopPropagation(); e.preventDefault();
+        function mv(ev){ ev.preventDefault(); const r=svg.getBoundingClientRect(); const X=(ev.clientX-r.left)/r.width*360, Y=(ev.clientY-r.top)/r.height*200; let ang=Math.atan2(cy-Y,X-cx)*180/Math.PI; if(ang<0)ang=0; if(ang>180)ang=180; A.angle=ang; const np=P(ang); arm.setAttribute("x2",np[0]);arm.setAttribute("y2",np[1]); h.setAttribute("cx",np[0]);h.setAttribute("cy",np[1]); setInd(); valEl.innerHTML="Angle : <b>"+Math.round(ang)+"°</b> — "+cls(ang); }
+        function up(){ window.removeEventListener("pointermove",mv); window.removeEventListener("pointerup",up); persist(); renderRapporteur(); }
+        window.addEventListener("pointermove",mv); window.addEventListener("pointerup",up); });
+      content.appendChild(svg); const valEl=mkEl("div","mz-out"); valEl.innerHTML="Angle : <b>"+Math.round(A.angle)+"°</b> — "+cls(A.angle); content.appendChild(valEl); }
+
+    function renderBalance(){ content.innerHTML=""; const E=w.balance; if(typeof E.a!=="number")E.a=2; if(typeof E.b!=="number")E.b=3; if(typeof E.c!=="number")E.c=7; if(typeof E.step!=="number")E.step=0;
+      function eqStr(a,b,c){ let s=(a===1?"x":a+"·x"); if(b>0)s+=" + "+b; else if(b<0)s+=" − "+(-b); return s+" = "+c; }
+      const ctrls=mkEl("div","mz-ctrls"); ctrls.appendChild(stepper("a",()=>E.a,v=>{E.a=Math.max(1,Math.min(10,v));E.step=0;persist();renderBalance();},1,10)); ctrls.appendChild(stepper("b",()=>E.b,v=>{E.b=Math.max(-12,Math.min(20,v));E.step=0;persist();renderBalance();},-12,20)); ctrls.appendChild(stepper("c",()=>E.c,v=>{E.c=Math.max(-20,Math.min(40,v));E.step=0;persist();renderBalance();},-20,40)); content.appendChild(ctrls);
+      content.appendChild(mkEl("div","mz-bal-eq","Résoudre : "+eqStr(E.a,E.b,E.c)));
+      function tiles(xs,units){ const box=mkEl("div","mz-pan2"); if(xs>0){ if(xs<=10){ for(let i=0;i<xs;i++)box.appendChild(mkEl("div","mz-tile mz-tx","x")); } else box.appendChild(mkEl("div","mz-tile mz-tx",xs+"·x")); } const u=Math.round(units*1000)/1000; if(u!==0){ const n=Math.abs(u),cl="mz-tile "+(u>0?"mz-tu":"mz-tu mz-neg"); if(Number.isInteger(n)&&n<=10){ for(let i=0;i<n;i++)box.appendChild(mkEl("div",cl,"1")); } else box.appendChild(mkEl("div",cl,(u>0?"+":"−")+n)); } if(xs===0&&u===0)box.appendChild(mkEl("div","mz-tile mz-tz","0")); return box; }
+      let L,R; if(E.step===0){ L=[E.a,E.b]; R=[0,E.c]; } else if(E.step===1){ L=[E.a,0]; R=[0,E.c-E.b]; } else { L=[1,0]; R=[0,(E.c-E.b)/E.a]; }
+      const bal=mkEl("div","mz-bal"); const pans=mkEl("div","mz-bal-pans"); const lp=mkEl("div","mz-panwrap"); lp.appendChild(tiles(L[0],L[1])); lp.appendChild(mkEl("div","mz-panlbl","gauche")); const rp=mkEl("div","mz-panwrap"); rp.appendChild(tiles(R[0],R[1])); rp.appendChild(mkEl("div","mz-panlbl","droite")); pans.appendChild(lp); pans.appendChild(mkEl("div","mz-bal-ful","▲")); pans.appendChild(rp); bal.appendChild(pans); content.appendChild(bal);
+      const sc=mkEl("div","mz-ctrls");
+      if(E.step===0){ const b1=mkEl("button","mz-btn",(E.b>=0?("Enlever "+E.b):("Ajouter "+(-E.b)))+" des 2 côtés"); b1.addEventListener("pointerdown",e=>e.stopPropagation()); b1.addEventListener("click",()=>{E.step=1;persist();renderBalance();}); sc.appendChild(b1); }
+      else if(E.step===1){ const b2=mkEl("button","mz-btn","Diviser par "+E.a+" des 2 côtés"); b2.addEventListener("pointerdown",e=>e.stopPropagation()); b2.addEventListener("click",()=>{E.step=2;persist();renderBalance();}); sc.appendChild(b2); }
+      const rb=mkEl("button","mz-btn","↺"); rb.title="Recommencer"; rb.addEventListener("pointerdown",e=>e.stopPropagation()); rb.addEventListener("click",()=>{E.step=0;persist();renderBalance();}); sc.appendChild(rb); content.appendChild(sc);
+      const steps=["Au départ : "+eqStr(E.a,E.b,E.c), (E.b>=0?("On enlève "+E.b):("On ajoute "+(-E.b)))+" : "+(E.a===1?"x":E.a+"·x")+" = "+(E.c-E.b), "On divise par "+E.a+" : x = "+fracStr(E.c-E.b,E.a)+" ≈ "+fmtVal((E.c-E.b)/E.a)];
+      const out=mkEl("div","mz-out"); out.innerHTML=steps.slice(0,E.step+1).map((s,i)=>i===E.step?"<b>"+s+"</b>":s).join("<br>"); content.appendChild(out); }
+
+    function renderAires(){ content.innerHTML=""; const G=w.aires; if(!G.shape)G.shape="rect"; if(typeof G.w!=="number")G.w=4; if(typeof G.h!=="number")G.h=3; if(typeof G.r!=="number")G.r=3;
+      const ctrls=mkEl("div","mz-ctrls"); [["rect","▭ Rectangle"],["tri","◣ Triangle"],["disc","⬤ Disque"]].forEach(t=>{ const b=mkEl("button","mz-seg"+(G.shape===t[0]?" on":""),t[1]); b.addEventListener("pointerdown",e=>e.stopPropagation()); b.addEventListener("click",()=>{ G.shape=t[0]; persist(); renderAires(); }); ctrls.appendChild(b); }); content.appendChild(ctrls);
+      const c2=mkEl("div","mz-ctrls"); if(G.shape==="disc"){ c2.appendChild(stepper("rayon",()=>G.r,v=>{G.r=Math.max(1,Math.min(4,v));persist();renderAires();},1,4)); } else { c2.appendChild(stepper(G.shape==="tri"?"base":"largeur",()=>G.w,v=>{G.w=Math.max(1,Math.min(13,v));persist();renderAires();},1,13)); c2.appendChild(stepper("hauteur",()=>G.h,v=>{G.h=Math.max(1,Math.min(9,v));persist();renderAires();},1,9)); } content.appendChild(c2);
+      const maxW=13,maxH=9,vbW=maxW+1,vbH=maxH+1,ox=0.5,oy=maxH+0.5,f=(x,y)=>[ox+x,oy-y];
+      const svg=document.createElementNS(NS,"svg"); svg.setAttribute("viewBox","0 0 "+vbW+" "+vbH); svg.setAttribute("class","mz-grid");
+      for(let x=0;x<=maxW;x++){ const a=f(x,0),b=f(x,maxH); const ln=document.createElementNS(NS,"line"); ln.setAttribute("x1",a[0]);ln.setAttribute("y1",a[1]);ln.setAttribute("x2",b[0]);ln.setAttribute("y2",b[1]); ln.setAttribute("class",x===0?"mz-gridax":"mz-gridln"); svg.appendChild(ln); }
+      for(let y=0;y<=maxH;y++){ const a=f(0,y),b=f(maxW,y); const ln=document.createElementNS(NS,"line"); ln.setAttribute("x1",a[0]);ln.setAttribute("y1",a[1]);ln.setAttribute("x2",b[0]);ln.setAttribute("y2",b[1]); ln.setAttribute("class",y===0?"mz-gridax":"mz-gridln"); svg.appendChild(ln); }
+      let info;
+      if(G.shape==="rect"){ const pp=[f(0,0),f(G.w,0),f(G.w,G.h),f(0,G.h)]; const pg=document.createElementNS(NS,"polygon"); pg.setAttribute("points",pp.map(p=>p[0]+","+p[1]).join(" ")); pg.setAttribute("class","mz-shape"); svg.appendChild(pg); info="Aire = "+G.w+" × "+G.h+" = <b>"+(G.w*G.h)+"</b> u²<br>Périmètre = 2 × ("+G.w+" + "+G.h+") = <b>"+(2*(G.w+G.h))+"</b> u"; }
+      else if(G.shape==="tri"){ const pp=[f(0,0),f(G.w,0),f(0,G.h)]; const pg=document.createElementNS(NS,"polygon"); pg.setAttribute("points",pp.map(p=>p[0]+","+p[1]).join(" ")); pg.setAttribute("class","mz-shape"); svg.appendChild(pg); const hyp=Math.sqrt(G.w*G.w+G.h*G.h); info="Aire = ("+G.w+" × "+G.h+") ÷ 2 = <b>"+fmtVal(G.w*G.h/2)+"</b> u²<br>Périmètre = "+G.w+" + "+G.h+" + √"+(G.w*G.w+G.h*G.h)+" ≈ <b>"+fmtVal(G.w+G.h+hyp)+"</b> u"; }
+      else { const ctr=f(G.r,G.r); const ci=document.createElementNS(NS,"circle"); ci.setAttribute("cx",ctr[0]);ci.setAttribute("cy",ctr[1]);ci.setAttribute("r",G.r); ci.setAttribute("class","mz-shape"); svg.appendChild(ci); info="Aire = π × "+G.r+"² ≈ <b>"+fmtVal(Math.PI*G.r*G.r)+"</b> u²<br>Périmètre = 2 × π × "+G.r+" ≈ <b>"+fmtVal(2*Math.PI*G.r)+"</b> u"; }
+      content.appendChild(svg); const out=mkEl("div","mz-out"); out.innerHTML=info; content.appendChild(out); }
+
+    function renderProportion(){ content.innerHTML=""; const Pr=w.proportion; if(typeof Pr.a!=="number")Pr.a=2; if(typeof Pr.b!=="number")Pr.b=5; if(typeof Pr.c!=="number")Pr.c=8;
+      const ctrls=mkEl("div","mz-ctrls"); ctrls.appendChild(stepper("a",()=>Pr.a,v=>{Pr.a=Math.max(1,Math.min(30,v));persist();renderProportion();},1,30)); ctrls.appendChild(stepper("b",()=>Pr.b,v=>{Pr.b=Math.max(1,Math.min(60,v));persist();renderProportion();},1,60)); ctrls.appendChild(stepper("c",()=>Pr.c,v=>{Pr.c=Math.max(1,Math.min(60,v));persist();renderProportion();},1,60)); content.appendChild(ctrls);
+      content.appendChild(mkEl("div","mz-hint","Tableau de proportionnalité : trouve la 4ᵉ valeur (produit en croix)."));
+      const tb=mkEl("table","mz-ptab"); const r1=mkEl("tr"); r1.appendChild(mkEl("td","mz-pcell",String(Pr.a))); r1.appendChild(mkEl("td","mz-pcell",String(Pr.c))); const r2=mkEl("tr"); r2.appendChild(mkEl("td","mz-pcell",String(Pr.b))); r2.appendChild(mkEl("td","mz-pcell mz-px","?")); tb.appendChild(r1); tb.appendChild(r2); content.appendChild(tb);
+      const x=Pr.b*Pr.c/Pr.a; const out=mkEl("div","mz-out"); out.innerHTML="Produit en croix : <b>"+Pr.a+" × ? = "+Pr.b+" × "+Pr.c+"</b><br>? = ("+Pr.b+" × "+Pr.c+") ÷ "+Pr.a+" = <b>"+fracStr(Pr.b*Pr.c,Pr.a)+"</b> ≈ "+fmtVal(x); content.appendChild(out); }
+
+    function renderLancers(){ content.innerHTML=""; const Lc=w.lancers; if(typeof Lc.faces!=="number")Lc.faces=6; if(!Array.isArray(Lc.counts)||Lc.counts.length!==Lc.faces)Lc.counts=new Array(Lc.faces).fill(0); if(typeof Lc.total!=="number")Lc.total=Lc.counts.reduce((a,b)=>a+b,0);
+      const ctrls=mkEl("div","mz-ctrls"); [["dé",6],["pièce",2]].forEach(t=>{ const b=mkEl("button","mz-seg"+(Lc.faces===t[1]?" on":""),t[0]); b.addEventListener("pointerdown",e=>e.stopPropagation()); b.addEventListener("click",()=>{ Lc.faces=t[1]; Lc.counts=new Array(t[1]).fill(0); Lc.total=0; persist(); renderLancers(); }); ctrls.appendChild(b); }); content.appendChild(ctrls);
+      const c2=mkEl("div","mz-ctrls"); function throwN(n){ for(let i=0;i<n;i++){ const fc=Math.floor(Math.random()*Lc.faces); Lc.counts[fc]++; } Lc.total+=n; persist(); renderLancers(); } [1,10,100].forEach(n=>{ const b=mkEl("button","mz-btn","+"+n); b.addEventListener("pointerdown",e=>e.stopPropagation()); b.addEventListener("click",()=>throwN(n)); c2.appendChild(b); }); const rb=mkEl("button","mz-btn","↺"); rb.addEventListener("pointerdown",e=>e.stopPropagation()); rb.addEventListener("click",()=>{ Lc.counts=new Array(Lc.faces).fill(0); Lc.total=0; persist(); renderLancers(); }); c2.appendChild(rb); content.appendChild(c2);
+      const max=Math.max(1,Math.max.apply(null,Lc.counts)); const chart=mkEl("div","mz-chart"); Lc.counts.forEach((c,i)=>{ const col=mkEl("div","mz-ccol"); col.appendChild(mkEl("div","mz-cval",String(c))); const bw=mkEl("div","mz-cbarwrap"); const bar=mkEl("div","mz-cbar"); bar.style.height=Math.round(c/max*100)+"%"; bw.appendChild(bar); col.appendChild(bw); col.appendChild(mkEl("div","mz-cface",Lc.faces===2?(i===0?"P":"F"):String(i+1))); col.appendChild(mkEl("div","mz-cfreq",Lc.total?Math.round(c/Lc.total*100)+"%":"—")); chart.appendChild(col); }); content.appendChild(chart);
+      const out=mkEl("div","mz-out"); out.innerHTML="Total : <b>"+Lc.total+"</b> lancers &nbsp;·&nbsp; théorique : <b>"+fracStr(1,Lc.faces)+"</b> ≈ "+Math.round(100/Lc.faces)+"%"; content.appendChild(out); }
+
+    function renderPythagore(){ content.innerHTML=""; const Py=w.pythagore; if(typeof Py.a!=="number")Py.a=3; if(typeof Py.b!=="number")Py.b=4;
+      const ctrls=mkEl("div","mz-ctrls"); ctrls.appendChild(stepper("a",()=>Py.a,v=>{Py.a=Math.max(1,Math.min(8,v));persist();renderPythagore();},1,8)); ctrls.appendChild(stepper("b",()=>Py.b,v=>{Py.b=Math.max(1,Math.min(8,v));persist();renderPythagore();},1,8)); content.appendChild(ctrls);
+      const a=Py.a,b=Py.b,c=Math.sqrt(a*a+b*b);
+      const sq1=[[0,0],[a,0],[a,-a],[0,-a]], sq2=[[0,0],[0,b],[-b,b],[-b,0]], sq3=[[a,0],[0,b],[b,b+a],[a+b,a]], tri=[[0,0],[a,0],[0,b]];
+      const all=sq1.concat(sq2,sq3,tri); let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9; all.forEach(p=>{ const sx=p[0],sy=-p[1]; if(sx<minX)minX=sx; if(sx>maxX)maxX=sx; if(sy<minY)minY=sy; if(sy>maxY)maxY=sy; }); minX-=0.6;minY-=0.6;maxX+=0.6;maxY+=0.6; const vbW=maxX-minX,vbH=maxY-minY;
+      const svg=document.createElementNS(NS,"svg"); svg.setAttribute("viewBox",minX+" "+minY+" "+vbW+" "+vbH); svg.setAttribute("class","mz-pyth"); const fs=(vbW*0.05).toFixed(2);
+      function poly(co,cl){ const p=document.createElementNS(NS,"polygon"); p.setAttribute("points",co.map(c=>c[0]+","+(-c[1])).join(" ")); p.setAttribute("class",cl); svg.appendChild(p); }
+      function label(co,txt){ let X=0,Y=0; co.forEach(c=>{X+=c[0];Y+=c[1];}); X/=co.length;Y/=co.length; const t=document.createElementNS(NS,"text"); t.setAttribute("x",X); t.setAttribute("y",-Y); t.setAttribute("class","mz-sqlbl"); t.setAttribute("font-size",fs); t.setAttribute("text-anchor","middle"); t.textContent=txt; svg.appendChild(t); }
+      poly(sq1,"mz-sqa"); poly(sq2,"mz-sqb"); poly(sq3,"mz-sqc"); poly(tri,"mz-trip"); label(sq1,"a²="+(a*a)); label(sq2,"b²="+(b*b)); label(sq3,"c²="+(a*a+b*b));
+      content.appendChild(svg); const perfect=Number.isInteger(c); const out=mkEl("div","mz-out"); out.innerHTML="<b>a² + b² = c²</b> → "+(a*a)+" + "+(b*b)+" = "+(a*a+b*b)+" &nbsp;·&nbsp; c = √"+(a*a+b*b)+" "+(perfect?("= <b>"+c+"</b>"):("≈ <b>"+fmtVal(c)+"</b>")); content.appendChild(out); }
+
+    function renderTool(){ const t=w.tool; if(t==="barres")renderBarres(); else if(t==="droite")renderDroite(); else if(t==="rapporteur")renderRapporteur(); else if(t==="balance")renderBalance(); else if(t==="aires")renderAires(); else if(t==="proportion")renderProportion(); else if(t==="lancers")renderLancers(); else if(t==="pythagore")renderPythagore(); else renderPizza(); }
+    renderTool();
   }
   function fillTimer(w,body,el){
     const tw=document.createElement("div"); tw.className="tw";
@@ -2024,7 +2489,7 @@
   document.addEventListener("click",e=>{ if(!themePop.hidden && !themePop.contains(e.target) && e.target!==themeBtn && !themeBtn.contains(e.target)) themePop.hidden=true; });
   addPop.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{ addPop.hidden=true; addWidget(b.dataset.type); }));
   document.addEventListener("click",e=>{ if(!addPop.hidden && !addPop.contains(e.target) && e.target.id!=="addW") addPop.hidden=true; });
-  function addWidget(type){ const n=page().widgets.length; const off=20+(n%6)*26; let w;
+  function addWidget(type){ snapshot(); const n=page().widgets.length; const off=20+(n%6)*26; let w;
     if(type==="plan")w=planW(defaultClasses(),off,off);
     else if(type==="video")w=videoW("",off,off);
     else if(type==="timer")w=timerW(off,off);
@@ -2042,6 +2507,10 @@
     else if(type==="calc")w=calcW(off,off);
     else if(type==="tableur")w=tableurW(off,off);
     else if(type==="code")w=codeW(off,off);
+    else if(type==="exo")w=exoW(off,off);
+    else if(type==="qr")w=qrW(off,off);
+    else if(type==="reveal")w=revealW(off,off);
+    else if(type==="manip")w=manipW(off,off);
     else w=clockW(off,off);
     page().widgets.push(w); persist(); renderCanvas(); }
 
@@ -2115,7 +2584,8 @@
 
   // ---------- contrôles globaux ----------
   document.getElementById("editPages").addEventListener("click",e=>{ editPages=!editPages; e.currentTarget.classList.toggle("primary",editPages); e.currentTarget.textContent=editPages?"Terminer":"Gérer les pages"; document.body.classList.toggle("editpages",editPages); });
-  document.getElementById("expandBtn").addEventListener("click",()=>{ const p=page(); if(!p)return; p.expand=(((p.expand||1))%3)+1; applyCanvasSize(); canvas.querySelectorAll(".widget").forEach(el=>{ const w=p.widgets.find(x=>x.id===el.dataset.wid); if(w){ clampW(w); el.style.left=w.x+"px"; el.style.top=w.y+"px"; el.style.width=w.w+"px"; el.style.height=w.h+"px"; if(el._refit)el._refit(); } }); persist(); });
+  document.getElementById("expandBtn").addEventListener("click",()=>{ const p=page(); if(!p)return; snapshot(); p.expand=(((p.expand||1))%3)+1; applyCanvasSize(); canvas.querySelectorAll(".widget").forEach(el=>{ const w=p.widgets.find(x=>x.id===el.dataset.wid); if(w){ clampW(w); el.style.left=w.x+"px"; el.style.top=w.y+"px"; el.style.width=w.w+"px"; el.style.height=w.h+"px"; if(el._refit)el._refit(); } }); persist(); });
+  (function(){ const fsBtn=document.getElementById("fsBtn"); if(!fsBtn)return; function fsTarget(){ return document.querySelector(".app")||document.documentElement; } function isFs(){ return document.fullscreenElement||document.webkitFullscreenElement; } fsBtn.addEventListener("click",()=>{ try{ if(isFs()){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); } else { const e=fsTarget(); (e.requestFullscreen||e.webkitRequestFullscreen||function(){}).call(e); } }catch(_){ } }); function upd(){ fsBtn.textContent=isFs()?"⛶ Quitter":"⛶ Plein écran"; } document.addEventListener("fullscreenchange",upd); document.addEventListener("webkitfullscreenchange",upd); })();
   const mute=document.getElementById("mute"),mlbl=document.getElementById("mlbl");
   mute.addEventListener("click",()=>{ muted=!muted; mute.classList.toggle("muted",muted); mute.setAttribute("aria-pressed",String(muted)); mute.title=muted?"Activer le son":"Couper le son"; mlbl.textContent=muted?"Muet":"Son"; if(muted&&window.speechSynthesis)try{speechSynthesis.cancel();}catch(e){} });
   const helpBg=document.getElementById("helpBg");
