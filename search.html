@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MULTISEARCH v1.17</title>
+<title>MULTISEARCH v2.1</title>
 <style>
 :root{
   --bg:#f4f6fb;--bg1:#fff;--bg2:#f0f3f8;--bg3:#e5eaf4;--bg4:#d8dff0;
@@ -162,6 +162,18 @@ html.dark .yn-tag.yn-ok span{color:#fcd34d;}
 
 /* Grille */
 #grid{flex:1;display:grid;gap:2px;background:var(--bd);overflow:hidden;}
+/* ── Mode Fenêtres (façon ClassroomPDC) ── */
+#grid.winmode{display:block;position:relative;background:var(--bg3);}
+#grid.winmode .pane{
+  position:absolute;min-width:260px;min-height:180px;
+  border:1px solid var(--bd2);border-radius:7px;
+  box-shadow:0 3px 14px rgba(12,21,37,.12);
+  resize:both;overflow:hidden;
+}
+#grid.winmode .pane.ap{border-color:#f59e0b;outline:2px solid #f59e0b;box-shadow:0 8px 28px rgba(245,158,11,.30),0 6px 24px rgba(12,21,37,.18);}
+html.dark #grid.winmode .pane.ap{border-color:#fbbf24;outline-color:#fbbf24;box-shadow:0 8px 28px rgba(251,191,36,.28),0 6px 24px rgba(0,0,0,.5);}
+#grid.winmode .ph{cursor:move;border-radius:9px 9px 0 0;}
+html.dark #grid.winmode .pane{box-shadow:0 6px 24px rgba(0,0,0,.5);}
 #grid.l1{grid-template-columns:1fr;}
 #grid.l2h{grid-template-columns:1fr 1fr;}
 #grid.l2v{grid-template-rows:1fr 1fr;}
@@ -310,7 +322,7 @@ kbd{background:var(--bg3);border:1px solid var(--bd2);border-radius:5px;padding:
 <div id="sb">
   <div id="tog" onclick="tSB()">&#8249;</div>
   <div class="sbi">
-    <div id="logo">MULTISEARCH <em>v1.17</em></div>
+    <div id="logo">MULTISEARCH <em>v2.1</em></div>
 
     <div class="sbox">
       <input id="q" type="text" placeholder="w python  ·  yt cats  ·  img sunset…" autocomplete="off"
@@ -376,6 +388,10 @@ kbd{background:var(--bg3);border:1px solid var(--bd2);border-radius:5px;padding:
     <button class="lbtn" onclick="setL('l6b')"   title="6 panneaux (2 colonnes)">&#9632;&#215;6&#8595;</button>
     <button class="lbtn" onclick="setL('l8a')"   title="8 panneaux (4 colonnes)">&#9632;&#215;8&#8594;</button>
     <button class="lbtn" onclick="setL('l8b')"   title="8 panneaux (2 colonnes)">&#9632;&#215;8&#8595;</button>
+    <button class="lbtn" id="wm-btn" onclick="toggleWinMode()" title="Basculer Fenêtres flottantes / Grille fixe"
+      style="font-size:.86rem;font-weight:800;padding:5px 14px;background:linear-gradient(135deg,#7c3aed,#4d8eff);color:#fff;border:none;">🪟 Fenêtres</button>
+    <button class="lbtn" id="add-btn" onclick="showAddMenu()" title="Rouvrir un widget fermé"
+      style="font-size:.95rem;font-weight:800;padding:5px 12px;background:var(--g2);color:#fff;border:none;">＋</button>
     <div class="sep"></div>
     <button class="lbtn hl" onclick="oGrp(['ddg','bing','mojeek','brave'],'Web&#215;4')"              title="Ouvrir DDG + Bing + Mojeek + Brave dans 4 panneaux">&#8853;Web</button>
     <button class="lbtn hl" onclick="oGrp(['perplexity','phind','claude'],'IA&#215;3')"               title="Ouvrir Perplexity + Phind + Claude dans 3 panneaux">&#8853;IA</button>
@@ -864,7 +880,7 @@ function init(){
     document.documentElement.classList.add('dark');
     document.getElementById('dm-btn').textContent='🌙';
   }
-  const savedL=localStorage.getItem('ms_layout')||localStorage.getItem('ms_layout')||'l8a';
+  const savedL=localStorage.getItem('ms_layout')||'l8a';
   const validL=['l1','l2h','l2v','l3r','l3b','l4','l6a','l6b','l8a','l8b'].includes(savedL)?savedL:'l8a';
   const savedAP=parseInt(localStorage.getItem('ms_ap')||localStorage.getItem('ms_ap')||'1');
   setL(validL);
@@ -1028,6 +1044,104 @@ function loadHF(){
 }
 
 // ── Popup commandes ──────────────────────────────────────
+// ── Mode Fenêtres (façon ClassroomPDC) ──────────────────
+let winMode = localStorage.getItem('ms_winmode')!=='0';   // Fenêtres par défaut
+
+function toggleWinMode(){
+  winMode=!winMode;
+  localStorage.setItem('ms_winmode', winMode?'1':'0');
+  applyWinMode();
+  showT(winMode?'🪟 Mode Fenêtres':'▦ Mode Grille','ok');
+}
+
+function applyWinMode(){
+  const grid=document.getElementById('grid');
+  const btn=document.getElementById('wm-btn');
+  if(btn) btn.textContent=winMode?'🪟 Fenêtres':'▦ Grille';
+  if(winMode){
+    grid.classList.add('winmode');
+    if(btn) btn.classList.add('a');
+    const saved=JSON.parse(localStorage.getItem('ms_winpos2')||'{}');
+    document.querySelectorAll('.pane').forEach((p,i)=>{
+      const pos=saved[p.id]||defaultWinPos(i);
+      p.style.left=pos.l; p.style.top=pos.t;
+      p.style.width=pos.w; p.style.height=pos.h;
+      p.style.display=closedP.has(parseInt(p.id.slice(1)))?'none':'';
+      makeDraggable(p);
+    });
+  } else {
+    grid.classList.remove('winmode');
+    if(btn) btn.classList.remove('a');
+    document.querySelectorAll('.pane').forEach(p=>{
+      p.style.left='';p.style.top='';p.style.width='';p.style.height='';p.style.display='';
+    });
+  }
+}
+
+function defaultWinPos(i){
+  // Réplique exacte de la grille l8a : 4 colonnes × 2 lignes, gap 2px, bord à bord
+  const grid=document.getElementById('grid');
+  const W=grid?.clientWidth||1200, H=grid?.clientHeight||700;
+  const cols=4, rows=2, gap=2;
+  const cw=Math.floor((W-gap*(cols-1))/cols);
+  const ch=Math.floor((H-gap*(rows-1))/rows);
+  const col=i%cols, row=Math.floor(i/cols);
+  return {
+    l:(col*(cw+gap))+'px',
+    t:(row*(ch+gap))+'px',
+    w:cw+'px',
+    h:ch+'px'
+  };
+}
+
+function saveWinPos(){
+  const saved={};
+  document.querySelectorAll('.pane').forEach(p=>{
+    saved[p.id]={l:p.style.left,t:p.style.top,w:p.style.width||p.offsetWidth+'px',h:p.style.height||p.offsetHeight+'px'};
+  });
+  localStorage.setItem('ms_winpos2',JSON.stringify(saved));
+}
+
+function makeDraggable(pane){
+  const hdr=pane.querySelector('.ph');
+  if(!hdr||hdr.dataset.drag) return;
+  hdr.dataset.drag='1';
+  // Clic n'importe où sur la fenêtre = devient active et passe devant
+  pane.addEventListener('mousedown',()=>{
+    if(winMode) setAP(parseInt(pane.id.slice(1)));
+  });
+  hdr.addEventListener('mousedown',(e)=>{
+    if(!winMode) return;
+    if(e.target.closest('.pabtn')) return;
+    const grid=document.getElementById('grid');
+    const gr=grid.getBoundingClientRect();
+    const pr=pane.getBoundingClientRect();
+    const dx=e.clientX-pr.left, dy=e.clientY-pr.top;
+    // Les iframes capturent la souris → bouclier temporaire
+    const shield=document.createElement('div');
+    shield.style.cssText='position:fixed;inset:0;z-index:9999;cursor:move;';
+    document.body.appendChild(shield);
+    const move=(ev)=>{
+      let l=ev.clientX-gr.left-dx, t=ev.clientY-gr.top-dy;
+      l=Math.max(0,Math.min(l,gr.width-80));
+      t=Math.max(0,Math.min(t,gr.height-40));
+      pane.style.left=l+'px'; pane.style.top=t+'px';
+    };
+    const up=()=>{
+      shield.remove();
+      document.removeEventListener('mousemove',move);
+      document.removeEventListener('mouseup',up);
+      saveWinPos();
+    };
+    document.addEventListener('mousemove',move);
+    document.addEventListener('mouseup',up);
+    e.preventDefault();
+  });
+  if(window.ResizeObserver){
+    new ResizeObserver(()=>{ if(winMode) saveWinPos(); }).observe(pane);
+  }
+}
+
 function toggleDark(){
   const dark=document.documentElement.classList.toggle('dark');
   localStorage.setItem('nexus_dark', dark?'1':'0');
@@ -1102,7 +1216,7 @@ function setL(l){
   curL=l;document.getElementById('grid').className=l;
   document.querySelectorAll('#tb .lbtn:not(.d):not(.hl)').forEach((b,i)=>{
     b.classList.toggle('a',['l1','l2h','l2v','l3r','l3b','l4','l6a','l6b'][i]===l);});
-  const cnt=PN[l]||1;if(AP>cnt)AP=1;buildPanes(cnt);buildTR(cnt);restoreAll();
+  const cnt=PN[l]||1;if(AP>cnt)AP=1;buildPanes(cnt);buildTR(cnt);restoreAll();applyWinMode();
   localStorage.setItem('ms_layout',l);
 }
 function buildTR(cnt){
@@ -1339,87 +1453,7 @@ function aiAddMsg(id,role,text){
 
 
 
-// ── P1 : Moteur natif (DDG Instant Answer + Wikipedia Search) ─
-async function injectSearch(id, qv){
-  const pane=document.getElementById('p'+id);if(!pane)return;
-  rmC(pane);
-  pane.style.position='relative';
 
-  const wrap=document.createElement('div');
-  wrap.style.cssText='position:absolute;inset:0;top:29px;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);';
-
-  const hdr=document.createElement('div');hdr.className='ai-header';hdr.style.flexShrink='0';
-  hdr.innerHTML=`<span class="ai-dot"></span>🔍 Résultats : "${qv}" &nbsp;<a href="https://duckduckgo.com/?q=${encodeURIComponent(qv)}" target="_blank" style="color:var(--ac);font-size:.68rem">↗ DDG</a> <a href="https://www.google.com/search?q=${encodeURIComponent(qv)}" target="_blank" style="color:var(--ac);font-size:.68rem;margin-left:6px">↗ Google</a>`;
-
-  const list=document.createElement('div');
-  list.style.cssText='flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;';
-  list.innerHTML='<div style="color:var(--t3);font-size:.78rem;padding:8px">⏳ Chargement…</div>';
-
-  wrap.appendChild(hdr);wrap.appendChild(list);
-  pane.appendChild(wrap);
-  PD[id]={label:'🔍 Recherche: "'+qv+'"'};updatePU(id,'🔍 Recherche: "'+qv+'"');
-
-  try{
-    // 1. DDG Instant Answer (CORS ouvert)
-    const [ddgRes, wikiRes] = await Promise.allSettled([
-      fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(qv)}&format=json&no_html=1&skip_disambig=1&t=nexussearch`),
-      fetch(`https://fr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(qv)}&srlimit=8&format=json&origin=*&uselang=fr`)
-    ]);
-
-    list.innerHTML='';
-
-    // DDG abstract
-    if(ddgRes.status==='fulfilled'){
-      const ddg=await ddgRes.value.json();
-      if(ddg.AbstractText){
-        const box=document.createElement('div');
-        box.style.cssText='padding:10px 12px;background:var(--bg1);border:1px solid var(--bd);border-left:3px solid var(--ac);border-radius:6px;';
-        box.innerHTML=`<div style="font-size:.72rem;color:var(--ac);font-weight:700;margin-bottom:4px">${ddg.AbstractSource||'Résumé'}</div>
-          <div style="font-size:.78rem;color:var(--t1);line-height:1.5">${ddg.AbstractText}</div>
-          ${ddg.AbstractURL?`<a href="${ddg.AbstractURL}" target="_blank" style="font-size:.68rem;color:var(--ac);display:block;margin-top:4px">↗ Source</a>`:''}`;
-        list.appendChild(box);
-      }
-      // DDG related topics
-      (ddg.RelatedTopics||[]).slice(0,4).forEach(t=>{
-        if(!t.Text||!t.FirstURL) return;
-        const a=mkResultCard(t.Text.split(' - ')[0], t.FirstURL, t.Text, '🦆 DDG');
-        list.appendChild(a);
-      });
-    }
-
-    // Wikipedia results
-    if(wikiRes.status==='fulfilled'){
-      const wiki=await wikiRes.value.json();
-      (wiki.query?.search||[]).forEach(r=>{
-        const url=`https://fr.wikipedia.org/wiki/${encodeURIComponent(r.title.replace(/ /g,'_'))}`;
-        const snippet=r.snippet.replace(/<[^>]+>/g,'');
-        const a=mkResultCard(r.title, url, snippet, '📖 Wikipédia');
-        list.appendChild(a);
-      });
-    }
-
-    if(!list.children.length){
-      list.innerHTML=`<div style="padding:16px;text-align:center;color:var(--t2);font-size:.78rem">
-        Aucun résultat local.<br><br>
-        <a href="https://duckduckgo.com/?q=${encodeURIComponent(qv)}" target="_blank" style="color:var(--ac)">↗ Chercher sur DuckDuckGo</a>
-      </div>`;
-    }
-  }catch(e){
-    list.innerHTML=`<div style="padding:16px;text-align:center;color:var(--t2);font-size:.78rem">⚠️ ${e.message}</div>`;
-  }
-}
-
-function mkResultCard(title, url, snippet, source){
-  const a=document.createElement('a');
-  a.href=url;a.target='_blank';
-  a.style.cssText='display:block;padding:8px 10px;border-radius:6px;background:var(--bg1);border:1px solid var(--bd);text-decoration:none;transition:border-color .15s;';
-  a.onmouseenter=()=>a.style.borderColor='var(--ac)';
-  a.onmouseleave=()=>a.style.borderColor='var(--bd)';
-  a.innerHTML=`<div style="font-size:.76rem;font-weight:600;color:var(--ac);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${title}</div>
-    <div style="font-size:.72rem;color:var(--t2);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${snippet}</div>
-    <div style="font-size:.64rem;color:var(--t3);margin-top:3px">${source}</div>`;
-  return a;
-}
 
 // ── P4 : Images via Wikimedia Commons API ────────────────
 async function injectImages(id, qv, url){
@@ -1429,35 +1463,6 @@ async function injectImages(id, qv, url){
   PD[id]={url:u, label:'🖼 Images: "'+qv+'"', q:qv};
 }
 
-// ── P5 : Carte OpenStreetMap embed ───────────────────────
-async function injectMap(id, qv){
-  const pane=document.getElementById('p'+id);if(!pane)return;
-  rmC(pane);
-  PD[id]={label:'🗺 Carte: "'+qv+'"'};updatePU(id,'🗺 Carte: "'+qv+'"');
-
-  try{
-    // Nominatim geocoding (CORS ouvert)
-    const geo=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(qv)}&format=json&limit=1`,
-      {headers:{'Accept-Language':'fr'}});
-    const places=await geo.json();
-    let url;
-    if(places.length){
-      const {lat,lon,boundingbox:bb}=places[0];
-      if(bb){
-        // Use bounding box for best zoom
-        url=`https://www.openstreetmap.org/export/embed.html?bbox=${bb[2]},${bb[0]},${bb[3]},${bb[1]}&layer=mapnik&marker=${lat},${lon}`;
-      } else {
-        url=`https://www.openstreetmap.org/export/embed.html?lat=${lat}&lon=${lon}&zoom=12&layer=mapnik&marker=${lat},${lon}`;
-      }
-    } else {
-      // Fallback: search page
-      url=`https://www.openstreetmap.org/search?query=${encodeURIComponent(qv)}`;
-    }
-    inject(id, url, '🗺 Carte: "'+qv+'"');
-  }catch(e){
-    inject(id, `https://www.openstreetmap.org/search?query=${encodeURIComponent(qv)}`, '🗺 Carte: "'+qv+'"');
-  }
-}
 
 async function injectNews(id, qv, url){
   const qe=encodeURIComponent(qv);
@@ -1503,7 +1508,12 @@ function inject(id,url,label,retryCount=0){
   fr.loading='lazy';
   fr.sandbox='allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox';
 
+  let settled=false;   // une fois la page validée OK, plus aucune détection
+  let firstLoad=true;  // la détection ne s'applique qu'au premier chargement
+
   const doRetryOrBlock=()=>{
+    if(settled) return;
+    settled=true;
     if(retryCount < MAX_RETRIES){
       console.log(`[NEXUS] P${id} auto-retry ${retryCount+1}/${MAX_RETRIES}…`);
       fr.remove();
@@ -1514,22 +1524,32 @@ function inject(id,url,label,retryCount=0){
   };
 
   const t=setTimeout(()=>{
+    if(settled) return;
     try{
-      const u=fr.contentDocument?.URL||'';
-      if(u===''||u==='about:blank'||u.startsWith('chrome-error')) doRetryOrBlock();
-    }catch(e){}
+      const doc=fr.contentDocument;
+      // doc null = cross-origin (depuis file:// pas d'exception) = chargé/en cours → OK
+      if(doc===null){ settled=true; return; }
+      const u=doc.URL||'';
+      if(u==='about:blank'||u.startsWith('chrome-error')) doRetryOrBlock();
+    }catch(e){ settled=true; /* cross-origin = chargé OK */ }
   },3000);
 
   fr.addEventListener('load',()=>{
     clearTimeout(t);
+    if(settled) return;
+    if(!firstLoad) return;   // navigations internes = jamais re-détecter
+    firstLoad=false;
     try{
-      const u=fr.contentDocument?.URL||'';
+      const doc=fr.contentDocument;
+      // doc null (file:// cross-origin) = page chargée correctement
+      if(doc===null){ settled=true; return; }
+      const u=doc.URL||'';
       if(u.startsWith('chrome-error')||u==='about:blank') doRetryOrBlock();
-      else{
-        const body=fr.contentDocument?.body?.innerText||'';
-        if(body.includes("n'autorise pas")||body.includes("refused to connect")||body.includes("ERR_")) doRetryOrBlock();
-      }
-    }catch(e){}
+      else settled=true;
+    }catch(e){
+      // SecurityError cross-origin = la page a chargé correctement
+      settled=true;
+    }
   });
 
   fr.onerror=()=>{ clearTimeout(t); doRetryOrBlock(); };
@@ -1592,11 +1612,15 @@ function injectIframe(pane,id,url,label,retryCount=0){
   fr.loading='lazy';
   fr.sandbox='allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox';
 
+  let settled=false;
+  let firstLoad=true;
+
   const doBlock=()=>{
+    if(settled) return;
+    settled=true;
     if(retryCount < MAX_RETRIES){
       console.log(`[NEXUS] P${id} retry ${retryCount+1}/${MAX_RETRIES}…`);
       fr.remove();
-      // Délai croissant : 1s, 2s, 3s
       setTimeout(()=>injectIframe(pane,id,url,label,retryCount+1), (retryCount+1)*1000);
     } else {
       showIframeBlocked(pane,id,url,label);
@@ -1604,22 +1628,27 @@ function injectIframe(pane,id,url,label,retryCount=0){
   };
 
   const t=setTimeout(()=>{
+    if(settled) return;
     try{
-      const u=fr.contentDocument?.URL||'';
-      if(u===''||u==='about:blank'||u.startsWith('chrome-error')) doBlock();
-    }catch(e){}
+      const doc=fr.contentDocument;
+      if(doc===null){ settled=true; return; }
+      const u=doc.URL||'';
+      if(u==='about:blank'||u.startsWith('chrome-error')) doBlock();
+    }catch(e){ settled=true; }
   },3000);
 
   fr.addEventListener('load',()=>{
     clearTimeout(t);
+    if(settled) return;
+    if(!firstLoad) return;
+    firstLoad=false;
     try{
-      const u=fr.contentDocument?.URL||'';
+      const doc=fr.contentDocument;
+      if(doc===null){ settled=true; return; }
+      const u=doc.URL||'';
       if(u.startsWith('chrome-error')||u==='about:blank') doBlock();
-      else{
-        const body=fr.contentDocument?.body?.innerText||'';
-        if(body.includes("n'autorise pas")||body.includes("refused to connect")||body.includes("ERR_")) doBlock();
-      }
-    }catch(e){} // cross-origin = chargé OK
+      else settled=true;
+    }catch(e){ settled=true; } // cross-origin = chargé OK
   });
 
   fr.onerror=()=>{ clearTimeout(t); doBlock(); };
@@ -1683,22 +1712,76 @@ function showOnglet(id,url,label,sn){
     `</div>`;
   pane.appendChild(div);updatePU(id,'&#8599; '+label);
 }
+let topZ=100;
 function setAP(id){
   AP=id;document.querySelectorAll('.pane').forEach(p=>p.classList.remove('ap'));
-  document.getElementById('p'+id)?.classList.add('ap');
+  const pane=document.getElementById('p'+id);
+  if(pane){
+    pane.classList.add('ap');
+    if(winMode) pane.style.zIndex=++topZ;   // passe devant les autres
+  }
   document.getElementById('apn').textContent=id;
   document.querySelectorAll('.tbtn').forEach((b,i)=>b.classList.toggle('a',i+1===id));
   localStorage.setItem('ms_ap',id);
 }
 function rmC(pane){['.pempty','iframe','.tov','.ai-pane'].forEach(s=>pane.querySelectorAll(s).forEach(el=>el.remove()));}
+// Widgets fermés (mode Fenêtres)
+let closedP=new Set(JSON.parse(localStorage.getItem('ms_closed')||'[]'));
+
 function cP(id){
-  const pane=document.getElementById('p'+id);if(!pane)return;rmC(pane);delete PD[id];
+  const pane=document.getElementById('p'+id);if(!pane)return;
+  if(winMode){
+    // Mode Fenêtres : la croix FERME le widget
+    pane.style.display='none';
+    closedP.add(id);
+    localStorage.setItem('ms_closed',JSON.stringify([...closedP]));
+    if(AP===id){ // bascule sur la première fenêtre visible
+      const next=[...document.querySelectorAll('.pane')].find(p=>p.style.display!=='none');
+      if(next) setAP(parseInt(next.id.slice(1)));
+    }
+    showT('P'+id+' fermé — bouton ＋ pour rouvrir','ok');
+    return;
+  }
+  rmC(pane);delete PD[id];
   updatePU(id,'Panneau vide');
   const e=document.createElement('div');e.className='pempty';e.id='pe'+id;
   const ql=QUICK.map(sid=>{const s=findSite(sid);return s?`<button class="ql" onclick="setAP(${id});run('${sid}')">${s.ico} ${s.n.split(' ')[0]}</button>`:''}).join('');
   e.innerHTML=`<div class="bn">${id}</div><p>tape <code>cmd mot-clé</code> ou clique</p>`+
     `<span class="hint">ex: <code>yt lofi</code> · <code>w python</code></span><div class="qlinks">${ql}</div>`;
   pane.appendChild(e);showT('P'+id+' vidé','ok');
+}
+
+function reopenP(id){
+  const pane=document.getElementById('p'+id);if(!pane)return;
+  pane.style.display='';
+  closedP.delete(id);
+  localStorage.setItem('ms_closed',JSON.stringify([...closedP]));
+  setAP(id);
+  document.getElementById('addmenu')?.remove();
+  showT('P'+id+' rouvert','ok');
+}
+
+function showAddMenu(){
+  document.getElementById('addmenu')?.remove();
+  if(!closedP.size){ showT('Aucun widget fermé','er'); return; }
+  const btn=document.getElementById('add-btn');
+  const r=btn.getBoundingClientRect();
+  const m=document.createElement('div');m.id='addmenu';
+  m.style.cssText=`position:fixed;top:${r.bottom+4}px;left:${r.left}px;z-index:10000;background:var(--bg1);border:1px solid var(--bd2);border-radius:9px;box-shadow:0 8px 24px rgba(12,21,37,.2);padding:5px;display:flex;flex-direction:column;gap:2px;min-width:170px;`;
+  [...closedP].sort((a,b)=>a-b).forEach(id=>{
+    const lbl=PD[id]?.label||('Panneau '+id);
+    const b=document.createElement('button');
+    b.style.cssText='display:flex;align-items:center;gap:7px;padding:6px 10px;background:none;border:none;border-radius:6px;cursor:pointer;color:var(--t1);font-size:.78rem;text-align:left;';
+    b.onmouseenter=()=>b.style.background='var(--bg3)';
+    b.onmouseleave=()=>b.style.background='none';
+    b.innerHTML=`<b style="color:var(--ac)">P${id}</b> <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">${lbl}</span>`;
+    b.onclick=()=>reopenP(id);
+    m.appendChild(b);
+  });
+  document.body.appendChild(m);
+  setTimeout(()=>document.addEventListener('mousedown',function close(e){
+    if(!m.contains(e.target)&&e.target!==btn){m.remove();document.removeEventListener('mousedown',close);}
+  }),50);
 }
 // Commandes YubNub rapides (sidebar)
 const YN_QUICK=[
@@ -1769,85 +1852,6 @@ function renderYN(){
   });
 }
 
-// ── P8 : Tweets via Nitter RSS ───────────────────────────
-async function injectTweets(id, qv){
-  const pane=document.getElementById('p'+id);if(!pane)return;
-  rmC(pane);
-  pane.style.position='relative';
-
-  const wrap=document.createElement('div');
-  wrap.style.cssText='position:absolute;inset:0;top:29px;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);';
-  const hdr=document.createElement('div');hdr.className='ai-header';
-  hdr.innerHTML='<span class="ai-dot"></span>🐦 Tweets : "'+qv+'"';
-  const list=document.createElement('div');
-  list.style.cssText='flex:1;overflow-y:auto;padding:6px 8px;display:flex;flex-direction:column;gap:5px;';
-  list.innerHTML='<div style="color:var(--t3);font-size:.78rem;padding:8px">⏳ Chargement tweets…</div>';
-  wrap.appendChild(hdr);wrap.appendChild(list);
-  pane.appendChild(wrap);
-  PD[id]={label:'🐦 Tweets: "'+qv+'"',q:qv};updatePU(id,'🐦 Tweets: "'+qv+'"');
-
-  const qe=encodeURIComponent(qv);
-  const nitterInstances=[
-    `https://nitter.privacydev.net/search/rss?q=${qe}`,
-    `https://nitter.poast.org/search/rss?q=${qe}`,
-  ];
-
-  const fetchRSS=async(rssUrl)=>{
-    try{
-      const r=await fetch(rssUrl,{signal:AbortSignal.timeout(5000)});
-      if(r.ok){const t=await r.text();if(t.includes('<item>'))return t;}
-    }catch(e){}
-    for(const mkP of PROXIES){
-      try{
-        const r=await fetch(mkP(rssUrl),{signal:AbortSignal.timeout(5000)});
-        if(!r.ok)continue;
-        const t=await r.text();
-        if(t.includes('<item>'))return t;
-      }catch(e){continue;}
-    }
-    throw new Error('indisponible');
-  };
-
-  let text='';
-  for(const inst of nitterInstances){
-    try{text=await fetchRSS(inst);break;}catch(e){}
-  }
-
-  if(!text){
-    // Fallback : bouton onglet vers Twitter direct
-    list.innerHTML=`<div style="padding:16px;text-align:center;color:var(--t2);font-size:.78rem">
-      ⚠️ Nitter indisponible<br><br>
-      <a href="https://twitter.com/search?q=${qe}&f=live" target="_blank"
-         style="padding:8px 18px;background:#1da1f2;color:#fff;border-radius:7px;text-decoration:none;font-size:.82rem;font-weight:700;display:inline-block">
-        ↗ Ouvrir Twitter/X
-      </a>
-    </div>`;
-    return;
-  }
-
-  const xml=new DOMParser().parseFromString(text,'text/xml');
-  const items=[...xml.querySelectorAll('item')];
-  if(!items.length){list.innerHTML='<div style="padding:10px;color:var(--t3);font-size:.78rem">Aucun tweet trouvé.</div>';return;}
-
-  list.innerHTML='';
-  items.slice(0,30).forEach(item=>{
-    const title=(item.querySelector('title')?.textContent||'').replace(/<!\[CDATA\[|\]\]>/g,'').trim();
-    const link=item.querySelector('link')?.textContent||'#';
-    const author=item.querySelector('dc\\:creator,creator')?.textContent||'';
-    const date=item.querySelector('pubDate')?.textContent||'';
-    const d=date?new Date(date).toLocaleDateString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
-    if(!title)return;
-    const a=document.createElement('a');
-    a.href=link;a.target='_blank';
-    a.style.cssText='display:block;padding:8px 10px;border-radius:7px;background:var(--bg1);border:1px solid var(--bd);text-decoration:none;transition:border-color .15s;';
-    a.onmouseenter=()=>a.style.borderColor='#1da1f2';
-    a.onmouseleave=()=>a.style.borderColor='var(--bd)';
-    a.innerHTML=`<div style="font-size:.72rem;font-weight:700;color:#1da1f2;margin-bottom:3px">@${author}</div>
-      <div style="font-size:.76rem;color:var(--t0);line-height:1.4">${title}</div>
-      <div style="font-size:.65rem;color:var(--t3);margin-top:3px">${d}</div>`;
-    list.appendChild(a);
-  });
-}
 
 
 const PH={}; // {1:[url1,url2,...], 2:[...]}
