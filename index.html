@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>PluiePro v2.31</title>
+<title>PluiePro v2.32</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -231,6 +231,9 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   #optPanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:10003;overflow-y:auto;padding:16px}
   #optPanel.open{display:flex;align-items:flex-start;justify-content:center}
   #optCard{background:#0d0d0d;border:1px solid #2a2a2a;border-radius:12px;padding:16px;max-width:460px;width:100%;margin:auto;font-family:'Courier New',monospace}
+  /* OPTIONS ouvert depuis le GRAPH : panneau latéral droit, translucide, le graphe reste visible et actif */
+  #optPanel.opt-side{background:none;pointer-events:none;padding:0;justify-content:flex-end;overflow:hidden}
+  #optPanel.opt-side #optCard{pointer-events:auto;margin:0;height:100%;max-height:100dvh;overflow-y:auto;max-width:min(400px,88vw);border-radius:12px 0 0 12px;border-right:none;background:rgba(13,13,13,0.72);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
   .opt-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
   .opt-ttl{flex:1;font-size:15px;font-weight:900;color:#e0b84c}
   .opt-x{background:none;border:1px solid #444;border-radius:4px;color:#888;padding:4px 10px;cursor:pointer;font-size:16px}
@@ -476,7 +479,7 @@ document.addEventListener('DOMContentLoaded',function(){try{var vt=document.getE
         <button id="btnJ14" onclick="setView('j14');closeViewMenu()">J+14 <span>dans 14 jours</span></button>
         <div class="vm-sep">— tendance longue —</div>
         <button id="btnExt30" onclick="openExt30();closeViewMenu()" style="color:#88aaff">⤢ J+28 <span>ensemble</span></button>
-        <button id="btnGraph" onclick="openGraph();closeViewMenu()" style="color:#7ec97e">📈 GRAPH <span>J→J+28</span></button>
+        <button id="btnGraph" onclick="openGraph();closeViewMenu()" style="color:#7ec97e">📈 GRAPH <span>J→J+15</span></button>
         <button id="btnSeason" onclick="openSeason();closeViewMenu()" style="color:#d9a3ff">🗓 SAISON <span>3 mois</span></button>
       </div>
     </div>
@@ -1113,7 +1116,10 @@ function renderOptForm(){
   });
 }
 function bumpOpt(d){_canicOpts.off=Math.max(-9,Math.min(9,(_canicOpts.off||0)+d));renderOptForm();_canicSave();_redrawGraphCanic();}
-function openOpt(){renderOptForm();const p=document.getElementById('optPanel');if(p)p.classList.add('open');}
+function openOpt(){renderOptForm();const p=document.getElementById('optPanel');if(!p)return;
+  const g=document.getElementById('graphPanel');
+  p.classList.toggle('opt-side',!!(g&&g.classList.contains('open')));
+  p.classList.add('open');}
 function closeOpt(){const p=document.getElementById('optPanel');if(p)p.classList.remove('open');}
 /* ═══════════════════════════════════════════════════════════════
    MONITEUR DE COHÉRENCE INTERNE — « Santé des données »
@@ -1527,16 +1533,16 @@ async function openGraph(){
   if(typeof _cityLat==='undefined'||_cityLat==null){if(status){status.style.display='block';status.textContent='Cherchez une ville d\'abord.';}hide();return;}
   if(status){status.style.display='block';status.textContent='⏳ Chargement…';}
   hide();
-  if(ttl)ttl.textContent='📈 '+((typeof cityName!=='undefined'&&cityName)?cityName+' — ':'')+'J → J+28';
+  if(ttl)ttl.textContent='📈 '+((typeof cityName!=='undefined'&&cityName)?cityName+' — ':'')+'J → J+15';
   try{
     const dn=['dim','lun','mar','mer','jeu','ven','sam'];
     let labels=[],tmax=[],tmin=[],rain=[],codes=[];
     /* La synthèse multi-modèles (_tempByDay) peut encore se charger (fetchDailyTemps tourne en arrière-plan, notamment à l'ouverture auto en vue simplifiée). On l'attend jusqu'à ~12 s pour ne PAS dessiner le modèle par défaut (fallback, température différente → incohérence vue simplifiée vs GRAPH). */
     for(let _w=0;_w<60&&(!_tempSynthDone||!_rainByDay||!_rainByDay.length);_w++){await new Promise(r=>setTimeout(r,200));}
-    /* ── PARTIE 1 : J → J+14 (prévision déterministe, synthèse multi-modèles de la vue principale) ── */
+    /* ── J → J+15 (prévision déterministe, synthèse multi-modèles de la vue principale) — au-delà, voir la vue J+28 ── */
     if(_tempByDay&&_tempByDay.length&&_rainByDay&&_rainByDay.length){
       const today=new Date();
-      const N15=Math.min(15,_tempByDay.length,_rainByDay.length);
+      const N15=Math.min(16,_tempByDay.length,_rainByDay.length);
       for(let d=0;d<N15;d++){
         const dt=new Date(today);dt.setDate(today.getDate()+d);
         labels.push([dn[dt.getDay()],String(dt.getDate())]);
@@ -1548,7 +1554,7 @@ async function openGraph(){
       }
     }else{
       const url=`https://api.open-meteo.com/v1/forecast?latitude=${_cityLat}&longitude=${_cityLon}`
-        +`&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode&forecast_days=15&timezone=auto`;
+        +`&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode&forecast_days=16&timezone=auto`;
       const r=await _fetchTO(url,10000);
       if(!r.ok)throw new Error('API '+r.status);
       const d=await r.json();const dy=d&&d.daily;
@@ -1562,52 +1568,6 @@ async function openGraph(){
         codes.push((dy.weathercode&&dy.weathercode[i])||0);
       });
     }
-    /* ── PARTIE 2 : J+15 → J+28 (tendance ensemble, 4 modèles), raccordée à la suite — best effort : si indispo on garde J→J+14 ── */
-    try{
-      const ENS28=['gfs05','ecmwf_ifs025','icon_eu','gem_global'];
-      const med=a=>{const s=[...a].sort((x,y)=>x-y);const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;};
-      const res28=await Promise.all(ENS28.map(async id=>{
-        try{
-          const u=`https://ensemble-api.open-meteo.com/v1/ensemble?latitude=${_cityLat}&longitude=${_cityLon}`
-            +`&hourly=temperature_2m,precipitation&models=${id}&forecast_days=29&timezone=auto`;
-          const rr=await _fetchTO(u,15000);if(!rr.ok)return null;
-          const dd=await rr.json();if(!dd?.hourly?.time)return null;
-          return dd.hourly;
-        }catch(_){return null;}
-      }));
-      const oks=res28.filter(Boolean);
-      if(oks.length){
-        const maxLen=Math.max(...oks.map(h=>h.time.length));
-        const maxDay=Math.min(28,Math.floor(maxLen/24)-1);
-        for(let day=15;day<=maxDay;day++){
-          const h0=day*24,h1=h0+24;
-          const allMax=[],allMin=[],allSum=[];
-          let ref=null;
-          oks.forEach(hh=>{
-            if(h0>=hh.time.length)return;
-            if(!ref)ref=hh;
-            const tKeys=Object.keys(hh).filter(k=>k.startsWith('temperature_2m'));
-            const pKeys=Object.keys(hh).filter(k=>k.startsWith('precipitation'));
-            tKeys.forEach(tk=>{
-              let mx=-99,mn=99,okv=false;
-              for(let h=h0;h<Math.min(h1,hh.time.length);h++){const v=hh[tk][h];if(v!=null&&isFinite(v)){if(v>mx)mx=v;if(v<mn)mn=v;okv=true;}}
-              if(okv){allMax.push(mx);allMin.push(mn);}
-            });
-            pKeys.forEach(pk=>{
-              let s=0,okv=false;
-              for(let h=h0;h<Math.min(h1,hh.time.length);h++){const v=hh[pk][h];if(v!=null&&isFinite(v)){s+=v;okv=true;}}
-              if(okv)allSum.push(s);
-            });
-          });
-          if(!allMax.length||!ref)continue;
-          const dt=new Date(ref.time[h0]);
-          labels.push([dn[dt.getDay()],String(dt.getDate())]);
-          tmax.push(Math.round(med(allMax)));tmin.push(Math.round(med(allMin)));
-          const rm=allSum.length?allSum.reduce((a,b)=>a+b,0)/allSum.length:0;
-          rain.push(Math.round(rm*10)/10);codes.push(_rainToCode(rm));
-        }
-      }
-    }catch(_){}
     if(!labels.length)throw new Error('pas de données');
     /* ── Flèches de tendance : on lit EN DIRECT les runs précédents du modèle best_match (API previous-runs Open-Meteo), aucun stockage. Régression run-par-run (run actuel + previous_day1..4) = tendance des révisions, là où elle a du sens (jours proches). Jamais en vue simplifiée ni sur la page long terme. ── */
     let deltaT=[],deltaR=[];
@@ -1708,8 +1668,8 @@ async function openGraph(){
         ctx.save();ctx.textAlign='center';ctx.textBaseline='alphabetic';
         mMax.data.forEach((pt,i)=>{
           if(tmax[i]==null)return;
-          ctx.font=(isMob?14:18)+'px serif';
-          ctx.fillText(_wmoEmoji(codes[i]),pt.x,pt.y-(isMob?20:26));
+          ctx.font=(isMob?22:32)+"px 'Segoe UI Emoji','Apple Color Emoji',serif";
+          ctx.fillText(_wmoEmoji(codes[i]),pt.x,pt.y-(isMob?24:32));
           ctx.font='700 '+fs+'px "Courier New",monospace';
           const t=tmax[i]+'°',ty=pt.y-(isMob?6:8);
           chip(t,pt.x,ty);
