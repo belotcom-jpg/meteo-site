@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>PluiePro v2.32</title>
+<title>PluiePro v2.34</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -66,7 +66,58 @@ body{background:#000;color:#fff;font-family:'Courier New',monospace;padding:3px;
   #exploreBtn.searching{animation:spin 1s linear infinite}
   #exploreMenu{display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:9998;background:#0d0d0d;border:1px solid #333;border-radius:10px;padding:6px;min-width:215px;box-shadow:0 8px 24px rgba(0,0,0,0.6)}
   #exploreMenu.open{display:block}
-  #exploreMenu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;color:#ddd;font-family:'Courier New',monospace;font-size:13px;font-weight:700;text-align:left;padding:9px 10px;border-radius:7px;cursor:pointer}
+  #viewModeMenu{display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:9998;background:#0d0d0d;border:1px solid #333;border-radius:10px;padding:6px;min-width:235px;box-shadow:0 8px 24px rgba(0,0,0,0.6)}
+#viewModeMenu.open{display:block}
+#viewModeMenu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;color:#ddd;font-family:'Courier New',monospace;font-size:13px;font-weight:700;text-align:left;padding:9px 10px;border-radius:7px;cursor:pointer}
+#viewModeMenu button:hover{background:#1a1a1a}
+#viewModeWrap{position:relative;flex-shrink:0;display:flex}
+#horairePanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:10001;padding:6px}
+#horairePanel.open{display:flex;justify-content:center}
+#horaireCard{background:#0d0d0d;border:1px solid #2a2a2a;border-radius:10px;padding:8px 10px;max-width:1400px;width:100%;margin:0 auto;position:relative;display:flex;flex-direction:column;box-sizing:border-box}
+.hor-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex:none}
+#horaireTitle{font-family:'Courier New',monospace;font-size:14px;font-weight:700;color:#88aaff}
+#horaireStatus{text-align:center;color:#aaa;font-size:14px;font-family:'Courier New',monospace;padding:30px 0;flex:none}
+#horaireScroll{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}
+#horaireInner{min-width:100%}
+#qdHost{display:none;flex:1;min-height:0;flex-direction:column;overflow:hidden}
+.qd-bar{display:flex;justify-content:space-between;align-items:center;flex:none;padding:1px 2px}
+#qdTitle{font-family:'Courier New',monospace;font-size:11px;font-weight:700;color:#88aaff}
+.qd-x{background:#16222e;border:1px solid #33455a;border-radius:7px;color:#a5c8e8;font-family:'Courier New',monospace;font-size:11px;font-weight:900;padding:3px 9px;cursor:pointer}
+#qdStatus{text-align:center;color:#aaa;font-size:12px;font-family:'Courier New',monospace;padding:16px 0;flex:none}
+#qdScroll{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}
+.qd2-table{border-collapse:collapse;font-family:'Courier New',monospace;height:100%}
+.qd2-fit{width:100%;table-layout:fixed}
+.qd2-fit td{min-width:0!important;padding:0!important;font-size:13px;overflow:hidden;text-overflow:clip}
+.qd2-fit .qd-t{font-size:17px}
+.qd2-fit .qd-ciel{font-size:26px}
+.qd2-fit .qd-lbl{box-sizing:border-box;overflow:hidden}
+.qd-sp{padding:0!important;border:none!important;background:transparent!important}
+.qd2-fit .qd-h2 b{font-size:13px}
+.qd2-fit .qd-h2 small{font-size:10px}
+.qd2-fit .qd-pr,.qd2-fit .qd-s,.qd2-fit .qd-hu{font-size:11px}
+.qd-tc{display:inline-block;min-width:24px;padding:1px 2px;border-radius:6px;font-weight:900;line-height:1.25}
+.qd2-table .qd-lbl{position:sticky;left:0;background:#101820;color:#9fc0dd;font-size:10px;font-weight:900;padding:3px 6px;text-align:left;border-bottom:1px solid #1c2733;z-index:2;white-space:nowrap}
+.qd2-table .qd-lblh{color:#7a8fa5}
+.qd2-table td{padding:2px 3px;text-align:center;font-size:14px;color:#cfcfcf;border-bottom:1px solid #131313;border-left:1px solid #101010;white-space:nowrap;min-width:32px}
+.qd-hr{border-left:2px solid #3d5166!important}
+.qd-oB{background:rgba(255,255,255,0.05)}
+.qd-mid{border-left:2px solid #5b7bb0!important}
+.qd-now2{background:rgba(90,155,255,0.18)!important}
+.qd-h2{color:#8a8a8a;font-size:12px}
+.qd-h2 b{color:#fff;font-size:14px}
+.qd-h2 small{color:#555;font-size:8px}
+.qd-h2 .qd-day{color:#88aaff}
+.qd-t{font-size:16px;font-weight:900}
+.qd-p2{color:#555}
+.qd-p2 b{color:#5b9bff}
+.qd-pr{color:#8fb4d8;font-size:12px}
+.qd-ciel{font-size:28px}
+.qd-s{color:#ffe600;font-size:12px}
+.qd-w{color:#bdbdbd}
+.qd-g{color:#e0b84c}
+.qd-d{color:#9fd0ff;font-size:13px}
+.qd-hu{color:#7fb3a8;font-size:12px}
+#exploreMenu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;color:#ddd;font-family:'Courier New',monospace;font-size:13px;font-weight:700;text-align:left;padding:9px 10px;border-radius:7px;cursor:pointer}
   #exploreMenu button:hover{background:#1e2a3a}
   #exploreMenu button span{flex:1}
   #exploreMenu .em-sep{font-size:9px;color:#555;text-align:center;padding:7px 0 4px;letter-spacing:0.5px}
@@ -366,21 +417,25 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   #modelLegendInline .mdot{width:16px;height:2px;border-radius:1px;display:inline-block;vertical-align:middle}
 
 /* ===== Mode simplifié iPhone (?simple=ok) : vue J+1 en haut + GRAPH (J→J+8) en bas ===== */
-html.simple #clearBtn,
-html.simple #exploreWrap,
-html.simple #sourcesBar,
-html.simple #radarCard,
-html.simple #viewBtns{display:none!important}
+/* Vue iPhone sur grand écran : affichage en colonne de téléphone centrée */
+html.simple:not(.simple-full) .wrap{max-width:430px;margin:0 auto;border-left:1px solid #262626;border-right:1px solid #262626}
+html.simple:not(.simple-full) #clearBtn,
+html.simple:not(.simple-full) #exploreWrap,
+html.simple:not(.simple-full) #sourcesBar,
+html.simple:not(.simple-full) #viewBtns,
+html.simple #radarCard{display:none!important}
 html.simple #graphPanel{display:flex!important;position:relative!important;inset:auto!important;z-index:auto!important;background:transparent!important;padding:0!important;overflow:visible!important;flex:1.3 1 0!important;height:auto!important;min-height:0!important;margin:2px 0 0}
 html.simple #graphHeader{display:none!important}
 html.simple #graphCard{flex:1;display:flex;flex-direction:column;max-width:100%;margin:0;padding:6px 1px;min-height:0}
 html.simple #graphWrap{flex:1!important;min-height:0;display:block!important}
+html.simple.qdview #graphWrap,html.simple.qdview #graphStatus,html.simple.qdview .graph-leg{display:none!important}
 html.simple #graphCanvas{height:100%!important;width:100%!important}
 html.simple #graphPanel button[aria-label="Fermer"]{display:none!important}
 html.simple #graphNote{display:none!important}
 html.simple #graphStatus{padding:3px;font-size:11px}
 html.simple .canvas-container{flex:1 1 0!important;height:auto!important;max-height:none!important;min-height:0!important}
 html.simple .graph-leg{display:none!important}
+
 /* Chaîne flex : on remplit exactement la hauteur d'écran, sans vide ni ascenseur */
 html.simple body{padding:0!important;overflow:hidden!important;height:100vh!important;height:100dvh!important;min-height:0!important}
 html.simple .wrap{height:100vh!important;height:100dvh!important;overflow:hidden!important;gap:2px!important}
@@ -410,9 +465,20 @@ html.simple #simpleBtn{background:#00ffff!important;color:#000!important;box-sha
   try{
     var _p=new URLSearchParams(location.search).get('simple');
     var _isIPhone=/iPhone|iPod/.test(navigator.userAgent||'');
-    var _simple=(_p==='ok')?true:((_p==='no')?false:_isIPhone);
+    var _simple=(_p==='ok'||_p==='full'||_p==='detail')?true:((_p==='no')?false:_isIPhone);
     if(!_simple)return;
     document.documentElement.classList.add('simple');
+    if(_p==='full'||_p==='detail')document.documentElement.classList.add('simple-full');
+    if(_p==='detail'){
+      /* Vue Détail = layout vue iPhone, mais le pane du bas affiche le tableau ¼ h (openHoraire) dès que la ville est chargée */
+      document.addEventListener('DOMContentLoaded',function(){
+        var n=0;var iv=setInterval(function(){
+          n++;
+          if(typeof _cityLat==='number'&&_cityLat!=null&&typeof openHoraire==='function'){clearInterval(iv);try{openHoraire();}catch(e){}}
+          else if(n>150){clearInterval(iv);}
+        },400);
+      });
+    }
     document.addEventListener('DOMContentLoaded',function(){
       try{
         var gp=document.getElementById('graphPanel'),cw=document.getElementById('chartWrapper');
@@ -450,7 +516,15 @@ document.addEventListener('DOMContentLoaded',function(){try{var vt=document.getE
         <button onclick="findPollenCity();closeExploreMenu()">🌼 <span>Alerte pollen</span></button>
       </div>
     </div>
-    <button id="simpleBtn" onclick="toggleSimple()" title="Vue simplifiée (GRAPH + J+1)">📱</button>
+    <div id="viewModeWrap">
+      <button id="simpleBtn" onclick="toggleViewModeMenu(event)" title="Choisir la vue">📱▾</button>
+      <div id="viewModeMenu">
+        <button onclick="setViewMode('ok')">📱 <span>iPhone</span></button>
+        <button onclick="setViewMode('full')">📈 <span>Graph</span></button>
+        <button onclick="setViewMode('no')">🌧 <span>Pluie</span></button>
+        <button onclick="setViewMode('detail')">🕒 <span>Détail</span></button>
+      </div>
+    </div>
     <div id="helpWrap">
       <button id="helpBtn" onclick="toggleHelpMenu(event)" title="Aide & explications">❓</button>
       <div id="helpMenu">
@@ -1721,7 +1795,7 @@ async function openGraph(){
       data:{labels,datasets:[
         {label:'Max',data:tmax,borderColor:'#e23b3b',backgroundColor:'#e23b3b',borderWidth:isMob?2:3,tension:0.4,pointRadius:isMob?2:3,pointBackgroundColor:'#e23b3b',yAxisID:'yT',order:1,spanGaps:true},
         {label:'Min',data:tmin,borderColor:'#3b7ce2',backgroundColor:'#3b7ce2',borderWidth:isMob?2:3,tension:0.4,pointRadius:isMob?2:3,pointBackgroundColor:'#3b7ce2',yAxisID:'yT',order:2,spanGaps:true},
-        {type:'bar',label:'Pluie',data:rain,backgroundColor:'#2196f3',borderRadius:3,maxBarThickness:26,yAxisID:'yP',order:3}
+        {type:'bar',label:'Pluie',data:rain,backgroundColor:'#2196f3',borderRadius:3,maxBarThickness:isMob?17:26,barPercentage:isMob?0.58:0.9,yAxisID:'yP',order:3}
       ]},
       options:{
         responsive:true,maintainAspectRatio:false,
@@ -1737,7 +1811,8 @@ async function openGraph(){
       plugins:[canicBandsPlugin,bandsPlugin,labelPlugin,trendArrowPlugin]
     });
     if(status)status.style.display='none';
-    if(wrap)wrap.style.display='block';
+    const _qd=document.getElementById('qdHost');
+    if(wrap&&!(_qd&&_qd.style.display==='flex'))wrap.style.display='block';
     if(leg)leg.style.display='none';
   }catch(e){
     if(status){status.style.display='block';status.textContent='✕ '+e.message;}
@@ -2087,21 +2162,212 @@ async function findCanicular(){
 }
 
 /* ── retour ville par défaut ── */
-function toggleSimple(){
-  var bare=location.href.split('#')[0].split('?')[0];
-  var simple=document.documentElement.classList.contains('simple');
-  /* on force explicitement, pour pouvoir aussi quitter la vue simplifiée quand elle est le défaut (iPhone) */
-  location.href=bare+(simple?'?simple=no':'?simple=ok');
+/* ── Menu des vues (remplace le simple toggle 📱) ── */
+function toggleViewModeMenu(e){if(e)e.stopPropagation();const m=document.getElementById('viewModeMenu');if(m)m.classList.toggle('open');}
+function closeViewModeMenu(){const m=document.getElementById('viewModeMenu');if(m)m.classList.remove('open');}
+document.addEventListener('click',function(e){const w=document.getElementById('viewModeWrap');if(w&&!w.contains(e.target))closeViewModeMenu();});
+function setViewMode(v){var bare=location.href.split('#')[0].split('?')[0];location.href=bare+'?simple='+v;}
+
+/* ── Vue DÉTAIL : tableau transposé (temps en HORIZONTAL). Pas de temps : heure (défaut) ou ¼ h.
+   Vue iPhone/GRAPH/Détail : injecté DANS le pane du GRAPH (#graphCard). Vue PC : panneau plein écran. ── */
+let _qdStep='h';       /* 'h' = heure par heure (défaut) · 'q' = quart d'heure par quart d'heure */
+let _qdData=null;      /* cache du dernier fetch pour re-rendre sans re-fetcher */
+function _dirArrow(deg){if(deg==null||!isFinite(deg))return '·';const A=['↓','↙','←','↖','↑','↗','→','↘'];return A[Math.round((((deg%360)+360)%360)/45)%8];}
+function _qdChartAlign(){
+  /* Lit la position de la 1re heure pleine et la largeur d'une heure sur le graphe du haut (myChart),
+     en sautant la zone 5 min ('+5'', '+10''…). null si indisponible. */
+  try{
+    const ch=(typeof myChart!=='undefined')&&myChart;
+    if(!ch||!ch.scales||!ch.scales.x||!ch.data||!ch.data.labels)return null;
+    const labs=ch.data.labels.map(String);
+    const hi=[];for(let i=0;i<labs.length;i++)if(/^\d{1,2}h$/.test(labs[i]))hi.push(i);
+    if(hi.length<2)return null;
+    const x=ch.scales.x;
+    const x0=x.getPixelForValue(hi[0]),x1=x.getPixelForValue(hi[1]);
+    const colW=x1-x0;
+    if(!(colW>4)||!isFinite(x0))return null;
+    return {lead:Math.max(0,x0-colW/2),colW,firstHour:parseInt(labs[hi[0]])%24};
+  }catch(_){return null;}
 }
-function goHome(){
-  _windRanking=[];_windRankIdx=0;
-  _pollenRanking=[];_pollenRankIdx=0;
-  _hotRanking=[];_hotRankIdx=0;_canicRanking=[];_canicRankIdx=0;
-  const inp=document.getElementById('cityInput');
-  inp.value='Juvisy-sur-Orge';
-  document.getElementById('clearBtn').style.display='block';
-  _rainRanking=[];_rainRankIdx=0;
-  load();
+function _qdTempCol(t){return t>=35?'#ff2200':t>=28?'#ff6600':t>=22?'#ffaa00':t>=15?'#ffdd44':t>=8?'#88ddff':t>=0?'#aaddff':'#ccccff';}
+function _buildQDTable(m,i0,pm,tzNow,fit,al){
+  if(al){
+    /* démarrer à la même heure que la section horaire du graphe (l'heure d'après la zone 5 min) */
+    for(let i=i0;i<Math.min(i0+9,m.time.length);i++){
+      const t=m.time[i];
+      if(t.slice(11,16).endsWith(':00')&&parseInt(t.slice(11,13))===al.firstHour){i0=i;break;}
+    }
+  }
+  const dn=['dim','lun','mar','mer','jeu','ven','sam'];
+  const hourMode=(_qdStep==='h');
+  const g=(a,i)=>((m[a]||[])[i]);
+  /* somme sur les 4 quarts de l'heure commençant à i */
+  const sum4=(a,i)=>{let s=0,ok=false;for(let k=i;k<Math.min(i+4,(m[a]||[]).length);k++){const v=g(a,k);if(v!=null){s+=v;ok=true;}}return ok?s:null;};
+  const idx=[];
+  for(let i=i0;i<m.time.length;i++){
+    if(hourMode&&!m.time[i].slice(11,16).endsWith(':00'))continue;
+    idx.push(i);
+  }
+  const nowKey=tzNow.getFullYear()+'-'+String(tzNow.getMonth()+1).padStart(2,'0')+'-'+String(tzNow.getDate()).padStart(2,'0')
+    +'T'+String(tzNow.getHours()).padStart(2,'0');
+  const qNow=nowKey+':'+String(Math.floor(tzNow.getMinutes()/15)*15).padStart(2,'0');
+  const sunFrOf=i=>{
+    if(hourMode){const s=sum4('sunshine_duration',i);return (s!=null)?Math.max(0,Math.min(1,s/3600)):0;}
+    const s=g('sunshine_duration',i);return (s!=null)?Math.max(0,Math.min(1,s/900)):0;
+  };
+  const cell=(i,inner,cls,extraStyle)=>{
+    const t=m.time[i],hm=t.slice(11,16);
+    const c=['qd-c2'];
+    if(hm.endsWith(':00'))c.push('qd-hr');
+    if(hm==='00:00')c.push('qd-mid');
+    if(!hourMode&&(parseInt(t.slice(11,13))%2===1))c.push('qd-oB');   /* paquets d'1 h : heures impaires teintées */
+    if(hourMode?(t.slice(0,13)===nowKey):(t.slice(0,16)===qNow))c.push('qd-now2');
+    if(cls)c.push(cls);
+    const fr=sunFrOf(i);
+    let st='';
+    if(fr>0.05)st='background:rgba(255,225,0,'+(fr*0.10).toFixed(3)+');';
+    if(extraStyle)st+=extraStyle;
+    return '<td class="'+c.join(' ')+'"'+(st?(' style="'+st+'"'):'')+'>'+inner+'</td>';
+  };
+  /* alignement pixel sur le graphe du haut : largeur libellés + éventuelle colonne de garde (zone 5 min + axe) */
+  let lblW=56,spW=0;
+  if(al){
+    if(al.lead>=64){spW=Math.round(al.lead-56);}
+    else{lblW=Math.max(30,Math.round(al.lead));}
+  }
+  const sp=spW>2?'<td class="qd-sp"></td>':'';
+  const row=(lbl,fn,cls,styleFn)=>{let r='<tr><th class="qd-lbl">'+lbl+'</th>'+sp;idx.forEach(i=>{r+=cell(i,fn(i),cls,styleFn?styleFn(i):'');});return r+'</tr>';};
+  let html='<table class="qd2-table'+((fit||al)?' qd2-fit':'')+'"';
+  if(al){
+    const tw=(lblW+spW+al.colW*idx.length).toFixed(1);
+    html+=' style="width:'+tw+'px;min-width:'+tw+'px"';
+  }
+  html+='><colgroup><col style="width:'+lblW+'px">'
+    +(spW>2?('<col style="width:'+spW+'px">'):'')
+    +'</colgroup><tbody>';
+  html+='<tr><th class="qd-lbl qd-lblh">Heure</th>'+sp;
+  idx.forEach(i=>{
+    const t=m.time[i],hm=t.slice(11,16);
+    let lab='';
+    if(hm==='00:00'){const dt=new Date(t+':00');lab='<b class="qd-day">'+dn[dt.getDay()]+' '+dt.getDate()+'</b>';}
+    else if(hm.endsWith(':00'))lab='<b>'+parseInt(hm)+'h</b>';
+    else lab='<small>'+hm.slice(3)+'</small>';
+    html+=cell(i,lab,'qd-h2');
+  });
+  html+='</tr>';
+  html+=row('🌡 T°',i=>{const v=g('temperature_2m',i);if(v==null)return '·';
+    const bg=_qdTempCol(v),fg=v>=28?'#fff':'#181818';
+    return '<span class="qd-tc" style="background:'+bg+';color:'+fg+'">'+Math.round(v)+'°</span>';},'qd-t');
+  html+=row('🌧 mm',i=>{const v=hourMode?sum4('precipitation',i):g('precipitation',i);return (v!=null&&v>0.04)?('<b>'+(Math.round(v*10)/10).toFixed(1)+'</b>'):'·';},'qd-p2');
+  html+=row('Proba',i=>{const v=pm[m.time[i].slice(0,13)];return v!=null?v+'%':'·';},'qd-pr');
+  html+=row('Ciel',i=>{const t=m.time[i];if(!t.slice(11,16).endsWith(':00'))return '';const c=g('weather_code',i);return c!=null?_wmoEmoji(c):'';},'qd-ciel');
+  html+=row('☀️',i=>{const fr=sunFrOf(i);return fr>0?Math.round(fr*100)+'%':'·';},'qd-s');
+  html+=row('💨 km/h',i=>{const v=g('wind_speed_10m',i);return v!=null?Math.round(v):'·';},'qd-w');
+  html+=row('Raf.',i=>{const v=g('wind_gusts_10m',i);return v!=null?Math.round(v):'·';},'qd-g');
+  html+=row('Dir',i=>_dirArrow(g('wind_direction_10m',i)),'qd-d');
+  html+=row('💧 Hum',i=>{const v=g('relative_humidity_2m',i);return v!=null?Math.round(v)+'%':'·';},'qd-hu');
+  html+='</tbody></table>';
+  return html;
+}
+function _qdStepLabel(){return _qdStep==='h'?'passer en ¼ h':'passer en 1 h';}
+function toggleQdStep(){
+  _qdStep=(_qdStep==='h')?'q':'h';
+  const b1=document.getElementById('qdStepBtn'),b2=document.getElementById('qdStepBtn2');
+  if(b1)b1.textContent=_qdStepLabel();
+  if(b2)b2.textContent=_qdStepLabel();
+  if(_qdData)_qdRender();
+}
+function _qdRender(){
+  if(!_qdData)return;
+  const inPane=(document.getElementById('qdHost')&&document.getElementById('qdHost').style.display==='flex');
+  const box=inPane?document.getElementById('qdScroll'):document.getElementById('horaireScroll');
+  /* mode heure : étirer sur 100% de largeur (colonnes alignées avec les heures du graphe au-dessus)
+     sauf si trop étroit (~<14px/col) → défilement */
+  let fit=false,al=null;
+  if(_qdStep==='h'){
+    if(inPane)al=_qdChartAlign();   /* alignement pixel sur le graphe du haut */
+    if(!al){
+      let cols=0;for(let i=_qdData.i0;i<_qdData.m.time.length;i++)if(_qdData.m.time[i].slice(11,16).endsWith(':00'))cols++;
+      const w=(box&&box.clientWidth)||0;
+      fit=!w||((w-56)/Math.max(1,cols))>=14;
+    }
+  }
+  const html=_buildQDTable(_qdData.m,_qdData.i0,_qdData.pm,_qdData.tzNow,fit,al);
+  const t1=document.getElementById('qdScroll'),t2=document.getElementById('horaireInner');
+  if(t1&&t1.innerHTML!==undefined&&document.getElementById('qdHost')&&document.getElementById('qdHost').style.display==='flex')t1.innerHTML=html;
+  else if(t2)t2.innerHTML=html;
+  /* scroll sur la colonne courante */
+  try{
+    const sbox=(document.getElementById('qdHost')&&document.getElementById('qdHost').style.display==='flex')?t1:document.getElementById('horaireScroll');
+    if(al){if(sbox)sbox.scrollLeft=0;}
+    else{const nowCell=sbox&&sbox.querySelector('.qd-now2');if(nowCell&&sbox)sbox.scrollLeft=Math.max(0,nowCell.offsetLeft-70);}
+  }catch(_){}
+}
+function closeHoraire(){
+  document.documentElement.classList.remove('qdview');
+  const p=document.getElementById('horairePanel');if(p)p.classList.remove('open');
+  const host=document.getElementById('qdHost');
+  if(host){host.style.display='none';host.innerHTML='';}
+  const gw=document.getElementById('graphWrap'),gl=document.getElementById('graphLeg');
+  if(gw)gw.style.display='';
+  if(gl)gl.style.display='';
+}
+async function openHoraire(){
+  const simp=document.documentElement.classList.contains('simple');
+  let statusEl,scrollEl;
+  if(simp){
+    const card=document.getElementById('graphCard');
+    if(!card)return;
+    let host=document.getElementById('qdHost');
+    if(!host){host=document.createElement('div');host.id='qdHost';card.appendChild(host);}
+    const gw=document.getElementById('graphWrap'),gl=document.getElementById('graphLeg'),gs=document.getElementById('graphStatus');
+    if(gw)gw.style.display='none';
+    if(gl)gl.style.display='none';
+    if(gs)gs.style.display='none';
+    document.documentElement.classList.add('qdview');
+    host.style.display='flex';
+    host.innerHTML='<div class="qd-bar"><span id="qdTitle">🕒 Détail → fin J+1</span><span>'
+      +'<button class="qd-x" id="qdStepBtn" onclick="toggleQdStep()">'+_qdStepLabel()+'</button> '
+      +'<button class="qd-x" onclick="closeHoraire()">✕ GRAPH</button></span></div>'
+      +'<div id="qdStatus">⏳ Chargement…</div><div id="qdScroll" style="display:none"></div>';
+    statusEl=()=>document.getElementById('qdStatus');
+    scrollEl=()=>document.getElementById('qdScroll');
+  }else{
+    const p=document.getElementById('horairePanel');if(p)p.classList.add('open');
+    const b2=document.getElementById('qdStepBtn2');if(b2)b2.textContent=_qdStepLabel();
+    statusEl=()=>document.getElementById('horaireStatus');
+    scrollEl=()=>document.getElementById('horaireScroll');
+    const inner=document.getElementById('horaireInner');if(inner)inner.innerHTML='';
+  }
+  const st=statusEl(),sc=scrollEl();
+  if(typeof _cityLat==='undefined'||_cityLat==null){if(st){st.style.display='block';st.textContent="Cherchez une ville d'abord.";}if(sc)sc.style.display='none';return;}
+  if(st){st.style.display='block';st.textContent='⏳ Chargement…';}
+  if(sc)sc.style.display='none';
+  try{
+    const url='https://api.open-meteo.com/v1/forecast?latitude='+_cityLat+'&longitude='+_cityLon
+      +'&minutely_15=temperature_2m,precipitation,weather_code,sunshine_duration,wind_speed_10m,wind_gusts_10m,wind_direction_10m,relative_humidity_2m'
+      +'&hourly=precipitation_probability&forecast_days=2&timezone=auto';
+    const r=await _fetchTO(url,12000);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    const m=d&&d.minutely_15;
+    if(!m||!m.time||!m.time.length||!m.temperature_2m)throw new Error('données ¼ h indisponibles ici');
+    let tzNow;try{tzNow=new Date(new Date().toLocaleString('en-US',{timeZone:(typeof cityTz==='string'&&cityTz)||'Europe/Paris'}));}catch(_){tzNow=new Date();}
+    const kk=tzNow.getFullYear()+'-'+String(tzNow.getMonth()+1).padStart(2,'0')+'-'+String(tzNow.getDate()).padStart(2,'0')+'T'+String(tzNow.getHours()).padStart(2,'0');
+    let i0=m.time.findIndex(t=>t.startsWith(kk));if(i0<0)i0=0;
+    const pm={};
+    if(d.hourly&&d.hourly.time&&d.hourly.precipitation_probability)
+      d.hourly.time.forEach((t,k)=>{pm[t.slice(0,13)]=d.hourly.precipitation_probability[k];});
+    _qdData={m,i0,pm,tzNow};
+    if(st)st.style.display='none';
+    if(sc)sc.style.display='block';
+    _qdRender();
+    const ttl=simp?document.getElementById('qdTitle'):document.getElementById('horaireTitle');
+    if(ttl)ttl.textContent='🕒 '+((typeof cityName!=='undefined'&&cityName)?cityName+' — ':'')+'Détail → fin J+1';
+  }catch(e){
+    if(st){st.style.display='block';st.textContent='✕ '+e.message;}
+    if(sc)sc.style.display='none';
+  }
 }
 
 /* ── clear search ── */
@@ -5199,7 +5465,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
         <li style="margin-bottom:5px"><b style="color:#88ccff">Pluie minute par minute</b> — ce qui tombe dans l'heure qui vient.</li>
         <li style="margin-bottom:5px"><b style="color:#d9a3ff">🗓 Saison</b> — la tendance des 3 prochains mois.</li>
       </ul>
-      <p style="margin:0">Un badge <b style="color:#e0b84c">⚠️ Vigilance</b> apparaît en cas de vigilance orange ou rouge et renvoie aux alertes officielles Météo‑France de votre département, et vous pouvez garder vos villes en <b style="color:#ffe600">favoris</b> ⭐ pour les retrouver d'un geste. Le bouton 📱 bascule en vue simplifiée (pratique sur téléphone).</p>
+      <p style="margin:0">Un badge <b style="color:#e0b84c">⚠️ Vigilance</b> apparaît en cas de vigilance orange ou rouge et renvoie aux alertes officielles Météo‑France de votre département, et vous pouvez garder vos villes en <b style="color:#ffe600">favoris</b> ⭐ pour les retrouver d'un geste. Le bouton 📱▾ ouvre le menu des vues : iPhone (allégée), GRAPH (allégée + boutons), PC (complète) et Détail (layout iPhone avec le tableau ¼ h → J+1 dans le pane du bas).</p>
     </div>
   </div>
 </div>
@@ -5241,7 +5507,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
         <li><b style="color:#ddd">Champ de recherche</b> : tapez une ville, validez par <code>GO</code> ou la touche Entrée. La croix <b>✕</b> efface le champ.</li>
         <li><b style="color:#ddd">🎲 Explorer</b> : ouvre un menu — <b>📍 Ma position GPS</b>, basculer <b>🇫🇷 France / 🌍 Monde</b>, <b>🎲 Ville aléatoire</b>, et (en France) les villes extrêmes <b>🌡️ la plus chaude</b> / <b>💧 la plus pluvieuse</b> du moment.</li>
         <li><b style="color:#ddd">📅 Échéances</b> : choisit le jour affiché, de J‑7 à J+28 (voir §4). C'est aussi là que se trouvent <b>📈 GRAPH</b>, <b>⤢ J+28</b> et <b>🗓 SAISON</b>. Les <b>⚙ OPTIONS</b> (zones de canicule) sont sur le bouton ⚙ de la barre de recherche.</li>
-        <li><b style="color:#ddd">📱 Vue simplifiée</b> : bascule en affichage allégé pour téléphone (voir §13).</li>
+        <li><b style="color:#ddd">📱▾ Menu des vues</b> : Vue iPhone (allégée), Vue GRAPH (allégée + tous les boutons), Vue PC (complète), Vue Détail (¼ h jusqu'à J+1 : température, pluie, probabilité, ensoleillement, icônes — dans le pane du bas) (voir §13).</li>
         <li><b style="color:#ddd">🏠 Accueil</b> : revient à votre ville d'accueil.</li>
         <li><b style="color:#ddd">❓ Aide</b> : ce menu (vue d'ensemble · détaillé · modèles).</li>
       </ul>
@@ -5329,7 +5595,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
       <p>Via <b>📅 → 🗓 SAISON</b> : les prévisions saisonnières (tendance des 3 prochains mois). À lire comme une orientation, pas un détail jour par jour.</p>
 
       <h4>13 — Vue simplifiée</h4>
-      <p>Le bouton <b>📱</b> bascule en affichage allégé, pensé pour le téléphone : le GRAPH et la prévision du lendemain, en plus grand. Le même bouton fait revenir à la vue complète.</p>
+      <p>Le bouton <b>📱▾</b> ouvre un menu : <b>Vue iPhone</b> (affichage allégé : GRAPH + J+1), <b>Vue GRAPH</b> (le même, mais avec tous les boutons de la vue PC), <b>Vue PC</b> (vue complète) et <b>Vue Détail</b> (quart d'heure par quart d'heure jusqu'à la fin de demain, affichée dans le pane du bas : température, pluie, probabilité en pointillé, fond jaune selon l'ensoleillement, icône ciel chaque heure ; ✕ pour revenir au GRAPH).</p>
 
       <h4>14 — Favoris</h4>
       <p>Ajoutez la ville affichée à vos favoris (bouton ⭐ / « + ») : elle apparaît en <b>pastille</b> sous la barre de recherche et se recharge d'un simple appui. Re‑cliquer retire le favori.</p>
@@ -5425,6 +5691,17 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
       <button onclick="closeScenarios()" aria-label="Fermer" class="scen-x">✕</button>
     </div>
     <div id="scenBody"></div>
+  </div>
+</div>
+
+<div id="horairePanel">
+  <div id="horaireCard">
+    <div class="hor-head">
+      <div id="horaireTitle">🕒 DÉTAIL ¼ h · J → J+1</div>
+      <span><button class="qd-x" id="qdStepBtn2" onclick="toggleQdStep()">passer en ¼ h</button> <button onclick="closeHoraire()" aria-label="Fermer" class="scen-x">✕</button></span>
+    </div>
+    <div id="horaireStatus">⏳</div>
+    <div id="horaireScroll" style="display:none"><div id="horaireInner"></div></div>
   </div>
 </div>
 
