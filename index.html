@@ -13,82 +13,123 @@
     height:100vh;height:100dvh;overflow:hidden;
     display:flex;flex-direction:column;gap:8px;padding:8px 10px 10px}
 
-  header{flex:0 0 auto;display:flex;align-items:baseline;gap:12px;min-width:0}
-  h1{font-size:clamp(14px,2.2vw,20px);margin:0;letter-spacing:2px;color:#fff;white-space:nowrap}
-  .sub{color:var(--mut);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .gh{margin-left:auto;color:#7a9cc0;font-size:11px;text-decoration:none;white-space:nowrap}
-  .gh:hover{color:#a5c8e8}
+  header{flex:0 0 auto;text-align:center}
+  h1{font-size:clamp(14px,2vw,20px);margin:0 0 3px;letter-spacing:2px;color:#fff}
+  .sub{color:var(--mut);font-size:11px;line-height:1.45;margin:0 auto;max-width:900px}
+  .sub a{color:#7a9cc0;text-decoration:none}
+  .sub a:hover{color:#a5c8e8}
 
   #filewarn{display:none;flex:0 0 auto;margin:0;background:#241a10;border:1px solid #5a4326;border-radius:8px;color:#e6c07a;font-size:10.5px;line-height:1.4;padding:5px 9px}
 
   .grid{flex:1;min-height:0;display:grid;gap:10px;
-    grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-template-columns:repeat(4,minmax(0,1fr));
     grid-template-rows:repeat(2,minmax(0,1fr))}
-  @media (max-aspect-ratio:1/1),(max-width:820px){
-    .grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr))}
+  @media (max-width:1150px){
+    .grid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr))}
   }
-  @media (max-width:520px){.cat{display:none}.sub{display:none}}
+  @media (max-aspect-ratio:1/1),(max-width:760px){
+    .grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr))}
+  }
 
-  .card{min-width:0;min-height:0;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:7px;display:flex;flex-direction:column;gap:6px}
+  .card{min-width:0;min-height:0;overflow:hidden;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px}
   .head{flex:0 0 auto;display:flex;align-items:center;gap:6px;min-width:0}
-  .ico{font-size:15px;line-height:1}
-  .ttl{font-size:12.5px;font-weight:900;color:#fff;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ico{font-size:16px;line-height:1}
+  .ttl{font-size:13px;font-weight:900;color:#fff;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .cat{font-size:8px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .sp{flex:1 1 0;min-width:4px}
   .mini{flex:0 0 auto;background:#1a2a3a;border:1px solid #3a5a7a;border-radius:7px;color:#fff;font-size:10.5px;font-weight:900;padding:3px 8px;text-decoration:none;white-space:nowrap}
-  .mini:hover{background:#22364a}
+  a.mini:hover{background:#22364a}
   .mini.alt{background:#161616;border-color:#333;color:#bbb}
-  .mini.alt:hover{background:#1e1e1e}
+  a.mini.alt:hover{background:#1e1e1e}
 
-  .prev{flex:1 1 0;min-height:0;position:relative;border:1px solid #222;border-radius:9px;overflow:hidden;background:#000;cursor:pointer}
+  .desc{flex:0 0 auto;margin:0;font-size:11px;line-height:1.45;color:#c5c5c5;
+    display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+  .chips{flex:0 0 auto;display:flex;gap:4px;flex-wrap:nowrap;overflow:hidden}
+  .chip{flex:0 0 auto;font-size:9px;color:#9fc0dd;background:#101820;border:1px solid #1e2c3a;border-radius:5px;padding:1px 6px;white-space:nowrap}
+
+  .prev{flex:1 1 0;min-height:50px;position:relative;border:1px solid #222;border-radius:9px;overflow:hidden;background:#000;cursor:pointer}
   .prev iframe{position:absolute;top:0;left:0;border:0;background:#000;transform-origin:0 0;pointer-events:none}
   .prev.wait::after,.prev.err::after{position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:10px;font-size:10.5px;line-height:1.45;color:#cfd8e0;background:rgba(8,8,8,.6);pointer-events:none}
   .prev.wait::after{content:'⏳ chargement…'}
   .prev.err::after{content:'⚠ Aperçu indisponible — cliquer pour ouvrir l’appli'}
   .full{position:absolute;right:5px;bottom:5px;z-index:2;background:rgba(13,13,13,.85);border:1px solid #444;border-radius:6px;color:#ccc;font-size:10px;font-weight:700;padding:2px 7px;text-decoration:none}
   .full:hover{color:#fff;border-color:#666}
+
+  .prev.static{cursor:default;display:flex;align-items:center;justify-content:center;background:#0a0d10}
+  .offweb{text-align:center;color:#8fa3b8;font-size:10.5px;line-height:1.6;padding:8px}
+  .offweb .big{display:block;font-size:30px;margin-bottom:4px}
+
+  /* Écrans bas : on compacte pour garantir le zéro-scroll */
+  @media (max-height:760px){.desc{-webkit-line-clamp:3}.chips{display:none}}
+  @media (max-height:620px){.desc{-webkit-line-clamp:2;font-size:10px}h1{margin-bottom:1px}.sub{font-size:10px}}
+  @media (max-width:520px){.desc{-webkit-line-clamp:2;font-size:10px}.cat{display:none}.chips{display:none}}
 </style>
 </head>
 <body>
 
 <header>
   <h1>⚡ MES APPLIS</h1>
-  <span class="sub">6 applis autonomes — 1 fichier HTML chacune · cliquer une vignette = plein écran</span>
-  <a class="gh" href="https://github.com/belotcom-jpg/meteo-site">GitHub Pages</a>
+  <p class="sub">Une collection d'outils et de jeux <b>100 % autonomes</b> — chaque appli web tient dans un seul fichier HTML, sans installation (plus une appli musicale Windows), conçue et itérée maison, hébergée sur <a href="https://github.com/belotcom-jpg/meteo-site">GitHub Pages</a>. Cliquez une vignette (ou <b>▶</b>) pour ouvrir l'appli en plein écran.</p>
 </header>
 
 <p id="filewarn">⚠ Page ouverte en <b>file://</b> — ce fichier doit être dans le même dossier que les applis. Si les vignettes restent vides : <b>python -m http.server</b> puis <b>http://localhost:8000</b>.</p>
 
 <div class="grid">
 
-  <div class="card" title="PluiePro — Va-t-il pleuvoir, et quand ? Prévision heure par heure croisant une douzaine de modèles météo (Open-Meteo) : courbe du jour, graphe J→J+15, accord des modèles J+28, radar, zones de canicule, vue Détail au quart d'heure.">
-    <div class="head"><span class="ico">🌦️</span><span class="ttl">PluiePro</span><span class="cat">météo</span><span class="sp"></span><a class="mini alt" href="./pluiePro.html?ville=Juvisy-sur-Orge">Juvisy</a><a class="mini" href="./pluiePro.html">▶</a></div>
-    <div class="prev" data-src="pluiePro.html"><a class="full" href="./pluiePro.html">⤢</a></div>
+  <div class="card">
+    <div class="head"><span class="ico">🔎</span><span class="ttl">Multi Search</span><span class="cat">outil · recherche</span><span class="sp"></span><a class="mini" href="./search.html">▶ Ouvrir</a></div>
+    <p class="desc" title="Une requête, huit moteurs à la fois : la même recherche s'affiche simultanément dans 8 panneaux (moteurs, encyclopédies, images…), avec commandes rapides façon YubNub, synthèse par IA et fenêtre flottante déplaçable.">Une requête, <b>huit moteurs à la fois</b> : la même recherche s'affiche simultanément dans 8 panneaux (moteurs, encyclopédies, images…), avec commandes rapides façon YubNub, synthèse par IA et fenêtre flottante déplaçable.</p>
+    <div class="chips"><span class="chip">8 panneaux</span><span class="chip">IA</span><span class="chip">commandes rapides</span></div>
+    <div class="prev" data-src="search.html"><a class="full" href="./search.html">⤢</a></div>
   </div>
 
-  <div class="card" title="Maths Dash — Runner inspiré de Geometry Dash : on saute d'obstacle en obstacle en répondant à des questions de maths. Programme du collège 6e→3e : calcul, fractions, équations, géométrie.">
-    <div class="head"><span class="ico">🏃</span><span class="ttl">Maths Dash</span><span class="cat">jeu · maths</span><span class="sp"></span><a class="mini" href="./mathsDash.html">▶</a></div>
-    <div class="prev" data-src="mathsDash.html"><a class="full" href="./mathsDash.html">⤢</a></div>
+  <div class="card">
+    <div class="head"><span class="ico">🤖</span><span class="ttl">Multi-IA</span><span class="cat">outil · IA</span><span class="sp"></span><a class="mini" href="./multiIA.html">▶ Ouvrir</a></div>
+    <p class="desc" title="Un prompt, plusieurs IA en parallèle : la même question part simultanément vers plusieurs moteurs d'intelligence artificielle, réponses côte à côte, puis étape de synthèse pour croiser et condenser les avis.">Un prompt, <b>plusieurs IA en parallèle</b> : la même question part simultanément vers plusieurs moteurs d'intelligence artificielle, réponses côte à côte, puis <b>étape de synthèse</b> pour croiser et condenser les avis.</p>
+    <div class="chips"><span class="chip">multi-moteurs</span><span class="chip">synthèse</span><span class="chip">comparatif</span></div>
+    <div class="prev" data-src="multiIA.html"><a class="full" href="./multiIA.html">⤢</a></div>
   </div>
 
-  <div class="card" title="MathsBubble — Hommage à Bubble Bobble : on enferme les monstres dans des bulles, et un mode maths transforme chaque niveau en séance de calcul (programme du collège). Éditeur de niveaux intégré, touches configurables.">
-    <div class="head"><span class="ico">🫧</span><span class="ttl">MathsBubble</span><span class="cat">arcade · maths</span><span class="sp"></span><a class="mini" href="./bubble.html">▶</a></div>
-    <div class="prev" data-src="bubble.html"><a class="full" href="./bubble.html">⤢</a></div>
-  </div>
-
-  <div class="card" title="ClassroomPDC — Tableau de bord du prof de maths : widgets (chrono, tirage au sort, consignes…), traceur de fonctions 3e, 17 générateurs de questions flash, arcade de 16 mini-jeux, pages exportables, mode kiosque.">
-    <div class="head"><span class="ico">🧑‍🏫</span><span class="ttl">ClassroomPDC</span><span class="cat">classe</span><span class="sp"></span><a class="mini" href="./pdc.html">▶</a></div>
+  <div class="card">
+    <div class="head"><span class="ico">🧑‍🏫</span><span class="ttl">ClassroomPDC</span><span class="cat">classe · tableau de bord</span><span class="sp"></span><a class="mini" href="./pdc.html">▶ Ouvrir</a></div>
+    <p class="desc" title="Le tableau de bord du prof de maths : widgets à la carte (chrono, tirage au sort, consignes…), traceur de fonctions orienté 3e, 17 générateurs de questions flash, une arcade de 16 mini-jeux mathématiques, pages exportables et mode kiosque pour vidéoprojeter.">Le <b>tableau de bord du prof de maths</b> : widgets à la carte (chrono, tirage au sort, consignes…), traceur de fonctions orienté 3e, <b>17 générateurs de questions flash</b>, une arcade de 16 mini-jeux mathématiques, pages exportables et mode kiosque pour vidéoprojeter.</p>
+    <div class="chips"><span class="chip">widgets</span><span class="chip">questions flash</span><span class="chip">arcade 16 jeux</span><span class="chip">kiosque</span></div>
     <div class="prev" data-src="pdc.html"><a class="full" href="./pdc.html">⤢</a></div>
   </div>
 
-  <div class="card" title="Canicules — Les canicules en France, hier et demain : rejouez les vagues de chaleur historiques en animation générative et explorez les scénarios climatiques TRACC territoire par territoire.">
-    <div class="head"><span class="ico">🔥</span><span class="ttl">Canicules</span><span class="cat">dataviz · climat</span><span class="sp"></span><a class="mini" href="./canicule.html">▶</a></div>
+  <div class="card">
+    <div class="head"><span class="ico">🎹</span><span class="ttl">MusicKeyboard</span><span class="cat">musique · Windows</span><span class="sp"></span><span class="mini alt">PC</span></div>
+    <p class="desc" title="Un clavier musical complet pour PC : synthèse additive, rack d'effets, moteur polyphonique (numpy/sounddevice), séquenceur pas-à-pas et arpégiateur. Application Python/tkinter pour Windows — elle ne s'exécute pas dans le navigateur.">Un <b>clavier musical complet pour PC</b> : synthèse additive, rack d'effets, moteur polyphonique (numpy/sounddevice), <b>séquenceur pas-à-pas</b> et arpégiateur. Application Python/tkinter pour Windows.</p>
+    <div class="chips"><span class="chip">synthèse</span><span class="chip">FX rack</span><span class="chip">séquenceur</span><span class="chip">arpégiateur</span></div>
+    <div class="prev static"><div class="offweb"><span class="big">🎹</span>Appli Windows (Python)<br>— pas de version navigateur —</div></div>
+  </div>
+
+  <div class="card">
+    <div class="head"><span class="ico">🌦️</span><span class="ttl">PluiePro</span><span class="cat">météo · France &amp; monde</span><span class="sp"></span><a class="mini alt" href="./pluiePro.html?ville=Juvisy-sur-Orge">Juvisy</a><a class="mini" href="./pluiePro.html">▶ Ouvrir</a></div>
+    <p class="desc" title="Va-t-il pleuvoir, et quand ? Prévision de pluie heure par heure croisant une douzaine de modèles météo (Open-Meteo), avec courbe du jour, graphe J→J+15, accord des modèles jusqu'à J+28, radar, zones de canicule adaptées au climat local et vue « Détail » quart d'heure par quart d'heure.">Va-t-il pleuvoir, et quand ? Prévision de pluie heure par heure croisant <b>une douzaine de modèles météo</b> (Open-Meteo), avec courbe du jour, graphe J→J+15, accord des modèles jusqu'à J+28, radar, zones de canicule adaptées au climat local et vue « Détail » quart d'heure par quart d'heure.</p>
+    <div class="chips"><span class="chip">multi-modèles</span><span class="chip">canicule</span><span class="chip">radar</span><span class="chip">vues iPhone/PC</span><span class="chip">villes extrêmes</span></div>
+    <div class="prev" data-src="pluiePro.html"><a class="full" href="./pluiePro.html">⤢</a></div>
+  </div>
+
+  <div class="card">
+    <div class="head"><span class="ico">🔥</span><span class="ttl">Canicules</span><span class="cat">dataviz · climat</span><span class="sp"></span><a class="mini" href="./canicule.html">▶ Ouvrir</a></div>
+    <p class="desc" title="Les canicules en France, hier et demain : rejouez les vagues de chaleur historiques en animation générative, et explorez les scénarios climatiques (TRACC) pour voir ce qui attend chaque territoire. Pédagogique et un peu vertigineux.">Les <b>canicules en France</b>, hier et demain : rejouez les vagues de chaleur historiques en animation générative, et explorez les <b>scénarios climatiques (TRACC)</b> pour voir ce qui attend chaque territoire. Pédagogique et un peu vertigineux.</p>
+    <div class="chips"><span class="chip">historique</span><span class="chip">scénarios TRACC</span><span class="chip">animation</span></div>
     <div class="prev" data-src="canicule.html"><a class="full" href="./canicule.html">⤢</a></div>
   </div>
 
-  <div class="card" title="Multi Search — Une requête, huit moteurs à la fois : la même recherche dans 8 panneaux simultanés (moteurs, encyclopédies, images…), commandes rapides façon YubNub, synthèse par IA, fenêtre flottante.">
-    <div class="head"><span class="ico">🔎</span><span class="ttl">Multi Search</span><span class="cat">outil</span><span class="sp"></span><a class="mini" href="./search.html">▶</a></div>
-    <div class="prev" data-src="search.html"><a class="full" href="./search.html">⤢</a></div>
+  <div class="card">
+    <div class="head"><span class="ico">🏃</span><span class="ttl">Maths Dash</span><span class="cat">jeu · maths collège</span><span class="sp"></span><a class="mini" href="./mathsDash.html">▶ Ouvrir</a></div>
+    <p class="desc" title="Un runner inspiré de Geometry Dash où l'on saute d'obstacle en obstacle… en répondant à des questions de maths. Couvre le programme du collège (6e → 3e) : calcul, fractions, équations, géométrie. Pensé pour réviser sans s'en rendre compte.">Un runner inspiré de <b>Geometry Dash</b> où l'on saute d'obstacle en obstacle… en répondant à des questions de maths. Couvre le <b>programme du collège (6e → 3e)</b> : calcul, fractions, équations, géométrie. Pensé pour réviser sans s'en rendre compte.</p>
+    <div class="chips"><span class="chip">6e→3e</span><span class="chip">runner</span><span class="chip">questions flash</span></div>
+    <div class="prev" data-src="mathsDash.html"><a class="full" href="./mathsDash.html">⤢</a></div>
+  </div>
+
+  <div class="card">
+    <div class="head"><span class="ico">🫧</span><span class="ttl">MathsBubble</span><span class="cat">arcade &amp; maths</span><span class="sp"></span><a class="mini" href="./bubble.html">▶ Ouvrir</a></div>
+    <p class="desc" title="Hommage à Bubble Bobble : on enferme les monstres dans des bulles… et un mode maths transforme chaque niveau en séance de calcul (générateurs couvrant le programme du collège). Éditeur de niveaux intégré et touches configurables.">Hommage à <b>Bubble Bobble</b> : on enferme les monstres dans des bulles… et un <b>mode maths</b> transforme chaque niveau en séance de calcul (générateurs couvrant le programme du collège). Éditeur de niveaux intégré et touches configurables.</p>
+    <div class="chips"><span class="chip">arcade</span><span class="chip">mode maths</span><span class="chip">éditeur de niveaux</span></div>
+    <div class="prev" data-src="bubble.html"><a class="full" href="./bubble.html">⤢</a></div>
   </div>
 
 </div>
@@ -97,13 +138,13 @@
 var IS_FILE=(location.protocol==='file:');
 if(IS_FILE)document.getElementById('filewarn').style.display='block';
 
-var prevs=[].slice.call(document.querySelectorAll('.prev'));
+var prevs=[].slice.call(document.querySelectorAll('.prev[data-src]'));
 
 // Ajuste l'iframe : viewport virtuel mis à l'échelle pour remplir exactement la vignette
 function fit(p){
   var f=p.querySelector('iframe'); if(!f)return;
   var w=p.clientWidth,h=p.clientHeight; if(!w||!h)return;
-  var VW=(w<300)?640:1100;          // largeur de rendu virtuelle
+  var VW=(w<360)?700:1100;          // largeur de rendu virtuelle
   var s=w/VW;
   f.style.width=VW+'px';
   f.style.height=Math.round(h/s)+'px';
@@ -130,17 +171,22 @@ function load(p){
 // Chargement échelonné (200 ms d'écart) pour ne pas saturer au démarrage
 prevs.forEach(function(p,i){setTimeout(function(){load(p);},i*200);});
 
+// Re-calibrage : resize fenêtre + toute variation de taille des vignettes
 var rsz;
 window.addEventListener('resize',function(){
   clearTimeout(rsz);
   rsz=setTimeout(function(){prevs.forEach(fit);},120);
 });
+if(window.ResizeObserver){
+  var ro=new ResizeObserver(function(){prevs.forEach(fit);});
+  prevs.forEach(function(p){ro.observe(p);});
+}
 
 // La vignette entière ouvre l'appli (iframes en pointer-events:none)
 document.addEventListener('click',function(e){
   var p=e.target.closest('.prev');
   if(!p||e.target.closest('.full'))return;
-  location.href='./'+p.dataset.src;
+  if(p.dataset.src)location.href='./'+p.dataset.src;
 });
 </script>
 
