@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>PluiePro v2.36</title>
+<title>PluiePro v2.37</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -2237,8 +2237,8 @@ function _buildQDTable(m,i0,pm,tzNow,fit,al){
   const zoneOf=i=>{
     const v=g('temperature_2m',i);
     if(v==null||!isFinite(_tMin)||!isFinite(_tMax))return {c:0,h:0};
-    let c=v<=_tMin+1?2:(v<=_tMin+3?1:0);
-    let hh=v>=_tMax-1?2:(v>=_tMax-3?1:0);
+    let c=v<=_tMin+3?1:0;
+    let hh=v>=_tMax-4?1:0;
     if(c&&hh){if((v-_tMin)<=(_tMax-v))hh=0;else c=0;}   /* chevauchement (profil plat) : zone la plus proche */
     return {c:c,h:hh};
   };
@@ -2250,14 +2250,10 @@ function _buildQDTable(m,i0,pm,tzNow,fit,al){
     if(!hourMode&&(parseInt(t.slice(11,13))%2===1))c.push('qd-oB');   /* paquets d'1 h : heures impaires teintées */
     if(hourMode?(t.slice(0,13)===nowKey):(t.slice(0,16)===qNow))c.push('qd-now2');
     if(cls)c.push(cls);
-    const fr=sunFrOf(i);
     const z=zoneOf(i);
     let st='';
-    if(z.c===2)st='background:rgba(80,160,255,0.30);';
-    else if(z.h===2)st='background:rgba(255,80,30,0.30);';
-    else if(z.c===1)st='background:rgba(80,160,255,0.15);';
-    else if(z.h===1)st='background:rgba(255,80,30,0.15);';
-    else if(fr>0.05)st='background:rgba(255,225,0,'+(fr*0.10).toFixed(3)+');';
+    if(z.c)st='background:rgba(80,160,255,0.30);';
+    else if(z.h)st='background:rgba(255,80,30,0.30);';
     if(extraStyle)st+=extraStyle;
     return '<td class="'+c.join(' ')+'"'+(st?(' style="'+st+'"'):'')+'>'+inner+'</td>';
   };
