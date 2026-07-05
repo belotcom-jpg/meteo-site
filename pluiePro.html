@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>PluiePro v2.35</title>
+<title>PluiePro v2.36</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -96,6 +96,8 @@ body{background:#000;color:#fff;font-family:'Courier New',monospace;padding:3px;
 .qd2-fit .qd-h2 small{font-size:10px}
 .qd2-fit .qd-pr,.qd2-fit .qd-s,.qd2-fit .qd-hu{font-size:11px}
 .qd-tc{display:inline-block;min-width:24px;padding:1px 2px;border-radius:6px;font-weight:900;line-height:1.25}
+.qd-tmin{box-shadow:0 0 0 2px #7fd0ff,0 0 9px rgba(127,208,255,0.85)}
+.qd-tmax{box-shadow:0 0 0 2px #ffd0b0,0 0 9px rgba(255,150,90,0.9)}
 .qd2-table .qd-lbl{position:sticky;left:0;background:#101820;color:#9fc0dd;font-size:10px;font-weight:900;padding:3px 6px;text-align:left;border-bottom:1px solid #1c2733;z-index:2;white-space:nowrap}
 .qd2-table .qd-lblh{color:#7a8fa5}
 .qd2-table td{padding:2px 3px;text-align:center;font-size:14px;color:#cfcfcf;border-bottom:1px solid #131313;border-left:1px solid #101010;white-space:nowrap;min-width:32px}
@@ -2229,6 +2231,17 @@ function _buildQDTable(m,i0,pm,tzNow,fit,al){
     if(hourMode){const s=sum4('sunshine_duration',i);return (s!=null)?Math.max(0,Math.min(1,s/3600)):0;}
     const s=g('sunshine_duration',i);return (s!=null)?Math.max(0,Math.min(1,s/900)):0;
   };
+  /* zones extrêmes de la fenêtre : fraîche (bleu) et chaude (rouge), 2 niveaux chacune (±1° fort, ±3° léger) */
+  let _tMin=Infinity,_tMax=-Infinity;
+  idx.forEach(i=>{const v=g('temperature_2m',i);if(v!=null&&isFinite(v)){if(v<_tMin)_tMin=v;if(v>_tMax)_tMax=v;}});
+  const zoneOf=i=>{
+    const v=g('temperature_2m',i);
+    if(v==null||!isFinite(_tMin)||!isFinite(_tMax))return {c:0,h:0};
+    let c=v<=_tMin+1?2:(v<=_tMin+3?1:0);
+    let hh=v>=_tMax-1?2:(v>=_tMax-3?1:0);
+    if(c&&hh){if((v-_tMin)<=(_tMax-v))hh=0;else c=0;}   /* chevauchement (profil plat) : zone la plus proche */
+    return {c:c,h:hh};
+  };
   const cell=(i,inner,cls,extraStyle)=>{
     const t=m.time[i],hm=t.slice(11,16);
     const c=['qd-c2'];
@@ -2238,8 +2251,13 @@ function _buildQDTable(m,i0,pm,tzNow,fit,al){
     if(hourMode?(t.slice(0,13)===nowKey):(t.slice(0,16)===qNow))c.push('qd-now2');
     if(cls)c.push(cls);
     const fr=sunFrOf(i);
+    const z=zoneOf(i);
     let st='';
-    if(fr>0.05)st='background:rgba(255,225,0,'+(fr*0.10).toFixed(3)+');';
+    if(z.c===2)st='background:rgba(80,160,255,0.30);';
+    else if(z.h===2)st='background:rgba(255,80,30,0.30);';
+    else if(z.c===1)st='background:rgba(80,160,255,0.15);';
+    else if(z.h===1)st='background:rgba(255,80,30,0.15);';
+    else if(fr>0.05)st='background:rgba(255,225,0,'+(fr*0.10).toFixed(3)+');';
     if(extraStyle)st+=extraStyle;
     return '<td class="'+c.join(' ')+'"'+(st?(' style="'+st+'"'):'')+'>'+inner+'</td>';
   };
@@ -2271,7 +2289,10 @@ function _buildQDTable(m,i0,pm,tzNow,fit,al){
   html+='</tr>';
   html+=row('🌡 T°',i=>{const v=g('temperature_2m',i);if(v==null)return '·';
     const bg=_qdTempCol(v),fg=v>=28?'#fff':'#181818';
-    return '<span class="qd-tc" style="background:'+bg+';color:'+fg+'">'+Math.round(v)+'°</span>';},'qd-t');
+    const isMin=(isFinite(_tMin)&&v===_tMin),isMax=(isFinite(_tMax)&&v===_tMax&&!isMin);
+    const xcls=isMin?' qd-tmin':(isMax?' qd-tmax':'');
+    const ttl2=isMin?' title="Température la plus basse de la fenêtre"':(isMax?' title="Température la plus haute de la fenêtre"':'');
+    return '<span class="qd-tc'+xcls+'" style="background:'+bg+';color:'+fg+'"'+ttl2+'>'+Math.round(v)+'°</span>';},'qd-t');
   html+=row('🌧 mm',i=>{const v=hourMode?sum4('precipitation',i):g('precipitation',i);return (v!=null&&v>0.04)?('<b>'+(Math.round(v*10)/10).toFixed(1)+'</b>'):'·';},'qd-p2');
   html+=row('Proba',i=>{const v=pm[m.time[i].slice(0,13)];return v!=null?v+'%':'·';},'qd-pr');
   html+=row('Ciel',i=>{const t=m.time[i];if(!t.slice(11,16).endsWith(':00'))return '';const c=g('weather_code',i);return c!=null?_wmoEmoji(c):'';},'qd-ciel');
