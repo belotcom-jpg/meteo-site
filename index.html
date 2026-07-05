@@ -70,6 +70,7 @@ body{background:#000;color:#fff;font-family:'Courier New',monospace;padding:3px;
 #viewModeMenu.open{display:block}
 #viewModeMenu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;color:#ddd;font-family:'Courier New',monospace;font-size:13px;font-weight:700;text-align:left;padding:9px 10px;border-radius:7px;cursor:pointer}
 #viewModeMenu button:hover{background:#1a1a1a}
+@media (max-width:700px){#viewModeMenu{position:fixed;top:54px;left:50%;right:auto;transform:translateX(-50%)}}
 #viewModeWrap{position:relative;flex-shrink:0;display:flex}
 #horairePanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:10001;padding:6px}
 #horairePanel.open{display:flex;justify-content:center}
@@ -418,11 +419,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 
 /* ===== Mode simplifié iPhone (?simple=ok) : vue J+1 en haut + GRAPH (J→J+8) en bas ===== */
 /* Vue iPhone sur grand écran : affichage en colonne de téléphone centrée */
-html.simple:not(.simple-full) .wrap{max-width:430px;margin:0 auto;border-left:1px solid #262626;border-right:1px solid #262626}
-html.simple:not(.simple-full) #clearBtn,
-html.simple:not(.simple-full) #exploreWrap,
-html.simple:not(.simple-full) #sourcesBar,
-html.simple:not(.simple-full) #viewBtns,
+html.simple.phone-col .wrap{max-width:430px;margin:0 auto;border-left:1px solid #262626;border-right:1px solid #262626}
 html.simple #radarCard{display:none!important}
 html.simple #graphPanel{display:flex!important;position:relative!important;inset:auto!important;z-index:auto!important;background:transparent!important;padding:0!important;overflow:visible!important;flex:1.3 1 0!important;height:auto!important;min-height:0!important;margin:2px 0 0}
 html.simple #graphHeader{display:none!important}
@@ -468,7 +465,8 @@ html.simple #simpleBtn{background:#00ffff!important;color:#000!important;box-sha
     var _simple=(_p==='ok'||_p==='full'||_p==='detail')?true:((_p==='no')?false:_isIPhone);
     if(!_simple)return;
     document.documentElement.classList.add('simple');
-    if(_p==='full'||_p==='detail')document.documentElement.classList.add('simple-full');
+    document.documentElement.classList.add('simple-full');   /* toutes les vues gardent les boutons */
+    if(_p==='ok'||!_p)document.documentElement.classList.add('phone-col');   /* vue iPhone : colonne téléphone sur PC */
     if(_p==='detail'){
       /* Vue Détail = layout vue iPhone, mais le pane du bas affiche le tableau ¼ h (openHoraire) dès que la ville est chargée */
       document.addEventListener('DOMContentLoaded',function(){
@@ -2287,9 +2285,12 @@ function _qdRender(){
   if(_qdStep==='h'){
     if(inPane)al=_qdChartAlign();   /* alignement pixel sur le graphe du haut */
     if(!al){
-      let cols=0;for(let i=_qdData.i0;i<_qdData.m.time.length;i++)if(_qdData.m.time[i].slice(11,16).endsWith(':00'))cols++;
-      const w=(box&&box.clientWidth)||0;
-      fit=!w||((w-56)/Math.max(1,cols))>=14;
+      if(inPane){fit=true;}          /* dans le pane : toujours pleine largeur, jamais d'ascenseur */
+      else{
+        let cols=0;for(let i=_qdData.i0;i<_qdData.m.time.length;i++)if(_qdData.m.time[i].slice(11,16).endsWith(':00'))cols++;
+        const w=(box&&box.clientWidth)||0;
+        fit=!w||((w-56)/Math.max(1,cols))>=14;
+      }
     }
   }
   const html=_buildQDTable(_qdData.m,_qdData.i0,_qdData.pm,_qdData.tzNow,fit,al);
