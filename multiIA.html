@@ -1,1 +1,1375 @@
+<!DOCTYPE html>
+<html lang="fr">
+<!-- ============================ RECAP ============================
+  MULTI-IA — un seul fichier HTML, zéro dépendance, file:// & GitHub Pages
+  Principe : 1 question → N IA → 1 IA pour les réunir toutes (synthèse)
+
+  v1.0  UI console fan-out/fan-in, 5 moteurs à clé (BYOK), synthèse paramétrable,
+        markdown maison, localStorage protégé.
+  v1.1  Moteurs gratuits SANS clé (relais public Pollinations) actifs par défaut,
+        Ollama local, réglages en 2 sections (sans clé / avec clé).
+  v1.2  Fiabilisation complète du relais gratuit (bridé à 1 requête à la fois) :
+        - FILE D'ATTENTE GLOBALE du relais (jamais 2 requêtes en vol, où qu'elles
+          soient déclenchées : cartes, synthèse, relance) ;
+        - liste des modèles récupérée EN LIVE + AUTO-RÉPARATION 404 (resync + retry) ;
+        - RETRY auto avec backoff sur 429/5xx (3 tentatives) ; timeouts ;
+          token enter.pollinations.ai optionnel pour lever la limite ;
+        - premier envoi ATTEND la synchro des modèles (anti-course) ;
+        - SYNTHÈSE EN CASCADE : moteur choisi → moteurs à clé ayant répondu →
+          relais gratuit ; l'en-tête indique le moteur réellement utilisé ;
+        - validé en simulation (jsdom + faux relais reproduisant 429/404, 22 checks).
+  v1.3  Changement d'échelle — « j'en veux des milliers » :
+        - IA LIBRES = roster dynamique : TOUS les modèles du relais listés en
+          live, cochables en masse (Tout / Aucun / Reco ×4, filtre) ;
+        - fix : le repli hors-ligne donnait 2× le même modèle → 1 seule carte ;
+        - OpenRouter ajouté : des centaines de modèles avec UNE clé,
+          en parallèle (plafond 4 simultanés) ;
+        - multi-modèles PARTOUT : champ modèle = liste à virgules → 1 carte
+          par modèle (Groq, OpenAI, Ollama…), garde-fou 64 cartes/vague ;
+        - bouton STOP : interrompt la vague et synthétise ce qui a répondu ;
+        - synthèse : réponses tronquées à 4000 car. chacune (budget contexte).
+  v1.4  PARALLÈLE PARTOUT + fix définitif du « une seule IA » :
+        - cause trouvée : sélection dégénérée ["openai"] héritée du bug de
+          repli v1.2, re-sauvegardée à chaque session → stockage v2 (clés et
+          réglages migrés depuis v1, roster repart sur Reco ×6) ;
+        - parseur de liste blindé (conteneurs data/models/…, roster <2 = échec
+          → repli 3 modèles distincts) : plus jamais 1 carte fantôme ;
+        - IA libres en POOL ADAPTATIF (AIMD) : parallèle d'emblée, se resserre
+          sur 429 jusqu'à 1 si le relais bride, regrossit sur succès ;
+          token → cap 6→12 ; étalement initial + backoff avec jitter ;
+        - Reco passe de ×4 à ×6.
+  Moteurs à clé : parallèle. IA libres : parallèle adaptatif (pool AIMD).
+================================================================== -->
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-IA v1.4</title>
+<style>
+  :root{
+    --bg:#0b0d12;
+    --bg-soft:#0f131b;
+    --panel:#141a24;
+    --panel-2:#171e2a;
+    --line:#232c3a;
+    --line-soft:#1b222e;
+    --txt:#e7ecf4;
+    --txt-dim:#94a0b4;
+    --txt-faint:#5f6b7e;
+    --accent:#7b6bff;        /* violet = convergence / synthèse */
+    --accent-soft:#1b1840;
+    --ok:#46d39a;
+    --warn:#f3b34d;
+    --err:#ff6b6b;
+    /* couleurs d'identité par moteur */
+    --c-openai:#10a37f;
+    --c-anthropic:#d97757;
+    --c-gemini:#4f8cff;
+    --c-groq:#f55036;
+    --c-mistral:#ffae42;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(900px 500px at 85% -10%, #16183a 0%, rgba(11,13,18,0) 60%),
+      radial-gradient(700px 400px at -10% 0%, #10202a 0%, rgba(11,13,18,0) 55%),
+      var(--bg);
+    color:var(--txt);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .wrap{max-width:1240px;margin:0 auto;padding:26px 22px 80px}
+
+  /* ---------- En-tête ---------- */
+  header.top{display:flex;align-items:center;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+  .brand{display:flex;align-items:baseline;gap:12px}
+  .logo{
+    font-weight:800;letter-spacing:-.02em;font-size:26px;
+    background:linear-gradient(92deg,#fff 0%,#cfd6ff 45%,var(--accent) 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .logo b{color:var(--accent);-webkit-text-fill-color:var(--accent)}
+  .ver{font-family:var(--mono);font-size:12px;color:var(--txt-faint);border:1px solid var(--line);
+    padding:2px 7px;border-radius:999px}
+  .tagline{color:var(--txt-dim);font-size:13px;margin-left:2px}
+  .top .spacer{flex:1}
+  .iconbtn{
+    background:var(--panel);border:1px solid var(--line);color:var(--txt-dim);
+    border-radius:10px;padding:9px 13px;cursor:pointer;font-family:var(--sans);font-size:13px;
+    display:inline-flex;align-items:center;gap:8px;transition:.15s;
+  }
+  .iconbtn:hover{border-color:var(--accent);color:var(--txt)}
+  .iconbtn .gear{font-size:15px}
+
+  /* ---------- Console de saisie ---------- */
+  .console{
+    border:1px solid var(--line);border-radius:var(--r);
+    background:linear-gradient(180deg,var(--panel-2),var(--panel));
+    padding:14px 14px 12px;position:relative;
+    box-shadow:0 1px 0 rgba(255,255,255,.02) inset, 0 18px 40px -28px rgba(0,0,0,.8);
+  }
+  .console-row{display:flex;gap:12px;align-items:flex-start}
+  .caret{font-family:var(--mono);color:var(--accent);font-size:18px;padding-top:9px;user-select:none}
+  textarea#prompt{
+    flex:1;background:transparent;border:none;outline:none;color:var(--txt);
+    font-family:var(--sans);font-size:16px;line-height:1.55;resize:vertical;
+    min-height:54px;max-height:340px;padding:8px 2px;
+  }
+  textarea#prompt::placeholder{color:var(--txt-faint)}
+  .send{
+    align-self:stretch;background:var(--accent);color:#fff;border:none;border-radius:10px;
+    padding:0 18px;font-weight:700;font-size:14px;cursor:pointer;min-width:84px;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:.15s;
+  }
+  .send:hover{filter:brightness(1.08)}
+  .send:disabled{opacity:.5;cursor:default;filter:none}
+  .console-foot{display:flex;align-items:center;gap:14px;margin-top:8px;flex-wrap:wrap;
+    border-top:1px solid var(--line-soft);padding-top:9px}
+  .hint{font-size:12px;color:var(--txt-faint)}
+  .hint kbd{font-family:var(--mono);background:#0c1017;border:1px solid var(--line);
+    border-radius:5px;padding:1px 5px;font-size:11px;color:var(--txt-dim)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+  .chip{font-family:var(--mono);font-size:11px;color:var(--txt-dim);border:1px solid var(--line);
+    border-radius:999px;padding:2px 9px;display:inline-flex;align-items:center;gap:6px}
+  .chip .dot{width:7px;height:7px;border-radius:50%}
+  .chip.off{opacity:.32}
+
+  /* ---------- Pipeline / divergence ---------- */
+  .stage-label{display:flex;align-items:center;gap:10px;margin:26px 2px 12px;color:var(--txt-dim);
+    font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.14em}
+  .stage-label::after{content:"";flex:1;height:1px;background:var(--line-soft)}
+  .stage-label .n{color:var(--accent);font-weight:700}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+  .card{
+    border:1px solid var(--line);border-radius:var(--r);background:var(--panel);
+    overflow:hidden;display:flex;flex-direction:column;position:relative;
+    animation:rise .25s ease both;
+  }
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--eng,#444)}
+  @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .card .head{display:flex;align-items:center;gap:9px;padding:11px 13px;border-bottom:1px solid var(--line-soft)}
+  .card .eng-dot{width:9px;height:9px;border-radius:50%;background:var(--eng);flex:none;
+    box-shadow:0 0 0 3px color-mix(in srgb,var(--eng) 22%,transparent)}
+  .card .name{font-weight:700;font-size:14px}
+  .card .model{font-family:var(--mono);font-size:11px;color:var(--txt-faint);
+    margin-left:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px}
+  .card .meta{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .badge{font-family:var(--mono);font-size:10.5px;padding:2px 8px;border-radius:999px;
+    border:1px solid var(--line);color:var(--txt-dim);display:inline-flex;align-items:center;gap:5px}
+  .badge.run{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+  .badge.done{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,var(--line))}
+  .badge.err{color:var(--err);border-color:color-mix(in srgb,var(--err) 45%,var(--line))}
+  .lat{font-family:var(--mono);font-size:10.5px;color:var(--txt-faint)}
+  .card .body{padding:13px 14px;font-size:14.2px;color:var(--txt);overflow-wrap:anywhere;flex:1}
+  .card.is-err .body{color:var(--err)}
+  .card .foot{padding:8px 13px;border-top:1px solid var(--line-soft);display:flex;gap:8px;justify-content:flex-end}
+  .ghostbtn{background:transparent;border:1px solid var(--line);color:var(--txt-dim);
+    border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;transition:.15s;font-family:var(--sans)}
+  .ghostbtn:hover{border-color:var(--accent);color:var(--txt)}
+
+  /* pulsation des points de chargement */
+  .loading-dots{display:inline-flex;gap:4px;align-items:center}
+  .loading-dots i{width:5px;height:5px;border-radius:50%;background:currentColor;
+    animation:blink 1s infinite}
+  .loading-dots i:nth-child(2){animation-delay:.15s}
+  .loading-dots i:nth-child(3){animation-delay:.3s}
+  @keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+
+  /* ---------- Convergence / synthèse ---------- */
+  #synthWrap{margin-top:8px}
+  .synth{
+    border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));
+    border-radius:var(--r);
+    background:linear-gradient(180deg,var(--accent-soft),var(--panel));
+    position:relative;overflow:hidden;
+    box-shadow:0 22px 60px -34px color-mix(in srgb,var(--accent) 60%,transparent);
+  }
+  .synth::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+  .synth .head{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid color-mix(in srgb,var(--accent) 22%,var(--line-soft))}
+  .synth .head .star{color:var(--accent);font-size:16px}
+  .synth .head .name{font-weight:800;letter-spacing:-.01em}
+  .synth .head .by{font-family:var(--mono);font-size:11px;color:var(--txt-dim);margin-left:2px}
+  .synth .body{padding:16px 18px;font-size:15px}
+  .synth .foot{padding:9px 16px;border-top:1px solid color-mix(in srgb,var(--accent) 18%,var(--line-soft));
+    display:flex;gap:8px;justify-content:flex-end}
+  .converge{display:flex;align-items:center;gap:7px;margin-left:auto}
+  .converge .d{width:8px;height:8px;border-radius:50%}
+  .converge .arrow{color:var(--txt-faint);font-family:var(--mono);font-size:12px}
+
+  /* ---------- contenu markdown ---------- */
+  .md>:first-child{margin-top:0}
+  .md>:last-child{margin-bottom:0}
+  .md h1,.md h2,.md h3,.md h4,.md h5,.md h6{line-height:1.3;margin:1em 0 .4em;font-weight:700}
+  .md h1{font-size:1.3em}.md h2{font-size:1.18em}.md h3{font-size:1.07em}
+  .md p{margin:.55em 0}
+  .md ul,.md ol{margin:.5em 0;padding-left:1.4em}
+  .md li{margin:.22em 0}
+  .md code{font-family:var(--mono);font-size:.88em;background:#0a0e15;border:1px solid var(--line-soft);
+    border-radius:5px;padding:1px 5px}
+  .md pre{background:#080b11;border:1px solid var(--line);border-radius:9px;padding:12px 13px;
+    overflow:auto;margin:.7em 0}
+  .md pre code{background:none;border:none;padding:0;font-size:.85em;white-space:pre}
+  .md a{color:var(--accent);text-decoration:none}
+  .md a:hover{text-decoration:underline}
+  .md strong{color:#fff}
+
+  /* ---------- état vide ---------- */
+  .empty{border:1px dashed var(--line);border-radius:var(--r);padding:34px 22px;text-align:center;
+    color:var(--txt-faint);font-size:14px}
+  .empty b{color:var(--txt-dim);display:block;margin-bottom:4px;font-weight:600}
+  .empty a{color:var(--accent);cursor:pointer;text-decoration:none}
+  .empty a:hover{text-decoration:underline}
+
+  /* ---------- panneau réglages ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(4,6,10,.62);backdrop-filter:blur(3px);
+    display:none;align-items:flex-start;justify-content:center;z-index:50;padding:40px 16px;overflow:auto}
+  .overlay.open{display:flex}
+  .settings{width:min(720px,100%);background:var(--bg-soft);border:1px solid var(--line);
+    border-radius:16px;box-shadow:0 30px 80px -30px #000;animation:rise .2s ease both}
+  .settings .s-head{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line)}
+  .settings .s-head h2{margin:0;font-size:16px}
+  .settings .s-head .x{margin-left:auto;background:none;border:none;color:var(--txt-dim);font-size:22px;
+    cursor:pointer;line-height:1;padding:0 4px}
+  .settings .s-head .x:hover{color:var(--txt)}
+  .settings .s-body{padding:6px 20px 18px;max-height:70vh;overflow:auto}
+  .note{display:flex;gap:9px;background:#10131b;border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;color:var(--txt-dim);font-size:12.5px;margin:12px 0}
+  .note .ic{color:var(--warn)}
+  .sect{margin-top:18px}
+  .sect>h3{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.14em;
+    color:var(--txt-faint);margin:0 0 10px;font-weight:700}
+  .prow{display:grid;grid-template-columns:22px 1fr;gap:11px;align-items:start;padding:10px 0;
+    border-top:1px solid var(--line-soft)}
+  .prow:first-of-type{border-top:none}
+  .prow .pmain{display:flex;flex-direction:column;gap:7px}
+  .prow .pname{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px}
+  .prow .pname .pdot{width:9px;height:9px;border-radius:50%}
+  .fields{display:grid;grid-template-columns:1fr 220px;gap:8px}
+  @media(max-width:560px){.fields{grid-template-columns:1fr}}
+  input[type=text],input[type=password],input[type=number],textarea.cfg,select{
+    width:100%;background:#0b0e15;border:1px solid var(--line);border-radius:9px;color:var(--txt);
+    font-family:var(--sans);font-size:13.5px;padding:9px 11px;outline:none;transition:.15s}
+  input:focus,select:focus,textarea.cfg:focus{border-color:var(--accent)}
+  .keywrap{position:relative}
+  .keywrap .reveal{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;
+    color:var(--txt-faint);cursor:pointer;font-size:12px;font-family:var(--mono)}
+  .keywrap input{padding-right:48px;font-family:var(--mono);font-size:12.5px}
+  label.lab{font-size:12px;color:var(--txt-faint);margin-bottom:4px;display:block;font-family:var(--mono)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:560px){.grid2{grid-template-columns:1fr}}
+  textarea.cfg{resize:vertical;min-height:90px;line-height:1.5}
+  .range-row{display:flex;align-items:center;gap:12px}
+  input[type=range]{flex:1;accent-color:var(--accent)}
+  .rangeval{font-family:var(--mono);font-size:13px;color:var(--txt);min-width:38px;text-align:right}
+  .ckbx{appearance:none;width:18px;height:18px;border:1px solid var(--line);border-radius:5px;
+    background:#0b0e15;cursor:pointer;position:relative;margin-top:2px;transition:.15s}
+  .ckbx:checked{background:var(--accent);border-color:var(--accent)}
+  .ckbx:checked::after{content:"✓";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:12px}
+  .s-foot{display:flex;gap:10px;align-items:center;padding:14px 20px;border-top:1px solid var(--line)}
+  .s-foot .danger{background:transparent;border:1px solid color-mix(in srgb,var(--err) 45%,var(--line));
+    color:var(--err);border-radius:9px;padding:9px 13px;font-size:13px;cursor:pointer}
+  .s-foot .danger:hover{background:color-mix(in srgb,var(--err) 12%,transparent)}
+  .s-foot .ok{margin-left:auto;background:var(--accent);border:none;color:#fff;border-radius:9px;
+    padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer}
+  .saved{font-family:var(--mono);font-size:11px;color:var(--ok);opacity:0;transition:.2s}
+  .saved.show{opacity:1}
+
+  /* moteurs gratuits / sous-sections */
+  .subhead{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.12em;
+    color:var(--txt-faint);margin:16px 0 2px;padding-top:6px}
+  .subhead:first-child{margin-top:2px;padding-top:0}
+  .tag{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;
+    background:var(--accent-soft);color:#b9b3ff;
+    border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);
+    border-radius:999px;padding:1px 6px;font-weight:600}
+  .freenote{font-size:11.5px;color:var(--txt-dim);background:#0b0e15;border:1px dashed var(--line);
+    border-radius:9px;padding:8px 10px;line-height:1.4}
+  .freenote span{color:var(--txt-faint);font-size:10.5px}
+  .freecol{display:flex;flex-direction:column;gap:7px}
+  .ctag{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:#b9b3ff;
+    background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);
+    border-radius:5px;padding:0 5px}
+
+
+  /* ---------- roster des IA libres ---------- */
+  .roster{border:1px solid var(--line-soft);border-radius:10px;background:#0b0e15;padding:10px}
+  .rr-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .rr-count{font-family:var(--mono);font-size:11.5px;color:var(--txt-dim);margin-right:auto}
+  .rr-count b{color:var(--accent)}
+  .rr-top input#rrFilter{width:130px;padding:6px 9px;font-size:12.5px}
+  .rr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:4px;
+    max-height:210px;overflow:auto;padding:2px;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)}
+  .rr-item{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:7px;cursor:pointer;
+    font-family:var(--mono);font-size:12px;color:var(--txt-dim);border:1px solid transparent;user-select:none}
+  .rr-item:hover{background:#10141d}
+  .rr-item.on{color:var(--txt);border-color:color-mix(in srgb,var(--accent) 35%,var(--line));background:#10131f}
+  .rr-item input{accent-color:var(--accent);margin:0}
+  .rr-item .pdot{width:8px;height:8px;border-radius:50%;flex:none}
+  .rr-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rr-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+    margin-top:8px;font-size:11.5px;color:var(--txt-faint)}
+  .stage-label .stop{margin-left:8px;padding:3px 10px;font-size:11.5px;color:var(--warn);
+    border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+  .stage-label .stop:hover{border-color:var(--warn);color:var(--warn)}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important;transition:none !important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <span class="logo">Multi<b>·</b>IA</span>
+      <span class="ver">v1.4</span>
+    </div>
+    <span class="tagline">une question → plusieurs IA → une pour les réunir toutes</span>
+    <span class="spacer"></span>
+    <button class="iconbtn" id="openSettings"><span class="gear">⚙︎</span> Réglages</button>
+  </header>
+
+  <!-- Console -->
+  <div class="console">
+    <div class="console-row">
+      <span class="caret">▸</span>
+      <textarea id="prompt" placeholder="Posez votre question…  (Entrée pour envoyer · Maj+Entrée = nouvelle ligne)"></textarea>
+      <button class="send" id="sendBtn">OK ↵</button>
+    </div>
+    <div class="console-foot">
+      <span class="hint"><kbd>Entrée</kbd> envoyer · <kbd>Maj</kbd>+<kbd>Entrée</kbd> nouvelle ligne</span>
+      <div class="chips" id="chips"></div>
+    </div>
+  </div>
+
+  <!-- Divergence -->
+  <div class="stage-label" id="divLabel" style="display:none"><span class="n">01</span> Réponses des IA <span id="divCount"></span> <button class="ghostbtn stop" id="stopBtn" style="display:none">✕ Stop &amp; synthèse</button></div>
+  <div class="grid" id="grid"></div>
+
+  <!-- état initial -->
+  <div class="empty" id="emptyState">
+    <b>Des dizaines d'IA libres, sans aucune clé.</b>
+    6 sont pré-cochées — tapez une question puis Entrée. Cochez-en plus (ou ajoutez OpenRouter : des centaines de modèles avec une clé) dans <a id="emptyCfg">Réglages</a>.
+  </div>
+
+  <!-- Convergence -->
+  <div class="stage-label" id="synthLabel" style="display:none"><span class="n">02</span> Synthèse</div>
+  <div id="synthWrap"></div>
+
+</div>
+
+<!-- ================= RÉGLAGES ================= -->
+<div class="overlay" id="overlay">
+  <div class="settings" role="dialog" aria-modal="true" aria-label="Réglages">
+    <div class="s-head">
+      <span class="gear" style="color:var(--accent);font-size:16px">⚙︎</span>
+      <h2>Réglages</h2>
+      <button class="x" id="closeSettings" aria-label="Fermer">×</button>
+    </div>
+    <div class="s-body">
+      <div class="note">
+        <span class="ic">✨</span>
+        <span>Les moteurs <b>sans clé</b> (relais public Pollinations) sont parfaits pour démarrer, mais
+        lancés <b>en parallèle</b> ; si le relais bride (429), le débit s'ajuste tout seul — un token <b>enter.pollinations.ai</b> lève largement la bride. Le bouton <b>Stop</b> synthétise à tout moment ce qui a déjà répondu.
+        Pour de <b>vraies réponses en parallèle</b>, ajoutez une clé (Groq et Gemini ont des offres gratuites),
+        ou collez un token <b>enter.pollinations.ai</b> ci-dessous pour lever la limite. <b>Ollama</b> tourne en local, sans clé.</span>
+      </div>
+      <div class="note">
+        <span class="ic">🔒</span>
+        <span>Vos clés sont stockées <b>uniquement dans ce navigateur</b> (localStorage) et envoyées
+        <b>directement</b> du navigateur vers chaque API. À utiliser sur une machine de confiance —
+        ne publiez pas ce fichier en ligne avec vos clés. Chaque utilisateur saisit ses propres clés.</span>
+      </div>
+
+      <div class="sect">
+        <h3>IA libres — sans clé (relais public)</h3>
+        <div id="relayRoster" class="roster"></div>
+      </div>
+
+      <div class="sect">
+        <h3>Moteurs avec clé <span style="text-transform:none;letter-spacing:0">· le champ modèle accepte plusieurs modèles séparés par des virgules → une carte chacun</span></h3>
+        <div id="providerRows"></div>
+      </div>
+
+      <div class="sect">
+        <h3>Synthèse</h3>
+        <div class="grid2">
+          <div>
+            <label class="lab">Moteur de synthèse</label>
+            <select id="synthProvider"></select>
+          </div>
+          <div>
+            <label class="lab">Modèle de synthèse</label>
+            <input type="text" id="synthModel" list="dl-synth" autocomplete="off" spellcheck="false">
+            <datalist id="dl-synth"></datalist>
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <label class="lab">Consigne de synthèse</label>
+          <textarea class="cfg" id="synthPrompt" spellcheck="false"></textarea>
+        </div>
+      </div>
+
+      <div class="sect">
+        <h3>Paramètres communs</h3>
+        <div class="grid2">
+          <div>
+            <label class="lab">Température : <span class="rangeval" id="tempVal">0.7</span></label>
+            <div class="range-row">
+              <input type="range" id="temp" min="0" max="1.5" step="0.1" value="0.7">
+            </div>
+          </div>
+          <div>
+            <label class="lab">Tokens max (par réponse)</label>
+            <input type="number" id="maxTokens" min="128" max="32768" step="128" value="2048">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="s-foot">
+      <button class="danger" id="clearKeys">Effacer les clés</button>
+      <span class="saved" id="savedFlag">enregistré ✓</span>
+      <button class="ok" id="doneSettings">Terminé</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   Multi-IA v1.3 — outil autonome (un seul fichier)
+   "Une question → des dizaines d'IA → une pour les réunir toutes."
+   - IA LIBRES : roster dynamique = TOUS les modèles du relais public
+     (Pollinations), cochables en masse, interrogés en série (file globale).
+   - OpenRouter : des centaines de modèles avec UNE clé, en parallèle
+     (concurrence plafonnée à 4).
+   - Chaque moteur à clé accepte PLUSIEURS modèles séparés par des
+     virgules → une carte par modèle.
+   - Bouton STOP : interrompt la vague et synthétise ce qui a répondu.
+   ============================================================ */
+
+/* ---- Le relais public gratuit (sans clé) ---- */
+const RELAY = {
+  chat:   "https://text.pollinations.ai/openai",
+  models: "https://text.pollinations.ai/models"
+};
+let RELAY_MODELS = [];  // liste live, remplie par syncRelayModels()
+
+/* ---- Moteurs à clé (le champ modèle accepte "a, b, c" → 1 carte par modèle) ---- */
+const PROVIDERS = {
+  openrouter: {
+    label:"OpenRouter", vendor:"des centaines de modèles · 1 clé", color:"#8ab4ff",
+    type:"openai", base:"https://openrouter.ai/api/v1", keyHint:"sk-or-…", parallelCap:4,
+    defaultModel:"openai/gpt-4o-mini",
+    models:["openai/gpt-4o-mini","anthropic/claude-sonnet-4-6","google/gemini-2.0-flash-001","meta-llama/llama-3.3-70b-instruct","deepseek/deepseek-chat","mistralai/mistral-large"]
+  },
+  openai: {
+    label:"ChatGPT", vendor:"OpenAI", color:"var(--c-openai)",
+    type:"openai", base:"https://api.openai.com/v1", keyHint:"sk-…",
+    defaultModel:"gpt-4o",
+    models:["gpt-4o","gpt-4o-mini","gpt-4.1","gpt-4.1-mini","o4-mini","o3"]
+  },
+  anthropic: {
+    label:"Claude", vendor:"Anthropic", color:"var(--c-anthropic)",
+    type:"anthropic", keyHint:"sk-ant-…",
+    defaultModel:"claude-sonnet-4-6",
+    models:["claude-opus-4-8","claude-sonnet-4-6","claude-haiku-4-5-20251001"]
+  },
+  gemini: {
+    label:"Gemini", vendor:"Google", color:"var(--c-gemini)",
+    type:"gemini", keyHint:"AIza…",
+    defaultModel:"gemini-2.0-flash",
+    models:["gemini-2.0-flash","gemini-2.5-flash","gemini-2.5-pro"]
+  },
+  groq: {
+    label:"Groq", vendor:"Llama / Mixtral", color:"var(--c-groq)",
+    type:"openai", base:"https://api.groq.com/openai/v1", keyHint:"gsk_…",
+    defaultModel:"llama-3.3-70b-versatile",
+    models:["llama-3.3-70b-versatile","llama-3.1-8b-instant","mixtral-8x7b-32768"]
+  },
+  mistral: {
+    label:"Mistral", vendor:"Mistral AI", color:"var(--c-mistral)",
+    type:"openai", base:"https://api.mistral.ai/v1", keyHint:"…",
+    defaultModel:"mistral-large-latest",
+    models:["mistral-large-latest","mistral-small-latest","open-mistral-nemo"]
+  },
+  ollama: {
+    label:"Ollama", vendor:"local · sans clé", color:"#aeb8ff",
+    type:"openai", keyless:true, needsBase:true, base:"http://localhost:11434/v1",
+    defaultModel:"llama3.2",
+    models:["llama3.2","llama3.1","qwen2.5","mistral","phi3","gemma2"]
+  }
+};
+const KEYED_PIDS = Object.keys(PROVIDERS);
+const MAX_JOBS = 64;          // garde-fou : nombre max de cartes par vague
+const TRUNC_PER_ANSWER = 4000; // chars max par réponse injectée dans la synthèse
+
+const DEFAULT_SYNTH =
+`Tu reçois une même question, posée à plusieurs IA, suivie de leurs réponses respectives.
+Rédige UNE synthèse claire, structurée et fiable :
+- combine les meilleures idées de chaque réponse ;
+- signale explicitement les points d'accord et les désaccords ;
+- corrige ou écarte ce qui semble faux ou douteux ;
+- donne la réponse finale la plus complète et utile possible.
+Réponds directement, sans préciser que tu fais une synthèse.`;
+
+/* ---- État + persistance ---- */
+/* v2 : nouveau stockage. La v1 pouvait contenir une sélection dégénérée
+   (["openai"] seul, héritée du bug de repli v1.2) qui se re-sauvegardait à
+   chaque session → « toujours qu'une seule IA ». On migre les CLÉS et les
+   réglages depuis v1, mais JAMAIS la sélection du roster (repart sur Reco). */
+const LS_KEY = "multi-ia-v2";
+const LS_KEY_OLD = "multi-ia-v1";
+const state = {
+  relaySelected: null,   // null = pas encore choisi → RECO après synchro
+  relayToken: "",
+  keys:{}, models:{}, enabled:{}, bases:{},
+  synthProvider:"relay", synthModel:"",
+  synthPrompt:DEFAULT_SYNTH, temperature:0.7, maxTokens:2048
+};
+function applySaved(s, withRoster){
+  ["keys","models","enabled","bases"].forEach(k=>{
+    if(!s[k]) return;
+    Object.keys(s[k]).forEach(kk=>{ if(kk in state[k] || k==="keys") state[k][kk]=s[k][kk]; });
+    // ne garde que les entrées correspondant à des moteurs actuels
+    Object.keys(state[k]).forEach(kk=>{ if(!PROVIDERS[kk]) delete state[k][kk]; });
+  });
+  if(withRoster && Array.isArray(s.relaySelected)) state.relaySelected = s.relaySelected;
+  if(typeof s.relayToken==="string") state.relayToken = s.relayToken;
+  if(typeof s.synthProvider==="string") state.synthProvider = s.synthProvider;
+  if(typeof s.synthModel==="string" && withRoster) state.synthModel = s.synthModel;
+  if(typeof s.synthPrompt==="string") state.synthPrompt = s.synthPrompt;
+  if(typeof s.temperature==="number") state.temperature = s.temperature;
+  if(typeof s.maxTokens==="number") state.maxTokens = s.maxTokens;
+  if(/^free_/.test(state.synthProvider)) state.synthProvider = "relay";
+  if(!PROVIDERS[state.synthProvider] && state.synthProvider!=="relay") state.synthProvider = "relay";
+}
+function loadState(){
+  KEYED_PIDS.forEach(p=>{
+    state.enabled[p] = false;
+    state.models[p]  = PROVIDERS[p].defaultModel;
+    state.keys[p]    = "";
+    if(PROVIDERS[p].base) state.bases[p] = PROVIDERS[p].base;
+  });
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){
+      applySaved(JSON.parse(raw), true);            // v2 : tout, roster compris
+    } else {
+      const old = localStorage.getItem(LS_KEY_OLD); // v1 : clés + réglages SEULEMENT
+      if(old){
+        const s = JSON.parse(old);
+        applySaved(s, false);
+        // token du relais rangé dans keys.free_* en v1.2
+        if(!state.relayToken && s.keys){
+          const t = s.keys.free_openai || s.keys.free_mistral || s.keys.free_llama;
+          if(t) state.relayToken = t;
+        }
+        state.relaySelected = null;                 // → Reco au prochain sync
+      }
+    }
+  }catch(e){ /* stockage indisponible → mémoire de session */ }
+}
+let saveTimer=null;
+function saveState(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
+  const f=document.getElementById("savedFlag");
+  if(f){ f.classList.add("show"); clearTimeout(saveTimer);
+    saveTimer=setTimeout(()=>f.classList.remove("show"),1200); }
+}
+
+/* ============================================================
+   Rendu Markdown minimal et autonome
+   ============================================================ */
+function mdToHtml(md){
+  if(!md) return "";
+  let s = String(md).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const blocks=[];
+  s = s.replace(/```[^\n]*\n?([\s\S]*?)```/g,(m,code)=>{
+    blocks.push("<pre><code>"+code.replace(/\n$/,"")+"</code></pre>");
+    return "\u0000B"+(blocks.length-1)+"\u0000";
+  });
+  s = s.replace(/`([^`\n]+)`/g,"<code>$1</code>");
+  s = s.replace(/^######\s+(.*)$/gm,"<h6>$1</h6>")
+       .replace(/^#####\s+(.*)$/gm,"<h5>$1</h5>")
+       .replace(/^####\s+(.*)$/gm,"<h4>$1</h4>")
+       .replace(/^###\s+(.*)$/gm,"<h3>$1</h3>")
+       .replace(/^##\s+(.*)$/gm,"<h2>$1</h2>")
+       .replace(/^#\s+(.*)$/gm,"<h1>$1</h1>");
+  s = s.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
+       .replace(/__([^_]+)__/g,"<strong>$1</strong>")
+       .replace(/(^|[^*])\*([^*\n]+)\*/g,"$1<em>$2</em>");
+  s = s.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  const lines = s.split("\n");
+  const out=[]; let para=[]; let list=null;
+  const flushPara=()=>{ if(para.length){ out.push("<p>"+para.join("<br>")+"</p>"); para=[]; } };
+  const flushList=()=>{ if(list){ out.push("</"+list+">"); list=null; } };
+  const flushAll=()=>{ flushPara(); flushList(); };
+  for(const line of lines){
+    const ph = line.match(/^\u0000B(\d+)\u0000$/);
+    if(ph){ flushAll(); out.push(blocks[+ph[1]]); continue; }
+    if(/^<h[1-6]>/.test(line)){ flushAll(); out.push(line); continue; }
+    if(line.trim()===""){ flushAll(); continue; }
+    let m;
+    if((m=line.match(/^\s*[-*+]\s+(.+)$/))){
+      flushPara(); if(list!=="ul"){ flushList(); out.push("<ul>"); list="ul"; }
+      out.push("<li>"+m[1]+"</li>"); continue;
+    }
+    if((m=line.match(/^\s*\d+[.)]\s+(.+)$/))){
+      flushPara(); if(list!=="ol"){ flushList(); out.push("<ol>"); list="ol"; }
+      out.push("<li>"+m[1]+"</li>"); continue;
+    }
+    flushList(); para.push(line);
+  }
+  flushAll();
+  let html = out.join("\n");
+  html = html.replace(/\u0000B(\d+)\u0000/g,(m,i)=>blocks[+i]||"");
+  return html;
+}
+
+/* ============================================================
+   Utilitaires réseau
+   ============================================================ */
+async function readError(r){
+  let msg = "HTTP "+r.status;
+  try{
+    const j = await r.json();
+    msg += " · " + (j.error?.message || j.message || (j.error&&JSON.stringify(j.error)) || JSON.stringify(j)).toString().slice(0,300);
+  }catch(_){
+    try{ const t=await r.text(); if(t) msg += " · "+t.slice(0,300); }catch(__){}
+  }
+  return msg;
+}
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+async function fetchT(url, opts, ms){
+  const ctrl = new AbortController();
+  const id = setTimeout(()=>ctrl.abort(), ms||90000);
+  try{ return await fetch(url, Object.assign({}, opts||{}, {signal:ctrl.signal})); }
+  catch(e){ if(e.name==="AbortError") throw new Error("délai dépassé ("+Math.round((ms||90000)/1000)+"s)"); throw e; }
+  finally{ clearTimeout(id); }
+}
+
+/* ---- POOL ADAPTATIF du relais : PARALLÈLE d'emblée.
+   Le relais bride parfois la concurrence (429 "queue full") : dans ce cas le
+   pool se RÉTRÉCIT tout seul (jusqu'à 1 si nécessaire) puis regrossit quand
+   les succès s'enchaînent (AIMD). Un token lève largement la bride. ---- */
+const relayPool = { cap: 3, max: 6, active: 0, queue: [], streak: 0 };
+function relayPoolTune(){
+  const hasToken = !!(state.relayToken||"").trim();
+  relayPool.max = hasToken ? 12 : 6;
+  if(hasToken && relayPool.cap < 6) relayPool.cap = 6;
+}
+function relayPump(){
+  while(relayPool.active < relayPool.cap && relayPool.queue.length){
+    const {task,res,rej} = relayPool.queue.shift();
+    relayPool.active++;
+    Promise.resolve().then(task).then(res,rej)
+      .finally(()=>{ relayPool.active--; relayPump(); });
+  }
+}
+function relayRun(task){
+  return new Promise((res,rej)=>{ relayPool.queue.push({task,res,rej}); relayPump(); });
+}
+function relayCongested(){          // 429 reçu → on serre
+  relayPool.streak = 0;
+  relayPool.cap = Math.max(1, relayPool.cap - 1);
+}
+function relayHealthy(){            // succès → on relâche progressivement
+  relayPool.streak++;
+  if(relayPool.streak >= 3 && relayPool.cap < relayPool.max){
+    relayPool.cap++; relayPool.streak = 0; relayPump();
+  }
+}
+
+/* ---- Limiteur générique de concurrence (OpenRouter : 4 en parallèle max) ---- */
+function makeLimiter(n){
+  let active=0; const q=[];
+  const next=()=>{ if(active>=n || !q.length) return;
+    active++; const {t,res,rej}=q.shift();
+    Promise.resolve().then(t).then(res,rej).finally(()=>{ active--; next(); });
+  };
+  return t=>new Promise((res,rej)=>{ q.push({t,res,rej}); next(); });
+}
+const LIMITERS = {};
+function limiterFor(pid){
+  const cap = PROVIDERS[pid] && PROVIDERS[pid].parallelCap;
+  if(!cap) return t=>t();
+  if(!LIMITERS[pid]) LIMITERS[pid] = makeLimiter(cap);
+  return LIMITERS[pid];
+}
+
+/* ============================================================
+   Roster du relais (liste live des modèles gratuits)
+   ============================================================ */
+function extractModelIds(data){
+  if(Array.isArray(data))
+    return data.map(x=> typeof x==="string" ? x : (x && (x.name||x.id||x.model))).filter(Boolean);
+  if(data && typeof data==="object"){
+    for(const k of ["data","models","list","result","items"])
+      if(Array.isArray(data[k])) return extractModelIds(data[k]);
+    return Object.keys(data); // dictionnaire { "nom-du-modele": {...} }
+  }
+  return [];
+}
+async function loadRelayModels(){
+  try{
+    const r = await fetchT(RELAY.models, {}, 15000);
+    if(!r.ok) return null;
+    const ids = Array.from(new Set(extractModelIds(await r.json())));
+    return ids.length >= 2 ? ids : null; // <2 = parse suspect → traité comme un échec
+  }catch(_){ return null; }
+}
+function recoRelay(ids){
+  const used = new Set(); const out=[];
+  const grab = kw=>{ const m = ids.find(id=>!used.has(id)&&id.toLowerCase().includes(kw)); if(m){used.add(m);out.push(m);} };
+  ["openai","mistral","llama","deepseek","qwen","gemini"].forEach(grab);
+  for(const id of ids){ if(out.length>=6) break; if(!used.has(id)){used.add(id);out.push(id);} }
+  return out.slice(0,6);
+}
+async function syncRelayModels(quiet){
+  const ids = await loadRelayModels();
+  if(ids && ids.length){
+    RELAY_MODELS = ids;
+    if(Array.isArray(state.relaySelected)){
+      const before = state.relaySelected.length;
+      state.relaySelected = state.relaySelected.filter(m=>ids.includes(m)); // purge les modèles retirés
+      // [] choisi délibérément = respecté ; Reco uniquement si la purge a tout vidé
+      if(before>0 && !state.relaySelected.length) state.relaySelected = recoRelay(ids);
+    } else {
+      state.relaySelected = recoRelay(ids); // jamais choisi → Reco ×4
+    }
+    if(state.synthProvider==="relay" && !ids.includes(state.synthModel)){
+      state.synthModel = state.relaySelected[0] || ids[0];
+    }
+  } else {
+    // liste injoignable : repli sur noms génériques DISTINCTS (plus jamais 1 seule carte)
+    if(!RELAY_MODELS.length) RELAY_MODELS = ["openai","openai-large","searchgpt"];
+    if(!Array.isArray(state.relaySelected))
+      state.relaySelected = RELAY_MODELS.slice(0,3);          // jamais choisi → défaut
+    else {
+      const before = state.relaySelected.length;
+      state.relaySelected = state.relaySelected.filter(m=>RELAY_MODELS.includes(m));
+      if(before>0 && !state.relaySelected.length)
+        state.relaySelected = RELAY_MODELS.slice(0,3);        // purge totale → défaut
+    }
+    if(state.synthProvider==="relay" && !RELAY_MODELS.includes(state.synthModel))
+      state.synthModel = state.relaySelected[0] || RELAY_MODELS[0];
+  }
+  saveState();
+  if(!quiet){ buildRelayRoster(); buildChips(); buildSynthControls(); }
+}
+
+/* ---- Liste live OpenRouter (endpoint public, clé non requise pour lister) ---- */
+let OR_MODELS = [];
+async function syncOpenRouterModels(){
+  try{
+    const r = await fetchT("https://openrouter.ai/api/v1/models", {}, 15000);
+    if(!r.ok) return;
+    const d = await r.json();
+    const ids = (d.data||[]).map(x=>x.id).filter(Boolean);
+    if(ids.length){ OR_MODELS = ids; PROVIDERS.openrouter.models = ids.slice(0,400);
+      const dl = document.getElementById("dl-openrouter");
+      if(dl) dl.innerHTML = OR_MODELS.slice(0,400).map(m=>`<option value="${escAttr(m)}">`).join("");
+    }
+  }catch(_){ /* silencieux */ }
+}
+
+/* ============================================================
+   Appels API
+   ============================================================ */
+async function callRelay(model, prompt, runTok){
+  const headers = { "Content-Type":"application/json" };
+  const token = (state.relayToken||"").trim();
+  if(token) headers["Authorization"] = "Bearer "+token;
+  return relayRun(async ()=>{
+    if(runTok!=null && runTok!==runToken) throw new Error("annulé");
+    await sleep(Math.random()*300);            // étale la rafale initiale
+    let curModel = model, resynced = false, lastErr = null;
+    for(let attempt=0; attempt<4; attempt++){
+      if(runTok!=null && runTok!==runToken) throw new Error("annulé");
+      let r;
+      try{
+        r = await fetchT(RELAY.chat,{
+          method:"POST", headers,
+          body:JSON.stringify({ model:curModel, temperature:state.temperature,
+            max_tokens:state.maxTokens, messages:[{role:"user",content:prompt}], private:true })
+        }, 60000);
+      }catch(e){ lastErr=e; await sleep(1500*(attempt+1)); continue; }
+      if(r.ok){
+        relayHealthy();                        // succès → le pool peut regrossir
+        const raw = await r.text();
+        try{
+          const d = JSON.parse(raw);
+          const c = d.choices?.[0]?.message?.content ?? d.choices?.[0]?.text ?? d.content ?? null;
+          return (c!=null ? String(c) : raw).trim() || "(réponse vide)";
+        }catch(_){ return raw.trim() || "(réponse vide)"; }
+      }
+      const errMsg = await readError(r);
+      lastErr = new Error(errMsg);
+      if(r.status===429){
+        relayCongested();                      // trop de parallèle → on serre
+        await sleep(1200*(attempt+1) + Math.random()*800);
+        continue;
+      }
+      if(r.status===404 && !resynced){
+        resynced = true;
+        await syncRelayModels(true);
+        if(!RELAY_MODELS.includes(curModel)) throw new Error("modèle retiré du relais ("+curModel+")");
+        continue; // le modèle existe encore : simple hoquet, on retente
+      }
+      if(r.status>=500){ await sleep(2000*(attempt+1)); continue; }
+      throw lastErr;
+    }
+    throw lastErr || new Error("relais indisponible après plusieurs tentatives");
+  });
+}
+
+async function callKeyed(pid, model, prompt){
+  const cfg = PROVIDERS[pid];
+  const key = (state.keys[pid]||"").trim();
+  if(!cfg.keyless && !key) throw new Error("Clé API manquante");
+
+  if(cfg.type==="openai"){
+    const exec = async ()=>{
+      const base = (state.bases[pid] || cfg.base || "").trim().replace(/\/+$/,"");
+      const body = { model, messages:[{role:"user",content:prompt}], max_tokens:state.maxTokens };
+      if(!/^o\d/i.test(model)) body.temperature = state.temperature; // o-série : pas de temperature
+      const headers = { "Content-Type":"application/json" };
+      if(key) headers["Authorization"] = "Bearer "+key;
+      const r = await fetchT(base+"/chat/completions",{ method:"POST", headers, body:JSON.stringify(body) }, 90000);
+      if(!r.ok) throw new Error(await readError(r));
+      const d = await r.json();
+      return (d.choices?.[0]?.message?.content || "").trim() || "(réponse vide)";
+    };
+    return limiterFor(pid)(exec);
+  }
+
+  if(cfg.type==="anthropic"){
+    const r = await fetchT("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "x-api-key":key,
+        "anthropic-version":"2023-06-01",
+        "anthropic-dangerous-direct-browser-access":"true"
+      },
+      body:JSON.stringify({ model, max_tokens:state.maxTokens, temperature:state.temperature,
+        messages:[{role:"user",content:prompt}] })
+    }, 90000);
+    if(!r.ok) throw new Error(await readError(r));
+    const d = await r.json();
+    return (d.content||[]).map(b=>b.text||"").join("").trim() || "(réponse vide)";
+  }
+
+  if(cfg.type==="gemini"){
+    const url = "https://generativelanguage.googleapis.com/v1beta/models/"+
+      encodeURIComponent(model)+":generateContent?key="+encodeURIComponent(key);
+    const r = await fetchT(url,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({
+        contents:[{ role:"user", parts:[{text:prompt}] }],
+        generationConfig:{ temperature:state.temperature, maxOutputTokens:state.maxTokens }
+      })
+    }, 90000);
+    if(!r.ok) throw new Error(await readError(r));
+    const d = await r.json();
+    const parts = d.candidates?.[0]?.content?.parts || [];
+    return parts.map(p=>p.text||"").join("").trim() || "(réponse vide)";
+  }
+
+  throw new Error("Type de moteur inconnu");
+}
+
+function callByJob(job, prompt, runTok){
+  return job.pid==="relay" ? callRelay(job.model, prompt, runTok)
+                           : callKeyed(job.pid, job.model, prompt);
+}
+
+/* ============================================================
+   Construction des jobs (1 job = 1 carte = 1 couple source/modèle)
+   ============================================================ */
+function splitModels(s){
+  return Array.from(new Set(String(s||"").split(",").map(x=>x.trim()).filter(Boolean)));
+}
+function hueOf(str){ let h=0; for(let i=0;i<str.length;i++) h=(h*31+str.charCodeAt(i))>>>0; return h%360; }
+function relayColor(model){ return "hsl("+hueOf(model)+" 62% 62%)"; }
+function slug(s){ return String(s).replace(/[^a-z0-9]+/gi,"-").replace(/^-+|-+$/g,""); }
+
+function buildJobs(){
+  const jobs = [];
+  (state.relaySelected||[]).forEach(m=>jobs.push({
+    id:"relay__"+slug(m), pid:"relay", model:m,
+    label:m, sub:"libre", color:relayColor(m)
+  }));
+  KEYED_PIDS.forEach(p=>{
+    if(!state.enabled[p]) return;
+    if(!PROVIDERS[p].keyless && !(state.keys[p]||"").trim()) return;
+    splitModels(state.models[p]).forEach(m=>jobs.push({
+      id:p+"__"+slug(m), pid:p, model:m,
+      label:PROVIDERS[p].label, sub:null, color:PROVIDERS[p].color
+    }));
+  });
+  return jobs.slice(0, MAX_JOBS);
+}
+
+/* ============================================================
+   Orchestration + rendu des cartes
+   ============================================================ */
+let last = { prompt:"", jobs:[], results:{}, good:[] };
+let running = false;
+let runToken = 0;
+let relayModelsReady = Promise.resolve();
+
+const $ = id => document.getElementById(id);
+const grid = () => $("grid");
+const synthWrap = () => $("synthWrap");
+
+function cardSkeleton(job){
+  const el = document.createElement("div");
+  el.className = "card";
+  el.id = "card-"+job.id;
+  el.style.setProperty("--eng", job.color);
+  el.innerHTML = `
+    <div class="head">
+      <span class="eng-dot"></span>
+      <span class="name">${escAttr(job.label)}</span>
+      ${job.sub?`<span class="ctag">${job.sub}</span>`:""}
+      <span class="model" title="${escAttr(job.model)}">${escAttr(job.model)}</span>
+      <span class="meta">
+        <span class="lat" data-lat></span>
+        <span class="badge run" data-badge><span class="loading-dots"><i></i><i></i><i></i></span></span>
+      </span>
+    </div>
+    <div class="body md" data-body><span style="color:var(--txt-faint)">en file…</span></div>
+    <div class="foot"><button class="ghostbtn" data-copy disabled>Copier</button></div>`;
+  return el;
+}
+function setCard(jobId, status, content, ms){
+  const el = $("card-"+jobId); if(!el) return;
+  const badge = el.querySelector("[data-badge]");
+  const body  = el.querySelector("[data-body]");
+  const lat   = el.querySelector("[data-lat]");
+  const copy  = el.querySelector("[data-copy]");
+  if(ms!=null) lat.textContent = (ms/1000).toFixed(1)+"s";
+  if(status==="done"){
+    badge.className="badge done"; badge.textContent="OK";
+    body.innerHTML = mdToHtml(content);
+    el.classList.remove("is-err");
+    copy.disabled=false; copy.onclick=()=>copyText(copy, content);
+  }else if(status==="error"){
+    badge.className="badge err"; badge.textContent="erreur";
+    body.textContent = content;
+    el.classList.add("is-err");
+    copy.disabled=true;
+  }else if(status==="cancel"){
+    badge.className="badge"; badge.textContent="annulé";
+    body.innerHTML = '<span style="color:var(--txt-faint)">interrompu (Stop)</span>';
+    copy.disabled=true;
+  }
+}
+function copyText(btn, txt){
+  navigator.clipboard?.writeText(txt).then(()=>{
+    const old=btn.textContent; btn.textContent="Copié ✓";
+    setTimeout(()=>btn.textContent=old,1200);
+  }).catch(()=>{});
+}
+
+/* ---- Synthèse ---- */
+function renderSynthSkeleton(){
+  const byLabel = state.synthProvider==="relay" ? "IA libre" : (PROVIDERS[state.synthProvider]?.label || state.synthProvider);
+  const dots = last.good.slice(0,12).map(j=>`<span class="d" style="background:${j.color}"></span>`).join("")
+    + (last.good.length>12 ? `<span class="arrow">+${last.good.length-12}</span>` : "");
+  synthWrap().innerHTML = `
+    <div class="synth" id="synthCard">
+      <div class="head">
+        <span class="star">✦</span>
+        <span class="name">Synthèse</span>
+        <span class="by" id="synthBy">par ${escAttr(byLabel)} · ${escAttr(state.synthModel)}</span>
+        <span class="converge">${dots}<span class="arrow">→</span><span class="d" style="background:var(--accent)"></span></span>
+      </div>
+      <div class="body md" data-sbody><span style="color:var(--txt-faint)">fusion de ${last.good.length} réponse(s)…</span></div>
+      <div class="foot">
+        <button class="ghostbtn" id="redoSynth">Relancer la synthèse</button>
+        <button class="ghostbtn" data-scopy disabled>Copier</button>
+      </div>
+    </div>`;
+  $("redoSynth").onclick = ()=>{ if(!running && last.good.length) runSynthesis(); };
+}
+function setSynthBy(pid, model){
+  const el = $("synthBy"); if(!el) return;
+  const lab = pid==="relay" ? "IA libre" : (PROVIDERS[pid]?.label || pid);
+  el.textContent = "par "+lab+" · "+model;
+}
+function setSynthProgress(msg){
+  const card = $("synthCard"); if(!card) return;
+  card.querySelector("[data-sbody]").innerHTML = '<span style="color:var(--txt-faint)">'+msg+"</span>";
+}
+function setSynth(status, content){
+  const card = $("synthCard"); if(!card) return;
+  const body = card.querySelector("[data-sbody]");
+  const copy = card.querySelector("[data-scopy]");
+  if(status==="done"){
+    body.innerHTML = mdToHtml(content);
+    copy.disabled=false; copy.onclick=()=>copyText(copy, content);
+  }else if(status==="error"){
+    body.innerHTML = `<span style="color:var(--err)">${content}</span>`;
+    copy.disabled=true;
+  }
+}
+
+async function runSynthesis(){
+  if(!last.good.length) return;
+  renderSynthSkeleton();
+
+  const compiled =
+    state.synthPrompt + "\n\n" +
+    "QUESTION INITIALE :\n" + last.prompt + "\n\n---\n\nRÉPONSES DES IA ("+last.good.length+") :\n\n" +
+    last.good.map(j=>{
+      let t = last.results[j.id].text;
+      if(t.length > TRUNC_PER_ANSWER) t = t.slice(0, TRUNC_PER_ANSWER) + "\n…(tronqué)";
+      return "### " + j.label + " (" + j.model + ")\n" + t;
+    }).join("\n\n") +
+    "\n\n---\n\nProduis maintenant la synthèse demandée.";
+
+  /* CASCADE : moteur choisi → moteurs à clé ayant répondu → moteurs à clé prêts → relais.
+     La synthèse aboutit tant qu'UN moteur au monde fonctionne. */
+  const tried = new Set();
+  const candidates = [];
+  const push = (pid, model)=>{
+    if(!model) return;
+    if(pid!=="relay"){
+      if(!PROVIDERS[pid]) return;
+      if(!PROVIDERS[pid].keyless && !(state.keys[pid]||"").trim()) return;
+    }
+    const k = pid+"|"+model;
+    if(tried.has(k)) return; tried.add(k);
+    candidates.push({pid, model});
+  };
+  push(state.synthProvider, state.synthModel);
+  last.good.filter(j=>j.pid!=="relay").forEach(j=>push(j.pid, j.model));
+  KEYED_PIDS.filter(p=>state.enabled[p]).forEach(p=>push(p, splitModels(state.models[p])[0]));
+  (state.relaySelected||[]).slice(0,2).forEach(m=>push("relay", m));
+
+  let lastErr = null;
+  for(let i=0;i<candidates.length;i++){
+    const c = candidates[i];
+    setSynthBy(c.pid, c.model);
+    if(i>0) setSynthProgress("moteur précédent indisponible → essai avec "+(c.pid==="relay"?"IA libre":PROVIDERS[c.pid].label)+" ("+c.model+")…");
+    try{
+      const text = c.pid==="relay" ? await callRelay(c.model, compiled)
+                                   : await callKeyed(c.pid, c.model, compiled);
+      setSynth("done", text);
+      return;
+    }catch(e){ lastErr = e; }
+  }
+  setSynth("error", "Aucun moteur de synthèse n'a répondu. Dernière erreur : "+((lastErr&&lastErr.message)||lastErr));
+}
+
+/* ---- Vague principale ---- */
+function finishRun(myTok){
+  if(myTok!==runToken) return;
+  running = false;
+  $("sendBtn").disabled = false;
+  $("stopBtn").style.display = "none";
+  last.good = last.jobs.filter(j=>last.results[j.id]?.ok);
+  if(last.good.length>0){
+    $("synthLabel").style.display="flex";
+    runSynthesis();
+  }
+}
+
+async function run(){
+  if(running) return;
+  const prompt = $("prompt").value.trim();
+  if(!prompt) return;
+
+  try{ await Promise.race([relayModelsReady, sleep(4000)]); }catch(_){}
+
+  const jobs = buildJobs();
+  if(jobs.length===0){ openSettings(); return; }
+
+  running = true;
+  const myTok = ++runToken;
+  $("sendBtn").disabled = true;
+  $("stopBtn").style.display = "";
+  $("emptyState").style.display="none";
+  $("divLabel").style.display="flex";
+  $("synthLabel").style.display="none";
+  synthWrap().innerHTML="";
+  grid().innerHTML="";
+  last = { prompt, jobs, results:{}, good:[] };
+
+  jobs.forEach(j=>grid().appendChild(cardSkeleton(j)));
+  let done=0;
+  const updCount=()=>{ $("divCount").textContent = "· "+done+"/"+jobs.length; };
+  updCount();
+
+  const runOne = (job)=>{
+    const t0 = performance.now();
+    return callByJob(job, prompt, myTok)
+      .then(text=>{ if(myTok!==runToken) return;
+        last.results[job.id]={ok:true,text};
+        setCard(job.id,"done",text,performance.now()-t0); })
+      .catch(err=>{ if(myTok!==runToken) return;
+        const msg = err && err.message || String(err);
+        if(msg==="annulé") setCard(job.id,"cancel");
+        else { last.results[job.id]={ok:false,err:msg}; setCard(job.id,"error",msg,performance.now()-t0); } })
+      .finally(()=>{ if(myTok!==runToken) return; done++; updCount(); });
+  };
+
+  // Tout part ensemble, EN PARALLÈLE : moteurs à clé sans restriction
+  // (OpenRouter plafonné à 4), IA libres via le pool adaptatif du relais
+  // (se resserre tout seul si le relais renvoie des 429, puis regrossit).
+  await Promise.allSettled(jobs.map(runOne));
+  finishRun(myTok);
+}
+
+function stopRun(){
+  if(!running) return;
+  const oldTok = runToken;
+  runToken++;                       // invalide les tâches en attente/retours tardifs
+  last.jobs.forEach(j=>{ if(!(j.id in last.results)) setCard(j.id,"cancel"); });
+  running = false;
+  $("sendBtn").disabled = false;
+  $("stopBtn").style.display = "none";
+  last.good = last.jobs.filter(j=>last.results[j.id]?.ok);
+  if(last.good.length>0){
+    $("synthLabel").style.display="flex";
+    runSynthesis();                 // « fusionne ce qu'on a »
+  }
+  void oldTok;
+}
+
+/* ============================================================
+   Réglages (UI)
+   ============================================================ */
+function escAttr(s){ return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+
+function buildChips(){
+  const c = $("chips"); if(!c) return; c.innerHTML="";
+  const nRelay = (state.relaySelected||[]).length;
+  if(nRelay>0){
+    const chip=document.createElement("span"); chip.className="chip";
+    chip.innerHTML = `<span class="dot" style="background:var(--accent)"></span>IA libres ×${nRelay}`;
+    c.appendChild(chip);
+  }
+  KEYED_PIDS.forEach(p=>{
+    if(!state.enabled[p]) return;
+    if(!PROVIDERS[p].keyless && !(state.keys[p]||"").trim()) return;
+    const n = splitModels(state.models[p]).length;
+    const chip=document.createElement("span"); chip.className="chip";
+    chip.innerHTML = `<span class="dot" style="background:${PROVIDERS[p].color}"></span>${PROVIDERS[p].label}`+(n>1?` ×${n}`:"");
+    c.appendChild(chip);
+  });
+  if(!c.children.length){
+    const s=document.createElement("span"); s.className="chip off";
+    s.innerHTML='<span class="dot" style="background:var(--txt-faint)"></span>aucun moteur actif — ⚙︎ Réglages';
+    c.appendChild(s);
+  }
+}
+
+/* ---- Roster des IA libres ---- */
+function buildRelayRoster(){
+  const host = $("relayRoster"); if(!host) return;
+  const sel = new Set(state.relaySelected||[]);
+  const filter = (host.dataset.filter||"").toLowerCase();
+  const shown = RELAY_MODELS.filter(m=>!filter || m.toLowerCase().includes(filter));
+  host.innerHTML = `
+    <div class="rr-top">
+      <span class="rr-count"><b>${sel.size}</b> cochée(s) / ${RELAY_MODELS.length} en ligne</span>
+      <input type="text" id="rrFilter" placeholder="filtrer…" value="${escAttr(host.dataset.filter||"")}">
+      <button class="ghostbtn" id="rrAll">Tout</button>
+      <button class="ghostbtn" id="rrNone">Aucun</button>
+      <button class="ghostbtn" id="rrReco">Reco ×4</button>
+    </div>
+    <div class="rr-grid">
+      ${shown.map(m=>`
+        <label class="rr-item${sel.has(m)?" on":""}">
+          <input type="checkbox" data-rm="${escAttr(m)}" ${sel.has(m)?"checked":""}>
+          <span class="pdot" style="background:${relayColor(m)}"></span>
+          <span class="rr-name" title="${escAttr(m)}">${escAttr(m)}</span>
+        </label>`).join("") || '<span style="color:var(--txt-faint);font-size:12px;padding:6px">aucun modèle ne correspond au filtre</span>'}
+    </div>
+    <div class="rr-foot">
+      <span>parallèle adaptatif — sans token le relais laisse passer ~1–2 à la fois, avec token c'est bien plus</span>
+      <div class="keywrap" style="max-width:280px">
+        <input type="password" id="relayToken" placeholder="token enter.pollinations.ai (optionnel)" autocomplete="off" spellcheck="false" value="${escAttr(state.relayToken||"")}">
+        <button class="reveal" type="button">voir</button>
+      </div>
+    </div>`;
+  host.querySelectorAll("[data-rm]").forEach(cb=>cb.addEventListener("change",e=>{
+    const m = e.target.dataset.rm;
+    const s = new Set(state.relaySelected||[]);
+    if(e.target.checked) s.add(m); else s.delete(m);
+    state.relaySelected = RELAY_MODELS.filter(x=>s.has(x));
+    saveState(); buildRelayRoster(); buildChips();
+  }));
+  const f = $("rrFilter");
+  f.addEventListener("input", e=>{ host.dataset.filter = e.target.value;
+    const pos=e.target.selectionStart; buildRelayRoster();
+    const nf=$("rrFilter"); nf.focus(); nf.setSelectionRange(pos,pos); });
+  $("rrAll").onclick  = ()=>{ state.relaySelected = RELAY_MODELS.slice(0, MAX_JOBS); saveState(); buildRelayRoster(); buildChips(); };
+  $("rrNone").onclick = ()=>{ state.relaySelected = []; saveState(); buildRelayRoster(); buildChips(); };
+  $("rrReco").onclick = ()=>{ state.relaySelected = recoRelay(RELAY_MODELS); saveState(); buildRelayRoster(); buildChips(); };
+  host.querySelector("#relayToken").addEventListener("input", e=>{ state.relayToken=e.target.value; relayPoolTune(); saveState(); });
+  host.querySelectorAll(".reveal").forEach(btn=>btn.addEventListener("click",()=>{
+    const inp = btn.previousElementSibling; if(!inp) return;
+    if(inp.type==="password"){ inp.type="text"; btn.textContent="cacher"; }
+    else { inp.type="password"; btn.textContent="voir"; }
+  }));
+}
+
+/* ---- Lignes des moteurs à clé ---- */
+function buildProviderRows(){
+  const wrap = $("providerRows"); if(!wrap) return; wrap.innerHTML="";
+  KEYED_PIDS.forEach(p=>wrap.appendChild(providerRow(p)));
+  attachRowListeners(wrap);
+}
+function providerRow(p){
+  const cfg = PROVIDERS[p];
+  const row = document.createElement("div");
+  row.className = "prow";
+  const dlId = "dl-"+p;
+  let left;
+  if(cfg.keyless && cfg.needsBase){
+    left = `<input type="text" data-base="${p}" placeholder="${cfg.base}" autocomplete="off" spellcheck="false" value="${escAttr(state.bases[p]||cfg.base)}">`;
+  } else {
+    left = `<div class="keywrap">
+        <input type="password" data-key="${p}" placeholder="Clé API ${cfg.keyHint}" autocomplete="off" spellcheck="false" value="${escAttr(state.keys[p]||"")}">
+        <button class="reveal" type="button">voir</button>
+      </div>`;
+  }
+  row.innerHTML = `
+    <input type="checkbox" class="ckbx" data-enable="${p}" ${state.enabled[p]?"checked":""}>
+    <div class="pmain">
+      <div class="pname"><span class="pdot" style="background:${cfg.color}"></span>${cfg.label}
+        ${cfg.parallelCap?`<span class="tag">multi</span>`:""}
+        <span style="color:var(--txt-faint);font-weight:400;font-size:12px">· ${cfg.vendor}</span></div>
+      <div class="fields">
+        ${left}
+        <div>
+          <input type="text" data-model="${p}" list="${dlId}" autocomplete="off" spellcheck="false"
+            placeholder="modèle(s) — virgules pour plusieurs" value="${escAttr(state.models[p]||cfg.defaultModel)}">
+          <datalist id="${dlId}">${cfg.models.map(m=>`<option value="${escAttr(m)}">`).join("")}</datalist>
+        </div>
+      </div>
+    </div>`;
+  return row;
+}
+function attachRowListeners(wrap){
+  wrap.querySelectorAll("[data-enable]").forEach(el=>el.addEventListener("change",e=>{
+    state.enabled[e.target.dataset.enable]=e.target.checked; saveState(); buildChips();
+  }));
+  wrap.querySelectorAll("[data-key]").forEach(el=>el.addEventListener("input",e=>{
+    state.keys[e.target.dataset.key]=e.target.value; saveState(); buildChips();
+  }));
+  wrap.querySelectorAll("[data-base]").forEach(el=>el.addEventListener("input",e=>{
+    state.bases[e.target.dataset.base]=e.target.value; saveState();
+  }));
+  wrap.querySelectorAll("[data-model]").forEach(el=>el.addEventListener("input",e=>{
+    state.models[e.target.dataset.model]=e.target.value; saveState(); buildChips();
+  }));
+  wrap.querySelectorAll(".reveal").forEach(btn=>btn.addEventListener("click",()=>{
+    const inp = btn.previousElementSibling; if(!inp) return;
+    if(inp.type==="password"){ inp.type="text"; btn.textContent="cacher"; }
+    else { inp.type="password"; btn.textContent="voir"; }
+  }));
+}
+
+/* ---- Contrôles de synthèse ---- */
+function buildSynthControls(){
+  const sel = $("synthProvider"); if(!sel) return; sel.innerHTML="";
+  const oRelay=document.createElement("option");
+  oRelay.value="relay"; oRelay.textContent="IA libre (relais, sans clé)";
+  if(state.synthProvider==="relay") oRelay.selected=true;
+  sel.appendChild(oRelay);
+  KEYED_PIDS.forEach(p=>{
+    const o=document.createElement("option");
+    o.value=p; o.textContent=PROVIDERS[p].label+" ("+PROVIDERS[p].vendor+")";
+    if(p===state.synthProvider) o.selected=true;
+    sel.appendChild(o);
+  });
+  const dl = $("dl-synth");
+  const fill = ()=>{
+    const list = state.synthProvider==="relay" ? RELAY_MODELS : (PROVIDERS[state.synthProvider]?.models||[]);
+    dl.innerHTML = list.slice(0,400).map(m=>`<option value="${escAttr(m)}">`).join("");
+  };
+  fill();
+  if(state.synthProvider==="relay" && !state.synthModel)
+    state.synthModel = (state.relaySelected||[])[0] || RELAY_MODELS[0] || "";
+  $("synthModel").value = state.synthModel;
+  $("synthPrompt").value = state.synthPrompt;
+  $("temp").value = state.temperature;
+  $("tempVal").textContent = Number(state.temperature).toFixed(1);
+  $("maxTokens").value = state.maxTokens;
+
+  sel.onchange = e=>{
+    state.synthProvider = e.target.value;
+    state.synthModel = state.synthProvider==="relay"
+      ? ((state.relaySelected||[])[0] || RELAY_MODELS[0] || "")
+      : PROVIDERS[state.synthProvider].defaultModel;
+    $("synthModel").value = state.synthModel;
+    fill(); saveState();
+  };
+  $("synthModel").oninput = e=>{ state.synthModel=e.target.value; saveState(); };
+  $("synthPrompt").oninput = e=>{ state.synthPrompt=e.target.value; saveState(); };
+  $("temp").oninput = e=>{ state.temperature=parseFloat(e.target.value); $("tempVal").textContent=Number(state.temperature).toFixed(1); saveState(); };
+  $("maxTokens").oninput = e=>{ const v=parseInt(e.target.value,10); if(!isNaN(v)) state.maxTokens=v; saveState(); };
+}
+
+function openSettings(){ $("overlay").classList.add("open"); }
+function closeSettings(){ $("overlay").classList.remove("open"); }
+
+/* ============================================================
+   Initialisation
+   ============================================================ */
+function init(){
+  loadState();
+  buildChips();
+  buildRelayRoster();
+  buildProviderRows();
+  buildSynthControls();
+  relayPoolTune();
+  relayModelsReady = syncRelayModels();  // roster live (attendu par le 1er envoi)
+  syncOpenRouterModels();                // datalist OpenRouter (silencieux)
+
+  $("sendBtn").addEventListener("click", run);
+  $("stopBtn").addEventListener("click", stopRun);
+  $("prompt").addEventListener("keydown", e=>{
+    if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); run(); }
+  });
+
+  $("openSettings").addEventListener("click", openSettings);
+  $("emptyCfg").addEventListener("click", openSettings);
+  $("closeSettings").addEventListener("click", closeSettings);
+  $("doneSettings").addEventListener("click", closeSettings);
+  $("overlay").addEventListener("click", e=>{ if(e.target===$("overlay")) closeSettings(); });
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeSettings(); });
+
+  $("clearKeys").addEventListener("click", ()=>{
+    if(!confirm("Effacer toutes les clés API enregistrées dans ce navigateur ?")) return;
+    KEYED_PIDS.forEach(p=>state.keys[p]="");
+    state.relayToken="";
+    saveState();
+    buildProviderRows(); buildRelayRoster(); buildChips();
+  });
+
+  $("prompt").focus();
+}
+document.addEventListener("DOMContentLoaded", init);
+
+</script>
+</body>
+</html>
 
