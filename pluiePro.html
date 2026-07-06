@@ -2237,9 +2237,11 @@ function _buildQDTable(m,i0,pm,tzNow,fit,al){
   const zoneOf=i=>{
     const v=g('temperature_2m',i);
     if(v==null||!isFinite(_tMin)||!isFinite(_tMax))return {c:0,h:0};
-    let c=v<=_tMin+3?1:0;
-    let hh=v>=_tMax-4?1:0;
-    if(c&&hh){if((v-_tMin)<=(_tMax-v))hh=0;else c=0;}   /* chevauchement (profil plat) : zone la plus proche */
+    /* comparaisons sur les valeurs ARRONDIES (celles affichées) : ce qu'on lit est ce qui est coloré */
+    const vr=Math.round(v),rMin=Math.round(_tMin),rMax=Math.round(_tMax);
+    let c=vr<=rMin+4?1:0;
+    let hh=vr>=rMax-4?1:0;
+    if(c&&hh){if((vr-rMin)<=(rMax-vr))hh=0;else c=0;}   /* chevauchement (profil plat) : zone la plus proche */
     return {c:c,h:hh};
   };
   const cell=(i,inner,cls,extraStyle)=>{
@@ -2312,18 +2314,17 @@ function _qdRender(){
   if(!_qdData)return;
   const inPane=(document.getElementById('qdHost')&&document.getElementById('qdHost').style.display==='flex');
   const box=inPane?document.getElementById('qdScroll'):document.getElementById('horaireScroll');
-  /* mode heure : étirer sur 100% de largeur (colonnes alignées avec les heures du graphe au-dessus)
-     sauf si trop étroit (~<14px/col) → défilement */
+  /* mode heure : aligné sur le graphe si possible ; sinon pleine largeur si ≥16px/col, sinon défilement */
   let fit=false,al=null;
   if(_qdStep==='h'){
-    if(inPane)al=_qdChartAlign();   /* alignement pixel sur le graphe du haut */
+    if(inPane){
+      al=_qdChartAlign();            /* alignement pixel sur le graphe du haut */
+      if(al&&al.colW<16)al=null;     /* colonnes trop étroites (iPhone) → défilement lisible plutôt qu'aligné illisible */
+    }
     if(!al){
-      if(inPane){fit=true;}          /* dans le pane : toujours pleine largeur, jamais d'ascenseur */
-      else{
-        let cols=0;for(let i=_qdData.i0;i<_qdData.m.time.length;i++)if(_qdData.m.time[i].slice(11,16).endsWith(':00'))cols++;
-        const w=(box&&box.clientWidth)||0;
-        fit=!w||((w-56)/Math.max(1,cols))>=14;
-      }
+      let cols=0;for(let i=_qdData.i0;i<_qdData.m.time.length;i++)if(_qdData.m.time[i].slice(11,16).endsWith(':00'))cols++;
+      const w=(box&&box.clientWidth)||0;
+      fit=!!w&&((w-56)/Math.max(1,cols))>=16;   /* assez large → pleine largeur ; sinon ascenseur horizontal */
     }
   }
   const html=_buildQDTable(_qdData.m,_qdData.i0,_qdData.pm,_qdData.tzNow,fit,al);
@@ -3044,6 +3045,7 @@ function _renderFavsInto(barId){
   bar.appendChild(add);
 }
 function loadFav(n){const inp=document.getElementById('cityInput');if(inp)inp.value=n;load();}
+function goHome(){loadFav('Juvisy-sur-Orge');}
 function _graphSearchCity(){const gi=document.getElementById('graphCityInput');const ci=document.getElementById('cityInput');const v=gi?gi.value.trim():'';if(!v)return;if(ci)ci.value=v;load();}
 function toggleFavCurrent(){const cur=(typeof cityName!=='undefined'&&cityName)?cityName:'';if(!cur)return;const i=_favs.findIndex(function(n){return n.toLowerCase()===cur.toLowerCase();});if(i>=0)_favs.splice(i,1);else _favs.push(cur);_saveFavs(_favs);renderFavs();}
 function removeFav(n){const i=_favs.findIndex(function(x){return x.toLowerCase()===String(n).toLowerCase();});if(i<0)return;if(confirm('Retirer "'+n+'" des favoris ?')){_favs.splice(i,1);_saveFavs(_favs);renderFavs();}}
