@@ -1,1 +1,193 @@
+<!DOCTYPE html>
+<!-- ClassroomPDC Élève — V1.2 (phase 1 : mains, questions, sondages, documents) -->
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>ClassroomPDC · Élève</title>
+<style>
+  :root{--ink:#1b1b17;--edge:rgba(27,27,23,.22);--bg:#f6f2e7}
+  *{-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;}
+  body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg) repeating-linear-gradient(to bottom,transparent 0,transparent 27px,rgba(27,27,23,.06) 28px);color:var(--ink);display:flex;flex-direction:column;align-items:center;padding:14px;box-sizing:border-box;gap:12px}
+  .brand{font-weight:800;font-size:1.05rem;display:flex;align-items:center;gap:8px}
+  .dot{width:10px;height:10px;border-radius:50%;background:#c0392b}
+  .dot.on{background:#2e9e4f}
+  .card{width:100%;max-width:430px;background:#fffdf7;border:1.5px solid var(--edge);border-radius:16px;box-shadow:0 8px 26px rgba(27,27,23,.10);padding:16px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px}
+  h2{margin:0;font-size:1rem}
+  .in{border:1.5px solid var(--edge);border-radius:10px;font-family:inherit;font-size:1.05rem;padding:.6rem .7rem;color:var(--ink);width:100%;box-sizing:border-box;background:#fff}
+  .code{letter-spacing:.4rem;text-transform:uppercase;font-weight:800;text-align:center;font-size:1.5rem}
+  .btn{border:none;background:#23231d;color:#fff;border-radius:12px;font-family:inherit;font-weight:800;font-size:1rem;padding:.75rem;cursor:pointer;width:100%}
+  .btn:disabled{opacity:.4}
+  .btn.sec{background:#fff;color:var(--ink);border:1.5px solid var(--edge)}
+  .hand{font-size:1.25rem;padding:1.05rem;border-radius:16px;background:#e8b84b;color:#23231d;transition:all .15s}
+  .hand.on{background:#2e9e4f;color:#fff;box-shadow:0 0 0 5px rgba(46,158,79,.25)}
+  .names{display:flex;flex-direction:column;gap:6px;max-height:46vh;overflow-y:auto}
+  .nm{border:1.5px solid var(--edge);background:#fff;border-radius:10px;font-family:inherit;font-weight:700;font-size:1rem;padding:.6rem;cursor:pointer;text-align:left}
+  .nm:active{background:rgba(91,118,196,.12)}
+  .muted{font-size:.8rem;color:#8a8a7c;line-height:1.35}
+  .banner{background:#fff8dc;border:1.5px solid #e8b84b;border-radius:12px;padding:.7rem;font-weight:700;font-size:.95rem;display:none}
+  .banner.on{display:block;animation:pop .25s}
+  @keyframes pop{from{transform:scale(.96);opacity:0}}
+  .poll{display:none}
+  .poll.on{display:flex}
+  .popt{border:1.5px solid var(--edge);background:#fff;border-radius:12px;font-family:inherit;font-weight:700;font-size:1rem;padding:.75rem;cursor:pointer;text-align:left}
+  .popt.sel{background:#23231d;color:#fff;border-color:#23231d}
+  .popt.good{background:#2e9e4f;color:#fff;border-color:#2e9e4f}
+  .ok{color:#2e9e4f;font-weight:800;display:none}
+  .docs a{display:block;background:#fff;border:1.5px solid var(--edge);border-radius:10px;padding:.55rem .65rem;font-weight:700;color:var(--ink);text-decoration:none;margin-top:5px}
+  .err{color:#c0392b;font-weight:700;font-size:.85rem}
+  textarea.in{resize:none}
+  .hidden{display:none !important}
+  .board{display:none;padding:10px}
+  .board.on{display:flex}
+  .bwrap{position:relative;width:100%;overflow:hidden;border:1.5px solid var(--edge);border-radius:10px;background:#fff;cursor:zoom-in}
+  .bwrap iframe{border:none;pointer-events:none;transform-origin:0 0;display:block}
+  .bfull{position:fixed;inset:0;background:#14120c;z-index:50;display:none;align-items:center;justify-content:center}
+  .bfull.on{display:flex}
+  .bfull iframe{border:none;pointer-events:none;transform-origin:0 0;display:block;background:#fff}
+  .bclose{position:fixed;top:12px;right:12px;z-index:51;border:none;background:rgba(255,255,255,.92);border-radius:10px;font-weight:800;font-size:1rem;padding:.5rem .8rem;cursor:pointer}
+</style>
+</head>
+<body>
+  <div class="brand">📡 ClassroomPDC — Élève <span class="dot" id="dot"></span></div>
 
+  <div class="card" id="stepCode">
+    <h2>Code de la classe</h2>
+    <input class="in code" id="code" maxlength="4" autocomplete="off" placeholder="ABCD">
+    <button class="btn" id="goCode">Rejoindre</button>
+    <div class="err" id="errCode"></div>
+    <div class="muted">Le code est affiché au tableau par ton professeur (ou scanne le QR code).</div>
+  </div>
+
+  <div class="card hidden" id="stepName">
+    <h2>Qui es-tu ?</h2>
+    <div class="names" id="names"></div>
+    <input class="in hidden" id="freeName" maxlength="30" placeholder="Ton prénom">
+    <button class="btn hidden" id="goFree">Valider</button>
+  </div>
+
+  <div class="card hidden" id="stepMain">
+    <div class="muted" id="hello"></div>
+    <div class="banner" id="banner"></div>
+    <button class="btn hand" id="handBtn">✋ Lever la main</button>
+    <div id="askZone">
+      <textarea class="in" id="askTxt" rows="2" placeholder="Pose ta question au professeur…"></textarea>
+      <button class="btn sec" id="askBtn" style="margin-top:6px">❓ Envoyer la question</button>
+      <div class="ok" id="askOk">Question envoyée ✓</div>
+    </div>
+    <div class="card board" id="board" style="box-shadow:none">
+      <h2>🖥 Tableau du professeur <span class="muted" style="font-weight:400">(toucher pour agrandir)</span></h2>
+      <div class="bwrap" id="bwrap"><iframe id="bframe" sandbox="" src="about:blank"></iframe></div>
+    </div>
+    <div class="card poll" id="poll" style="box-shadow:none;border-style:dashed">
+      <h2 id="pollQ"></h2>
+      <div id="pollOpts" style="display:flex;flex-direction:column;gap:6px"></div>
+      <div class="ok" id="pollOk">Réponse envoyée ✓</div>
+      <div class="muted" id="pollEnd"></div>
+    </div>
+    <div class="docs" id="docs"></div>
+  </div>
+
+  <div class="muted" id="foot">Rien n'est enregistré : la connexion est directe avec l'ordinateur du professeur.</div>
+
+<script>
+(function(){
+  "use strict";
+  const $=id=>document.getElementById(id);
+  const dot=$("dot");
+  let peer=null,conn=null,myName="",code="",cfg={hands:true,ask:true},hand=false,curPoll=null,answered=false;
+
+  function show(step){ ["stepCode","stepName","stepMain"].forEach(s=>$(s).classList.toggle("hidden",s!==step)); }
+  function setDot(on){ dot.classList.toggle("on",!!on); }
+
+  function loadPeer(cb){ if(window.Peer){ cb(true); return; }
+    const urls=["https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js","https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"];
+    (function tryN(i){ if(i>=urls.length){ cb(false); return; } const sc=document.createElement("script"); sc.src=urls[i]; sc.onload=()=>cb(!!window.Peer); sc.onerror=()=>{ sc.remove(); tryN(i+1); }; document.head.appendChild(sc); })(0); }
+
+  function send(m){ if(conn&&conn.open){ try{ conn.send(JSON.stringify(m)); }catch(_){ } } }
+
+  function connect(){
+    const c=$("code").value.trim().toUpperCase(); if(c.length!==4){ $("errCode").textContent="Code à 4 caractères."; return; }
+    code=c; $("errCode").textContent="Connexion…";
+    loadPeer(ok=>{ if(!ok){ $("errCode").textContent="Réseau bloqué : impossible de charger le module."; return; }
+      peer=new Peer({debug:0});
+      peer.on("open",()=>{ conn=peer.connect("pdc-"+code,{reliable:true});
+        conn.on("open",()=>{ setDot(true); $("errCode").textContent=""; });
+        conn.on("data",raw=>{ let m=null; try{ m=JSON.parse(raw); }catch(_){ return; } handle(m); });
+        conn.on("close",()=>{ setDot(false); $("banner").textContent="Session terminée par le professeur."; $("banner").classList.add("on"); $("handBtn").disabled=true; $("askBtn").disabled=true; });
+        setTimeout(()=>{ if(!conn.open){ $("errCode").textContent="Aucune session avec ce code (vérifie le code, ou réseau bloqué)."; } },6000);
+      });
+      peer.on("error",e=>{ $("errCode").textContent="Erreur : "+((e&&e.type)||"réseau"); });
+    });
+  }
+
+  function pickName(list){
+    show("stepName"); const box=$("names"); box.innerHTML="";
+    if(list&&list.length){ list.slice().sort((a,b)=>a.localeCompare(b)).forEach(n=>{ const b=document.createElement("button"); b.className="nm"; b.textContent=n; b.addEventListener("click",()=>hello(n)); box.appendChild(b); });
+      const alt=document.createElement("button"); alt.className="nm"; alt.style.opacity=".7"; alt.textContent="Je ne suis pas dans la liste…"; alt.addEventListener("click",()=>{ $("freeName").classList.remove("hidden"); $("goFree").classList.remove("hidden"); }); box.appendChild(alt);
+    } else { $("freeName").classList.remove("hidden"); $("goFree").classList.remove("hidden"); }
+  }
+  $("goFree").addEventListener("click",()=>{ const n=$("freeName").value.trim(); if(n)hello(n); });
+
+  function hello(name){ myName=name; send({t:"hello",name:name}); $("hello").textContent="Connecté : "+name+" · classe "+code; show("stepMain"); applyCfg(); try{ localStorage.setItem("pdc_eleve",JSON.stringify({code:code,name:name})); }catch(_){ } }
+
+  function applyCfg(){ $("handBtn").classList.toggle("hidden",!cfg.hands); $("askZone").classList.toggle("hidden",!cfg.ask); }
+
+  function paintHand(){ $("handBtn").classList.toggle("on",hand); $("handBtn").textContent=hand?"✋ Main levée — appuyer pour baisser":"✋ Lever la main"; }
+  $("handBtn").addEventListener("click",()=>{ hand=!hand; send({t:"hand",on:hand}); paintHand(); });
+
+  $("askBtn").addEventListener("click",()=>{ const q=$("askTxt").value.trim(); if(!q)return; send({t:"ask",q:q}); $("askTxt").value=""; $("askOk").style.display="block"; setTimeout(()=>$("askOk").style.display="none",1600); });
+
+  function showPoll(p){ curPoll=p; answered=false; $("poll").classList.add("on"); $("pollOk").style.display="none"; $("pollEnd").textContent=""; $("pollQ").textContent=p.q;
+    const box=$("pollOpts"); box.innerHTML="";
+    if(p.type==="court"){ const inp=document.createElement("input"); inp.className="in"; inp.placeholder="Ta réponse…"; const ok=document.createElement("button"); ok.className="btn"; ok.textContent="Envoyer"; ok.addEventListener("click",()=>{ const v=inp.value.trim(); if(!v||answered)return; answered=true; send({t:"vote",id:p.id,ans:v}); $("pollOk").style.display="block"; inp.disabled=true; ok.disabled=true; }); box.append(inp,ok); }
+    else { p.opts.forEach((op,i)=>{ const b=document.createElement("button"); b.className="popt"; b.textContent=op; b.addEventListener("click",()=>{ if(answered)return; answered=true; send({t:"vote",id:p.id,ans:i}); [...box.children].forEach(x=>x.disabled=true); b.classList.add("sel"); $("pollOk").style.display="block"; }); box.appendChild(b); }); } }
+
+  function endPoll(m){ if(!curPoll||m.id!==curPoll.id)return; $("pollEnd").textContent="Sondage terminé."+(m.correctText?(" Bonne réponse : "+m.correctText):"");
+    if(m.correct>=0){ const box=$("pollOpts"); [...box.children].forEach((b,i)=>{ if(i===m.correct)b.classList.add("good"); b.disabled=true; }); }
+    setTimeout(()=>{ $("poll").classList.remove("on"); curPoll=null; },6000); }
+
+  function addDoc(m){ const a=document.createElement("a"); a.href=m.data; a.download=m.name; a.textContent="📎 "+m.name+" (toucher pour télécharger)"; $("docs").prepend(a); banner("📎 Document reçu : "+m.name); }
+
+  function banner(t){ const b=$("banner"); b.textContent=t; b.classList.add("on"); }
+
+  let boardCss="",boardData=null,full=false;
+  const bfull=document.createElement("div"); bfull.className="bfull"; const bfr=document.createElement("iframe"); bfr.setAttribute("sandbox",""); bfr.src="about:blank"; bfull.appendChild(bfr);
+  const bcl=document.createElement("button"); bcl.className="bclose"; bcl.textContent="✕ Fermer"; bcl.style.display="none";
+  document.body.append(bfull,bcl);
+  bcl.addEventListener("click",()=>{ full=false; bfull.classList.remove("on"); bcl.style.display="none"; });
+  $("bwrap").addEventListener("click",()=>{ if(!boardData)return; full=true; bfull.classList.add("on"); bcl.style.display="block"; paintBoard(); });
+  function srcdocFor(d){ return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><style>"+boardCss+"\nhtml,body{margin:0;background:#fff;overflow:hidden}*{pointer-events:none !important;user-select:none !important}\n.canvas{position:relative;width:"+d.w+"px !important;height:"+d.h+"px !important;box-sizing:border-box}</style></head><body>"+d.html+"</body></html>"; }
+  function fit(frame,wrap,d,maxH){ const cw=wrap.clientWidth||300; const sc=Math.min(cw/d.w,(maxH||460)/d.h,1.6); frame.style.width=d.w+"px"; frame.style.height=d.h+"px"; frame.style.transform="scale("+sc+")"; wrap.style.height=Math.ceil(d.h*sc)+"px"; }
+  function paintBoard(){ if(!boardData)return;
+    $("board").classList.add("on");
+    $("bframe").srcdoc=srcdocFor(boardData); fit($("bframe"),$("bwrap"),boardData,Math.round(innerHeight*0.42));
+    if(full){ bfr.srcdoc=srcdocFor(boardData); const sc=Math.min(innerWidth/boardData.w,innerHeight/boardData.h); bfr.style.width=boardData.w+"px"; bfr.style.height=boardData.h+"px"; bfr.style.transform="scale("+sc+")"; } }
+  function boardOff(){ boardData=null; $("board").classList.remove("on"); full=false; bfull.classList.remove("on"); bcl.style.display="none"; }
+  window.addEventListener("resize",()=>paintBoard());
+
+  function handle(m){
+    if(m.t==="css"){ boardCss=m.css||""; return; }
+    if(m.t==="board"){ boardData={w:m.w||1200,h:m.h||700,html:m.html||""}; paintBoard(); return; }
+    if(m.t==="boardoff"){ boardOff(); return; }
+    if(m.t==="roster"){ cfg=m.cfg||cfg; pickName(m.names||[]); return; }
+    if(m.t==="welcome"){ cfg=m.cfg||cfg; applyCfg(); if(m.consigne)banner("📢 "+m.consigne); if(m.poll)showPoll(m.poll); return; }
+    if(m.t==="cfg"){ cfg=m.cfg||cfg; applyCfg(); if(cfg.board===false)boardOff(); return; }
+    if(m.t==="handsreset"){ hand=false; paintHand(); return; }
+    if(m.t==="poll"){ showPoll(m); return; }
+    if(m.t==="pollend"){ endPoll(m); return; }
+    if(m.t==="doc"){ addDoc(m); return; }
+    if(m.t==="msg"){ banner("📢 "+m.text); return; }
+    if(m.t==="end"){ setDot(false); banner("Session terminée. À bientôt !"); $("handBtn").disabled=true; $("askBtn").disabled=true; }
+  }
+
+  // pré-remplissage : ?c=CODE dans l'URL + dernière session
+  const u=new URLSearchParams(location.search); if(u.get("c"))$("code").value=u.get("c").toUpperCase();
+  try{ const last=JSON.parse(localStorage.getItem("pdc_eleve")||"null"); if(last&&!$("code").value)$("code").value=last.code||""; }catch(_){ }
+  $("goCode").addEventListener("click",connect);
+  $("code").addEventListener("keydown",e=>{ if(e.key==="Enter")connect(); });
+})();
+</script>
+</body>
+</html>
