@@ -3948,6 +3948,15 @@
     cl.querySelectorAll("iframe,video,audio,embed,object").forEach(x=>{ const ph=document.createElement("div"); ph.className="lv-ph"; ph.textContent="🎬 contenu diffusé en classe"; ph.style.cssText="display:flex;align-items:center;justify-content:center;height:100%;background:#e9e4d4;border-radius:8px;color:#8a8a7c;font-weight:700"; x.replaceWith(ph); });
     cl.querySelectorAll("[contenteditable]").forEach(x=>x.removeAttribute("contenteditable"));
     cl.querySelectorAll("input,textarea,select,button").forEach(x=>x.setAttribute("disabled",""));
+    // annotations (encre + formes) : couche plein écran recalée sur le canevas
+    try{ const r=canvas.getBoundingClientRect(); const layer=document.getElementById("annoLayer"); let anno="";
+      if(layer&&layer.style.display!=="none"){
+        const ink=document.getElementById("inkCv");
+        if(ink&&ink.width){ const ib=ink.getBoundingClientRect(); const durl=ink.toDataURL("image/png"); if(durl&&durl.length>2000)anno+='<img src="'+durl+'" style="position:absolute;left:'+Math.round(-r.left)+'px;top:'+Math.round(-r.top)+'px;width:'+Math.round(ib.width)+'px;height:'+Math.round(ib.height)+'px;pointer-events:none;z-index:900">'; }
+        const shp=document.getElementById("shapeSvg");
+        if(shp&&shp.childNodes.length){ const c2=shp.cloneNode(true); c2.removeAttribute("id"); c2.setAttribute("width",window.innerWidth); c2.setAttribute("height",window.innerHeight); c2.setAttribute("style","position:absolute;left:"+Math.round(-r.left)+"px;top:"+Math.round(-r.top)+"px;pointer-events:none;z-index:901"); anno+=c2.outerHTML; } }
+      if(anno)cl.insertAdjacentHTML("beforeend",anno);
+    }catch(_){ }
     let html=cl.outerHTML;
     if(html.length>900000){ cl.querySelectorAll('img[src^="data:"]').forEach(x=>{ x.removeAttribute("src"); x.style.background="#e9e4d4"; }); html=cl.outerHTML; }
     return {html:html,w:canvas.scrollWidth||canvas.clientWidth,h:canvas.scrollHeight||canvas.clientHeight}; }
