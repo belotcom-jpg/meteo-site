@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ClassroomPDC Élève — V2.0 (2 pans : menu haut + tableau maximal) -->
+<!-- ClassroomPDC Élève — V2.1 (2 pans : menu haut + tableau maximal) -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -180,17 +180,17 @@
   $("bannerX").addEventListener("click",()=>$("banner").classList.remove("on"));
 
   // ---- tableau : pan du bas, échelle maximale ----
-  function srcdocFor(d){ return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><style>"+boardCss+"\nhtml,body{margin:0;background:#fff;overflow:hidden}*{pointer-events:none !important;user-select:none !important}\n.canvas{position:relative;width:"+d.w+"px !important;height:"+d.h+"px !important;box-sizing:border-box}</style></head><body>"+d.html+"</body></html>"; }
+  function srcdocFor(d,sc){ return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><style>"+boardCss+"\nhtml,body{margin:0;background:#fff;overflow:hidden}*{pointer-events:none !important;user-select:none !important}\n.canvas{position:relative;width:"+d.w+"px !important;height:"+d.h+"px !important;box-sizing:border-box;overflow:hidden;transform:scale("+sc+");transform-origin:0 0;zoom:"+sc+"}\n@supports (zoom:2){.canvas{transform:none}}</style></head><body>"+d.html+"</body></html>"; }
   function paintBoard(){ const fr=$("bframe"),ph=$("ph"),pane=$("pane");
     if(!boardData){ fr.classList.add("hidden"); ph.classList.remove("hidden"); return; }
     ph.classList.add("hidden"); fr.classList.remove("hidden");
-    fr.srcdoc=srcdocFor(boardData);
     const pw=pane.clientWidth-14, phh=pane.clientHeight-14;
     const sc=Math.min(pw/boardData.w,phh/boardData.h);
-    fr.style.width=boardData.w+"px"; fr.style.height=boardData.h+"px";
-    fr.style.transform="scale("+sc+")";
+    fr.srcdoc=srcdocFor(boardData,sc);
+    fr.style.transform="none";
+    fr.style.width=Math.ceil(boardData.w*sc)+"px"; fr.style.height=Math.ceil(boardData.h*sc)+"px";
     const mx=(pane.clientWidth-boardData.w*sc)/2, my=(pane.clientHeight-boardData.h*sc)/2;
-    fr.style.position="absolute"; fr.style.left=Math.max(7,mx)+"px"; fr.style.top=Math.max(7,my)+"px"; }
+    fr.style.position="absolute"; fr.style.left=Math.max(7,Math.round(mx))+"px"; fr.style.top=Math.max(7,Math.round(my))+"px"; }
   window.addEventListener("resize",paintBoard);
 
   // ---- sondage : surcouche ----
