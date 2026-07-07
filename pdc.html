@@ -1,10 +1,10 @@
 <!doctype html>
-<!-- ClassroomPDC — V1.37 (pages + widgets) -->
+<!-- ClassroomPDC — V1.38 (pages + widgets) -->
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ClassroomPDC · V1.37</title>
+<title>ClassroomPDC · V1.38</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hanken+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -780,13 +780,75 @@
   .se-opts[hidden]{display:none}
   .se-oh{font-size:.72rem;font-weight:700;color:#8a8a7c}
   .se-ta{flex:1;resize:none;border:1.5px solid var(--edge);border-radius:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;padding:.4rem .5rem;color:var(--ink)}
-  .se-orow{display:flex;gap:6px}
+  .se-orow{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   .se-ob{border:1.5px solid var(--edge);background:#fff;border-radius:8px;font-family:inherit;font-weight:800;font-size:.74rem;padding:.3rem .55rem;cursor:pointer;color:var(--ink)}
   .se-ob.ok{background:#23231d;color:#fff;border-color:#23231d}
+  .wh{height:100%;display:flex;flex-direction:column;gap:6px;padding:6px;box-sizing:border-box}
+  .wh-bar{display:flex;align-items:center;gap:7px;flex:0 0 auto}
+  .wh-bb{border:1.5px solid var(--edge);background:#fff;border-radius:8px;font-family:inherit;font-weight:800;font-size:.74rem;padding:.28rem .5rem;cursor:pointer;color:var(--ink)}
+  .wh-ttl{font-weight:800;font-size:.84rem;color:var(--ink)}
+  .wh-search{flex:1;border:1.5px solid var(--edge);border-radius:8px;font-family:inherit;font-size:.84rem;padding:.4rem .55rem;color:var(--ink);background:#fff}
+  .wh-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:7px;align-content:start}
+  .wh-card{border:1.5px solid var(--edge);background:#fff;border-radius:11px;padding:9px 7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:inherit;min-height:86px}
+  .wh-card:hover{background:rgba(91,118,196,.09);transform:translateY(-1px)}
+  .wh-card.custom{border-style:dashed}
+  .wh-ic{font-size:1.5rem;font-weight:800;color:var(--ink)}
+  .wh-n{font-weight:800;font-size:.76rem;color:var(--ink);text-align:center;line-height:1.1}
+  .wh-d{font-size:.66rem;color:#8a8a7c;text-align:center;line-height:1.15}
+  .wh-empty{grid-column:1/-1;font-size:.8rem;color:#8a8a7c;padding:.5rem}
+  .wh-frame{flex:1;width:100%;border:none;border-radius:9px;background:#101418}
+  .wh-ta{flex:1;resize:none;border:1.5px solid var(--edge);border-radius:9px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;padding:.5rem;color:var(--ink)}
+  .wh-go{border:none;background:#23231d;color:#fff;border-radius:9px;font-family:inherit;font-weight:800;font-size:.84rem;padding:.5rem;cursor:pointer}
+  .fo{height:100%;display:flex;flex-direction:column;gap:6px;padding:6px;box-sizing:border-box;position:relative}
+  .fo-bar{display:flex;gap:6px;flex:0 0 auto}
+  .fo-search{flex:1;border:1.5px solid var(--edge);border-radius:8px;font-family:inherit;font-size:.84rem;padding:.4rem .55rem;color:var(--ink);background:#fff}
+  .fo-lv{border:1.5px solid var(--edge);background:#fff;border-radius:8px;font-family:inherit;font-weight:700;font-size:.76rem;padding:.3rem;cursor:pointer;color:var(--ink);max-width:150px}
+  .fo-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px;padding-right:2px}
+  .fo-cat{display:flex;align-items:center;gap:8px;font-weight:800;font-size:.8rem;color:var(--ink);background:rgba(91,118,196,.12);border-radius:8px;padding:.3rem .55rem;margin-top:6px;position:sticky;top:0;z-index:1}
+  .fo-lvtag{margin-left:auto;font-size:.64rem;font-weight:800;color:#8a8a7c}
+  .fo-row{display:flex;align-items:center;gap:10px;padding:.34rem .55rem;border-radius:8px;cursor:pointer}
+  .fo-row:hover{background:rgba(91,118,196,.08)}
+  .fo-n{flex:0 0 42%;font-size:.78rem;font-weight:700;color:var(--ink);line-height:1.15}
+  .fo-f{flex:1;overflow-x:auto;white-space:nowrap}
+  .fo-empty{font-size:.8rem;color:#8a8a7c;padding:.6rem}
+  .fo-toast{position:absolute;bottom:10px;left:50%;transform:translate(-50%,8px);background:#23231d;color:#fff;font-weight:800;font-size:.76rem;border-radius:9px;padding:.35rem .7rem;opacity:0;transition:all .2s;pointer-events:none}
+  .fo-toast.on{opacity:1;transform:translate(-50%,0)}
+  .mth{font-family:"Georgia","Times New Roman",serif;font-size:1.02rem;color:var(--ink)}
+  .mth i{font-style:italic;font-family:inherit}
+  .mth sup,.mth sub{font-size:.68em}
+  .mfr{display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;margin:0 2px;line-height:1.15}
+  .mfr>span:first-child{border-bottom:1.2px solid currentColor;padding:0 4px}
+  .mfr>span:last-child{padding:0 4px}
+  .msq{display:inline-flex;align-items:baseline}
+  .msqi{font-size:.6em;margin-right:-2px}
+  .msqr{font-size:1.05em}
+  .msqv{border-top:1.2px solid currentColor;padding:0 2px}
+  .mvec{position:relative;margin:0 1px}
+  .mvec::before{content:"→";position:absolute;top:-0.85em;left:0;right:0;font-size:.62em;text-align:center;font-style:normal}
+  .mbar{border-top:1.2px solid currentColor;padding:0 1px}
+  .mhat{position:relative}
+  .mhat::before{content:"^";position:absolute;top:-0.7em;left:0;right:0;font-size:.75em;text-align:center;font-style:normal}
+  .mfn{font-style:normal;margin:0 1px}
+  .mtx{font-style:normal}
+  .msp{display:inline-block;width:.18em}
+  .mqd{display:inline-block;width:.9em}
+  .mbin{display:inline-flex;align-items:center}
+  .mbin .mbp{font-size:1.5em;font-weight:400}
+  .mfr.nb>span:first-child{border-bottom:none}
+  .lx{height:100%;display:flex;gap:6px;padding:6px;box-sizing:border-box}
+  .lx-left{flex:1;min-width:0;display:flex}
+  .lx-ta{flex:1;resize:none;border:1.5px solid var(--edge);border-radius:9px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;line-height:1.5;padding:.5rem .55rem;color:var(--ink);background:#fff}
+  .lx-right{flex:1;min-width:0;display:flex;flex-direction:column;border:1.5px solid var(--edge);border-radius:9px;background:#fffdf7;position:relative}
+  .lx-tools{position:absolute;top:5px;right:5px;display:flex;gap:4px;z-index:2}
+  .lx-tb{border:1.5px solid var(--edge);background:#fff;border-radius:7px;font-family:inherit;font-weight:800;font-size:.7rem;padding:.14rem .4rem;cursor:pointer;color:var(--ink)}
+  .lx-out{flex:1;overflow:auto;padding:.6rem .7rem;display:flex;flex-direction:column;gap:.45rem}
+  .lx-line{white-space:nowrap}
+  .lx-line.empty{height:.5rem}
+  .wh-src{border:1.5px solid var(--edge);background:#fff;border-radius:8px;font-family:inherit;font-weight:700;font-size:.74rem;padding:.28rem .3rem;cursor:pointer;color:var(--ink)}
+  .wh-hint{flex:0 0 auto;font-size:.68rem;color:#8a8a7c;text-align:center}
   .se-off{font-size:.72rem;font-weight:800;color:#8a8a7c;align-self:center}
   .se-off.on{color:#c07a10}
   .se-clock.off{color:#c07a10}
-  .se-orow{flex-wrap:wrap;align-items:center}
   .widget:has(> .w-body > .kh){background:transparent}
   .mz-out{font-size:.92rem;color:var(--ink);text-align:center;padding:2px}
   .mz-wall{display:flex;flex-direction:column;gap:4px}
@@ -852,7 +914,7 @@
 <body>
   <div class="app">
     <nav class="tabs" id="tabs" aria-label="Pages">
-      <span class="brand">ClassroomPDC <span class="ver">V1.37</span></span>
+      <span class="brand">ClassroomPDC <span class="ver">V1.38</span></span>
     </nav>
     <div class="toolbar">
       <button class="btn primary" id="addW">+ Widget</button>
@@ -876,7 +938,7 @@
   <button id="presentLock" title="Verrouiller / déverrouiller tous les widgets de la page">🔒</button>
   <button id="presentExit" title="Quitter la présentation">Quitter la présentation ✕</button>
   <div class="popover" id="addPop" hidden>
-    <div class="addpop-head"><input id="widgetSearch" class="addpop-search" type="text" placeholder="🔍 Rechercher un widget…" autocomplete="off" spellcheck="false"></div>
+    <div class="addpop-head"><input id="widgetSearch" class="addpop-search" type="text" placeholder="🔍 Nom ou mot-clé (ex. fraction, bruit, tirage)…" autocomplete="off" spellcheck="false"></div>
     <div id="widgetRecents" class="addpop-recents" hidden></div>
     <div id="widgetResults" class="addpop-results" hidden></div>
     <div id="widgetCats">
@@ -907,6 +969,8 @@
       <div class="addsub" hidden>
         <button data-type="manip"><span>🍕</span> Manip’ maths</button>
         <button data-type="qflash"><span>⚡</span> Questions flash</button>
+        <button data-type="formu"><span>∑</span> Formulaire de maths</button>
+        <button data-type="latex"><span>✒️</span> Éditeur LaTeX</button>
         <button data-type="plot"><span>📈</span> Traceur de fonctions</button>
         <button data-type="calc"><span>🧮</span> Calculatrice</button>
         <button data-type="exo"><span>🔢</span> Exercices</button>
@@ -927,6 +991,7 @@
         <button data-type="image"><span>🖼️</span> Image / GIF</button>
         <button data-type="qr"><span>🔳</span> QR code</button>
         <button data-type="cache"><span>🟫</span> Cache / rideau</button>
+        <button data-type="hw"><span>🧩</span> Widget HTML</button>
       </div>
     </div>
     </div>
@@ -947,7 +1012,7 @@
   <div class="modal-bg" id="helpBg" hidden>
     <div class="modal help" role="dialog" aria-modal="true">
       <div class="help-head">
-        <h3>ClassroomPDC — aide <span class="help-ver">V1.37</span></h3>
+        <h3>ClassroomPDC — aide <span class="help-ver">V1.38</span></h3>
         <div class="help-tabs">
           <button class="help-tab on" data-view="over" type="button">Vue d'ensemble</button>
           <button class="help-tab" data-view="detail" type="button">Vue détaillée</button>
@@ -1061,8 +1126,11 @@
             <li>Le programme est <b>sauvegardé</b> avec la config (blocs maison et montage Blockly). Hors-ligne, seul le mode Blocs est disponible.</li>
           </ul>
         </details>
-        <details><summary>🎧 Sons d'ambiance · 🏆 Grille de jeu · 🟫 Cache</summary>
+        <details><summary>🎧 Sons d'ambiance · 🏆 Grille de jeu · 🟫 Cache · ∑ Formulaire</summary>
           <ul>
+            <li><b>🧩 Widget HTML</b> : un <b>catalogue cherchable</b> de mini-widgets prêts (horloge analogique, texte défilant, compte à rebours, compteur géant, dé, métronome, citation & nombre du jour, confettis, balles, ciel étoilé, chifoumi) + une carte <b>&lt;/&gt; Mon code HTML</b> pour coller ton propre code ou un code d’intégration — le tout exécuté dans un cadre isolé (sandbox). Le bouton <b>🌐 Web</b> (ou Entrée) cherche des widgets à intégrer <b>sur le web</b> directement dans le cadre (DuckDuckGo ou Google) : copie le code trouvé puis colle-le dans « Mon code HTML ».</li>
+            <li><b>∑ Formulaire de maths</b> : ~130 formules du <b>collège à bac+7</b> (aires, Pythagore, second degré, dérivées, intégrales, complexes, DL, Fourier, Stokes…), rendues en vraie notation mathématique (moteur LaTeX intégré, hors-ligne). Filtre par <b>niveau</b>, <b>recherche</b>, et <b>clic sur une formule = copie du code LaTeX</b>.</li>
+            <li><b>✒️ Éditeur LaTeX</b> : deux panneaux — code LaTeX à gauche (une formule par ligne), <b>rendu en direct</b> à droite (A− / A+ pour la taille). Astuce : clique une formule du Formulaire pour copier son LaTeX, puis colle-la ici.</li>
             <li><b>🎧 Sons d'ambiance</b> : pluie, vagues, forêt (avec oiseaux) ou brouhaha de café, générés localement (aucun fichier) ; volume réglable, respecte le bouton Muet. Le carillon de fin de minuteur est aussi plus doux (3 notes).</li>
             <li><b>🏆 Grille de jeu</b> : jeu télévisé type « Jeopardy » — 4 catégories × 5 valeurs, questions maths incluses et <b>modifiables</b> (✎ : clique une case ou une catégorie), 2 à 4 équipes, attribution des points en un clic, 🔄 nouvelle partie.</li>
             <li><b>🟫 Cache / rideau</b> : panneau opaque à poser sur ce que tu veux masquer (couleur au survol), redimensionnable ; verrouille-le pour figer. Bouton <b>🔦 Projecteur</b> : assombrit tout l'écran sauf un rond que tu déplaces (molette ou +/− pour la taille, ✕ pour fermer).</li>
@@ -1390,6 +1458,9 @@
   const ambianceW=(x,y)=>({id:uid(),type:"ambiance",x:x==null?100:x,y:y==null?100:y,w:300,h:230,amb:{vol:0.5}});
   const jeoW=(x,y)=>({id:uid(),type:"jeo",x:x==null?60:x,y:y==null?60:y,w:660,h:460,jeo:null});
   const seanceW=(x,y)=>({id:uid(),type:"seance",x:x==null?100:x,y:y==null?100:y,w:340,h:250,seance:null});
+  const formuW=(x,y)=>({id:uid(),type:"formu",x:x==null?70:x,y:y==null?70:y,w:470,h:540,formu:{q:"",lv:0}});
+  const latexW=(x,y)=>({id:uid(),type:"latex",x:x==null?80:x,y:y==null?80:y,w:560,h:340,latex:{src:"",fs:1.15}});
+  const hwW=(x,y)=>({id:uid(),type:"hw",x:x==null?90:x,y:y==null?90:y,w:420,h:360,hw:{q:"",sel:null,custom:""}});
   const cacheW=(x,y)=>({id:uid(),type:"cache",x:x==null?120:x,y:y==null?120:y,w:280,h:190,cache:{col:"kraft"}});
   function defaultState(){return {active:0,pages:[{id:uid(),name:"Page 1",widgets:[planW(defaultClasses(),16,16)]}]};}
 
@@ -1504,8 +1575,8 @@
   };
   function applyTheme(){ const key=(page()&&page().theme)||"paper"; const t=THEMES[key]||THEMES.paper; canvas.style.background=t.bg; if(page()&&page().bgImg){ canvas.style.backgroundImage="url("+page().bgImg+")"; canvas.style.backgroundSize="cover"; canvas.style.backgroundPosition="center"; } canvas.classList.toggle("dark",!!t.dark); }
   function clampW(w){ if(!isFinite(w.w))w.w=260; if(!isFinite(w.h))w.h=200; if(!isFinite(w.x))w.x=20; if(!isFinite(w.y))w.y=20; w.w=Math.max(170,w.w); w.h=Math.max(120,w.h); w.x=Math.max(0,w.x); w.y=Math.max(0,w.y); }
-  const TITLES={plan:"Plan de classe",video:"Vidéo",timer:"Minuteur",text:"Texte",clock:"Horloge",feu:"Feu tricolore",symbols:"Travail",dice:"Dé",chrono:"Chronomètre",calendar:"Calendrier",embed:"Site web",image:"Image",wheel:"Roue",sand:"Sablier",plot:"Traceur de fonctions",calc:"Calculatrice Numéo",tableur:"Tableur",code:"Atelier code",exo:"Exercices",qr:"QR code",reveal:"Cours à révélation",manip:"Manip’ maths",tiktok:"MathTok",qflash:"Questions flash",games:"Jeux maths",ambiance:"Sons d’ambiance",jeo:"Grille de jeu",cache:"Cache / rideau",seance:"Séance en cours"};
-  const ICONS={plan:"🪑",video:"▶",timer:"⏱",text:"📝",clock:"🕒",feu:"🚦",symbols:"✋",dice:"🎲",chrono:"⏲",calendar:"📅",embed:"🌐",image:"🖼️",wheel:"🎡",sand:"⏳",plot:"📈",calc:"🧮",tableur:"▦",code:"🐢",exo:"🔢",qr:"🔳",reveal:"📖",manip:"🍕",tiktok:"🎬",qflash:"⚡",games:"🎮",ambiance:"🎧",jeo:"🏆",cache:"🟫",seance:"🛎️"};
+  const TITLES={plan:"Plan de classe",video:"Vidéo",timer:"Minuteur",text:"Texte",clock:"Horloge",feu:"Feu tricolore",symbols:"Travail",dice:"Dé",chrono:"Chronomètre",calendar:"Calendrier",embed:"Site web",image:"Image",wheel:"Roue",sand:"Sablier",plot:"Traceur de fonctions",calc:"Calculatrice Numéo",tableur:"Tableur",code:"Atelier code",exo:"Exercices",qr:"QR code",reveal:"Cours à révélation",manip:"Manip’ maths",tiktok:"MathTok",qflash:"Questions flash",games:"Jeux maths",ambiance:"Sons d’ambiance",jeo:"Grille de jeu",cache:"Cache / rideau",seance:"Séance en cours",hw:"Widget HTML",formu:"Formulaire de maths",latex:"Éditeur LaTeX"};
+  const ICONS={plan:"🪑",video:"▶",timer:"⏱",text:"📝",clock:"🕒",feu:"🚦",symbols:"✋",dice:"🎲",chrono:"⏲",calendar:"📅",embed:"🌐",image:"🖼️",wheel:"🎡",sand:"⏳",plot:"📈",calc:"🧮",tableur:"▦",code:"🐢",exo:"🔢",qr:"🔳",reveal:"📖",manip:"🍕",tiktok:"🎬",qflash:"⚡",games:"🎮",ambiance:"🎧",jeo:"🏆",cache:"🟫",seance:"🛎️",hw:"🧩",formu:"∑",latex:"✒️"};
   function buildWidget(w){
     clampW(w);
     const el=document.createElement("div"); el.className="widget"; el.dataset.wid=w.id; if(w.locked)el.classList.add("locked");
@@ -1557,6 +1628,9 @@
     else if(w.type==="jeo") fillJeo(w,body,el);
     else if(w.type==="cache") fillCache(w,body,el);
     else if(w.type==="seance") fillSeance(w,body,el);
+    else if(w.type==="hw") fillHtml(w,body,el);
+    else if(w.type==="formu") fillFormu(w,body,el);
+    else if(w.type==="latex") fillLatex(w,body,el);
   }
   function refreshPlan(w){ const el=canvas.querySelector('[data-wid="'+w.id+'"]'); if(el){ const body=el.querySelector(".w-body"); fillBody(w,body,el); } }
 
@@ -3039,6 +3113,195 @@
     upd(); intervals.set(w.id,setInterval(upd,1000));
   }
 
+  // ---------- FORMULAIRE DE MATHS : mini-moteur LaTeX (pur, sans dépendance) ----------
+  const MSYM={pi:"π",infty:"∞",sum:"∑",prod:"∏",int:"∫",oint:"∮",iint:"∬",iiint:"∭",to:"→",rightarrow:"→",mapsto:"↦",le:"≤",leq:"≤",ge:"≥",geq:"≥",ne:"≠",neq:"≠",approx:"≈",sim:"∼",simeq:"≃",pm:"±",mp:"∓",times:"×",cdot:"·",div:"÷",in:"∈",notin:"∉",subset:"⊂",cup:"∪",cap:"∩",setminus:"∖",forall:"∀",exists:"∃",Rightarrow:"⇒",Leftrightarrow:"⇔",equiv:"≡",partial:"∂",nabla:"∇",Delta:"Δ",Gamma:"Γ",Sigma:"Σ",Omega:"Ω",Phi:"Φ",Pi:"Π",Lambda:"Λ",Theta:"Θ",alpha:"α",beta:"β",gamma:"γ",delta:"δ",epsilon:"ε",varepsilon:"ε",zeta:"ζ",eta:"η",theta:"θ",iota:"ι",kappa:"κ",lambda:"λ",mu:"μ",nu:"ν",xi:"ξ",rho:"ρ",sigma:"σ",tau:"τ",phi:"φ",varphi:"φ",chi:"χ",psi:"ψ",omega:"ω",cdots:"⋯",dots:"…",ldots:"…",hbar:"ħ",ell:"ℓ",circ:"∘",ast:"∗",star:"⋆",propto:"∝",emptyset:"∅",mid:"|",langle:"⟨",rangle:"⟩",prime:"′",degree:"°"};
+  const MBB={R:"ℝ",N:"ℕ",Z:"ℤ",Q:"ℚ",C:"ℂ",K:"𝕂",E:"𝔼",P:"ℙ"};
+  const MFN=["ln","log","sin","cos","tan","arctan","arcsin","arccos","exp","det","dim","ker","rg","tr","sh","ch","th","arg","Re","Im","max","min","sup","inf","lim","mod","pgcd","ppcm","Var","Cov","rot","grad","Res"];
+  function mrender(tex){
+    const s=String(tex); let i=0;
+    const esc=c=>c==="<"?"&lt;":c===">"?"&gt;":c==="&"?"&amp;":c;
+    const emit=c=>/[a-zA-Z]/.test(c)?"<i>"+c+"</i>":esc(c);
+    function rawGroup(){ if(s[i]!=="{")return ""; i++; let d=1,out=""; while(i<s.length&&d>0){ const c=s[i++]; if(c==="{")d++; else if(c==="}"){ d--; if(!d)break; } if(d>0)out+=c; } return out; }
+    function group(){ if(s[i]==="{"){ i++; return until("}"); } return atom(); }
+    function atom(){ const c=s[i]; if(c==="\\"){ i++; let cmd=""; while(i<s.length&&/[a-zA-Z]/.test(s[i]))cmd+=s[i++]; return command(cmd); } i++; return emit(c); }
+    function command(cmd){
+      if(!cmd){ const ch=s[i++]||""; if(ch===","||ch===";")return '<span class="msp"></span>'; return esc(ch); }
+      if(cmd==="frac"){ const a=group(),b=group(); return '<span class="mfr"><span>'+a+'</span><span>'+b+'</span></span>'; }
+      if(cmd==="sqrt"){ let idx=""; if(s[i]==="["){ i++; while(i<s.length&&s[i]!=="]")idx+=emit(s[i++]); i++; } const a=group(); return '<span class="msq">'+(idx?'<sup class="msqi">'+idx+'</sup>':'')+'<span class="msqr">√</span><span class="msqv">'+a+'</span></span>'; }
+      if(cmd==="binom"){ const a=group(),b=group(); return '<span class="mbin"><span class="mbp">(</span><span class="mfr nb"><span>'+a+'</span><span>'+b+'</span></span><span class="mbp">)</span></span>'; }
+      if(cmd==="vec"){ return '<span class="mvec">'+group()+'</span>'; }
+      if(cmd==="bar"||cmd==="overline"){ return '<span class="mbar">'+group()+'</span>'; }
+      if(cmd==="hat"){ return '<span class="mhat">'+group()+'</span>'; }
+      if(cmd==="text"||cmd==="mathrm"){ return '<span class="mtx">'+rawGroup().split("").map(esc).join("")+'</span>'; }
+      if(cmd==="mathbb"){ const g=rawGroup(); return MBB[g]||g; }
+      if(cmd==="left"||cmd==="right"){ const ch=s[i++]||""; if(ch==="\\"){ let c2=""; while(i<s.length&&/[a-zA-Z]/.test(s[i]))c2+=s[i++]; return MSYM[c2]||""; } return ch==="."?"":esc(ch); }
+      if(cmd==="quad")return '<span class="mqd"></span>';
+      if(cmd==="displaystyle"||cmd==="limits")return "";
+      if(MSYM[cmd]!=null)return MSYM[cmd];
+      if(MFN.indexOf(cmd)>=0)return '<span class="mfn">'+cmd+'</span>';
+      return '<span class="mfn">'+cmd+'</span>';
+    }
+    function until(stop){ let out=""; while(i<s.length){ const c=s[i];
+      if(stop&&c===stop){ i++; return out; }
+      if(c==="{"){ i++; out+=until("}"); continue; }
+      if(c==="}"){ i++; continue; }
+      if(c==="\\"){ i++; let cmd=""; while(i<s.length&&/[a-zA-Z]/.test(s[i]))cmd+=s[i++]; out+=command(cmd); continue; }
+      if(c==="^"||c==="_"){ i++; const inner=group(); out+=(c==="^"?"<sup>":"<sub>")+inner+(c==="^"?"</sup>":"</sub>"); continue; }
+      i++; out+=emit(c);
+    } return out; }
+    try{ return '<span class="mth">'+until(null)+'</span>'; }catch(e){ return '<span class="mth">'+s.split("").map(esc).join("")+'</span>'; }
+  }
+  const FORMULAIRE=(function(){ const R=String.raw; return [
+   {lv:1,cat:"Aires & périmètres",it:[["Rectangle",R`A = L \times l`],["Triangle",R`A = \frac{b \times h}{2}`],["Disque",R`A = \pi r^2`],["Trapèze",R`A = \frac{(B+b)\times h}{2}`],["Cercle (périmètre)",R`P = 2\pi r`]]},
+   {lv:1,cat:"Volumes",it:[["Pavé droit",R`V = L \times l \times h`],["Cube",R`V = a^3`],["Cylindre",R`V = \pi r^2 h`],["Cône",R`V = \frac{1}{3}\pi r^2 h`],["Pyramide",R`V = \frac{1}{3} B h`],["Boule",R`V = \frac{4}{3}\pi r^3`]]},
+   {lv:1,cat:"Théorèmes",it:[["Pythagore",R`BC^2 = AB^2 + AC^2`],["Thalès",R`\frac{AM}{AB} = \frac{AN}{AC} = \frac{MN}{BC}`],["Somme des angles d'un triangle",R`\hat{A}+\hat{B}+\hat{C} = 180\degree`]]},
+   {lv:1,cat:"Trigonométrie (rectangle)",it:[["Cosinus",R`\cos \hat{A} = \frac{\text{adjacent}}{\text{hypoténuse}}`],["Sinus",R`\sin \hat{A} = \frac{\text{opposé}}{\text{hypoténuse}}`],["Tangente",R`\tan \hat{A} = \frac{\text{opposé}}{\text{adjacent}}`]]},
+   {lv:1,cat:"Calcul numérique",it:[["Produit en croix",R`\frac{a}{b} = \frac{c}{d} \Leftrightarrow a d = b c`],["Pourcentage",R`p\text{% de } x = \frac{p}{100}\times x`],["Augmenter de p %",R`\times \left(1+\frac{p}{100}\right)`],["Diminuer de p %",R`\times \left(1-\frac{p}{100}\right)`],["Vitesse",R`v = \frac{d}{t}`],["Somme de fractions",R`\frac{a}{b}+\frac{c}{d} = \frac{ad+bc}{bd}`],["Produit de fractions",R`\frac{a}{b}\times\frac{c}{d} = \frac{ac}{bd}`],["Quotient de fractions",R`\frac{a/b}{c/d} = \frac{a}{b}\times\frac{d}{c}`]]},
+   {lv:1,cat:"Puissances",it:[["Produit",R`a^m \times a^n = a^{m+n}`],["Quotient",R`\frac{a^m}{a^n} = a^{m-n}`],["Puissance de puissance",R`(a^m)^n = a^{mn}`],["Exposant négatif",R`a^{-n} = \frac{1}{a^n}`],["Produit de bases",R`(ab)^n = a^n b^n`]]},
+   {lv:1,cat:"Identités remarquables",it:[["Carré d'une somme",R`(a+b)^2 = a^2+2ab+b^2`],["Carré d'une différence",R`(a-b)^2 = a^2-2ab+b^2`],["Différence de carrés",R`(a+b)(a-b) = a^2-b^2`]]},
+   {lv:1,cat:"Statistiques & probabilités",it:[["Moyenne",R`\bar{x} = \frac{x_1+x_2+\cdots+x_n}{n}`],["Fréquence",R`f = \frac{\text{effectif}}{\text{effectif total}}`],["Probabilité (équiprobabilité)",R`p = \frac{\text{cas favorables}}{\text{cas possibles}}`]]},
+   {lv:2,cat:"Second degré",it:[["Forme générale",R`f(x) = ax^2+bx+c`],["Discriminant",R`\Delta = b^2-4ac`],["Racines (Δ>0)",R`x = \frac{-b \pm \sqrt{\Delta}}{2a}`],["Forme canonique",R`f(x) = a(x-\alpha)^2+\beta ,\; \alpha=\frac{-b}{2a}`],["Somme et produit des racines",R`x_1+x_2 = \frac{-b}{a} ,\; x_1 x_2 = \frac{c}{a}`]]},
+   {lv:2,cat:"Droites & vecteurs",it:[["Équation réduite",R`y = mx+p`],["Coefficient directeur",R`m = \frac{y_B-y_A}{x_B-x_A}`],["Coordonnées de vecteur",R`\vec{AB}\,(x_B-x_A \,;\, y_B-y_A)`],["Colinéarité",R`x y' - x' y = 0`],["Produit scalaire",R`\vec{u}\cdot\vec{v} = xx'+yy' = \Vert\vec{u}\Vert\,\Vert\vec{v}\Vert\cos\theta`],["Norme",R`\Vert\vec{u}\Vert = \sqrt{x^2+y^2}`]]},
+   {lv:2,cat:"Suites",it:[["Arithmétique",R`u_n = u_0+nr`],["Somme 1+2+…+n",R`1+2+\cdots+n = \frac{n(n+1)}{2}`],["Somme arithmétique",R`S = \text{nb termes}\times\frac{u_{premier}+u_{dernier}}{2}`],["Géométrique",R`u_n = u_0 \, q^n`],["Somme géométrique",R`1+q+\cdots+q^n = \frac{1-q^{n+1}}{1-q}`]]},
+   {lv:2,cat:"Dérivées",it:[["Puissance",R`(x^n)' = n x^{n-1}`],["Inverse",R`\left(\frac{1}{x}\right)' = \frac{-1}{x^2}`],["Racine",R`(\sqrt{x})' = \frac{1}{2\sqrt{x}}`],["Produit",R`(uv)' = u'v+uv'`],["Quotient",R`\left(\frac{u}{v}\right)' = \frac{u'v-uv'}{v^2}`],["Composée exp",R`(e^u)' = u'e^u`],["ln",R`(\ln x)' = \frac{1}{x}`],["sin / cos",R`(\sin x)'=\cos x ,\; (\cos x)'=-\sin x`]]},
+   {lv:2,cat:"Exponentielle & logarithme",it:[["Produit",R`e^{a+b} = e^a e^b ,\; \ln(ab)=\ln a+\ln b`],["Quotient",R`\ln\frac{a}{b} = \ln a-\ln b`],["Puissance",R`\ln(a^n) = n\ln a`],["Réciprocité",R`e^{\ln x}=x ,\; \ln(e^x)=x`]]},
+   {lv:2,cat:"Trigonométrie",it:[["Relation fondamentale",R`\cos^2 x+\sin^2 x = 1`],["Addition",R`\cos(a+b) = \cos a\cos b-\sin a\sin b`],["Addition (sin)",R`\sin(a+b) = \sin a\cos b+\cos a\sin b`],["Duplication",R`\cos 2a = 2\cos^2 a-1 ,\; \sin 2a = 2\sin a\cos a`]]},
+   {lv:2,cat:"Probabilités",it:[["Union",R`P(A\cup B) = P(A)+P(B)-P(A\cap B)`],["Conditionnelle",R`P_B(A) = \frac{P(A\cap B)}{P(B)}`],["Indépendance",R`P(A\cap B) = P(A)\,P(B)`],["Binomiale",R`P(X=k) = \binom{n}{k} p^k (1-p)^{n-k}`],["Binomiale : espérance / variance",R`E(X)=np ,\; V(X)=np(1-p)`],["Espérance",R`E(X) = \sum x_i \, p_i`],["Variance",R`V(X) = E(X^2)-E(X)^2`]]},
+   {lv:2,cat:"Intégrales & primitives",it:[["Théorème fondamental",R`\int_a^b f(x)\,dx = F(b)-F(a)`],["Puissance",R`\int x^n dx = \frac{x^{n+1}}{n+1}+C`],["Inverse",R`\int \frac{dx}{x} = \ln|x|+C`],["Exponentielle",R`\int e^x dx = e^x+C`],["Valeur moyenne",R`\mu = \frac{1}{b-a}\int_a^b f(x)\,dx`]]},
+   {lv:2,cat:"Dénombrement",it:[["Factorielle",R`n! = 1\times 2\times\cdots\times n`],["Combinaisons",R`\binom{n}{k} = \frac{n!}{k!(n-k)!}`],["Pascal",R`\binom{n}{k} = \binom{n-1}{k-1}+\binom{n-1}{k}`]]},
+   {lv:3,cat:"Sommes classiques",it:[["Somme des carrés",R`\sum_{k=1}^{n} k^2 = \frac{n(n+1)(2n+1)}{6}`],["Somme des cubes",R`\sum_{k=1}^{n} k^3 = \left(\frac{n(n+1)}{2}\right)^2`],["Binôme de Newton",R`(a+b)^n = \sum_{k=0}^{n}\binom{n}{k}a^k b^{n-k}`],["Série géométrique",R`\sum_{n=0}^{\infty} q^n = \frac{1}{1-q} \quad (|q|<1)`]]},
+   {lv:3,cat:"Nombres complexes",it:[["Module",R`|z| = \sqrt{a^2+b^2} ,\; z\bar{z}=|z|^2`],["Euler",R`e^{i\theta} = \cos\theta+i\sin\theta`],["Formules d'Euler",R`\cos\theta = \frac{e^{i\theta}+e^{-i\theta}}{2}`],["Moivre",R`(\cos\theta+i\sin\theta)^n = \cos n\theta+i\sin n\theta`],["Racines n-ièmes de 1",R`z_k = e^{2ik\pi/n} ,\; k=0,\dots,n-1`]]},
+   {lv:3,cat:"Développements limités (x→0)",it:[["Exponentielle",R`e^x = 1+x+\frac{x^2}{2!}+\cdots+\frac{x^n}{n!}+o(x^n)`],["ln(1+x)",R`\ln(1+x) = x-\frac{x^2}{2}+\frac{x^3}{3}-\cdots`],["1/(1−x)",R`\frac{1}{1-x} = 1+x+x^2+\cdots`],["(1+x)^α",R`(1+x)^\alpha = 1+\alpha x+\frac{\alpha(\alpha-1)}{2}x^2+\cdots`],["sin",R`\sin x = x-\frac{x^3}{3!}+\frac{x^5}{5!}-\cdots`],["cos",R`\cos x = 1-\frac{x^2}{2!}+\frac{x^4}{4!}-\cdots`]]},
+   {lv:3,cat:"Analyse",it:[["Intégration par parties",R`\int u\,v' = uv-\int u'v`],["Accroissements finis",R`f(b)-f(a) = f'(c)(b-a)`],["Leibniz",R`(fg)^{(n)} = \sum_{k=0}^{n}\binom{n}{k}f^{(k)}g^{(n-k)}`],["Intégrale de Gauss",R`\int_{-\infty}^{+\infty} e^{-x^2}dx = \sqrt{\pi}`],["Trig. hyperbolique",R`\text{ch}^2 x-\text{sh}^2 x = 1`],["Basel",R`\sum_{n=1}^{\infty}\frac{1}{n^2} = \frac{\pi^2}{6}`],["Série de e",R`\sum_{n=0}^{\infty}\frac{1}{n!} = e`]]},
+   {lv:3,cat:"Algèbre linéaire",it:[["Déterminant 2×2",R`\det\left(a\;b\;;\;c\;d\right) = ad-bc`],["Inverse d'un produit",R`(AB)^{-1} = B^{-1}A^{-1}`],["Théorème du rang",R`\dim E = \text{rg}\,f+\dim\ker f`]]},
+   {lv:3,cat:"Arithmétique",it:[["Bézout",R`au+bv = \text{pgcd}(a,b)`],["Petit Fermat",R`a^{p-1} \equiv 1 \; [p] \quad (p \text{ premier})`],["Div. euclidienne",R`a = bq+r ,\; 0\le r<b`]]},
+   {lv:3,cat:"Équations différentielles",it:[["y′ = ay",R`y = C e^{ax}`],["y′ = ay+b",R`y = C e^{ax}-\frac{b}{a}`],["Oscillateur",R`y''+\omega^2 y = 0 \Rightarrow y = A\cos\omega t+B\sin\omega t`]]},
+   {lv:3,cat:"Probabilités (sup)",it:[["Loi exponentielle",R`P(X>t) = e^{-\lambda t} ,\; E(X)=\frac{1}{\lambda}`],["Densité",R`E(X) = \int x f(x)\,dx`],["Bayes",R`P(A|B) = \frac{P(B|A)\,P(A)}{P(B)}`]]},
+   {lv:4,cat:"Analyse avancée",it:[["Stirling",R`n! \sim \sqrt{2\pi n}\left(\frac{n}{e}\right)^n`],["Fonction Gamma",R`\Gamma(n+1) = n! ,\; \Gamma(1/2)=\sqrt{\pi}`],["Zêta",R`\zeta(s) = \sum_{n=1}^{\infty} n^{-s}`],["Fourier",R`\hat{f}(\xi) = \int f(x)\,e^{-2i\pi x\xi}dx`],["Convolution",R`(f\ast g)(x) = \int f(t)\,g(x-t)\,dt`],["Laplace",R`F(s) = \int_0^{\infty} f(t)\,e^{-st}dt`]]},
+   {lv:4,cat:"Analyse complexe",it:[["Formule de Cauchy",R`f(a) = \frac{1}{2i\pi}\oint \frac{f(z)}{z-a}dz`],["Résidus",R`\oint f(z)\,dz = 2i\pi \sum \text{Res}(f)`]]},
+   {lv:4,cat:"Probabilités avancées",it:[["TCL",R`\frac{\bar{X}_n-\mu}{\sigma/\sqrt{n}} \to \mathbb{N}(0,1)`],["Densité normale",R`f(x) = \frac{1}{\sigma\sqrt{2\pi}}\,e^{-\frac{(x-\mu)^2}{2\sigma^2}}`],["Entropie",R`H = -\sum p_i \ln p_i`]]},
+   {lv:4,cat:"Algèbre & géométrie",it:[["Cayley-Hamilton",R`\chi_A(A) = 0`],["det / trace",R`\det(e^A) = e^{\text{tr}\,A}`],["Diagonalisation",R`A = PDP^{-1}`],["Lagrange (optimisation)",R`\nabla f = \lambda \nabla g`]]},
+   {lv:4,cat:"Analyse vectorielle & EDP",it:[["Green-Ostrogradski",R`\iiint \text{div}\,\vec{F}\,dV = \iint \vec{F}\cdot\vec{dS}`],["Stokes",R`\oint \vec{F}\cdot\vec{dl} = \iint \text{rot}\,\vec{F}\cdot\vec{dS}`],["Laplacien",R`\Delta f = \frac{\partial^2 f}{\partial x^2}+\frac{\partial^2 f}{\partial y^2}+\frac{\partial^2 f}{\partial z^2}`],["Chaleur",R`\frac{\partial u}{\partial t} = \alpha\,\Delta u`],["Ondes",R`\frac{\partial^2 u}{\partial t^2} = c^2\,\Delta u`]]}
+  ];})();
+  function fillFormu(w,body){
+    if(!w.formu)w.formu={q:"",lv:0}; const F=w.formu;
+    const LV=["Tous","Collège","Lycée","Sup (bac+1-3)","Avancé (bac+4-7)"];
+    const root=mkEl("div","fo"); body.appendChild(root);
+    const bar=mkEl("div","fo-bar");
+    const inp=document.createElement("input"); inp.className="fo-search"; inp.type="text"; inp.placeholder="🔍 Rechercher (ex. dérivée, aire, binôme)…"; inp.value=F.q||"";
+    const sel=document.createElement("select"); sel.className="fo-lv"; LV.forEach((n,i)=>{ const o=document.createElement("option"); o.value=i; o.textContent=n; if(F.lv===i)o.selected=true; sel.appendChild(o); });
+    [inp,sel].forEach(x=>x.addEventListener("pointerdown",e=>e.stopPropagation()));
+    inp.addEventListener("input",()=>{ F.q=inp.value; renderList(); }); inp.addEventListener("keydown",e=>e.stopPropagation());
+    sel.addEventListener("change",()=>{ F.lv=+sel.value; persist(); renderList(); });
+    bar.append(inp,sel); root.appendChild(bar);
+    const list=mkEl("div","fo-list"); root.appendChild(list);
+    const toast=mkEl("div","fo-toast","LaTeX copié ✓"); root.appendChild(toast);
+    const norm2=s2=>String(s2).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+    function renderList(){ list.innerHTML=""; const q=norm2((F.q||"").trim()); const terms=q?q.split(/\s+/):[];
+      let shown=0;
+      FORMULAIRE.forEach(sec=>{ if(F.lv&&sec.lv!==F.lv)return;
+        const items=sec.it.filter(it=>{ if(!terms.length)return true; const hay=norm2(sec.cat+" "+it[0]); return terms.every(t=>hay.includes(t)); });
+        if(!items.length)return;
+        const hd=mkEl("div","fo-cat"); hd.appendChild(mkEl("span","",sec.cat)); hd.appendChild(mkEl("span","fo-lvtag",LV[sec.lv])); list.appendChild(hd);
+        items.forEach(it=>{ const row=mkEl("div","fo-row"); row.title="Clic : copier le code LaTeX";
+          row.appendChild(mkEl("div","fo-n",it[0]));
+          const fx=mkEl("div","fo-f"); fx.innerHTML=mrender(it[1]); row.appendChild(fx);
+          row.addEventListener("pointerdown",e=>e.stopPropagation());
+          row.addEventListener("click",()=>{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(it[1]).then(()=>{ toast.classList.add("on"); setTimeout(()=>toast.classList.remove("on"),900); }).catch(()=>{}); } });
+          list.appendChild(row); shown++; }); });
+      if(!shown)list.appendChild(mkEl("div","fo-empty","Aucune formule trouvée."));
+    }
+    renderList();
+  }
+
+  // ---------- widget ÉDITEUR LATEX (code à gauche, rendu à droite) ----------
+  function fillLatex(w,body){
+    if(!w.latex)w.latex={src:"",fs:1.15}; const L=w.latex; if(typeof L.fs!=="number")L.fs=1.15;
+    if(!L.src)L.src="\\frac{-b \\pm \\sqrt{\\Delta}}{2a}\n(a+b)^2 = a^2+2ab+b^2\n\\sum_{k=1}^{n} k = \\frac{n(n+1)}{2}\n\\int_a^b f(x)\\,dx = F(b)-F(a)";
+    const root=mkEl("div","lx"); body.appendChild(root);
+    const left=mkEl("div","lx-left");
+    const ta=document.createElement("textarea"); ta.className="lx-ta"; ta.spellcheck=false; ta.placeholder="Une formule LaTeX par ligne…\nEx. \\frac{a}{b} , x^2 , \\sqrt{x} , \\sum_{k=0}^{n}"; ta.value=L.src;
+    left.appendChild(ta);
+    const right=mkEl("div","lx-right");
+    const tools=mkEl("div","lx-tools");
+    const am=mkEl("button","lx-tb","A−"),ap=mkEl("button","lx-tb","A+");
+    tools.append(am,ap); 
+    const out=mkEl("div","lx-out"); right.append(tools,out);
+    root.append(left,right);
+    [ta,am,ap].forEach(x=>x.addEventListener("pointerdown",e=>e.stopPropagation()));
+    ta.addEventListener("keydown",e=>e.stopPropagation());
+    function renderOut(){ out.innerHTML=""; out.style.fontSize=L.fs+"rem";
+      const lines=L.src.split("\n");
+      lines.forEach(l=>{ const line=mkEl("div","lx-line"); if(!l.trim()){ line.classList.add("empty"); } else { line.innerHTML=mrender(l); } out.appendChild(line); }); }
+    let tmo; ta.addEventListener("input",()=>{ L.src=ta.value; renderOut(); clearTimeout(tmo); tmo=setTimeout(persist,400); });
+    am.addEventListener("click",()=>{ L.fs=Math.max(0.8,Math.round((L.fs-0.1)*10)/10); persist(); renderOut(); });
+    ap.addEventListener("click",()=>{ L.fs=Math.min(2.4,Math.round((L.fs+0.1)*10)/10); persist(); renderOut(); });
+    renderOut();
+  }
+
+  // ---------- widget HTML (catalogue + code perso) ----------
+  const HW_BASE='<style>html,body{margin:0;height:100%;background:#101418;color:#e8eef7;font-family:system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;overflow:hidden}button{font:700 18px system-ui;background:#2a3546;color:#fff;border:0;border-radius:12px;padding:9px 16px;cursor:pointer}button:active{transform:scale(.95)}</style>';
+  const HW_CATALOG=[
+    {id:"horloge",ic:"🕰️",n:"Horloge analogique",d:"Aiguilles en direct",tags:"heure temps clock",html:'<style>html,body{margin:0;height:100%;background:#101418;display:grid;place-items:center}svg{width:min(94vw,94vh)}</style><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#1c2430" stroke="#39485c" stroke-width="2"/><g id="t"></g><line id="h" x1="50" y1="50" x2="50" y2="29" stroke="#e8eef7" stroke-width="3.4" stroke-linecap="round"/><line id="m" x1="50" y1="50" x2="50" y2="19" stroke="#9fd08f" stroke-width="2.2" stroke-linecap="round"/><line id="s" x1="50" y1="50" x2="50" y2="15" stroke="#e0562b" stroke-width="1" stroke-linecap="round"/><circle cx="50" cy="50" r="2.4" fill="#e8eef7"/></svg><script>var g=document.getElementById("t"),i,a,o="";for(i=0;i<12;i++){a=i*Math.PI/6;o+=\'<line x1="\'+(50+42*Math.sin(a))+\'" y1="\'+(50-42*Math.cos(a))+\'" x2="\'+(50+45.5*Math.sin(a))+\'" y2="\'+(50-45.5*Math.cos(a))+\'" stroke="#8ea2ba" stroke-width="1.6"/>\';}g.innerHTML=o;function rot(id,deg){document.getElementById(id).setAttribute("transform","rotate("+deg+" 50 50)");}function tick(){var d=new Date();rot("s",d.getSeconds()*6);rot("m",d.getMinutes()*6+d.getSeconds()*0.1);rot("h",(d.getHours()%12)*30+d.getMinutes()*0.5);}tick();setInterval(tick,1000);<\/script>'},
+    {id:"defil",ic:"📜",n:"Texte défilant néon",d:"Message qui défile, éditable",tags:"marquee message annonce",html:'<style>html,body{margin:0;height:100%;background:#0b0d12;overflow:hidden;display:flex;align-items:center}#m{white-space:nowrap;font:900 11vh system-ui;color:#39ff9c;text-shadow:0 0 8px #39ff9c,0 0 22px #16c46f;outline:none}</style><div id="m" contenteditable="true" spellcheck="false">Bienvenue en Maths ! ✨ Clique pour modifier —</div><script>var m=document.getElementById("m"),x=innerWidth;function f(){if(document.activeElement!==m){x-=2.2;if(x<-m.offsetWidth)x=innerWidth;m.style.transform="translateX("+x+"px)";}requestAnimationFrame(f);}f();<\/script>'},
+    {id:"rebours",ic:"🎯",n:"Compte à rebours date",d:"Jours avant un événement",tags:"vacances brevet sortie countdown",html:HW_BASE+'<input type="date" id="d" style="background:#222a36;color:#fff;border:1px solid #3a4a5c;border-radius:8px;padding:6px;font-size:16px"><div id="c" style="font-size:8.5vh;font-weight:900">—</div><div id="l" style="opacity:.7">Choisis une date 🎯</div><script>var d=document.getElementById("d"),c=document.getElementById("c"),l=document.getElementById("l");function u(){if(!d.value){c.textContent="—";return;}var t=new Date(d.value+"T00:00:00")-new Date();if(t<=0){c.textContent="🎉";l.textContent="C\'est aujourd\'hui !";return;}var j=Math.floor(t/86400000),h=Math.floor(t%86400000/3600000),mi=Math.floor(t%3600000/60000),s=Math.floor(t%60000/1000);c.textContent=j+" j "+h+" h "+mi+" min "+s+" s";l.textContent="avant le "+d.value.split("-").reverse().join("/");}d.onchange=u;setInterval(u,1000);u();<\/script>'},
+    {id:"compteur",ic:"🔢",n:"Compteur géant",d:"+1 / −1 / zéro, bien visible",tags:"points score comptage",html:HW_BASE+'<div id="n" style="font-size:24vh;font-weight:900;line-height:1">0</div><div><button onclick="c(-1)">−1</button> <button onclick="z()">0</button> <button onclick="c(1)">+1</button></div><script>var v=0,n=document.getElementById("n");function c(d){v+=d;n.textContent=v;}function z(){v=0;n.textContent=0;}<\/script>'},
+    {id:"de3d",ic:"🎲",n:"Dé animé",d:"Clique pour lancer",tags:"hasard dé jeu",html:HW_BASE+'<div id="d" style="font-size:34vh;cursor:pointer;user-select:none;line-height:1">🎲</div><div style="opacity:.6">Clique le dé</div><script>var f=["⚀","⚁","⚂","⚃","⚄","⚅"],d=document.getElementById("d");d.onclick=function(){var n=0,iv=setInterval(function(){d.textContent=f[Math.floor(Math.random()*6)];d.style.transform="rotate("+(Math.random()*28-14)+"deg)";if(++n>9){clearInterval(iv);d.style.transform="";}},70);};<\/script>'},
+    {id:"metronome",ic:"🎼",n:"Métronome",d:"Tempo réglable, clic sonore",tags:"rythme musique bpm tempo",html:HW_BASE+'<div id="b" style="font-size:8vh;font-weight:900">80 BPM</div><input type="range" min="40" max="200" value="80" id="r" style="width:70%"><button id="go">▶ Démarrer</button><div id="dot" style="width:26px;height:26px;border-radius:50%;background:#2a3546"></div><script>var A=window.AudioContext||window.webkitAudioContext,ac=null,iv=null,r=document.getElementById("r"),b=document.getElementById("b"),go=document.getElementById("go"),dot=document.getElementById("dot");r.oninput=function(){b.textContent=r.value+" BPM";if(iv)start();};function tick(){if(!ac)ac=new A();var o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime;o.frequency.value=1000;o.connect(g);g.connect(ac.destination);g.gain.setValueAtTime(.28,t);g.gain.exponentialRampToValueAtTime(.001,t+.05);o.start(t);o.stop(t+.06);dot.style.background="#39ff9c";setTimeout(function(){dot.style.background="#2a3546";},90);}function start(){stop();iv=setInterval(tick,60000/(+r.value));go.textContent="■ Stop";}function stop(){if(iv){clearInterval(iv);iv=null;}go.textContent="▶ Démarrer";}go.onclick=function(){iv?stop():start();};<\/script>'},
+    {id:"citation",ic:"💬",n:"Citation maths du jour",d:"Change chaque jour",tags:"citation pensée inspiration",html:HW_BASE+'<div id="q" style="font-size:4.2vh;font-weight:700;text-align:center;max-width:88%;line-height:1.35"></div><div id="a" style="opacity:.6"></div><script>var Q=[["Les mathématiques sont la reine des sciences.","Gauss"],["Dans la vie, rien n\'est à craindre, tout est à comprendre.","Marie Curie"],["La géométrie est l\'art de raisonner juste sur des figures fausses.","Poincaré"],["Un problème sans solution est un problème mal posé.","Einstein"],["Les nombres gouvernent le monde.","Pythagore"],["Ce qui est affirmé sans preuve peut être nié sans preuve.","Euclide"],["Le hasard ne favorise que les esprits préparés.","Pasteur"],["On ne peut pas ne pas apprendre.","Anonyme"],["Une erreur peut devenir exacte selon que celui qui l\'a commise s\'est trompé ou non.","Devos"],["Le zéro est le seul nombre qui ait changé le monde sans rien valoir.","Anonyme"],["Mesurer ce qui est mesurable, rendre mesurable ce qui ne l\'est pas.","Galilée"],["L\'essence des mathématiques, c\'est la liberté.","Cantor"],["Il n\'y a pas de voie royale vers la géométrie.","Euclide"],["Les maths, c\'est comme l\'amour : une idée simple, mais ça peut devenir compliqué.","Drabek"]];var d=new Date(),i=(d.getDate()+d.getMonth()*31)%Q.length;document.getElementById("q").textContent="« "+Q[i][0]+" »";document.getElementById("a").textContent="— "+Q[i][1];<\/script>'},
+    {id:"njour",ic:"✨",n:"Nombre du jour",d:"Propriétés du nombre",tags:"rituel numération premier pair",html:HW_BASE+'<div id="n" style="font-size:18vh;font-weight:900;line-height:1"></div><div id="p" style="font-size:2.6vh;text-align:center;line-height:1.7;opacity:.85"></div><script>function prem(n){if(n<2)return false;for(var i=2;i*i<=n;i++)if(n%i===0)return false;return true;}var d=new Date(),n=(d.getDate()+d.getMonth()*31)%99+2;document.getElementById("n").textContent=n;var t=[];t.push(n%2===0?"pair":"impair");if(prem(n))t.push("nombre premier");t.push("double : "+(2*n));if(n%2===0)t.push("moitié : "+(n/2));t.push("carré : "+(n*n));document.getElementById("p").innerHTML=t.join("<br>");<\/script>'},
+    {id:"confettis",ic:"🎉",n:"Canon à confettis",d:"Pour célébrer une réussite",tags:"fête bravo récompense",html:'<style>html,body{margin:0;height:100%;background:#101418;overflow:hidden}canvas{position:fixed;inset:0}#b{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);font:800 20px system-ui;background:#e0562b;color:#fff;border:0;border-radius:14px;padding:12px 22px;cursor:pointer}</style><canvas id="c"></canvas><button id="b">🎉 Bravo !</button><script>var cv=document.getElementById("c"),x=cv.getContext("2d"),P=[];function rs(){cv.width=innerWidth;cv.height=innerHeight;}rs();onresize=rs;var C=["#e0562b","#ffd400","#39ff9c","#5b9dff","#ff5bd0"];document.getElementById("b").onclick=function(){for(var i=0;i<130;i++)P.push({x:cv.width/2,y:cv.height,vx:(Math.random()-0.5)*11,vy:-(7+Math.random()*11),r:3+Math.random()*4,c:C[i%5],a:Math.random()*6});};function f(){x.clearRect(0,0,cv.width,cv.height);for(var i=P.length-1;i>=0;i--){var p=P[i];p.x+=p.vx;p.y+=p.vy;p.vy+=0.25;p.a+=0.2;if(p.y>cv.height+20)P.splice(i,1);else{x.save();x.translate(p.x,p.y);x.rotate(p.a);x.fillStyle=p.c;x.fillRect(-p.r,-p.r/2,p.r*2,p.r);x.restore();}}requestAnimationFrame(f);}f();<\/script>'},
+    {id:"balles",ic:"⚽",n:"Balles rebondissantes",d:"Clique pour en ajouter",tags:"détente physique animation",html:'<style>html,body{margin:0;height:100%;background:#101418;overflow:hidden;cursor:pointer}canvas{position:fixed;inset:0}</style><canvas id="c"></canvas><script>var cv=document.getElementById("c"),x=cv.getContext("2d"),B=[];function rs(){cv.width=innerWidth;cv.height=innerHeight;}rs();onresize=rs;var C=["#e0562b","#ffd400","#39ff9c","#5b9dff","#ff5bd0"];function add(px,py){B.push({x:px,y:py,vx:(Math.random()-0.5)*7,vy:-4,r:12+Math.random()*16,c:C[B.length%5]});}cv.onpointerdown=function(e){add(e.clientX,e.clientY);};add(cv.width/2,60);function f(){x.clearRect(0,0,cv.width,cv.height);B.forEach(function(b){b.x+=b.vx;b.y+=b.vy;b.vy+=0.32;if(b.y+b.r>cv.height){b.y=cv.height-b.r;b.vy*=-0.86;}if(b.x-b.r<0||b.x+b.r>cv.width)b.vx*=-1;x.beginPath();x.arc(b.x,b.y,b.r,0,6.2832);x.fillStyle=b.c;x.fill();});requestAnimationFrame(f);}f();<\/script>'},
+    {id:"etoiles",ic:"🌌",n:"Ciel étoilé",d:"Fond calme et scintillant",tags:"calme ambiance retour au calme",html:'<style>html,body{margin:0;height:100%;background:#070a12;overflow:hidden}canvas{position:fixed;inset:0}</style><canvas id="c"></canvas><script>var cv=document.getElementById("c"),x=cv.getContext("2d"),S=[];function rs(){cv.width=innerWidth;cv.height=innerHeight;S=[];for(var i=0;i<130;i++)S.push({x:Math.random()*cv.width,y:Math.random()*cv.height,r:Math.random()*1.6+0.4,p:Math.random()*6});}rs();onresize=rs;function f(t){x.clearRect(0,0,cv.width,cv.height);S.forEach(function(s){var a=0.35+0.65*Math.abs(Math.sin(t/900+s.p));x.globalAlpha=a;x.fillStyle="#dfe8ff";x.beginPath();x.arc(s.x,s.y,s.r,0,6.2832);x.fill();});x.globalAlpha=1;requestAnimationFrame(f);}requestAnimationFrame(f);<\/script>'},
+    {id:"pfc",ic:"✂️",n:"Pierre-feuille-ciseaux",d:"Contre l'ordinateur, avec score",tags:"jeu chifoumi duel",html:HW_BASE+'<div id="s" style="font-size:3vh;opacity:.75">Toi 0 — 0 Ordi</div><div id="z" style="font-size:12vh;line-height:1.2">🤖</div><div id="r" style="font-size:3.2vh;font-weight:800">Choisis !</div><div><button onclick="go(0)" style="font-size:30px">🪨</button> <button onclick="go(1)" style="font-size:30px">📄</button> <button onclick="go(2)" style="font-size:30px">✂️</button></div><script>var E=["🪨","📄","✂️"],me=0,pc=0;function go(p){var o=Math.floor(Math.random()*3);document.getElementById("z").textContent=E[p]+" vs "+E[o];var r;if(p===o)r="Égalité !";else if((p===0&&o===2)||(p===1&&o===0)||(p===2&&o===1)){r="Gagné ! 🎉";me++;}else{r="Perdu…";pc++;}document.getElementById("r").textContent=r;document.getElementById("s").textContent="Toi "+me+" — "+pc+" Ordi";}<\/script>'}
+  ];
+  function fillHtml(w,body){
+    if(!w.hw)w.hw={q:"",sel:null,custom:""}; const H=w.hw;
+    const root=mkEl("div","wh"); body.appendChild(root);
+    function iframeFor(src){ const f=document.createElement("iframe"); f.className="wh-frame"; f.setAttribute("sandbox","allow-scripts"); f.setAttribute("referrerpolicy","no-referrer"); f.srcdoc=src; return f; }
+    function render(){ root.innerHTML="";
+      if(H.sel){ const item=H.sel==="custom"?{ic:"🧩",n:"Mon code HTML"}:HW_CATALOG.find(c=>c.id===H.sel);
+        if(!item){ H.sel=null; render(); return; }
+        const bar=mkEl("div","wh-bar"); const back=mkEl("button","wh-bb","← Catalogue"); back.addEventListener("pointerdown",e=>e.stopPropagation()); back.addEventListener("click",()=>{ H.sel=null; persist(); render(); });
+        bar.appendChild(back); bar.appendChild(mkEl("span","wh-ttl",item.ic+" "+item.n));
+        if(H.sel==="custom"){ const ed=mkEl("button","wh-bb","✎"); ed.title="Modifier le code"; ed.addEventListener("pointerdown",e=>e.stopPropagation()); ed.addEventListener("click",()=>{ H.sel=null; H.editing=true; persist(); render(); }); bar.appendChild(ed); }
+        root.appendChild(bar);
+        root.appendChild(iframeFor(H.sel==="custom"?H.custom:HW_CATALOG.find(c=>c.id===H.sel).html));
+        return; }
+      if(H.web){ const bar=mkEl("div","wh-bar"); const back=mkEl("button","wh-bb","← Catalogue"); back.addEventListener("pointerdown",e=>e.stopPropagation()); back.addEventListener("click",()=>{ H.web=null; persist(); render(); });
+        const src=document.createElement("select"); src.className="wh-src"; [["ddg","DuckDuckGo"],["google","Google"]].forEach(o=>{ const op=document.createElement("option"); op.value=o[0]; op.textContent=o[1]; if(H.web.src===o[0])op.selected=true; src.appendChild(op); });
+        const q2=document.createElement("input"); q2.className="wh-search"; q2.type="text"; q2.value=H.web.q||"";
+        const go=mkEl("button","wh-bb","🔍");
+        [src,q2,go,back].forEach(x=>x.addEventListener("pointerdown",e=>e.stopPropagation()));
+        function urlFor(){ const qq=encodeURIComponent((H.web.q||"").trim()+" widget html code intégration embed"); return H.web.src==="google"?("https://www.google.com/search?igu=1&hl=fr&q="+qq):("https://lite.duckduckgo.com/lite/?q="+qq); }
+        function reload(){ fr.src=urlFor(); }
+        go.addEventListener("click",()=>{ H.web.q=q2.value; persist(); reload(); });
+        q2.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"){ H.web.q=q2.value; persist(); reload(); } });
+        src.addEventListener("change",()=>{ H.web.src=src.value; persist(); reload(); });
+        bar.append(back,src,q2,go); root.appendChild(bar);
+        const fr=document.createElement("iframe"); fr.className="wh-frame"; fr.setAttribute("referrerpolicy","no-referrer"); fr.src=urlFor(); root.appendChild(fr);
+        root.appendChild(mkEl("div","wh-hint","Trouve un widget, copie son code d'intégration, puis « </> Mon code HTML »."));
+        return; }
+      if(H.editing){ const bar=mkEl("div","wh-bar"); const back=mkEl("button","wh-bb","← Catalogue"); back.addEventListener("pointerdown",e=>e.stopPropagation()); back.addEventListener("click",()=>{ H.editing=false; render(); }); bar.append(back,mkEl("span","wh-ttl","🧩 Mon code HTML"));
+        root.appendChild(bar);
+        const ta=document.createElement("textarea"); ta.className="wh-ta"; ta.placeholder="Colle ici ton code HTML / CSS / JS (ou un code d'intégration)…"; ta.value=H.custom||""; ta.spellcheck=false; ta.addEventListener("pointerdown",e=>e.stopPropagation());
+        const go=mkEl("button","wh-go","▶ Afficher"); go.addEventListener("pointerdown",e=>e.stopPropagation()); go.addEventListener("click",()=>{ H.custom=ta.value; if(!H.custom.trim())return; H.editing=false; H.sel="custom"; persist(); render(); });
+        root.append(ta,go); return; }
+      const bar=mkEl("div","wh-bar");
+      const inp=document.createElement("input"); inp.className="wh-search"; inp.type="text"; inp.placeholder="🔍 Filtrer le catalogue — Entrée : chercher sur le web"; inp.value=H.q||""; inp.addEventListener("pointerdown",e=>e.stopPropagation()); inp.addEventListener("input",()=>{ H.q=inp.value; renderGrid(); });
+      inp.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"&&inp.value.trim()){ H.web={q:inp.value.trim(),src:"ddg"}; persist(); render(); } });
+      const webB=mkEl("button","wh-bb","🌐 Web"); webB.title="Chercher des widgets à intégrer sur le web"; webB.addEventListener("pointerdown",e=>e.stopPropagation()); webB.addEventListener("click",()=>{ H.web={q:inp.value.trim(),src:"ddg"}; persist(); render(); });
+      bar.appendChild(inp); bar.appendChild(webB); root.appendChild(bar);
+      const grid=mkEl("div","wh-grid"); root.appendChild(grid);
+      function renderGrid(){ grid.innerHTML=""; const q=(H.q||"").trim().toLowerCase();
+        const list=HW_CATALOG.filter(c=>!q||(c.n+" "+c.d+" "+c.tags).toLowerCase().includes(q));
+        list.forEach(c=>{ const card=mkEl("button","wh-card"); card.appendChild(mkEl("span","wh-ic",c.ic)); card.appendChild(mkEl("span","wh-n",c.n)); card.appendChild(mkEl("span","wh-d",c.d)); card.addEventListener("pointerdown",e=>e.stopPropagation()); card.addEventListener("click",()=>{ H.sel=c.id; persist(); render(); }); grid.appendChild(card); });
+        if(!q||"code html perso intégration".includes(q)){ const card=mkEl("button","wh-card custom"); card.appendChild(mkEl("span","wh-ic","</>")); card.appendChild(mkEl("span","wh-n","Mon code HTML")); card.appendChild(mkEl("span","wh-d","Colle ton propre code")); card.addEventListener("pointerdown",e=>e.stopPropagation()); card.addEventListener("click",()=>{ H.editing=true; render(); }); grid.appendChild(card); }
+        if(!grid.children.length)grid.appendChild(mkEl("div","wh-empty","Aucun mini-widget ne correspond.")); }
+      renderGrid(); inp.focus(); }
+    render();
+  }
+
   // ---------- widget CACHE / RIDEAU + PROJECTEUR ----------
   function openSpotlight(){ let ov=document.getElementById("spotOv");
     if(ov){ ov.remove(); return; }
@@ -3358,9 +3621,43 @@
     h.addEventListener("click",e=>{ e.stopPropagation(); if(cat.classList.contains("active"))closeSubs(); else openSubFor(cat); }); });
   addPop.querySelectorAll("button[data-type]").forEach(b=>b.addEventListener("click",()=>{ addPop.hidden=true; closeSubs(); addWidget(b.dataset.type); }));
   const wSearch=document.getElementById("widgetSearch"),wRecents=document.getElementById("widgetRecents"),wResults=document.getElementById("widgetResults"),wCats=document.getElementById("widgetCats");
-  const MENU=[...addPop.querySelectorAll("#widgetCats button[data-type]")].map(b=>({type:b.dataset.type,label:b.textContent.trim(),icon:(b.querySelector("span")&&b.querySelector("span").textContent)||ICONS[b.dataset.type]}));
+  const WKEYS={
+    plan:"élèves places tables îlots croix comportement participation classe noms",
+    video:"youtube film capsule lecture clip",
+    timer:"minuteur compte à rebours temps activité sonnerie alarme",
+    text:"consigne message note écrire post-it mémo",
+    clock:"heure pendule horloge cadran",
+    feu:"tricolore silence bruit niveau autorisation rouge orange vert",
+    symbols:"travail consignes silence chuchoter groupe autonomie pictogrammes",
+    dice:"dé hasard tirage aléatoire jeu lancer",
+    chrono:"chronomètre mesurer durée temps tour",
+    calendar:"date jour mois semaine agenda",
+    embed:"site web page internet intégrer iframe geogebra learningapps",
+    image:"photo gif illustration figure dessin capture",
+    wheel:"roue tirage au sort élève hasard sélecteur désigner",
+    sand:"sablier durée visuel temps",
+    plot:"fonction courbe graphique affine linéaire repère traceur mystère intersection",
+    calc:"calculatrice opérations calculer",
+    tableur:"excel feuille cellules données tableau notes moyennes",
+    code:"programmation tortue scratch logo python algorithme boucle",
+    exo:"exercices entraînement questions calcul mental automatismes",
+    reveal:"cours leçon masquer révélation progressif trace écrite",
+    manip:"fractions pizza barres droite graduée rapporteur angles balance équation aires proportionnalité probabilités pythagore équivalentes géoplan base dix manipulation",
+    tiktok:"fun astuces quiz défilement rituels pause",
+    qflash:"questions flash rituel début heure automatismes générateur",
+    qr:"qr code lien téléphone partage scanner",
+    games:"jeux arcade calcul éclair tables serpent multiples memory vrai faux ranger cible angles trous fractions colorier compte est bon repérage symétrie suites relatifs arrondis récompense",
+    ambiance:"sons bruit pluie vagues forêt oiseaux café calme concentration retour au calme carillon",
+    jeo:"jeopardy quiz équipes points révisions jeu télévisé grille questions réponses",
+    cache:"cacher masquer rideau panneau projecteur spotlight zone correction",
+    seance:"séance sonnerie horaires avancement temps restant curseur cours collège",
+    hw:"html mini widgets catalogue confettis métronome citation compteur nombre du jour étoiles chifoumi code intégration",
+    latex:"latex éditeur formule équation rendu écrire maths notation",
+    formu:"formulaire formules latex aires volumes pythagore thalès trigonométrie dérivées primitives intégrales suites probabilités complexes matrices fourier séries lycée collège prépa licence master"};
+  const MENU=[...addPop.querySelectorAll("#widgetCats button[data-type]")].map(b=>({type:b.dataset.type,label:b.textContent.trim(),icon:(b.querySelector("span")&&b.querySelector("span").textContent)||ICONS[b.dataset.type],kw:(WKEYS[b.dataset.type]||"")}));
   function refreshRecents(){ if(!wRecents)return; wRecents.innerHTML=""; const rc=(state.recents||[]).filter(t=>MENU.some(m=>m.type===t)).slice(0,6); if(!rc.length){ wRecents.hidden=true; return; } wRecents.hidden=false; wRecents.appendChild(mkEl("span","addpop-rlbl","Récents")); rc.forEach(tp=>{ const m=MENU.find(x=>x.type===tp); const b=mkEl("button","addpop-rbtn",m.icon); b.title=m.label; b.addEventListener("pointerdown",e=>e.stopPropagation()); b.addEventListener("click",()=>{ addPop.hidden=true; closeSubs(); addWidget(tp); }); wRecents.appendChild(b); }); }
-  function runSearch(){ const q=wSearch.value.trim().toLowerCase(); if(!q){ wResults.hidden=true; wResults.innerHTML=""; wCats.style.display=""; refreshRecents(); return; } wCats.style.display="none"; wRecents.hidden=true; wResults.hidden=false; wResults.innerHTML=""; const found=MENU.filter(m=>m.label.toLowerCase().includes(q)); if(!found.length){ wResults.appendChild(mkEl("div","addpop-empty","Aucun widget")); return; } found.forEach(m=>{ const b=mkEl("button","addpop-res"); b.innerHTML='<span>'+m.icon+'</span> '+m.label; b.addEventListener("pointerdown",e=>e.stopPropagation()); b.addEventListener("click",()=>{ addPop.hidden=true; closeSubs(); addWidget(m.type); }); wResults.appendChild(b); }); }
+  const norm=s=>String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  function runSearch(){ const q=norm(wSearch.value.trim()); if(!q){ wResults.hidden=true; wResults.innerHTML=""; wCats.style.display=""; refreshRecents(); return; } wCats.style.display="none"; wRecents.hidden=true; wResults.hidden=false; wResults.innerHTML=""; const terms=q.split(/\s+/); const found=MENU.filter(m=>{ const hay=norm(m.label+" "+m.kw); return terms.every(t=>hay.includes(t)); }); if(!found.length){ wResults.appendChild(mkEl("div","addpop-empty","Aucun widget")); return; } found.forEach(m=>{ const b=mkEl("button","addpop-res"); b.innerHTML='<span>'+m.icon+'</span> '+m.label; b.addEventListener("pointerdown",e=>e.stopPropagation()); b.addEventListener("click",()=>{ addPop.hidden=true; closeSubs(); addWidget(m.type); }); wResults.appendChild(b); }); }
   if(wSearch){ wSearch.addEventListener("pointerdown",e=>e.stopPropagation()); wSearch.addEventListener("input",runSearch); wSearch.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Escape"){ addPop.hidden=true; } else if(e.key==="Enter"){ const f=wResults.querySelector(".addpop-res"); if(f)f.click(); } }); }
   function resetMenu(){ if(wSearch)wSearch.value=""; if(wResults){ wResults.hidden=true; wResults.innerHTML=""; } if(wCats)wCats.style.display=""; refreshRecents(); }
   document.addEventListener("click",e=>{ if(!addPop.hidden && !addPop.contains(e.target) && e.target.id!=="addW"){ addPop.hidden=true; closeSubs(); } });
@@ -3393,6 +3690,9 @@
     else if(type==="jeo")w=jeoW(off,off);
     else if(type==="cache")w=cacheW(off,off);
     else if(type==="seance")w=seanceW(off,off);
+    else if(type==="hw")w=hwW(off,off);
+    else if(type==="formu")w=formuW(off,off);
+    else if(type==="latex")w=latexW(off,off);
     else w=clockW(off,off);
     if(!Array.isArray(state.recents))state.recents=[]; state.recents=[type].concat(state.recents.filter(t=>t!==type)).slice(0,6);
     page().widgets.push(w); persist(); renderCanvas(); if(typeof refreshRecents==="function")refreshRecents(); }
@@ -3525,9 +3825,16 @@
     if(html){ const m=/<img[^>]+src\s*=\s*["']([^"']+)["']/i.exec(html);
       if(m&&/^(https?:|data:image\/)/i.test(m[1])){ e.preventDefault(); const src=m[1].replace(/&amp;/g,"&");
         const probe=new Image(); probe.onload=()=>addPastedImage(src,probe.naturalWidth,probe.naturalHeight); probe.onerror=()=>addPastedImage(src); probe.src=src; return; } }
-    // 4) texte
+    // 4) texte — avec détection d'URL
     const txt=cd.getData("text/plain");
-    if(txt&&txt.trim()){ e.preventDefault(); addPastedText(txt); }
+    if(txt&&txt.trim()){ const u=txt.trim();
+      if(/^https?:\/\/\S+$/i.test(u)){
+        e.preventDefault(); snapshot(); const p2=pasteSpot(); let w2;
+        if(ytId(u)){ w2=videoW(u,p2.x,p2.y); }
+        else if(/\.(png|jpe?g|gif|webp|svg|bmp|avif)(\?[^#]*)?(#.*)?$/i.test(u)){ w2=imageW(p2.x,p2.y); w2.src=u; w2.title="Image collée"; }
+        else { w2=embedW(p2.x,p2.y); w2.mode="url"; w2.url=u; }
+        page().widgets.push(w2); persist(); renderCanvas(); return; }
+      e.preventDefault(); addPastedText(txt); }
   });
 
   // ---------- annotation plein écran + formes ----------
