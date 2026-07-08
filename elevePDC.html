@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ClassroomPDC Élève — V2.1 (2 pans : menu haut + tableau maximal) -->
+<!-- ClassroomPDC Élève — V3.5 (2 pans : menu haut + tableau maximal) -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -65,6 +65,32 @@
   .nm{border:1.5px solid var(--edge);background:#fff;border-radius:10px;font-family:inherit;font-weight:700;font-size:1rem;padding:.6rem;cursor:pointer;text-align:left}
   .nm:active{background:rgba(91,118,196,.12)}
   .hidden{display:none !important}
+  .planGrid{display:grid;gap:4px;justify-content:center;padding:4px}
+  .pcell{min-width:44px;height:34px;border-radius:7px;background:transparent;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;color:var(--ink);padding:0 3px;text-align:center;line-height:1.05;overflow:hidden}
+  .pcell.occ{background:#fff;border:1.5px solid var(--edge)}
+  .pcell.me{background:#e8b84b;border:2px solid #c99a2e;font-weight:800;box-shadow:0 0 0 3px rgba(232,184,75,.3)}
+  .met{display:flex;gap:3px;background:#fff;border:1.5px solid var(--edge);border-radius:999px;padding:2px}
+  .mb{border:none;background:transparent;font-size:1rem;padding:.2rem .3rem;cursor:pointer;border-radius:999px;opacity:.45}
+  .mb.on{opacity:1;background:rgba(27,27,23,.1)}
+  .feustrip{flex:0 0 auto;height:0;transition:height .2s}
+  .feustrip.g{height:10px;background:#2e9e4f}
+  .feustrip.o{height:10px;background:#e8931c}
+  .feustrip.r{height:10px;background:#c0392b}
+  .timerbar{flex:0 0 auto;display:none;align-items:center;justify-content:center;gap:8px;background:#23231d;color:#fff;font-weight:800;font-size:1.15rem;padding:.35rem}
+  .timerbar.on{display:flex}
+  .timerbar.warn{background:#c0392b;animation:tb-bl 1s steps(2) infinite}
+  @keyframes tb-bl{50%{opacity:.6}}
+  .slate{position:fixed;inset:0;background:#fffdf7;z-index:60;display:none;flex-direction:column}
+  .slate.on{display:flex}
+  .slhead{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1.5px solid var(--edge);background:#fff;flex-wrap:wrap}
+  .slhead .tbb.on{background:#23231d;color:#fff}
+  #slCv{flex:1;touch-action:none;background:#fffdf7}
+  .slate .tbb.finished{background:#2e9e4f;color:#fff;border-color:#2e9e4f}
+  .focus{position:fixed;inset:0;background:rgba(20,18,12,.97);z-index:80;display:none;align-items:center;justify-content:center}
+  .focus.on{display:flex}
+  .speak{position:fixed;inset:0;background:rgba(46,158,79,.95);z-index:70;display:none;align-items:center;justify-content:center;cursor:pointer}
+  .speak.on{display:flex;animation:pop .25s}
+  .spk{color:#fff;font-weight:800;font-size:2rem;text-align:center;line-height:1.3}
 </style>
 </head>
 <body>
@@ -74,8 +100,15 @@
     <span class="brand">📡 ClassroomPDC <span class="dot" id="dot"></span></span>
     <span class="who" id="who"></span>
     <span class="sp"></span>
+    <span class="met" id="metWrap"><button class="mb" data-v="0">🟢</button><button class="mb" data-v="1">🟡</button><button class="mb" data-v="2">🔴</button></span>
     <button class="tbb hand" id="handBtn">✋ Lever la main</button>
     <button class="tbb" id="askTog">❓ Question</button>
+    <button class="tbb" id="helpBtn" title="Aide" style="font-weight:800">?</button>
+    <button class="tbb hidden" id="pinBtn" title="Changer mon mot de passe">🔑</button>
+    <button class="tbb" id="photoBtn">📷</button>
+    <button class="tbb hidden" id="chatTog">💬<span class="badge" id="chatBadge">0</span></button>
+    <button class="tbb hidden" id="planTog">🪑</button>
+    <input type="file" id="photoIn" accept="image/*" capture="environment" style="display:none">
     <button class="tbb" id="docsTog">📎<span class="badge" id="docsBadge">0</span></button>
   </div>
   <div class="askrow" id="askRow">
@@ -83,6 +116,46 @@
     <button class="tbb" id="askBtn">Envoyer</button>
   </div>
   <div class="docsrow" id="docsRow"><div class="muted">Aucun document reçu pour l'instant.</div></div>
+  <div class="docsrow" id="planRow"><div class="muted">Plan non partagé.</div></div>
+  <div class="docsrow" id="chatRow">
+    <div id="chatFeed" style="display:flex;flex-direction:column;gap:4px"><div class="muted">Chat de classe — tes messages sont validés par le professeur avant diffusion.</div></div>
+    <div style="display:flex;gap:6px"><input class="in" id="chatTxt" maxlength="300" placeholder="Ton message…" style="flex:1"><button class="tbb" id="chatSend">➤</button></div>
+  </div>
+  <div class="slate" id="slate">
+    <div class="slhead"><span id="slQ" style="font-weight:800"></span><span class="sp"></span>
+      <button class="tbb" id="slPen">✏️</button><button class="tbb" id="slEraser">🧽</button><button class="tbb" id="slClear">🗑</button><button class="tbb" id="slDone">✅ J'ai fini</button></div>
+    <canvas id="slCv"></canvas>
+  </div>
+  <div class="speak" id="speak"><div class="spk" id="spkTxt">🎤<br>À toi de parler !</div></div>
+  <div class="feustrip" id="feuStrip"></div>
+  <div class="timerbar" id="timerBar"></div>
+  <div class="focus" id="focusOv"><div class="spk">👀<br>Les yeux au tableau !</div></div>
+  <div class="pov" id="helpOv">
+    <div class="pcard">
+      <h2>❓ Comment ça marche</h2>
+      <div class="muted" style="font-size:.85rem;line-height:1.5">
+        <b>🟢🟡🔴</b> dis au prof si tu suis (ça va / bof / perdu)<br>
+        <b>✋</b> lever / baisser la main — <b>❓</b> poser une question<br>
+        <b>📷</b> envoyer la photo de ton travail — <b>💬</b> chat (validé par le prof)<br>
+        <b>🪑</b> voir ta place — <b>📎</b> documents reçus — <b>🔑</b> changer ton mot de passe<br>
+        <b>🖥</b> le grand pan du bas = le tableau du professeur (tu ne peux pas le modifier)<br>
+        Les <b>sondages, quiz et ardoises</b> s'ouvrent tout seuls en plein écran.<br>
+        Connexion coupée ? Ça se <b>reconnecte automatiquement</b> 📶
+      </div>
+      <button class="btn" id="helpClose">J'ai compris</button>
+    </div>
+  </div>
+  <div class="pov" id="pinOv">
+    <div class="pcard">
+      <h2 id="pinTitle">🔑 Choisis ton mot de passe</h2>
+      <div class="muted" id="pinHint">Au moins 4 caractères. Tu le garderas pour toutes les prochaines séances.</div>
+      <input class="in" id="pinNew" type="password" maxlength="20" placeholder="Nouveau mot de passe" autocomplete="new-password">
+      <input class="in" id="pinNew2" type="password" maxlength="20" placeholder="Confirme-le" autocomplete="new-password">
+      <button class="btn" id="pinGo">Valider</button>
+      <button class="btn sec" id="pinCancel">Annuler</button>
+      <div class="err" id="pinErr"></div>
+    </div>
+  </div>
   <div class="banner" id="banner"><span id="bannerTxt"></span><button class="x" id="bannerX">✕</button></div>
 
   <!-- PAN DU BAS : tableau -->
@@ -126,8 +199,12 @@
 (function(){
   "use strict";
   const $=id=>document.getElementById(id);
-  let peer=null,conn=null,myName="",code="",cfg={hands:true,ask:true},hand=false,curPoll=null,answered=false;
-  let boardCss="",boardData=null,docsN=0;
+  let peer=null,conn=null,myName="",code="",cfg={hands:true,ask:true,plan:false,notif:true,meteo:true,photo:true,chat:false},hand=false,curPoll=null,answered=false;
+  let boardCss="",boardData=null,docsN=0,planData=null,curQuiz=null,meteoV=-1,timerEnd=0,timerIv=0,ended=false,retryIv=0,myPin="",chatN=0;
+  let SL={on:false,id:0,tool:"pen",drawing:false,dirty:false,done:false,iv:0,last:"",bg:null};
+  let RC={id:0,n:0,secs:0,qi:-1,answered:false,iv:0};
+  let PT={id:0,n:0,secs:0,qi:-1,ans:-1,iv:0};
+  const PT_SH=["▲","◆","●","■"], PT_CL=["#e21b3c","#1368ce","#d89e00","#26890c"];
 
   function setDot(on){ $("dot").classList.toggle("on",!!on); $("dot2").classList.toggle("on",!!on); }
   function send(m){ if(conn&&conn.open){ try{ conn.send(JSON.stringify(m)); }catch(_){ } } }
@@ -144,41 +221,139 @@
       peer.on("open",()=>{ conn=peer.connect("pdc-"+code,{reliable:true});
         conn.on("open",()=>{ setDot(true); $("errCode").textContent=""; });
         conn.on("data",raw=>{ let m=null; try{ m=JSON.parse(raw); }catch(_){ return; } handle(m); });
-        conn.on("close",()=>{ setDot(false); banner("Session terminée par le professeur."); $("handBtn").disabled=true; $("askBtn").disabled=true; });
-        setTimeout(()=>{ if(!conn.open){ $("errCode").textContent="Aucune session avec ce code (vérifie le code, ou réseau bloqué)."; } },6000);
+        conn.on("close",()=>{ setDot(false); if(!ended)startRetry(); else { banner("Session terminée par le professeur.",true); } });
+        setTimeout(()=>{ if(!conn.open){ $("errCode").textContent="Aucune session avec ce code. Vérifie le code — ou le wifi bloque peut-être la connexion : essaie en 4G / partage de connexion."; } },6000);
       });
       peer.on("error",e=>{ $("errCode").textContent="Erreur : "+((e&&e.type)||"réseau"); });
     });
   }
 
-  function pickName(list){
+  const nrm=s=>String(s||"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  let lastRoster=null;
+  function pickName(list,taken){
+    lastRoster={list:list||[],taken:taken||[]};
     $("stepCode").classList.add("hidden"); $("stepName").classList.remove("hidden");
+    const tk=new Set((taken||[]).map(nrm));
     const box=$("names"); box.innerHTML="";
-    if(list&&list.length){ list.slice().sort((a,b)=>a.localeCompare(b)).forEach(n=>{ const b=document.createElement("button"); b.className="nm"; b.textContent=n; b.addEventListener("click",()=>hello(n)); box.appendChild(b); });
+    if(list&&list.length){ list.slice().sort((a,b)=>a.localeCompare(b)).forEach(n=>{ const b=document.createElement("button"); b.className="nm"; b.textContent=n; if(tk.has(nrm(n))){ b.disabled=true; b.style.opacity=".35"; b.textContent=n+" — déjà connecté"; } else b.addEventListener("click",()=>hello(n)); box.appendChild(b); });
       const alt=document.createElement("button"); alt.className="nm"; alt.style.opacity=".7"; alt.textContent="Je ne suis pas dans la liste…"; alt.addEventListener("click",()=>{ $("freeName").classList.remove("hidden"); $("goFree").classList.remove("hidden"); }); box.appendChild(alt);
     } else { $("freeName").classList.remove("hidden"); $("goFree").classList.remove("hidden"); }
   }
   $("goFree").addEventListener("click",()=>{ const n=$("freeName").value.trim(); if(n)hello(n); });
 
-  function hello(name){ myName=name; send({t:"hello",name:name});
+  function hello(name){
+    if(cfg.pin){ askPin(name); return; }
+    doHello(name,""); }
+  function askPin(name){
+    $("stepCode").classList.add("hidden"); $("stepName").classList.remove("hidden");
+    const box=$("names"); box.innerHTML="";
+    const tt=document.createElement("div"); tt.className="muted"; tt.style.fontWeight="700"; tt.textContent=name+" — ton code personnel";
+    const hint=document.createElement("div"); hint.className="muted"; hint.textContent="Ton professeur t'a donné la méthode en classe.";
+    const inp=document.createElement("input"); inp.className="in code"; inp.maxLength=12; inp.placeholder="••••"; inp.type="password"; inp.autocomplete="off"; inp.style.letterSpacing=".15rem";
+    try{ inp.value=localStorage.getItem("pdc_pin_"+nrm(name))||""; }catch(_){ }
+    const ok=document.createElement("button"); ok.className="btn"; ok.textContent="Valider";
+    function go(){ const v=inp.value.trim(); if(v.length<3)return; try{ localStorage.setItem("pdc_pin_"+nrm(name),v); }catch(_){ } doHello(name,v); }
+    ok.addEventListener("click",go); inp.addEventListener("keydown",e=>{ if(e.key==="Enter")go(); });
+    const back=document.createElement("button"); back.className="btn sec"; back.textContent="← Changer de prénom";
+    back.addEventListener("click",()=>{ if(lastRoster)pickName(lastRoster.list,lastRoster.taken); });
+    box.append(tt,hint,inp,ok,back); setTimeout(()=>inp.focus(),80); }
+  function doHello(name,pin){ myName=name; myPin=pin; send({t:"hello",name:name,pin:pin});
     $("who").textContent=name+" · "+code;
     $("gate").classList.add("hidden"); $("topbar").classList.remove("hidden"); $("pane").classList.remove("hidden");
     applyCfg(); paintBoard();
     try{ localStorage.setItem("pdc_eleve",JSON.stringify({code:code,name:name})); }catch(_){ } }
 
-  function applyCfg(){ $("handBtn").classList.toggle("hidden",!cfg.hands); $("askTog").classList.toggle("hidden",!cfg.ask); if(!cfg.ask)$("askRow").classList.remove("on"); }
+  function applyCfg(){ $("handBtn").classList.toggle("hidden",!cfg.hands); $("askTog").classList.toggle("hidden",!cfg.ask); if(!cfg.ask)$("askRow").classList.remove("on"); $("planTog").classList.toggle("hidden",!(cfg.plan&&planData)); if(!cfg.plan)$("planRow").classList.remove("on"); $("metWrap").classList.toggle("hidden",cfg.meteo===false); $("photoBtn").classList.toggle("hidden",cfg.photo===false); $("pinBtn").classList.toggle("hidden",cfg.pin!==true); $("chatTog").classList.toggle("hidden",cfg.chat!==true); if(cfg.chat!==true)$("chatRow").classList.remove("on"); }
+  [...document.querySelectorAll(".mb")].forEach(b=>b.addEventListener("click",()=>{ const v=+b.dataset.v; meteoV=v; send({t:"meteo",v:v}); [...document.querySelectorAll(".mb")].forEach(x=>x.classList.toggle("on",+x.dataset.v===v)); }));
+  function meteoReset(){ meteoV=-1; [...document.querySelectorAll(".mb")].forEach(x=>x.classList.remove("on")); }
+  function timerPaint(){ const tb=$("timerBar"); if(!timerEnd){ tb.classList.remove("on","warn"); if(timerIv){ clearInterval(timerIv); timerIv=0; } return; }
+    const left=Math.max(0,Math.round((timerEnd-Date.now())/1000)); const m2=Math.floor(left/60),s2=left%60;
+    tb.textContent="⏱ "+m2+":"+(s2<10?"0":"")+s2; tb.classList.add("on"); tb.classList.toggle("warn",left<=60&&left>0);
+    if(left<=0){ tb.textContent="⏱ Temps écoulé !"; } }
 
   function paintHand(){ $("handBtn").classList.toggle("on",hand); $("handBtn").textContent=hand?"✋ Main levée":"✋ Lever la main"; }
   $("handBtn").addEventListener("click",()=>{ hand=!hand; send({t:"hand",on:hand}); paintHand(); });
 
   $("askTog").addEventListener("click",()=>{ $("askRow").classList.toggle("on"); $("docsRow").classList.remove("on"); if($("askRow").classList.contains("on"))$("askTxt").focus(); });
   $("askBtn").addEventListener("click",()=>{ const q=$("askTxt").value.trim(); if(!q)return; send({t:"ask",q:q}); $("askTxt").value=""; $("askRow").classList.remove("on"); chip("✓ Question envoyée"); });
-  $("docsTog").addEventListener("click",()=>{ $("docsRow").classList.toggle("on"); $("askRow").classList.remove("on"); $("docsBadge").classList.remove("on"); $("docsBadge").textContent="0"; docsN=0; });
+  $("docsTog").addEventListener("click",()=>{ $("docsRow").classList.toggle("on"); $("askRow").classList.remove("on"); $("planRow").classList.remove("on"); $("docsBadge").classList.remove("on"); $("docsBadge").textContent="0"; docsN=0; });
+  $("planTog").addEventListener("click",()=>{ $("planRow").classList.toggle("on"); $("docsRow").classList.remove("on"); $("askRow").classList.remove("on"); });
+  function paintPlan(){ const row=$("planRow"); if(!planData||!planData.grid){ row.innerHTML='<div class="muted">Plan non partagé.</div>'; applyCfg(); return; }
+    row.innerHTML=""; const g=planData.grid; const grid=document.createElement("div"); grid.className="planGrid"; grid.style.gridTemplateColumns="repeat("+(g[0]?g[0].length:1)+",minmax(34px,1fr))";
+    g.forEach(r2=>r2.forEach(c2=>{ const d=document.createElement("div"); d.className="pcell"+(c2?(c2.me?" me occ":" occ"):""); d.textContent=c2?(c2.me?"⭐ Moi":(c2.n||"")):""; grid.appendChild(d); }));
+    row.appendChild(grid); const hint=document.createElement("div"); hint.className="muted"; hint.style.textAlign="center"; hint.textContent="Le tableau (en haut de la grille) — ta place est en doré."; row.appendChild(hint); applyCfg(); }
+  $("speak").addEventListener("click",()=>$("speak").classList.remove("on"));
 
-  function chip(t){ const c=$("chip"); c.textContent=t; c.classList.add("on"); setTimeout(()=>c.classList.remove("on"),1800); }
-  function banner(t){ $("bannerTxt").textContent=t; $("banner").classList.add("on"); }
+  function chip(t,force){ if(cfg.notif===false&&!force)return; const c=$("chip"); c.textContent=t; c.classList.add("on"); setTimeout(()=>c.classList.remove("on"),1800); }
+  function banner(t,force){ if(cfg.notif===false&&!force)return; $("bannerTxt").textContent=t; $("banner").classList.add("on"); }
   $("bannerX").addEventListener("click",()=>$("banner").classList.remove("on"));
 
+  // ---- mot de passe ----
+  let pinPending="",pinForced=false;
+  function pinModal(force){ pinForced=!!force; $("pinOv").classList.add("on"); $("pinErr").textContent="";
+    $("pinNew").value=""; $("pinNew2").value="";
+    $("pinTitle").textContent=force?"🔑 Choisis ton mot de passe personnel":"🔑 Changer mon mot de passe";
+    $("pinHint").textContent=force?"Première connexion : remplace le code initial par TON mot de passe (au moins 4 caractères).":"Au moins 4 caractères.";
+    $("pinCancel").style.display=force?"none":"block";
+    setTimeout(()=>$("pinNew").focus(),80); }
+  $("pinCancel").addEventListener("click",()=>{ if(!pinForced)$("pinOv").classList.remove("on"); });
+  $("pinGo").addEventListener("click",()=>{ const a=$("pinNew").value.trim(),b=$("pinNew2").value.trim();
+    if(a.length<4){ $("pinErr").textContent="Au moins 4 caractères."; return; }
+    if(a!==b){ $("pinErr").textContent="Les deux saisies ne correspondent pas."; return; }
+    pinPending=a; $("pinErr").textContent="…"; send({t:"newpin",pin:a});
+    setTimeout(()=>{ if($("pinErr").textContent==="…")$("pinErr").textContent="Pas de réponse — vérifie ta connexion et réessaie."; },5000); });
+  $("pinBtn").addEventListener("click",()=>pinModal(false));
+  $("helpBtn").addEventListener("click",()=>$("helpOv").classList.add("on"));
+  $("helpClose").addEventListener("click",()=>$("helpOv").classList.remove("on"));
+  // ---- photo ----
+  function shrink(file,maxW,q,cb){
+    function draw(src,w,h2){ const sc=Math.min(1,maxW/w); const c=document.createElement("canvas"); c.width=Math.round(w*sc); c.height=Math.round(h2*sc);
+      c.getContext("2d").drawImage(src,0,0,c.width,c.height); cb(c.toDataURL("image/jpeg",q)); }
+    if(window.createImageBitmap){ createImageBitmap(file,{imageOrientation:"from-image"}).then(b=>draw(b,b.width,b.height)).catch(()=>legacy()); } else legacy();
+    function legacy(){ const img=new Image(); const rd=new FileReader();
+      rd.onload=()=>{ img.onload=()=>draw(img,img.width,img.height); img.src=rd.result; };
+      rd.readAsDataURL(file); } }
+  $("photoBtn").addEventListener("click",()=>$("photoIn").click());
+  $("photoIn").addEventListener("change",()=>{ const f=$("photoIn").files&&$("photoIn").files[0]; if(!f)return;
+    shrink(f,1100,0.72,d=>{ send({t:"photo",img:d}); chip("📷 Photo envoyée au professeur",true); }); $("photoIn").value=""; });
+  // ---- chat ----
+  $("chatTog").addEventListener("click",()=>{ $("chatRow").classList.toggle("on"); $("docsRow").classList.remove("on"); $("askRow").classList.remove("on"); $("planRow").classList.remove("on"); $("chatBadge").classList.remove("on"); $("chatBadge").textContent="0"; chatN=0; });
+  function chatSend(){ const tx=$("chatTxt").value.trim(); if(!tx)return; send({t:"chat",text:tx}); $("chatTxt").value=""; chip("💬 Envoyé au prof pour validation"); }
+  $("chatSend").addEventListener("click",chatSend);
+  $("chatTxt").addEventListener("keydown",e=>{ if(e.key==="Enter")chatSend(); });
+  function chatAdd(name,text){ const feed=$("chatFeed"); if(feed.querySelector(".muted"))feed.innerHTML="";
+    const d=document.createElement("div"); d.style.cssText="font-size:.88rem"; const b=document.createElement("b"); b.textContent=name+" : "; d.appendChild(b); d.appendChild(document.createTextNode(text)); feed.appendChild(d); feed.scrollTop=feed.scrollHeight;
+    if(!$("chatRow").classList.contains("on")){ chatN++; const bg=$("chatBadge"); bg.textContent=String(chatN); bg.classList.add("on"); } }
+  // ---- ardoise ----
+  const slCv=$("slCv"); const slCtx=slCv.getContext("2d");
+  function slResize(){ if(!SL.on)return; const r=slCv.getBoundingClientRect(); const tmp=document.createElement("canvas"); tmp.width=slCv.width; tmp.height=slCv.height; if(slCv.width)tmp.getContext("2d").drawImage(slCv,0,0);
+    slCv.width=Math.round(r.width); slCv.height=Math.round(r.height); slCtx.lineCap="round"; slCtx.lineJoin="round"; if(tmp.width)slCtx.drawImage(tmp,0,0); }
+  window.addEventListener("resize",slResize);
+  function slPos(e){ const r=slCv.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}; }
+  slCv.addEventListener("pointerdown",e=>{ if(!SL.on)return; SL.drawing=true; slCv.setPointerCapture(e.pointerId); const p=slPos(e); slCtx.beginPath(); slCtx.moveTo(p.x,p.y); e.preventDefault(); });
+  slCv.addEventListener("pointermove",e=>{ if(!SL.drawing)return; const p=slPos(e);
+    if(SL.tool==="eraser"){ slCtx.globalCompositeOperation="destination-out"; slCtx.lineWidth=26; } else { slCtx.globalCompositeOperation="source-over"; slCtx.strokeStyle="#1b1b17"; slCtx.lineWidth=3.5; }
+    slCtx.lineTo(p.x,p.y); slCtx.stroke(); SL.dirty=true; e.preventDefault(); });
+  ["pointerup","pointercancel"].forEach(ev=>slCv.addEventListener(ev,()=>{ SL.drawing=false; }));
+  function slTool(t){ SL.tool=t; $("slPen").classList.toggle("on",t==="pen"); $("slEraser").classList.toggle("on",t==="eraser"); }
+  $("slPen").addEventListener("click",()=>slTool("pen"));
+  $("slEraser").addEventListener("click",()=>slTool("eraser"));
+  $("slClear").addEventListener("click",()=>{ slCtx.clearRect(0,0,slCv.width,slCv.height); SL.dirty=true; });
+  $("slDone").addEventListener("click",()=>{ SL.done=!SL.done; $("slDone").classList.toggle("finished",SL.done); $("slDone").textContent=SL.done?"✅ Fini !":"✅ J'ai fini"; SL.dirty=true; slPush(); });
+  function slPush(){ if(!SL.on||!SL.dirty)return; SL.dirty=false;
+    const w2=240,h2=Math.round(240*slCv.height/Math.max(1,slCv.width)); const c=document.createElement("canvas"); c.width=w2; c.height=h2;
+    const cx=c.getContext("2d"); cx.fillStyle="#fffdf7"; cx.fillRect(0,0,w2,h2);
+    if(SL.bg){ const br=SL.bg.width/SL.bg.height, cr=w2/h2; let bw,bh; if(br>cr){ bw=w2; bh=w2/br; } else { bh=h2; bw=h2*br; } cx.drawImage(SL.bg,(w2-bw)/2,(h2-bh)/2,bw,bh); }
+    if(slCv.width)cx.drawImage(slCv,0,0,w2,h2);
+    const d=c.toDataURL("image/jpeg",0.6); if(d===SL.last)return; SL.last=d; send({t:"sl",id:SL.id,img:d,done:SL.done}); }
+  function slStart(m){ SL.on=true; SL.id=m.id; SL.done=false; SL.dirty=true; SL.last=""; SL.bg=null;
+    if(m.bg){ const im=new Image(); im.onload=()=>{ SL.bg=im; slCv.style.backgroundImage="url("+m.bg+")"; slCv.style.backgroundSize="contain"; slCv.style.backgroundRepeat="no-repeat"; slCv.style.backgroundPosition="center"; }; im.src=m.bg; }
+    else slCv.style.backgroundImage="";
+    $("slDone").classList.remove("finished"); $("slDone").textContent="✅ J'ai fini";
+    $("slQ").textContent=m.q||"Écris / dessine ta réponse"; $("slate").classList.add("on"); slTool("pen");
+    setTimeout(()=>{ slResize(); slCtx.clearRect(0,0,slCv.width,slCv.height); },60);
+    if(!SL.iv)SL.iv=setInterval(slPush,1500); }
+  function slStop(){ SL.on=false; $("slate").classList.remove("on"); if(SL.iv){ clearInterval(SL.iv); SL.iv=0; } }
   // ---- tableau : pan du bas, échelle maximale ----
   function srcdocFor(d,sc){ return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><style>"+boardCss+"\nhtml,body{margin:0;background:#fff;overflow:hidden}*{pointer-events:none !important;user-select:none !important}\n.canvas{position:relative;width:"+d.w+"px !important;height:"+d.h+"px !important;box-sizing:border-box;overflow:hidden;transform:scale("+sc+");transform-origin:0 0;zoom:"+sc+"}\n@supports (zoom:2){.canvas{transform:none}}</style></head><body>"+d.html+"</body></html>"; }
   function paintBoard(){ const fr=$("bframe"),ph=$("ph"),pane=$("pane");
@@ -196,12 +371,31 @@
   // ---- sondage : surcouche ----
   function showPoll(p){ curPoll=p; answered=false; $("pov").classList.add("on"); $("pollOk").style.display="none"; $("pollEnd").textContent=""; $("pollQ").textContent=p.q;
     const box=$("pollOpts"); box.innerHTML="";
-    if(p.type==="court"){ const inp=document.createElement("input"); inp.className="in"; inp.placeholder="Ta réponse…"; const ok=document.createElement("button"); ok.className="btn"; ok.textContent="Envoyer"; ok.addEventListener("click",()=>{ const v=inp.value.trim(); if(!v||answered)return; answered=true; send({t:"vote",id:p.id,ans:v}); done(); }); box.append(inp,ok); }
+    if(p.type==="nuage"){ let left=3; const inp=document.createElement("input"); inp.className="in"; inp.placeholder="Un mot…"; const ok=document.createElement("button"); ok.className="btn"; ok.textContent="Envoyer (3 max)"; const cnt=document.createElement("div"); cnt.className="muted"; cnt.textContent="Tu peux envoyer jusqu'à 3 mots.";
+      function go(){ const v=inp.value.trim(); if(!v||!left)return; left--; send({t:"vote",id:p.id,ans:v}); inp.value=""; cnt.textContent=left?("Encore "+left+" mot"+(left>1?"s":"")+" possible"+(left>1?"s":"")+"."):"Merci, c'est noté ✓"; if(!left){ inp.disabled=true; ok.disabled=true; answered=true; setTimeout(()=>{ $("pov").classList.remove("on"); chip("✓ Mots envoyés"); },700); } }
+      ok.addEventListener("click",go); inp.addEventListener("keydown",e=>{ if(e.key==="Enter")go(); });
+      const skip=document.createElement("button"); skip.className="btn sec"; skip.textContent="J'ai fini"; skip.addEventListener("click",()=>{ answered=true; $("pov").classList.remove("on"); });
+      box.append(inp,ok,cnt,skip); }
+    else if(p.type==="court"){ const inp=document.createElement("input"); inp.className="in"; inp.placeholder="Ta réponse…"; const ok=document.createElement("button"); ok.className="btn"; ok.textContent="Envoyer"; ok.addEventListener("click",()=>{ const v=inp.value.trim(); if(!v||answered)return; answered=true; send({t:"vote",id:p.id,ans:v}); done(); }); box.append(inp,ok); }
     else { p.opts.forEach((op,i)=>{ const b=document.createElement("button"); b.className="popt"; b.textContent=op; b.addEventListener("click",()=>{ if(answered)return; answered=true; b.classList.add("sel"); send({t:"vote",id:p.id,ans:i}); done(); }); box.appendChild(b); }); }
     function done(){ $("pollOk").style.display="block"; setTimeout(()=>{ if(curPoll&&!$("pollEnd").textContent){ $("pov").classList.remove("on"); chip("✓ Réponse envoyée — en attente du résultat"); } },900); } }
+  function showQuizQ(){ const z=curQuiz; if(!z)return; $("pov").classList.add("on"); $("pollOk").style.display="none"; $("pollEnd").textContent="";
+    $("pollQ").textContent="⚡ Question "+(z.qi+1)+"/"+z.n+" — "+z.q;
+    const box=$("pollOpts"); box.innerHTML="";
+    const inp=document.createElement("input"); inp.className="in"; inp.placeholder="Ta réponse…"; inp.autocomplete="off";
+    const ok=document.createElement("button"); ok.className="btn"; ok.textContent="Valider";
+    const st=document.createElement("div"); st.className="muted"; st.textContent="Score : "+z.score+" pt"+(z.score>1?"s":"");
+    function go(){ const v=inp.value.trim(); if(!v)return; ok.disabled=true; inp.disabled=true; send({t:"qa",id:z.id,qi:z.qi,ans:v}); }
+    ok.addEventListener("click",go); inp.addEventListener("keydown",e=>{ if(e.key==="Enter")go(); });
+    box.append(inp,ok,st); setTimeout(()=>inp.focus(),80); }
+  function quizResult(m){ const z=curQuiz; if(!z||m.id!==z.id)return; z.score=m.score;
+    const box=$("pollOpts"); const fb=document.createElement("div"); fb.className=m.ok?"ok":"err"; fb.style.fontSize="1.05rem"; fb.textContent=m.ok?"✓ Bonne réponse !":"✗ Raté — réponse : "+m.correct; box.appendChild(fb);
+    setTimeout(()=>{ if(m.done||!m.next){ $("pollQ").textContent="⚡ Quiz terminé !"; box.innerHTML='<div class="ok" style="font-size:1.3rem">Score final : '+m.score+"/"+z.n+"</div>"; setTimeout(()=>{ $("pov").classList.remove("on"); curQuiz=null; },3500); }
+      else { z.qi=m.next.qi; z.q=m.next.q; showQuizQ(); } },1100); }
   function endPoll(m){ if(!curPoll||m.id!==curPoll.id)return;
     $("pov").classList.add("on");
     $("pollEnd").textContent="Sondage terminé."+(m.correctText?(" Bonne réponse : "+m.correctText):"");
+    if(m.top&&m.top.length){ const box=$("pollOpts"); box.innerHTML=""; const cl=document.createElement("div"); cl.style.cssText="display:flex;flex-wrap:wrap;gap:9px;align-items:baseline;justify-content:center"; const mx=m.top[0][1]; m.top.forEach(t2=>{ const sp=document.createElement("span"); sp.textContent=t2[0]; sp.style.cssText="font-weight:800;color:#3a5fbf;font-size:"+(0.9+1.4*(t2[1]/mx)).toFixed(2)+"rem"; cl.appendChild(sp); }); box.appendChild(cl); }
     if(m.correct>=0){ const box=$("pollOpts"); [...box.children].forEach((b,i)=>{ if(i===m.correct)b.classList.add("good"); b.disabled=true; }); }
     setTimeout(()=>{ $("pov").classList.remove("on"); curPoll=null; },5000); }
 
@@ -213,17 +407,116 @@
     if(m.t==="css"){ boardCss=m.css||""; return; }
     if(m.t==="board"){ boardData={w:m.w||1200,h:m.h||700,html:m.html||""}; paintBoard(); return; }
     if(m.t==="boardoff"){ boardData=null; paintBoard(); return; }
-    if(m.t==="roster"){ cfg=m.cfg||cfg; pickName(m.names||[]); return; }
+    if(m.t==="roster"){ cfg=m.cfg||cfg; if(!myName)pickName(m.names||[],m.taken||[]); return; }
+    if(m.t==="denied"){ myName=""; $("gate").classList.remove("hidden"); $("topbar").classList.add("hidden"); $("pane").classList.add("hidden");
+      if(lastRoster)pickName(lastRoster.list,lastRoster.taken);
+      let er=$("nameErr"); if(!er){ er=document.createElement("div"); er.className="err"; er.id="nameErr"; $("stepName").appendChild(er); }
+      er.textContent=m.reason||"Prénom refusé."; return; }
+    if(m.t==="ping"){ send({t:"pong"}); return; }
+    if(m.t==="kicked"){ ended=true; setDot(false); banner("Le professeur t'a déconnecté de la session.",true); $("handBtn").disabled=true; $("askBtn").disabled=true; return; }
     if(m.t==="welcome"){ cfg=m.cfg||cfg; applyCfg(); if(m.consigne)banner("📢 "+m.consigne); if(m.poll)showPoll(m.poll); return; }
     if(m.t==="cfg"){ cfg=m.cfg||cfg; applyCfg(); if(cfg.board===false){ boardData=null; paintBoard(); } return; }
     if(m.t==="handsreset"){ hand=false; paintHand(); return; }
+    if(m.t==="plan"){ planData=m.grid?m:null; paintPlan(); if(planData)chip("🪑 Plan de classe reçu"); return; }
+    if(m.t==="timer"){ timerEnd=(m.at||Date.now())+m.secs*1000; timerPaint(); if(!timerIv)timerIv=setInterval(timerPaint,500); return; }
+    if(m.t==="timeroff"){ timerEnd=0; timerPaint(); return; }
+    if(m.t==="feu"){ $("feuStrip").className="feustrip "+(m.c==="g"?"g":m.c==="o"?"o":"r"); return; }
+    if(m.t==="feuoff"){ $("feuStrip").className="feustrip"; return; }
+    if(m.t==="focus"){ $("focusOv").classList.toggle("on",!!m.on); return; }
+    if(m.t==="picked"){ $("spkTxt").innerHTML="🎉<br>C'est toi !"; $("speak").classList.add("on"); setTimeout(()=>{ $("speak").classList.remove("on"); $("spkTxt").innerHTML="🎤<br>À toi de parler !"; },6000); return; }
+    if(m.t==="group"){ banner("👥 Groupe "+m.num+" : "+m.members.join(", "),true); return; }
+    if(m.t==="meteoraz"){ meteoReset(); return; }
+    if(m.t==="slate"){ slStart(m); return; }
+    if(m.t==="slateoff"){ slStop(); chip("✍️ Ardoise terminée"); return; }
+    if(m.t==="chatmsg"){ chatAdd(m.name,m.text); return; }
+    if(m.t==="setpin"){ pinModal(true); return; }
+    if(m.t==="pinok"){ if(m.ok){ myPin=pinPending; try{ localStorage.setItem("pdc_pin_"+nrm(myName),myPin); }catch(_){ } pinPending=""; pinForced=false; $("pinOv").classList.remove("on"); chip("🔑 Mot de passe enregistré ✓",true); } else { $("pinErr").textContent=m.reason||"Refusé."; } return; }
+    if(m.t==="speak"){ hand=false; paintHand(); $("speak").classList.add("on"); setTimeout(()=>$("speak").classList.remove("on"),6000); return; }
+    if(m.t==="reply"){ banner("💬 Réponse du prof : "+m.text,true); return; }
+    if(m.t==="pstart"){ PT={id:m.id,n:m.n,secs:m.secs,qi:-1,ans:-1,iv:0};
+      $("pov").classList.add("on"); $("pollOk").style.display="none"; $("pollEnd").textContent="";
+      $("pollQ").textContent="🎉 Quiz Party !"; $("pollOpts").innerHTML='<div class="muted" style="text-align:center;font-size:1rem">'+m.n+' questions · '+m.secs+' s<br><b>Regarde le tableau et appuie sur la bonne couleur !</b></div>'; return; }
+    if(m.t==="pq"){ if(m.id!==PT.id)return; PT.qi=m.qi; PT.ans=-1;
+      $("pov").classList.add("on"); $("pollOk").style.display="none"; $("pollEnd").textContent="";
+      $("pollQ").textContent="🎉 "+(m.qi+1)+" / "+PT.n;
+      const box=$("pollOpts"); box.innerHTML="";
+      const bar=document.createElement("div"); bar.style.cssText="height:10px;border-radius:5px;background:#e8b84b;transition:width .2s;width:100%"; box.appendChild(bar);
+      const grid=document.createElement("div"); grid.style.cssText="display:grid;grid-template-columns:1fr 1fr;gap:8px";
+      m.opts.forEach((op,i)=>{ const b=document.createElement("button"); b.className="popt"; b.style.cssText="background:"+PT_CL[i]+";color:#fff;border:none;min-height:70px;font-size:1rem;display:flex;align-items:center;gap:8px";
+        b.innerHTML='<span style="font-size:1.4rem">'+PT_SH[i]+'</span><span style="flex:1;text-align:left">'+op.replace(/&/g,"&amp;").replace(/</g,"&lt;")+'</span>';
+        b.addEventListener("click",()=>{ if(PT.ans>=0)return; PT.ans=i; send({t:"pa",id:PT.id,qi:PT.qi,ans:i});
+          [...grid.children].forEach((x,xi)=>{ x.disabled=true; if(xi!==i)x.style.opacity=".3"; else x.style.outline="4px solid #fff"; });
+          $("pollOk").style.display="block"; });
+        grid.appendChild(b); });
+      box.appendChild(grid);
+      const end2=(m.at||Date.now())+m.secs*1000;
+      if(PT.iv)clearInterval(PT.iv);
+      PT.iv=setInterval(()=>{ const left=end2-Date.now(); bar.style.width=Math.max(0,left/(m.secs*10))+"%"; if(left<=m.secs*250)bar.style.background="#c0392b"; if(left<=0){ clearInterval(PT.iv); PT.iv=0; [...grid.children].forEach(x=>x.disabled=true); } },100);
+      return; }
+    if(m.t==="pr"){ if(m.id!==PT.id)return; if(PT.iv){ clearInterval(PT.iv); PT.iv=0; }
+      const grid=$("pollOpts").querySelector("div[style*=grid]");
+      if(grid)[...grid.children].forEach((x,xi)=>{ x.disabled=true; if(xi===m.correct){ x.style.opacity="1"; x.style.outline="4px solid #fff"; } else x.style.opacity=".25"; });
+      return; }
+    if(m.t==="pyou"){ if(m.id!==PT.id)return;
+      const box=$("pollOpts"); const fb=document.createElement("div");
+      fb.style.cssText="text-align:center;font-weight:800;font-size:1.15rem;padding:.5rem;border-radius:10px;color:#fff;background:"+(m.ok?"#26890c":"#e21b3c");
+      fb.innerHTML=(m.ok?("✓ +"+m.gain+" pts"+(m.streak>1?" · 🔥×"+m.streak:"")):"✗ Raté")+"<br><span style='font-size:.85rem'>Total : "+m.total+" — "+m.rank+"ᵉ</span>";
+      box.appendChild(fb); return; }
+    if(m.t==="pend"){ if(m.id!==PT.id)return; if(PT.iv){ clearInterval(PT.iv); PT.iv=0; }
+      $("pollQ").textContent="🏆 Podium !";
+      const box=$("pollOpts"); box.innerHTML=(m.podium&&m.podium.length)?('<div style="text-align:center;font-size:1.05rem;font-weight:800">'+m.podium.map((e2,i)=>["🥇","🥈","🥉"][i]+" "+e2[0]+" — "+e2[1]).join("<br>")+"</div>"):"";
+      setTimeout(()=>{ $("pov").classList.remove("on"); },6000); PT.id=0; return; }
+    if(m.t==="race"){ RC={id:m.id,n:m.n,secs:m.secs,qi:-1,answered:false,iv:0};
+      $("pov").classList.add("on"); $("pollOk").style.display="none"; $("pollEnd").textContent="";
+      $("pollQ").textContent="🏁 Course de calcul !"; $("pollOpts").innerHTML='<div class="muted" style="text-align:center;font-size:1rem">'+m.n+' questions · '+m.secs+' s chacune<br><b>Réponds vite, les points vont à la vitesse !</b></div>'; return; }
+    if(m.t==="rq"){ if(m.id!==RC.id)return; RC.qi=m.qi; RC.answered=false;
+      $("pov").classList.add("on"); $("pollOk").style.display="none"; $("pollEnd").textContent="";
+      $("pollQ").textContent="🏁 "+(m.qi+1)+"/"+RC.n+" — "+m.q;
+      const box=$("pollOpts"); box.innerHTML="";
+      const bar=document.createElement("div"); bar.style.cssText="height:10px;border-radius:5px;background:#e8b84b;transition:width .2s;width:100%";
+      const inp=document.createElement("input"); inp.className="in"; inp.placeholder="Ta réponse — vite !"; inp.autocomplete="off";
+      const ok=document.createElement("button"); ok.className="btn"; ok.textContent="⚡ Envoyer";
+      function go(){ const v=inp.value.trim(); if(!v||RC.answered)return; RC.answered=true; send({t:"ra",id:RC.id,qi:RC.qi,ans:v}); inp.disabled=true; ok.disabled=true; ok.textContent="✓ Envoyé — attends le résultat"; }
+      ok.addEventListener("click",go); inp.addEventListener("keydown",e=>{ if(e.key==="Enter")go(); });
+      box.append(bar,inp,ok); setTimeout(()=>inp.focus(),60);
+      const end2=(m.at||Date.now())+m.secs*1000;
+      if(RC.iv)clearInterval(RC.iv);
+      RC.iv=setInterval(()=>{ const left=end2-Date.now(); bar.style.width=Math.max(0,left/(m.secs*10))+"%"; if(left<=m.secs*250)bar.style.background="#c0392b"; if(left<=0){ clearInterval(RC.iv); RC.iv=0; inp.disabled=true; ok.disabled=true; if(!RC.answered)ok.textContent="⏱ Temps écoulé"; } },100);
+      return; }
+    if(m.t==="rr"){ if(m.id!==RC.id)return; if(RC.iv){ clearInterval(RC.iv); RC.iv=0; }
+      const box=$("pollOpts"); const fb=document.createElement("div"); fb.className="ok"; fb.style.fontSize="1.05rem"; fb.textContent="Réponse : "+m.correct; box.appendChild(fb);
+      if(m.board&&m.board.length){ const bl=document.createElement("div"); bl.className="muted"; bl.style.fontSize=".85rem"; bl.innerHTML=m.board.map((e2,i)=>(i<3?["🥇","🥈","🥉"][i]:"·")+" "+e2[0]+" — "+e2[1]).join("<br>"); box.appendChild(bl); }
+      return; }
+    if(m.t==="raceend"){ if(m.id!==RC.id)return; if(RC.iv){ clearInterval(RC.iv); RC.iv=0; }
+      $("pollQ").textContent="🏁 Course terminée !";
+      const box=$("pollOpts"); box.innerHTML=(m.podium&&m.podium.length)?('<div style="text-align:center;font-size:1rem;font-weight:800">'+m.podium.map((e2,i)=>["🥇","🥈","🥉"][i]+" "+e2[0]+" — "+e2[1]).join("<br>")+"</div>"):"";
+      setTimeout(()=>{ $("pov").classList.remove("on"); },5000); RC.id=0; return; }
+    if(m.t==="badges"){ if(!m.list||!m.list.length)return;
+      let bo=$("badgeOv"); if(!bo){ bo=document.createElement("div"); bo.className="pov"; bo.id="badgeOv"; bo.innerHTML='<div class="pcard"><h2>🏅 Tes badges</h2><div id="badgeList" style="display:flex;flex-direction:column;gap:6px"></div><button class="btn" id="badgeClose">Trop fort !</button></div>'; document.body.appendChild(bo); bo.querySelector("#badgeClose").addEventListener("click",()=>bo.classList.remove("on")); }
+      const bl2=bo.querySelector("#badgeList"); bl2.innerHTML=""; m.list.forEach(b2=>{ const d=document.createElement("div"); d.style.cssText="font-weight:800;font-size:1rem"; d.textContent=b2[0]+"  "+b2[1]; bl2.appendChild(d); });
+      bo.classList.add("on"); return; }
+    if(m.t==="quiz"){ curQuiz={id:m.id,n:m.n,qi:m.qi,q:m.q,score:m.score||0}; showQuizQ(); return; }
+    if(m.t==="qr"){ quizResult(m); return; }
+    if(m.t==="quizend"){ if(curQuiz){ $("pov").classList.remove("on"); curQuiz=null; chip("⚡ Quiz terminé",true); } return; }
     if(m.t==="poll"){ showPoll(m); return; }
     if(m.t==="pollend"){ endPoll(m); return; }
     if(m.t==="doc"){ addDoc(m); return; }
     if(m.t==="msg"){ banner("📢 "+m.text); return; }
-    if(m.t==="end"){ setDot(false); banner("Session terminée. À bientôt !"); $("handBtn").disabled=true; $("askBtn").disabled=true; }
+    if(m.t==="end"){ ended=true; setDot(false); banner("Session terminée. À bientôt !",true); $("handBtn").disabled=true; $("askBtn").disabled=true; $("focusOv").classList.remove("on"); timerEnd=0; timerPaint(); slStop(); }
   }
 
+  function startRetry(){ if(ended||retryIv)return; banner("📶 Connexion perdue — reconnexion en cours…",true);
+    retryIv=setInterval(()=>{ if(ended){ clearInterval(retryIv); retryIv=0; return; }
+      try{ if(peer){ peer.destroy(); } }catch(_){ }
+      peer=new Peer({debug:0});
+      peer.on("open",()=>{ conn=peer.connect("pdc-"+code,{reliable:true});
+        conn.on("open",()=>{ clearInterval(retryIv); retryIv=0; setDot(true); $("banner").classList.remove("on"); chip("✓ Reconnecté",true);
+          if(myName){ send({t:"hello",name:myName,pin:myPin}); if(hand)setTimeout(()=>send({t:"hand",on:true}),300); if(meteoV>=0)setTimeout(()=>send({t:"meteo",v:meteoV}),400); } });
+        conn.on("data",raw=>{ let m=null; try{ m=JSON.parse(raw); }catch(_){ return; } handle(m); });
+        conn.on("close",()=>{ setDot(false); if(!ended)startRetry(); });
+      });
+      peer.on("error",()=>{});
+    },4000); }
   const u=new URLSearchParams(location.search); if(u.get("c"))$("code").value=u.get("c").toUpperCase();
   try{ const last=JSON.parse(localStorage.getItem("pdc_eleve")||"null"); if(last&&!$("code").value)$("code").value=last.code||""; }catch(_){ }
   $("goCode").addEventListener("click",connect);
