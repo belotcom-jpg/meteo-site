@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ClassroomPDC Élève — V3.5 (2 pans : menu haut + tableau maximal) -->
+<!-- ClassroomPDC Élève — V3.9 (2 pans : menu haut + tableau maximal) -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -18,6 +18,22 @@
   .dot.on{background:#2e9e4f}
   .who{font-size:.74rem;color:#8a8a7c;font-weight:700;white-space:nowrap}
   .sp{flex:1}
+  .morewrap{display:flex;gap:6px;align-items:center}
+  .morewrap.hidden{display:none}
+  .rc{position:fixed;inset:0;background:#23231d;z-index:90;display:flex;flex-direction:column;gap:12px;padding:16px;color:#fff}
+  .rc.hidden{display:none}
+  .rc-h{font-weight:800;font-size:1.15rem;display:flex;align-items:center;gap:8px}
+  .rc-st{margin-left:auto;font-size:.8rem;font-weight:700;color:#9be89b}
+  .rc-grid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:stretch}
+  .rc-grid button{border:none;border-radius:16px;background:#3a3a32;color:#fff;font-family:inherit;font-weight:800;font-size:1rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+  .rc-grid button:active{background:#e8b84b;color:#23231d}
+  .rc-grid button:disabled{opacity:.5}
+  .rc-grid button b{font-size:2.2rem;font-weight:400}
+  .rc-fb{min-height:2.6em;background:#3a3a32;border-radius:12px;padding:.6rem .8rem;font-weight:800;font-size:1rem;text-align:center}
+  .rowfs{display:flex;gap:8px;justify-content:center;margin:.4rem 0}
+  .rowfs button{border:1.5px solid var(--edge);background:#fff;border-radius:9px;font-family:inherit;font-weight:800;font-size:1rem;padding:.4rem .9rem;cursor:pointer}
+  .slc{width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px rgba(27,27,23,.3);cursor:pointer;padding:0;flex:0 0 auto}
+  .slc.on{box-shadow:0 0 0 3px #e8b84b}
   .tbb{border:1.5px solid var(--edge);background:#fff;border-radius:10px;font-family:inherit;font-weight:800;font-size:.86rem;padding:.5rem .8rem;cursor:pointer;color:var(--ink);position:relative}
   .tbb:disabled{opacity:.4}
   .tbb.hand{background:#e8b84b;border-color:#c99a2e}
@@ -99,17 +115,35 @@
   <div class="tb hidden" id="topbar">
     <span class="brand">📡 ClassroomPDC <span class="dot" id="dot"></span></span>
     <span class="who" id="who"></span>
+    <span id="micInd" class="hidden" style="font-size:.9rem;font-weight:800;color:#c0392b;animation:pop .3s">🔊</span>
     <span class="sp"></span>
     <span class="met" id="metWrap"><button class="mb" data-v="0">🟢</button><button class="mb" data-v="1">🟡</button><button class="mb" data-v="2">🔴</button></span>
     <button class="tbb hand" id="handBtn">✋ Lever la main</button>
     <button class="tbb" id="askTog">❓ Question</button>
-    <button class="tbb" id="helpBtn" title="Aide" style="font-weight:800">?</button>
-    <button class="tbb hidden" id="pinBtn" title="Changer mon mot de passe">🔑</button>
     <button class="tbb" id="photoBtn">📷</button>
     <button class="tbb hidden" id="chatTog">💬<span class="badge" id="chatBadge">0</span></button>
-    <button class="tbb hidden" id="planTog">🪑</button>
     <input type="file" id="photoIn" accept="image/*" capture="environment" style="display:none">
-    <button class="tbb" id="docsTog">📎<span class="badge" id="docsBadge">0</span></button>
+    <button class="tbb" id="moreTog" title="Plus d'options">⋯</button>
+    <span class="morewrap hidden" id="moreWrap">
+      <button class="tbb hidden" id="planTog">🪑</button>
+      <button class="tbb" id="docsTog">📎<span class="badge" id="docsBadge">0</span></button>
+      <button class="tbb hidden" id="pinBtn" title="Changer mon mot de passe">🔑</button>
+      <button class="tbb" id="helpBtn" title="Aide" style="font-weight:800">?</button>
+    </span>
+  </div>
+  <div class="rc hidden" id="rcPane">
+    <div class="rc-h">📱 Télécommande prof <span class="rc-st" id="rcSt">connexion…</span></div>
+    <div class="rc-grid">
+      <button data-cmd="draw"><b>🎡</b>Tirer un élève</button>
+      <button data-cmd="timer"><b>⏱</b>5 min / ■</button>
+      <button data-cmd="focus"><b>👀</b>Attention</button>
+      <button data-cmd="hands"><b>✋</b>RAZ mains</button>
+      <button data-cmd="meteo"><b>🚦</b>RAZ météo</button>
+      <button data-cmd="slate"><b>✍️</b>Ardoise</button>
+      <button data-cmd="quiz"><b>⚡</b>Quiz 10 q</button>
+      <button data-cmd="party"><b>🎉</b>Quiz Party</button>
+    </div>
+    <div class="rc-fb" id="rcFb">En attente de la session…</div>
   </div>
   <div class="askrow" id="askRow">
     <textarea id="askTxt" rows="1" placeholder="Pose ta question au professeur…"></textarea>
@@ -123,7 +157,7 @@
   </div>
   <div class="slate" id="slate">
     <div class="slhead"><span id="slQ" style="font-weight:800"></span><span class="sp"></span>
-      <button class="tbb" id="slPen">✏️</button><button class="tbb" id="slEraser">🧽</button><button class="tbb" id="slClear">🗑</button><button class="tbb" id="slDone">✅ J'ai fini</button></div>
+      <button class="tbb" id="slPen">✏️</button><button class="slc on" id="slC0" data-c="#1b1b17" style="background:#1b1b17"></button><button class="slc" id="slC1" data-c="#c0392b" style="background:#c0392b"></button><button class="slc" id="slC2" data-c="#2563d2" style="background:#2563d2"></button><button class="slc" id="slC3" data-c="#1f8a3b" style="background:#1f8a3b"></button><button class="tbb" id="slText">🔤</button><button class="tbb" id="slEraser">🧽</button><button class="tbb" id="slClear">🗑</button><button class="tbb" id="slDone">✅ J'ai fini</button></div>
     <canvas id="slCv"></canvas>
   </div>
   <div class="speak" id="speak"><div class="spk" id="spkTxt">🎤<br>À toi de parler !</div></div>
@@ -142,6 +176,7 @@
         Les <b>sondages, quiz et ardoises</b> s'ouvrent tout seuls en plein écran.<br>
         Connexion coupée ? Ça se <b>reconnecte automatiquement</b> 📶
       </div>
+      <div class="rowfs"><span class="muted" style="align-self:center;font-weight:800">Taille du texte :</span><button id="fsMinus">A−</button><button id="fsReset">A</button><button id="fsPlus">A+</button></div>
       <button class="btn" id="helpClose">J'ai compris</button>
     </div>
   </div>
@@ -201,7 +236,7 @@
   const $=id=>document.getElementById(id);
   let peer=null,conn=null,myName="",code="",cfg={hands:true,ask:true,plan:false,notif:true,meteo:true,photo:true,chat:false},hand=false,curPoll=null,answered=false;
   let boardCss="",boardData=null,docsN=0,planData=null,curQuiz=null,meteoV=-1,timerEnd=0,timerIv=0,ended=false,retryIv=0,myPin="",chatN=0;
-  let SL={on:false,id:0,tool:"pen",drawing:false,dirty:false,done:false,iv:0,last:"",bg:null};
+  let SL={on:false,id:0,tool:"pen",drawing:false,dirty:false,done:false,iv:0,last:"",bg:null,col:"#1b1b17",txt:""};
   let RC={id:0,n:0,secs:0,qi:-1,answered:false,iv:0};
   let PT={id:0,n:0,secs:0,qi:-1,ans:-1,iv:0};
   const PT_SH=["▲","◆","●","■"], PT_CL=["#e21b3c","#1368ce","#d89e00","#26890c"];
@@ -209,6 +244,21 @@
   function setDot(on){ $("dot").classList.toggle("on",!!on); $("dot2").classList.toggle("on",!!on); }
   function send(m){ if(conn&&conn.open){ try{ conn.send(JSON.stringify(m)); }catch(_){ } } }
 
+  let micAudio=null;
+  function micStop(){ $("micInd").classList.add("hidden"); if(micAudio){ try{ micAudio.srcObject=null; }catch(_){ } } }
+  function hookCalls(p2){ p2.on("call",call=>{
+    if(call.peer!=="pdc-"+code){ try{ call.close(); }catch(_){ } return; }
+    call.answer();
+    call.on("stream",s=>{
+      if(!micAudio){ micAudio=document.createElement("audio"); micAudio.autoplay=true; micAudio.setAttribute("playsinline",""); document.body.appendChild(micAudio); }
+      micAudio.srcObject=s; $("micInd").classList.remove("hidden");
+      const pr=micAudio.play();
+      if(pr&&pr.catch)pr.catch(()=>{ banner("🔊 Touche ce bandeau pour activer le son du micro",true);
+        const f=()=>{ micAudio.play().catch(()=>{}); $("banner").classList.remove("on"); $("banner").removeEventListener("click",f); };
+        $("banner").addEventListener("click",f); });
+    });
+    call.on("close",micStop); call.on("error",micStop);
+  }); }
   function loadPeer(cb){ if(window.Peer){ cb(true); return; }
     const urls=["https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js","https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"];
     (function tryN(i){ if(i>=urls.length){ cb(false); return; } const sc=document.createElement("script"); sc.src=urls[i]; sc.onload=()=>cb(!!window.Peer); sc.onerror=()=>{ sc.remove(); tryN(i+1); }; document.head.appendChild(sc); })(0); }
@@ -217,9 +267,9 @@
     const c=$("code").value.trim().toUpperCase(); if(c.length!==4){ $("errCode").textContent="Code à 4 caractères."; return; }
     code=c; $("errCode").textContent="Connexion…";
     loadPeer(ok=>{ if(!ok){ $("errCode").textContent="Réseau bloqué : impossible de charger le module."; return; }
-      peer=new Peer({debug:0});
+      peer=new Peer({debug:0}); hookCalls(peer);
       peer.on("open",()=>{ conn=peer.connect("pdc-"+code,{reliable:true});
-        conn.on("open",()=>{ setDot(true); $("errCode").textContent=""; });
+        conn.on("open",()=>{ setDot(true); $("errCode").textContent=""; if(RC_TOK)rcShow(); });
         conn.on("data",raw=>{ let m=null; try{ m=JSON.parse(raw); }catch(_){ return; } handle(m); });
         conn.on("close",()=>{ setDot(false); if(!ended)startRetry(); else { banner("Session terminée par le professeur.",true); } });
         setTimeout(()=>{ if(!conn.open){ $("errCode").textContent="Aucune session avec ce code. Vérifie le code — ou le wifi bloque peut-être la connexion : essaie en 4G / partage de connexion."; } },6000);
@@ -330,14 +380,18 @@
     slCv.width=Math.round(r.width); slCv.height=Math.round(r.height); slCtx.lineCap="round"; slCtx.lineJoin="round"; if(tmp.width)slCtx.drawImage(tmp,0,0); }
   window.addEventListener("resize",slResize);
   function slPos(e){ const r=slCv.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}; }
-  slCv.addEventListener("pointerdown",e=>{ if(!SL.on)return; SL.drawing=true; slCv.setPointerCapture(e.pointerId); const p=slPos(e); slCtx.beginPath(); slCtx.moveTo(p.x,p.y); e.preventDefault(); });
+  slCv.addEventListener("pointerdown",e=>{ if(!SL.on)return;
+    if(SL.tool==="text"&&SL.txt){ const p=slPos(e); slCtx.globalCompositeOperation="source-over"; slCtx.fillStyle=SL.col; slCtx.font="800 24px system-ui,sans-serif"; slCtx.textBaseline="middle"; slCtx.fillText(SL.txt,p.x,p.y); SL.dirty=true; SL.txt=""; slTool("pen"); e.preventDefault(); return; }
+    SL.drawing=true; slCv.setPointerCapture(e.pointerId); const p=slPos(e); slCtx.beginPath(); slCtx.moveTo(p.x,p.y); e.preventDefault(); });
   slCv.addEventListener("pointermove",e=>{ if(!SL.drawing)return; const p=slPos(e);
-    if(SL.tool==="eraser"){ slCtx.globalCompositeOperation="destination-out"; slCtx.lineWidth=26; } else { slCtx.globalCompositeOperation="source-over"; slCtx.strokeStyle="#1b1b17"; slCtx.lineWidth=3.5; }
+    if(SL.tool==="eraser"){ slCtx.globalCompositeOperation="destination-out"; slCtx.lineWidth=26; } else { slCtx.globalCompositeOperation="source-over"; slCtx.strokeStyle=SL.col; slCtx.lineWidth=3.5; }
     slCtx.lineTo(p.x,p.y); slCtx.stroke(); SL.dirty=true; e.preventDefault(); });
   ["pointerup","pointercancel"].forEach(ev=>slCv.addEventListener(ev,()=>{ SL.drawing=false; }));
-  function slTool(t){ SL.tool=t; $("slPen").classList.toggle("on",t==="pen"); $("slEraser").classList.toggle("on",t==="eraser"); }
+  function slTool(t){ SL.tool=t; $("slPen").classList.toggle("on",t==="pen"); $("slEraser").classList.toggle("on",t==="eraser"); $("slText").classList.toggle("on",t==="text"); }
   $("slPen").addEventListener("click",()=>slTool("pen"));
   $("slEraser").addEventListener("click",()=>slTool("eraser"));
+  ["slC0","slC1","slC2","slC3"].forEach(id=>{ $(id).addEventListener("click",()=>{ SL.col=$(id).dataset.c; document.querySelectorAll(".slc").forEach(x=>x.classList.toggle("on",x.id===id)); if(SL.tool==="eraser")slTool("pen"); }); });
+  $("slText").addEventListener("click",()=>{ const t=prompt("Texte à poser (touche ensuite l'ardoise à l'endroit voulu) :",""); if(t===null)return; const v=t.trim().slice(0,60); if(!v)return; SL.txt=v; slTool("text"); });
   $("slClear").addEventListener("click",()=>{ slCtx.clearRect(0,0,slCv.width,slCv.height); SL.dirty=true; });
   $("slDone").addEventListener("click",()=>{ SL.done=!SL.done; $("slDone").classList.toggle("finished",SL.done); $("slDone").textContent=SL.done?"✅ Fini !":"✅ J'ai fini"; SL.dirty=true; slPush(); });
   function slPush(){ if(!SL.on||!SL.dirty)return; SL.dirty=false;
@@ -407,6 +461,7 @@
     if(m.t==="css"){ boardCss=m.css||""; return; }
     if(m.t==="board"){ boardData={w:m.w||1200,h:m.h||700,html:m.html||""}; paintBoard(); return; }
     if(m.t==="boardoff"){ boardData=null; paintBoard(); return; }
+    if(RC_TOK){ if(m.t==="rcok"){ $("rcFb").textContent=(m.msg||"✓")+(m.conns!=null?("  ·  ✋"+m.hands+"  ·  👥 "+m.conns):""); } return; }
     if(m.t==="roster"){ cfg=m.cfg||cfg; if(!myName)pickName(m.names||[],m.taken||[]); return; }
     if(m.t==="denied"){ myName=""; $("gate").classList.remove("hidden"); $("topbar").classList.add("hidden"); $("pane").classList.add("hidden");
       if(lastRoster)pickName(lastRoster.list,lastRoster.taken);
@@ -426,6 +481,7 @@
     if(m.t==="picked"){ $("spkTxt").innerHTML="🎉<br>C'est toi !"; $("speak").classList.add("on"); setTimeout(()=>{ $("speak").classList.remove("on"); $("spkTxt").innerHTML="🎤<br>À toi de parler !"; },6000); return; }
     if(m.t==="group"){ banner("👥 Groupe "+m.num+" : "+m.members.join(", "),true); return; }
     if(m.t==="meteoraz"){ meteoReset(); return; }
+    if(m.t==="mic"){ if(m.on)banner("🎙 Le professeur a activé son micro",true); else micStop(); return; }
     if(m.t==="slate"){ slStart(m); return; }
     if(m.t==="slateoff"){ slStop(); chip("✍️ Ardoise terminée"); return; }
     if(m.t==="chatmsg"){ chatAdd(m.name,m.text); return; }
@@ -502,15 +558,15 @@
     if(m.t==="pollend"){ endPoll(m); return; }
     if(m.t==="doc"){ addDoc(m); return; }
     if(m.t==="msg"){ banner("📢 "+m.text); return; }
-    if(m.t==="end"){ ended=true; setDot(false); banner("Session terminée. À bientôt !",true); $("handBtn").disabled=true; $("askBtn").disabled=true; $("focusOv").classList.remove("on"); timerEnd=0; timerPaint(); slStop(); }
+    if(m.t==="end"){ ended=true; setDot(false); banner("Session terminée. À bientôt !",true); $("handBtn").disabled=true; $("askBtn").disabled=true; $("focusOv").classList.remove("on"); timerEnd=0; timerPaint(); slStop(); micStop(); }
   }
 
   function startRetry(){ if(ended||retryIv)return; banner("📶 Connexion perdue — reconnexion en cours…",true);
     retryIv=setInterval(()=>{ if(ended){ clearInterval(retryIv); retryIv=0; return; }
       try{ if(peer){ peer.destroy(); } }catch(_){ }
-      peer=new Peer({debug:0});
+      peer=new Peer({debug:0}); hookCalls(peer);
       peer.on("open",()=>{ conn=peer.connect("pdc-"+code,{reliable:true});
-        conn.on("open",()=>{ clearInterval(retryIv); retryIv=0; setDot(true); $("banner").classList.remove("on"); chip("✓ Reconnecté",true);
+        conn.on("open",()=>{ clearInterval(retryIv); retryIv=0; setDot(true); if(RC_TOK)rcShow(); $("banner").classList.remove("on"); chip("✓ Reconnecté",true);
           if(myName){ send({t:"hello",name:myName,pin:myPin}); if(hand)setTimeout(()=>send({t:"hand",on:true}),300); if(meteoV>=0)setTimeout(()=>send({t:"meteo",v:meteoV}),400); } });
         conn.on("data",raw=>{ let m=null; try{ m=JSON.parse(raw); }catch(_){ return; } handle(m); });
         conn.on("close",()=>{ setDot(false); if(!ended)startRetry(); });
@@ -518,6 +574,19 @@
       peer.on("error",()=>{});
     },4000); }
   const u=new URLSearchParams(location.search); if(u.get("c"))$("code").value=u.get("c").toUpperCase();
+  const RC_TOK=(u.get("tc")||"").trim();
+  function rcShow(){ $("gate").classList.add("hidden"); $("topbar").classList.add("hidden"); $("rcPane").classList.remove("hidden"); $("rcSt").textContent="connecté ✓"; $("rcFb").textContent="Prêt — appuie sur une commande."; }
+  document.querySelectorAll("#rcPane [data-cmd]").forEach(b=>{
+    b.addEventListener("click",()=>{ if(!conn||!conn.open){ $("rcFb").textContent="⏳ pas encore connecté…"; return; }
+      send({t:"rc",tok:RC_TOK,cmd:b.dataset.cmd}); b.disabled=true; setTimeout(()=>{ b.disabled=false; },500); }); });
+  let fsMult=1; try{ fsMult=parseFloat(localStorage.getItem("pdc_fs"))||1; }catch(_){ }
+  function fsApply(){ fsMult=Math.max(0.85,Math.min(1.4,fsMult)); document.documentElement.style.fontSize=(fsMult*100)+"%"; try{ localStorage.setItem("pdc_fs",String(fsMult)); }catch(_){ } }
+  fsApply();
+  $("fsMinus").addEventListener("click",()=>{ fsMult-=0.1; fsApply(); });
+  $("fsPlus").addEventListener("click",()=>{ fsMult+=0.1; fsApply(); });
+  $("fsReset").addEventListener("click",()=>{ fsMult=1; fsApply(); });
+  $("moreTog").addEventListener("click",()=>{ $("moreWrap").classList.toggle("hidden"); });
+  if(RC_TOK&&u.get("c"))setTimeout(connect,60);
   try{ const last=JSON.parse(localStorage.getItem("pdc_eleve")||"null"); if(last&&!$("code").value)$("code").value=last.code||""; }catch(_){ }
   $("goCode").addEventListener("click",connect);
   $("code").addEventListener("keydown",e=>{ if(e.key==="Enter")connect(); });
