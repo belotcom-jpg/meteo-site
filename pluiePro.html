@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>PluiePro v2.38.0</title>
+<title>PluiePro v2.39</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -84,7 +84,7 @@ body{background:#000;color:#fff;font-family:'Courier New',monospace;padding:3px;
 #qdTitle{font-family:'Courier New',monospace;font-size:11px;font-weight:700;color:#88aaff}
 .qd-x{background:#16222e;border:1px solid #33455a;border-radius:7px;color:#a5c8e8;font-family:'Courier New',monospace;font-size:11px;font-weight:900;padding:3px 9px;cursor:pointer}
 #qdStatus{text-align:center;color:#aaa;font-size:12px;font-family:'Courier New',monospace;padding:16px 0;flex:none}
-#qdScroll{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}
+#qdScroll{flex:1;min-height:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
 .qd2-table{border-collapse:collapse;font-family:'Courier New',monospace;height:100%}
 .qd2-fit{width:100%;table-layout:fixed}
 .qd2-fit td{min-width:0!important;padding:0!important;font-size:13px;overflow:hidden;text-overflow:clip}
@@ -95,12 +95,13 @@ body{background:#000;color:#fff;font-family:'Courier New',monospace;padding:3px;
 .qd2-fit .qd-h2 b{font-size:13px}
 .qd2-fit .qd-h2 small{font-size:10px}
 .qd2-fit .qd-pr,.qd2-fit .qd-s,.qd2-fit .qd-hu{font-size:11px}
-.qd-tc{display:inline-block;min-width:24px;padding:1px 2px;border-radius:6px;font-weight:900;line-height:1.25}
+.qd-tc{display:inline-block;min-width:22px;padding:0 2px;border-radius:6px;font-weight:900;line-height:1.2}
 .qd-tmin{box-shadow:0 0 0 2px #7fd0ff,0 0 9px rgba(127,208,255,0.85)}
 .qd-tmax{box-shadow:0 0 0 2px #ffd0b0,0 0 9px rgba(255,150,90,0.9)}
-.qd2-table .qd-lbl{position:sticky;left:0;background:#101820;color:#9fc0dd;font-size:10px;font-weight:900;padding:3px 6px;text-align:left;border-bottom:1px solid #1c2733;z-index:2;white-space:nowrap}
+.qd2-table .qd-lbl{position:sticky;left:0;background:#101820;color:#9fc0dd;font-size:10px;font-weight:900;padding:2px 6px;text-align:left;border-bottom:1px solid #1c2733;z-index:2;white-space:nowrap}
 .qd2-table .qd-lblh{color:#7a8fa5}
-.qd2-table td{padding:2px 3px;text-align:center;font-size:14px;color:#cfcfcf;border-bottom:1px solid #131313;border-left:1px solid #101010;white-space:nowrap;min-width:32px}
+.qd2-table td{padding:1px 3px;text-align:center;font-size:14px;color:#cfcfcf;border-bottom:1px solid #131313;border-left:1px solid #101010;white-space:nowrap;min-width:32px}
+.qd-hx{font-size:12px}
 .qd-hr{border-left:2px solid #3d5166!important}
 .qd-oB{background:rgba(255,255,255,0.05)}
 .qd-mid{border-left:2px solid #5b7bb0!important}
@@ -283,6 +284,11 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   .graph-leg b{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
   #optPanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:10003;overflow-y:auto;padding:16px}
   #optPanel.open{display:flex;align-items:flex-start;justify-content:center}
+    .opt-views{display:flex;gap:8px;margin:2px 0 10px}
+  .opt-vbtn{flex:1;background:#141c26;border:1px solid #33455a;border-radius:9px;font-family:'Courier New',monospace;font-size:13px;font-weight:900;padding:9px 6px;cursor:pointer}
+  .opt-vbtn small{color:#8899aa;font-weight:700}
+  .opt-vbtn:hover{background:#1b2736}
+  .opt-ttl2{font-family:'Courier New',monospace;font-size:12px;font-weight:900;color:#e0b84c;letter-spacing:1px;margin:2px 0 6px}
   #optCard{background:#0d0d0d;border:1px solid #2a2a2a;border-radius:12px;padding:16px;max-width:460px;width:100%;margin:auto;font-family:'Courier New',monospace}
   /* OPTIONS ouvert depuis le GRAPH : panneau latéral droit, translucide, le graphe reste visible et actif */
   #optPanel.opt-side{background:none;pointer-events:none;padding:0;justify-content:flex-end;overflow:hidden}
@@ -316,6 +322,10 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   #healthBtn{position:relative;background:#161616;border:1px solid #333;border-radius:10px;color:#ccc;font-size:17px;cursor:pointer;padding:0 11px;line-height:1;transition:background .15s}
   #healthBtn:hover{background:#222}
   #healthPip{position:absolute;top:2px;right:2px;width:9px;height:9px;border-radius:50%;background:#3ad07a;box-shadow:0 0 0 2px #161616;pointer-events:none}
+  .hl-quick{display:flex;gap:8px;margin:0 0 12px}
+  .hl-quick button{flex:1;background:#141c26;border:1px solid #33455a;border-radius:9px;color:#a5c8e8;font-family:'Courier New',monospace;font-size:13px;font-weight:900;padding:10px 6px;cursor:pointer}
+  .hl-quick button:hover{background:#1b2736}
+  .hl-sub{font-family:'Courier New',monospace;font-size:12px;font-weight:900;color:#e0b84c;letter-spacing:1px;margin:2px 0 8px}
   #healthPanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:10003;overflow-y:auto;padding:16px}
   #healthPanel.open{display:block}
   #healthCard{max-width:680px;margin:0 auto;background:#111;border:1px solid #2a2a2a;border-radius:14px;padding:18px}
@@ -442,7 +452,7 @@ html.simple #chartWrapper{flex:1 1 0!important;display:flex!important;flex-direc
 html.simple #summaryRow{flex:0 0 auto!important}
 /* Bouton bascule simple/complète (état enfoncé quand la vue simplifiée est active) */
 #simpleBtn{border:1px solid #3a3a3a!important;border-radius:9px!important;padding:0 8px!important;color:#7ff!important;font-size:15px!important;min-height:34px}
-html.simple #simpleBtn{background:#00ffff!important;color:#000!important;box-shadow:inset 0 2px 5px rgba(0,0,0,.5)!important;border-color:#0cc!important}
+html.simple.phone-col #phoneBtn{background:#00ffff!important;color:#000!important;box-shadow:inset 0 2px 5px rgba(0,0,0,.5)!important;border-color:#0cc!important}
   /* ── iPhone en PAYSAGE : uniquement la courbe principale, pleine hauteur ── */
   @media screen and (orientation:landscape) and (max-height:520px){
     body{padding:0!important;overflow:hidden!important}
@@ -483,10 +493,7 @@ html.simple #simpleBtn{background:#00ffff!important;color:#000!important;box-sha
         var gp=document.getElementById('graphPanel'),cw=document.getElementById('chartWrapper');
         if(gp&&cw&&cw.parentNode){cw.parentNode.insertBefore(gp,cw.nextSibling);gp.classList.add('open');}
       }catch(e){}
-      try{
-        var sb=document.getElementById('simpleBtn');
-        if(sb){sb.textContent='🖥';sb.title='Revenir à la version complète (vue simplifiée active)';}
-      }catch(e){}
+
     });
   }catch(e){}
 })();
@@ -516,12 +523,11 @@ document.addEventListener('DOMContentLoaded',function(){try{var vt=document.getE
       </div>
     </div>
     <div id="viewModeWrap">
-      <button id="simpleBtn" onclick="toggleViewModeMenu(event)" title="Choisir la vue">📱▾</button>
+      <button id="simpleBtn" onclick="toggleViewModeMenu(event)" title="Choisir la vue">🖥▾</button>
       <div id="viewModeMenu">
-        <button onclick="setViewMode('ok')">📱 <span>iPhone</span></button>
-        <button onclick="setViewMode('full')">📈 <span>Graph</span></button>
-        <button onclick="setViewMode('no')">🌧 <span>Pluie</span></button>
-        <button onclick="setViewMode('detail')">🕒 <span>Détail</span></button>
+        <button onclick="setViewMode('full')">📈 <span>Météo J+14</span></button>
+        <button onclick="setViewMode('no')">🌧 <span>Pluie dans l'heure</span></button>
+        <button onclick="setViewMode('detail')">🕒 <span>Détail horaire</span></button>
       </div>
     </div>
     <div id="helpWrap">
@@ -532,8 +538,7 @@ document.addEventListener('DOMContentLoaded',function(){try{var vt=document.getE
         <button onclick="openHelpPanel();closeHelpMenu()">🌐 Les modèles météo <span>les 10 sources de prévision</span></button>
       </div>
     </div>
-    <button id="optBtn" onclick="openOpt()" aria-label="Options : zones de canicule" title="Options : zones de canicule">⚙</button>
-    <button id="healthBtn" onclick="openHealth()" aria-label="Santé des données" title="Santé des données">🩺</button>
+    <button id="healthBtn" onclick="openHealth()" aria-label="OPTION" title="OPTION — réglages &amp; santé des données">⚙</button>
     <button id="homeBtn"  onclick="goHome()" title="Retour Juvisy-sur-Orge">🏠</button>
     <button id="searchBtn" onclick="load()">GO</button>
   </div>
@@ -550,10 +555,6 @@ document.addEventListener('DOMContentLoaded',function(){try{var vt=document.getE
         <button id="btnJ5"  onclick="setView('j5');closeViewMenu()">J+5 <span>dans 5 jours</span></button>
         <button id="btnJ8"  onclick="setView('j8');closeViewMenu()">J+8 <span>dans 8 jours</span></button>
         <button id="btnJ14" onclick="setView('j14');closeViewMenu()">J+14 <span>dans 14 jours</span></button>
-        <div class="vm-sep">— tendance longue —</div>
-        <button id="btnExt30" onclick="openExt30();closeViewMenu()" style="color:#88aaff">⤢ J+28 <span>ensemble</span></button>
-        <button id="btnGraph" onclick="openGraph();closeViewMenu()" style="color:#7ec97e">📈 GRAPH <span>J→J+15</span></button>
-        <button id="btnSeason" onclick="openSeason();closeViewMenu()" style="color:#d9a3ff">🗓 SAISON <span>3 mois</span></button>
       </div>
     </div>
     <div id="layersWrap">
@@ -1073,16 +1074,14 @@ let _ext30Loaded=false;
 
 
 function closeExt30(){const p=document.getElementById('ext30Panel');if(p)p.classList.remove('open');}
-async function openExt30(){
-  const p=document.getElementById('ext30Panel');
-  if(p)p.classList.add('open');
-  if(_ext30Loaded)return;
-  const status=document.getElementById('ext30Status');
-  const list=document.getElementById('ext30List');
-  if(typeof _cityLat==='undefined'||_cityLat==null){if(status)status.textContent='Cherchez une ville d\'abord.';return;}
-  if(status){status.style.display='block';status.textContent='⏳ Chargement des modèles d\'ensemble…';}
-  if(list)list.innerHTML='';
-  try{
+let _ext30Loading=null;
+/* Chargement des ensembles (4 modèles, 35 j) — PARTAGÉ entre la vue J+28 et le GRAPH.
+   Idempotent (cache window._ext30Days), dédupliqué, et protégé contre un changement de ville en cours de route. */
+async function _loadExt30Data(){
+  if(window._ext30Days&&window._ext30Days.length)return;
+  if(_ext30Loading)return _ext30Loading;
+  const lat0=_cityLat,lon0=_cityLon;
+  _ext30Loading=(async()=>{
     const début=0;
     /* Plusieurs modèles d'ensemble : nom lisible → identifiant Open-Meteo */
     const ENS=[
@@ -1145,8 +1144,23 @@ async function openExt30(){
       gMax=Math.max(gMax,...allMax);gMin=Math.min(gMin,...allMin);
       dayData.push({day,dt,allMax,allMin,allSum,hottest,hottestModel,scenarios});
     }
+    if(lat0!==_cityLat||lon0!==_cityLon)throw new Error('ville changée');
     window._ext30Days=dayData;
     if(!dayData.length)throw new Error('pas assez de données');
+  })();
+  try{return await _ext30Loading;}finally{_ext30Loading=null;}
+}
+async function openExt30(){
+  const p=document.getElementById('ext30Panel');
+  if(p)p.classList.add('open');
+  if(_ext30Loaded&&window._ext30Days&&window._ext30Days.length){renderExt30Divergence();return;}
+  const status=document.getElementById('ext30Status');
+  const list=document.getElementById('ext30List');
+  if(typeof _cityLat==='undefined'||_cityLat==null){if(status)status.textContent='Cherchez une ville d\'abord.';return;}
+  if(status){status.style.display='block';status.textContent='⏳ Chargement des modèles d\'ensemble…';}
+  if(list)list.innerHTML='';
+  try{
+    await _loadExt30Data();
     if(status)status.style.display='none';
     renderExt30Divergence();
     _ext30Loaded=true;
@@ -1315,7 +1329,7 @@ function _updateHealthPip(){
   pip.style.background=col;
   if(w==='err'){if(!pip._bl){let on=true;pip._bl=setInterval(()=>{on=!on;pip.style.opacity=on?'1':'0.25';},600);}}
   else{if(pip._bl){clearInterval(pip._bl);pip._bl=null;}pip.style.opacity='1';}
-  b.title='Santé des données — '+(w==='err'?'anomalie détectée':w==='warn'?'avertissement(s)':'tout est cohérent');
+  b.title='OPTION — santé des données : '+(w==='err'?'anomalie détectée':w==='warn'?'avertissement(s)':'tout est cohérent');
 }
 
 function _hlIco(l){return l==='err'?'❌':l==='warn'?'⚠️':'✅';}
@@ -1355,6 +1369,32 @@ function rerunHealth(btn){
    J0→J+13 : modèles déterministes (_tempModelsByDay/_rainModelsByDay).
    J+14→J+28 : modèles d'ensemble agrégés (médiane par modèle) depuis window._ext30Days. ── */
 function _dvMed(a){const v=a.filter(x=>x!=null&&isFinite(x));if(!v.length)return null;const s=[...v].sort((x,y)=>x-y);const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+/* Listes fusionnées déterministes longs + ensembles pour un jour ≥ J+14 — PARTAGÉ vue J+28 ↔ GRAPH :
+   même liste de modèles → même médiane → mêmes chiffres partout, par construction. */
+function _mixTempListsForDay(d){
+  const detT=(typeof _tempModelsByDay!=='undefined'&&_tempModelsByDay&&_tempModelsByDay[d])||null;
+  const ext=(typeof window!=='undefined'&&window._ext30Days)||[];
+  const o=(ext&&ext.find)?ext.find(x=>x.day===d):null;
+  const hasDet=!!(detT&&detT.models&&detT.models.length);
+  if(!o&&!hasDet)return null;
+  const maxList=[],minList=[],pMaxLo=[],pMaxHi=[],pMinLo=[],pMinHi=[];
+  if(o){
+    const byM={};o.scenarios.forEach(s=>{const k=s.model;if(!byM[k])byM[k]={tmax:[],tmin:[]};if(s.tmax!=null)byM[k].tmax.push(s.tmax);if(s.tmin!=null)byM[k].tmin.push(s.tmin);});
+    Object.keys(byM).forEach(n=>{const b=byM[n],nm=_dvShortEns(n);
+      if(b.tmax.length){maxList.push({name:nm,val:_dvMed(b.tmax)});pMaxLo.push(_dvPct(b.tmax,10));pMaxHi.push(_dvPct(b.tmax,90));}
+      if(b.tmin.length){minList.push({name:nm,val:_dvMed(b.tmin)});pMinLo.push(_dvPct(b.tmin,10));pMinHi.push(_dvPct(b.tmin,90));}
+    });
+  }
+  if(hasDet)detT.models.forEach(m=>{if(m.max!=null)maxList.push({name:m.name,val:m.max});if(m.min!=null)minList.push({name:m.name,val:m.min});});
+  return {maxList,minList,pMaxLo,pMaxHi,pMinLo,pMinHi,hasDet,hasEns:!!o};
+}
+function _mixTempForDay(d){
+  const L=_mixTempListsForDay(d);if(!L)return null;
+  return {max:L.maxList.length?_dvMed(L.maxList.map(m=>m.val)):null,
+          min:L.minList.length?_dvMed(L.minList.map(m=>m.val)):null,
+          mixed:!!(L.hasDet&&L.hasEns)};
+}
+function _dvPct(a,p){const v=a.filter(x=>x!=null&&isFinite(x));if(!v.length)return null;const s=[...v].sort((x,y)=>x-y);const r=(p/100)*(s.length-1);const lo=Math.floor(r),hi=Math.ceil(r);return lo===hi?s[lo]:s[lo]+(s[hi]-s[lo])*(r-lo);}
 function _dvFmtDate(dt){return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');}
 function _dvShortEns(n){return String(n).replace('-Ens','').replace(/\s*🇺🇸|\s*🇪🇺|\s*🇩🇪|\s*🇨🇦/g,'').trim();}
 /* rows regroupées par jour : {day,date,src,tmax,tmin,rain} + échelles globales par colonne */
@@ -1362,7 +1402,8 @@ function _buildDivSeries(){
   const ext=(typeof window!=='undefined'&&window._ext30Days)||[];
   const extByDay={};ext.forEach(o=>{extByDay[o.day]=o;});
   const extMax=ext.length?Math.max.apply(null,ext.map(o=>o.day)):-1;
-  const FIN=Math.min(28,Math.max(13,extMax));
+  const detMax=(_tempModelsByDay&&_tempModelsByDay.length)?(_tempModelsByDay.length-1):13;
+  const FIN=Math.min(28,Math.max(13,extMax,detMax));
   const rows=[];
   for(let d=0;d<=FIN;d++){
     let date=null,src=null,tmax=null,tmin=null,rain=null;
@@ -1375,16 +1416,35 @@ function _buildDivSeries(){
       if(minM.length){const v=minM.map(m=>m.val);tmin={models:minM,med:detT.medMin,lo:Math.min.apply(null,v),hi:Math.max.apply(null,v),n:minM.length};}
       const detR=(_rainModelsByDay&&_rainModelsByDay[d])||null;
       if(detR&&detR.models.length)rain={models:detR.models.slice(),med:detR.med,lo:detR.lo,hi:detR.hi,n:detR.n};
-    }else if(extByDay[d]){
-      const o=extByDay[d];src='ens';date=o.dt?_dvFmtDate(new Date(o.dt)):null;
-      const byM={};o.scenarios.forEach(s=>{const k=s.model;if(!byM[k])byM[k]={tmax:[],tmin:[],rain:[]};if(s.tmax!=null)byM[k].tmax.push(s.tmax);if(s.tmin!=null)byM[k].tmin.push(s.tmin);if(s.rain!=null)byM[k].rain.push(s.rain);});
-      const names=Object.keys(byM);
-      const maxM=names.map(n=>({name:_dvShortEns(n),val:_dvMed(byM[n].tmax)})).filter(m=>m.val!=null);
-      const minM=names.map(n=>({name:_dvShortEns(n),val:_dvMed(byM[n].tmin)})).filter(m=>m.val!=null);
-      const rainM=names.map(n=>({name:_dvShortEns(n),val:byM[n].rain.length?Math.round(_dvMed(byM[n].rain)*10)/10:null})).filter(m=>m.val!=null);
-      if(maxM.length){const v=maxM.map(m=>m.val);tmax={models:maxM,med:_dvMed(v),lo:Math.min.apply(null,v),hi:Math.max.apply(null,v),n:maxM.length};}
-      if(minM.length){const v=minM.map(m=>m.val);tmin={models:minM,med:_dvMed(v),lo:Math.min.apply(null,v),hi:Math.max.apply(null,v),n:minM.length};}
-      if(rainM.length){const v=rainM.map(m=>m.val);rain={models:rainM,med:Math.round(_dvMed(v)*10)/10,lo:Math.min.apply(null,v),hi:Math.max.apply(null,v),n:rainM.length};}
+    }else if(extByDay[d]||detT){
+      /* Long terme : médianes de membres par modèle d'ensemble + éventail p10–p90 des membres,
+         FUSIONNÉS avec les déterministes longs encore disponibles (GFS…) → plus d'incohérence avec le GRAPH :
+         un run chaud isolé apparaît dans la liste et étire la fourchette au lieu d'être invisible. */
+      const o=extByDay[d]||null;
+      date=o?(o.dt?_dvFmtDate(new Date(o.dt)):null):(detT?detT.date:null);
+      const hasDet=!!(detT&&detT.models&&detT.models.length);
+      src=(o&&hasDet)?'mix':(o?'ens':'det');
+      const L=_mixTempListsForDay(d)||{maxList:[],minList:[],pMaxLo:[],pMaxHi:[],pMinLo:[],pMinHi:[]};
+      let ensRain=[],pRnLo=[],pRnHi=[];
+      if(o){
+        const byR={};o.scenarios.forEach(s=>{const k=s.model;if(!byR[k])byR[k]={rain:[]};if(s.rain!=null)byR[k].rain.push(s.rain);});
+        Object.keys(byR).forEach(n=>{const b=byR[n];if(b.rain.length){ensRain.push({name:_dvShortEns(n),val:Math.round(_dvMed(b.rain)*10)/10});pRnLo.push(_dvPct(b.rain,10));pRnHi.push(_dvPct(b.rain,90));}});
+      }
+      const detR2=(_rainModelsByDay&&_rainModelsByDay[d])||null;
+      const detRnM=(detR2&&detR2.models)?detR2.models.slice():[];
+      const mk=(list,plo,phi,isR)=>{
+        if(!list.length)return null;
+        const v=list.map(m=>m.val);
+        let lo=Math.min.apply(null,v),hi=Math.max.apply(null,v);
+        if(plo.length)lo=Math.min(lo,Math.min.apply(null,plo));
+        if(phi.length)hi=Math.max(hi,Math.max.apply(null,phi));
+        const med=_dvMed(v);
+        if(isR)return {models:list,med:Math.round(med*10)/10,lo:Math.round(Math.max(0,lo)*10)/10,hi:Math.round(hi*10)/10,n:list.length};
+        return {models:list,med,lo,hi,n:list.length};
+      };
+      tmax=mk(L.maxList,L.pMaxLo,L.pMaxHi,false);
+      tmin=mk(L.minList,L.pMinLo,L.pMinHi,false);
+      rain=mk(detRnM.concat(ensRain),pRnLo,pRnHi,true);
     }
     if(tmax||tmin||rain)rows.push({day:d,date,src,tmax,tmin,rain});
   }
@@ -1415,15 +1475,16 @@ function renderExt30Divergence(){
   S.rows.forEach(r=>{
     const dt=r.date?new Date(r.date+'T00:00:00'):null;
     const lbl=(dt&&!isNaN(dt))?(_hlDOW[dt.getDay()]+' '+dt.getDate()):('J+'+r.day);
-    const ens=r.src==='ens'?'<span class="dv-src">ens</span>':'';
+    const _tag=r.src==='ens'?'ens':(r.src==='mix'?'det+ens':(r.src==='det'&&r.day>=14?'det':''));
+    const ens=_tag?('<span class="dv-src">'+_tag+'</span>'):'';
     const det=detLine('max',r.tmax,false)+detLine('min',r.tmin,false)+detLine('mm',r.rain,true);
-    const scenBtn=(r.src==='ens')?'<button class="dvx-scen" onclick="event.stopPropagation();showScenarios('+r.day+')">👥 Tous les membres</button>':'';
+    const scenBtn=(r.src==='ens'||r.src==='mix')?'<button class="dvx-scen" onclick="event.stopPropagation();showScenarios('+r.day+')">👥 Tous les membres</button>':'';
     html+='<div class="dvx-item" onclick="this.classList.toggle(\'open\')">'
       +'<div class="dvx-row"><div class="dvx-day">'+lbl+ens+'</div>'
       +_divCell(r.tmax,S.sMax,false)+_divCell(r.tmin,S.sMin,false)+_divCell(r.rain,S.sRain,true)
       +'</div><div class="dvx-detail">'+det+scenBtn+'</div></div>';
   });
-  html+='</div><div class="dv-foot">Déterministes J0→J+13 · ensemble au-delà (tag « ens ») · Open-Meteo · touchez une ligne pour le détail par modèle</div>';
+  html+='</div><div class="dv-foot">Déterministes J0→J+13 · au-delà : ensembles (éventail = p10–p90 des membres) fusionnés avec les déterministes longs (tag « det+ens ») · Open-Meteo · touchez une ligne pour le détail</div>';
   list.innerHTML=html;
 }
 /* ── Panneau membres d'ensemble (jours « ens » de la vue J+28) ── */
@@ -1642,6 +1703,19 @@ async function openGraph(){
       });
     }
     if(!labels.length)throw new Error('pas de données');
+    /* J+14 et au-delà : si les ensembles sont chargés, afficher la MÊME médiane fusionnée que la vue J+28
+       (helper partagé _mixTempForDay → chiffres identiques sur les deux vues, par construction). */
+    const fusedDay=[];
+    try{
+      for(let d=14;d<tmax.length;d++){
+        const f=(typeof _mixTempForDay==='function')?_mixTempForDay(d):null;
+        if(f&&f.mixed){
+          if(f.max!=null)tmax[d]=Math.round(f.max);
+          if(f.min!=null)tmin[d]=Math.round(f.min);
+          fusedDay[d]=true;
+        }
+      }
+    }catch(_){}
     /* ── Flèches de tendance : on lit EN DIRECT les runs précédents du modèle best_match (API previous-runs Open-Meteo), aucun stockage. Régression run-par-run (run actuel + previous_day1..4) = tendance des révisions, là où elle a du sens (jours proches). Jamais en vue simplifiée ni sur la page long terme. ── */
     let deltaT=[],deltaR=[];
     if(!document.documentElement.classList.contains('simple')){
@@ -1744,7 +1818,8 @@ async function openGraph(){
           ctx.font=(isMob?22:32)+"px 'Segoe UI Emoji','Apple Color Emoji',serif";
           ctx.fillText(_wmoEmoji(codes[i]),pt.x,pt.y-(isMob?24:32));
           ctx.font='700 '+fs+'px "Courier New",monospace';
-          const t=tmax[i]+'°',ty=pt.y-(isMob?6:8);
+          const _few=!fusedDay[i]&&(_tempModelsByDay&&_tempModelsByDay[i]&&_tempModelsByDay[i].n<=2);
+          const t=(_few?'~':'')+tmax[i]+'°',ty=pt.y-(isMob?6:8);
           chip(t,pt.x,ty);
           ctx.fillStyle='#d62828';
           ctx.fillText(t,pt.x,ty);
@@ -1752,7 +1827,8 @@ async function openGraph(){
         ctx.font='700 '+fs+'px "Courier New",monospace';
         mMin.data.forEach((pt,i)=>{
           if(tmin[i]==null)return;
-          const t=tmin[i]+'°',ty=pt.y+(isMob?15:17);
+          const _few=!fusedDay[i]&&(_tempModelsByDay&&_tempModelsByDay[i]&&_tempModelsByDay[i].n<=2);
+          const t=(_few?'~':'')+tmin[i]+'°',ty=pt.y+(isMob?15:17);
           chip(t,pt.x,ty);
           ctx.fillStyle='#1f6feb';
           ctx.fillText(t,pt.x,ty);
@@ -1812,6 +1888,19 @@ async function openGraph(){
     if(status)status.style.display='none';
     const _qd=document.getElementById('qdHost');
     if(wrap&&!(_qd&&_qd.style.display==='flex'))wrap.style.display='block';
+    /* Ensembles pas encore chargés → chargement en arrière-plan, puis repaint du GRAPH s'il est toujours visible
+       (le graphe s'affiche immédiatement en déterministe ~, puis se met au diapason de la vue J+28). */
+    try{
+      if(!window._ext30Days||!window._ext30Days.length){
+        _loadExt30Data().then(()=>{
+          try{
+            const gp=document.getElementById('graphPanel');
+            const vis=(gp&&gp.classList.contains('open'))||(document.documentElement.classList.contains('simple')&&!document.documentElement.classList.contains('qdview'));
+            if(vis)openGraph();
+          }catch(_){}
+        }).catch(()=>{});
+      }
+    }catch(_){}
     if(leg)leg.style.display='none';
   }catch(e){
     if(status){status.style.display='block';status.textContent='✕ '+e.message;}
@@ -2183,6 +2272,10 @@ function toggleViewModeMenu(e){
 function closeViewModeMenu(){const m=document.getElementById('viewModeMenu');if(m)m.classList.remove('open');}
 document.addEventListener('click',function(e){const w=document.getElementById('viewModeWrap'),m=document.getElementById('viewModeMenu');if(w&&!w.contains(e.target)&&(!m||!m.contains(e.target)))closeViewModeMenu();});
 function setViewMode(v){var bare=location.href.split('#')[0].split('?')[0];location.href=bare+'?simple='+v;}
+function togglePhoneView(){
+  var on=document.documentElement.classList.contains('simple')&&document.documentElement.classList.contains('phone-col');
+  setViewMode(on?'no':'ok');
+}
 
 /* ── Vue DÉTAIL : tableau transposé (temps en HORIZONTAL). Pas de temps : heure (défaut) ou ¼ h.
    Vue iPhone/GRAPH/Détail : injecté DANS le pane du GRAPH (#graphCard). Vue PC : panneau plein écran. ── */
@@ -2291,6 +2384,15 @@ function _buildQDTable(m,i0,pm,tzNow,fit,al){
     const xcls=isMin?' qd-tmin':(isMax?' qd-tmax':'');
     const ttl2=isMin?' title="Température la plus basse de la fenêtre"':(isMax?' title="Température la plus haute de la fenêtre"':'');
     return '<span class="qd-tc'+xcls+'" style="background:'+bg+';color:'+fg+'"'+ttl2+'>'+Math.round(v)+'°</span>';},'qd-t');
+  html+=row('🤒 Ress.',i=>{const v=g('apparent_temperature',i);if(v==null)return '·';
+    return '<b style="color:'+_qdTempCol(v)+'">'+Math.round(v)+'°</b>';},'qd-hx');
+  html+=row('Humidex',i=>{const T=g('temperature_2m',i),H=g('relative_humidity_2m',i);
+    if(T==null||H==null)return '·';
+    const e=(H/100)*6.112*Math.exp(17.62*T/(243.12+T));   /* pression de vapeur (Magnus) */
+    const hx=T+0.5555*(e-10);
+    if(hx<20)return '·';
+    const c=hx>=45?'#ff2ea6':hx>=40?'#ff2200':hx>=35?'#ff6600':hx>=30?'#ffaa00':'#9aa7b5';
+    return '<b style="color:'+c+'">'+Math.round(hx)+'</b>';},'qd-hx');
   html+=row('🌧 mm',i=>{const v=hourMode?sum4('precipitation',i):g('precipitation',i);return (v!=null&&v>0.04)?('<b>'+(Math.round(v*10)/10).toFixed(1)+'</b>'):'·';},'qd-p2');
   html+=row('Proba',i=>{const v=pm[m.time[i].slice(0,13)];return v!=null?v+'%':'·';},'qd-pr');
   html+=row('Ciel',i=>{const t=m.time[i];if(!t.slice(11,16).endsWith(':00'))return '';const c=g('weather_code',i);return c!=null?_wmoEmoji(c):'';},'qd-ciel');
@@ -2380,7 +2482,7 @@ async function openHoraire(){
   if(sc)sc.style.display='none';
   try{
     const url='https://api.open-meteo.com/v1/forecast?latitude='+_cityLat+'&longitude='+_cityLon
-      +'&minutely_15=temperature_2m,precipitation,weather_code,sunshine_duration,wind_speed_10m,wind_gusts_10m,wind_direction_10m,relative_humidity_2m'
+      +'&minutely_15=temperature_2m,apparent_temperature,precipitation,weather_code,sunshine_duration,wind_speed_10m,wind_gusts_10m,wind_direction_10m,relative_humidity_2m'
       +'&hourly=precipitation_probability&forecast_days=2&timezone=auto';
     const r=await _fetchTO(url,12000);
     if(!r.ok)throw new Error('HTTP '+r.status);
@@ -3321,7 +3423,7 @@ async function fetchVigilance(lat,lon,deptName,countryCode){
   }catch(e){renderVigilanceBadges(null,deptName,slug,'FATAL');}
 }
 async function load(){
-  /* Nouvelle ville → invalider le cache J-1/J-7 */_cachedJm1=null;_cachedJm7=null;_ext30Loaded=false;
+  /* Nouvelle ville → invalider le cache J-1/J-7 */_cachedJm1=null;_cachedJm7=null;_ext30Loaded=false;window._ext30Days=[];
   const city=document.getElementById('cityInput').value.trim();if(!city)return;
   /* Test du badge sans changer l'URL : taper "vigtest rouge" ou "vigtest orange" dans le champ ville */
   if(/^\s*vigtest/i.test(city)){var _tc=/jaune/i.test(city)?2:/vert/i.test(city)?1:/orange/i.test(city)?3:4;var _tn=({1:'vert (masqué)',2:'jaune (masqué)',3:'orange (fixe)',4:'rouge (doit clignoter)'})[_tc];try{renderVigilanceBadges([{id:6,color:_tc},{id:3,color:_tc}],'Essonne','essonne','TEST '+_tn);}catch(e){}return;}
@@ -5693,6 +5795,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
       <div class="opt-ttl">⚙ OPTIONS — Zones de canicule</div>
       <button onclick="closeOpt()" aria-label="Fermer" class="opt-x">✕</button>
     </div>
+
     <label class="opt-toggle"><input type="checkbox" id="optOn"> Afficher les zones de canicule sur le graphe</label>
     <label class="opt-toggle"><input type="checkbox" id="optMod"> Adapter au climat local (latitude + normale de la ville)</label>
     <label class="opt-toggle"><input type="checkbox" id="optLvl1"> Afficher les périodes émeraude (niveau 1, seuils bas)</label>
@@ -5709,9 +5812,18 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
 <div id="healthPanel">
   <div id="healthCard">
     <div class="hl-head">
-      <div class="hl-ttl">🩺 Santé des données</div>
+      <div class="hl-ttl">⚙ OPTION</div>
       <button onclick="closeHealth()" aria-label="Fermer" class="hl-x">✕</button>
     </div>
+    <div class="hl-quick">
+      <button id="phoneBtn" onclick="togglePhoneView()" title="Vue iPhone (enfoncé = actif)">📱 Vue iPhone</button>
+      <button onclick="closeHealth();openOpt()">🌡 Zones de canicule…</button>
+    </div>
+    <div class="hl-quick">
+      <button style="color:#88aaff" onclick="closeHealth();openExt30()">⤢ J+28 ensemble</button>
+      <button style="color:#d9a3ff" onclick="closeHealth();openSeason()">🗓 SAISON 3 mois</button>
+    </div>
+    <div class="hl-sub">🩺 Santé des données</div>
     <div id="healthBody"></div>
     <div class="hl-actions">
       <button onclick="rerunHealth(this)" class="hl-refresh">↻ Relancer l'analyse</button>
