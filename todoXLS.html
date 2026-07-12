@@ -120,7 +120,7 @@
 
   <header>
     <h1><span class="todo">To Do</span> ⇄ <span class="xl">Excel</span></h1>
-    <span class="ver">ToDoXL v2.2 · API Microsoft Graph</span>
+    <span class="ver">ToDoXL v2.3 · API Microsoft Graph</span>
   </header>
   <p class="tagline">Export et import complets de tes tâches Microsoft To Do (échéances, notes, sous-tâches) via l'API officielle. Tout reste dans ton navigateur.</p>
 
@@ -256,11 +256,11 @@
     </div>
   </div>
 
-  <footer>ToDoXL v2.2 — API Microsoft Graph (<code>Tasks.ReadWrite</code>), authentification MSAL, aucune donnée envoyée ailleurs que chez Microsoft.</footer>
+  <footer>ToDoXL v2.3 — API Microsoft Graph (<code>Tasks.ReadWrite</code>), authentification MSAL, aucune donnée envoyée ailleurs que chez Microsoft.</footer>
 </div>
 
 <script>
-/* ================== ToDoXL v2.2 — API Microsoft Graph ================== */
+/* ================== ToDoXL v2.3 — API Microsoft Graph ================== */
 const GRAPH = 'https://graph.microsoft.com/v1.0';
 const SCOPES = ['Tasks.ReadWrite'];
 let msalApp = null;
@@ -360,14 +360,21 @@ async function useToken(){
   showConnErr('');
   document.getElementById('connInfo').textContent = 'Vérification du jeton…';
   try {
-    const test = await gfetch(GRAPH + '/me/todo/lists');   // test réel
+    let test = (await gfetch(GRAPH + '/me/todo/lists')).value || [];
+    let real = test.filter(l => l.wellknownListName && l.wellknownListName !== 'none'
+                 ? l.wellknownListName === 'defaultList' : true)
+               .filter(l => l.wellknownListName !== 'flaggedEmails');
+    if (!real.length){
+      // bug Graph comptes perso : vérifier via /delta avant d'alerter
+      const delta = await gAll(GRAPH + '/me/todo/lists/delta');
+      real = delta.filter(l => l.id && !l['@removed'] && l.wellknownListName !== 'flaggedEmails');
+    }
     connected = true;
     const who = tokenAccount(t);
     document.getElementById('connDot').classList.add('on');
     document.getElementById('connInfo').textContent =
       'Connecté via jeton — compte : ' + who + ' (validité ~1 h)';
     document.getElementById('btnReload').disabled = false;
-    const real = (test.value || []).filter(l => l.wellknownListName !== 'flaggedEmails');
     if (!real.length)
       showConnErr('Attention : le compte « ' + who + ' » n\'a aucune liste To Do. '
         + 'Ce n\'est probablement pas le compte où vivent tes tâches — reconnecte-toi '
@@ -424,7 +431,18 @@ async function loadLists(){
   const zone = document.getElementById('listZone');
   zone.innerHTML = '<em style="color:var(--muted)">Chargement…</em>';
   try {
-    lists = await gAll(GRAPH + '/me/todo/lists');
+    let ls = await gAll(GRAPH + '/me/todo/lists');
+    // Bug connu de Graph sur les comptes perso : les listes créées par
+    // l'utilisateur sont omises. L'endpoint /delta, lui, renvoie tout.
+    const hasUserLists = ls.some(l => !l.wellknownListName || l.wellknownListName === 'none');
+    if (!hasUserLists){
+      const delta = await gAll(GRAPH + '/me/todo/lists/delta');
+      const seen = new Map();
+      for (const l of [...ls, ...delta])
+        if (l.id && !l['@removed']) seen.set(l.id, l);
+      if (seen.size > ls.length) ls = [...seen.values()];
+    }
+    lists = ls;
     zone.innerHTML = lists.map((l, i) =>
       '<label><input type="checkbox" class="lchk" data-i="' + i + '" checked onchange="refreshExportBtn()"> '
       + esc(l.displayName) + '</label>').join('')
