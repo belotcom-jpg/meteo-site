@@ -120,16 +120,28 @@
 
   <header>
     <h1><span class="todo">To Do</span> ⇄ <span class="xl">Excel</span></h1>
-    <span class="ver">ToDoXL v2.1 · API Microsoft Graph</span>
+    <span class="ver">ToDoXL v2.2 · API Microsoft Graph</span>
   </header>
   <p class="tagline">Export et import complets de tes tâches Microsoft To Do (échéances, notes, sous-tâches) via l'API officielle. Tout reste dans ton navigateur.</p>
 
   <!-- ============ CONNEXION ============ -->
   <div class="card">
-    <h2>🔐 Connexion Microsoft</h2>
+    <h2>🔐 Connexion Microsoft — via jeton Graph Explorer</h2>
 
-    <details class="setup" id="setupGuide">
-      <summary>Configuration initiale (une seule fois, ~5 min)</summary>
+    <ol style="margin:8px 0 4px;padding-left:22px">
+      <li style="margin:6px 0">Ouvre <a href="https://developer.microsoft.com/graph/graph-explorer" target="_blank" rel="noopener"><b>developer.microsoft.com/graph/graph-explorer</b></a> <b>dans la fenêtre où to-do.live.com affiche tes tâches</b> (même session = même compte), et connecte-toi (icône profil en haut à droite).</li>
+      <li style="margin:6px 0">Dans la barre de requête, mets <code>https://graph.microsoft.com/v1.0/me/todo/lists</code> et <b>Exécuter la requête</b>. Un 403 est normal la première fois.</li>
+      <li style="margin:6px 0">Onglet <b>« Modifier les autorisations »</b> → <code>Tasks.ReadWrite</code> → <b>Consentir</b>. Ré-exécute : la réponse doit lister <b>tes vraies listes</b> (pas juste « Flagged Emails » — sinon, mauvais compte).</li>
+      <li style="margin:6px 0">Onglet <b>« Jeton d'accès »</b> → <b>icône copier 📋</b> → colle ci-dessous <b>immédiatement</b> (validité ~1 h).</li>
+    </ol>
+    <div class="btnrow">
+      <input type="text" id="tokenIn" class="wide" style="flex:1;min-width:240px"
+             placeholder="Colle ici le jeton d'accès (eyJ0…)">
+      <button onclick="useToken()">✅ Utiliser ce jeton</button>
+    </div>
+
+    <details class="setup" style="margin-top:14px" id="setupGuide">
+      <summary>⚙️ Mode avancé : app Azure personnelle (nécessite un tenant Azure — indisponible pour les comptes perso sans compte Azure)</summary>
       <ol>
         <li>Va sur <b>portal.azure.com</b> → cherche « <b>Inscriptions d'applications</b> » (App registrations) → <b>Nouvelle inscription</b>.</li>
         <li>Nom : <code>ToDoXL</code>. Types de comptes pris en charge : choisis la dernière option, <b>« … et comptes Microsoft personnels (Skype, Xbox) »</b>.</li>
@@ -142,33 +154,18 @@
         <li>Clique <b>Inscrire</b>, puis copie l'<b>ID d'application (client)</b> affiché en haut de la page et colle-le ci-dessous. Aucun secret nécessaire.</li>
         <li>À la première connexion, Microsoft demandera l'autorisation de lire/écrire tes tâches : accepte.</li>
       </ol>
-      <div class="hint warn">⚠️ La page doit être servie en <b>https</b> (ton GitHub Pages est parfait). Ça ne fonctionne pas en ouvrant le fichier directement (<code>file://</code>).</div>
-    </details>
-
-    <div class="btnrow" style="margin-top:14px">
-      <input type="text" id="clientId" class="wide" style="flex:1;min-width:240px"
-             placeholder="ID d'application (client) — ex. 1a2b3c4d-…" oninput="saveClientId()">
-      <button id="btnLogin" onclick="login()">Se connecter</button>
-      <button id="btnLogout" class="gray" onclick="logout()" style="display:none">Se déconnecter</button>
-    </div>
-    <details class="setup" style="margin-top:14px" id="tokenGuide">
-      <summary>🎫 Mode alternatif : jeton Graph Explorer (aucune inscription Azure)</summary>
-      <ol>
-        <li>Ouvre <a href="https://developer.microsoft.com/graph/graph-explorer" target="_blank" rel="noopener"><b>developer.microsoft.com/graph/graph-explorer</b></a> et connecte-toi (icône profil, en haut à droite) avec ton compte Microsoft personnel.</li>
-        <li>Onglet <b>« Modifier les autorisations »</b> (sous la barre de requête) → cherche <code>Tasks.ReadWrite</code> → <b>Consentir</b>.</li>
-        <li>Onglet <b>« Jeton d'accès »</b> → copie le jeton (longue chaîne).</li>
-        <li>Colle-le ci-dessous. Validité ~1 h ; si ça expire, recopie un jeton frais.</li>
-      </ol>
-      <div class="btnrow">
-        <input type="text" id="tokenIn" class="wide" style="flex:1;min-width:240px"
-               placeholder="Colle ici le jeton d'accès (eyJ0…)">
-        <button class="ghost" onclick="useToken()">Utiliser ce jeton</button>
+      <div class="hint warn">⚠️ La page doit être servie en <b>https</b> (GitHub Pages). Si tu obtiens « Selected user account does not exist in tenant 'Microsoft Services' », ton compte n'a pas accès au portail Azure : utilise le mode jeton ci-dessus.</div>
+      <div class="btnrow" style="margin-top:10px">
+        <input type="text" id="clientId" class="wide" style="flex:1;min-width:240px"
+               placeholder="ID d'application (client) — ex. 1a2b3c4d-…" oninput="saveClientId()">
+        <button id="btnLogin" onclick="login()">Se connecter (Azure)</button>
+        <button id="btnLogout" class="gray" onclick="logout()" style="display:none">Se déconnecter</button>
       </div>
     </details>
 
     <div class="conn" style="margin-top:10px">
       <span class="dot" id="connDot"></span>
-      <span class="acct" id="connInfo">Non connecté</span>
+      <span class="acct" id="connInfo">Non connecté — colle un jeton pour commencer</span>
     </div>
     <div id="connErr"></div>
   </div>
@@ -259,11 +256,11 @@
     </div>
   </div>
 
-  <footer>ToDoXL v2.1 — API Microsoft Graph (<code>Tasks.ReadWrite</code>), authentification MSAL, aucune donnée envoyée ailleurs que chez Microsoft.</footer>
+  <footer>ToDoXL v2.2 — API Microsoft Graph (<code>Tasks.ReadWrite</code>), authentification MSAL, aucune donnée envoyée ailleurs que chez Microsoft.</footer>
 </div>
 
 <script>
-/* ================== ToDoXL v2.1 — API Microsoft Graph ================== */
+/* ================== ToDoXL v2.2 — API Microsoft Graph ================== */
 const GRAPH = 'https://graph.microsoft.com/v1.0';
 const SCOPES = ['Tasks.ReadWrite'];
 let msalApp = null;
@@ -279,7 +276,6 @@ document.getElementById('redirectUri').value =
   location.origin + location.pathname;
 const savedId = localStorage.getItem('todoxl_clientId') || '';
 document.getElementById('clientId').value = savedId;
-if (!savedId) document.getElementById('setupGuide').open = true;
 if (typeof msal === 'undefined')
   showConnErr("Librairie Microsoft (MSAL) non chargée — vérifie ta connexion internet.");
 else initMsal();
@@ -349,6 +345,13 @@ function showConnErr(msg){
 }
 
 /* ---------- mode jeton Graph Explorer ---------- */
+function tokenAccount(t){
+  try {
+    const p = JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+    return p.upn || p.preferred_username || p.unique_name || p.email || '(compte inconnu)';
+  } catch(e){ return '(compte illisible)'; }
+}
+
 async function useToken(){
   const t = document.getElementById('tokenIn').value.trim()
               .replace(/^Bearer\s+/i, '').replace(/["']/g, '');
@@ -357,12 +360,18 @@ async function useToken(){
   showConnErr('');
   document.getElementById('connInfo').textContent = 'Vérification du jeton…';
   try {
-    await gfetch(GRAPH + '/me/todo/lists?$top=1');   // test réel
+    const test = await gfetch(GRAPH + '/me/todo/lists');   // test réel
     connected = true;
+    const who = tokenAccount(t);
     document.getElementById('connDot').classList.add('on');
-    document.getElementById('connInfo').textContent = 'Connecté via jeton Graph Explorer (validité ~1 h)';
+    document.getElementById('connInfo').textContent =
+      'Connecté via jeton — compte : ' + who + ' (validité ~1 h)';
     document.getElementById('btnReload').disabled = false;
-    document.getElementById('tokenGuide').open = false;
+    const real = (test.value || []).filter(l => l.wellknownListName !== 'flaggedEmails');
+    if (!real.length)
+      showConnErr('Attention : le compte « ' + who + ' » n\'a aucune liste To Do. '
+        + 'Ce n\'est probablement pas le compte où vivent tes tâches — reconnecte-toi '
+        + 'à Graph Explorer dans la fenêtre où to-do.live.com affiche tes tâches.');
     loadLists();
   } catch(e){
     manualToken = null; connected = false;
