@@ -2,8 +2,11 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta name="theme-color" content="#1b2430">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ApproximativeFormulasGenerator v1.0</title>
+<title>ApproximativeFormulasGenerator v3.2</title>
 <style>
 :root{
   --bg:#1b2430; --panel:#232f3f; --panel2:#2a3849; --line:#37475c;
@@ -81,6 +84,28 @@ button.ia:hover{border-color:var(--amber); }
   background:var(--amber); color:#1b2430; padding:8px 14px; font-weight:600}
 #copyBar input{flex:1; font-family:Consolas,monospace; font-size:.95rem; padding:6px 8px; border:none; border-radius:6px}
 #copyBar button{background:#1b2430; color:var(--amber); border:none; border-radius:6px; padding:6px 10px; cursor:pointer}
+.vbadge{margin-left:8px; font-size:.72rem; color:var(--good); font-family:Consolas,monospace}
+button.star,button.share,button.png{background:var(--panel2); border:1px solid var(--line); border-radius:6px; padding:3px 7px; font-size:.78rem; color:var(--ink); cursor:pointer}
+button.star:hover,button.share:hover,button.png:hover{border-color:var(--amber)}
+.pslqList{display:flex; flex-wrap:wrap; gap:4px 10px; margin-top:6px; max-height:110px; overflow:auto}
+.pslqList label{font-size:.82rem; color:var(--dim); cursor:pointer}
+#sharedBanner{background:var(--panel); border:1px solid var(--amber); border-radius:10px; padding:10px 14px; margin-bottom:12px; display:flex; align-items:center; gap:10px}
+#sharedBanner .meta{color:var(--dim); font-size:.85rem}
+#sharedBanner button{margin-left:auto; background:none; border:none; color:var(--dim); cursor:pointer}
+a.hub{color:var(--dim); text-decoration:none; margin-right:6px}
+a.hub:hover{color:var(--amber)}
+.vbadge.cert{color:var(--good)}
+.vbadge.warn{color:#e0a080}
+#printSheet{display:none}
+@media print{
+  body *{visibility:hidden}
+  #printSheet, #printSheet *{visibility:visible}
+  #printSheet{display:block; position:absolute; top:0; left:0; width:100%; background:#fff; color:#000; padding:20px; font-family:Georgia,serif}
+  #printSheet h1{font-size:1.4rem} #printSheet .sub{color:#555; font-size:.9rem}
+  #printSheet .pItem{margin:14px 0; font-size:1.1rem}
+  #printSheet .dots{color:#555; font-size:.85rem; margin-left:10px}
+  #printSheet .katex{color:#000}
+}
 .tex{font-family:Consolas,monospace; font-size:.72rem; color:#6f8199; margin-top:3px; cursor:pointer; word-break:break-all}
 .tex:hover{color:var(--amber2)}
 .tex.copied{color:var(--good)}
@@ -103,8 +128,8 @@ button.ia:hover{border-color:var(--amber); }
 <body>
 <div class="wrap">
 <header>
-  <h1>Approximative<span class="x">Formulas</span>Generator</h1>
-  <span class="sub">v1.0 · quasi-identités · 10 formes · recherche ∞</span>
+  <h1><a href="index.html" class="hub" title="Retour au hub">←</a> Approximative<span class="x">Formulas</span>Generator</h1>
+  <span class="sub">v3.2 · quasi-identités · 10 formes · recherche ∞</span>
   <span id="ktest" class="sub"></span>
 </header>
 
@@ -150,19 +175,40 @@ button.ia:hover{border-color:var(--amber); }
     <button id="go">Générer</button>
     <button id="goLong" class="longbtn">Générer long ∞</button>
     <button class="ghost" id="exportBtn">Exporter .txt</button>
+    <button class="ghost" id="defiBtn">🎯 Défi</button>
+    <button class="ghost" id="aiFormsBtn">✨ formes IA</button>
     <div id="progress"><div class="bar"></div></div>
     <div id="curForm" style="display:none"></div>
     <span id="status"></span>
   </div>
   <details class="formsDetails">
-    <summary>Formes explorées (50 % classiques / 50 % inventées à la volée)</summary>
+    <summary>✨ IA — clé API ou relais (pour GitHub Pages)</summary>
+    <div class="row" style="margin-top:6px; gap:6px">
+      <input id="aiKey" type="password" placeholder="clé API sk-ant-… (optionnel)" style="flex:1">
+      <input id="aiRelay" type="text" placeholder="URL relais (optionnel)" style="flex:1">
+    </div>
+    <div class="note">Vide : fonctionne dans l'environnement Claude. Clé : appel direct Anthropic. Relais : ton proxy Multi-IA.</div>
+  </details>
+  <details class="formsDetails">
+    <summary>🔬 PSLQ — relations entières exactes (Ferguson–Bailey, 40 décimales)</summary>
+    <div id="pslqList" class="pslqList"></div>
+    <div class="row" style="margin-top:6px"><button class="ghost" id="pslqRun">Chercher une relation</button></div>
+    <div id="pslqOut" class="note"></div>
+  </details>
+  <details class="formsDetails">
+    <summary>Formes explorées (50 % classiques / 50 % inventées à la volée + ✨IA)</summary>
     <div class="consts" id="classicList" style="margin-top:6px"></div>
   </details>
   <div class="note">La barre verte = nombre de décimales exactes. Les identités exactes (erreur &lt; 10⁻¹²) sont écartées : on ne garde que les <em>vraies fausses</em> coïncidences, dans l'esprit de e^π − π ≈ 20.</div>
 </div>
 
 <div class="card results">
-  <h2>Résultats <span id="count"></span></h2>
+  <h2>Résultats <span id="count"></span> <span style="float:right;display:flex;gap:4px">
+    <button class="ghost" id="hofBtn" style="padding:2px 10px;font-size:.75rem">★ Panthéon (0)</button>
+    <button class="ghost" id="hofExp" title="Exporter le Panthéon (JSON)" style="padding:2px 8px;font-size:.75rem">⬇</button>
+    <button class="ghost" id="hofImp" title="Importer un Panthéon (JSON)" style="padding:2px 8px;font-size:.75rem">⬆</button>
+    <button class="ghost" id="printBtn" title="Fiche imprimable du Panthéon" style="padding:2px 8px;font-size:.75rem">🖨</button>
+  </span></h2>
   <table>
     <thead><tr>
       <th>Formule</th>
@@ -332,116 +378,412 @@ function readToken(s,i){          // \cmd, nombre, ou caractère seul
 }
 
 // ---------- moteur de recherche (par tranches, UI fluide) ----------
-// ---------- moteur unifié v1.0 : formes fabriquées à la volée, cachées, optimisées ----------
-let RESULTS=[], RUNNING=false, BESTMISS=null;
-let STOP=false;
-const RUN={on:false, round:0, max:0, seen:null};
+// ---------- BIG : virgule fixe BigInt, 40 décimales ----------
+const BIG=(function(){
+  const S=10n**40n;
+  const fromStr=s=>{ s=s.trim(); const neg=s[0]==="-"; if(neg||s[0]==="+") s=s.slice(1);
+    let [i,f=""]=s.split("."); f=(f+"0".repeat(40)).slice(0,40);
+    const v=BigInt(i||"0")*S+BigInt(f); return neg?-v:v; };
+  const fromNum=x=>{ if(!isFinite(x)) return null; return fromStr(x.toFixed(20)); };
+  const toNum=a=>Number(a)/1e40;
+  const toStr=(a,d=30)=>{ const neg=a<0n; if(neg)a=-a;
+    return (neg?"-":"")+(a/S).toString()+"."+(a%S).toString().padStart(40,"0").slice(0,d); };
+  const abs=a=>a<0n?-a:a;
+  const mul=(a,b)=>{ const p=a*b; return p>=0n?(p+S/2n)/S:-((-p+S/2n)/S); };
+  const div=(a,b)=>{ if(b===0n) return null; const p=a*S;
+    const q=p/b, r=p%b; let out=q;
+    if(abs(2n*r)>=abs(b)) out+= (p>=0n)===(b>0n) ? 1n : -1n;
+    return out; };
+  const idiv=(a,k)=>{ const q=a/k, r=a%k; let out=q;
+    if(abs(2n*r)>=abs(k)) out+= (a>=0n)===(k>0n) ? 1n : -1n;
+    return out; };
+  function sqrt(a){ if(a<0n) return null; if(a===0n) return 0n;
+    let x=fromNum(Math.sqrt(toNum(a)))||S; if(x<=0n)x=S;
+    for(let k=0;k<80;k++){ const nx=(x+div(a,x))/2n; if(abs(nx-x)<=1n){x=nx;break;} x=nx; }
+    return x; }
+  function cbrt(a){ const neg=a<0n; if(neg)a=-a; if(a===0n)return 0n;
+    let x=fromNum(Math.cbrt(toNum(a)))||S; if(x<=0n)x=S;
+    for(let k=0;k<80;k++){ const x2=mul(x,x); const nx=idiv(2n*x+div(a,x2), 3n);
+      if(abs(nx-x)<=1n){x=nx;break;} x=nx; }
+    return x; }
+  function atanInv(n){ const N=BigInt(n), n2=N*N;
+    let p=idiv(S,N), sum=p, k=1n, sign=1n;
+    for(;;){ p=idiv(p,n2); k+=2n; sign=-sign; const t=idiv(p,k); if(t===0n) break; sum+=sign*t; }
+    return sum; }
+  const PI=4n*(4n*atanInv(5n)-atanInv(239n));
+  function atanhInv(n){ const N=BigInt(n), n2=N*N;
+    let p=idiv(S,N), sum=p, k=1n;
+    for(;;){ p=idiv(p,n2); k+=2n; const t=idiv(p,k); if(t===0n) break; sum+=t; }
+    return sum; }
+  const LN2=2n*atanhInv(3n), LN3=LN2+2n*atanhInv(5n);
+  function expSmall(r){ let term=S, sum=S, k=1n;
+    for(;;){ term=idiv(mul(term,r),k); if(term===0n) break; sum+=term; k+=1n; if(k>500n) break; }
+    return sum; }
+  function exp(a){ // a = K·ln2 + r, |r| ≤ ln2
+    const K = a>=0n ? a/LN2 : -(((-a)+LN2-1n)/LN2);   // quotient entier (les deux sont à l'échelle S)
+    const r = a - K*LN2;
+    let e=expSmall(r);
+    const k=Number(K);
+    if(k>=0){ if(k>500) return null; e=e<<BigInt(k); } else { e=e>>BigInt(-k); }
+    return e; }
+  const E=expSmall(S);
+  function ln(a){ if(a===null||a<=0n) return null;
+    let k=0n, x=a;
+    while(x>(3n*S)/2n){ x=(x+1n)/2n; k+=1n; }
+    while(x<(3n*S)/4n){ x=x*2n; k-=1n; }
+    const u=div(x-S, x+S);
+    let p=u, sum=u, uu=mul(u,u), j=1n;
+    for(;;){ p=mul(p,uu); j+=2n; const t=idiv(p,j); if(t===0n) break; sum+=t; }
+    return 2n*sum + k*LN2; }
+  function pow(a,b){ const l=ln(a); if(l===null) return null; return exp(mul(l,b)); }
+  const TWO_PI=2n*PI;
+  function sincos(a){ let r=a%TWO_PI; if(r<0n)r+=TWO_PI; if(r>PI)r-=TWO_PI;
+    const rr=mul(r,r);
+    let sin=0n, t=r, k=1n, sg=1n;
+    for(;;){ sin+=sg*t; t=idiv(mul(t,rr),(k+1n)*(k+2n)); if(t===0n) break; k+=2n; sg=-sg; }
+    let cos=0n; t=S; k=0n; sg=1n;
+    for(;;){ cos+=sg*t; t=idiv(mul(t,rr),(k+1n)*(k+2n)); if(t===0n) break; k+=2n; sg=-sg; }
+    return [sin,cos]; }
+  const sin=a=>sincos(a)[0], cos=a=>sincos(a)[1];
+  const tan=a=>{ const [s,c]=sincos(a); return c===0n?null:div(s,c); };
+  function atan(a){ const neg=a<0n; let x=abs(a); let inv=false;
+    if(x>S){ inv=true; x=div(S, x); }            // 1/x
+    let halved=0;
+    while(x>S/2n){ x=div(x, S+sqrt(S+mul(x,x))); halved++; }
+    let p=x, sum=x, xx=mul(x,x), k=1n, sg=1n;
+    for(;;){ p=mul(p,xx); k+=2n; sg=-sg; const t=idiv(p,k); if(t===0n) break; sum+=sg*t; }
+    let r=sum*(2n**BigInt(halved));
+    if(inv) r=PI/2n-r;
+    return neg?-r:r; }
+  const sinh=a=>{ const e=exp(a); return e===null?null:(e-div(S,e))/2n; };
+  const cosh=a=>{ const e=exp(a); return e===null?null:(e+div(S,e))/2n; };
+  const tanh=a=>{ const e=exp(2n*a); return e===null?null:div(e-S,e+S); };
+  const hypot=(a,b)=>sqrt(mul(a,a)+mul(b,b));
+  const SQRT2=sqrt(2n*S), SQRT3=sqrt(3n*S), SQRT5=sqrt(5n*S);
+  const PHI=(S+SQRT5)/2n;
+  const GAMMA=fromStr("0.5772156649015328606065120900824024310421593359399235988057672348848677");
+  const ZETA3=fromStr("1.2020569031595942853997381615114499907649862923404988817922715553418382");
+  function plastic(){ let x=fromStr("1.32471795724474602596");
+    for(let k=0;k<60;k++){ const x2=mul(x,x); const f=mul(x2,x)-x-S, fp=3n*x2-S;
+      const nx=x-div(f,fp); if(abs(nx-x)<=1n){x=nx;break;} x=nx; }
+    return x; }
+  const PSI=plastic(), DS=S+SQRT2;
+  return {S,idiv,fromStr,fromNum,toNum,toStr,mul,div,abs,sqrt,cbrt,ln,exp,pow,sin,cos,tan,atan,sinh,cosh,tanh,hypot,
+          PI,E,LN2,LN3,SQRT2,SQRT3,SQRT5,PHI,GAMMA,ZETA3,PSI,DS};
+})();
 
-// briques unaires (garde-fous intégrés : NaN = combinaison écartée, zones plates exclues)
+
+// ---------- PSLQ (Ferguson–Bailey) sur BIG : trouve m entier avec m·x ≈ 0 ----------
+// retourne {rel:[...entiers], y:résidu} ou null (aucune relation dans les bornes)
+function PSLQ(B, xs, maxIter=2000, epsDigits=28, coefBound=10n**12n){
+  const S=B.S, n=xs.length;
+  const EPS=10n**BigInt(40-epsDigits);        // |y| < 10^-epsDigits
+  const nint=a=>{ const q=a/S, r=a%S; let o=q;
+    if(2n*(r<0n?-r:r)>=S) o+= a>=0n?1n:-1n; return o; };
+  // s_k = sqrt(Σ_{j≥k} x_j²) ; y = x/s_1
+  const s=new Array(n);
+  { let acc=0n;
+    for(let k=n-1;k>=0;k--){ acc+=B.mul(xs[k],xs[k]); s[k]=B.sqrt(acc); } }
+  const s0=s[0];
+  const y=xs.map(x=>B.div(x,s0));
+  for(let k=0;k<n;k++) s[k]=B.div(s[k],s0);
+  // H : n × (n−1)
+  const H=Array.from({length:n},()=>new Array(n-1).fill(0n));
+  for(let j=0;j<n-1;j++){
+    H[j][j]=B.div(s[j+1],s[j]);
+    for(let i=j+1;i<n;i++) H[i][j]= -B.div(B.mul(y[i],y[j]), B.mul(s[j],s[j+1]));
+  }
+  // A, Binv : entiers ; relation lue dans une colonne de Bm
+  const A=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1n:0n));
+  const Bm=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1n:0n));
+  function reduce(){
+    for(let i=1;i<n;i++) for(let j=i-1;j>=0;j--){
+      if(H[j][j]===0n) continue;
+      const t=nint(B.div(H[i][j],H[j][j]));
+      if(t===0n) continue;
+      y[j]=y[j]+t*y[i];
+      for(let k=0;k<=j;k++) H[i][k]-=t*H[j][k];
+      for(let k=0;k<n;k++){ A[i][k]-=t*A[j][k]; Bm[k][j]+=t*Bm[k][i]; }
+    }
+  }
+  reduce();
+  // γ^i précalculé (γ = 2/√3)
+  const gamma=B.div(2n*S, B.SQRT3);
+  const gpow=new Array(n-1); gpow[0]=gamma;
+  for(let i=1;i<n-1;i++) gpow[i]=B.mul(gpow[i-1],gamma);
+  for(let it=0; it<maxIter; it++){
+    // fin ? un y quasi nul
+    for(let j=0;j<n;j++) if(B.abs(y[j])<EPS){
+      const rel=Bm.map(row=>row[j]);
+      if(rel.some(c=>c!==0n)) return {rel, residual:B.toStr(B.abs(y[j]),35), iters:it};
+    }
+    // choix de m maximisant γ^i |H_ii|
+    let m=0, best=-1n;
+    for(let i=0;i<n-1;i++){ const v=B.abs(B.mul(gpow[i],H[i][i])); if(v>best){best=v;m=i;} }
+    // échanges
+    [y[m],y[m+1]]=[y[m+1],y[m]];
+    [H[m],H[m+1]]=[H[m+1],H[m]];
+    [A[m],A[m+1]]=[A[m+1],A[m]];
+    for(let k=0;k<n;k++) [Bm[k][m],Bm[k][m+1]]=[Bm[k][m+1],Bm[k][m]];
+    // coin
+    if(m<n-2){
+      const a=H[m][m], b=H[m][m+1];
+      const t0=B.sqrt(B.mul(a,a)+B.mul(b,b));
+      if(t0!==0n){
+        const t1=B.div(a,t0), t2=B.div(b,t0);
+        for(let i=m;i<n;i++){
+          const u=H[i][m], v=H[i][m+1];
+          H[i][m]=B.mul(t1,u)+B.mul(t2,v);
+          H[i][m+1]=B.mul(t1,v)-B.mul(t2,u);
+        }
+      }
+    }
+    reduce();
+    // bornes de sécurité : coefficients qui explosent = pas de relation accessible
+    let maxA=0n;
+    for(let i=0;i<n;i++) for(let k=0;k<n;k++){ const v=A[i][k]<0n?-A[i][k]:A[i][k]; if(v>maxA)maxA=v; }
+    if(maxA>coefBound) return null;
+  }
+  return null;
+}
+
+
+// ================== MOTEUR v3.2 ==================
+let RESULTS=[], RUNNING=false, BESTMISS=null, STOP=false;
+const RUN={on:false, round:0, max:0, seen:null, forms:[], exactKilled:0};
+let HOFVIEW=false;
+
+// ---------- briques : valeur double, valeur BIG, label ----------
 const R_UN=[
-  {p:6, f:x=>x,                                l:s=>s},
-  {p:2, f:x=>x>0?Math.sqrt(x):NaN,             l:s=>"√("+s+")"},
-  {p:1, f:x=>x>0?Math.sqrt(Math.sqrt(x)):NaN,  l:s=>"("+s+")^(1/4)"},
-  {p:2, f:x=>x>1e-9?Math.log(x):NaN,           l:s=>"ln("+s+")"},
-  {p:1, f:x=>x>-0.9?Math.log(1+x):NaN,         l:s=>"ln(1+"+s+")"},
-  {p:2, f:x=>x*x,                              l:s=>"("+s+")²"},
-  {p:1, f:x=>x*x*x,                            l:s=>"("+s+")³"},
-  {p:2, f:x=>Math.abs(x)>1e-9?1/x:NaN,         l:s=>"1/("+s+")"},
-  {p:1, f:x=>x>0?Math.cbrt(x):NaN,             l:s=>"("+s+")^(1/3)"},
-  {p:2, f:x=>(x>-1&&x<14)?Math.exp(x):NaN,     l:s=>"e^("+s+")"},
-  {p:1, f:x=>{const s=Math.sin(x),a=Math.abs(s);return(a>0.01&&a<0.99)?s:NaN;}, l:s=>"sin("+s+")"},
-  {p:1, f:x=>{const c=Math.cos(x),a=Math.abs(c);return(a>0.01&&a<0.99)?c:NaN;}, l:s=>"cos("+s+")"},
-  {p:1, f:x=>{const t=Math.tan(x);return Math.abs(t)<1e4?t:NaN;},              l:s=>"tan("+s+")"},
-  {p:1, f:x=>Math.abs(x)<20?Math.atan(x):NaN,  l:s=>"atan("+s+")"},
-  {p:1, f:x=>Math.abs(x)<14?Math.sinh(x):NaN,  l:s=>"sinh("+s+")"},
-  {p:1, f:x=>Math.abs(x)<14?Math.cosh(x):NaN,  l:s=>"cosh("+s+")"},
-  {p:1, f:x=>{const t=Math.tanh(x);return Math.abs(t)<0.99?t:NaN;},            l:s=>"tanh("+s+")"},
+  {f:x=>x, g:(B,x)=>x, l:s=>s, nm:"id", p:6},
+  {f:x=>x>0?Math.sqrt(x):NaN, g:(B,x)=>x>0n?B.sqrt(x):null, l:s=>"√("+s+")", nm:"sqrt", p:2},
+  {f:x=>x>0?Math.sqrt(Math.sqrt(x)):NaN, g:(B,x)=>x>0n?B.sqrt(B.sqrt(x)):null, l:s=>"("+s+")^(1/4)", nm:"root4", p:1},
+  {f:x=>x>1e-9?Math.log(x):NaN, g:(B,x)=>B.ln(x), l:s=>"ln("+s+")", nm:"ln", p:2},
+  {f:x=>x>-0.9?Math.log(1+x):NaN, g:(B,x)=>B.ln(B.S+x), l:s=>"ln(1+"+s+")", nm:"ln1p", p:1},
+  {f:x=>x*x, g:(B,x)=>B.mul(x,x), l:s=>"("+s+")²", nm:"sq", p:2},
+  {f:x=>x*x*x, g:(B,x)=>B.mul(B.mul(x,x),x), l:s=>"("+s+")³", nm:"cube", p:1},
+  {f:x=>Math.abs(x)>1e-9?1/x:NaN, g:(B,x)=>x===0n?null:B.div(B.S,x), l:s=>"1/("+s+")", nm:"inv", p:2},
+  {f:x=>x>0?Math.cbrt(x):NaN, g:(B,x)=>x>0n?B.cbrt(x):null, l:s=>"("+s+")^(1/3)", nm:"cbrt", p:1},
+  {f:x=>(x>-1&&x<14)?Math.exp(x):NaN, g:(B,x)=>B.exp(x), l:s=>"e^("+s+")", nm:"exp", p:2},
+  {f:x=>{const s=Math.sin(x),a=Math.abs(s);return(a>0.01&&a<0.99)?s:NaN;}, g:(B,x)=>B.sin(x), l:s=>"sin("+s+")", nm:"sin", p:1},
+  {f:x=>{const c=Math.cos(x),a=Math.abs(c);return(a>0.01&&a<0.99)?c:NaN;}, g:(B,x)=>B.cos(x), l:s=>"cos("+s+")", nm:"cos", p:1},
+  {f:x=>{const t=Math.tan(x);return Math.abs(t)<1e4?t:NaN;}, g:(B,x)=>B.tan(x), l:s=>"tan("+s+")", nm:"tan", p:1},
+  {f:x=>Math.abs(x)<20?Math.atan(x):NaN, g:(B,x)=>B.atan(x), l:s=>"atan("+s+")", nm:"atan", p:1},
+  {f:x=>Math.abs(x)<14?Math.sinh(x):NaN, g:(B,x)=>B.sinh(x), l:s=>"sinh("+s+")", nm:"sinh", p:1},
+  {f:x=>Math.abs(x)<14?Math.cosh(x):NaN, g:(B,x)=>B.cosh(x), l:s=>"cosh("+s+")", nm:"cosh", p:1},
+  {f:x=>{const t=Math.tanh(x);return Math.abs(t)<0.99?t:NaN;}, g:(B,x)=>B.tanh(x), l:s=>"tanh("+s+")", nm:"tanh", p:1},
 ];
-// briques binaires
 const R_BIN=[
-  {p:5, f:(x,y)=>x+y,                          l:(a,b)=>a+" + "+b},
-  {p:5, f:(x,y)=>x-y,                          l:(a,b)=>a+" − "+b},
-  {p:4, f:(x,y)=>x*y,                          l:(a,b)=>"("+a+")·("+b+")"},
-  {p:4, f:(x,y)=>Math.abs(y)>1e-9?x/y:NaN,     l:(a,b)=>"("+a+")/("+b+")"},
-  {p:2, f:(x,y)=>{const e=x>0?y*Math.log(x):NaN; return(Math.abs(e)>0.05&&Math.abs(e)<14)?Math.pow(x,y):NaN;},   l:(a,b)=>"("+a+")^("+b+")"},
-  {p:1, f:(x,y)=>{const e=x>0?Math.log(x)/y:NaN; return(Math.abs(e)>0.05&&Math.abs(e)<14)?Math.pow(x,1/y):NaN;}, l:(a,b)=>"("+a+")^(1/("+b+"))"},
-  {p:1, f:(x,y)=>(x>0&&y>0&&Math.abs(Math.log(y))>1e-9)?Math.log(x)/Math.log(y):NaN, l:(a,b)=>"ln("+a+")/ln("+b+")"},
-  {p:1, f:(x,y)=>Math.hypot(x,y),              l:(a,b)=>"√(("+a+")²+("+b+")²)"},
-  {p:1, f:(x,y)=>x*y>0?Math.sqrt(x*y):NaN,     l:(a,b)=>"√(("+a+")·("+b+"))"},
+  {f:(x,y)=>x+y, g:(B,x,y)=>x+y, l:(a,b)=>a+" + "+b, nm:"add", p:5},
+  {f:(x,y)=>x-y, g:(B,x,y)=>x-y, l:(a,b)=>a+" − "+b, nm:"sub", p:5},
+  {f:(x,y)=>x*y, g:(B,x,y)=>B.mul(x,y), l:(a,b)=>"("+a+")·("+b+")", nm:"mul", p:4},
+  {f:(x,y)=>Math.abs(y)>1e-9?x/y:NaN, g:(B,x,y)=>y===0n?null:B.div(x,y), l:(a,b)=>"("+a+")/("+b+")", nm:"div", p:4},
+  {f:(x,y)=>{const e=x>0?y*Math.log(x):NaN; return(Math.abs(e)>0.05&&Math.abs(e)<14)?Math.pow(x,y):NaN;}, g:(B,x,y)=>B.pow(x,y), l:(a,b)=>"("+a+")^("+b+")", nm:"pow", p:2},
+  {f:(x,y)=>{const e=x>0?Math.log(x)/y:NaN; return(Math.abs(e)>0.05&&Math.abs(e)<14)?Math.pow(x,1/y):NaN;}, g:(B,x,y)=>{const l=B.ln(x); return l===null||y===0n?null:B.exp(B.div(l,y));}, l:(a,b)=>"("+a+")^(1/("+b+"))", nm:"powinv", p:1},
+  {f:(x,y)=>(x>0&&y>0&&Math.abs(Math.log(y))>1e-9)?Math.log(x)/Math.log(y):NaN, g:(B,x,y)=>{const a=B.ln(x),c=B.ln(y); return a===null||c===null||c===0n?null:B.div(a,c);}, l:(a,b)=>"ln("+a+")/ln("+b+")", nm:"logb", p:1},
+  {f:(x,y)=>Math.hypot(x,y), g:(B,x,y)=>B.hypot(x,y), l:(a,b)=>"√(("+a+")²+("+b+")²)", nm:"hyp", p:1},
+  {f:(x,y)=>x*y>0?Math.sqrt(x*y):NaN, g:(B,x,y)=>{const p=B.mul(x,y); return p>0n?B.sqrt(p):null;}, l:(a,b)=>"√(("+a+")·("+b+"))", nm:"geo", p:1},
 ];
 function pick(arr){ let t=0; for(const o of arr) t+=o.p; let r=Math.random()*t;
   for(const o of arr){ r-=o.p; if(r<0) return o; } return arr[0]; }
+const UNI=nm=>R_UN.findIndex(o=>o.nm===nm), BNI=nm=>R_BIN.findIndex(o=>o.nm===nm);
 
-// fabrique : forme à 1, 2 ou 3 constantes, ou linéaire à double coefficient
-// repérage des briques par leur rendu (robuste au réordonnancement)
-const fU=s=>R_UN.find(o=>o.l("x")===s), fB=s=>R_BIN.find(o=>o.l("x","y")===s);
-const U_={id:fU("x"), sqrt:fU("√(x)"), ln:fU("ln(x)"), sq:fU("(x)²"), inv:fU("1/(x)"),
-          cbrt:fU("(x)^(1/3)"), exp:fU("e^(x)"), sin:fU("sin(x)"), cos:fU("cos(x)"),
-          tan:fU("tan(x)"), atan:fU("atan(x)")};
-const B_={add:fB("x + y"), sub:fB("x − y"), mul:fB("(x)·(y)"), div:fB("(x)/(y)"),
-          pow:fB("(x)^(y)"), powinv:fB("(x)^(1/(y))"), logb:fB("ln(x)/ln(y)"),
-          hyp:fB("√((x)²+(y)²)"), geo:fB("√((x)·(y))")};
-// les formes élégantes historiques (v0.9) — tirées une fois sur deux
+// ---------- fabrique de formes : DESCRIPTEURS (sérialisables → workers, vérifiables → BIG) ----------
+// F = {kind, ui:[i,i,i], b1, b2, outer, sgn, leftHeavy}
+function pickLightI(){ return Math.random()<0.55 ? 0 : R_UN.indexOf(pick(R_UN)); }
+const AIQUEUE=[];
+function buildRandomForm(){
+  if(AIQUEUE.length) return AIQUEUE.shift();
+  if(Math.random()<0.5) return CLASSICS[(Math.random()*CLASSICS.length)|0];
+  const roll=Math.random();
+  const F={ui:[pickLightI(),pickLightI(),pickLightI()],
+           b1:R_BIN.indexOf(pick(R_BIN)), b2:R_BIN.indexOf(pick(R_BIN)),
+           outer: Math.random()<0.15 ? R_UN.indexOf(pick(R_UN)) : 0,
+           sgn: Math.random()<0.5?1:-1, leftHeavy: Math.random()<0.5};
+  F.kind = roll<0.15?"k1" : roll<0.50?"lin2" : roll<0.85?"k2" : "k3";
+  return F;
+}
 const CLASSICS=(function(){
-  const mkK2=(u0,u1,b,outer)=>({kind:"k2", u:[u0,u1,U_.id], b1:b, outer,
-    lab:(X,Y)=>outer.l(b.l(u0.l(X),u1.l(Y))),
-    display:"a·[ "+outer.l(b.l(u0.l("E₁"),u1.l("E₂")))+" ]"});
-  const mkLin=(u0,u1,sgn)=>({kind:"lin2", u:[u0,u1,U_.id], sgn,
-    display:"a·"+u0.l("E₁")+(sgn>0?" + ":" − ")+"b·"+u1.l("E₂")});
-  const I=U_.id, L=[];
-  L.push(mkLin(I,I,1), mkLin(I,I,-1));                       // a·E₁ ± b·E₂
-  L.push(mkLin(U_.inv,U_.inv,1), mkLin(U_.inv,U_.inv,-1));   // a/E₁ ± b/E₂
-  for(const b of [B_.mul,B_.div,B_.pow,B_.powinv,B_.logb,B_.hyp,B_.geo]) L.push(mkK2(I,I,b,I));
-  for(const b of [B_.add,B_.sub,B_.mul,B_.div]){
-    L.push(mkK2(I,I,b,U_.ln));                               // ln(E₁∘E₂)
-    L.push(mkK2(I,I,b,U_.exp));                              // e^(E₁∘E₂)
-  }
-  for(const b of [B_.add,B_.sub]){
-    L.push(mkK2(I,I,b,U_.sqrt));                             // √(E₁±E₂)
-    L.push(mkK2(I,I,b,U_.sq));                               // (E₁±E₂)²
-    L.push(mkK2(I,I,b,U_.inv));                              // 1/(E₁±E₂)
-    L.push(mkK2(I,I,b,U_.cbrt));                             // (E₁±E₂)^(1/3)
-  }
-  for(const t of [U_.sin,U_.cos,U_.tan,U_.atan]) L.push(mkK2(I,I,B_.div,t)); // trig(E₁/E₂)
+  const L=[], I=0;
+  const k2=(u0,u1,b,outer)=>L.push({kind:"k2",ui:[UNI(u0),UNI(u1),0],b1:BNI(b),b2:0,outer:UNI(outer),sgn:1,leftHeavy:false});
+  const lin=(u0,u1,sgn)=>L.push({kind:"lin2",ui:[UNI(u0),UNI(u1),0],b1:0,b2:0,outer:0,sgn,leftHeavy:false});
+  lin("id","id",1); lin("id","id",-1); lin("inv","inv",1); lin("inv","inv",-1);
+  for(const b of ["mul","div","pow","powinv","logb","hyp","geo"]) k2("id","id",b,"id");
+  for(const b of ["add","sub","mul","div"]){ k2("id","id",b,"ln"); k2("id","id",b,"exp"); }
+  for(const b of ["add","sub"]){ k2("id","id",b,"sqrt"); k2("id","id",b,"sq"); k2("id","id",b,"inv"); k2("id","id",b,"cbrt"); }
+  for(const t of ["sin","cos","tan","atan"]) k2("id","id","div",t);
   return L;
 })();
-
-function pickLight(){ return Math.random()<0.55 ? R_UN[0] : pick(R_UN); }  // biais fort vers l'identité = formes simples
-function buildRandomForm(){
-  if(Math.random()<0.5) return CLASSICS[(Math.random()*CLASSICS.length)|0];  // 50 % : formes élégantes historiques
-  const roll=Math.random();
-  const u=[pickLight(),pickLight(),pickLight()], b1=pick(R_BIN), b2=pick(R_BIN);
-  const outer = Math.random()<0.15 ? pick(R_UN) : R_UN[0];
-  if(roll<0.15)
-    return {kind:"k1", u, outer,
-      display:"a·[ "+outer.l(u[0].l("E₁"))+" ]"};
-  if(roll<0.50){
-    const sgn=Math.random()<0.5?1:-1;
-    return {kind:"lin2", u, sgn,
-      display:"a·"+u[0].l("E₁")+(sgn>0?" + ":" − ")+"b·"+u[1].l("E₂")};
-  }
-  if(roll<0.85)
-    return {kind:"k2", u, b1, outer,
-      lab:(X,Y)=>outer.l(b1.l(u[0].l(X),u[1].l(Y))),
-      display:"a·[ "+outer.l(b1.l(u[0].l("E₁"),u[1].l("E₂")))+" ]"};
-  const leftHeavy=Math.random()<0.5;
-  const lab = leftHeavy
-    ? (X,Y,Z)=>outer.l(b1.l(b2.l(u[0].l(X),u[1].l(Y)),u[2].l(Z)))
-    : (X,Y,Z)=>outer.l(b1.l(u[0].l(X),b2.l(u[1].l(Y),u[2].l(Z))));
-  return {kind:"k3", u, b1, b2, outer, leftHeavy, lab,
-    display:"a·[ "+lab("E₁","E₂","E₃")+" ]"};
+function evalForm(F,x,y,z){
+  const u0=R_UN[F.ui[0]].f, u1=R_UN[F.ui[1]].f, u2=R_UN[F.ui[2]].f;
+  const b1=R_BIN[F.b1].f, b2=R_BIN[F.b2].f, o=R_UN[F.outer].f;
+  if(F.kind==="k1") return o(u0(x));
+  if(F.kind==="lin2") return NaN; // géré à part (double coefficient)
+  if(F.kind==="k2") return o(b1(u0(x),u1(y)));
+  return F.leftHeavy ? o(b1(b2(u0(x),u1(y)),u2(z))) : o(b1(u0(x),b2(u1(y),u2(z))));
+}
+function evalFormBig(F,B,x,y,z){
+  const u0=R_UN[F.ui[0]].g, u1=R_UN[F.ui[1]].g, u2=R_UN[F.ui[2]].g;
+  const b1=R_BIN[F.b1].g, b2=R_BIN[F.b2].g, o=R_UN[F.outer].g;
+  const N=v=>v===null?null:v;
+  try{
+    if(F.kind==="k1"){ const a=u0(B,x); return a===null?null:o(B,a); }
+    if(F.kind==="k2"){ const a=u0(B,x), b=u1(B,y); if(a===null||b===null)return null;
+      const c=b1(B,a,b); return c===null?null:o(B,c); }
+    if(F.kind==="k3"){ const a=u0(B,x), b=u1(B,y), c=u2(B,z); if(a===null||b===null||c===null)return null;
+      const m=F.leftHeavy? b1(B, b2(B,a,b)??0n, c) : b1(B, a, b2(B,b,c)??0n);
+      const inner=F.leftHeavy? b2(B,a,b) : b2(B,b,c); if(inner===null) return null;
+      const r=F.leftHeavy? b1(B,inner,c) : b1(B,a,inner); return r===null?null:o(B,r); }
+  }catch(e){ return null; }
+  return null;
+}
+function labelOfForm(F, lx, ly, lz){
+  const u0=R_UN[F.ui[0]].l, u1=R_UN[F.ui[1]].l, u2=R_UN[F.ui[2]].l;
+  const b1=R_BIN[F.b1].l, b2=R_BIN[F.b2].l, o=R_UN[F.outer].l;
+  if(F.kind==="k1") return o(u0(lx));
+  if(F.kind==="k2") return o(b1(u0(lx),u1(ly)));
+  if(F.kind==="k3") return F.leftHeavy? o(b1(b2(u0(lx),u1(ly)),u2(lz))) : o(b1(u0(lx),b2(u1(ly),u2(lz))));
+  return "";
+}
+function displayOfForm(F){
+  if(F.kind==="lin2") return "a·"+R_UN[F.ui[0]].l("E₁")+(F.sgn>0?" + ":" − ")+"b·"+R_UN[F.ui[1]].l("E₂");
+  const k=F.kind==="k1"?1:F.kind==="k2"?2:3;
+  return "a·[ "+labelOfForm(F,"E₁","E₂","E₃")+" ]";
 }
 
-function startRun(maxForms){
-  if(RUN.on){                                           // pause (pendant ou entre deux formes)
-    STOP=true;
-    if(!RUNNING) endRun(true); else setStatus("⏳ arrêt en fin de tranche…");
-    return;
+// ---------- cibles (entiers, fractions, constantes, valeur fixe) ----------
+function mkTargetCfg(){
+  const mode=el("targetMode").value, intMax=+el("intMax").value;
+  const raw=el("targetVal").value.trim().replace(",",".");
+  const fixed=raw===""?null:parseFloat(raw);
+  const consts=BASE.filter(c=>{const d=document.querySelector('.chip[data-k="'+c.k+'"]');return d&&d.classList.contains("on");})
+                   .map(c=>({v:c.v, sym:c.sym}));
+  return {mode, intMax, fixed:isFinite(fixed)?fixed:null, raw, consts};
+}
+
+// ---------- WORKER : source générée depuis les fonctions elles-mêmes ----------
+const WORKER_SRC=(function(){
+  const unf="["+R_UN.map(o=>o.f.toString()).join(",")+"]";
+  const bnf="["+R_BIN.map(o=>o.f.toString()).join(",")+"]";
+  return `"use strict";
+const UNF=${unf}, BNF=${bnf};
+function gcd(a,b){ while(b){ [a,b]=[b,a%b]; } return a; }
+function bestTarget(v, cfg){
+  if(cfg.fixed!==null) return {t:cfg.fixed, err:Math.abs(v-cfg.fixed), name:String(cfg.fixed)};
+  if(cfg.mode==="int"){ const n=Math.round(v); if(n===0||Math.abs(n)>cfg.intMax) return null;
+    return {t:n, err:Math.abs(v-n), name:String(n)}; }
+  if(cfg.mode==="const"){ let best=null;
+    for(const c of cfg.consts){ const e=Math.abs(v-c.v); if(!best||e<best.err) best={t:c.v,err:e,name:c.sym}; }
+    return best; }
+  let best=null;
+  for(let q=1;q<=12;q++){ const p=Math.round(v*q); if(p===0) continue;
+    if(q>1&&gcd(Math.abs(p),q)!==1) continue; if(q===1&&Math.abs(p)>cfg.intMax) continue;
+    const err=Math.abs(v-p/q); if(!best||err<best.err*0.999) best={t:p/q,err,name:q===1?String(p):(p+"/"+q)}; }
+  return best;
+}
+function evalF(F,x,y,z){
+  const u0=UNF[F.ui[0]],u1=UNF[F.ui[1]],u2=UNF[F.ui[2]],b1=BNF[F.b1],b2=BNF[F.b2],o=UNF[F.outer];
+  if(F.kind==="k1") return o(u0(x));
+  if(F.kind==="k2") return o(b1(u0(x),u1(y)));
+  return F.leftHeavy? o(b1(b2(u0(x),u1(y)),u2(z))) : o(b1(u0(x),b2(u1(y),u2(z))));
+}
+function consider(v, cfg, tol, out, ijkab){
+  if(!isFinite(v)) return;
+  v=Math.abs(v);
+  if(v<1e-4||v>1e6) return;
+  const hit=bestTarget(v,cfg); if(!hit) return;
+  const noise=Math.max(1e-12, v*3e-13);
+  if(hit.err<noise) return;
+  if(hit.t!==0 && hit.err/Math.abs(hit.t)<5e-13) return;
+  if(hit.err<tol) out.push({v, t:hit.t, name:hit.name, err:hit.err, x:ijkab[0], y:ijkab[1], z:ijkab[2], a:ijkab[3], b:ijkab[4]});
+  else if(cfg.fixed!==null){ if(!self.__miss||hit.err<self.__miss.err) self.__miss={v,err:hit.err,x:ijkab[0],y:ijkab[1],z:ijkab[2],a:ijkab[3],b:ijkab[4]}; }
+}
+self.onmessage=function(ev){
+  const {V,F,A,tol,cfg,seg,T,seed}=ev.data;
+  const N=V.length, out=[];
+  self.__miss=null;
+  let rng=seed>>>0;
+  const rnd=()=>{ rng^=rng<<13; rng^=rng>>>17; rng^=rng<<5; rng>>>=0; return rng/4294967296; };
+  if(F.kind==="k1"){
+    for(let i=seg[0];i<seg[1];i++){ const v=evalF(F,V[i]);
+      if(isFinite(v)) for(let a=1;a<=A;a++) consider(a*v,cfg,tol,out,[i,-1,-1,a,0]); }
+  } else if(F.kind==="lin2"){
+    const U0=new Float64Array(N),U1=new Float64Array(N);
+    for(let i=0;i<N;i++){ U0[i]=UNF[F.ui[0]](V[i]); U1[i]=UNF[F.ui[1]](V[i]); }
+    const A2=Math.min(A,16);
+    for(let t=seg[0];t<seg[1];t++){
+      let i,j;
+      if(T<0){ i=(t/N)|0; j=t%N; } else { i=(rnd()*N)|0; j=(rnd()*N)|0; }
+      if(i===j) continue;
+      const x=U0[i], y=U1[j]; if(!isFinite(x)||!isFinite(y)) continue;
+      for(let a=1;a<=A2;a++){ const ax=a*x;
+        for(let b=1;b<=A2;b++) consider(ax+F.sgn*b*y,cfg,tol,out,[i,j,-1,a,b]); }
+    }
+  } else if(F.kind==="k2"){
+    const U0=new Float64Array(N),U1=new Float64Array(N);
+    for(let i=0;i<N;i++){ U0[i]=UNF[F.ui[0]](V[i]); U1[i]=UNF[F.ui[1]](V[i]); }
+    const b1=BNF[F.b1], o=UNF[F.outer];
+    for(let i=seg[0];i<seg[1];i++){ const x=U0[i]; if(!isFinite(x)) continue;
+      for(let j=0;j<N;j++){ if(j===i) continue; const y=U1[j]; if(!isFinite(y)) continue;
+        const v=o(b1(x,y));
+        if(isFinite(v)) for(let a=1;a<=A;a++) consider(a*v,cfg,tol,out,[i,j,-1,a,0]); } }
+  } else {
+    const U0=new Float64Array(N),U1=new Float64Array(N),U2=new Float64Array(N);
+    for(let i=0;i<N;i++){ U0[i]=UNF[F.ui[0]](V[i]); U1[i]=UNF[F.ui[1]](V[i]); U2[i]=UNF[F.ui[2]](V[i]); }
+    const b1=BNF[F.b1], b2=BNF[F.b2], o=UNF[F.outer];
+    for(let t=seg[0];t<seg[1];t++){
+      const i=(rnd()*N)|0, j=(rnd()*N)|0, k=(rnd()*N)|0;
+      if(i===j||j===k||i===k) continue;
+      const x=U0[i], y=U1[j], z=U2[k]; if(!isFinite(x)||!isFinite(y)||!isFinite(z)) continue;
+      const v=F.leftHeavy? o(b1(b2(x,y),z)) : o(b1(x,b2(y,z)));
+      if(isFinite(v)) for(let a=1;a<=A;a++) consider(a*v,cfg,tol,out,[i,j,k,a,0]);
+    }
   }
+  self.postMessage({hits:out, miss:self.__miss});
+};`;
+})();
+let POOL=null;
+function getPool(){
+  if(POOL!==null) return POOL;
+  if(typeof Worker==="undefined"){ POOL=[]; return POOL; }
+  try{
+    const url=URL.createObjectURL(new Blob([WORKER_SRC],{type:"text/javascript"}));
+    const n=Math.min(4, (navigator.hardwareConcurrency||2));
+    POOL=Array.from({length:n},()=>new Worker(url));
+  }catch(e){ POOL=[]; }
+  return POOL;
+}
+
+// ---------- accepter un hit côté principal (dédup, label, élégance) ----------
+let cfgSprMax=500;
+function acceptHit(h, F, atoms){
+  const key=(h.t===0?h.v:h.v/h.t).toPrecision(12);
+  if(RUN.seen.has(key)) return; RUN.seen.add(key);
+  let label;
+  if(F.kind==="lin2"){
+    const bothLn=F.ui[0]===UNI("ln")&&F.ui[1]===UNI("ln");
+    if(bothLn){ const P=(n,X)=>n===1?X:"("+X+")^"+n;
+      label="ln("+P(h.a,mulL(atoms[h.x]))+(F.sgn>0?"·":"/")+P(h.b,mulL(atoms[h.y]))+")"; }
+    else label=coefL(h.a,R_UN[F.ui[0]].l(mulL(atoms[h.x])))+(F.sgn>0?" + ":" − ")+coefL(h.b,R_UN[F.ui[1]].l(mulL(atoms[h.y])));
+  } else {
+    label=coefL(h.a, labelOfForm(F, mulL(atoms[h.x]), h.y>=0?mulL(atoms[h.y]):"", h.z>=0?mulL(atoms[h.z]):""));
+  }
+  const elg=eleganceOf(label,h.err,h.t);
+  const spr=Math.max(0,-Math.log10(2*h.err*Math.max(1,cfgSprMax||500)));   // improbabilité de frôler UN entier ≤ intMax
+  RESULTS.push({f:label, v:h.v, t:h.t, name:h.name, err:h.err, elg, spr,
+                Fi:RUN.forms.length-1, xi:h.x, yi:h.y, zi:h.z, a:h.a, b:h.b});
+  if(RESULTS.length>50000) RESULTS.length=50000;
+}
+
+// ---------- boucle des formes : pool de workers, repli mono-thread ----------
+function startRun(maxForms, fixedOverride){
+  if(RUN.on){ STOP=true; if(!RUNNING) endRun(true); else setStatus("⏳ arrêt en fin de tranche…"); return; }
   if(RUNNING) return;
   STOP=false;
-  RUN.on=true; RUN.round=0; RUN.max=maxForms; RUN.seen=new Set();
-  RESULTS=[]; BESTMISS=null;
+  RUN.on=true; RUN.round=0; RUN.max=maxForms; RUN.seen=new Set(); RUN.forms=[]; RUN.exactKilled=0;
+  RUN.dynTol=null; RUN.dryStreak=0; RUN.lastCount=0;
+  RUN.fixedOverride = fixedOverride!==undefined ? fixedOverride : null;
+  RESULTS=[]; BESTMISS=null; HOFVIEW=false;
   el("go").textContent = maxForms>0 ? "⏸ Pause" : "Générer";
   el("goLong").textContent = maxForms===0 ? "⏸ Pause" : "Générer long ∞";
   (maxForms===0?el("goLong"):el("go")).classList.add("pause");
@@ -457,136 +799,343 @@ function endRun(paused){
   el("progress").style.display="none"; el("curForm").style.display="none";
   RESULTS.sort((x,y)=> y.elg - x.elg || x.err - y.err);
   render();
-  setStatus((paused?"Pause — ":"")+RESULTS.length+" trouvailles · "+RUN.round+" forme"+(RUN.round>1?"s":"")+" explorée"+(RUN.round>1?"s":""));
+  setStatus((paused?"Pause — ":"")+RESULTS.length+" trouvailles · "+RUN.round+" forme"+(RUN.round>1?"s":"")+(RUN.dynTol!==null?" · tol adaptée à "+RUN.dynTol.toExponential(0):"")
+            +(RUN.exactKilled?" · "+RUN.exactKilled+" identité(s) exacte(s) éliminée(s) 🔬":""));
+  verifyTop();
+  if(RUN.fixedOverride!==null) defiRecord(RUN.fixedOverride);
 }
-
+let CURATOMS=[], CURLEVEL=0, CURSEL=[];
 function nextForm(){
   if(!RUN.on || STOP || (RUN.max>0 && RUN.round>=RUN.max)){ endRun(STOP); return; }
-  const sel = BASE.filter(c=>{const d=document.querySelector('.chip[data-k="'+c.k+'"]');return d&&d.classList.contains("on");});
+  const sel=BASE.filter(c=>{const d=document.querySelector('.chip[data-k="'+c.k+'"]');return d&&d.classList.contains("on");});
   if(sel.length===0){ setStatus("Choisis au moins une constante."); endRun(false); return; }
   const level=+el("level").value;
-  const tol=Math.pow(10,-el("tol").value);
-  const mode=el("targetMode").value, intMax=+el("intMax").value;
-  const raw=el("targetVal").value.trim().replace(",",".");
-  const fixed = raw==="" ? null : parseFloat(raw);
-  if(raw!=="" && !isFinite(fixed)){ setStatus("Cible précise invalide."); endRun(false); return; }
+  const userTol=Math.pow(10,-el("tol").value);
+  const tol=RUN.dynTol!==null?RUN.dynTol:userTol;
+  const cfg=mkTargetCfg();
+  if(RUN.fixedOverride!==null) cfg.fixed=RUN.fixedOverride;
+  if(cfg.raw!=="" && cfg.fixed===null && RUN.fixedOverride===null){ setStatus("Cible précise invalide."); endRun(false); return; }
   saveSettings();
-
   const atoms=buildAtoms(sel, level);
-  const N=atoms.length;
-  const A=Math.min(30, +el("coefMax").value);
+  CURATOMS=atoms; CURLEVEL=level; CURSEL=sel; cfgSprMax=cfg.intMax;
+  const N=atoms.length, A=Math.min(30,+el("coefMax").value);
   const F=buildRandomForm();
-  RUN.round++;
-  el("curForm").textContent="Forme "+RUN.round+(RUN.max>0?"/"+RUN.max:"")+" · "+F.display;
-
+  RUN.forms.push(F); RUN.round++;
+  el("curForm").textContent="Forme "+RUN.round+(RUN.max>0?"/"+RUN.max:"")+" · "+displayOfForm(F)+"   [tol "+tol.toExponential(0).replace("e","·10^")+"]";
   RUNNING=true;
   const prog=el("progress"); prog.style.display="block";
   const bar=prog.querySelector(".bar");
-  const seen=RUN.seen;
-  const progress=(t,T)=>{
-    bar.style.width=(100*t/T).toFixed(1)+"%";
-    setStatus("forme "+RUN.round+(RUN.max>0?"/"+RUN.max:" ∞")+" · "+(100*t/T|0)+"% · "+RESULTS.length+" trouvailles");
-  };
-  const afterForm=()=>{
+  const V=new Float64Array(N); for(let i=0;i<N;i++) V[i]=atoms[i].v;
+  // découpage
+  let total, mkSeg;
+  if(F.kind==="k1"){ total=N; }
+  else if(F.kind==="lin2"){ const full=N*N<=40000; total=full?N*N:40000; F.__T=full?-1:total; }
+  else if(F.kind==="k2"){ total=N; }
+  else { total=Math.min(150000, N*N*8); }
+  const pool=getPool();
+  const afterAll=()=>{
     RESULTS.sort((x,y)=> y.elg - x.elg || x.err - y.err);
-    render();
-    RUNNING=false;
+    render(); RUNNING=false;
+    bar.style.width="100%";
+    // tolérance adaptative : trop de hits → resserrer ; disette → relâcher vers le réglage utilisateur
+    const gained=RESULTS.length-RUN.lastCount; RUN.lastCount=RESULTS.length;
+    if(gained>400) RUN.dynTol=Math.max(tol/10, 1e-12);
+    else if(gained===0 && ++RUN.dryStreak>=2){ RUN.dynTol=Math.min(userTol, tol*10); RUN.dryStreak=0; }
+    if(gained>0) RUN.dryStreak=0;
+    setStatus("forme "+RUN.round+(RUN.max>0?"/"+RUN.max:" ∞")+" · "+RESULTS.length+" trouvailles · tol "+((RUN.dynTol!==null?RUN.dynTol:userTol).toExponential(0)));
     setTimeout(nextForm, 25);
   };
-  // précalcul des unaires par atome : une évaluation au lieu d'une par combinaison
-  const U0=new Float64Array(N), U1=new Float64Array(N), U2=new Float64Array(N);
-  for(let i=0;i<N;i++){ const v=atoms[i].v; U0[i]=F.u[0].f(v); U1[i]=F.u[1].f(v); U2[i]=F.u[2].f(v); }
-
-  if(F.kind==="k1"){
-    for(let i=0;i<N;i++){
-      const v=F.outer.f(U0[i]);
-      if(isFinite(v)&&Math.abs(v)>1e-4){
-        const ii=i;
-        for(let a=1;a<=A;a++){ const aa=a;
-          tryHit(a*Math.abs(v), ()=>coefL(aa, F.outer.l(F.u[0].l(mulL(atoms[ii])))), 1, tol, mode, intMax, fixed, seen);
-        }
-      }
-    }
-    afterForm();
-  }
-  else if(F.kind==="lin2"){
-    const A2=Math.min(A,16);
-    const full=N*N<=40000, T=full?N*N:40000;
-    let t=0;
+  if(pool.length){
+    // parallèle : segments répartis sur le pool
+    const W=pool.length, segLen=Math.ceil(total/W);
+    let pending=W;
+    pool.forEach((w,wi)=>{
+      const seg=[wi*segLen, Math.min(total,(wi+1)*segLen)];
+      w.onmessage=ev=>{
+        for(const h of ev.data.hits) acceptHit(h, F, atoms);
+        const m=ev.data.miss;
+        if(m && cfg.fixed!==null && (!BESTMISS||m.err<BESTMISS.err))
+          BESTMISS={f:labelOfHitLike(F,atoms,m), v:m.v, err:m.err};
+        if(--pending===0){ if(STOP){endRun(true);} else afterAll(); }
+      };
+      w.postMessage({V, F:JSON.parse(JSON.stringify(F)), A, tol, cfg, seg, T:F.__T||0, seed:(Math.random()*2**31)|0});
+    });
+    setStatus("forme "+RUN.round+(RUN.max>0?"/"+RUN.max:" ∞")+" · "+W+" workers · "+RESULTS.length+" trouvailles");
+  } else {
+    // repli mono-thread par tranches
+    let t= F.kind==="lin2" && F.__T===-1 ? 0 : 0;
+    let idx=0;
     (function slice(){
       const dl=performance.now()+40;
-      while(t<T && performance.now()<dl){
-        const i=full?(t/N)|0:(Math.random()*N)|0, j=full?t%N:(Math.random()*N)|0;
-        t++;
-        if(i===j) continue;
-        const x=U0[i], y=U1[j];
-        if(!isFinite(x)||!isFinite(y)) continue;
-        for(let a=1;a<=A2;a++){ const ax=a*x, aa=a, ii=i, jj=j;
-          for(let b=1;b<=A2;b++){
-            const v=ax+F.sgn*b*y, bb=b;
-            if(Math.abs(v)>1e-4)
-              tryHit(Math.abs(v), ()=>{
-                const bothLn = F.u[0].l("x")==="ln(x)" && F.u[1].l("x")==="ln(x)";
-                if(bothLn){                                // a·ln X ± b·ln Y = ln(X^a · Y^b) ou ln(X^a / Y^b)
-                  const P=(n,X)=> n===1 ? X : "("+X+")^"+n;
-                  return "ln("+P(aa,mulL(atoms[ii]))+(F.sgn>0?"·":"/")+P(bb,mulL(atoms[jj]))+")";
-                }
-                return coefL(aa, F.u[0].l(mulL(atoms[ii])))+(F.sgn>0?" + ":" − ")+coefL(bb, F.u[1].l(mulL(atoms[jj])));
-              }, 1, tol, mode, intMax, fixed, seen);
-          }
-        }
+      const out=[];
+      const cons=(v,ijkab)=>{ // même filtre que le worker
+        if(!isFinite(v)) return; v=Math.abs(v);
+        if(v<1e-4||v>1e6) return;
+        const hit=bestTargetMain(v,cfg); if(!hit) return;
+        const noise=Math.max(1e-12,v*3e-13);
+        if(hit.err<noise) return;
+        if(hit.t!==0&&hit.err/Math.abs(hit.t)<5e-13) return;
+        if(hit.err<tol) acceptHit({v,t:hit.t,name:hit.name,err:hit.err,x:ijkab[0],y:ijkab[1],z:ijkab[2],a:ijkab[3],b:ijkab[4]},F,atoms);
+        else if(cfg.fixed!==null && (!BESTMISS||hit.err<BESTMISS.err))
+          BESTMISS={f:labelOfHitLike(F,atoms,{x:ijkab[0],y:ijkab[1],z:ijkab[2],a:ijkab[3],b:ijkab[4]}), v, err:hit.err};
+      };
+      while(idx<total && performance.now()<dl){
+        if(F.kind==="k1"){ const v=evalForm(F,V[idx]);
+          if(isFinite(v)) for(let a=1;a<=A;a++) cons(a*v,[idx,-1,-1,a,0]); idx++; }
+        else if(F.kind==="k2"){ const i=idx;
+          for(let j=0;j<N;j++){ if(j===i)continue; const v=evalForm(F,V[i],V[j]);
+            if(isFinite(v)) for(let a=1;a<=A;a++) cons(a*v,[i,j,-1,a,0]); } idx++; }
+        else if(F.kind==="lin2"){
+          const full=F.__T===-1;
+          const i=full?(idx/N)|0:(Math.random()*N)|0, j=full?idx%N:(Math.random()*N)|0; idx++;
+          if(i!==j){ const x=R_UN[F.ui[0]].f(V[i]), y=R_UN[F.ui[1]].f(V[j]);
+            if(isFinite(x)&&isFinite(y)){ const A2=Math.min(A,16);
+              for(let a=1;a<=A2;a++){ const ax=a*x; for(let b=1;b<=A2;b++) cons(ax+F.sgn*b*y,[i,j,-1,a,b]); } } } }
+        else { const i=(Math.random()*N)|0,j=(Math.random()*N)|0,k=(Math.random()*N)|0; idx++;
+          if(i!==j&&j!==k&&i!==k){ const v=evalForm(F,V[i],V[j],V[k]);
+            if(isFinite(v)) for(let a=1;a<=A;a++) cons(a*v,[i,j,k,a,0]); } }
       }
-      progress(t,T); if(STOP){endRun(true);return;}
-      if(t<T) setTimeout(slice,0); else afterForm();
-    })();
-  }
-  else if(F.kind==="k2"){
-    let i=0;
-    (function slice(){
-      const dl=performance.now()+40;
-      while(i<N && performance.now()<dl){
-        const x=U0[i];
-        if(isFinite(x)) for(let j=0;j<N;j++){
-          if(j===i) continue;
-          const y=U1[j]; if(!isFinite(y)) continue;
-          const v=F.outer.f(F.b1.f(x,y));
-          if(isFinite(v)&&Math.abs(v)>1e-4){
-            const ii=i, jj=j;
-            for(let a=1;a<=A;a++){ const aa=a;
-              tryHit(a*Math.abs(v), ()=>coefL(aa, F.lab(mulL(atoms[ii]),mulL(atoms[jj]))), 1, tol, mode, intMax, fixed, seen);
-            }
-          }
-        }
-        i++;
-      }
-      progress(i,N); if(STOP){endRun(true);return;}
-      if(i<N) setTimeout(slice,0); else afterForm();
-    })();
-  }
-  else { // k3 : triplets échantillonnés massivement
-    const T=Math.min(150000, N*N*8);
-    let t=0;
-    (function slice(){
-      const dl=performance.now()+40;
-      while(t<T && performance.now()<dl){
-        t++;
-        const i=(Math.random()*N)|0, j=(Math.random()*N)|0, k=(Math.random()*N)|0;
-        if(i===j||j===k||i===k) continue;
-        const x=U0[i], y=U1[j], z=U2[k];
-        if(!isFinite(x)||!isFinite(y)||!isFinite(z)) continue;
-        const v=F.leftHeavy ? F.outer.f(F.b1.f(F.b2.f(x,y),z)) : F.outer.f(F.b1.f(x,F.b2.f(y,z)));
-        if(isFinite(v)&&Math.abs(v)>1e-4){
-          const ii=i, jj=j, kk=k;
-          for(let a=1;a<=A;a++){ const aa=a;
-            tryHit(a*Math.abs(v), ()=>coefL(aa, F.lab(mulL(atoms[ii]),mulL(atoms[jj]),mulL(atoms[kk]))), 1, tol, mode, intMax, fixed, seen);
-          }
-        }
-      }
-      progress(t,T); if(STOP){endRun(true);return;}
-      if(t<T) setTimeout(slice,0); else afterForm();
+      bar.style.width=(100*idx/total).toFixed(1)+"%";
+      setStatus("forme "+RUN.round+(RUN.max>0?"/"+RUN.max:" ∞")+" · "+(100*idx/total|0)+"% · "+RESULTS.length+" trouvailles");
+      if(STOP){ endRun(true); return; }
+      if(idx<total) setTimeout(slice,0); else afterAll();
     })();
   }
 }
+function labelOfHitLike(F,atoms,h){
+  if(F.kind==="lin2") return coefL(h.a,R_UN[F.ui[0]].l(mulL(atoms[h.x])))+(F.sgn>0?" + ":" − ")+coefL(h.b,R_UN[F.ui[1]].l(mulL(atoms[h.y])));
+  return coefL(h.a, labelOfForm(F, mulL(atoms[h.x]), h.y>=0?mulL(atoms[h.y]):"", h.z>=0?mulL(atoms[h.z]):""));
+}
+function bestTargetMain(v,cfg){
+  if(cfg.fixed!==null) return {t:cfg.fixed, err:Math.abs(v-cfg.fixed), name:String(cfg.fixed)};
+  if(cfg.mode==="int"){ const n=Math.round(v); if(n===0||Math.abs(n)>cfg.intMax) return null;
+    return {t:n,err:Math.abs(v-n),name:String(n)}; }
+  if(cfg.mode==="const"){ let best=null;
+    for(const c of cfg.consts){ const e=Math.abs(v-c.v); if(!best||e<best.err) best={t:c.v,err:e,name:c.sym}; }
+    return best; }
+  let best=null;
+  for(let q=1;q<=12;q++){ const p=Math.round(v*q); if(p===0) continue;
+    if(q>1&&gcd(Math.abs(p),q)!==1) continue; if(q===1&&Math.abs(p)>cfg.intMax) continue;
+    const err=Math.abs(v-p/q); if(!best||err<best.err*0.999) best={t:p/q,err,name:q===1?String(p):(p+"/"+q)}; }
+  return best;
+}
+
+// ---------- v1.5 : vérification BIG (50 déc.) — identités exactes éliminées, erreur raffinée ----------
+let BIGATOMS=null, BIGKEY="";
+function bigConstOf(k){
+  const B=BIG;
+  return {pi:B.PI,e:B.E,sq2:B.SQRT2,sq3:B.SQRT3,phi:B.PHI,ln2:B.LN2,ln3:B.LN3,z3:B.ZETA3,gam:B.GAMMA,psi:B.PSI,dS:B.DS}[k];
+}
+function bigAtoms(sel,level){
+  const key=sel.map(c=>c.k).join(",")+"|"+level;
+  if(BIGKEY===key) return BIGATOMS;
+  const B=BIG, A=[];
+  const dbl=buildAtoms(sel,level);
+  // reconstruit en BIG en MIROIR STRICT de buildAtoms (mêmes pushes, mêmes filtres via la valeur double)
+  const push=(vb,vd)=>{ if(vb===null||!isFinite(vd)||Math.abs(vd)<1e-9||Math.abs(vd)>1e6) return false;
+    for(let q=1;q<=12;q++) if(Math.abs(vd*q-Math.round(vd*q))<1e-9) return false;
+    A.push(vb); return true; };
+  for(const c of sel){ const cb=bigConstOf(c.k), cd=c.v;
+    push(cb,cd);
+    if(level>=2){ push(B.mul(cb,cb),cd*cd); push(B.mul(B.mul(cb,cb),cb),cd**3);
+      push(B.sqrt(cb),Math.sqrt(cd));
+      if(cd>0&&Math.abs(cd-1)>1e-9&&!c.sym.startsWith("ln")) push(B.ln(cb),Math.log(cd));
+      push(B.exp(cb),Math.exp(cd));
+      push(B.exp(B.div(B.ln(cb),cb)),Math.pow(cd,1/cd)); } }
+  if(level>=3){ for(let i=0;i<sel.length;i++) for(let j=i+1;j<sel.length;j++){
+    const a=bigConstOf(sel[i].k), b=bigConstOf(sel[j].k), ad=sel[i].v, bd=sel[j].v;
+    push(a+b,ad+bd); push(a-b,ad-bd); push(B.mul(a,b),ad*bd); push(B.div(a,b),ad/bd); } }
+  if(level>=4){
+    for(const a of sel) for(const b of sel){ if(a===b) continue;
+      const ab=bigConstOf(a.k), bb=bigConstOf(b.k);
+      push(B.pow(ab,bb),Math.pow(a.v,b.v));
+      push(B.exp(B.div(B.ln(ab),bb)),Math.pow(a.v,1/b.v)); }
+    for(const n of INTS){ const nb=BigInt(n)*B.S;
+      for(const c of sel){ const cb=bigConstOf(c.k);
+        push(B.pow(nb,cb),Math.pow(n,c.v));
+        push(B.exp(B.div(B.ln(nb),cb)),Math.pow(n,1/c.v)); }
+      push(B.sqrt(nb),Math.sqrt(n)); push(B.ln(nb),Math.log(n)); } }
+  if(A.length!==dbl.length){ console.warn("bigAtoms désaligné",A.length,dbl.length); BIGKEY=""; return null; }
+  BIGATOMS=A; BIGKEY=key; return A;
+}
+function verifyHitBig(r){
+  const F=RUN.forms[r.Fi]; if(!F) return null;
+  const BA=bigAtoms(CURSEL,CURLEVEL); if(!BA) return null;
+  const B=BIG;
+  let vb;
+  if(F.kind==="lin2"){
+    const x=R_UN[F.ui[0]].g(B,BA[r.xi]), y=R_UN[F.ui[1]].g(B,BA[r.yi]);
+    if(x===null||y===null) return null;
+    vb=BigInt(r.a)*x + BigInt(F.sgn)*BigInt(r.b)*y;
+  } else {
+    const e=evalFormBig(F,B,BA[r.xi], r.yi>=0?BA[r.yi]:0n, r.zi>=0?BA[r.zi]:0n);
+    if(e===null) return null;
+    vb=BigInt(r.a)*e;
+  }
+  vb=B.abs(vb);
+  // cible en BIG : fraction p/q exacte ou constante
+  let tb;
+  if(typeof r.t==="number" && isFinite(r.t)){
+    // retrouver p/q depuis name
+    if(r.name.includes("/")){ const [p,q]=r.name.split("/").map(s=>BigInt(s)); tb=B.idiv(p*B.S,q); }
+    else if(/^-?\d+$/.test(r.name)) tb=BigInt(r.name)*B.S;
+    else { const c=BASE.find(c=>c.sym===r.name); tb=c?bigConstOf(c.k):B.fromNum(r.t); }
+  } else tb=B.fromNum(r.t);
+  const errB=B.abs(vb-B.abs(tb));
+  return {errB, exact: errB < 10n**8n};   // < 10⁻³² : identité exacte
+}
+function verifyTop(){
+  let killed=0, n=0;
+  for(let i=0;i<RESULTS.length && n<60;i++){          // du podium vers le bas
+    const r=RESULTS[i]; if(r.errBig!==undefined) continue;
+    n++;
+    const v=verifyHitBig(r);
+    if(!v){ r.errBig=null; continue; }
+    if(v.exact){ RESULTS.splice(i,1); i--; killed++; continue; }
+    r.errBig=BIG.toStr(v.errB,32).replace(/^0\.0*(?=\d)/,m=>"0."+"0".repeat(m.length-2));
+    r.errBigE=(function(s){ const m=BIG.toStr(v.errB,38).match(/^0\.(0*)(\d)/); return m? m[2]+"e-"+(m[1].length+1) : BIG.toNum(v.errB).toExponential(1); })();
+    // A · certification : PSLQ sur {1, atomes constitutifs} — aucune relation = coïncidence certifiée
+    if(i<20 && r.pslq===undefined){
+      const BA=bigAtoms(CURSEL,CURLEVEL);
+      if(BA){
+        const idx=[...new Set([r.xi,r.yi,r.zi].filter(k=>k>=0))];
+        if(idx.length>=1 && idx.length<=4){
+          const vec=[BIG.S, ...idx.map(k=>BA[k])];
+          const rel=PSLQ(BIG, vec, 500, 26, 10n**10n);
+          r.pslq = rel ? "lié" : "certifié";
+        }
+      }
+    }
+  }
+  if(killed){ RUN.exactKilled+=killed; render(); }
+  else if(n) render();
+}
+
+// ---------- v1.1 : Panthéon (Hall of Fame) ----------
+function hofList(){ try{ return JSON.parse(localStorage.getItem("afg_hof")||"[]"); }catch(e){ return []; } }
+function hofSave(l){ localStorage.setItem("afg_hof",JSON.stringify(l.slice(0,500))); updateHofBtn(); }
+function hofHas(f){ return hofList().some(h=>h.f===f); }
+function hofToggle(r){
+  const l=hofList();
+  const i=l.findIndex(h=>h.f===r.f);
+  if(i>=0) l.splice(i,1);
+  else l.unshift({f:r.f, name:r.name, v:r.v, err:r.err, elg:r.elg, errBigE:r.errBigE||null, date:new Date().toISOString().slice(0,10)});
+  hofSave(l);
+}
+function updateHofBtn(){ const b=el("hofBtn"); if(b) b.textContent="★ Panthéon ("+hofList().length+")"; }
+
+// ---------- v1.2 : partage URL + export PNG ----------
+function shareHit(r){
+  const payload=btoa(unescape(encodeURIComponent(JSON.stringify({f:r.f,name:r.name,v:r.v,err:r.err,elg:r.elg}))));
+  const url=location.href.split("#")[0]+"#f="+payload;
+  copyText(url, null);
+  setStatus("lien copié : "+url.slice(0,60)+"…");
+}
+function loadShared(){
+  const m=location.hash.match(/^#f=(.+)$/); if(!m) return;
+  try{
+    const r=JSON.parse(decodeURIComponent(escape(atob(m[1]))));
+    const d=document.createElement("div"); d.id="sharedBanner";
+    d.innerHTML='<span class="ktx"></span><span class="meta"></span><button>✕</button>';
+    document.querySelector(".wrap").insertBefore(d, document.querySelector(".cols"));
+    d.querySelector(".meta").textContent=" — partagée · erreur "+Number(r.err).toExponential(1)+" · élégance "+(+r.elg).toFixed(1);
+    d.querySelector("button").onclick=()=>d.remove();
+    try{ katex.render(toTex(r.f)+" \\approx "+r.name, d.querySelector(".ktx"), {throwOnError:false}); }
+    catch(e){ d.querySelector(".ktx").textContent=r.f+" ≈ "+r.name; }
+  }catch(e){}
+}
+function pngHit(r){
+  const c=document.createElement("canvas"); c.width=1200; c.height=300;
+  const g=c.getContext("2d");
+  g.fillStyle="#1b2430"; g.fillRect(0,0,1200,300);
+  g.fillStyle="#e9e4d6"; g.font="42px Georgia"; g.textAlign="center";
+  g.fillText(r.f+" ≈ "+r.name, 600, 130, 1140);
+  g.fillStyle="#9aa7b8"; g.font="22px Consolas,monospace";
+  g.fillText("= "+r.v.toPrecision(14)+"   ·   erreur "+r.err.toExponential(2)+"   ·   élégance "+r.elg.toFixed(1), 600, 190, 1140);
+  g.fillStyle="#f0b429"; g.font="18px Georgia";
+  g.fillText("ApproximativeFormulasGenerator", 600, 262);
+  const a=document.createElement("a");
+  a.href=c.toDataURL("image/png"); a.download="formule.png"; a.click();
+}
+
+// ---------- v2.0 : panneau PSLQ ----------
+function pslqItems(){
+  const B=BIG;
+  return [
+    {sym:"1", v:B.S},{sym:"π", v:B.PI},{sym:"π²", v:B.mul(B.PI,B.PI)},{sym:"e", v:B.E},
+    {sym:"e²", v:B.mul(B.E,B.E)},{sym:"√2", v:B.SQRT2},{sym:"√3", v:B.SQRT3},{sym:"√5", v:B.SQRT5},
+    {sym:"φ", v:B.PHI},{sym:"φ²", v:B.mul(B.PHI,B.PHI)},{sym:"ln2", v:B.LN2},{sym:"ln3", v:B.LN3},
+    {sym:"ln5", v:B.ln(5n*B.S)},{sym:"ζ(3)", v:B.ZETA3},{sym:"γ", v:B.GAMMA},{sym:"ψ", v:B.PSI},
+    {sym:"ψ²", v:B.mul(B.PSI,B.PSI)},{sym:"ψ³", v:B.mul(B.mul(B.PSI,B.PSI),B.PSI)},
+    {sym:"δs", v:B.DS},{sym:"e^π", v:B.exp(B.PI)},{sym:"π^e", v:B.pow(B.PI,B.E)},{sym:"ln(π)", v:B.ln(B.PI)}
+  ];
+}
+function runPSLQ(){
+  const sel=[...document.querySelectorAll("#pslqList input:checked")].map(i=>+i.value);
+  const out=el("pslqOut");
+  if(sel.length<2||sel.length>6){ out.textContent="Choisis 2 à 6 termes."; return; }
+  const items=pslqItems();
+  out.textContent="PSLQ en cours…";
+  setTimeout(()=>{
+    const xs=sel.map(i=>items[i].v);
+    const r=PSLQ(BIG, xs);
+    if(!r){ out.textContent="Aucune relation entière (coefficients ≤ 10¹²) entre : "+sel.map(i=>items[i].sym).join(", ")+". Indépendance probable."; return; }
+    const terms=r.rel.map((c,i)=>({c,sym:items[sel[i]].sym})).filter(t=>t.c!==0n);
+    const lhs=terms.filter(t=>t.c>0n).map(t=>(t.c===1n?"":t.c+"·")+t.sym).join(" + ")||"0";
+    const rhs=terms.filter(t=>t.c<0n).map(t=>((-t.c)===1n?"":(-t.c)+"·")+t.sym).join(" + ")||"0";
+    out.innerHTML="Relation exacte trouvée : <b>"+lhs+" = "+rhs+"</b> (résidu "+r.residual.slice(0,10)+"…, "+r.iters+" itérations)";
+  },30);
+}
+
+// ---------- v2.2 : formes proposées par l'IA ----------
+async function aiForms(){
+  const btn=el("aiFormsBtn"); btn.disabled=true; btn.textContent="✨…";
+  const uns=R_UN.map(o=>o.nm).join(", "), bns=R_BIN.map(o=>o.nm).join(", ");
+  const best=RESULTS.slice(0,5).map(r=>r.f+" ≈ "+r.name).join(" ; ")||"(aucun encore)";
+  const prompt="Tu aides un chercheur de quasi-identités numériques (formules ≈ entier). Opérations unaires disponibles : "
+    +uns+". Binaires : "+bns+".\nMeilleurs résultats actuels : "+best
+    +"\nPropose 5 gabarits de formes prometteuses et ÉLÉGANTES au format JSON STRICT (aucun texte autour) : "
+    +'[{"kind":"k2","u":["id","ln"],"b1":"add","outer":"sqrt"},{"kind":"k3","u":["id","id","sq"],"b1":"add","b2":"div","outer":"id","leftHeavy":true},{"kind":"lin2","u":["id","inv"],"sgn":-1}]'
+    +"\nkind ∈ {k1,k2,k3,lin2}. Varie les structures, privilégie la simplicité.";
+  try{
+    const resp=await aiFetch({model:"claude-sonnet-4-6",max_tokens:800,messages:[{role:"user",content:prompt}]});
+    if(!resp.ok) throw new Error("HTTP "+resp.status);
+    const data=await resp.json();
+    const txt=(data.content||[]).map(c=>c.text||"").join("").replace(/```json|```/g,"").trim();
+    const arr=JSON.parse(txt);
+    let added=0;
+    for(const o of arr){
+      const F={kind:o.kind, ui:[UNI(o.u&&o.u[0]||"id"),UNI(o.u&&o.u[1]||"id"),UNI(o.u&&o.u[2]||"id")],
+               b1:Math.max(0,BNI(o.b1||"add")), b2:Math.max(0,BNI(o.b2||"add")),
+               outer:Math.max(0,UNI(o.outer||"id")), sgn:o.sgn===-1?-1:1, leftHeavy:!!o.leftHeavy};
+      if(F.ui.every(i=>i>=0) && ["k1","k2","k3","lin2"].includes(F.kind)){ AIQUEUE.push(F); added++; }
+    }
+    setStatus("✨ "+added+" formes IA en file — lance Générer");
+  }catch(e){ setStatus("✨ IA indisponible ici ("+e.message+")"); }
+  btn.disabled=false; btn.textContent="✨ formes IA";
+}
+
+// ---------- v3.2 : mode défi ----------
+function startDefi(){
+  const raw=window.prompt("Cible du défi (ex : 2026) :","2026");
+  if(raw===null) return;
+  const t=parseFloat(raw.replace(",","."));
+  if(!isFinite(t)){ setStatus("Cible invalide."); return; }
+  startRun(15, t);
+}
+function defiRecord(target){
+  let db; try{ db=JSON.parse(localStorage.getItem("afg_defi")||"{}"); }catch(e){ db={}; }
+  const best=RESULTS[0];
+  if(best){
+    const prev=db[target];
+    if(!prev || best.elg>prev.elg){
+      db[target]={f:best.f, elg:best.elg, err:best.err, date:new Date().toISOString().slice(0,10)};
+      localStorage.setItem("afg_defi",JSON.stringify(db));
+      setStatus("🎯 Défi "+target+" — NOUVEAU RECORD d'élégance "+best.elg.toFixed(1)+" : "+best.f);
+    } else setStatus("🎯 Défi "+target+" — record à battre : "+prev.elg.toFixed(1)+" ("+prev.f+")");
+  } else setStatus("🎯 Défi "+target+" — aucune trouvaille ; élargis la tolérance.");
+}
+// ================== FIN MOTEUR v3.2 ==================
 
 function mulL(atom){ return atom.composite ? "("+atom.label+")" : atom.label; }
 
@@ -616,25 +1165,6 @@ function eleganceOf(label, err, t){
   return digits - 0.4*complexity(label);
 }
 
-function tryHit(v, label, nTerms, tol, mode, intMax, fixed, seen, a,A1,op,b,A2){
-  if(!isFinite(v) || Math.abs(v)<1e-4) return;          // valeur écrasée vers 0 (ex: e^(−30)) = fausse égalité
-  const hit=bestTarget(v, mode, 12, intMax, fixed);
-  if(!hit) return;
-  if(hit.t!==0 && hit.err/Math.abs(hit.t) < 5e-13) return;  // identité mathématique déguisée (précision machine)
-  const noise=Math.max(1e-12, Math.abs(v)*3e-13);   // bruit flottant proportionnel à la magnitude
-  if(fixed!==null && hit.err>noise && (!BESTMISS || hit.err<BESTMISS.err)){
-    BESTMISS={f: typeof label==="function" ? label() : label, v, err:hit.err};
-  }
-  if(hit.err>=tol || hit.err<noise) return;         // ni raté, ni identité exacte / artefact flottant
-  if(nTerms===2) label=termLabel(a,A1)+" "+op+" "+termLabel(b,A2);
-  const key=(hit.t===0 ? v : v/hit.t).toPrecision(12);  // invariant par multiple : 2·X≈2n a le même ratio que X≈n
-  if(seen.has(key)) return;
-  seen.add(key);
-  if(typeof label==="function") label=label();          // label construit seulement en cas de hit avéré
-  const elg=eleganceOf(label, hit.err, hit.t);
-  RESULTS.push({f:label, v, t:hit.t, name:hit.name, err:hit.err, elg});
-  if(RESULTS.length>50000) RESULTS.length=50000;      // garde-fou mémoire
-}
 
 // ---------- rendu ----------
 const MAXROWS=400;
@@ -658,8 +1188,8 @@ function ensureKatex(){                      // KaTeX pas encore là : attendre,
 }
 function render(){
   const tb=el("results"); tb.innerHTML="";
-  el("count").textContent = RESULTS.length ? "— "+Math.min(RESULTS.length,MAXROWS)+" affichées sur "+RESULTS.length : "";
-  if(!RESULTS.length){
+  el("count").textContent = HOFVIEW ? "— Panthéon" : (RESULTS.length ? "— "+Math.min(RESULTS.length,MAXROWS)+" affichées sur "+RESULTS.length : "");
+  if(!HOFVIEW && !RESULTS.length){
     let msg="Rien dans la tolérance. Élargis-la ou monte les coefficients.";
     if(BESTMISS){
       msg+="<br>Tir le plus proche : <span class='ktx miss'></span><span class='formula ascii'>"+esc(BESTMISS.f)+"</span> = "+BESTMISS.v.toFixed(8)+" (écart "+BESTMISS.err.toExponential(2)+")";
@@ -673,26 +1203,36 @@ function render(){
     return;
   }
   const frag=document.createDocumentFragment();
-  for(const r of RESULTS.slice(0,MAXROWS)){
-    const digits=Math.max(0,Math.min(10,Math.floor(-Math.log10(r.err))));
+  const LIST = HOFVIEW ? hofList() : RESULTS.slice(0,MAXROWS);
+  for(const r of LIST){
     const tex=toTex(r.f)+" \\approx "+(r.name.includes("/")?"\\frac{"+r.name.split("/")[0]+"}{"+r.name.split("/")[1]+"}":r.name);
+    const starred=hofHas(r.f);
     const tr=document.createElement("tr");
     tr.innerHTML =
       '<td class="formula"><span class="ktx"></span><span class="ascii">'+esc(r.f)+' ≈ <span class="tgt">'+esc(r.name)+'</span></span>'+
+        (r.errBigE?'<span class="vbadge" title="Erreur re-calculée en 40 décimales">🔬 '+r.errBigE+'</span>':'')+
+        (r.pslq==="certifié"?'<span class="vbadge cert" title="PSLQ : aucune relation entière entre les constituants — coïncidence garantie">✔ certifiée</span>':
+         r.pslq==="lié"?'<span class="vbadge warn" title="PSLQ : les constituants sont liés par une relation entière exacte">⚠ atomes liés</span>':'')+
         '<div class="tex" title="Cliquer pour copier le LaTeX">'+esc(tex)+'</div></td>'+
-      '<td class="err hide-m">'+r.v.toFixed(10)+'</td>'+
-      '<td class="err">'+r.err.toExponential(1)+'</td>'+
-      '<td><span class="elg">'+r.elg.toFixed(1)+'</span> <span class="digits hide-m">'+bars(Math.max(0,Math.min(10,Math.round(r.elg))))+'</span></td>'+
-      '<td class="actions"><button class="copy" title="Copier la formule">copier</button> <button class="ia" title="Analyse IA : réécriture élégante et commentaire">✨</button></td>';
+      '<td class="err hide-m">'+Number(r.v).toFixed(10)+'</td>'+
+      '<td class="err">'+Number(r.err).toExponential(1)+'</td>'+
+      '<td><span class="elg" title="élégance '+Number(r.elg).toFixed(1)+' · surprise '+Number(r.spr||0).toFixed(1)+'">'+Number(r.elg).toFixed(1)+'</span> <span class="digits hide-m">'+bars(Math.max(0,Math.min(10,Math.round(r.elg))))+'</span></td>'+
+      '<td class="actions"><button class="copy" title="Copier la formule">copier</button>'+
+        ' <button class="star" title="Panthéon">'+(starred?"★":"☆")+'</button>'+
+        ' <button class="share" title="Copier un lien de partage">🔗</button>'+
+        ' <button class="png" title="Exporter en image PNG">🖼</button>'+
+        ' <button class="ia" title="Analyse IA">✨</button></td>';
     if(window.katex){
-      try{
-        katex.render(tex, tr.querySelector(".ktx"), {throwOnError:false});
+      try{ katex.render(tex, tr.querySelector(".ktx"), {throwOnError:false});
         tr.querySelector(".ascii").style.display="none";
       }catch(e){ tr.querySelector(".ktx").style.display="none"; }
     } else { tr.querySelector(".ktx").style.display="none"; ensureKatex(); }
     tr.querySelector(".copy").onclick=e=>copyText(r.f+" ≈ "+r.name, e.target);
-    tr.querySelector(".tex").onclick=e=>{ copyText(tex, null); e.target.classList.add("copied"); setTimeout(()=>e.target.classList.remove("copied"),600); };
+    tr.querySelector(".star").onclick=e=>{ hofToggle(r); e.target.textContent=hofHas(r.f)?"★":"☆"; if(HOFVIEW) render(); };
+    tr.querySelector(".share").onclick=()=>shareHit(r);
+    tr.querySelector(".png").onclick=()=>pngHit(r);
     tr.querySelector(".ia").onclick=()=>aiAnalyze(r, tr);
+    tr.querySelector(".tex").onclick=e=>{ copyText(tex, null); e.target.classList.add("copied"); setTimeout(()=>e.target.classList.remove("copied"),600); };
     frag.appendChild(tr);
   }
   tb.appendChild(frag);
@@ -739,6 +1279,15 @@ function manualCopyBar(t){
 }
 
 // ---------- analyse IA d'une formule (Claude) ----------
+function aiCfgLoad(){ try{ return JSON.parse(localStorage.getItem("afg_ai")||"{}"); }catch(e){ return {}; } }
+function aiCfgSave(){ localStorage.setItem("afg_ai", JSON.stringify({key:el("aiKey").value.trim(), relay:el("aiRelay").value.trim()})); }
+async function aiFetch(body){
+  const cfg=aiCfgLoad();
+  if(cfg.relay) return fetch(cfg.relay,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const headers={"Content-Type":"application/json"};
+  if(cfg.key){ headers["x-api-key"]=cfg.key; headers["anthropic-version"]="2023-06-01"; headers["anthropic-dangerous-direct-browser-access"]="true"; }
+  return fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers,body:JSON.stringify(body)});
+}
 async function aiAnalyze(r, tr){
   let row=tr.nextSibling;
   if(row && row.classList && row.classList.contains("iaRow")){ row.remove(); return; }  // repli si déjà ouvert
@@ -752,11 +1301,8 @@ async function aiAnalyze(r, tr){
     +"2) En une phrase : coïncidence numérique probable, ou trace d'une structure mathématique connue ?\n"
     +"Réponds en français, très concis (4 lignes max), termine par la meilleure écriture en LaTeX entre $...$.";
   try{
-    const resp=await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-6", max_tokens:1000,
-        messages:[{role:"user",content:prompt}]})
-    });
+    const resp=await aiFetch({model:"claude-sonnet-4-6", max_tokens:1000,
+        messages:[{role:"user",content:prompt}]});
     if(!resp.ok) throw new Error("HTTP "+resp.status);
     const data=await resp.json();
     const txt=(data.content||[]).map(c=>c.text||"").join("\n").trim();
@@ -778,7 +1324,7 @@ async function aiAnalyze(r, tr){
 }
 
 function exportTxt(){
-  if(!RESULTS.length){ setStatus("Rien à exporter."); return; }
+  if(!HOFVIEW && !RESULTS.length){ setStatus("Rien à exporter."); return; }
   const lines=RESULTS.map(r=>r.f+" ≈ "+r.name+"\t"+r.v.toPrecision(15)+"\terr "+r.err.toExponential(3)+"\t"+toTex(r.f)+" \\approx "+r.name);
   const blob=new Blob([lines.join("\n")],{type:"text/plain;charset=utf-8"});
   const a=document.createElement("a");
@@ -814,15 +1360,68 @@ function loadSettings(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)); }
 function updateTolLbl(){ el("tolLbl").textContent="10⁻"+"³⁴⁵⁶⁷⁸"[el("tol").value-3]; }
 
 el("tol").addEventListener("input",()=>{ updateTolLbl(); saveSettings(); });
-el("go").onclick=()=>startRun(8);        // 8 formes aleatoires puis stop
-el("goLong").onclick=()=>startRun(0);    // sans fin, jusqu’a Pause
+el("go").onclick=()=>startRun(8);
+el("goLong").onclick=()=>startRun(0);
+el("defiBtn").onclick=startDefi;
+el("aiFormsBtn").onclick=aiForms;
+el("hofBtn").onclick=()=>{ HOFVIEW=!HOFVIEW; render(); };
+el("pslqRun").onclick=runPSLQ;
+(function(){ // liste PSLQ
+  const box=el("pslqList");
+  pslqItems().forEach((it,i)=>{
+    const lb=document.createElement("label");
+    lb.innerHTML='<input type="checkbox" value="'+i+'"> '+it.sym;
+    box.appendChild(lb);
+  });
+})();
+updateHofBtn();
+loadShared();
+(function(){ const cfg=aiCfgLoad(); el("aiKey").value=cfg.key||""; el("aiRelay").value=cfg.relay||"";
+  el("aiKey").onchange=aiCfgSave; el("aiRelay").onchange=aiCfgSave; })();
+el("hofExp").onclick=()=>{
+  const blob=new Blob([JSON.stringify(hofList(),null,1)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="pantheon_afg.json"; a.click();
+};
+el("hofImp").onclick=()=>{
+  const inp=document.createElement("input"); inp.type="file"; inp.accept=".json";
+  inp.onchange=()=>{ const f=inp.files[0]; if(!f) return;
+    const rd=new FileReader();
+    rd.onload=()=>{ try{
+      const arr=JSON.parse(rd.result);
+      const cur=hofList(); let n=0;
+      for(const it of arr) if(it&&it.f&&!cur.some(c=>c.f===it.f)){ cur.push(it); n++; }
+      hofSave(cur); if(HOFVIEW) render();
+      setStatus(n+" formule(s) importée(s) au Panthéon.");
+    }catch(e){ setStatus("Import impossible : "+e.message); } };
+    rd.readAsText(f); };
+  inp.click();
+};
+el("printBtn").onclick=()=>{
+  const l=hofList();
+  if(!l.length){ setStatus("Panthéon vide — épingle des formules avec ★ d'abord."); return; }
+  let sheet=el("printSheet");
+  if(sheet) sheet.remove();
+  sheet=document.createElement("div"); sheet.id="printSheet";
+  sheet.innerHTML="<h1>Le bestiaire des coïncidences</h1><p class='sub'>ApproximativeFormulasGenerator — à vérifier à la calculatrice !</p>";
+  l.forEach((r,i)=>{
+    const d=document.createElement("div"); d.className="pItem";
+    const k=document.createElement("span");
+    try{ katex.render(toTex(r.f)+" \\approx\\; ?", k, {throwOnError:false}); }catch(e){ k.textContent=r.f+" ≈ ?"; }
+    d.appendChild(document.createTextNode((i+1)+".  "));
+    d.appendChild(k);
+    d.insertAdjacentHTML("beforeend", "<span class='dots'> valeur : ______________  erreur : ______________</span>");
+    sheet.appendChild(d);
+  });
+  document.body.appendChild(sheet);
+  window.print();
+};
 el("exportBtn").onclick=exportTxt;
 initChips();
 (function(){ // affichage informatif des formes classiques
   const box=el("classicList");
   const seen=new Set();
   for(const F of CLASSICS){
-    const d=F.display.replace(/^a·\[ /,"a·").replace(/ \]$/,"");
+    const d=displayOfForm(F).replace(/^a·\[ /,"a·").replace(/ \]$/,"");
     if(seen.has(d)) continue; seen.add(d);
     const c=document.createElement("div");
     c.className="chip passive"; c.textContent=d;
@@ -841,4 +1440,3 @@ initChips();
 </script>
 </body>
 </html>
-
