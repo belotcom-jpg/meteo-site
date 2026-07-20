@@ -1,10 +1,10 @@
 <!doctype html>
-<!-- ClassroomHGF — V1.0 (fork ClassroomPDC V2.6, histoire-géo-français lycée technologique) (pages + widgets) -->
+<!-- ClassroomHGF — V1.1 (fork ClassroomPDC V2.6, histoire-géo-français lycée technologique) (pages + widgets) -->
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ClassroomHGF · V1.0</title>
+<title>ClassroomHGF · V1.1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hanken+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -1059,28 +1059,19 @@
 
   @media (prefers-reduced-motion:reduce){ .seat,.seat.bp,.seat.bn,.seat.picked,.pw.editing .seat,.t.done{animation:none;transition:none} }
 
-  /* --- widget Comparateur de cartes --- */
-  .cw{position:absolute;inset:0;display:flex;flex-direction:column;background:#0b1020}
-  .cw-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 8px;background:rgba(15,20,38,.94);border-bottom:1px solid rgba(255,255,255,.08);font-size:.82rem;color:#e8ecf6}
-  .cw-bar select,.cw-bar input[type=range]{font-family:inherit}
-  .cw-bar select{background:#141a30;color:#e8ecf6;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:3px 6px;font-size:.8rem}
-  .cw-seg{display:inline-flex;border:1px solid rgba(255,255,255,.18);border-radius:8px;overflow:hidden}
-  .cw-seg button{background:#141a30;color:#c7cfe2;border:0;padding:3px 9px;font:inherit;font-size:.8rem;cursor:pointer}
-  .cw-seg button.on{background:#3b6cf6;color:#fff}
-  .cw-lab{opacity:.7;margin-right:2px}
-  .cw-map{position:relative;flex:1;min-height:0}
-  .cw-op{width:120px;vertical-align:middle}
-  .cw-note{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;color:#cfd6e8;font-size:.9rem;padding:16px;background:#0b1020}
-  .cw-divider{position:absolute;top:0;bottom:0;width:3px;margin-left:-1.5px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.35);cursor:ew-resize;z-index:500}
-  .cw-divider::after{content:"⇔";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:30px;height:30px;line-height:30px;text-align:center;background:#fff;color:#111;border-radius:50%;font-size:15px;box-shadow:0 1px 4px rgba(0,0,0,.4)}
-  .cw-map .leaflet-container{background:#0b1020;font-family:inherit}
+  /* --- widget Comparateur de cartes (Multimaps) --- */
+  .cw{position:absolute;inset:0;background:#0b1020}
+  .cw-frame{position:absolute;inset:0}
+  .cw-frame iframe{width:100%;height:100%;border:0;display:block;background:#fff}
+  .cw-fallback{display:none;position:absolute;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px;color:#e8ecf6;background:#0b1020;font-size:.9rem}
+  .cw-fallback span{opacity:.75;font-size:.82rem;display:block;margin-top:4px}
 
 </style>
 </head>
 <body>
   <div class="app">
     <nav class="tabs" id="tabs" aria-label="Pages">
-      <span class="brand">ClassroomHGF <span class="ver">V1.0</span></span>
+      <span class="brand">ClassroomHGF <span class="ver">V1.1</span></span>
     </nav>
     <div class="toolbar">
       <button class="btn primary" id="addW">+ Widget</button>
@@ -1150,6 +1141,7 @@
         <button data-type="tableur"><span>▦</span> Tableur</button>
         <button data-type="embed"><span>🌐</span> Site web (intégrer)</button>
         <button data-type="carto"><span>🗺️</span> Comparateur de cartes</button>
+        <button data-type="mmaps"><span>🌍</span> Multimaps</button>
         <button data-type="video"><span>▶</span> Vidéo YouTube</button>
         <button data-type="image"><span>🖼️</span> Image / GIF</button>
         <button data-type="qr"><span>🔳</span> QR code</button>
@@ -1176,7 +1168,7 @@
   <div class="modal-bg" id="helpBg" hidden>
     <div class="modal help" role="dialog" aria-modal="true">
       <div class="help-head">
-        <h3>ClassroomHGF — aide <span class="help-ver">V1.0</span></h3>
+        <h3>ClassroomHGF — aide <span class="help-ver">V1.1</span></h3>
         <div class="help-tabs">
           <button class="help-tab on" data-view="over" type="button">Vue d'ensemble</button>
           <button class="help-tab" data-view="detail" type="button">Vue détaillée</button>
@@ -1546,7 +1538,8 @@
   const chronoW=(x,y)=>({id:uid(),type:"chrono",x:x==null?100:x,y:y==null?100:y,w:260,h:180});
   const calW=(x,y)=>({id:uid(),type:"calendar",x:x==null?120:x,y:y==null?120:y,w:300,h:300});
   const embedW=(x,y)=>({id:uid(),type:"embed",x:x==null?80:x,y:y==null?80:y,w:480,h:340,mode:"url",url:"",code:""});
-  const cartoW=(x,y)=>({id:uid(),type:"carto",x:x==null?90:x,y:y==null?90:y,w:560,h:420,carto:{left:"osm",right:"sat",mode:"swipe",op:0.5,split:0.5,lat:46.6,lng:2.4,zoom:5}});
+  const cartoW=(x,y)=>({id:uid(),type:"carto",x:x==null?90:x,y:y==null?90:y,w:560,h:440});
+  const mmapsW=(x,y)=>({id:uid(),type:"mmaps",x:x==null?100:x,y:y==null?100:y,w:600,h:460});
   const imageW=(x,y)=>({id:uid(),type:"image",x:x==null?90:x,y:y==null?90:y,w:360,h:320,src:"",title:"",searchMode:"images",query:""});
   const wheelW=(x,y)=>({id:uid(),type:"wheel",x:x==null?70:x,y:y==null?70:y,w:340,h:390,entries:["Léa","Tom","Sam","Noa","Mia","Eli","Zoé","Naël"],removeWinner:false});
   const sandW=(x,y)=>({id:uid(),type:"sand",x:x==null?90:x,y:y==null?90:y,w:220,h:310,minutes:5});
@@ -1689,8 +1682,8 @@
   };
   function applyTheme(){ const key=(page()&&page().theme)||"paper"; const t=THEMES[key]||THEMES.paper; canvas.style.background=t.bg; if(page()&&page().bgImg){ canvas.style.backgroundImage="url("+page().bgImg+")"; canvas.style.backgroundSize="cover"; canvas.style.backgroundPosition="center"; } canvas.classList.toggle("dark",!!t.dark); }
   function clampW(w){ if(!isFinite(w.w))w.w=260; if(!isFinite(w.h))w.h=200; if(!isFinite(w.x))w.x=20; if(!isFinite(w.y))w.y=20; w.w=Math.max(170,w.w); w.h=Math.max(120,w.h); w.x=Math.max(0,w.x); w.y=Math.max(0,w.y); }
-  const TITLES={plan:"Plan de classe",video:"Vidéo",timer:"Minuteur",text:"Texte",clock:"Horloge",feu:"Feu tricolore",symbols:"Travail",dice:"Dé",chrono:"Chronomètre",calendar:"Calendrier",embed:"Site web",carto:"Comparateur de cartes",image:"Image",wheel:"Roue",sand:"Sablier",tableur:"Tableur",code:"Atelier code",qr:"QR code",reveal:"Cours à révélation",qflash:"Questions flash",ambiance:"Sons d’ambiance",jeo:"Grille de jeu",cache:"Cache / rideau",seance:"Séance en cours",hw:"Widget HTML",live:"Classe connectée",party:"Quiz Party",noise:"Sonomètre"};
-  const ICONS={plan:"🪑",video:"▶",timer:"⏱",text:"📝",clock:"🕒",feu:"🚦",symbols:"✋",dice:"🎲",chrono:"⏲",calendar:"📅",embed:"🌐",carto:"🗺️",image:"🖼️",wheel:"🎡",sand:"⏳",tableur:"▦",code:"🐢",qr:"🔳",reveal:"📖",qflash:"⚡",ambiance:"🎧",jeo:"🏆",cache:"🟫",seance:"🛎️",hw:"🧩",live:"📡",party:"🎉",noise:"🎙"};
+  const TITLES={plan:"Plan de classe",video:"Vidéo",timer:"Minuteur",text:"Texte",clock:"Horloge",feu:"Feu tricolore",symbols:"Travail",dice:"Dé",chrono:"Chronomètre",calendar:"Calendrier",embed:"Site web",carto:"Comparateur de cartes",mmaps:"Multimaps",image:"Image",wheel:"Roue",sand:"Sablier",tableur:"Tableur",code:"Atelier code",qr:"QR code",reveal:"Cours à révélation",qflash:"Questions flash",ambiance:"Sons d’ambiance",jeo:"Grille de jeu",cache:"Cache / rideau",seance:"Séance en cours",hw:"Widget HTML",live:"Classe connectée",party:"Quiz Party",noise:"Sonomètre"};
+  const ICONS={plan:"🪑",video:"▶",timer:"⏱",text:"📝",clock:"🕒",feu:"🚦",symbols:"✋",dice:"🎲",chrono:"⏲",calendar:"📅",embed:"🌐",carto:"🗺️",mmaps:"🌍",image:"🖼️",wheel:"🎡",sand:"⏳",tableur:"▦",code:"🐢",qr:"🔳",reveal:"📖",qflash:"⚡",ambiance:"🎧",jeo:"🏆",cache:"🟫",seance:"🛎️",hw:"🧩",live:"📡",party:"🎉",noise:"🎙"};
   function exitMaxi(){ const cur=canvas.querySelector(".widget.maxi"); if(!cur)return;
     cur.classList.remove("maxi"); if(cur._wasMin)cur.classList.add("min"); cur._wasMin=false;
     const xb=document.getElementById("maxiExit"); if(xb)xb.remove();
@@ -1807,6 +1800,7 @@
     else if(w.type==="calendar") fillCalendar(w,body,el);
     else if(w.type==="embed") fillEmbed(w,body,el);
     else if(w.type==="carto") fillCarto(w,body,el);
+    else if(w.type==="mmaps") fillMmaps(w,body,el);
     else if(w.type==="image") fillImage(w,body,el);
     else if(w.type==="wheel") fillWheel(w,body,el);
     else if(w.type==="sand") fillSand(w,body,el);
@@ -2140,88 +2134,44 @@
     {n:"Calculatrice TI (MaClasseTI)",u:"https://maclasseti.fr/calculatrice"},
     {n:"Météo Bubble",u:"https://belotcom-jpg.github.io/meteo-site/bubble.html"}
   ];
-  function ensureLeaflet(cb){ if(window.L&&window.L.map){ cb(true); return; }
-    if(ensureLeaflet._q){ ensureLeaflet._q.push(cb); return; } ensureLeaflet._q=[cb];
-    if(!document.getElementById("__leafletCss")){ const lk=document.createElement("link"); lk.id="__leafletCss"; lk.rel="stylesheet"; lk.href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"; document.head.appendChild(lk); }
-    const urls=["https://unpkg.com/leaflet@1.9.4/dist/leaflet.js","https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"];
-    (function tryN(i){ if(i>=urls.length){ const q=ensureLeaflet._q||[]; ensureLeaflet._q=null; q.forEach(f=>f(false)); return; }
-      const sc=document.createElement("script"); sc.src=urls[i];
-      sc.onload=()=>{ const q=ensureLeaflet._q||[]; ensureLeaflet._q=null; q.forEach(f=>f(!!(window.L&&window.L.map))); };
-      sc.onerror=()=>tryN(i+1); document.head.appendChild(sc); })(0);
-  }
-  const CW_TILES={
-    osm:{n:"Plan (OSM)",u:"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",a:"© OpenStreetMap",max:19},
-    clair:{n:"Clair (Positron)",u:"https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",a:"© OSM © CARTO",max:20,sub:"abcd"},
-    sombre:{n:"Sombre",u:"https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",a:"© OSM © CARTO",max:20,sub:"abcd"},
-    sat:{n:"Satellite (Esri)",u:"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",a:"© Esri",max:19,nos:true},
-    relief:{n:"Relief (OpenTopo)",u:"https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",a:"© OpenTopoMap (CC-BY-SA)",max:17},
-    topo:{n:"Topographique (Esri)",u:"https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",a:"© Esri",max:19,nos:true}
-  };
-  function fillCarto(w,body){
-    if(!w.carto)w.carto={left:"osm",right:"sat",mode:"swipe",op:0.5,split:0.5,lat:46.6,lng:2.4,zoom:5};
-    const C=w.carto;
+  function fillMmaps(w,body){
+    const URL="https://belotcom-jpg.github.io/meteo-site/multiMaps.html";
     const root=mkEl("div","cw"); body.appendChild(root);
-    const bar=mkEl("div","cw-bar"); const mapWrap=mkEl("div","cw-map"); root.appendChild(bar); root.appendChild(mapWrap);
-    const stop=el=>{ el.addEventListener("pointerdown",e=>e.stopPropagation()); el.addEventListener("mousedown",e=>e.stopPropagation()); return el; };
-    function tileSelect(side){ const s=stop(mkEl("select")); Object.keys(CW_TILES).forEach(k=>{ const op=mkEl("option"); op.value=k; op.textContent=CW_TILES[k].n; if(C[side]===k)op.selected=true; s.appendChild(op); }); s.addEventListener("change",()=>{ C[side]=s.value; persist(); build(); }); return s; }
-    // barre de contrôles
-    bar.appendChild(stop(mkEl("span","cw-lab","Gauche/bas :"))); bar.appendChild(tileSelect("left"));
-    bar.appendChild(stop(mkEl("span","cw-lab","Droite/haut :"))); bar.appendChild(tileSelect("right"));
-    const seg=stop(mkEl("div","cw-seg"));
-    const bSwipe=mkEl("button",null,"Rideau"), bOp=mkEl("button",null,"Opacité");
-    function segSync(){ bSwipe.classList.toggle("on",C.mode==="swipe"); bOp.classList.toggle("on",C.mode==="opacity"); }
-    bSwipe.addEventListener("click",()=>{ C.mode="swipe"; persist(); segSync(); build(); });
-    bOp.addEventListener("click",()=>{ C.mode="opacity"; persist(); segSync(); build(); });
-    seg.appendChild(bSwipe); seg.appendChild(bOp); segSync(); bar.appendChild(seg);
-    const opWrap=stop(mkEl("span")); const opR=mkEl("input"); opR.type="range"; opR.min="0"; opR.max="100"; opR.className="cw-op"; opR.value=String(Math.round((C.op||0.5)*100));
-    opWrap.appendChild(document.createTextNode(" ")); opWrap.appendChild(opR); bar.appendChild(opWrap);
+    const frame=mkEl("div","cw-frame"); root.appendChild(frame);
+    const ifr=document.createElement("iframe");
+    ifr.src=URL;
+    ifr.setAttribute("referrerpolicy","no-referrer-when-downgrade");
+    ifr.setAttribute("allow","fullscreen; geolocation");
+    ifr.allowFullscreen=true; ifr.loading="lazy";
+    frame.appendChild(ifr);
+    const fb=mkEl("div","cw-fallback");
+    fb.innerHTML='🌍 <b>Multimaps</b><br><span>Si la carte ne s\'affiche pas ici, ouvre-la dans un onglet :</span>';
+    const a=mkEl("a","btn sm primary","Ouvrir Multimaps ↗"); a.href=URL; a.target="_blank"; a.rel="noopener";
+    a.addEventListener("pointerdown",e=>e.stopPropagation());
+    fb.appendChild(document.createElement("br")); fb.appendChild(a); root.appendChild(fb);
+    let ok=false; ifr.addEventListener("load",()=>{ ok=true; fb.style.display="none"; });
+    setTimeout(()=>{ if(!ok)fb.style.display="flex"; },3500);
+  }
 
-    let map=null, leftLayer=null, rightLayer=null, divider=null, clipHandler=null, opHandler=null;
-    function mkLayer(k){ const t=CW_TILES[k]||CW_TILES.osm; const opt={maxZoom:t.max||19,attribution:t.a,crossOrigin:true}; if(t.sub)opt.subdomains=t.sub; if(t.nos)opt.subdomains=[]; return L.tileLayer(t.u,opt); }
-    function clearOverlayHandlers(){ if(map&&clipHandler){ map.off("move zoom moveend zoomend resize",clipHandler); clipHandler=null; } if(divider){ divider.remove(); divider=null; } }
-
-    function build(){
-      if(!window.L||!window.L.map)return;
-      if(!map){ map=L.map(mapWrap,{zoomControl:true,attributionControl:true}).setView([C.lat||46.6,C.lng||2.4],C.zoom||5);
-        map.on("moveend zoomend",()=>{ const c=map.getCenter(); C.lat=+c.lat.toFixed(5); C.lng=+c.lng.toFixed(5); C.zoom=map.getZoom(); persist(); });
-      }
-      if(leftLayer){ map.removeLayer(leftLayer); leftLayer=null; }
-      if(rightLayer){ map.removeLayer(rightLayer); rightLayer=null; }
-      clearOverlayHandlers();
-      leftLayer=mkLayer(C.left).addTo(map);
-      rightLayer=mkLayer(C.right).addTo(map);
-      opWrap.style.display = C.mode==="opacity" ? "" : "none";
-      if(C.mode==="opacity"){
-        rightLayer.setOpacity(C.op!=null?C.op:0.5);
-      } else {
-        // mode rideau : on clippe la couche "droite" (haut) selon un séparateur vertical
-        rightLayer.setOpacity(1);
-        const pane=rightLayer.getContainer? rightLayer.getContainer() : null;
-        divider=mkEl("div","cw-divider"); mapWrap.appendChild(divider);
-        function applyClip(){ const wd=mapWrap.clientWidth; const x=Math.max(0,Math.min(1,C.split!=null?C.split:0.5))*wd;
-          if(pane)pane.style.clip="rect(0px, "+wd+"px, "+mapWrap.clientHeight+"px, "+x+"px)";
-          divider.style.left=x+"px"; }
-        clipHandler=applyClip; map.on("move zoom moveend zoomend resize",applyClip); applyClip();
-        // drag du séparateur
-        let drag=false;
-        const dn=e=>{ drag=true; e.preventDefault(); e.stopPropagation(); };
-        const mv=e=>{ if(!drag)return; const r=mapWrap.getBoundingClientRect(); const cx=(e.touches?e.touches[0].clientX:e.clientX)-r.left; C.split=Math.max(0,Math.min(1,cx/r.width)); applyClip(); };
-        const up=()=>{ if(drag){ drag=false; persist(); } };
-        divider.addEventListener("pointerdown",dn); window.addEventListener("pointermove",mv); window.addEventListener("pointerup",up);
-        divider.addEventListener("mousedown",dn); window.addEventListener("mousemove",mv); window.addEventListener("mouseup",up);
-        divider.addEventListener("touchstart",dn,{passive:false}); window.addEventListener("touchmove",mv,{passive:false}); window.addEventListener("touchend",up);
-      }
-      setTimeout(()=>{ try{ map.invalidateSize(); if(clipHandler)clipHandler(); }catch(_){ } },60);
-    }
-    opR.addEventListener("input",()=>{ C.op=(+opR.value)/100; if(rightLayer&&C.mode==="opacity")rightLayer.setOpacity(C.op); });
-    opR.addEventListener("change",()=>{ persist(); });
-
-    // chargement paresseux de Leaflet
-    const note=mkEl("div","cw-note","🗺️ Chargement de la carte…"); mapWrap.appendChild(note);
-    ensureLeaflet(ok=>{ if(!ok){ note.textContent="Impossible de charger Leaflet (réseau bloqué ?). Réessaie une fois en ligne."; return; } note.remove(); build(); });
-
-    // resize du widget -> réajuste la carte
-    if(window.ResizeObserver){ const ro=new ResizeObserver(()=>{ if(map){ try{ map.invalidateSize(); if(clipHandler)clipHandler(); }catch(_){ } } }); ro.observe(mapWrap); }
+  function fillCarto(w,body){
+    if(!w.carto)w.carto={};
+    const URL="https://javier.jimenezshaw.com/mapas/mapas.html";
+    const root=mkEl("div","cw"); body.appendChild(root);
+    const frame=mkEl("div","cw-frame"); root.appendChild(frame);
+    const ifr=document.createElement("iframe");
+    ifr.src=URL;
+    ifr.setAttribute("referrerpolicy","no-referrer-when-downgrade");
+    ifr.setAttribute("allow","fullscreen; geolocation");
+    ifr.allowFullscreen=true; ifr.loading="lazy";
+    frame.appendChild(ifr);
+    // filet de sécurité : si le site refuse l'iframe (X-Frame-Options / mixed content), proposer l'ouverture externe
+    const fb=mkEl("div","cw-fallback");
+    fb.innerHTML='🗺️ <b>Multimaps</b><br><span>Si la carte ne s\'affiche pas ici (site externe), ouvre-la dans un onglet :</span>';
+    const a=mkEl("a","btn sm primary","Ouvrir Multimaps ↗"); a.href=URL; a.target="_blank"; a.rel="noopener";
+    a.addEventListener("pointerdown",e=>e.stopPropagation());
+    fb.appendChild(document.createElement("br")); fb.appendChild(a); root.appendChild(fb);
+    let ok=false; ifr.addEventListener("load",()=>{ ok=true; fb.style.display="none"; });
+    setTimeout(()=>{ if(!ok)fb.style.display="flex"; },3500);
   }
 
   function fillEmbed(w,body){
@@ -3216,7 +3166,8 @@
     chrono:"chronomètre mesurer durée temps tour",
     calendar:"date jour mois semaine agenda",
     embed:"site web page internet intégrer iframe geogebra learningapps",
-    carto:"carte cartes comparateur multimaps leaflet satellite relief osm géographie fond swipe rideau opacité superposer topographie",
+    carto:"carte cartes comparateur multimaps satellite relief géographie fond opacité superposer topographique image aérienne historique",
+    mmaps:"multimaps carte cartes géographie monde atlas relief satellite météo site perso",
     image:"photo gif illustration figure dessin capture",
     wheel:"roue tirage au sort élève hasard sélecteur désigner",
     sand:"sablier durée visuel temps",
@@ -3252,6 +3203,7 @@
     else if(type==="calendar")w=calW(off,off);
     else if(type==="embed")w=embedW(off,off);
     else if(type==="carto")w=cartoW(off,off);
+    else if(type==="mmaps")w=mmapsW(off,off);
     else if(type==="image")w=imageW(off,off);
     else if(type==="wheel")w=wheelW(off,off);
     else if(type==="sand")w=sandW(off,off);
@@ -4709,4 +4661,3 @@
 </script>
 </body>
 </html>
-
