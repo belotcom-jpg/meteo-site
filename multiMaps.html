@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v1.4 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v1.6 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v1.4</title>
+<title>MultiMaps — géographie (collège & lycée) — v1.6</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -62,6 +62,7 @@
   .widget.replie .widget-corps{display:none}
   .widget.cache{display:none}
   .widget-pilote{border-width:2px;border-color:var(--encre)}
+  .pilote-sep{border-top:1.5px solid var(--trait);margin:5px 2px}
   .pilote-grille{display:grid;grid-template-columns:1fr 1fr;gap:5px}
   .pilote-btn{
     border:1px solid var(--trait);border-radius:9px;background:#fff;color:#8a8577;
@@ -108,7 +109,12 @@
   body.mode-projo #wg-legende .widget-corps{font-size:14.5px}
   body.mode-projo #wg-legende .leg-sous{font-size:14px}
   body.mode-projo .leaflet-overlay-pane path{stroke-width:1.6}
+  #fichiers-voile{position:fixed;inset:0;z-index:2100;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center}
   #aide-voile{position:fixed;inset:0;z-index:2100;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center}
+  #fichiers-boite{background:#fffdf7;border-radius:14px;max-width:680px;width:92vw;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 8px 30px rgba(0,0,0,.35);padding:4px 18px 16px;overflow-y:auto;font-size:13.5px;line-height:1.5}
+  #fichiers-boite h3{margin:12px 0 4px}
+  #fichiers-boite a{color:#1d4ed8;word-break:break-all}
+  #fichiers-boite li{margin:0 0 10px}
   #aide-boite{background:#fffdf7;border-radius:14px;max-width:660px;width:92vw;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 8px 30px rgba(0,0,0,.35)}
   #aide-onglets{display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid var(--trait)}
   #aide-onglets button{border:1px solid var(--trait);border-radius:8px;background:#fff;cursor:pointer;padding:4px 12px;font-size:13px}
@@ -217,11 +223,6 @@
   .t5 span{width:14px;height:14px}.t6 span{width:17px;height:17px}
 
   /* ---------- Panneau calques + données (droite) ---------- */
-  .nav-filtre{
-    border:1px solid var(--trait);border-radius:8px;padding:6px 9px;font-size:12px;
-    font-family:inherit;background:#fff;color:var(--encre);width:100%;
-  }
-  .nav-filtre:focus-visible{outline:2px solid var(--encre)}
   .nav-sec{border:1px solid var(--trait);border-radius:10px;background:#fff;overflow:hidden;flex-shrink:0}
   .nav-tete{
     width:100%;display:flex;align-items:center;gap:6px;border:none;background:none;
@@ -424,108 +425,6 @@
 </div>
 </div>
 
-<div class="widget" id="wg-donnees" style="top:12px;width:238px">
-  <div class="widget-tete">
-    <span class="widget-titre">🗺 Calques &amp; données</span>
-    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
-  </div>
-  <div class="widget-corps" id="panneau-nav">
-  <input type="search" class="nav-filtre" id="nav-filtre" placeholder="Filtrer… (ips, forêt, pauvres…)" aria-label="Filtrer les couches de données">
-
-  <section class="nav-sec" data-sec="ville">
-    <button class="nav-tete" type="button"><span class="nav-chevron">▸</span>🏛 Ville &amp; quartiers<span class="nav-badge" hidden></span></button>
-    <div class="nav-corps">
-      <button class="calque-ajout donnee" id="btn-qpv" title="Contours officiels des quartiers prioritaires de la politique de la ville (ANCT, décret 2023)">🏛 QPV (quartiers prioritaires)</button>
-      <button class="calque-ajout donnee" id="btn-acv" title="Les ~240 villes moyennes en difficulté soutenues par le programme national Action Cœur de Ville">🏙 Villes Action Cœur de Ville</button>
-      <button class="calque-ajout donnee" id="btn-metropoles" title="Les 22 métropoles françaises au sens juridique du terme : les EPCI ayant le statut de métropole (loi MAPTAM 2014, complétée en 2017 — liste stabilisée à 22 depuis 2018). ★ sur la ville-centre, nom officiel de l'EPCI au clic.">🏙 Les 22 métropoles</button>
-      <button class="calque-ajout donnee" id="btn-top100" title="Le classement des 100 communes les plus peuplées de France (population municipale 2022) : numéro de rang affiché sur chaque ville, classement complet dans la légende.">🏆 Top 100 des villes (classement)</button>
-      <button class="calque-ajout donnee" id="btn-choro-dens" title="Densité de population 2022, visible à toutes les échelles : dézoomée = France entière par département, zoom 9+ = détail communal (7 classes, données INSEE embarquées, 34 903 communes). Légende complète à gauche.">👥 Densité de population</button>
-      <button class="calque-ajout donnee" id="btn-choro-pauvres" title="Taux de pauvreté monétaire (part des ménages sous 60 % du niveau de vie médian, INSEE Filosofi 2023). 6 classes, légende complète à gauche. Diffusé pour 2 527 communes — les autres sont sous secret statistique et restent transparentes.">💶 Taux de pauvreté</button>
-      <button class="calque-ajout donnee" id="btn-carreaux-dens" title="Densité de population par petits carreaux INSEE (maille fine ~200 m) — complète la choroplèthe communale : on voit les quartiers denses À L'INTÉRIEUR des villes. Zoomez, et cliquez en mode contrôle pour lire la valeur du carreau.">👥 Densité (petits carreaux)</button>
-      <button class="calque-ajout donnee" id="btn-carreaux-pauvres" title="Part des ménages pauvres par petits carreaux INSEE (Filosofi, secret statistique appliqué) — la pauvreté quartier par quartier. Zoomez, clic en mode contrôle pour la valeur.">💶 Pauvreté (petits carreaux)</button>
-      <button class="calque-ajout donnee" id="btn-carreaux-hlm" title="Part de logements sociaux par petits carreaux INSEE (Filosofi, secret statistique appliqué). Zoomez, clic en mode contrôle pour la valeur.">🏢 HLM (petits carreaux)</button>
-      <button class="calque-ajout donnee" id="btn-histo" title="La densité de chaque département à chaque recensement depuis 1876 : faites glisser le curseur ou lancez la lecture ▶ pour voir l'exode rural vider le centre et les métropoles se densifier. 37 recensements, populations municipales historiques INSEE.">⏳ Population 1876-2023 (animation)</button>
-      <div id="histo-boite" style="display:none;margin:4px 0 6px">
-        <div style="display:flex;align-items:center;gap:6px">
-          <button id="btn-histo-lecture" title="Lecture automatique" style="border:1px solid var(--trait);border-radius:8px;background:#fff;cursor:pointer;padding:2px 8px">▶</button>
-          <input type="range" id="curseur-annee" min="0" max="36" value="0" style="flex:1" aria-label="Recensement">
-          <b id="annee-affichee" style="min-width:40px;text-align:right">1876</b>
-        </div>
-      </div>
-      <button class="calque-ajout donnee" id="btn-choro-aav" title="Le zonage en aires d'attraction des villes (INSEE 2020) : communes-centres, pôles, couronnes périurbaines et communes hors attraction — le zonage des programmes de 3e et de 1re. Département dézoomé (catégorie dominante), commune au zoom 9+.">🎯 Aires d'attraction (AAV)</button>
-      <button class="calque-ajout donnee" id="btn-choro-pres22" title="Second tour de la présidentielle 2022 : part des suffrages exprimés pour E. Macron (le complément est celui de M. Le Pen). Orange = majorité Le Pen, violet = majorité Macron. Département dézoomé, commune au zoom 9+.">🗳 Présidentielle 2022 (2d tour)</button>
-      <button class="calque-ajout donnee" id="btn-choro-abst" title="Part des inscrits qui se sont abstenus au 2d tour de la présidentielle 2022 — la géographie de la participation. Département dézoomé, commune au zoom 9+.">🚫 Abstention 2022</button>
-      <button class="calque-ajout donnee" id="btn-choro-jeunes" title="Part des moins de 20 ans dans la population (RP2022, 34 893 communes) — la France jeune contre la France vieillissante. Département dézoomé, commune au zoom 9+, légende à gauche.">🧒 Moins de 20 ans</button>
-      <button class="calque-ajout donnee" id="btn-choro-chomage" title="Taux de chômage au sens du recensement (chômeurs / actifs 15-64 ans, RP2022 — mesure plus large que le BIT). Département dézoomé, commune au zoom 9+.">📉 Taux de chômage</button>
-      <button class="calque-ajout donnee" id="btn-choro-hlm" title="Part de logements HLM parmi les résidences principales (INSEE RP2022, 34 893 communes). 6 classes, légende complète à gauche.">🏢 Part de logements HLM</button>
-    </div>
-  </section>
-
-  <section class="nav-sec" data-sec="educ">
-    <button class="nav-tete" type="button"><span class="nav-chevron">▸</span>🎓 Éducation<span class="nav-badge" hidden></span></button>
-    <div class="nav-corps">
-      <button class="calque-ajout donnee" id="btn-ips" title="Indice de position sociale des collèges (ministère de l'Éducation nationale, DEPP) : chaque collège coloré selon le milieu social de ses élèves. Zoomez au niveau d'une ville pour voir les pastilles.">🎓 IPS des collèges</button>
-      <button class="calque-ajout donnee" id="btn-ips-lycees" title="Indice de position sociale des lycées (DEPP) : grands cercles à liseré sombre, même échelle que les collèges">🏫 IPS des lycées</button>
-      <button class="calque-ajout donnee" id="btn-ips-ecoles" title="Indice de position sociale des écoles primaires (DEPP) : petites pastilles, zoomez au niveau du quartier">🏒 IPS des écoles</button>
-      <button class="calque-ajout donnee" id="btn-rep" title="Écoles et collèges relevant de l'éducation prioritaire : REP en orange, REP+ en rouge (annuaire du ministère de l'Éducation nationale). Croisement naturel avec les QPV et l'IPS.">🚩 Éducation prioritaire (REP/REP+)</button>
-    </div>
-  </section>
-
-  <section class="nav-sec" data-sec="insee">
-    <button class="nav-tete" type="button"><span class="nav-chevron">▸</span>💰 INSEE — tops 50<span class="nav-badge" hidden></span></button>
-    <div class="nav-corps">
-      <button class="calque-ajout donnee" style="display:none" id="btn-insee" title="Déposez une ou plusieurs bases communales officielles de l'INSEE (base-cc-filosofi, base-cc-evol-struct-pop, base-cc-emploi-pop-active, base-cc-diplomes-formation, base-cc-couples-familles-menages, base comparateur… en CSV ou ZIP) : chaque fichier débloque ou actualise les indicateurs que ses colonnes contiennent">💰 Charger un fichier INSEE</button>
-      <input type="file" id="fichier-insee" accept=".zip,.csv,.gz" style="display:none">
-      <button class="calque-ajout" style="display:none" id="btn-inventaire" title="Inventaire complet des bases déposées : nombre de communes, liste des colonnes avec leur libellé officiel (dictionnaire meta), indicateurs débloqués par fichier">📚 Contenu des bases déposées</button>
-      <div id="couches-insee" class="nav-grille">
-        <button class="calque-ajout donnee" id="btn-riches" title="Les 50 communes de plus de 20 000 habitants au niveau de vie médian le plus élevé (INSEE Filosofi)">💎 Plus riches</button>
-        <button class="calque-ajout donnee" id="btn-pauvres" title="Les 50 communes de plus de 20 000 habitants au taux de pauvreté le plus élevé (INSEE Filosofi)">🥀 Plus pauvres</button>
-        <button class="calque-ajout donnee verrou" id="btn-inegal" title="Les 50 communes de plus de 20 000 habitants les plus inégalitaires : rapport entre les revenus des 10 % les plus riches et des 10 % les plus pauvres (INSEE Filosofi)">⚖️ Plus inégalitaires</button>
-        <button class="calque-ajout donnee" id="btn-declin" title="Les 50 villes qui ont perdu le plus de population (recensements INSEE)">📉 En déclin</button>
-        <button class="calque-ajout donnee" id="btn-croissance" title="Les 50 villes qui ont gagné le plus de population (recensements INSEE)">📈 En croissance</button>
-        <button class="calque-ajout donnee" id="btn-agees" title="Les 50 villes avec la plus forte part de 60 ans et plus (recensement INSEE)">👴 Plus âgées</button>
-        <button class="calque-ajout donnee" id="btn-jeunes" title="Les 50 villes avec la plus forte part de moins de 15 ans (recensement INSEE)">🧒 Plus jeunes</button>
-        <button class="calque-ajout donnee" id="btn-cadres" title="Les 50 villes avec la plus forte part de cadres et professions intellectuelles supérieures parmi les actifs de 15-64 ans (recensement INSEE, CSP)">💼 Cadres</button>
-        <button class="calque-ajout donnee" id="btn-ouvriers" title="Les 50 villes avec la plus forte part d'ouvriers parmi les actifs de 15-64 ans (recensement INSEE, CSP)">🔧 Ouvrières</button>
-        <button class="calque-ajout donnee" id="btn-diplomes" title="Les 50 villes avec la plus forte part de diplômés du supérieur parmi les 15 ans et + non scolarisés (recensement INSEE)">🎓 Plus diplômées</button>
-        <button class="calque-ajout donnee" id="btn-sansdip" title="Les 50 villes avec la plus forte part de personnes peu ou pas diplômées parmi les 15 ans et + non scolarisés (recensement INSEE)">📕 Moins diplômées</button>
-        <button class="calque-ajout donnee" id="btn-chomage" title="Les 50 villes au taux de chômage des 15-64 ans le plus élevé, au sens du recensement INSEE">📊 Chômage fort</button>
-        <button class="calque-ajout donnee" id="btn-monoparent" title="Les 50 villes avec la plus forte part de familles monoparentales (recensement INSEE)">👩‍👧 Monoparentales</button>
-        <button class="calque-ajout donnee" id="btn-logvac" title="Les 50 villes avec la plus forte part de logements vacants (recensement INSEE) — marqueur de déclin urbain">🏚 Logts vacants</button>
-        <button class="calque-ajout donnee" id="btn-ressec" title="Les 50 villes avec la plus forte part de résidences secondaires (recensement INSEE)">🏖 Rés. secondaires</button>
-        <button class="calque-ajout donnee" id="btn-deficitnat" title="Les 50 villes au plus fort déficit naturel : plus de décès que de naissances (état civil INSEE)">⚰️ Déficit naturel</button>
-        <button class="calque-ajout donnee" id="btn-proprio" title="Les 50 villes avec la plus forte part de propriétaires de leur résidence principale (recensement INSEE)">🔑 Propriétaires</button>
-        <button class="calque-ajout donnee" id="btn-densite" title="Les 50 villes les plus denses en habitants par km² (recensement INSEE)">🏢 Plus denses</button>
-        <button class="calque-ajout donnee" id="btn-menages" title="Les 50 villes aux plus grands ménages : habitants par ménage (recensement INSEE)">👨‍👩‍👧‍👦 Grands ménages</button>
-        <button class="calque-ajout donnee" id="btn-hlm" title="Les 50 villes avec la plus forte part de logements HLM parmi les résidences principales (recensement INSEE — fichier base-cc-logement)">🏢 Logements HLM</button>
-        <button class="calque-ajout donnee" id="btn-sansvoit" title="Les 50 villes avec la plus forte part de ménages sans voiture (recensement INSEE — fichier base-cc-logement)">🚶 Ménages sans voiture</button>
-        <button class="calque-ajout donnee" id="btn-vieuxlog" title="Les 50 villes avec la plus forte part de résidences principales construites avant 1946 (recensement INSEE — fichier base-cc-logement)">🏚 Logements d'avant 1946</button>
-        <button class="calque-ajout donnee" id="btn-migpos" title="Les 50 villes au plus fort solde migratoire apparent 2016-2022 : croissance de population non expliquée par les naissances — les villes qui attirent (INSEE)">🧲 Plus attractives</button>
-        <button class="calque-ajout donnee" id="btn-migneg" title="Les 50 villes au solde migratoire apparent le plus négatif 2016-2022 : les villes que l'on quitte (INSEE)">🚪 Plus répulsives</button>
-        <button class="calque-ajout donnee" id="btn-vieux" title="Indice de vieillissement : nombre de 60 ans et plus pour 100 jeunes de moins de 20 ans (INSEE RP2022)">⚖️ Vieillissement</button>
-        <button class="calque-ajout donnee" id="btn-navetteurs" title="Part des actifs occupés travaillant hors de leur commune de résidence — les navetteurs du périurbain (INSEE RP2022)">🚗 Navetteurs</button>
-        <button class="calque-ajout donnee" id="btn-etabagri" title="Part d'établissements du secteur agriculture-sylviculture-pêche parmi tous les établissements actifs (INSEE, fin 2024)">🌾 Plus agricoles</button>
-        <button class="calque-ajout donnee" id="btn-etabindus" title="Part d'établissements de l'industrie parmi tous les établissements actifs (INSEE, fin 2024)">🏭 Plus industrielles</button>
-      </div>
-    </div>
-  </section>
-
-  
-
-  <section class="nav-sec" data-sec="origines">
-    <button class="nav-tete" type="button"><span class="nav-chevron">▸</span>🌍 Origines (immigration)<span class="nav-badge" hidden></span></button>
-    <div class="nav-corps">
-      <p class="nav-note">Part des <b>immigrés</b> (personnes nées étrangères à l'étranger, définition INSEE — un immigré peut être devenu français) dans la population de chaque <b>département</b>. Recensement 2023. Cochez un ou plusieurs pays de naissance : les parts s'additionnent. Les départements gris ne sont pas diffusés (effectifs trop faibles, secret statistique).</p>
-      <button class="calque-ajout donnee" id="btn-origines" title="Choroplèthe départementale de la part d'immigrés selon les pays de naissance cochés ci-dessous. Classes recalculées automatiquement selon la sélection.">🌍 Afficher la carte</button>
-      <div id="origines-cases" class="origines-liste"></div>
-      <button class="calque-ajout" id="btn-origines-com" title="Télécharge le fichier communal officiel directement depuis l'INSEE (~40 Mo, une fois par session) pour affiner la carte à l'échelle des communes. Nécessite une connexion correcte — les données restent dans le navigateur.">📥 Détail communal (INSEE, ~40 Mo)</button>
-    </div>
-  </section>
-
-  
-
-  </div>
-</div>
 
 <div class="widget" id="wg-legende" style="width:220px">
   <div class="widget-tete">
@@ -549,7 +448,12 @@
       <button id="btn-image" title="Exporter la vue actuelle en image PNG">🖼 Image</button>
       <button id="btn-options" title="Options : seuil des tops 50, fenêtres">⚙️ Options</button>
       <button id="btn-gpx" title="Importer une trace GPX : elle devient un trait sur le calque actif">📈 GPX</button>
+      <span style="display:inline-flex;align-items:center;gap:4px;font-size:11.5px">
+        <input type="color" id="gpx-couleur" value="#1d4ed8" title="Couleur des traces GPX" style="width:26px;height:22px;padding:0;border:1px solid var(--trait);border-radius:5px;cursor:pointer">
+        <button data-gpxl="-" title="Trace GPX plus fine" style="border:1px solid var(--trait);border-radius:5px;background:#fff;cursor:pointer;padding:0 6px">−</button><b id="gpx-larg-val">×3</b><button data-gpxl="+" title="Trace GPX plus large" style="border:1px solid var(--trait);border-radius:5px;background:#fff;cursor:pointer;padding:0 6px">+</button>
+      </span>
       <button id="btn-quiz" title="Quiz : 5 questions sur les départements, à partir des données de l'atlas — cliquez le bon département sur la carte !">🎓 Quiz</button>
+      <button id="btn-fichiers" title="La liste des fichiers de données à télécharger pour débloquer les prochaines couches, avec leurs liens officiels">📥 Fichiers à télécharger</button>
       <button id="btn-aide" title="Aide : mode d'emploi rapide ou guide détaillé de toutes les fonctions">❓ Aide</button>
       <button id="btn-comparer" title="Deux cartes côte à côte, synchronisées : activez une couche différente de chaque côté (ex. densité vs pauvreté) et déplacez-vous — les deux vues bougent ensemble.">⚖ Comparer</button>
       <input type="file" id="fichier-gpx" accept=".gpx" style="display:none">
@@ -571,6 +475,8 @@
       <span class="velo-trait" style="height:3px;background:#10b981"></span> Bandes cyclables <small>(peintes sur la chaussée)</small></label>
     <label class="velo-filtre"><input type="checkbox" id="chk-velo-t3" checked>
       <span class="velo-trait" style="height:1.5px;background:#6ee7b7"></span> Voies partagées <small>(simple marquage)</small></label>
+    <label class="velo-filtre" style="margin-top:3px"><input type="checkbox" id="chk-velo-coul"> Couleur unique
+      <input type="color" id="velo-couleur" value="#1d4ed8" style="width:26px;height:20px;padding:0;border:1px solid var(--trait);border-radius:5px;cursor:pointer"></label>
     <div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:12px">Épaisseur
       <button data-ep="-" style="border:1px solid var(--trait);border-radius:6px;background:#fff;cursor:pointer;padding:0 8px">−</button>
       <b class="ep-valeur">+0</b>
@@ -594,6 +500,10 @@
       <span class="velo-trait" style="height:3px;background:#ea580c"></span> GR de Pays <small>(régional)</small></label>
     <label class="velo-filtre"><input type="checkbox" id="chk-rando-pr" checked>
       <span class="velo-trait" style="height:1.5px;background:#ca8a04"></span> PR <small>(petite randonnée, local)</small></label>
+    <label class="velo-filtre"><input type="checkbox" id="chk-rando-chemins" checked>
+      <span class="velo-trait" style="height:2px;background:repeating-linear-gradient(90deg,#6b7280 0 5px,transparent 5px 9px)"></span> Petits chemins <small>(sentiers &amp; pistes non balisés)</small></label>
+    <label class="velo-filtre" style="margin-top:3px"><input type="checkbox" id="chk-rando-coul"> Couleur unique
+      <input type="color" id="rando-couleur" value="#b91c1c" style="width:26px;height:20px;padding:0;border:1px solid var(--trait);border-radius:5px;cursor:pointer"></label>
     <div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:12px">Épaisseur
       <button data-ep="-" style="border:1px solid var(--trait);border-radius:6px;background:#fff;cursor:pointer;padding:0 8px">−</button>
       <b class="ep-valeur">+0</b>
@@ -624,6 +534,8 @@
         <input type="range" id="curseur-mer" min="1" max="10" step="1" value="1" aria-label="Niveau de la mer">
         <span id="valeur-mer">+1 m</span>
       </div>
+      <button class="calque-ajout donnee" id="btn-choro-catnat" title="Le nombre d'arrêtés de catastrophe naturelle reçus par chaque commune depuis 1982 (base GASPAR) : inondations et coulées de boue (56 %), sécheresse, mouvements de terrain, tempêtes… La géographie française du risque. Département dézoomé (moyenne par commune), commune au zoom 9+.">🌪 Catastrophes naturelles (1982-2026)</button>
+      <button class="calque-ajout donnee" id="btn-zfe" title="Les Zones à Faibles Émissions : les périmètres officiels où la circulation est restreinte selon la vignette Crit'Air (Base nationale des ZFE, transport.data.gouv.fr — zones actives et en projet). Chargées en direct depuis la base de l'État.">🚗 Zones à Faibles Émissions (ZFE)</button>
       <button class="calque-ajout donnee" id="btn-energie" title="Éoliennes et centrales solaires relevées dans OpenStreetMap — la géographie de la transition énergétique. Zoomez (9+), rechargement au déplacement.">🌬 Éoliennes &amp; solaire (OSM)</button>
       <p class="sous" id="energie-bilan" style="margin:2px 0 4px">Source : OpenStreetMap</p>
       <p class="nav-note">Visualisation pédagogique : la couche 🌊 montre les terres basses (altitude ≤ niveau choisi), sans modéliser digues ni marées.</p>
@@ -669,7 +581,15 @@
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
     <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
   </div>
-  <div class="widget-corps">
+  <div class="widget-corps"><button class="calque-ajout donnee" id="btn-feu-fbl" title="Le périmètre brûlé du feu de Fontainebleau (juillet 2026), cartographié par satellite par le service Copernicus EMS (activation EMSR894, produit de délinéation v2). Surfaces classées « Burnt area », simplifiées pour l'affichage.">🔥 Feu de Fontainebleau (juil. 2026)</button>
+      <button class="calque-ajout donnee" id="btn-feux-effis" title="Les surfaces brûlées cartographiées par le système européen EFFIS (Copernicus) à partir des satellites MODIS et VIIRS — saison en cours par défaut, années passées au sélecteur. Feux d'environ 30 ha et plus.">🔥 Feux de forêts (EFFIS)</button>
+      <select id="feux-annee" style="margin:2px 0 4px;font-size:12px;border:1px solid var(--trait);border-radius:6px;padding:2px">
+        <option value="">Saison en cours</option>
+        <option value="2025">2025</option>
+        <option value="2024">2024</option>
+        <option value="2023">2023</option>
+        <option value="2022">2022 (été record)</option>
+      </select>
       <button class="calque-ajout donnee" id="btn-foret" title="Carte forestière BD Forêt® V2 de l'IGN : 32 types de peuplements photo-interprétés (feuillus, conifères, mixtes, peupleraies…) sur toute la métropole. En mode contrôle, cliquez sur une forêt pour connaître son type de peuplement et son essence dominante.">🌲 Carte forestière (IGN)</button>
       <button class="calque-ajout donnee" id="btn-foret-pub" title="Forêts publiques gérées par l'ONF : forêts domaniales (État) et forêts des collectivités (communales, départementales…). En mode contrôle, cliquez sur une forêt pour son nom. Repère : la forêt couvre ≈ 17,5 millions d'hectares en métropole (près d'un tiers du territoire) — ¾ privée, ¼ publique gérée par l'ONF.">🌳 Forêts publiques (ONF)</button>
       <button class="calque-ajout donnee" id="btn-parcelles" title="Parcelles forestières numérotées des forêts publiques (découpage de gestion ONF, relevé dans OpenStreetMap). Zoomez à l'échelle d'un massif (13+) — les numéros s'affichent au zoom 14. La forêt de Fontainebleau est intégralement couverte.">🔢 Parcelles forestières (n°)</button>
@@ -686,6 +606,110 @@
       <button class="calque-ajout donnee" id="btn-gares" title="Gares de voyageurs SNCF (SNCF Open Data) — cliquez une pastille pour le détail">🚉 Gares SNCF</button>
       <button class="calque-ajout donnee" id="btn-mh" title="Immeubles protégés au titre des monuments historiques (base Mérimée, ministère de la Culture). Zoomez au niveau d'un quartier.">🏛️ Monuments historiques</button>
       <button class="calque-ajout donnee" id="btn-sport" title="Recensement des équipements sportifs — piscines, gymnases, stades, skateparks… (ministère des Sports). Zoomez fortement, ils sont très nombreux.">🏊 Équipements sportifs</button>
+    </div>
+</div>
+
+<div class="widget" id="wg-ville" style="width:246px">
+  <div class="widget-tete">
+    <span class="widget-titre">🏙 Ville &amp; quartiers</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
+  </div>
+  <div class="widget-corps" style="max-height:72vh;overflow-y:auto">
+      <button class="calque-ajout donnee" id="btn-qpv" title="Contours officiels des quartiers prioritaires de la politique de la ville (ANCT, décret 2023)">🏛 QPV (quartiers prioritaires)</button>
+      <button class="calque-ajout donnee" id="btn-acv" title="Les ~240 villes moyennes en difficulté soutenues par le programme national Action Cœur de Ville">🏙 Villes Action Cœur de Ville</button>
+      <button class="calque-ajout donnee" id="btn-metropoles" title="Les 22 métropoles françaises au sens juridique du terme : les EPCI ayant le statut de métropole (loi MAPTAM 2014, complétée en 2017 — liste stabilisée à 22 depuis 2018). ★ sur la ville-centre, nom officiel de l'EPCI au clic.">🏙 Les 22 métropoles</button>
+      <button class="calque-ajout donnee" id="btn-top100" title="Le classement des 100 communes les plus peuplées de France (population municipale 2022) : numéro de rang affiché sur chaque ville, classement complet dans la légende.">🏆 Top 100 des villes (classement)</button>
+      <button class="calque-ajout donnee" id="btn-choro-dens" title="Densité de population 2022, visible à toutes les échelles : dézoomée = France entière par département, zoom 9+ = détail communal (7 classes, données INSEE embarquées, 34 903 communes). Légende complète à gauche.">👥 Densité de population</button>
+      <button class="calque-ajout donnee" id="btn-choro-pauvres" title="Taux de pauvreté monétaire (part des ménages sous 60 % du niveau de vie médian, INSEE Filosofi 2023). 6 classes, légende complète à gauche. Diffusé pour 2 527 communes — les autres sont sous secret statistique et restent transparentes.">💶 Taux de pauvreté</button>
+      <button class="calque-ajout donnee" id="btn-carreaux-dens" title="Densité de population par petits carreaux INSEE (maille fine ~200 m) — complète la choroplèthe communale : on voit les quartiers denses À L'INTÉRIEUR des villes. Zoomez, et cliquez en mode contrôle pour lire la valeur du carreau.">👥 Densité (petits carreaux)</button>
+      <button class="calque-ajout donnee" id="btn-carreaux-pauvres" title="Part des ménages pauvres par petits carreaux INSEE (Filosofi, secret statistique appliqué) — la pauvreté quartier par quartier. Zoomez, clic en mode contrôle pour la valeur.">💶 Pauvreté (petits carreaux)</button>
+      <button class="calque-ajout donnee" id="btn-carreaux-hlm" title="Part de logements sociaux par petits carreaux INSEE (Filosofi, secret statistique appliqué). Zoomez, clic en mode contrôle pour la valeur.">🏢 HLM (petits carreaux)</button>
+      <button class="calque-ajout donnee" id="btn-histo" title="La densité de chaque département à chaque recensement depuis 1876 : faites glisser le curseur ou lancez la lecture ▶ pour voir l'exode rural vider le centre et les métropoles se densifier. 37 recensements, populations municipales historiques INSEE.">⏳ Population 1876-2023 (animation)</button>
+      <div id="histo-boite" style="display:none;margin:4px 0 6px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <button id="btn-histo-lecture" title="Lecture automatique" style="border:1px solid var(--trait);border-radius:8px;background:#fff;cursor:pointer;padding:2px 8px">▶</button>
+          <input type="range" id="curseur-annee" min="0" max="36" value="0" style="flex:1" aria-label="Recensement">
+          <b id="annee-affichee" style="min-width:40px;text-align:right">1876</b>
+        </div>
+      </div>
+      <button class="calque-ajout donnee" id="btn-choro-aav" title="Le zonage en aires d'attraction des villes (INSEE 2020) : communes-centres, pôles, couronnes périurbaines et communes hors attraction — le zonage des programmes de 3e et de 1re. Département dézoomé (catégorie dominante), commune au zoom 9+.">🎯 Aires d'attraction (AAV)</button>
+      <button class="calque-ajout donnee" id="btn-choro-pres22" title="Second tour de la présidentielle 2022 : part des suffrages exprimés pour E. Macron (le complément est celui de M. Le Pen). Orange = majorité Le Pen, violet = majorité Macron. Département dézoomé, commune au zoom 9+.">🗳 Présidentielle 2022 (2d tour)</button>
+      <button class="calque-ajout donnee" id="btn-choro-abst" title="Part des inscrits qui se sont abstenus au 2d tour de la présidentielle 2022 — la géographie de la participation. Département dézoomé, commune au zoom 9+.">🚫 Abstention 2022</button>
+      <button class="calque-ajout donnee" id="btn-choro-jeunes" title="Part des moins de 20 ans dans la population (RP2022, 34 893 communes) — la France jeune contre la France vieillissante. Département dézoomé, commune au zoom 9+, légende à gauche.">🧒 Moins de 20 ans</button>
+      <button class="calque-ajout donnee" id="btn-choro-chomage" title="Taux de chômage au sens du recensement (chômeurs / actifs 15-64 ans, RP2022 — mesure plus large que le BIT). Département dézoomé, commune au zoom 9+.">📉 Taux de chômage</button>
+      <button class="calque-ajout donnee" id="btn-choro-hlm" title="Part de logements HLM parmi les résidences principales (INSEE RP2022, 34 893 communes). 6 classes, légende complète à gauche.">🏢 Part de logements HLM</button>
+    </div>
+</div>
+
+<div class="widget" id="wg-educ" style="width:246px">
+  <div class="widget-tete">
+    <span class="widget-titre">🎓 Éducation</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
+  </div>
+  <div class="widget-corps" style="max-height:72vh;overflow-y:auto">
+      <button class="calque-ajout donnee" id="btn-ips" title="Indice de position sociale des collèges (ministère de l'Éducation nationale, DEPP) : chaque collège coloré selon le milieu social de ses élèves. Zoomez au niveau d'une ville pour voir les pastilles.">🎓 IPS des collèges</button>
+      <button class="calque-ajout donnee" id="btn-ips-lycees" title="Indice de position sociale des lycées (DEPP) : grands cercles à liseré sombre, même échelle que les collèges">🏫 IPS des lycées</button>
+      <button class="calque-ajout donnee" id="btn-ips-ecoles" title="Indice de position sociale des écoles primaires (DEPP) : petites pastilles, zoomez au niveau du quartier">🏒 IPS des écoles</button>
+      <button class="calque-ajout donnee" id="btn-rep" title="Écoles et collèges relevant de l'éducation prioritaire : REP en orange, REP+ en rouge (annuaire du ministère de l'Éducation nationale). Croisement naturel avec les QPV et l'IPS.">🚩 Éducation prioritaire (REP/REP+)</button>
+    </div>
+</div>
+
+<div class="widget" id="wg-insee" style="width:246px">
+  <div class="widget-tete">
+    <span class="widget-titre">💰 INSEE — tops 50</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
+  </div>
+  <div class="widget-corps" style="max-height:72vh;overflow-y:auto">
+      <button class="calque-ajout donnee" style="display:none" id="btn-insee" title="Déposez une ou plusieurs bases communales officielles de l'INSEE (base-cc-filosofi, base-cc-evol-struct-pop, base-cc-emploi-pop-active, base-cc-diplomes-formation, base-cc-couples-familles-menages, base comparateur… en CSV ou ZIP) : chaque fichier débloque ou actualise les indicateurs que ses colonnes contiennent">💰 Charger un fichier INSEE</button>
+      <input type="file" id="fichier-insee" accept=".zip,.csv,.gz" style="display:none">
+      <button class="calque-ajout" style="display:none" id="btn-inventaire" title="Inventaire complet des bases déposées : nombre de communes, liste des colonnes avec leur libellé officiel (dictionnaire meta), indicateurs débloqués par fichier">📚 Contenu des bases déposées</button>
+      <div id="couches-insee" class="nav-grille">
+        <button class="calque-ajout donnee" id="btn-riches" title="Les 50 communes de plus de 20 000 habitants au niveau de vie médian le plus élevé (INSEE Filosofi)">💎 Plus riches</button>
+        <button class="calque-ajout donnee" id="btn-pauvres" title="Les 50 communes de plus de 20 000 habitants au taux de pauvreté le plus élevé (INSEE Filosofi)">🥀 Plus pauvres</button>
+        <button class="calque-ajout donnee verrou" id="btn-inegal" title="Les 50 communes de plus de 20 000 habitants les plus inégalitaires : rapport entre les revenus des 10 % les plus riches et des 10 % les plus pauvres (INSEE Filosofi)">⚖️ Plus inégalitaires</button>
+        <button class="calque-ajout donnee" id="btn-declin" title="Les 50 villes qui ont perdu le plus de population (recensements INSEE)">📉 En déclin</button>
+        <button class="calque-ajout donnee" id="btn-croissance" title="Les 50 villes qui ont gagné le plus de population (recensements INSEE)">📈 En croissance</button>
+        <button class="calque-ajout donnee" id="btn-agees" title="Les 50 villes avec la plus forte part de 60 ans et plus (recensement INSEE)">👴 Plus âgées</button>
+        <button class="calque-ajout donnee" id="btn-jeunes" title="Les 50 villes avec la plus forte part de moins de 15 ans (recensement INSEE)">🧒 Plus jeunes</button>
+        <button class="calque-ajout donnee" id="btn-cadres" title="Les 50 villes avec la plus forte part de cadres et professions intellectuelles supérieures parmi les actifs de 15-64 ans (recensement INSEE, CSP)">💼 Cadres</button>
+        <button class="calque-ajout donnee" id="btn-ouvriers" title="Les 50 villes avec la plus forte part d'ouvriers parmi les actifs de 15-64 ans (recensement INSEE, CSP)">🔧 Ouvrières</button>
+        <button class="calque-ajout donnee" id="btn-diplomes" title="Les 50 villes avec la plus forte part de diplômés du supérieur parmi les 15 ans et + non scolarisés (recensement INSEE)">🎓 Plus diplômées</button>
+        <button class="calque-ajout donnee" id="btn-sansdip" title="Les 50 villes avec la plus forte part de personnes peu ou pas diplômées parmi les 15 ans et + non scolarisés (recensement INSEE)">📕 Moins diplômées</button>
+        <button class="calque-ajout donnee" id="btn-chomage" title="Les 50 villes au taux de chômage des 15-64 ans le plus élevé, au sens du recensement INSEE">📊 Chômage fort</button>
+        <button class="calque-ajout donnee" id="btn-monoparent" title="Les 50 villes avec la plus forte part de familles monoparentales (recensement INSEE)">👩‍👧 Monoparentales</button>
+        <button class="calque-ajout donnee" id="btn-logvac" title="Les 50 villes avec la plus forte part de logements vacants (recensement INSEE) — marqueur de déclin urbain">🏚 Logts vacants</button>
+        <button class="calque-ajout donnee" id="btn-ressec" title="Les 50 villes avec la plus forte part de résidences secondaires (recensement INSEE)">🏖 Rés. secondaires</button>
+        <button class="calque-ajout donnee" id="btn-deficitnat" title="Les 50 villes au plus fort déficit naturel : plus de décès que de naissances (état civil INSEE)">⚰️ Déficit naturel</button>
+        <button class="calque-ajout donnee" id="btn-proprio" title="Les 50 villes avec la plus forte part de propriétaires de leur résidence principale (recensement INSEE)">🔑 Propriétaires</button>
+        <button class="calque-ajout donnee" id="btn-densite" title="Les 50 villes les plus denses en habitants par km² (recensement INSEE)">🏢 Plus denses</button>
+        <button class="calque-ajout donnee" id="btn-menages" title="Les 50 villes aux plus grands ménages : habitants par ménage (recensement INSEE)">👨‍👩‍👧‍👦 Grands ménages</button>
+        <button class="calque-ajout donnee" id="btn-hlm" title="Les 50 villes avec la plus forte part de logements HLM parmi les résidences principales (recensement INSEE — fichier base-cc-logement)">🏢 Logements HLM</button>
+        <button class="calque-ajout donnee" id="btn-sansvoit" title="Les 50 villes avec la plus forte part de ménages sans voiture (recensement INSEE — fichier base-cc-logement)">🚶 Ménages sans voiture</button>
+        <button class="calque-ajout donnee" id="btn-vieuxlog" title="Les 50 villes avec la plus forte part de résidences principales construites avant 1946 (recensement INSEE — fichier base-cc-logement)">🏚 Logements d'avant 1946</button>
+        <button class="calque-ajout donnee" id="btn-migpos" title="Les 50 villes au plus fort solde migratoire apparent 2016-2022 : croissance de population non expliquée par les naissances — les villes qui attirent (INSEE)">🧲 Plus attractives</button>
+        <button class="calque-ajout donnee" id="btn-migneg" title="Les 50 villes au solde migratoire apparent le plus négatif 2016-2022 : les villes que l'on quitte (INSEE)">🚪 Plus répulsives</button>
+        <button class="calque-ajout donnee" id="btn-vieux" title="Indice de vieillissement : nombre de 60 ans et plus pour 100 jeunes de moins de 20 ans (INSEE RP2022)">⚖️ Vieillissement</button>
+        <button class="calque-ajout donnee" id="btn-navetteurs" title="Part des actifs occupés travaillant hors de leur commune de résidence — les navetteurs du périurbain (INSEE RP2022)">🚗 Navetteurs</button>
+        <button class="calque-ajout donnee" id="btn-etabagri" title="Part d'établissements du secteur agriculture-sylviculture-pêche parmi tous les établissements actifs (INSEE, fin 2024)">🌾 Plus agricoles</button>
+        <button class="calque-ajout donnee" id="btn-etabindus" title="Part d'établissements de l'industrie parmi tous les établissements actifs (INSEE, fin 2024)">🏭 Plus industrielles</button>
+      </div>
+    </div>
+</div>
+
+<div class="widget" id="wg-origines" style="width:246px">
+  <div class="widget-tete">
+    <span class="widget-titre">🌍 Origines (immigration)</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
+  </div>
+  <div class="widget-corps" style="max-height:72vh;overflow-y:auto">
+      <p class="nav-note">Part des <b>immigrés</b> (personnes nées étrangères à l'étranger, définition INSEE — un immigré peut être devenu français) dans la population de chaque <b>département</b>. Recensement 2023. Cochez un ou plusieurs pays de naissance : les parts s'additionnent. Les départements gris ne sont pas diffusés (effectifs trop faibles, secret statistique).</p>
+      <button class="calque-ajout donnee" id="btn-origines" title="Choroplèthe départementale de la part d'immigrés selon les pays de naissance cochés ci-dessous. Classes recalculées automatiquement selon la sélection.">🌍 Afficher la carte</button>
+      <div id="origines-cases" class="origines-liste"></div>
+      <button class="calque-ajout" id="btn-origines-com" title="Télécharge le fichier communal officiel directement depuis l'INSEE (~40 Mo, une fois par session) pour affiner la carte à l'échelle des communes. Nécessite une connexion correcte — les données restent dans le navigateur.">📥 Détail communal (INSEE, ~40 Mo)</button>
     </div>
 </div>
 
@@ -709,20 +733,27 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v1.4</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v1.6</small></span>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
   <div class="widget-corps">
+    <div class="pilote-sep"></div>
     <div class="pilote-grille">
-      <button class="pilote-btn" data-cible="wg-outils">✏️ Annotations</button>
-      <button class="pilote-btn" data-cible="wg-donnees">🗺 Données</button>
-      <button class="pilote-btn" data-cible="wg-legende">🧭 Légende</button>
-      <button class="pilote-btn" data-cible="wg-recherche">🔎 Recherche</button>
       <button class="pilote-btn" data-cible="wg-actions">🧰 Actions</button>
-      <button class="pilote-btn" data-cible="wg-velo">🚲 Vélo</button>
-      <button class="pilote-btn" data-cible="wg-rando">🥾 Rando</button>
+      <button class="pilote-btn" data-cible="wg-recherche">🔎 Recherche</button>
+      <button class="pilote-btn" data-cible="wg-outils">✏️ Annotations</button>
+      <button class="pilote-btn" data-cible="wg-legende">🧭 Légende</button>
       <button class="pilote-btn" data-cible="wg-acces">👁 Couleurs</button>
       <button class="pilote-btn" data-cible="wg-fonds">🗺 Fonds</button>
+    </div>
+    <div class="pilote-sep"></div>
+    <div class="pilote-grille">
+      <button class="pilote-btn" data-cible="wg-ville">🏙 Ville</button>
+      <button class="pilote-btn" data-cible="wg-educ">🎓 Éducation</button>
+      <button class="pilote-btn" data-cible="wg-insee">💰 INSEE</button>
+      <button class="pilote-btn" data-cible="wg-origines">🌍 Origines</button>
+      <button class="pilote-btn" data-cible="wg-velo">🚲 Vélo</button>
+      <button class="pilote-btn" data-cible="wg-rando">🥾 Rando</button>
       <button class="pilote-btn" data-cible="wg-equip">🚉 Équipements</button>
       <button class="pilote-btn" data-cible="wg-climat">🌡 Climat</button>
       <button class="pilote-btn" data-cible="wg-montagnes">⛰ Montagnes</button>
@@ -744,7 +775,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v1.4</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v1.6</small></h2>
     <p class="sous">Seuil « villes » des tops 50</p>
     <select class="opt-select" id="sel-seuil" aria-label="Seuil de population des tops 50">
       <option value="5000">5 000 habitants et +</option>
@@ -829,7 +860,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v1.4';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v1.6';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -900,7 +931,7 @@
     const t = {
       id:'t'+(++compteurTrait),
       calque: calqueId || calqueActif,
-      type, couleur:coul, metres:metres||tailleMetres,
+      type, couleur: coul || couleur, metres:metres||tailleMetres,
       note: note || '',
       segments
     };
@@ -2266,6 +2297,15 @@
       source:'Minist\u00e8re de l\u2019Int\u00e9rieur, r\u00e9sultats d\u00e9finitifs',
       note:'compl\u00e9ment \u00e0 100 % = M. Le Pen \u00b7 orange = majorit\u00e9 Le Pen, violet = majorit\u00e9 Macron'
     },
+    catnat: {
+      btn:'btn-choro-catnat', libelle:'🌪 Catastrophes naturelles',
+      couleurs:['#fff7ec','#fee8c8','#fdbb84','#ef6548','#b30000','#5c0000'],
+      libelles:['1','2 \u2013 3','4 \u2013 6','7 \u2013 11','12 \u2013 19','20 et +'],
+      unite:' arr\u00eat\u00e9(s)', titre:'Arr\u00eat\u00e9s de catastrophe naturelle par commune (1982-2026)',
+      pack: ()=>CHORO_PACKS.catnat.classes, dep: ()=>CHORO_PACKS.catnat.dep,
+      source:'Base GASPAR (minist\u00e8re de la Transition \u00e9cologique) \u2014 247 701 arr\u00eat\u00e9s, 34 699 communes',
+      note:'inondations 56 %, s\u00e9cheresse 18 %, mouvements de terrain 13 % \u00b7 \u00e9chelle d\u00e9partement : moyenne par commune'
+    },
     abst22: {
       btn:'btn-choro-abst', libelle:'🚫 Abstention 2022',
       couleurs:['#f6eff7','#d0d1e6','#a6bddb','#67a9cf','#1c9099','#016c59'],
@@ -2730,6 +2770,15 @@
   }
 
   // ---------- 🥾 Sentiers de randonnée (OpenStreetMap : GR / GR de Pays / PR) ----------
+  let veloCoulUnique = localStorage.getItem('geo-velo-coul') || null;
+  let randoCoulUnique = localStorage.getItem('geo-rando-coul') || null;
+  function coulVelo(t){ return veloCoulUnique || coulCat(VELO_NIVEAUX[t].couleur, {t1:OKABE.bleu, t2:OKABE.cielAzur, t3:OKABE.rose}[t]); }
+  function coulRando(t){ return randoCoulUnique || coulCat(RANDO_NIVEAUX[t].couleur, {gr:OKABE.vermillon, grp:OKABE.orange, pr:OKABE.vert, chemins:'#999999'}[t]); }
+  function restylerTraces(){
+    Object.keys(VELO_NIVEAUX).forEach(t=>{ etatVelo.groupes[t].eachLayer(l=>{ if(l.setStyle) l.setStyle({color: coulVelo(t)}); }); });
+    Object.keys(RANDO_NIVEAUX).forEach(t=>{ etatRando.groupes[t].eachLayer(l=>{ if(l.setStyle) l.setStyle({color: coulRando(t)}); }); });
+    majLegende();
+  }
   let epaisseurDelta = parseInt(localStorage.getItem('geo-epaisseur')||'0', 10) || 0;
   function poidsTrait(base){ return Math.max(1, base + 1 + epaisseurDelta); }
   function majEpaisseurs(){
@@ -2751,10 +2800,11 @@
   const RANDO_NIVEAUX = {
     gr:  { libelle:'GR (grande randonnée)', reseau:'^(iwn|nwn)$', couleur:'#dc2626', epaisseur:4.5, tirets:null },
     grp: { libelle:'GR de Pays',            reseau:'^rwn$',       couleur:'#ea580c', epaisseur:3,   tirets:null },
-    pr:  { libelle:'PR (petite randonnée)', reseau:'^lwn$',       couleur:'#ca8a04', epaisseur:1.8, tirets:'5 5' }
+    pr:  { libelle:'PR (petite randonnée)', reseau:'^lwn$',       couleur:'#ca8a04', epaisseur:1.8, tirets:'5 5' },
+    chemins: { libelle:'Petits chemins & pistes', reseau:null, couleur:'#6b7280', epaisseur:1.2, tirets:'3 5' }
   };
-  const etatRando = { actif:false, groupes:{}, filtres:{gr:true,grp:true,pr:true}, requete:0,
-                      nb:{gr:0,grp:0,pr:0}, lignes:{gr:[],grp:[],pr:[]} };
+  const etatRando = { actif:false, groupes:{}, filtres:{gr:true,grp:true,pr:true,chemins:true}, requete:0,
+                      nb:{gr:0,grp:0,pr:0,chemins:0}, lignes:{gr:[],grp:[],pr:[],chemins:[]} };
   Object.keys(RANDO_NIVEAUX).forEach(t=>{ etatRando.groupes[t] = L.layerGroup(); });
   const btnRando = document.getElementById('btn-rando');
   btnRando.addEventListener('click', ()=>{
@@ -2771,7 +2821,21 @@
     appliquerFiltresRando();
     chargerRando();
   });
-  ['gr','grp','pr'].forEach(t=>{
+  (function(){
+    const cv = document.getElementById('chk-velo-coul'), iv = document.getElementById('velo-couleur');
+    const cr = document.getElementById('chk-rando-coul'), ir = document.getElementById('rando-couleur');
+    if(veloCoulUnique){ cv.checked = true; iv.value = veloCoulUnique; }
+    if(randoCoulUnique){ cr.checked = true; ir.value = randoCoulUnique; }
+    function majV(){ veloCoulUnique = cv.checked ? iv.value : null;
+      if(veloCoulUnique) localStorage.setItem('geo-velo-coul', veloCoulUnique); else localStorage.removeItem('geo-velo-coul');
+      restylerTraces(); }
+    function majR(){ randoCoulUnique = cr.checked ? ir.value : null;
+      if(randoCoulUnique) localStorage.setItem('geo-rando-coul', randoCoulUnique); else localStorage.removeItem('geo-rando-coul');
+      restylerTraces(); }
+    cv.addEventListener('change', majV); iv.addEventListener('input', majV);
+    cr.addEventListener('change', majR); ir.addEventListener('input', majR);
+  })();
+  ['gr','grp','pr','chemins'].forEach(t=>{
     document.getElementById('chk-rando-'+t).addEventListener('change', (e)=>{
       etatRando.filtres[t] = e.target.checked;
       appliquerFiltresRando();
@@ -2807,8 +2871,14 @@
     const bbox = [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()].join(',');
     document.getElementById('rando-bilan').textContent = 'Chargement des 3 niveaux\u2026';
     try{
-      for(const t of ['gr','grp','pr']){
-        const requete = '[out:json][timeout:25];'
+      for(const t of ['gr','grp','pr','chemins']){
+        if(t==='chemins' && !etatRando.filtres.chemins){
+          etatRando.groupes[t].clearLayers(); etatRando.lignes[t]=[]; etatRando.nb[t]=0;
+          continue;
+        }
+        const requete = t==='chemins'
+          ? '[out:json][timeout:25];way["highway"~"^(path|track)$"]('+bbox+');out geom 800;'
+          : '[out:json][timeout:25];'
           +'rel["route"="hiking"]["network"~"'+RANDO_NIVEAUX[t].reseau+'"]('+bbox+')->.itin;'
           +'way(r.itin)('+bbox+');out geom 500;';
         const r = await overpassRequete(requete);
@@ -2817,7 +2887,7 @@
         etatRando.groupes[t].clearLayers();
         etatRando.lignes[t] = []; etatRando.nb[t] = 0;
         const nv = RANDO_NIVEAUX[t];
-        const coulR = coulCat(nv.couleur, {gr:OKABE.vermillon, grp:OKABE.orange, pr:OKABE.vert}[t]);
+        const coulR = coulRando(t);
         (d.elements||[]).forEach(el=>{
           if(el.type!=='way' || !el.geometry || el.geometry.length<2) return;
           const pts = el.geometry.map(g=>L.latLng(g.lat, g.lon));
@@ -2830,9 +2900,9 @@
         });
       }
       majRegistreRando();
-      const total = etatRando.nb.gr+etatRando.nb.grp+etatRando.nb.pr;
+      const total = etatRando.nb.gr+etatRando.nb.grp+etatRando.nb.pr+etatRando.nb.chemins;
       document.getElementById('rando-bilan').textContent =
-        total ? etatRando.nb.gr+' GR · '+etatRando.nb.grp+' GRP · '+etatRando.nb.pr+' PR (tron\u00e7ons)'
+        total ? etatRando.nb.gr+' GR · '+etatRando.nb.grp+' GRP · '+etatRando.nb.pr+' PR · '+etatRando.nb.chemins+' chemins'
         : 'Aucun sentier balisé relevé dans cette zone';
       majLegende();
     }catch(e){
@@ -2844,6 +2914,34 @@
   map.on('moveend zoomend', ()=>{
     clearTimeout(randoMinuteur);
     randoMinuteur = setTimeout(()=>{ if(etatRando.actif) chargerRando(); }, 600);
+  });
+
+  // ---------- 📥 Fichiers à télécharger ----------
+  const FICHIERS_HTML = '<h3 style="display:flex;align-items:center">📥 Fichiers de donn\u00e9es \u00e0 t\u00e9l\u00e9charger <button id="fichiers-fermer" style="margin-left:auto;border:1px solid var(--trait);border-radius:8px;background:#fff;cursor:pointer;padding:2px 10px">\u2715</button></h3>'
+    +'<p>Chaque fichier d\u00e9bloque de nouvelles couches. T\u00e9l\u00e9chargez-le puis d\u00e9posez-le au d\u00e9veloppeur de la carte \u2014 il sera v\u00e9rifi\u00e9 et int\u00e9gr\u00e9.</p><ol>'
+    +'<li><b>Climatologie M\u00e9t\u00e9o-France</b> \u2014 d\u00e9bloque : indicateurs de r\u00e9chauffement observ\u00e9 (vagues de chaleur, anomalies de temp\u00e9rature), animation temporelle.<br>'
+    +'<a href="https://www.data.gouv.fr/datasets/donnees-climatologiques-de-base-quotidiennes" target="_blank" rel="noopener">data.gouv.fr \u2014 donn\u00e9es climatologiques quotidiennes</a> (volumineux)</li>'
+    +'<li><b>Artificialisation des sols (CEREMA)</b> \u2014 d\u00e9bloque : consommation d\u2019espaces naturels par commune 2009-2023, compl\u00e9ment des aires d\u2019attraction.<br>'
+    +'<a href="https://artificialisation.developpement-durable.gouv.fr" target="_blank" rel="noopener">artificialisation.developpement-durable.gouv.fr</a> \u2192 fichiers communaux</li>'
+    +'<li><b>Immigration par commune (INSEE)</b> \u2014 d\u00e9bloque : la section 🌍 Origines \u00e0 l\u2019\u00e9chelle communale (Grigny, \u00c9vry, Corbeil\u2026).<br>'
+    +'<a href="https://api.insee.fr/melodi/file/DS_RP_TD_IMMI_AGESEX_PAYSNAISS_COM_PRINC/DS_RP_TD_IMMI_AGESEX_PAYSNAISS_COM_PRINC_CSV_FR" target="_blank" rel="noopener">t\u00e9l\u00e9chargement direct INSEE (zip)</a></li>'
+    +'<li><b>Pr\u00e9sidentielle 2022 \u2014 1er tour</b> \u2014 d\u00e9bloque : candidat en t\u00eate par commune, nuances du vote.<br>'
+    +'<a href="https://www.data.gouv.fr/datasets/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour" target="_blank" rel="noopener">data.gouv.fr \u2014 r\u00e9sultats d\u00e9finitifs 1er tour</a> \u2192 fichier \u00ab par commune \u00bb (subcom)</li>'
+    +'<li><b>Grille communale de densit\u00e9 (INSEE)</b> \u2014 d\u00e9bloque : la typologie officielle urbain/rural en 7 niveaux, celle des manuels.<br>'
+    +'Sur <a href="https://www.insee.fr" target="_blank" rel="noopener">insee.fr</a>, rechercher \u00ab grille communale de densit\u00e9 \u00bb \u2192 fichier de composition communale</li>'
+    +'</ol><p><b>Rappel</b> : l\u2019application elle-m\u00eame vit en deux fichiers ins\u00e9parables \u2014 la page et \u00ab carte-france-geo-donnees.json \u00bb, \u00e0 h\u00e9berger dans le m\u00eame dossier.</p>';
+  document.getElementById('btn-fichiers').addEventListener('click', ()=>{
+    let voile = document.getElementById('fichiers-voile');
+    if(!voile){
+      voile = document.createElement('div');
+      voile.id = 'fichiers-voile';
+      voile.innerHTML = '<div id="fichiers-boite">'+FICHIERS_HTML+'</div>';
+      document.body.appendChild(voile);
+      voile.addEventListener('click', (e)=>{
+        if(e.target === voile || e.target.id === 'fichiers-fermer') voile.style.display = 'none';
+      });
+    }
+    voile.style.display = 'flex';
   });
 
   // ---------- ❓ Aide en ligne (simple / détaillée) ----------
@@ -3138,7 +3236,7 @@
         if(el.type!=='way' || !el.geometry || el.geometry.length<2) return;
         const t = classerVelo(el.tags);
         const nv = VELO_NIVEAUX[t];
-        const coulV = coulCat(nv.couleur, {t1:OKABE.bleu, t2:OKABE.cielAzur, t3:OKABE.rose}[t]);
+        const coulV = coulVelo(t);
         const pts = el.geometry.map(g=>L.latLng(g.lat, g.lon));
         L.polyline(pts, { color:coulV, weight:poidsTrait(nv.epaisseur), opacity:0.9,
             dashArray:nv.tirets, lineCap:'round' })
@@ -3262,6 +3360,68 @@
     etatHypso.minuteur = setTimeout(()=>{ if(etatHypso.actif) calculerHypso(); }, 550);
   });
 
+  // ---------- 🔥 Feux de forêts ----------
+  const FEU_FONTAINEBLEAU = {"nom":"Feu de Fontainebleau \u2014 juillet 2026","ha":767,"polys":[[[48.38471,2.51865],[48.38458,2.51861],[48.38456,2.5188],[48.38474,2.51923],[48.38505,2.51888],[48.38507,2.51966],[48.3854,2.51972],[48.38534,2.52007],[48.38529,2.52001],[48.38513,2.52005],[48.38553,2.52022],[48.38543,2.52022],[48.38536,2.52046],[48.3852,2.52042],[48.38533,2.52054],[48.38515,2.52098],[48.38499,2.52096],[48.38509,2.52117],[48.38496,2.52107],[48.38502,2.52083],[48.38489,2.5207],[48.38483,2.5209],[48.38469,2.52085],[48.38463,2.52107],[48.38457,2.52096],[48.38438,2.52105],[48.38441,2.52133],[48.38428,2.52114],[48.38415,2.52123],[48.38402,2.52108],[48.38397,2.52149],[48.38402,2.52092],[48.38413,2.52116],[48.38438,2.52099],[48.38418,2.52092],[48.38408,2.52101],[48.38404,2.52041],[48.38444,2.52055],[48.38451,2.52094],[48.38471,2.52081],[48.38454,2.52077],[48.38447,2.52047],[48.38427,2.52021],[48.38397,2.52031],[48.3833,2.51907],[48.38334,2.5175],[48.38342,2.51756],[48.38335,2.51742],[48.38348,2.51661],[48.38356,2.51656],[48.38352,2.51637],[48.38369,2.51637],[48.38347,2.51695],[48.38378,2.51769],[48.38362,2.5176],[48.38362,2.51818],[48.38385,2.51773],[48.38416,2.51794],[48.38384,2.51833],[48.38393,2.51855],[48.3837,2.51855],[48.38373,2.51836],[48.38367,2.51821],[48.38355,2.51825],[48.38351,2.5192],[48.38383,2.51877],[48.3838,2.51918],[48.38405,2.51922],[48.38374,2.51928],[48.38376,2.5197],[48.38383,2.51944],[48.38422,2.51939],[48.38433,2.51861],[48.38435,2.51893],[48.38452,2.51902],[48.38461,2.51917],[48.38442,2.51882],[48.38447,2.51861],[48.38466,2.51854],[48.38453,2.51813],[48.38463,2.5182],[48.38467,2.51787],[48.38487,2.51785],[48.38483,2.51806],[48.38496,2.51789],[48.38511,2.51832],[48.38496,2.51865],[48.38512,2.51865],[48.38471,2.51865]],[[48.38842,2.55494],[48.38848,2.55481],[48.38829,2.55473],[48.38835,2.55464],[48.38859,2.55473],[48.38854,2.55512],[48.38881,2.55509],[48.38855,2.55524],[48.3886,2.55553],[48.38406,2.55787],[48.38418,2.55716],[48.38463,2.55683],[48.38482,2.5554],[48.38532,2.55525],[48.38489,2.55532],[48.38483,2.55422],[48.38522,2.55495],[48.3857,2.55466],[48.38595,2.55529],[48.38612,2.55509],[48.3857,2.55421],[48.3851,2.55432],[48.38491,2.55404],[48.38505,2.55341],[48.38525,2.55365],[48.38542,2.55341],[48.38494,2.55326],[48.38536,2.55237],[48.38587,2.55295],[48.38545,2.55216],[48.38516,2.55246],[48.38505,2.55192],[48.38548,2.55209],[48.38584,2.54909],[48.38493,2.54782],[48.38522,2.54896],[48.38473,2.54869],[48.38468,2.5492],[48.38448,2.54815],[48.38434,2.54867],[48.38421,2.54822],[48.38358,2.54891],[48.38328,2.54805],[48.38249,2.54709],[48.38207,2.54782],[48.38263,2.54793],[48.38259,2.54883],[48.38161,2.55007],[48.38103,2.54807],[48.38072,2.54913],[48.38078,2.54777],[48.38048,2.54823],[48.38044,2.54728],[48.38002,2.54737],[48.37999,2.54592],[48.38026,2.54691],[48.38074,2.54663],[48.38025,2.54652],[48.38023,2.54473],[48.37933,2.54478],[48.37967,2.54547],[48.37895,2.54498],[48.3789,2.54368],[48.37869,2.54447],[48.37764,2.54333],[48.37674,2.54009],[48.37635,2.54003],[48.37619,2.53973],[48.37681,2.53986],[48.37698,2.53929],[48.37682,2.53925],[48.37673,2.53878],[48.3766,2.53871],[48.37635,2.53967],[48.37598,2.53818],[48.37642,2.53882],[48.37643,2.53755],[48.37657,2.53809],[48.37685,2.53778],[48.37644,2.5375],[48.3764,2.53738],[48.3768,2.5377],[48.37734,2.53644],[48.37762,2.53674],[48.37854,2.53591],[48.37869,2.53444],[48.3784,2.53502],[48.37811,2.53449],[48.3787,2.53377],[48.37932,2.53476],[48.37948,2.53404],[48.38048,2.53509],[48.38064,2.5366],[48.381,2.53606],[48.38204,2.53711],[48.38196,2.53627],[48.38241,2.53689],[48.38274,2.53635],[48.38246,2.53546],[48.38239,2.53596],[48.38179,2.53573],[48.38186,2.53471],[48.38104,2.53478],[48.38106,2.53403],[48.38032,2.53481],[48.37965,2.53354],[48.37951,2.5338],[48.37919,2.53366],[48.37918,2.53145],[48.37846,2.53062],[48.37863,2.53135],[48.3782,2.53159],[48.37711,2.52812],[48.37573,2.52649],[48.37609,2.52541],[48.37669,2.5256],[48.37702,2.52605],[48.37729,2.52624],[48.3775,2.52626],[48.37694,2.52476],[48.37708,2.52443],[48.37738,2.52533],[48.37786,2.52516],[48.37782,2.52327],[48.37832,2.52284],[48.3779,2.52308],[48.37695,2.52207],[48.37681,2.52106],[48.37717,2.52114],[48.37697,2.52023],[48.3768,2.52063],[48.37672,2.52067],[48.37671,2.52022],[48.37626,2.52037],[48.37619,2.52018],[48.37611,2.52055],[48.37602,2.52055],[48.37606,2.52031],[48.37582,2.52014],[48.37593,2.52096],[48.37568,2.52139],[48.37507,2.52094],[48.37495,2.52132],[48.37568,2.52163],[48.37577,2.52226],[48.3752,2.5227],[48.37571,2.52503],[48.3753,2.52596],[48.37536,2.52533],[48.37494,2.52473],[48.37491,2.52503],[48.37436,2.52467],[48.37414,2.52351],[48.37455,2.52314],[48.37462,2.52251],[48.37509,2.52222],[48.37497,2.52209],[48.37515,2.52186],[48.37515,2.52151],[48.37508,2.52192],[48.37458,2.52247],[48.3747,2.52095],[48.37409,2.52078],[48.37382,2.51874],[48.37352,2.51956],[48.37339,2.51952],[48.37314,2.51781],[48.37291,2.51766],[48.37268,2.51799],[48.37255,2.51807],[48.37245,2.51801],[48.37201,2.51637],[48.3725,2.51596],[48.37168,2.51607],[48.37188,2.5157],[48.37177,2.51579],[48.37161,2.51551],[48.37146,2.51478],[48.37132,2.51482],[48.37131,2.51413],[48.37105,2.51372],[48.37121,2.51374],[48.37134,2.5135],[48.37131,2.51333],[48.37101,2.51361],[48.37098,2.51329],[48.37105,2.51336],[48.37107,2.5132],[48.37119,2.5132],[48.37128,2.51281],[48.37116,2.51288],[48.37103,2.51271],[48.37134,2.51257],[48.37226,2.51351],[48.37246,2.51267],[48.37257,2.51271],[48.37268,2.51315],[48.37283,2.51297],[48.37291,2.51308],[48.37289,2.51282],[48.37293,2.51282],[48.37298,2.51316],[48.37302,2.51273],[48.37322,2.51266],[48.37328,2.51297],[48.37351,2.51264],[48.37422,2.51473],[48.37497,2.51474],[48.37579,2.51342],[48.37602,2.5135],[48.37661,2.51434],[48.37695,2.51428],[48.3767,2.51244],[48.37626,2.51247],[48.37554,2.51219],[48.37526,2.51118],[48.37516,2.511],[48.37511,2.51112],[48.37476,2.51122],[48.37464,2.51097],[48.37457,2.5112],[48.37441,2.5109],[48.3743,2.51114],[48.37425,2.51034],[48.37405,2.51013],[48.37403,2.50996],[48.37395,2.50996],[48.37445,2.50956],[48.37442,2.50909],[48.375,2.50865],[48.37503,2.50882],[48.37522,2.50873],[48.37525,2.50912],[48.37554,2.50903],[48.37534,2.50932],[48.37531,2.50964],[48.37543,2.50942],[48.37564,2.50936],[48.37554,2.50951],[48.37556,2.5097],[48.37582,2.50998],[48.37566,2.50996],[48.37573,2.51011],[48.37563,2.51016],[48.37538,2.51061],[48.37536,2.51053],[48.37532,2.51081],[48.37524,2.51066],[48.37542,2.51109],[48.37663,2.51082],[48.37654,2.51045],[48.37678,2.50961],[48.37714,2.51003],[48.37732,2.50889],[48.37751,2.50927],[48.3776,2.50899],[48.37752,2.50852],[48.37772,2.50856],[48.37761,2.50839],[48.37775,2.50824],[48.37784,2.50834],[48.37795,2.50817],[48.37795,2.50761],[48.37801,2.50787],[48.37808,2.50756],[48.37834,2.50775],[48.37825,2.50734],[48.37857,2.50769],[48.37804,2.51016],[48.37953,2.51066],[48.38119,2.51305],[48.38235,2.51291],[48.3825,2.51197],[48.38236,2.51165],[48.38241,2.51119],[48.38253,2.51169],[48.38249,2.51186],[48.38288,2.51199],[48.38276,2.51212],[48.38291,2.51216],[48.38285,2.51225],[48.38307,2.51259],[48.38307,2.51281],[48.38311,2.51279],[48.38253,2.51443],[48.38157,2.51537],[48.38119,2.51892],[48.3806,2.51893],[48.38012,2.51899],[48.37937,2.5197],[48.38161,2.52475],[48.38097,2.52958],[48.38223,2.52984],[48.38287,2.52902],[48.38251,2.52837],[48.38186,2.52245],[48.38375,2.52186],[48.38393,2.52147],[48.38401,2.52153],[48.38426,2.52122],[48.38452,2.52194],[48.38452,2.52165],[48.38469,2.52137],[48.38443,2.52107],[48.38456,2.52103],[48.3846,2.52126],[48.38469,2.52129],[48.38469,2.52094],[48.38477,2.52122],[48.38511,2.52126],[48.38501,2.52167],[48.38505,2.52161],[48.38511,2.52161],[48.38508,2.52145],[48.38513,2.52143],[48.38512,2.5213],[48.38515,2.52124],[48.38519,2.52124],[48.38516,2.52158],[48.38506,2.52163],[48.38509,2.52191],[48.38526,2.5216],[48.38537,2.52197],[48.38481,2.52208],[48.38498,2.52251],[48.38508,2.52212],[48.38517,2.52217],[48.38525,2.52234],[48.38535,2.52227],[48.38544,2.52247],[48.38538,2.52268],[48.38504,2.52275],[48.38507,2.52297],[48.38517,2.52299],[48.38516,2.52346],[48.38481,2.52243],[48.38491,2.52319],[48.38449,2.52299],[48.38443,2.52276],[48.38439,2.52295],[48.38435,2.52295],[48.38436,2.52224],[48.38435,2.52237],[48.38427,2.52226],[48.3841,2.52224],[48.38409,2.52239],[48.38402,2.52239],[48.384,2.52274],[48.38422,2.52313],[48.38444,2.52295],[48.38445,2.5233],[48.38454,2.52308],[48.38458,2.52334],[48.38465,2.52317],[48.38465,2.52327],[48.38477,2.52323],[48.38484,2.52345],[48.38491,2.52323],[48.38477,2.52368],[48.38462,2.52332],[48.3846,2.52384],[48.38441,2.52367],[48.38448,2.52423],[48.38427,2.5238],[48.38399,2.52402],[48.38391,2.52419],[48.38408,2.52408],[48.38414,2.52419],[48.38412,2.52436],[48.38418,2.5244],[48.38415,2.52447],[48.3839,2.52453],[48.38376,2.52404],[48.38368,2.52441],[48.3829,2.52366],[48.38273,2.52381],[48.38428,2.52479],[48.38416,2.52505],[48.38439,2.52524],[48.3842,2.52542],[48.3841,2.52522],[48.3841,2.52538],[48.38427,2.52568],[48.38435,2.52544],[48.38447,2.52539],[48.38449,2.52583],[48.38459,2.5255],[48.38479,2.52574],[48.38499,2.52513],[48.38518,2.52599],[48.385,2.52662],[48.38531,2.52657],[48.38507,2.52692],[48.3856,2.52707],[48.38568,2.52899],[48.38555,2.52826],[48.38544,2.52824],[48.38546,2.52806],[48.38535,2.52796],[48.38523,2.5282],[48.38528,2.52809],[48.3851,2.52792],[48.38513,2.52761],[48.38495,2.5282],[48.38557,2.52878],[48.38527,2.52923],[48.38512,2.52906],[48.38495,2.52924],[48.3852,2.52949],[48.38485,2.53012],[48.38501,2.53077],[48.38489,2.53103],[48.38481,2.53079],[48.38457,2.5306],[48.38454,2.53105],[48.3848,2.53107],[48.38483,2.53151],[48.3849,2.53125],[48.38478,2.53092],[48.38505,2.53133],[48.3852,2.53105],[48.38559,2.53176],[48.38548,2.53223],[48.38577,2.53202],[48.3857,2.53238],[48.38604,2.5324],[48.38593,2.53264],[48.38571,2.53245],[48.38576,2.53269],[48.38558,2.53249],[48.3856,2.53275],[48.3854,2.5326],[48.38531,2.53263],[48.38531,2.53267],[48.38583,2.53284],[48.38589,2.53327],[48.38609,2.53305],[48.38634,2.53352],[48.38641,2.53346],[48.38606,2.53413],[48.38614,2.53435],[48.38637,2.53402],[48.38646,2.53467],[48.38617,2.53467],[48.38609,2.53443],[48.38601,2.53443],[48.38652,2.53555],[48.38625,2.53603],[48.38601,2.53573],[48.38616,2.53618],[48.38594,2.53644],[48.3862,2.53668],[48.38607,2.53659],[48.3859,2.53681],[48.38574,2.53677],[48.38576,2.53686],[48.38569,2.53675],[48.38576,2.53645],[48.3859,2.53653],[48.38587,2.53623],[48.38579,2.53621],[48.38601,2.53586],[48.38584,2.53519],[48.38542,2.5358],[48.3857,2.53638],[48.38564,2.53651],[48.38548,2.53641],[48.3856,2.53677],[48.38539,2.53701],[48.38546,2.53712],[48.38537,2.53734],[48.3854,2.53753],[48.38555,2.53746],[48.38546,2.53699],[48.38579,2.53722],[48.38556,2.53723],[48.38579,2.53733],[48.38556,2.5374],[48.38546,2.53788],[48.38565,2.53759],[48.38581,2.53787],[48.38518,2.53842],[48.38569,2.53848],[48.38548,2.53874],[48.38554,2.53896],[48.38548,2.53909],[48.38581,2.53908],[48.3858,2.53926],[48.38587,2.53949],[48.3858,2.53876],[48.38595,2.53874],[48.38585,2.53897],[48.38595,2.53899],[48.38597,2.53917],[48.38608,2.53869],[48.38603,2.53858],[48.38587,2.53863],[48.38572,2.53818],[48.38599,2.53815],[48.38656,2.53858],[48.38624,2.53888],[48.38653,2.53923],[48.38643,2.53953],[48.38666,2.53955],[48.38665,2.54007],[48.38626,2.53983],[48.38612,2.5401],[48.38652,2.54011],[48.38651,2.54089],[48.38617,2.54178],[48.38596,2.54137],[48.38578,2.5417],[48.3863,2.54193],[48.38634,2.54223],[48.38587,2.54239],[48.38595,2.54209],[48.38579,2.54189],[48.3857,2.54267],[48.38594,2.54288],[48.38627,2.54478],[48.38634,2.54422],[48.38664,2.54409],[48.38657,2.54485],[48.38648,2.54498],[48.38681,2.54495],[48.38672,2.54634],[48.38705,2.54599],[48.38732,2.54629],[48.38725,2.547],[48.38682,2.54726],[48.38739,2.54977],[48.38716,2.54977],[48.38716,2.55003],[48.38701,2.55005],[48.38698,2.55031],[48.3875,2.55013],[48.38757,2.55123],[48.38813,2.55151],[48.38835,2.55192],[48.38802,2.5522],[48.38808,2.55203],[48.38796,2.55188],[48.38794,2.55225],[48.38824,2.55216],[48.38825,2.55257],[48.38821,2.55287],[48.38788,2.55264],[48.38793,2.55372],[48.38808,2.5533],[48.38823,2.55363],[48.38834,2.55354],[48.38823,2.55281],[48.38837,2.55231],[48.38864,2.55259],[48.38859,2.5538],[48.3884,2.55324],[48.3884,2.55395],[48.38807,2.55393],[48.38807,2.55421],[48.38796,2.55434],[48.388,2.55458],[48.38792,2.55447],[48.38786,2.55467],[48.38797,2.55417],[48.38789,2.55428],[48.3877,2.55422],[48.3878,2.55484],[48.38756,2.55458],[48.3877,2.55519],[48.38752,2.55556],[48.38793,2.55527],[48.38786,2.55501],[48.38802,2.55475],[48.38842,2.55494]],[[48.3785,2.55462],[48.37925,2.55532],[48.37918,2.55593],[48.37878,2.55522],[48.37831,2.55587],[48.37855,2.5574],[48.37911,2.55701],[48.37898,2.55774],[48.37933,2.55802],[48.37895,2.55792],[48.37886,2.55861],[48.37907,2.55854],[48.37919,2.55887],[48.37949,2.55886],[48.37914,2.55856],[48.37955,2.5586],[48.37921,2.55751],[48.3793,2.55705],[48.37957,2.55685],[48.37944,2.55776],[48.37995,2.55897],[48.37956,2.5588],[48.3794,2.55921],[48.38031,2.56019],[48.37982,2.56033],[48.37964,2.56055],[48.37924,2.56073],[48.37885,2.56089],[48.37834,2.56107],[48.37797,2.56117],[48.37718,2.56133],[48.37635,2.56142],[48.37804,2.56112],[48.37807,2.56093],[48.37778,2.56027],[48.37749,2.56012],[48.3776,2.55996],[48.37718,2.55902],[48.37704,2.55904],[48.37695,2.55926],[48.37688,2.55919],[48.37688,2.55941],[48.37685,2.55913],[48.37671,2.55904],[48.37658,2.55911],[48.37653,2.55896],[48.37636,2.55883],[48.37632,2.55926],[48.37583,2.55896],[48.37588,2.55875],[48.37584,2.55853],[48.3758,2.5589],[48.37555,2.5591],[48.37554,2.5589],[48.37542,2.55897],[48.37544,2.55858],[48.37534,2.55897],[48.37524,2.55867],[48.37511,2.5588],[48.37521,2.55893],[48.37504,2.55888],[48.37501,2.55919],[48.37514,2.55921],[48.37512,2.55936],[48.37488,2.55927],[48.37489,2.55977],[48.37471,2.55988],[48.37469,2.55954],[48.37417,2.55948],[48.37414,2.55907],[48.37383,2.55911],[48.37394,2.55967],[48.37364,2.5595],[48.37344,2.55981],[48.37337,2.55957],[48.37354,2.55963],[48.37355,2.55935],[48.37368,2.55948],[48.3738,2.55931],[48.37377,2.55918],[48.37344,2.55914],[48.37342,2.55931],[48.37335,2.55927],[48.37328,2.55953],[48.37332,2.5592],[48.37305,2.55946],[48.37301,2.55923],[48.37304,2.55907],[48.37296,2.55901],[48.37302,2.55972],[48.37265,2.5597],[48.37287,2.5605],[48.37264,2.56001],[48.37231,2.56031],[48.37238,2.56042],[48.37208,2.56047],[48.37241,2.56016],[48.37235,2.56005],[48.37235,2.55975],[48.37246,2.55975],[48.37248,2.55945],[48.37253,2.5594],[48.37237,2.55947],[48.3724,2.55932],[48.37232,2.55923],[48.37223,2.55954],[48.37242,2.55964],[48.3722,2.5599],[48.37228,2.56012],[48.37192,2.56029],[48.37195,2.56019],[48.37189,2.56012],[48.37187,2.56027],[48.37203,2.56047],[48.37119,2.56058],[48.37058,2.56141],[48.37003,2.56115],[48.3704,2.56175],[48.36965,2.56258],[48.36953,2.56204],[48.36961,2.56209],[48.36971,2.5618],[48.36949,2.5617],[48.36936,2.56131],[48.36952,2.56079],[48.36911,2.56049],[48.36971,2.55969],[48.36894,2.55844],[48.3698,2.55958],[48.3698,2.55923],[48.36954,2.5585],[48.36979,2.55865],[48.36982,2.55841],[48.36971,2.55824],[48.36956,2.55828],[48.3691,2.55742],[48.36921,2.55734],[48.36945,2.55757],[48.36934,2.55723],[48.36982,2.55688],[48.36957,2.55645],[48.37036,2.55558],[48.37018,2.55506],[48.37008,2.55525],[48.37001,2.5551],[48.36995,2.55513],[48.36998,2.55506],[48.36991,2.55487],[48.37,2.5548],[48.36982,2.55474],[48.36975,2.55385],[48.36965,2.55388],[48.36955,2.55414],[48.36945,2.55401],[48.36965,2.55377],[48.36982,2.55387],[48.36969,2.55362],[48.36978,2.55364],[48.36992,2.55344],[48.36976,2.5531],[48.36986,2.55277],[48.36961,2.55284],[48.36989,2.55266],[48.36974,2.55241],[48.36986,2.5523],[48.3695,2.55247],[48.36944,2.55135],[48.36962,2.55133],[48.36974,2.551],[48.36972,2.55141],[48.37004,2.55165],[48.36987,2.55191],[48.37009,2.55236],[48.36996,2.55236],[48.36994,2.55264],[48.37003,2.55264],[48.37014,2.5524],[48.3701,2.55158],[48.37022,2.55197],[48.37052,2.55182],[48.37037,2.55145],[48.37033,2.5516],[48.37024,2.5516],[48.3703,2.55147],[48.3702,2.55132],[48.3702,2.55119],[48.37056,2.55162],[48.37047,2.55078],[48.3706,2.55115],[48.3709,2.55073],[48.37081,2.55045],[48.37149,2.55034],[48.37123,2.54987],[48.37114,2.55006],[48.37107,2.55008],[48.37091,2.54976],[48.37084,2.55004],[48.37077,2.54974],[48.37054,2.54987],[48.37051,2.54959],[48.37031,2.54979],[48.37037,2.55009],[48.37018,2.54985],[48.37014,2.55029],[48.36992,2.55027],[48.36987,2.54957],[48.36996,2.55007],[48.37022,2.54929],[48.37048,2.54948],[48.37016,2.54899],[48.37061,2.54903],[48.37058,2.54929],[48.37075,2.54952],[48.37066,2.54883],[48.37094,2.54894],[48.3709,2.54916],[48.37127,2.54926],[48.37127,2.54952],[48.37172,2.5496],[48.37177,2.54917],[48.37182,2.54917],[48.37179,2.54926],[48.37183,2.54925],[48.37183,2.54928],[48.3719,2.54921],[48.37186,2.54912],[48.37176,2.5491],[48.37147,2.54932],[48.37163,2.54874],[48.37151,2.54846],[48.3716,2.54835],[48.3714,2.54835],[48.37147,2.54833],[48.37148,2.54807],[48.37141,2.54809],[48.37138,2.54788],[48.37149,2.54783],[48.37142,2.54762],[48.37151,2.54764],[48.37155,2.54809],[48.3717,2.54792],[48.37178,2.54757],[48.37199,2.54817],[48.37216,2.54806],[48.37223,2.54826],[48.37233,2.54793],[48.37213,2.54793],[48.372,2.54748],[48.3719,2.54772],[48.37184,2.54718],[48.37178,2.54755],[48.37168,2.54751],[48.37176,2.5469],[48.37156,2.54658],[48.37189,2.54658],[48.37182,2.5463],[48.37145,2.54626],[48.37143,2.54677],[48.37107,2.54691],[48.37122,2.54678],[48.37127,2.54641],[48.37116,2.54628],[48.3715,2.54621],[48.37117,2.5458],[48.37097,2.54745],[48.37045,2.54642],[48.37009,2.54674],[48.36959,2.54614],[48.36958,2.54677],[48.36935,2.54684],[48.37014,2.548],[48.37023,2.54834],[48.36986,2.54858],[48.36983,2.54923],[48.36966,2.54882],[48.3695,2.54925],[48.36944,2.54887],[48.36935,2.54908],[48.36924,2.54904],[48.36923,2.54939],[48.36943,2.54973],[48.36921,2.54965],[48.36917,2.54988],[48.36901,2.54988],[48.36899,2.55038],[48.36864,2.55015],[48.36851,2.55041],[48.36868,2.55056],[48.36861,2.55069],[48.36842,2.55041],[48.36849,2.54989],[48.36837,2.55006],[48.36826,2.54993],[48.36815,2.54998],[48.36786,2.54959],[48.36818,2.54963],[48.36813,2.54862],[48.36796,2.54909],[48.36776,2.54873],[48.36781,2.54899],[48.36769,2.54914],[48.36776,2.54899],[48.3674,2.54865],[48.36736,2.54815],[48.36724,2.5486],[48.3664,2.54779],[48.36634,2.54762],[48.36659,2.54612],[48.36664,2.54617],[48.36667,2.54612],[48.36635,2.54557],[48.36678,2.54504],[48.36684,2.54473],[48.36676,2.54357],[48.36689,2.54341],[48.36723,2.5431],[48.36724,2.54316],[48.36727,2.54301],[48.36718,2.5429],[48.36737,2.54293],[48.3673,2.54247],[48.36723,2.54217],[48.36718,2.54218],[48.36715,2.54238],[48.36721,2.54251],[48.36719,2.54277],[48.367,2.5419],[48.36619,2.54103],[48.36608,2.54008],[48.36602,2.54067],[48.36589,2.5406],[48.366,2.53961],[48.36576,2.53998],[48.36537,2.53968],[48.36532,2.53897],[48.36523,2.53994],[48.36479,2.53938],[48.36508,2.53931],[48.36511,2.53887],[48.36725,2.53961],[48.36772,2.53909],[48.3679,2.54012],[48.36793,2.539],[48.36669,2.5376],[48.36825,2.53439],[48.36778,2.53389],[48.36651,2.53432],[48.36655,2.53285],[48.36409,2.53477],[48.36441,2.5359],[48.36378,2.53839],[48.36491,2.53881],[48.36497,2.53911],[48.36379,2.5388],[48.36378,2.54091],[48.36309,2.54104],[48.36304,2.54219],[48.3631,2.54275],[48.36328,2.54326],[48.36324,2.54328],[48.36329,2.54334],[48.36336,2.54366],[48.36346,2.54377],[48.3634,2.54397],[48.36385,2.54464],[48.36263,2.54609],[48.36029,2.54574],[48.35961,2.54652],[48.35908,2.5459],[48.35853,2.54682],[48.3567,2.54561],[48.35754,2.54171],[48.35812,2.54245],[48.3582,2.54339],[48.35794,2.54428],[48.35799,2.54416],[48.35825,2.54434],[48.35841,2.54419],[48.35834,2.54378],[48.35862,2.54258],[48.35903,2.54234],[48.35907,2.54271],[48.35873,2.54429],[48.35915,2.54487],[48.35929,2.54413],[48.35914,2.54386],[48.35909,2.54346],[48.35935,2.54202],[48.35864,2.54177],[48.35854,2.54132],[48.35878,2.53984],[48.35921,2.53956],[48.35962,2.53979],[48.35915,2.53898],[48.35934,2.53632],[48.35945,2.53606],[48.35963,2.53625],[48.35967,2.53595],[48.3597,2.53619],[48.35962,2.53632],[48.35943,2.53615],[48.35963,2.53666],[48.35993,2.53569],[48.36016,2.53597],[48.36009,2.53644],[48.36021,2.53631],[48.36034,2.53646],[48.36016,2.53644],[48.36018,2.53674],[48.36052,2.53661],[48.36067,2.53607],[48.36048,2.53551],[48.36072,2.53572],[48.36067,2.53659],[48.3609,2.53583],[48.3611,2.53615],[48.36118,2.53604],[48.36113,2.53576],[48.36082,2.53581],[48.36085,2.53548],[48.36063,2.53518],[48.36112,2.5354],[48.36118,2.53488],[48.36109,2.53503],[48.36094,2.53505],[48.36101,2.53522],[48.36084,2.53525],[48.36065,2.53464],[48.36034,2.53443],[48.36049,2.53482],[48.36013,2.53469],[48.36,2.53402],[48.36017,2.53378],[48.36027,2.53331],[48.36047,2.53357],[48.3606,2.53333],[48.36059,2.5311],[48.36111,2.53172],[48.36075,2.53088],[48.36066,2.53028],[48.36114,2.53108],[48.36093,2.52957],[48.36136,2.52986],[48.3615,2.52919],[48.36274,2.5286],[48.36261,2.52823],[48.36271,2.52821],[48.36287,2.52842],[48.36287,2.52855],[48.36303,2.52868],[48.36286,2.52804],[48.3637,2.52779],[48.36377,2.52759],[48.36373,2.52734],[48.36522,2.52806],[48.36474,2.5266],[48.36398,2.52637],[48.36453,2.52502],[48.36411,2.52423],[48.36596,2.5214],[48.36623,2.52224],[48.36699,2.52163],[48.36864,2.52272],[48.36618,2.52663],[48.36585,2.52936],[48.36698,2.53007],[48.36633,2.53071],[48.36672,2.53263],[48.36796,2.53216],[48.36768,2.53074],[48.3681,2.53145],[48.36825,2.53097],[48.36776,2.52892],[48.36828,2.52775],[48.36951,2.52879],[48.37075,2.52794],[48.37094,2.52637],[48.37149,2.52759],[48.37114,2.52822],[48.37197,2.52772],[48.37339,2.52976],[48.37367,2.52926],[48.37356,2.53006],[48.37392,2.52975],[48.37415,2.53048],[48.37429,2.52992],[48.37431,2.52992],[48.37431,2.52999],[48.37441,2.53009],[48.37437,2.53029],[48.37457,2.53018],[48.37494,2.53171],[48.37587,2.53161],[48.37576,2.53202],[48.37616,2.53221],[48.37553,2.532],[48.37539,2.53281],[48.37625,2.53308],[48.37602,2.53338],[48.37618,2.53394],[48.37701,2.53333],[48.37696,2.53381],[48.3764,2.53394],[48.37649,2.53454],[48.37618,2.53401],[48.37643,2.53513],[48.37597,2.5352],[48.37604,2.53353],[48.37442,2.53251],[48.37492,2.53382],[48.37442,2.53281],[48.37463,2.53456],[48.37377,2.53576],[48.37532,2.53888],[48.37545,2.5416],[48.37467,2.5399],[48.37396,2.54094],[48.37453,2.54102],[48.37452,2.54322],[48.37463,2.5415],[48.37528,2.54173],[48.37573,2.54347],[48.37519,2.54393],[48.37571,2.54419],[48.37525,2.54434],[48.37561,2.54468],[48.37532,2.54488],[48.37525,2.54637],[48.37569,2.54663],[48.37569,2.54695],[48.37554,2.54723],[48.37549,2.5468],[48.37523,2.54683],[48.3754,2.54739],[48.37624,2.54766],[48.3763,2.54818],[48.37664,2.548],[48.37654,2.5485],[48.3768,2.54878],[48.37702,2.54821],[48.37648,2.54768],[48.37698,2.54733],[48.37637,2.54761],[48.37636,2.54716],[48.37718,2.54677],[48.37671,2.54629],[48.37635,2.54699],[48.37611,2.54444],[48.37621,2.54542],[48.37791,2.54609],[48.37701,2.5477],[48.37776,2.55002],[48.37722,2.54947],[48.37658,2.55038],[48.37688,2.55057],[48.37687,2.5513],[48.37752,2.55186],[48.37798,2.55425],[48.3785,2.55462]],[[48.38302,2.55771],[48.38332,2.55756],[48.38327,2.55795],[48.38334,2.55807],[48.38331,2.55793],[48.38342,2.5576],[48.38349,2.55762],[48.38344,2.55816],[48.3839,2.55794],[48.38148,2.55943],[48.38159,2.55863],[48.38133,2.55831],[48.38119,2.55898],[48.38107,2.55849],[48.38091,2.55892],[48.38071,2.5589],[48.38093,2.55838],[48.38038,2.55819],[48.38045,2.55907],[48.38008,2.55819],[48.37978,2.55834],[48.37957,2.55651],[48.38029,2.55747],[48.38039,2.5573],[48.37971,2.55534],[48.38005,2.55434],[48.3807,2.55648],[48.38126,2.55531],[48.38151,2.55615],[48.38185,2.55584],[48.3816,2.55848],[48.38266,2.55856],[48.38278,2.55772],[48.38302,2.55771]],[[48.37554,2.56136],[48.37585,2.56134],[48.37576,2.56093],[48.37606,2.56144],[48.3726,2.56202],[48.36956,2.56376],[48.36984,2.56344],[48.3697,2.56293],[48.37043,2.56232],[48.37046,2.56216],[48.37036,2.56217],[48.37035,2.5621],[48.37087,2.56115],[48.37139,2.56064],[48.37185,2.56061],[48.37226,2.56068],[48.37222,2.56103],[48.3723,2.5607],[48.37358,2.561],[48.37362,2.56121],[48.37369,2.561],[48.37387,2.561],[48.37394,2.56118],[48.37442,2.56088],[48.37487,2.56134],[48.37545,2.56091],[48.3754,2.56111],[48.37554,2.56136]],[[48.38129,2.56192],[48.3813,2.56289],[48.3811,2.5633],[48.38119,2.56375],[48.38111,2.56399],[48.38098,2.56395],[48.38093,2.56367],[48.38107,2.56319],[48.38053,2.56295],[48.38069,2.5638],[48.38043,2.5646],[48.37988,2.56373],[48.37844,2.5638],[48.37786,2.56352],[48.37667,2.56202],[48.37867,2.56181],[48.38033,2.56084],[48.38029,2.56123],[48.38069,2.56145],[48.38104,2.56054],[48.38129,2.56192]],[[48.38537,2.55923],[48.38549,2.55942],[48.38545,2.55955],[48.38553,2.55957],[48.38542,2.55959],[48.38536,2.55925],[48.38536,2.55972],[48.38549,2.5597],[48.38537,2.5599],[48.38549,2.56022],[48.38542,2.56044],[48.38554,2.56052],[48.38556,2.56074],[48.38567,2.56076],[48.38542,2.56104],[48.38555,2.5607],[48.38534,2.56093],[48.38532,2.56068],[48.38509,2.56042],[48.38551,2.56057],[48.38539,2.56048],[48.38532,2.56001],[48.38513,2.56001],[48.38523,2.55973],[48.38516,2.55955],[48.385,2.55997],[48.38513,2.56014],[48.38515,2.56029],[48.38496,2.55999],[48.38493,2.56005],[48.38481,2.56005],[48.38471,2.56014],[48.3846,2.56066],[48.38486,2.56079],[48.38473,2.56116],[48.38467,2.56092],[48.3844,2.56099],[48.3844,2.56077],[48.38433,2.56086],[48.38433,2.56109],[48.38436,2.56112],[48.38436,2.56116],[48.38439,2.56116],[48.38439,2.56122],[48.38431,2.56131],[48.3844,2.56129],[48.38434,2.56144],[48.38414,2.5611],[48.38416,2.56172],[48.38435,2.56189],[48.3841,2.56183],[48.38388,2.56149],[48.38361,2.56222],[48.38364,2.56307],[48.38351,2.56253],[48.38347,2.56261],[48.38341,2.56255],[48.38369,2.56369],[48.38341,2.56318],[48.38339,2.56415],[48.38348,2.56406],[48.38359,2.56415],[48.38359,2.56421],[48.38351,2.56417],[48.38345,2.56428],[48.38351,2.56447],[48.38341,2.5646],[48.38338,2.56424],[48.38325,2.56422],[48.38338,2.56476],[48.38322,2.5648],[48.38323,2.56467],[48.38313,2.56471],[48.38331,2.56506],[48.38306,2.56497],[48.3831,2.56439],[48.3829,2.56515],[48.38306,2.565],[48.38309,2.56515],[48.38286,2.56542],[48.38155,2.56553],[48.38149,2.56499],[48.38149,2.56551],[48.38147,2.56554],[48.38127,2.5656],[48.3811,2.56524],[48.38143,2.56554],[48.38146,2.56497],[48.38114,2.56462],[48.38143,2.56483],[48.38125,2.56444],[48.38161,2.56261],[48.38142,2.56136],[48.38106,2.56039],[48.38327,2.55893],[48.38456,2.55827],[48.38465,2.55845],[48.38538,2.55785],[48.38521,2.55832],[48.38537,2.55923]],[[48.36857,2.57076],[48.36846,2.5705],[48.36859,2.57063],[48.36872,2.57058],[48.36836,2.57039],[48.3684,2.57007],[48.36828,2.5702],[48.36821,2.57009],[48.36843,2.56994],[48.36828,2.5694],[48.36824,2.56972],[48.36801,2.56968],[48.36791,2.56994],[48.36789,2.5694],[48.36812,2.56934],[48.36816,2.56895],[48.36815,2.56877],[48.36803,2.56873],[48.36813,2.56867],[48.36822,2.56895],[48.36844,2.5689],[48.36839,2.56853],[48.36858,2.5687],[48.36872,2.56842],[48.36886,2.56967],[48.36906,2.56944],[48.36932,2.57051],[48.36972,2.57077],[48.37065,2.56879],[48.37068,2.57043],[48.37046,2.57147],[48.36981,2.57214],[48.36985,2.57381],[48.36956,2.57388],[48.3694,2.57358],[48.36938,2.5737],[48.36926,2.57358],[48.36929,2.57352],[48.36925,2.57343],[48.36909,2.57376],[48.36906,2.57337],[48.36896,2.5735],[48.36897,2.57402],[48.36913,2.57426],[48.36883,2.57449],[48.36892,2.57454],[48.36893,2.57471],[48.36901,2.57471],[48.36902,2.57488],[48.36907,2.57489],[48.36897,2.57533],[48.36907,2.57557],[48.36891,2.57559],[48.36893,2.57622],[48.3688,2.57642],[48.36886,2.57689],[48.3688,2.57715],[48.36893,2.5773],[48.36837,2.57689],[48.36863,2.57722],[48.36827,2.57728],[48.36811,2.57778],[48.36801,2.57711],[48.36773,2.57692],[48.36786,2.57655],[48.3678,2.57653],[48.36782,2.57632],[48.36787,2.57634],[48.36785,2.57612],[48.36754,2.57578],[48.36776,2.57567],[48.36774,2.57547],[48.36763,2.57528],[48.36777,2.57519],[48.36775,2.575],[48.36807,2.57487],[48.36794,2.57482],[48.36787,2.57457],[48.36814,2.57491],[48.36824,2.57432],[48.36839,2.57422],[48.36847,2.57437],[48.3685,2.574],[48.36861,2.57391],[48.3686,2.57309],[48.36875,2.57283],[48.36864,2.57231],[48.36849,2.57218],[48.36865,2.57182],[48.36839,2.57171],[48.36845,2.57149],[48.36837,2.57126],[48.36878,2.57117],[48.36855,2.57091],[48.36857,2.57076]],[[48.37233,2.5715],[48.37216,2.57187],[48.37237,2.57178],[48.37245,2.57266],[48.37208,2.572],[48.37214,2.57238],[48.3719,2.57215],[48.37175,2.57221],[48.37173,2.57297],[48.37141,2.57317],[48.37117,2.5728],[48.3711,2.57332],[48.37091,2.57317],[48.37091,2.57248],[48.37096,2.57265],[48.37124,2.57261],[48.37093,2.57127],[48.37076,2.57168],[48.37106,2.57038],[48.37081,2.57015],[48.37101,2.56965],[48.37081,2.56957],[48.37093,2.56851],[48.37173,2.56921],[48.37157,2.56861],[48.37167,2.56841],[48.37197,2.56921],[48.37175,2.56995],[48.37237,2.57044],[48.37233,2.57104],[48.37214,2.57128],[48.37233,2.5715]],[[48.38503,2.57509],[48.38517,2.57539],[48.38517,2.57513],[48.38524,2.57509],[48.38548,2.57574],[48.38526,2.57541],[48.38516,2.5758],[48.38497,2.57594],[48.3849,2.57585],[48.38499,2.57604],[48.38485,2.57624],[48.38489,2.57566],[48.38476,2.57522],[48.3848,2.57669],[48.38463,2.57635],[48.38445,2.577],[48.38455,2.5776],[48.38428,2.57819],[48.38431,2.57864],[48.38416,2.57869],[48.38427,2.57914],[48.38409,2.57931],[48.38418,2.57957],[48.38401,2.57944],[48.3841,2.57992],[48.38389,2.5797],[48.38382,2.58014],[48.38401,2.58029],[48.3839,2.58029],[48.38391,2.58057],[48.38388,2.58061],[48.3837,2.58055],[48.3839,2.58087],[48.38361,2.58059],[48.38363,2.58098],[48.38355,2.58087],[48.38352,2.581],[48.3836,2.58122],[48.38345,2.58094],[48.38331,2.58116],[48.38358,2.58124],[48.3834,2.58168],[48.38334,2.58135],[48.38324,2.58148],[48.38314,2.58135],[48.3832,2.58194],[48.38323,2.58196],[48.38334,2.58185],[48.38328,2.58215],[48.38341,2.58222],[48.38339,2.5825],[48.3835,2.5826],[48.38343,2.58289],[48.38333,2.58217],[48.38326,2.58225],[48.38325,2.58204],[48.38319,2.58209],[48.38302,2.58176],[48.38308,2.58157],[48.38301,2.58176],[48.38299,2.58157],[48.38294,2.58162],[48.38241,2.58073],[48.38233,2.5805],[48.38078,2.58107],[48.37955,2.58071],[48.37909,2.58212],[48.3792,2.58304],[48.37945,2.58361],[48.37949,2.58361],[48.37965,2.58398],[48.37983,2.5847],[48.37961,2.58495],[48.37941,2.58437],[48.37961,2.5851],[48.37934,2.58543],[48.37949,2.58495],[48.3793,2.58443],[48.379,2.58439],[48.37907,2.58385],[48.37867,2.58398],[48.3787,2.5842],[48.37899,2.58446],[48.37873,2.58428],[48.3787,2.58461],[48.3786,2.58474],[48.37869,2.58424],[48.37851,2.5842],[48.37842,2.58373],[48.3783,2.58396],[48.37832,2.58412],[48.37822,2.58392],[48.37827,2.58366],[48.3784,2.58373],[48.37847,2.58351],[48.37863,2.58362],[48.37865,2.58357],[48.37837,2.58329],[48.37825,2.58342],[48.37805,2.58269],[48.37835,2.58303],[48.37844,2.58295],[48.3779,2.58211],[48.37842,2.58193],[48.37847,2.58165],[48.37817,2.5818],[48.37808,2.58135],[48.37798,2.58148],[48.37795,2.58118],[48.3779,2.58118],[48.37794,2.58163],[48.37783,2.58183],[48.37765,2.58168],[48.37764,2.58187],[48.37754,2.58198],[48.3774,2.5819],[48.37735,2.58077],[48.37756,2.58079],[48.37754,2.58114],[48.37764,2.58125],[48.37775,2.58097],[48.37785,2.58114],[48.37797,2.58088],[48.37784,2.58101],[48.37777,2.58077],[48.37732,2.58054],[48.37728,2.58084],[48.37722,2.58086],[48.37715,2.58043],[48.37696,2.58084],[48.37676,2.5805],[48.37683,2.58035],[48.3766,2.58078],[48.3767,2.58052],[48.37632,2.58029],[48.3763,2.58057],[48.3762,2.5805],[48.3763,2.58124],[48.37616,2.5813],[48.37613,2.58098],[48.37621,2.58072],[48.37605,2.58044],[48.37622,2.58037],[48.37598,2.58005],[48.37596,2.57988],[48.37585,2.57981],[48.37586,2.58007],[48.37611,2.58029],[48.37582,2.58057],[48.37582,2.57994],[48.37566,2.57984],[48.37584,2.58092],[48.37575,2.58079],[48.37566,2.58096],[48.37559,2.58077],[48.37562,2.58098],[48.37548,2.58103],[48.37531,2.5812],[48.37552,2.58074],[48.3753,2.5804],[48.37536,2.58083],[48.37497,2.58075],[48.3749,2.58088],[48.3749,2.58112],[48.37503,2.58123],[48.3748,2.58151],[48.3749,2.58045],[48.37476,2.58056],[48.37478,2.58043],[48.37468,2.57993],[48.37477,2.58013],[48.37485,2.57995],[48.37462,2.57952],[48.37487,2.57939],[48.37433,2.57864],[48.37419,2.57955],[48.37423,2.57922],[48.374,2.57905],[48.37403,2.57985],[48.37367,2.57931],[48.37363,2.57966],[48.37388,2.57998],[48.3735,2.57983],[48.37337,2.57929],[48.37314,2.57945],[48.37301,2.57988],[48.37252,2.57981],[48.37284,2.57735],[48.37242,2.57653],[48.37216,2.5772],[48.37202,2.57703],[48.37184,2.57712],[48.37184,2.57694],[48.37172,2.57716],[48.37203,2.5758],[48.37228,2.57549],[48.37269,2.57581],[48.37237,2.57579],[48.37238,2.57612],[48.37268,2.57614],[48.37262,2.5768],[48.37294,2.57713],[48.37358,2.57486],[48.37376,2.57641],[48.37587,2.57726],[48.37632,2.57504],[48.37502,2.5748],[48.37484,2.57462],[48.37484,2.574],[48.37457,2.57379],[48.37406,2.5749],[48.37377,2.57517],[48.37382,2.57429],[48.37332,2.57462],[48.3731,2.5741],[48.37357,2.57291],[48.37374,2.57323],[48.37415,2.57302],[48.37413,2.56955],[48.37444,2.57124],[48.37463,2.57004],[48.37496,2.57027],[48.37371,2.56312],[48.37272,2.56281],[48.37256,2.56344],[48.37336,2.5679],[48.37199,2.56455],[48.37249,2.56413],[48.37147,2.56429],[48.37073,2.5636],[48.37341,2.5624],[48.37449,2.56218],[48.37521,2.56218],[48.37528,2.56211],[48.37633,2.56204],[48.37647,2.56211],[48.37647,2.56205],[48.37652,2.56228],[48.37659,2.56227],[48.37702,2.56293],[48.37689,2.56304],[48.37705,2.56312],[48.37702,2.56293],[48.37846,2.56414],[48.37848,2.56396],[48.37865,2.56425],[48.37868,2.56396],[48.37885,2.56401],[48.37878,2.56394],[48.37896,2.5639],[48.3792,2.5639],[48.38026,2.56437],[48.38033,2.56561],[48.38049,2.56584],[48.38211,2.5658],[48.38216,2.56565],[48.38239,2.56554],[48.38252,2.56551],[48.38262,2.56551],[48.38286,2.56558],[48.38294,2.5659],[48.38294,2.56556],[48.38318,2.56538],[48.38305,2.5658],[48.3832,2.56595],[48.38331,2.5656],[48.38321,2.56543],[48.38341,2.56553],[48.38347,2.56529],[48.38361,2.56596],[48.3834,2.56612],[48.38336,2.5664],[48.38374,2.56607],[48.38337,2.56648],[48.38356,2.56661],[48.38356,2.56674],[48.38376,2.5667],[48.38367,2.56624],[48.38392,2.56652],[48.3839,2.56613],[48.38412,2.56602],[48.38387,2.56719],[48.38403,2.56717],[48.38409,2.56637],[48.38462,2.56704],[48.38398,2.5676],[48.38404,2.56803],[48.38414,2.56801],[48.38424,2.56812],[48.38425,2.568],[48.38436,2.56825],[48.38425,2.56833],[48.384,2.56819],[48.38397,2.56899],[48.38397,2.56836],[48.38374,2.56873],[48.38396,2.56912],[48.38387,2.56992],[48.38422,2.57015],[48.38396,2.57007],[48.38395,2.57017],[48.38402,2.57024],[48.38393,2.57026],[48.38386,2.57039],[48.38392,2.57048],[48.38385,2.57054],[48.38382,2.57037],[48.38393,2.57002],[48.38384,2.57015],[48.38384,2.56972],[48.38377,2.56968],[48.38373,2.57063],[48.38347,2.57068],[48.38376,2.57121],[48.38347,2.57122],[48.38366,2.57204],[48.38358,2.57219],[48.38323,2.5721],[48.38306,2.57152],[48.3827,2.57189],[48.38317,2.57202],[48.38315,2.57243],[48.38306,2.57247],[48.38321,2.5728],[48.38303,2.57286],[48.38298,2.57394],[48.38315,2.57383],[48.38324,2.57301],[48.38341,2.5732],[48.38342,2.57331],[48.38358,2.57305],[48.3837,2.57329],[48.38383,2.57333],[48.38369,2.5721],[48.38382,2.57249],[48.3839,2.57223],[48.38404,2.57229],[48.38397,2.57242],[48.38417,2.57287],[48.38437,2.57266],[48.38452,2.57272],[48.3844,2.57218],[48.3845,2.5719],[48.3846,2.57194],[48.3846,2.57185],[48.38476,2.57187],[48.38487,2.57246],[48.38432,2.57289],[48.3846,2.57306],[48.38459,2.57322],[48.38439,2.57298],[48.38435,2.57346],[48.38419,2.57346],[48.38429,2.57333],[48.38429,2.57289],[48.38399,2.57333],[48.38393,2.57281],[48.38379,2.57361],[48.38394,2.57329],[48.3842,2.57382],[48.38422,2.57352],[48.38442,2.57378],[48.38459,2.5738],[48.38448,2.57365],[48.38447,2.5733],[48.38463,2.57356],[48.38458,2.57369],[48.38477,2.57423],[48.38484,2.57395],[48.38465,2.57347],[48.38498,2.57369],[48.38498,2.57334],[48.38511,2.57334],[48.38515,2.57308],[48.38508,2.57364],[48.38485,2.57384],[48.3849,2.57449],[48.38497,2.57442],[48.3852,2.57475],[48.38517,2.57507],[48.38509,2.57503],[48.38503,2.57509]],[[48.37197,2.57995],[48.37219,2.58074],[48.37202,2.58101],[48.37202,2.58121],[48.37234,2.58123],[48.37218,2.58149],[48.37226,2.58183],[48.37217,2.58175],[48.3721,2.58203],[48.37206,2.58188],[48.37188,2.58181],[48.37184,2.58216],[48.37168,2.58216],[48.37158,2.58197],[48.37145,2.58244],[48.37138,2.58225],[48.37106,2.58212],[48.37115,2.5818],[48.37103,2.58128],[48.3709,2.58165],[48.37097,2.58128],[48.37076,2.58113],[48.37074,2.58126],[48.37054,2.58122],[48.37051,2.58135],[48.3705,2.58105],[48.37038,2.58139],[48.37028,2.58124],[48.37015,2.58139],[48.37015,2.5815],[48.36999,2.58066],[48.36946,2.58054],[48.36943,2.57987],[48.36936,2.58056],[48.36923,2.58011],[48.36914,2.58067],[48.36896,2.58052],[48.36873,2.58074],[48.36884,2.58108],[48.36868,2.58126],[48.36871,2.58048],[48.36832,2.57998],[48.36832,2.57949],[48.36845,2.5794],[48.36846,2.57927],[48.36849,2.5792],[48.36845,2.57914],[48.36858,2.5791],[48.36856,2.57918],[48.36872,2.57935],[48.36879,2.57931],[48.36871,2.57938],[48.36874,2.57996],[48.36891,2.57981],[48.369,2.58002],[48.3692,2.58004],[48.3692,2.57985],[48.36927,2.57978],[48.3693,2.58006],[48.36943,2.57976],[48.36929,2.57892],[48.3696,2.5785],[48.36934,2.57846],[48.36928,2.57857],[48.36924,2.57857],[48.36931,2.57795],[48.36921,2.57797],[48.36941,2.57781],[48.36897,2.57724],[48.36903,2.57667],[48.36894,2.57657],[48.36904,2.5765],[48.3691,2.57551],[48.36925,2.57553],[48.36931,2.57543],[48.36934,2.5755],[48.36934,2.57541],[48.3694,2.57537],[48.36951,2.5755],[48.36946,2.57533],[48.36973,2.57515],[48.36996,2.5752],[48.37018,2.57569],[48.37029,2.57559],[48.37085,2.57605],[48.3709,2.57638],[48.37114,2.57593],[48.37155,2.57638],[48.37171,2.57699],[48.37146,2.57742],[48.37185,2.57728],[48.37182,2.57802],[48.37204,2.57826],[48.37176,2.57846],[48.37172,2.57783],[48.37162,2.57803],[48.37179,2.57874],[48.37165,2.57913],[48.37186,2.57874],[48.372,2.5791],[48.37199,2.57867],[48.37224,2.57869],[48.37197,2.57995]],[[48.38228,2.5867],[48.38235,2.58612],[48.38281,2.5859],[48.38301,2.58613],[48.38301,2.586],[48.38295,2.58594],[48.38298,2.58589],[48.38305,2.58604],[48.38326,2.58613],[48.38329,2.5868],[48.38294,2.58613],[48.38284,2.58656],[48.38257,2.58659],[48.38269,2.58635],[48.38254,2.58654],[48.38239,2.58648],[48.38235,2.58631],[48.38234,2.58668],[48.38271,2.58661],[48.38278,2.58684],[48.38245,2.58685],[48.38224,2.58726],[48.38276,2.5878],[48.38256,2.58765],[48.38247,2.58797],[48.38225,2.58763],[48.38236,2.58832],[48.382,2.58849],[48.3821,2.5888],[48.38181,2.58841],[48.38214,2.58955],[48.38211,2.58901],[48.38242,2.58922],[48.38226,2.5894],[48.38233,2.58974],[48.3822,2.58968],[48.38215,2.58977],[48.38217,2.58994],[48.38209,2.5899],[48.38217,2.5897],[48.38214,2.58957],[48.38196,2.58957],[48.38193,2.59011],[48.38223,2.59022],[48.38225,2.58983],[48.38242,2.59007],[48.38237,2.58953],[48.38262,2.58994],[48.38205,2.59039],[48.38231,2.59143],[48.3817,2.59111],[48.38139,2.59131],[48.38137,2.59157],[48.3815,2.59167],[48.38142,2.59174],[48.38143,2.59165],[48.38135,2.59161],[48.3813,2.59127],[48.38123,2.59118],[48.38077,2.592],[48.38101,2.59088],[48.38083,2.59092],[48.38079,2.59032],[48.38056,2.59036],[48.38044,2.59054],[48.38048,2.5901],[48.38035,2.59015],[48.38063,2.58948],[48.38055,2.58937],[48.38049,2.5895],[48.38056,2.58961],[48.38045,2.5898],[48.38033,2.58974],[48.38024,2.58907],[48.38042,2.58924],[48.3802,2.58894],[48.38021,2.58924],[48.38007,2.5894],[48.38007,2.58924],[48.37998,2.58918],[48.38001,2.58955],[48.37991,2.58966],[48.37991,2.58981],[48.37978,2.58953],[48.37967,2.58964],[48.3798,2.58972],[48.37964,2.5897],[48.3798,2.5902],[48.37963,2.59009],[48.37961,2.5902],[48.37951,2.58933],[48.37964,2.58901],[48.37935,2.5889],[48.37988,2.58804],[48.37955,2.5878],[48.37953,2.58741],[48.37963,2.58765],[48.37982,2.58745],[48.37956,2.58717],[48.3795,2.58681],[48.3795,2.58624],[48.37967,2.58603],[48.37977,2.58607],[48.37978,2.58583],[48.37999,2.58579],[48.37987,2.58568],[48.37991,2.58533],[48.37978,2.58536],[48.37977,2.58525],[48.37974,2.5857],[48.37968,2.5857],[48.3798,2.58475],[48.37984,2.58475],[48.37988,2.58501],[48.37994,2.58503],[48.38017,2.58559],[48.38057,2.58605],[48.38228,2.5867]],[[48.38678,2.651],[48.38629,2.65225],[48.38588,2.64994],[48.38521,2.64958],[48.38563,2.64866],[48.38498,2.64838],[48.3855,2.64785],[48.38536,2.64653],[48.38636,2.64709],[48.3861,2.64803],[48.38695,2.65008],[48.38698,2.65063],[48.38675,2.65082],[48.38678,2.651]],[[48.39514,2.64778],[48.39558,2.64741],[48.39511,2.64871],[48.39559,2.65128],[48.3952,2.65111],[48.39513,2.65167],[48.3949,2.65122],[48.39486,2.65208],[48.39421,2.65222],[48.39457,2.64688],[48.39496,2.64675],[48.39526,2.64597],[48.39514,2.64778]],[[48.3837,2.64728],[48.38397,2.65183],[48.38272,2.65198],[48.38343,2.6517],[48.38303,2.64856],[48.3837,2.64728]],[[48.3986,2.65146],[48.39967,2.65166],[48.40034,2.65187],[48.40036,2.65224],[48.40081,2.65239],[48.40048,2.65278],[48.40035,2.65272],[48.40048,2.65404],[48.39979,2.65496],[48.40015,2.65538],[48.39987,2.6559],[48.40013,2.65672],[48.39971,2.65661],[48.39961,2.65711],[48.39915,2.65631],[48.39929,2.65556],[48.39892,2.65563],[48.39903,2.65512],[48.39915,2.65523],[48.39923,2.65501],[48.39878,2.65429],[48.39919,2.65406],[48.39906,2.65392],[48.39875,2.65418],[48.39864,2.65399],[48.39897,2.65385],[48.39898,2.65283],[48.39848,2.65318],[48.3986,2.65146]],[[48.40296,2.65694],[48.40305,2.65665],[48.40337,2.65659],[48.40318,2.65644],[48.40328,2.65603],[48.40327,2.65631],[48.40357,2.65665],[48.40394,2.65672],[48.40371,2.65686],[48.40393,2.65737],[48.40384,2.65727],[48.40367,2.65745],[48.40406,2.65753],[48.40382,2.65781],[48.40444,2.65874],[48.40378,2.65941],[48.40347,2.66019],[48.40364,2.66057],[48.40338,2.66111],[48.40322,2.65979],[48.40297,2.65953],[48.40283,2.65992],[48.40283,2.65962],[48.40267,2.65956],[48.40267,2.65943],[48.40261,2.65941],[48.40262,2.65902],[48.40248,2.65888],[48.40244,2.65921],[48.40226,2.65911],[48.40251,2.65872],[48.40228,2.65848],[48.40261,2.65841],[48.40273,2.65864],[48.40288,2.65783],[48.40297,2.6581],[48.40326,2.65806],[48.40323,2.65785],[48.40307,2.658],[48.40324,2.65747],[48.40312,2.65698],[48.40296,2.65694]],[[48.39977,2.661],[48.39968,2.66143],[48.39968,2.66224],[48.39937,2.66197],[48.39976,2.66286],[48.39933,2.66299],[48.39913,2.66401],[48.39842,2.6625],[48.39808,2.66237],[48.39778,2.66277],[48.39761,2.66264],[48.398,2.66189],[48.3975,2.66164],[48.3982,2.66148],[48.39806,2.66109],[48.39847,2.6615],[48.39893,2.66051],[48.3991,2.6605],[48.39908,2.66098],[48.39928,2.66119],[48.39938,2.66113],[48.39942,2.66135],[48.39962,2.66085],[48.39977,2.661]],[[48.40274,2.67533],[48.40227,2.6744],[48.40151,2.6753],[48.39953,2.67428],[48.39953,2.67318],[48.40027,2.67196],[48.39955,2.67053],[48.39986,2.66968],[48.40057,2.67009],[48.40085,2.66947],[48.40039,2.66823],[48.40079,2.66622],[48.40096,2.66693],[48.40131,2.66654],[48.40147,2.66667],[48.40145,2.66717],[48.40098,2.667],[48.40121,2.6676],[48.40105,2.66839],[48.40111,2.66873],[48.40121,2.66888],[48.40188,2.66768],[48.40227,2.66846],[48.40213,2.66772],[48.4032,2.66789],[48.40326,2.66843],[48.40182,2.67035],[48.40187,2.6709],[48.40068,2.67073],[48.40045,2.67155],[48.40196,2.67193],[48.40261,2.67383],[48.40372,2.67381],[48.40424,2.67449],[48.40398,2.67565],[48.40274,2.67533]],[[48.403,2.66333],[48.40259,2.66299],[48.40283,2.66342],[48.40251,2.66398],[48.4031,2.66476],[48.4028,2.66446],[48.40293,2.66545],[48.40242,2.66638],[48.4018,2.6655],[48.40167,2.66325],[48.40198,2.66304],[48.40161,2.66239],[48.402,2.66217],[48.40219,2.66239],[48.40252,2.66139],[48.40255,2.66193],[48.40324,2.66267],[48.40284,2.66277],[48.40321,2.66285],[48.403,2.66333]]]};
+  const etatFeuFbl = { actif:false, groupe:null };
+  document.getElementById('btn-feu-fbl').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-feu-fbl');
+    if(etatFeuFbl.actif){
+      etatFeuFbl.actif = false;
+      map.removeLayer(etatFeuFbl.groupe);
+      delete registreOfficiel.feuFbl;
+      basculerBouton(btn, false, '', '🔥 Feu de Fontainebleau (juil. 2026)');
+      majLegende();
+      return;
+    }
+    if(!map.getPane('choro')){ const el = map.createPane('choro'); if(el && el.style) el.style.zIndex = 350; }
+    if(!etatFeuFbl.groupe){
+      etatFeuFbl.groupe = L.layerGroup();
+      const survol = '🔥 '+echap(FEU_FONTAINEBLEAU.nom)+' — '+FEU_FONTAINEBLEAU.ha.toLocaleString('fr-FR')
+        +' ha brûlés<br><small>Cartographie satellite Copernicus EMS (EMSR894, délinéation v2)</small>';
+      FEU_FONTAINEBLEAU.polys.forEach(anneau=>{
+        L.polygon(anneau.map(c=>L.latLng(c[0], c[1])), {
+          pane:'choro', color:'#7f1d1d', weight:1.5, opacity:0.9, fillColor:'#dc2626', fillOpacity:0.55
+        }).bindTooltip(survol, {sticky:true}).addTo(etatFeuFbl.groupe);
+      });
+    }
+    etatFeuFbl.groupe.addTo(map);
+    etatFeuFbl.actif = true;
+    registreOfficiel.feuFbl = { polygones: FEU_FONTAINEBLEAU.polys.map(a=>a.map(c=>L.latLng(c[0], c[1]))),
+      couleur:'#dc2626', legende:'Feu de Fontainebleau (2026)' };
+    basculerBouton(btn, true, '🔥 Fontainebleau \u2715', '', '#dc2626');
+    map.fitBounds(L.latLngBounds(FEU_FONTAINEBLEAU.polys[0].map(c=>L.latLng(c[0], c[1]))).pad(0.6));
+    afficherInfo('🔥 '+FEU_FONTAINEBLEAU.ha.toLocaleString('fr-FR')+' ha cartographi\u00e9s par Copernicus EMS \u2014 survolez les surfaces rouges', 6000);
+    majLegende();
+  });
+  const etatEffis = { actif:false, layer:null, alerte:false };
+  document.getElementById('btn-feux-effis').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-feux-effis');
+    if(etatEffis.actif){
+      etatEffis.actif = false;
+      map.removeLayer(etatEffis.layer);
+      basculerBouton(btn, false, '', '🔥 Feux de forêts (EFFIS)');
+      majLegende();
+      return;
+    }
+    const annee = document.getElementById('feux-annee').value;
+    const opts = { layers:'viirs.ba.poly,modis.ba.poly', format:'image/png', transparent:true,
+      version:'1.1.1', opacity:0.85, attribution:'&copy; Copernicus EFFIS' };
+    if(annee) opts.time = annee;
+    if(etatEffis.layer) map.removeLayer(etatEffis.layer);
+    etatEffis.layer = L.tileLayer.wms('https://maps.effis.emergency.copernicus.eu/effis?', opts);
+    etatEffis.layer.on('tileerror', ()=>{
+      if(!etatEffis.alerte){ etatEffis.alerte = true; afficherInfo('🔥 Le flux EFFIS ne r\u00e9pond pas pour le moment \u2014 r\u00e9essayez plus tard', 5000); }
+    });
+    etatEffis.layer.addTo(map);
+    etatEffis.actif = true;
+    basculerBouton(btn, true, '🔥 EFFIS \u2715', '', '#ea580c');
+    afficherInfo('🔥 Surfaces br\u00fbl\u00e9es EFFIS ('+(annee||'saison en cours')+') \u2014 feux d\u2019environ 30 ha et plus, satellites MODIS/VIIRS', 6000);
+    majLegende();
+  });
+  document.getElementById('feux-annee').addEventListener('change', ()=>{
+    if(etatEffis.actif){ document.getElementById('btn-feux-effis').click(); document.getElementById('btn-feux-effis').click(); }
+  });
+
   // ---------- 🌊 Élévation du niveau de la mer (terres ≤ seuil, en bleu) ----------
   const etatMer = { actif:false, seuil:1, calque:null, requete:0, image:null, bornes:null };
   const curseurMer = document.getElementById('curseur-mer');
@@ -3348,6 +3508,63 @@
   map.on('moveend zoomend', ()=>{
     clearTimeout(etatMer.minuteur);
     etatMer.minuteur = setTimeout(()=>{ if(etatMer.actif) calculerMer(); }, 600);
+  });
+
+  // ---------- 🚗 Zones à Faibles Émissions (Base nationale, transport.data.gouv) ----------
+  const etatZfe = { actif:false, groupe:null, charge:false };
+  document.getElementById('btn-zfe').addEventListener('click', async ()=>{
+    const btn = document.getElementById('btn-zfe');
+    if(etatZfe.actif){
+      etatZfe.actif = false;
+      map.removeLayer(etatZfe.groupe);
+      delete registreOfficiel.zfe;
+      basculerBouton(btn, false, '', '🚗 Zones à Faibles Émissions (ZFE)');
+      majLegende();
+      return;
+    }
+    if(!etatZfe.charge){
+      afficherInfo('🚗 Chargement de la base nationale des ZFE\u2026', 0);
+      majTitre(1);
+      try{
+        const r = await fetch('https://transport.data.gouv.fr/resources/79567/download');
+        if(!r.ok) throw new Error('http '+r.status);
+        const d = await r.json();
+        etatZfe.groupe = L.layerGroup();
+        const exportPolys = [];
+        let nb = 0;
+        (d.features||[]).forEach(f=>{
+          if(!f.geometry) return;
+          const pr = f.properties || {};
+          const nom = pr.zfe_id || pr.id || 'ZFE';
+          L.geoJSON(f, { pane:'choro',
+            style:{ color:'#6d28d9', weight:2, opacity:0.9, fillColor:'#a78bfa', fillOpacity:0.22 } })
+            .bindTooltip('🚗 ZFE '+echap(String(nom).replace(/-/g,' '))
+              +'<br><small>Restrictions Crit\u2019Air \u2014 r\u00e8gles et dates : mieuxrespirerenville.gouv.fr</small>', {sticky:true})
+            .addTo(etatZfe.groupe);
+          const g = f.geometry;
+          const polys = g.type==='Polygon' ? [g.coordinates] : (g.type==='MultiPolygon' ? g.coordinates : []);
+          polys.forEach(poly=>{ if(poly[0]) exportPolys.push(poly[0].map(c=>L.latLng(c[1], c[0]))); });
+          nb++;
+        });
+        etatZfe.nb = nb;
+        registreOfficiel.zfe = { polygones: exportPolys, couleur:'#6d28d9', legende:'Zones \u00e0 Faibles \u00c9missions' };
+        etatZfe.charge = true;
+        cacherInfo();
+      }catch(e){
+        cacherInfo();
+        afficherInfo('🚗 La base des ZFE ne r\u00e9pond pas (transport.data.gouv) \u2014 r\u00e9essayez plus tard', 6000);
+        majTitre(-1);
+        return;
+      }
+      majTitre(-1);
+    }
+    if(!map.getPane('choro')){ const el = map.createPane('choro'); if(el && el.style) el.style.zIndex = 350; }
+    etatZfe.groupe.addTo(map);
+    etatZfe.actif = true;
+    registreOfficiel.zfe = registreOfficiel.zfe || { polygones:[], couleur:'#6d28d9', legende:'ZFE' };
+    basculerBouton(btn, true, '🚗 ZFE \u2715', '', '#6d28d9');
+    afficherInfo('🚗 '+(etatZfe.nb||'')+' zones r\u00e9glement\u00e9es (actives et en projet) \u2014 survolez les p\u00e9rim\u00e8tres violets', 6000);
+    majLegende();
   });
 
   // ---------- 🌬 Éoliennes & solaire (OpenStreetMap) ----------
@@ -3497,6 +3714,27 @@
   });
 
   // ---------- 📈 Import GPX → trait sur le calque actif ----------
+  let gpxCouleur = localStorage.getItem('geo-gpx-coul') || '#1d4ed8';
+  let gpxLargeur = parseInt(localStorage.getItem('geo-gpx-larg')||'3', 10) || 3;
+  function majTraitsGpx(){
+    document.getElementById('gpx-couleur').value = gpxCouleur;
+    document.getElementById('gpx-larg-val').textContent = '\u00d7'+gpxLargeur;
+    traits.forEach(t=>{
+      if(!t.gpx) return;
+      t.couleur = gpxCouleur; t.metres = tailleMetres*gpxLargeur;
+      if(t.layerObj.setStyle) t.layerObj.setStyle(styleLigne(t.couleur, t.metres));
+    });
+  }
+  document.getElementById('gpx-couleur').addEventListener('input', (e)=>{
+    gpxCouleur = e.target.value; localStorage.setItem('geo-gpx-coul', gpxCouleur); majTraitsGpx();
+  });
+  document.addEventListener('click', (e)=>{
+    const b = e.target && e.target.closest ? e.target.closest('[data-gpxl]') : null;
+    if(!b) return;
+    gpxLargeur = Math.max(1, Math.min(8, gpxLargeur + (b.dataset.gpxl==='+'?1:-1)));
+    localStorage.setItem('geo-gpx-larg', String(gpxLargeur));
+    majTraitsGpx();
+  });
   const fichierGpx = document.getElementById('fichier-gpx');
   document.getElementById('btn-gpx').addEventListener('click', ()=>fichierGpx.click());
   fichierGpx.addEventListener('change', async ()=>{
@@ -3515,7 +3753,8 @@
         if(rte.length>1) segments.push(rte);
       }
       if(segments.length===0){ afficherInfo('Aucune trace exploitable dans ce GPX'); return; }
-      const t = creerTrait('ligne', segments);
+      const t = creerTrait('ligne', segments, gpxCouleur, tailleMetres*gpxLargeur);
+      t.gpx = true;
       map.fitBounds(t.layerObj.getBounds().pad(0.12));
       afficherInfo('📈 Trace GPX importée ('+segments.reduce((s,x)=>s+x.length,0)+' points) sur le calque actif — elle se sauvegarde et s\u2019exporte comme un trait normal', 6000);
     }catch(e){
@@ -4488,8 +4727,8 @@
   });
 
   // ================= Fenêtres flottantes (widgets) =================
-  const WIDGETS = ['wg-outils','wg-donnees','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-equip','wg-climat','wg-montagnes','wg-limites','wg-foret','wg-pilote'];
-  const WIDGETS_PILOTABLES = ['wg-outils','wg-donnees','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-equip','wg-climat','wg-montagnes','wg-limites','wg-foret'];
+  const WIDGETS = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-equip','wg-climat','wg-montagnes','wg-limites','wg-foret','wg-pilote'];
+  const WIDGETS_PILOTABLES = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-equip','wg-climat','wg-montagnes','wg-limites','wg-foret'];
   const WIDGETS_CASES = []; // remplacées par la fenêtre 🧭 pilote
   let posWidgets = {};
   try{ posWidgets = JSON.parse(localStorage.getItem('geo-widgets3')||'{}'); }catch(e){}
@@ -4554,7 +4793,10 @@
   }
   const petitEcran = window.innerWidth < 760;
   initWidget('wg-outils',  { left:'12px', top:'72px', replie:petitEcran });
-  initWidget('wg-donnees', { left:Math.max(8, window.innerWidth-252)+'px', top:'12px' });
+  initWidget('wg-ville',    { left:Math.max(8, window.innerWidth-262)+'px', top:'12px' });
+  initWidget('wg-educ',     { left:Math.max(8, window.innerWidth-262)+'px', top:'52px', replie:true, cache:true });
+  initWidget('wg-insee',    { left:Math.max(8, window.innerWidth-262)+'px', top:'92px', replie:true, cache:true });
+  initWidget('wg-origines', { left:Math.max(8, window.innerWidth-262)+'px', top:'132px', replie:true, cache:true });
   initWidget('wg-recherche', { left:Math.max(8, Math.round((window.innerWidth-288)/2))+'px', top:'12px', replie:petitEcran });
   initWidget('wg-actions',   { left:Math.max(8, Math.round((window.innerWidth-232)/2))+'px',
                                top:Math.max(60, window.innerHeight-150)+'px' });
@@ -4591,7 +4833,6 @@
   });
   majPilote();
   appliquerModeCouleurs();
-  document.getElementById('wg-donnees').classList.remove('cache'); // le panneau des données ne peut pas disparaître
   initWidget('wg-legende', { left:'12px', top:Math.round(window.innerHeight*0.42)+'px' });
   window.addEventListener('resize', ()=>WIDGETS.forEach(id=>bornerWidget(document.getElementById(id))));
 
@@ -4736,20 +4977,32 @@
     if(etatRando.actif){
       blocs.push('<div class="leg-sous">Sentiers de randonn\u00e9e <small>(OSM)</small></div>'
         + Object.keys(RANDO_NIVEAUX).filter(t=>etatRando.filtres[t]).map(t=>
-            ligneLegende(coulCat(RANDO_NIVEAUX[t].couleur, {gr:OKABE.vermillon, grp:OKABE.orange, pr:OKABE.vert}[t]),
-              RANDO_NIVEAUX[t].libelle+' <small>('+({gr:'trait large',grp:'trait moyen',pr:'trait fin'})[t]+')</small>',
+            ligneLegende(coulRando(t),
+              RANDO_NIVEAUX[t].libelle+' <small>('+({gr:'trait large',grp:'trait moyen',pr:'trait fin',chemins:'pointill\u00e9'})[t]+')</small>',
               'carre', 'Itin\u00e9raires balis\u00e9s relev\u00e9s dans OpenStreetMap')).join(''));
     }
     if(etatVelo.actif){
       blocs.push('<div class="leg-sous">Am\u00e9nagements cyclables <small>(OSM)</small></div>'
         + Object.keys(VELO_NIVEAUX).filter(t=>etatVelo.filtres[t]).map(t=>
-            ligneLegende(coulCat(VELO_NIVEAUX[t].couleur, {t1:OKABE.bleu, t2:OKABE.cielAzur, t3:OKABE.rose}[t]),
+            ligneLegende(coulVelo(t),
               VELO_NIVEAUX[t].libelle+' <small>('+({t1:'trait large',t2:'trait moyen',t3:'trait fin'})[t]+')</small>',
               'carre', 'Relev\u00e9 OpenStreetMap \u2014 la qualit\u00e9 d\u00e9pend du terrain r\u00e9el')).join(''));
+    }
+    if(etatFeuFbl.actif){
+      blocs.push(ligneLegende('#dc2626', '🔥 Feu de Fontainebleau <small>(juil. 2026 \u00b7 '+FEU_FONTAINEBLEAU.ha.toLocaleString('fr-FR')+' ha)</small>', 'carre',
+        'Surfaces br\u00fbl\u00e9es cartographi\u00e9es par Copernicus EMS \u2014 activation EMSR894, d\u00e9lin\u00e9ation v2 (simplifi\u00e9e)'));
+    }
+    if(etatEffis.actif){
+      blocs.push(ligneLegende('#ea580c', '🔥 Surfaces br\u00fbl\u00e9es EFFIS <small>('+(document.getElementById('feux-annee').value||'saison en cours')+')</small>', 'carre',
+        'Copernicus EFFIS, satellites MODIS/VIIRS \u2014 feux d\u2019environ 30 ha et plus'));
     }
     if(etatMer.actif){
       blocs.push(ligneLegende('#1d4ed8', 'Terres \u2264 +'+etatMer.seuil+' m au-dessus de la mer<br><small>curseur 🌊 \u00b7 altitude brute, pas un mod\u00e8le de submersion</small>', 'carre',
         'Altitudes SRTM (~90 m) \u2014 digues, mar\u00e9es et dynamique littorale non prises en compte'));
+    }
+    if(etatZfe.actif){
+      blocs.push(ligneLegende('#6d28d9', '🚗 Zones \u00e0 Faibles \u00c9missions <small>(actives et en projet)</small>', 'carre',
+        'Base nationale des ZFE (transport.data.gouv.fr) \u2014 restrictions de circulation selon la vignette Crit\u2019Air'));
     }
     if(etatEnergie.actif){
       blocs.push(ligneLegende('#0e7490','\u2739 \u00c9oliennes','rond','Relev\u00e9 OpenStreetMap')
@@ -4818,25 +5071,8 @@
     majLegende();
   }
   // Filet de sécurité : tout clic dans le panneau rafraîchit les compteurs
-  document.getElementById('panneau-nav').addEventListener('click', ()=>setTimeout(majBadges, 80));
   majBadges();
 
-  const champFiltre = document.getElementById('nav-filtre');
-  function normaliserTexte(s){ return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
-  champFiltre.addEventListener('input', ()=>{
-    const q = normaliserTexte(champFiltre.value.trim());
-    document.querySelectorAll('.nav-sec').forEach(sec=>{
-      if(sec.dataset.sec==='calques'){ sec.style.display = q ? 'none' : ''; return; }
-      let visibles = 0;
-      sec.querySelectorAll('.calque-ajout').forEach(b=>{
-        const ok = !q || normaliserTexte(b.textContent+' '+(b.title||'')).includes(q);
-        b.style.display = ok ? '' : 'none';
-        if(ok) visibles++;
-      });
-      sec.style.display = (q && visibles===0) ? 'none' : '';
-      if(q && visibles>0) sec.classList.add('ouverte');
-    });
-  });
 
   // ================= Raccourcis clavier =================
   document.addEventListener('keydown', (e)=>{
