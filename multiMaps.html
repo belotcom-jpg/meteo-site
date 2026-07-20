@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v1.6 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v1.8 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v1.6</title>
+<title>MultiMaps — géographie (collège & lycée) — v1.8</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -147,6 +147,8 @@
     min-width:22px;height:22px;line-height:18px;text-align:center;font-size:11px;font-weight:800;
     transform:translate(-50%,-50%);box-shadow:0 1px 3px rgba(0,0,0,.35);padding:0 3px}
   .rang-or{background:#b45309;min-width:26px;height:26px;line-height:22px;font-size:13px}
+  .site-etoile{background:none;border:none;font-size:15px;line-height:1;
+    text-shadow:0 0 3px #fff,0 0 4px #fff;transform:translate(-50%,-55%);cursor:pointer}
   .metro-etoile{background:none;border:none;color:#6d28d9;font-size:19px;line-height:1;
     text-shadow:0 0 3px #fff,0 0 4px #fff;transform:translate(-50%,-55%);cursor:pointer}
   .leg-classement{max-height:230px;overflow-y:auto;font-size:10.5px;margin:2px 0 6px 4px;padding-left:14px}
@@ -534,6 +536,11 @@
         <input type="range" id="curseur-mer" min="1" max="10" step="1" value="1" aria-label="Niveau de la mer">
         <span id="valeur-mer">+1 m</span>
       </div>
+      <button class="calque-ajout donnee" id="btn-littoral" title="Les secteurs littoraux les plus exposés au recul du trait de côte (érosion) et à la submersion marine, d'après les projections du Cerema (INEC) : côte aquitaine, marais vendéens et charentais (Xynthia), falaises normandes et picardes, delta camarguais… La jauge fait défiler les horizons 2028 → 2100 avec les enjeux chiffrés.">🌊 Submersion &amp; érosion (secteurs)</button>
+      <div class="hypso-ligne">
+        <input type="range" id="curseur-littoral" min="0" max="3" step="1" value="0" aria-label="Horizon">
+        <span id="horizon-littoral" style="min-width:96px">2028</span>
+      </div>
       <button class="calque-ajout donnee" id="btn-choro-catnat" title="Le nombre d'arrêtés de catastrophe naturelle reçus par chaque commune depuis 1982 (base GASPAR) : inondations et coulées de boue (56 %), sécheresse, mouvements de terrain, tempêtes… La géographie française du risque. Département dézoomé (moyenne par commune), commune au zoom 9+.">🌪 Catastrophes naturelles (1982-2026)</button>
       <button class="calque-ajout donnee" id="btn-zfe" title="Les Zones à Faibles Émissions : les périmètres officiels où la circulation est restreinte selon la vignette Crit'Air (Base nationale des ZFE, transport.data.gouv.fr — zones actives et en projet). Chargées en direct depuis la base de l'État.">🚗 Zones à Faibles Émissions (ZFE)</button>
       <button class="calque-ajout donnee" id="btn-energie" title="Éoliennes et centrales solaires relevées dans OpenStreetMap — la géographie de la transition énergétique. Zoomez (9+), rechargement au déplacement.">🌬 Éoliennes &amp; solaire (OSM)</button>
@@ -713,6 +720,18 @@
     </div>
 </div>
 
+<div class="widget" id="wg-sites" style="width:246px">
+  <div class="widget-tete">
+    <span class="widget-titre">⭐ Sites touristiques</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
+  </div>
+  <div class="widget-corps">
+    <button class="calque-ajout donnee" id="btn-sites" title="151 sites touristiques majeurs de France : monuments, musées, châteaux, sites naturels, villages… Filtrez par catégorie ci-dessous, survolez une étoile pour le nom.">⭐ Afficher les sites</button>
+    <div id="sites-cats" class="origines-liste" style="max-height:180px"></div>
+  </div>
+</div>
+
 <div class="widget" id="wg-acces" style="width:196px">
   <div class="widget-tete">
     <span class="widget-titre">👁 Couleurs</span>
@@ -733,7 +752,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v1.6</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v1.8</small></span>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
   <div class="widget-corps">
@@ -754,6 +773,7 @@
       <button class="pilote-btn" data-cible="wg-origines">🌍 Origines</button>
       <button class="pilote-btn" data-cible="wg-velo">🚲 Vélo</button>
       <button class="pilote-btn" data-cible="wg-rando">🥾 Rando</button>
+      <button class="pilote-btn" data-cible="wg-sites">⭐ Sites</button>
       <button class="pilote-btn" data-cible="wg-equip">🚉 Équipements</button>
       <button class="pilote-btn" data-cible="wg-climat">🌡 Climat</button>
       <button class="pilote-btn" data-cible="wg-montagnes">⛰ Montagnes</button>
@@ -775,7 +795,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v1.6</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v1.8</small></h2>
     <p class="sous">Seuil « villes » des tops 50</p>
     <select class="opt-select" id="sel-seuil" aria-label="Seuil de population des tops 50">
       <option value="5000">5 000 habitants et +</option>
@@ -860,7 +880,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v1.6';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v1.8';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -3094,6 +3114,62 @@
     if(etatQuiz.bandeau) etatQuiz.bandeau.style.display = 'none';
   }
 
+  // ---------- ⭐ Sites touristiques (151 sites majeurs) ----------
+  const SITES_TOURISTIQUES = [{"n":"Tour Eiffel","l":"Paris (Île-de-France)","a":48.8584,"o":2.2945,"c":"Monument"},{"n":"Musée du Louvre","l":"Paris (Île-de-France)","a":48.8606,"o":2.3376,"c":"Musée"},{"n":"Château de Versailles","l":"Versailles (Yvelines)","a":48.8049,"o":2.1204,"c":"Château / Palais"},{"n":"Sainte-Chapelle","l":"Paris (Île-de-France)","a":48.8554,"o":2.345,"c":"Édifice religieux"},{"n":"Cathédrale Notre-Dame de Paris","l":"Paris (Île-de-France)","a":48.853,"o":2.3499,"c":"Édifice religieux"},{"n":"Musée d'Orsay","l":"Paris (Île-de-France)","a":48.8598,"o":2.3266,"c":"Musée"},{"n":"Centre Pompidou","l":"Paris (Île-de-France)","a":48.8606,"o":2.3522,"c":"Musée"},{"n":"Château de Fontainebleau","l":"Fontainebleau (Seine-et-Marne)","a":48.402,"o":2.6997,"c":"Château / Palais"},{"n":"Château de Vaux-le-Vicomte","l":"Maincy (Seine-et-Marne)","a":48.5658,"o":2.7141,"c":"Château / Palais"},{"n":"Basilique Saint-Denis","l":"Saint-Denis (Seine-Saint-Denis)","a":48.9355,"o":2.3598,"c":"Édifice religieux"},{"n":"Aiguille du Midi","l":"Chamonix (Haute-Savoie)","a":45.8794,"o":6.8866,"c":"Site naturel"},{"n":"Puy de Dôme","l":"Massif Central (Puy-de-Dôme)","a":45.7723,"o":2.9644,"c":"Site naturel"},{"n":"Vieux-Lyon","l":"Lyon (Rhône)","a":45.7624,"o":4.8274,"c":"Quartier historique"},{"n":"Musée des Confluences","l":"Lyon (Rhône)","a":45.7325,"o":4.8181,"c":"Musée"},{"n":"Mer de Glace","l":"Chamonix (Haute-Savoie)","a":45.9261,"o":6.9168,"c":"Site naturel"},{"n":"Palais Idéal du Facteur Cheval","l":"Hauterives (Drôme)","a":45.2561,"o":5.0278,"c":"Monument"},{"n":"Gorges de l'Ardèche","l":"Vallon-Pont-d'Arc (Ardèche)","a":44.3822,"o":4.4172,"c":"Site naturel"},{"n":"Grotte Chauvet 2 (Réplique)","l":"Vallon-Pont-d'Arc (Ardèche)","a":44.4072,"o":4.4422,"c":"Site archéologique / Grotte"},{"n":"Puy Mary","l":"Cantal","a":45.1094,"o":2.6753,"c":"Site naturel"},{"n":"Abbatiale Saint-Robert","l":"La Chaise-Dieu (Haute-Loire)","a":45.3211,"o":3.6961,"c":"Édifice religieux"},{"n":"Monastère royal de Brou","l":"Bourg-en-Bresse (Ain)","a":46.1975,"o":5.2361,"c":"Édifice religieux"},{"n":"Combe Laval","l":"Vercors (Drôme)","a":45.0028,"o":5.3375,"c":"Site naturel"},{"n":"Grand Som","l":"Massif de la Chartreuse (Isère)","a":45.3653,"o":5.8111,"c":"Site naturel"},{"n":"Gorges du Verdon","l":"Castellane / Moustiers (Var/Alpes-de-Haute-Provence)","a":43.7369,"o":6.3681,"c":"Site naturel"},{"n":"Palais des Papes","l":"Avignon (Vaucluse)","a":43.9507,"o":4.8075,"c":"Château / Palais"},{"n":"Calanques de Marseille","l":"Marseille (Bouches-du-Rhône)","a":43.2132,"o":5.4525,"c":"Site naturel"},{"n":"Mont Ventoux","l":"Vaucluse","a":44.1744,"o":5.2789,"c":"Site naturel"},{"n":"Vieille Ville de Menton","l":"Menton (Alpes-Maritimes)","a":43.7749,"o":7.5061,"c":"Quartier historique"},{"n":"Massif de l'Estérel","l":"Saint-Raphaël (Var)","a":43.4447,"o":6.8142,"c":"Site naturel"},{"n":"Cap Canaille","l":"Cassis (Bouches-du-Rhône)","a":43.2152,"o":5.5539,"c":"Site naturel"},{"n":"Île de Port-Cros","l":"Hyères (Var)","a":43.0031,"o":6.3986,"c":"Site naturel"},{"n":"Les Baux-de-Provence","l":"Bouches-du-Rhône","a":43.7439,"o":4.7953,"c":"Village / Cité"},{"n":"Cité de Carcassonne","l":"Carcassonne (Aude)","a":43.2064,"o":2.3642,"c":"Village / Cité"},{"n":"Pont du Gard","l":"Vers-Pont-du-Gard (Gard)","a":43.9476,"o":4.535,"c":"Monument"},{"n":"Arènes de Nîmes","l":"Nîmes (Gard)","a":43.8349,"o":4.3596,"c":"Monument"},{"n":"Cirque de Gavarnie","l":"Pyrénées (Hautes-Pyrénées)","a":42.6953,"o":-0.0053,"c":"Site naturel"},{"n":"Pic du Midi de Bigorre","l":"Pyrénées (Hautes-Pyrénées)","a":42.9369,"o":0.1411,"c":"Site naturel"},{"n":"Gouffre de Padirac","l":"Padirac (Lot)","a":44.8584,"o":1.7501,"c":"Site archéologique / Grotte"},{"n":"Rocamadour","l":"Lot","a":44.7994,"o":1.6178,"c":"Village / Cité"},{"n":"Musée Fabre","l":"Montpellier (Hérault)","a":43.6111,"o":3.8803,"c":"Musée"},{"n":"Vieux Toulouse","l":"Toulouse (Haute-Garonne)","a":43.6045,"o":1.4442,"c":"Quartier historique"},{"n":"Massif de l'Aigoual","l":"Cévennes (Gard/Lozère)","a":44.1219,"o":3.5806,"c":"Site naturel"},{"n":"Viaduc de Millau","l":"Millau (Aveyron)","a":44.0772,"o":3.0231,"c":"Monument"},{"n":"Le Mont-Saint-Michel","l":"Manche","a":48.6361,"o":-1.5115,"c":"Édifice religieux / Cité"},{"n":"Falaises d'Étretat","l":"Étretat (Seine-Maritime)","a":49.7071,"o":0.2012,"c":"Site naturel"},{"n":"Mémorial de Caen","l":"Caen (Calvados)","a":49.1975,"o":-0.3844,"c":"Musée"},{"n":"Fondation Claude Monet - Giverny","l":"Giverny (Eure)","a":49.0753,"o":1.5339,"c":"Musée / Jardin"},{"n":"Cathédrale Notre-Dame de Rouen","l":"Rouen (Seine-Maritime)","a":49.4397,"o":1.0949,"c":"Édifice religieux"},{"n":"Tapisserie de Bayeux","l":"Bayeux (Calvados)","a":49.2744,"o":-0.7011,"c":"Musée"},{"n":"Pointe du Raz","l":"Plogoff (Finistère)","a":48.0366,"o":-4.7431,"c":"Site naturel"},{"n":"Remparts de Saint-Malo","l":"Saint-Malo (Ille-et-Vilaine)","a":48.6502,"o":-2.0244,"c":"Monument"},{"n":"Golfe du Morbihan","l":"Morbihan","a":47.5994,"o":-2.7534,"c":"Site naturel"},{"n":"Belle-Île-en-Mer","l":"Morbihan","a":47.3314,"o":-3.1975,"c":"Site naturel"},{"n":"Côte de Granit Rose","l":"Perros-Guirec (Côtes-d'Armor)","a":48.835,"o":-3.4831,"c":"Site naturel"},{"n":"Alignements de Carnac","l":"Carnac (Morbihan)","a":47.5906,"o":-3.0817,"c":"Site archéologique / Grotte"},{"n":"Château de Chambord","l":"Chambord (Loir-et-Cher)","a":47.6162,"o":1.5172,"c":"Château / Palais"},{"n":"Château de Chenonceau","l":"Chenonceaux (Indre-et-Loire)","a":47.3249,"o":1.0703,"c":"Château / Palais"},{"n":"Cathédrale de Chartres","l":"Chartres (Eure-et-Loir)","a":48.4472,"o":1.4878,"c":"Édifice religieux"},{"n":"Château de Blois","l":"Blois (Loir-et-Cher)","a":47.5858,"o":1.3306,"c":"Château / Palais"},{"n":"Cathédrale Bourges","l":"Bourges (Cher)","a":47.0822,"o":2.3992,"c":"Édifice religieux"},{"n":"Cathédrale de Strasbourg","l":"Strasbourg (Bas-Rhin)","a":48.5817,"o":7.7508,"c":"Édifice religieux"},{"n":"La Petite France","l":"Strasbourg (Bas-Rhin)","a":48.5808,"o":7.7428,"c":"Quartier historique"},{"n":"Château du Haut-Kœnigsbourg","l":"Orschwiller (Bas-Rhin)","a":48.2494,"o":7.3442,"c":"Château / Palais"},{"n":"Cathédrale Notre-Dame de Reims","l":"Reims (Marne)","a":49.2536,"o":4.0342,"c":"Édifice religieux"},{"n":"Place Stanislas","l":"Nancy (Meurthe-et-Moselle)","a":48.6936,"o":6.1833,"c":"Monument"},{"n":"Cathédrale Saint-Étienne de Metz","l":"Metz (Moselle)","a":49.1203,"o":6.1753,"c":"Édifice religieux"},{"n":"Place de la Bourse","l":"Bordeaux (Gironde)","a":44.8419,"o":-0.5701,"c":"Monument"},{"n":"Dune du Pilat","l":"Bassin d'Arcachon (Gironde)","a":44.59,"o":-1.2122,"c":"Site naturel"},{"n":"Grotte de Lascaux (Lascaux IV)","l":"Montignac (Dordogne)","a":45.0564,"o":1.1683,"c":"Site archéologique / Grotte"},{"n":"Vesunna - Site-musée gallo-romain","l":"Périgueux (Dordogne)","a":45.1814,"o":0.7122,"c":"Musée"},{"n":"Futuroscope","l":"Poitiers (Vienne)","a":46.6692,"o":0.3697,"c":"Parc de loisirs"},{"n":"Cité Internationale de la Bande Dessinée","l":"Angoulême (Charente)","a":45.6547,"o":0.1506,"c":"Musée"},{"n":"Puy du Fou","l":"Les Épesses (Vendée)","a":46.8901,"o":-0.9312,"c":"Parc de loisirs"},{"n":"Château des Ducs de Bretagne","l":"Nantes (Loire-Atlantique)","a":47.2161,"o":-1.5492,"c":"Château / Palais"},{"n":"Cadre Noir de Saumur","l":"Saumur (Maine-et-Loire)","a":47.2606,"o":-0.1136,"c":"Monument"},{"n":"Grand-Place de Lille","l":"Lille (Nord)","a":50.6372,"o":3.0633,"c":"Monument"},{"n":"Cathédrale Notre-Dame d'Amiens","l":"Amiens (Somme)","a":49.8947,"o":2.3022,"c":"Édifice religieux"},{"n":"Château de Chantilly","l":"Chantilly (Oise)","a":49.1939,"o":2.4853,"c":"Château / Palais"},{"n":"Baie de Somme","l":"Somme","a":50.1883,"o":1.6111,"c":"Site naturel"},{"n":"Basilique Sainte-Marie-Madeleine","l":"Vézelay (Yonne)","a":47.4664,"o":3.7483,"c":"Édifice religieux"},{"n":"Abbaye de Cluny","l":"Cluny (Saône-et-Loire)","a":46.4344,"o":4.6592,"c":"Édifice religieux"},{"n":"Hospices de Beaune","l":"Beaune (Côte-d'Or)","a":47.0219,"o":4.8367,"c":"Monument"},{"n":"Saut du Doubs","l":"Villers-le-Lac (Doubs)","a":47.0706,"o":6.7153,"c":"Site naturel"},{"n":"Reculée de Baume-les-Messieurs","l":"Jura","a":46.7072,"o":5.6178,"c":"Site naturel"},{"n":"Calanques de Piana","l":"Piana (Corse-du-Sud)","a":42.2544,"o":8.6594,"c":"Site naturel"},{"n":"Réserve naturelle de Scandola","l":"Galéria (Haute-Corse)","a":42.3639,"o":8.5639,"c":"Site naturel"},{"n":"Citadelle de Bonifacio","l":"Bonifacio (Corse-du-Sud)","a":41.3872,"o":9.1583,"c":"Village / Cité"},{"n":"Château de Vincennes","l":"Vincennes (Val-de-Marne)","a":48.8427,"o":2.4358,"c":"Château / Palais"},{"n":"Musée Rodin","l":"Paris (Île-de-France)","a":48.8553,"o":2.3159,"c":"Musée"},{"n":"Château de Pierrefonds","l":"Oise","a":49.3469,"o":2.9797,"c":"Château / Palais"},{"n":"Château de Malmaison","l":"Rueil-Malmaison (Hauts-de-Seine)","a":48.8706,"o":2.1672,"c":"Château / Palais"},{"n":"Musée de l'Air et de l'Espace","l":"Le Bourget (Seine-Saint-Denis)","a":48.9469,"o":2.4347,"c":"Musée"},{"n":"Parc de Sceaux","l":"Sceaux (Hauts-de-Seine)","a":48.7753,"o":2.3014,"c":"Musée / Jardin"},{"n":"Villa Savoye (Le Corbusier)","l":"Poissy (Yvelines)","a":48.9244,"o":2.0283,"c":"Monument"},{"n":"Petit Som","l":"Massif de la Chartreuse (Isère)","a":45.3619,"o":5.8014,"c":"Site naturel"},{"n":"Château de Grignan","l":"Drôme","a":44.4208,"o":4.9086,"c":"Château / Palais"},{"n":"Lac d'Annecy","l":"Haute-Savoie","a":45.85,"o":6.16,"c":"Site naturel"},{"n":"Cité du Design","l":"Saint-Étienne (Loire)","a":45.4514,"o":4.3861,"c":"Musée"},{"n":"Puy de Pariou","l":"Chaîne des Puys (Puy-de-Dôme)","a":45.7958,"o":2.9669,"c":"Site naturel"},{"n":"Vieux Chambéry","l":"Chambéry (Savoie)","a":45.5647,"o":5.9214,"c":"Quartier historique"},{"n":"Abbaye d'Hautecombe","l":"Saint-Pierre-de-Curtille (Savoie)","a":45.7539,"o":5.8394,"c":"Édifice religieux"},{"n":"Gorges du Fier","l":"Lovagny (Haute-Savoie)","a":45.9036,"o":6.0422,"c":"Site naturel"},{"n":"Cascade du Rouget","l":"Sixt-Fer-à-Cheval (Haute-Savoie)","a":46.0628,"o":6.7644,"c":"Site naturel"},{"n":"Monastère de la Grande Chartreuse","l":"Saint-Pierre-de-Chartreuse (Isère)","a":45.3636,"o":5.7931,"c":"Édifice religieux"},{"n":"Abbaye de Sénanque","l":"Gordes (Vaucluse)","a":43.9283,"o":5.1892,"c":"Édifice religieux"},{"n":"Gordes","l":"Vaucluse","a":43.9114,"o":5.2003,"c":"Village / Cité"},{"n":"Roussillon et le Sentier des Ocres","l":"Vaucluse","a":43.9019,"o":5.2936,"c":"Site naturel / Village"},{"n":"Fondation Maeght","l":"Saint-Paul-de-Vence (Alpes-Maritimes)","a":43.7006,"o":7.1147,"c":"Musée"},{"n":"Massif de la Sainte-Baume","l":"Var / Bouches-du-Rhône","a":43.3283,"o":5.7561,"c":"Site naturel"},{"n":"Villa Éphrussi de Rothschild","l":"Saint-Jean-Cap-Ferrat (Alpes-Maritimes)","a":43.6947,"o":7.3275,"c":"Château / Palais"},{"n":"Rocher de Sisteron","l":"Sisteron (Alpes-de-Haute-Provence)","a":44.1989,"o":5.9425,"c":"Site naturel"},{"n":"Saint-Guilhem-le-Désert","l":"Saint-Guilhem-le-Désert (Hérault)","a":43.7336,"o":3.5489,"c":"Village / Cité"},{"n":"Cordes-sur-Ciel","l":"Tarn","a":44.0633,"o":2.0217,"c":"Village / Cité"},{"n":"Château de Montségur","l":"Ariège","a":42.8711,"o":1.8322,"c":"Château / Palais"},{"n":"Abbatiale de Conques","l":"Conques (Aveyron)","a":44.5992,"o":2.3964,"c":"Édifice religieux"},{"n":"Cirque de Navacelles","l":"Gard / Hérault","a":43.8953,"o":3.5103,"c":"Site naturel"},{"n":"Pont Valentré","l":"Cahors (Lot)","a":44.4447,"o":1.4322,"c":"Monument"},{"n":"Grotte de Niaux","l":"Ariège","a":42.8194,"o":1.5939,"c":"Site archéologique / Grotte"},{"n":"Honfleur (Le Vieux Bassin)","l":"Calvados","a":49.4194,"o":0.2333,"c":"Quartier historique"},{"n":"Château Gaillard","l":"Les Andelys (Eure)","a":49.2381,"o":1.4025,"c":"Château / Palais"},{"n":"Musée des Beaux-Arts de Rouen","l":"Rouen (Seine-Maritime)","a":49.445,"o":1.0939,"c":"Musée"},{"n":"Haras national du Pin","l":"Orne","a":48.7369,"o":0.1472,"c":"Monument"},{"n":"Locronan","l":"Finistère","a":48.0986,"o":-4.2078,"c":"Village / Cité"},{"n":"Cap Fréhel","l":"Côtes-d'Armor","a":48.6833,"o":-2.3189,"c":"Site naturel"},{"n":"Dinard (Promenade du Clair de Lune)","l":"Ille-et-Vilaine","a":48.6294,"o":-2.0528,"c":"Site naturel"},{"n":"Cairn de Barnenez","l":"Plouezoc'h (Finistère)","a":48.6678,"o":-3.8583,"c":"Site archéologique / Grotte"},{"n":"Château de Villandry (et ses Jardins)","l":"Indre-et-Loire","a":47.3406,"o":0.5131,"c":"Château / Palais / Jardin"},{"n":"Château d'Amboise","l":"Indre-et-Loire","a":47.4136,"o":0.9858,"c":"Château / Palais"},{"n":"Château de Azay-le-Rideau","l":"Indre-et-Loire","a":47.2592,"o":0.4658,"c":"Château / Palais"},{"n":"Château de Cheverny","l":"Loir-et-Cher","a":47.5003,"o":1.4581,"c":"Château / Palais"},{"n":"Riquewihr","l":"Haut-Rhin","a":48.1664,"o":7.2975,"c":"Village / Cité"},{"n":"Colmar (La Petite Venise)","l":"Haut-Rhin","a":48.0742,"o":7.3594,"c":"Quartier historique"},{"n":"Musée de l'Automobile - Collection Schlumpf","l":"Mulhouse (Haut-Rhin)","a":47.76,"o":7.3292,"c":"Musée"},{"n":"Ouvrage de Hackenberg (Ligne Maginot)","l":"Veckring (Moselle)","a":49.3422,"o":6.3664,"c":"Monument / Site historique"},{"n":"Sarlat-la-Canéda (Centre historique)","l":"Dordogne","a":44.8892,"o":1.2167,"c":"Quartier historique"},{"n":"Saint-Émilion (Cité médiévale)","l":"Gironde","a":44.8944,"o":-0.1556,"c":"Village / Cité"},{"n":"Brouage (Place forte)","l":"Charente-Maritime","a":45.8694,"o":-1.0722,"c":"Monument"},{"n":"Collonges-la-Rouge","l":"Corrèze","a":45.0606,"o":1.6542,"c":"Village / Cité"},{"n":"Aquarium de La Rochelle","l":"La Rochelle (Charente-Maritime)","a":46.1533,"o":-1.1506,"c":"Parc de loisirs"},{"n":"Machines de l'Île","l":"Nantes (Loire-Atlantique)","a":47.2061,"o":-1.5644,"c":"Parc de loisirs"},{"n":"Guérande (Cité médiévale)","l":"Loire-Atlantique","a":47.3283,"o":-2.4289,"c":"Village / Cité"},{"n":"Abbaye de Fontevraud","l":"Maine-et-Loire","a":47.1811,"o":0.0514,"c":"Édifice religieux"},{"n":"Musée du Louvre-Lens","l":"Lens (Pas-de-Calais)","a":50.4328,"o":2.8047,"c":"Musée"},{"n":"Nausicaá - Centre National de la Mer","l":"Boulogne-sur-Mer (Pas-de-Calais)","a":50.7322,"o":1.5936,"c":"Parc de loisirs"},{"n":"Beffroi de Bergues","l":"Nord","a":50.9686,"o":2.4344,"c":"Monument"},{"n":"Citadelle de Besançon","l":"Besançon (Doubs)","a":47.2314,"o":6.0328,"c":"Monument"},{"n":"Abbaye de Fontenay","l":"Marmagne (Côte-d'Or)","a":47.6394,"o":4.3894,"c":"Édifice religieux"},{"n":"Cascades du Hérisson","l":"Ménétrux-en-Joux (Jura)","a":46.6133,"o":5.8675,"c":"Site naturel"},{"n":"Aiguilles de Bavella","l":"Zonza (Corse-du-Sud)","a":41.7958,"o":9.2253,"c":"Site naturel"},{"n":"Vieux Sartène","l":"Sartène (Corse-du-Sud)","a":41.6214,"o":8.9722,"c":"Quartier historique"},{"n":"Forêt de Fontainebleau","l":"Seine-et-Marne (Île-de-France)","a":48.4012,"o":2.6742,"c":"Site naturel"}];
+  const etatSites = { actif:false, groupe:null, cats:new Set() };
+  (function(){
+    const catsListe = [...new Set(SITES_TOURISTIQUES.map(s=>s.c))].sort();
+    catsListe.forEach(c=>etatSites.cats.add(c));
+    const boite = document.getElementById('sites-cats');
+    boite.innerHTML = catsListe.map(c=>
+      '<label><input type="checkbox" data-cat="'+echap(c)+'" checked> '+echap(c)
+      +' <small>('+SITES_TOURISTIQUES.filter(s=>s.c===c).length+')</small></label>').join('');
+    boite.addEventListener('change', (e)=>{
+      const cible = e.target;
+      if(!cible || !cible.dataset || !cible.dataset.cat) return;
+      if(cible.checked) etatSites.cats.add(cible.dataset.cat);
+      else etatSites.cats.delete(cible.dataset.cat);
+      if(etatSites.actif) dessinerSites();
+    });
+  })();
+  document.getElementById('btn-sites').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-sites');
+    if(etatSites.actif){
+      etatSites.actif = false;
+      map.removeLayer(etatSites.groupe);
+      delete registreOfficiel.sites;
+      basculerBouton(btn, false, '', '⭐ Afficher les sites');
+      majLegende();
+      return;
+    }
+    if(!etatSites.groupe) etatSites.groupe = L.layerGroup();
+    etatSites.actif = true;
+    basculerBouton(btn, true, '⭐ Sites \u2715', '', '#b45309');
+    etatSites.groupe.addTo(map);
+    dessinerSites();
+    afficherInfo('⭐ '+SITES_TOURISTIQUES.length+' sites majeurs \u2014 filtrez par cat\u00e9gorie dans le widget, survolez pour le nom', 5500);
+  });
+  function dessinerSites(){
+    if(!etatSites.actif) return;
+    etatSites.groupe.clearLayers();
+    const pts = [];
+    let nb = 0;
+    SITES_TOURISTIQUES.forEach(s=>{
+      if(!etatSites.cats.has(s.c)) return;
+      const ll = L.latLng(s.a, s.o);
+      L.marker(ll, { keyboard:false,
+        icon: L.divIcon({className:'site-etoile', html:'\u2b50', iconSize:null}) })
+        .bindTooltip('<b>'+echap(s.n)+'</b><br><small>'+echap(s.l)+' \u00b7 '+echap(s.c)+'</small>', {direction:'top'})
+        .addTo(etatSites.groupe);
+      pts.push({ll, couleur:'#b45309'});
+      nb++;
+    });
+    etatSites.nb = nb;
+    if(pts.length) registreOfficiel.sites = { points:pts, couleur:'#b45309', legende:'Sites touristiques' };
+    else delete registreOfficiel.sites;
+    majLegende();
+  }
+
   // ---------- 🏙 Les 22 métropoles (EPCI à statut de métropole, loi MAPTAM) ----------
   const METROPOLES = [["Métropole du Grand Paris", "Paris", 48.857, 2.352], ["Aix-Marseille-Provence", "Marseille", 43.296, 5.37], ["Métropole de Lyon", "Lyon", 45.764, 4.836], ["Métropole Européenne de Lille", "Lille", 50.633, 3.066], ["Bordeaux Métropole", "Bordeaux", 44.838, -0.579], ["Toulouse Métropole", "Toulouse", 43.604, 1.444], ["Nantes Métropole", "Nantes", 47.218, -1.554], ["Métropole Nice Côte d'Azur", "Nice", 43.701, 7.268], ["Rennes Métropole", "Rennes", 48.111, -1.68], ["Métropole Rouen Normandie", "Rouen", 49.443, 1.099], ["Eurométropole de Strasbourg", "Strasbourg", 48.573, 7.752], ["Grenoble-Alpes Métropole", "Grenoble", 45.188, 5.724], ["Montpellier Méditerranée Métropole", "Montpellier", 43.611, 3.877], ["Brest Métropole", "Brest", 48.39, -4.486], ["Dijon Métropole", "Dijon", 47.322, 5.041], ["Orléans Métropole", "Orléans", 47.902, 1.909], ["Saint-Étienne Métropole", "Saint-Étienne", 45.439, 4.387], ["Métropole Toulon-Provence-Méditerranée", "Toulon", 43.124, 5.928], ["Tours Métropole Val de Loire", "Tours", 47.394, 0.685], ["Clermont Auvergne Métropole", "Clermont-Ferrand", 45.777, 3.087], ["Eurométropole de Metz", "Metz", 49.119, 6.176], ["Métropole du Grand Nancy", "Nancy", 48.692, 6.184]];
   const etatMetros = { actif:false, groupe:null };
@@ -3509,6 +3585,54 @@
     clearTimeout(etatMer.minuteur);
     etatMer.minuteur = setTimeout(()=>{ if(etatMer.actif) calculerMer(); }, 600);
   });
+
+  // ---------- 🌊 Submersion & érosion : secteurs à risque (Cerema / fiche littoral) ----------
+  const LITTORAL = {"secteurs":[{"n":"Soulac-sur-Mer","a":45.512,"o":-1.126,"m":"erosion","r":3,"d":"jusqu'à 8 m/an — l'un des reculs les plus rapides d'Europe"},{"n":"Lacanau","a":45.001,"o":-1.203,"m":"erosion","r":3,"d":"2,5 m/an en moyenne — 1 200 logements sous surveillance"},{"n":"Biscarrosse (côte landaise)","a":44.446,"o":-1.253,"m":"erosion","r":3,"d":"recul moyen de 1,7 m/an dans les Landes"},{"n":"Mimizan (côte landaise)","a":44.211,"o":-1.304,"m":"erosion","r":3,"d":"côte sableuse en recul structurel"},{"n":"Capbreton","a":43.642,"o":-1.445,"m":"erosion","r":3,"d":"érosion rapide par houle océanique"},{"n":"La Faute-sur-Mer","a":46.323,"o":-1.318,"m":"submersion","r":3,"d":"Xynthia (2010) : 29 morts dans la commune — basses plaines endiguées"},{"n":"L'Aiguillon-sur-Mer","a":46.334,"o":-1.305,"m":"submersion","r":3,"d":"marais littoraux vendéens sous le niveau des plus hautes mers"},{"n":"Châtelaillon-Plage / La Rochelle","a":46.072,"o":-1.088,"m":"submersion","r":3,"d":"Charente-Maritime, façade durement touchée par Xynthia"},{"n":"Île de Ré","a":46.204,"o":-1.41,"m":"submersion","r":3,"d":"polders et marais salants, digues submergées en 2010"},{"n":"Ault (falaise picarde)","a":50.104,"o":1.451,"m":"erosion","r":2,"d":"falaises meubles en recul, éboulements imprévisibles"},{"n":"Dieppe / Pays de Caux","a":49.925,"o":1.078,"m":"erosion","r":2,"d":"falaises crayeuses de la Côte d'Albâtre"},{"n":"Étretat","a":49.707,"o":0.205,"m":"erosion","r":2,"d":"érosion par éboulement des falaises de craie"},{"n":"Criel-sur-Mer","a":50.015,"o":1.313,"m":"erosion","r":2,"d":"maisons évacuées en haut de falaise"},{"n":"Saintes-Maries-de-la-Mer (Camargue)","a":43.452,"o":4.428,"m":"mixte","r":2,"d":"subsidence du delta + déficit sédimentaire du Rhône"},{"n":"Palavas / lidos languedociens","a":43.528,"o":3.931,"m":"submersion","r":2,"d":"lidos étroits entre mer et étangs"},{"n":"Gruissan / littoral audois","a":43.108,"o":3.088,"m":"submersion","r":2,"d":"lagunes basses exposées aux surcotes"},{"n":"Presqu'île de Crozon (côtes rocheuses)","a":48.247,"o":-4.49,"m":"erosion","r":1,"d":"littoral armoricain rocheux — érosion lente, meilleure résilience"},{"n":"Côte de granite rose","a":48.832,"o":-3.475,"m":"erosion","r":1,"d":"côtes rocheuses bretonnes, relativement résistantes"}],"horizons":[{"t":"2028","f":1.0,"rmin":3,"c":"≈ 1 000 bâtiments menacés · ≈ 240 M€"},{"t":"2050","f":1.15,"rmin":2,"c":"≈ 5 200 logements + 1 400 locaux d'activité · ≈ 1,2 Md€"},{"t":"2100 médian","f":1.3,"rmin":1,"c":"5 000 à 50 000 logements (métropole + DROM) · 0,8 à 8 Md€"},{"t":"2100 défavorable","f":1.6,"rmin":1,"c":"jusqu'à 450 000 logements · ≈ 55 000 bureaux et commerces, 1 000 campings · centaines de Md€"}]};
+  const etatLittoral = { actif:false, groupe:null, horizon:0 };
+  const curseurLit = document.getElementById('curseur-littoral');
+  const etiqLit = document.getElementById('horizon-littoral');
+  curseurLit.addEventListener('input', ()=>{
+    etatLittoral.horizon = parseInt(curseurLit.value, 10);
+    etiqLit.textContent = LITTORAL.horizons[etatLittoral.horizon].t;
+    if(etatLittoral.actif) dessinerLittoral();
+  });
+  document.getElementById('btn-littoral').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-littoral');
+    if(etatLittoral.actif){
+      etatLittoral.actif = false;
+      map.removeLayer(etatLittoral.groupe);
+      delete registreOfficiel.littoral;
+      basculerBouton(btn, false, '', '🌊 Submersion & érosion (secteurs)');
+      majLegende();
+      return;
+    }
+    if(!etatLittoral.groupe) etatLittoral.groupe = L.layerGroup();
+    etatLittoral.actif = true;
+    basculerBouton(btn, true, '🌊 Littoral \u2715', '', '#c2410c');
+    etatLittoral.groupe.addTo(map);
+    dessinerLittoral();
+    afficherInfo('🌊 Secteurs c\u00f4tiers \u00e0 risque (Cerema) \u2014 faites glisser la jauge : 2028 \u2192 2100, les enjeux chiffr\u00e9s suivent en l\u00e9gende', 6500);
+  });
+  function dessinerLittoral(){
+    if(!etatLittoral.actif) return;
+    const h = LITTORAL.horizons[etatLittoral.horizon];
+    etatLittoral.groupe.clearLayers();
+    const pts = [];
+    LITTORAL.secteurs.forEach(s=>{
+      if(s.r < h.rmin) return;
+      const coul = coulCat({erosion:'#c2410c', submersion:'#1d4ed8', mixte:'#7c3aed'}[s.m],
+                           {erosion:OKABE.vermillon, submersion:OKABE.bleu, mixte:OKABE.rose}[s.m]);
+      const rayon = Math.round((6 + s.r*3) * h.f);
+      const ll = L.latLng(s.a, s.o);
+      L.circleMarker(ll, { radius:rayon, color:coul, weight:2, opacity:0.95, fillColor:coul, fillOpacity:0.3 })
+        .bindTooltip('<b>'+echap(s.n)+'</b><br>'+({erosion:'\u00c9rosion (recul du trait de c\u00f4te)',submersion:'Submersion marine',mixte:'\u00c9rosion + submersion (delta)'})[s.m]
+          +'<br><small>'+echap(s.d)+'</small>', {direction:'top'})
+        .addTo(etatLittoral.groupe);
+      pts.push({ll, couleur:coul});
+    });
+    registreOfficiel.littoral = { points:pts, couleur:'#c2410c', legende:'Littoral \u00e0 risque ('+h.t+')' };
+    majLegende();
+  }
 
   // ---------- 🚗 Zones à Faibles Émissions (Base nationale, transport.data.gouv) ----------
   const etatZfe = { actif:false, groupe:null, charge:false };
@@ -4727,8 +4851,8 @@
   });
 
   // ================= Fenêtres flottantes (widgets) =================
-  const WIDGETS = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-equip','wg-climat','wg-montagnes','wg-limites','wg-foret','wg-pilote'];
-  const WIDGETS_PILOTABLES = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-equip','wg-climat','wg-montagnes','wg-limites','wg-foret'];
+  const WIDGETS = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-sites','wg-equip','wg-climat','wg-montagnes','wg-limites','wg-foret','wg-pilote'];
+  const WIDGETS_PILOTABLES = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-sites','wg-equip','wg-climat','wg-montagnes','wg-limites','wg-foret'];
   const WIDGETS_CASES = []; // remplacées par la fenêtre 🧭 pilote
   let posWidgets = {};
   try{ posWidgets = JSON.parse(localStorage.getItem('geo-widgets3')||'{}'); }catch(e){}
@@ -4805,6 +4929,7 @@
   initWidget('wg-rando',     { left:Math.max(8, window.innerWidth-262)+'px',
                                top:Math.max(60, window.innerHeight-320)+'px', replie:true });
   initWidget('wg-fonds',     { left:Math.max(8, window.innerWidth-226)+'px', top:'54px', replie:true });
+  initWidget('wg-sites',     { left:'12px', top:'270px', replie:true, cache:true });
   initWidget('wg-equip',     { left:'12px', top:'70px', replie:true, cache:true });
   initWidget('wg-climat',    { left:'12px', top:'110px', replie:true, cache:true });
   initWidget('wg-montagnes', { left:'12px', top:'150px', replie:true, cache:true });
@@ -5000,6 +5125,17 @@
       blocs.push(ligneLegende('#1d4ed8', 'Terres \u2264 +'+etatMer.seuil+' m au-dessus de la mer<br><small>curseur 🌊 \u00b7 altitude brute, pas un mod\u00e8le de submersion</small>', 'carre',
         'Altitudes SRTM (~90 m) \u2014 digues, mar\u00e9es et dynamique littorale non prises en compte'));
     }
+    if(etatLittoral.actif){
+      const hL = LITTORAL.horizons[etatLittoral.horizon];
+      blocs.push('<div class="leg-sous">Littoral \u00e0 risque \u2014 horizon <b>'+hL.t+'</b><br><small>Cerema (INEC) : '+hL.c+'</small></div>'
+        + ligneLegende(coulCat('#c2410c', OKABE.vermillon), '\u00c9rosion c\u00f4ti\u00e8re <small>(recul du trait de c\u00f4te, irr\u00e9versible)</small>', 'rond',
+            'C\u00f4te aquitaine jusqu\u2019\u00e0 8 m/an, falaises normandes et picardes')
+        + ligneLegende(coulCat('#1d4ed8', OKABE.bleu), 'Submersion marine <small>(inondation brutale et temporaire)</small>', 'rond',
+            'Basses plaines vend\u00e9ennes et charentaises (Xynthia 2010), lidos languedociens')
+        + ligneLegende(coulCat('#7c3aed', OKABE.rose), 'Delta (\u00e9rosion + submersion) <small>(Camargue)</small>', 'rond',
+            'Subsidence et d\u00e9ficit s\u00e9dimentaire')
+        + '<div style="font-size:10px;color:#6b7280;margin:2px 0 4px 18px">secteurs cit\u00e9s par le Cerema et la fiche littoral \u2014 liste non exhaustive \u00b7 taille des cercles \u221d niveau de risque et horizon</div>');
+    }
     if(etatZfe.actif){
       blocs.push(ligneLegende('#6d28d9', '🚗 Zones \u00e0 Faibles \u00c9missions <small>(actives et en projet)</small>', 'carre',
         'Base nationale des ZFE (transport.data.gouv.fr) \u2014 restrictions de circulation selon la vignette Crit\u2019Air'));
@@ -5012,6 +5148,8 @@
       blocs.push(ligneLegende('#8b5a2b', 'Zones \u2265 '+etatHypso.seuil.toLocaleString('fr-FR')+' m<br><small>r\u00e9glable au curseur</small>', 'carre',
         'Hypsométrie calculée des tuiles SRTM (~90 m), recalculée à chaque déplacement'));
     }
+    if(etatSites.actif) blocs.push(ligneLegende('#b45309','\u2b50 Sites touristiques majeurs <small>('+(etatSites.nb||0)+' affich\u00e9s / '+SITES_TOURISTIQUES.length+')</small>','rond',
+      '151 sites majeurs : monuments, mus\u00e9es, ch\u00e2teaux, sites naturels, villages'));
     if(etatMetros.actif) blocs.push(ligneLegende('#6d28d9','\u2605 Les 22 métropoles<br><small>EPCI à statut de métropole (loi MAPTAM)</small>','rond',
       'Définition juridique : les 22 intercommunalités ayant le statut de métropole — à ne pas confondre avec les aires urbaines'));
     if(etatMassifs.actif){
