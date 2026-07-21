@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v1.9 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v2.0 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v1.9</title>
+<title>MultiMaps — géographie (collège & lycée) — v2.0</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -157,6 +157,7 @@
   .smassif-etq span{padding:1px 7px;border-radius:999px;color:#fff;font-weight:600;font-size:10.5px;
     white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.4);display:inline-block;transform:translate(-50%,-50%)}
   .hydro-forte{filter:saturate(2.6) contrast(1.35) brightness(0.88)}
+  .vise3d{background:none;border:none;font-size:20px;transform:translate(-50%,-90%)}
   .fleuve-etq{background:none;border:none;color:#1d4ed8;font-style:italic;font-weight:700;font-size:12px;
     white-space:nowrap;text-shadow:0 0 3px #fff,0 0 4px #fff,0 0 6px #fff;transform:translate(-50%,-50%)}
   body.mode-projo .fleuve-etq{font-size:15px}
@@ -774,6 +775,27 @@
   </div>
 </div>
 
+<div class="widget" id="wg-3d" style="width:246px">
+  <div class="widget-tete">
+    <span class="widget-titre">🏔 Vue 3D</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
+  </div>
+  <div class="widget-corps">
+    <button class="calque-ajout donnee" id="btn-3d-viser" title="Armez la visée puis cliquez deux fois sur la carte : le premier clic pose le point de vue (l'endroit où vous vous tenez), le second la direction regardée (un sommet, un monument…). Les coordonnées s'affichent ci-dessous.">🎯 Choisir les 2 points sur la carte</button>
+    <div class="sous" id="etiq-3d-a" style="margin:3px 0 0">📍 Point de vue : Meylan (ancienne mairie)</div>
+    <div class="sous" id="etiq-3d-b" style="margin:1px 0 3px">▲ Vue vers : Grand Pic de Belledonne</div>
+    <label class="velo-filtre"><input type="radio" name="tex3d" value="carte" checked> Fond carte (OSM)</label>
+    <label class="velo-filtre"><input type="radio" name="tex3d" value="sat"> Fond satellite (IGN)</label>
+    <label class="velo-filtre"><input type="checkbox" id="chk-3d-depart"> ⟳ Pivoter depuis le point de départ <small>(vue à la 1ʳᵉ personne)</small></label>
+    <div style="display:flex;align-items:center;gap:6px;margin:3px 0;font-size:11.5px">Relief ×
+      <input type="range" id="curseur-3d-exag" min="10" max="30" step="1" value="16" style="flex:1">
+      <b id="valeur-3d-exag">1,6</b>
+    </div>
+    <button class="calque-ajout donnee" id="btn-3d-ouvrir" title="Construit la scène 3D : terrain réel (altitudes SRTM) drapé du fond choisi, caméra placée au point de vue, regard vers la cible. Glissez pour orbiter, molette pour avancer.">🏔 Ouvrir la vue 3D</button>
+  </div>
+</div>
+
 <div class="widget" id="wg-acces" style="width:268px">
   <div class="widget-tete">
     <span class="widget-titre">👁 Couleurs</span>
@@ -813,7 +835,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v1.9</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v2.0</small></span>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
   <div class="widget-corps">
@@ -837,6 +859,7 @@
       <button class="pilote-btn" data-cible="wg-sites">⭐ Sites</button>
       <button class="pilote-btn" data-cible="wg-equip">🚉 Équipements</button>
       <button class="pilote-btn" data-cible="wg-climat">🌡 Climat</button>
+      <button class="pilote-btn" data-cible="wg-3d">🏔 Vue 3D</button>
       <button class="pilote-btn" data-cible="wg-montagnes">⛰ Monts &amp; fleuves</button>
       <button class="pilote-btn" data-cible="wg-limites">🗾 Limites</button>
       <button class="pilote-btn" data-cible="wg-foret">🌲 Forêts</button>
@@ -856,7 +879,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v1.9</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v2.0</small></h2>
     <p class="sous">Seuil « villes » des tops 50</p>
     <select class="opt-select" id="sel-seuil" aria-label="Seuil de population des tops 50">
       <option value="5000">5 000 habitants et +</option>
@@ -874,6 +897,13 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<div id="scene3d-fond" style="display:none;position:fixed;inset:0;background:#0b1020;z-index:99990">
+  <canvas id="scene3d-canvas" style="width:100%;height:100%;display:block"></canvas>
+  <div style="position:absolute;top:10px;left:12px;color:#fff;font:600 13px system-ui;text-shadow:0 1px 3px #000" id="scene3d-titre">Vue 3D</div>
+  <div style="position:absolute;bottom:8px;left:12px;color:#cbd5e1;font:11px system-ui;text-shadow:0 1px 2px #000">Glisser : orbiter · molette : avancer · relief SRTM (AWS) · fond © OSM / IGN</div>
+  <button id="scene3d-fermer" style="position:absolute;top:8px;right:10px;font-size:15px;border:1px solid #475569;border-radius:8px;background:#111827;color:#fff;cursor:pointer;padding:3px 11px">✕ Fermer</button>
+</div>
+
 <script>
 (function(){
   // ================= Carte =================
@@ -941,7 +971,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v1.9';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v2.0';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -4039,6 +4069,213 @@
     majLegende();
   });
 
+  // ---------- 🏔 Vue 3D (deux points : point de vue → cible) ----------
+  const ETAT3D = {
+    A: { lat:45.2100, lon:5.7790, nom:'Meylan (ancienne mairie)' },
+    B: { lat:45.1620, lon:5.9870, nom:'Grand Pic de Belledonne' },
+    visee: 0, marqueurs: [], exag: 1.6, rendu: null
+  };
+  document.getElementById('curseur-3d-exag').addEventListener('input', (e)=>{
+    ETAT3D.exag = parseInt(e.target.value, 10) / 10;
+    document.getElementById('valeur-3d-exag').textContent = ETAT3D.exag.toLocaleString('fr-FR');
+  });
+  function majEtiquettes3d(){
+    const f = (p)=> p.nom || (p.lat.toFixed(4)+', '+p.lon.toFixed(4));
+    document.getElementById('etiq-3d-a').textContent = '📍 Point de vue : '+f(ETAT3D.A);
+    document.getElementById('etiq-3d-b').textContent = '▲ Vue vers : '+f(ETAT3D.B);
+  }
+  document.getElementById('btn-3d-viser').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-3d-viser');
+    ETAT3D.marqueurs.forEach(mq=>map.removeLayer(mq));
+    ETAT3D.marqueurs = [];
+    ETAT3D.visee = 1;
+    basculerBouton(btn, true, '🎯 Cliquez le POINT DE VUE\u2026 \u2715', '', '#0e7490');
+    afficherInfo('🎯 1er clic sur la carte = point de vue \u00b7 2e clic = direction regard\u00e9e', 7000);
+  });
+  map.on('click', (ev)=>{
+    if(!ETAT3D.visee) return;
+    const p = { lat: ev.latlng.lat, lon: ev.latlng.lng, nom: null };
+    const mq = L.marker(ev.latlng, { keyboard:false, icon: L.divIcon({
+      className:'vise3d', html: ETAT3D.visee===1 ? '📍' : '🎯', iconSize:null }) }).addTo(map);
+    ETAT3D.marqueurs.push(mq);
+    if(ETAT3D.visee === 1){
+      ETAT3D.A = p; ETAT3D.visee = 2;
+      basculerBouton(document.getElementById('btn-3d-viser'), true, '🎯 Cliquez la CIBLE\u2026 \u2715', '', '#0e7490');
+    }else{
+      ETAT3D.B = p; ETAT3D.visee = 0;
+      basculerBouton(document.getElementById('btn-3d-viser'), false, '', '🎯 Choisir les 2 points sur la carte');
+      afficherInfo('🏔 Vis\u00e9e enregistr\u00e9e \u2014 ouvrez la vue 3D', 4000);
+    }
+    majEtiquettes3d();
+  });
+  let troisJsPromesse = null;
+  function chargerTroisJs(){
+    if(window.THREE) return Promise.resolve();
+    if(!troisJsPromesse){
+      troisJsPromesse = new Promise((res, rej)=>{
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+        s.onload = ()=> window.THREE ? res() : rej(new Error('THREE absent'));
+        s.onerror = ()=> rej(new Error('chargement three.js'));
+        document.head.appendChild(s);
+      }).catch(e=>{ troisJsPromesse = null; throw e; });
+    }
+    return troisJsPromesse;
+  }
+  function tuileTexture3d(mode, z, x, y){
+    if(mode === 'sat')
+      return 'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0'
+        +'&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&STYLE=normal&TILEMATRIXSET=PM'
+        +'&FORMAT=image/jpeg&TILEMATRIX='+z+'&TILEROW='+y+'&TILECOL='+x;
+    return 'https://tile.openstreetmap.org/'+z+'/'+x+'/'+y+'.png';
+  }
+  function chargerImage(url){
+    return new Promise((res)=>{
+      const im = new Image();
+      im.crossOrigin = 'anonymous';
+      im.onload = ()=>res(im);
+      im.onerror = ()=>res(null);
+      im.src = url;
+    });
+  }
+  document.getElementById('btn-3d-ouvrir').addEventListener('click', async ()=>{
+    const A = ETAT3D.A, B = ETAT3D.B;
+    const mode = (document.querySelector('input[name=tex3d]:checked')||{value:'carte'}).value;
+    afficherInfo('🏔 Construction du terrain 3D\u2026', 0);
+    try{
+      await chargerTroisJs();
+      // r\u00e9gion : carr\u00e9 centr\u00e9 sur le milieu A-B
+      const kx = 111320 * Math.cos((A.lat+B.lat)/2 * Math.PI/180), ky = 110570;
+      const dAB = Math.hypot((B.lat-A.lat)*ky, (B.lon-A.lon)*kx);
+      const taille = Math.max(6000, Math.min(40000, dAB * 1.8));
+      const cLat = (A.lat+B.lat)/2, cLon = (A.lon+B.lon)/2;
+      const dLat = taille/2/ky, dLon = taille/2/kx;
+      const z = taille <= 10000 ? 12 : (taille <= 22000 ? 11 : 10);
+      const zTex = Math.min(z + 2, 15); // texture 4\u00d7 plus fine que le relief
+      const x1 = tuileX(cLon-dLon, z), x2 = tuileX(cLon+dLon, z);
+      const y1 = tuileY(cLat+dLat, z), y2 = tuileY(cLat-dLat, z);
+      const nx = x2-x1+1, ny = y2-y1+1;
+      const fT = Math.pow(2, zTex - z);
+      const x1t = x1*fT, y1t = y1*fT, nxT = nx*fT, nyT = ny*fT;
+      // 1) altitudes (terrarium, z) et 2) texture (zTex), assembl\u00e9es sur canvas
+      const [alts, texs] = await Promise.all([
+        Promise.all(Array.from({length:nx*ny}, (_,i)=>{
+          const x = x1 + (i % nx), y = y1 + Math.floor(i/nx);
+          return chargerImage('https://s3.amazonaws.com/elevation-tiles-prod/terrarium/'+z+'/'+x+'/'+y+'.png').then(im=>({x,y,im}));
+        })),
+        Promise.all(Array.from({length:nxT*nyT}, (_,i)=>{
+          const x = x1t + (i % nxT), y = y1t + Math.floor(i/nxT);
+          return chargerImage(tuileTexture3d(mode, zTex, x, y)).then(im=>({x,y,im}));
+        }))
+      ]);
+      const cvA = document.createElement('canvas'); cvA.width = nx*256; cvA.height = ny*256;
+      const cxA = cvA.getContext('2d');
+      alts.forEach(t=>{ if(t.im) cxA.drawImage(t.im, (t.x-x1)*256, (t.y-y1)*256); });
+      const dA = cxA.getImageData(0, 0, cvA.width, cvA.height).data;
+      const cvT = document.createElement('canvas'); cvT.width = nxT*256; cvT.height = nyT*256;
+      const cxT = cvT.getContext('2d');
+      cxT.fillStyle = '#3a4a3a'; cxT.fillRect(0,0,cvT.width,cvT.height);
+      texs.forEach(t=>{ if(t.im) cxT.drawImage(t.im, (t.x-x1t)*256, (t.y-y1t)*256); });
+      // grille de terrain (bornes g\u00e9o exactes des tuiles)
+      const lonG = lonDeX(x1, z), lonD = lonDeX(x2+1, z);
+      const latH = latDeY(y1, z), latB2 = latDeY(y2+1, z);
+      const N = 128;
+      const geo = new THREE.PlaneGeometry(1, 1, N-1, N-1);
+      const pos = geo.attributes.position;
+      const largM = (lonD-lonG) * kx, hautM = (latH-latB2) * ky;
+      const altDe = (u, v)=>{ // u,v \u2208 [0,1] ouest\u2192est / nord\u2192sud
+        const px = Math.min(cvA.width-1, Math.round(u*(cvA.width-1)));
+        const py = Math.min(cvA.height-1, Math.round(v*(cvA.height-1)));
+        const i = (py*cvA.width + px) * 4;
+        return dA[i]*256 + dA[i+1] + dA[i+2]/256 - 32768;
+      };
+      for(let iy=0; iy<N; iy++) for(let ix=0; ix<N; ix++){
+        const idx = iy*N + ix, u = ix/(N-1), v = iy/(N-1);
+        pos.setXYZ(idx, (u-0.5)*largM, Math.max(-50, altDe(u, v))*ETAT3D.exag, (v-0.5)*hautM);
+      }
+      geo.computeVertexNormals();
+      const texture = new THREE.CanvasTexture(cvT);
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0b1020);
+      scene.fog = new THREE.Fog(0x0b1020, taille*0.9, taille*2.2);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+      const soleil = new THREE.DirectionalLight(0xffffff, 0.6);
+      soleil.position.set(-taille, taille, taille);
+      scene.add(soleil);
+      scene.add(new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: texture })));
+      const enM = (p)=> [ ((p.lon-lonG)/(lonD-lonG)-0.5)*largM,
+                          ((latH-p.lat)/(latH-latB2)) ];
+      const posDe = (p, dessus)=>{
+        const u = (p.lon-lonG)/(lonD-lonG), v = (latH-p.lat)/(latH-latB2);
+        return new THREE.Vector3((u-0.5)*largM, (altDe(u,v)+dessus)*ETAT3D.exag, (v-0.5)*hautM);
+      };
+      const bouleB = new THREE.Mesh(new THREE.SphereGeometry(taille*0.006, 12, 12),
+        new THREE.MeshBasicMaterial({ color: 0xef4444 }));
+      bouleB.position.copy(posDe(B, 25));
+      scene.add(bouleB);
+      const oeil = posDe(A, 60);
+      const cible = posDe(B, 0);
+      const canvas = document.getElementById('scene3d-canvas');
+      document.getElementById('scene3d-fond').style.display = 'block';
+      document.getElementById('scene3d-titre').textContent =
+        'Vue 3D \u2014 '+(A.nom||'point choisi')+' \u2192 '+(B.nom||'cible')+' \u00b7 relief \u00d7'+ETAT3D.exag.toLocaleString('fr-FR')+' \u00b7 '+(mode==='sat'?'satellite IGN':'carte OSM');
+      const rendu = new THREE.WebGLRenderer({ canvas, antialias:true });
+      rendu.setPixelRatio(window.devicePixelRatio || 1);
+      rendu.setSize(canvas.clientWidth, canvas.clientHeight, false);
+      texture.anisotropy = rendu.capabilities.getMaxAnisotropy ? rendu.capabilities.getMaxAnisotropy() : 1;
+      texture.needsUpdate = true;
+      const camera = new THREE.PerspectiveCamera(55, canvas.clientWidth/canvas.clientHeight, 5, taille*4);
+      camera.position.copy(oeil);
+      camera.lookAt(cible);
+      // contr\u00f4les : orbite autour de la cible, OU 1\u02b3\u1d49 personne pivot\u00e9e sur le point de d\u00e9part
+      const modeDepart = document.getElementById('chk-3d-depart').checked;
+      const dv = new THREE.Vector3().subVectors(modeDepart ? cible : oeil, modeDepart ? oeil : cible);
+      let rayon = dv.length(), theta = Math.atan2(dv.x, dv.z), phi = Math.acos(Math.max(-1, Math.min(1, dv.y/rayon)));
+      let glisse = null;
+      const appliquer = ()=>{
+        phi = Math.max(0.08, Math.min(Math.PI - 0.08, phi));
+        const dir = new THREE.Vector3(Math.sin(phi)*Math.sin(theta), Math.cos(phi), Math.sin(phi)*Math.cos(theta));
+        if(modeDepart){
+          camera.lookAt(new THREE.Vector3().copy(camera.position).addScaledVector(dir, 1000));
+        }else{
+          phi = Math.max(0.08, Math.min(Math.PI/2 - 0.02, phi));
+          camera.position.set(cible.x + rayon*dir.x, cible.y + rayon*dir.y, cible.z + rayon*dir.z);
+          camera.lookAt(cible);
+        }
+      };
+      appliquer();
+      canvas.onmousedown = (e)=>{ glisse = {x:e.clientX, y:e.clientY}; };
+      window.onmouseup = ()=>{ glisse = null; };
+      canvas.onmousemove = (e)=>{
+        if(!glisse) return;
+        const sens = modeDepart ? -1 : 1;
+        theta -= sens*(e.clientX-glisse.x)*0.005; phi -= sens*(e.clientY-glisse.y)*0.005;
+        glisse = {x:e.clientX, y:e.clientY}; appliquer();
+      };
+      canvas.onwheel = (e)=>{
+        e.preventDefault();
+        if(modeDepart){
+          const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
+          camera.position.addScaledVector(dir, e.deltaY>0 ? -taille*0.02 : taille*0.02);
+        }else{
+          rayon = Math.max(200, Math.min(taille*3, rayon*(e.deltaY>0?1.12:0.89)));
+        }
+        appliquer();
+      };
+      let anime = true;
+      ETAT3D.rendu = { arret:()=>{ anime = false; rendu.dispose(); } };
+      (function boucle(){ if(!anime) return; requestAnimationFrame(boucle); rendu.render(scene, camera); })();
+      cacherInfo();
+    }catch(e){
+      cacherInfo();
+      afficherInfo('🏔 Vue 3D indisponible : '+(e && e.message ? e.message : 'erreur')+' \u2014 v\u00e9rifiez la connexion (three.js, tuiles)', 6500);
+    }
+  });
+  document.getElementById('scene3d-fermer').addEventListener('click', ()=>{
+    document.getElementById('scene3d-fond').style.display = 'none';
+    if(ETAT3D.rendu){ ETAT3D.rendu.arret(); ETAT3D.rendu = null; }
+  });
+
   // ---------- 🏠 Logements menacés par la montée des eaux (classes par département) ----------
   const LOGEMENTS_MER = {
     // 3 = plus de 25 000 · 2 = de l'ordre de 15 000 · 1 = moins de 5 000 (étude Callendar / France Info, horizon 2100)
@@ -5708,8 +5945,8 @@
   });
 
   // ================= Fenêtres flottantes (widgets) =================
-  const WIDGETS = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-sites','wg-equip','wg-climat','wg-montagnes','wg-limites','wg-foret','wg-pilote'];
-  const WIDGETS_PILOTABLES = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-sites','wg-equip','wg-climat','wg-montagnes','wg-limites','wg-foret'];
+  const WIDGETS = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-sites','wg-equip','wg-climat','wg-montagnes','wg-3d','wg-limites','wg-foret','wg-pilote'];
+  const WIDGETS_PILOTABLES = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-sites','wg-equip','wg-climat','wg-montagnes','wg-3d','wg-limites','wg-foret'];
   const WIDGETS_CASES = []; // remplacées par la fenêtre 🧭 pilote
   let posWidgets = {};
   try{ posWidgets = JSON.parse(localStorage.getItem('geo-widgets3')||'{}'); }catch(e){}
@@ -5790,6 +6027,7 @@
   initWidget('wg-equip',     { left:'12px', top:'70px', replie:true, cache:true });
   initWidget('wg-climat',    { left:'12px', top:'110px', replie:true, cache:true });
   initWidget('wg-montagnes', { left:'12px', top:'150px', replie:true, cache:true });
+  initWidget('wg-3d',       { left:'12px', top:'340px', replie:true, cache:true });
   initWidget('wg-limites',   { left:'12px', top:'190px', replie:true, cache:true });
   initWidget('wg-foret',     { left:'12px', top:'230px', replie:true, cache:true });
   initWidget('wg-acces',     { left:'12px', top:Math.max(60, window.innerHeight-190)+'px', replie:true });
