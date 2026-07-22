@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>PluiePro v3.0</title>
+<title>PluiePro v3.1</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1936,7 +1936,12 @@ function _indRenderYear(d,opts){
   if(_indChart){_indChart.destroy();_indChart=null;}
   const N=d.time.length;
   const isMob=window.innerWidth<700;
-  const norm=d.time.map((_,i)=>Math.round(_IND_NORM(doy0+i)*10)/10);
+  const U=opts.unit||'°';
+  const norm=opts.normArr
+    ?d.time.map((_,i)=>{const v=opts.normArr[(doy0+i)%opts.normArr.length];return (v!=null&&isFinite(v))?Math.round(v*10)/10:null;})
+    :d.time.map((_,i)=>Math.round(_IND_NORM(doy0+i)*10)/10);
+  const HOT=opts.invert?'#3c5ae1':'#e3402a', COLD=opts.invert?'#e3402a':'#3c5ae1';
+  const HOTF=opts.invert?'rgba(60,90,225,0.22)':'rgba(227,60,40,0.20)', COLDF=opts.invert?'rgba(227,60,40,0.20)':'rgba(60,90,225,0.22)';
   const obs=d.vals.map((v,i)=>i<d.i0?v:null);
   const prev=d.vals.map((v,i)=>(i>=d.i0&&i<d.iX)?v:null);
   if(d.i0>0&&d.vals[d.i0-1]!=null)prev[d.i0-1]=d.vals[d.i0-1];
@@ -1957,7 +1962,7 @@ function _indRenderYear(d,opts){
       r.pts.forEach(([xi,v,_n],k)=>{const px=x.getPixelForValue(xi),py=y.getPixelForValue(v);k?ctx.lineTo(px,py):ctx.moveTo(px,py);});
       for(let k=r.pts.length-1;k>=0;k--){const [xi,_v,n]=r.pts[k];ctx.lineTo(x.getPixelForValue(xi),y.getPixelForValue(n));}
       ctx.closePath();
-      ctx.fillStyle=r.s>0?'rgba(227,60,40,0.20)':'rgba(60,90,225,0.22)';
+      ctx.fillStyle=r.s>0?HOTF:COLDF;
       ctx.fill();
     }
     /* aujourd'hui */
@@ -1968,11 +1973,11 @@ function _indRenderYear(d,opts){
     ctx.restore();
   }};
   const dsets=[
-      {label:'2026 observé',data:obs,borderWidth:2,pointRadius:0,tension:0.2,spanGaps:true,
-       segment:{borderColor:c=>{const i=c.p1DataIndex;const v=d.vals[i],n=norm[i];return (v!=null&&n!=null&&v>=n)?'#e3402a':'#3c5ae1';}},borderColor:'#e3402a'},
+      {label:(opts.obsLabel||'2026 observé'),data:obs,borderWidth:2,pointRadius:0,tension:0.2,spanGaps:true,
+       segment:{borderColor:c=>{const i=c.p1DataIndex;const v=d.vals[i],n=norm[i];return (v!=null&&n!=null&&v>=n)?HOT:COLD;}},borderColor:HOT},
       {label:'Prévision',data:prev,borderColor:'#ff9d3c',borderWidth:2.2,pointRadius:0,tension:0.2,spanGaps:true},
       {label:'Extrapolation '+(d.xSrc==='cfs'?'(CFS)':'(stat.)'),data:extra,borderColor:'#999',borderDash:[6,5],borderWidth:1.6,pointRadius:0,tension:0.2,spanGaps:true},
-      {label:'Normale 1991-2020',data:norm,borderColor:'#9a9a9a',borderDash:[5,4],borderWidth:1.5,pointRadius:0,tension:0.3,spanGaps:true}
+      {label:(opts.normLabel||'Normale 1991-2020'),data:norm,borderColor:'#9a9a9a',borderDash:[5,4],borderWidth:1.5,pointRadius:0,tension:0.3,spanGaps:true}
   ];
   if(opts.cone&&d.envHi&&d.envLo){
     const hi=d.envHi.map((v,i)=>i>=d.i0?v:null);
@@ -1986,14 +1991,14 @@ function _indRenderYear(d,opts){
     options:{responsive:true,maintainAspectRatio:false,animation:false,
       interaction:{mode:'index',intersect:false},
       plugins:{legend:{labels:{color:'#ccc',font:{family:'Courier New',size:isMob?9:12},boxWidth:isMob?14:24,filter:(it)=>!!it.text}},
-        tooltip:{callbacks:{label:(c)=>c.dataset.label?(' '+c.dataset.label+' : '+(c.parsed.y!=null?c.parsed.y.toFixed(1)+'°':'—')):null}},},
+        tooltip:{callbacks:{label:(c)=>c.dataset.label?(' '+c.dataset.label+' : '+(c.parsed.y!=null?c.parsed.y.toFixed(1)+U:'—')):null}},},
       scales:{
         x:{ticks:{color:'#aaa',font:{family:'Courier New',size:isMob?9:11},maxRotation:0,autoSkip:false,
           callback:function(v,idx){const t=d.time[idx];if(!t)return '';const dt=new Date(t+'T12:00');
             if(opts.ticks==='days'){const d1=dt.getDate()===1,lun=dt.getDay()===1&&dt.getDate()>=4&&dt.getDate()<=27;return (d1||lun)?(dt.getDate()+'/'+(dt.getMonth()+1)):'';}
             return dt.getDate()===1?MN[dt.getMonth()]:'';}},
           grid:{color:(c)=>{const t=d.time[c.index];if(!t)return 'transparent';const dt=new Date(t+'T12:00');const on=(opts.ticks==='days')?(dt.getDay()===1):(dt.getDate()===1);return on?'#1c1c1c':'transparent';}}},
-        y:{min:_yMin,max:_yMax,ticks:{color:'#ccc',font:{family:'Courier New',size:isMob?10:12},callback:v=>v+'°'},grid:{color:'#181818'}}
+        y:{min:_yMin,max:_yMax,ticks:{color:'#ccc',font:{family:'Courier New',size:isMob?10:12},callback:v=>v+U},grid:{color:'#181818'}}
       }},
     plugins:[fillPlug]
   });
@@ -2001,16 +2006,148 @@ function _indRenderYear(d,opts){
   if(info){
     /* anomalie moyenne de l'année écoulée */
     let s=0,n=0;
-    for(let i=0;i<d.i0;i++){const v=d.vals[i];if(v!=null){s+=v-_IND_NORM(doy0+i);n++;}}
+    for(let i=0;i<d.i0;i++){const v=d.vals[i],nn=norm[i];if(v!=null&&nn!=null){s+=v-nn;n++;}}
     const an=n?s/n:null;
     const per=opts.label||'depuis le 1er janvier';
-    info.innerHTML=an!=null?('Anomalie moyenne '+per+' : <b style="color:'+(an>=0?'#ff5040':'#7fa0ff')+'">'+(an>=0?'+':'')+an.toFixed(2)+'°</b> vs normale 1991-2020 (approchée)'):'';
+    const ref=opts.refLabel||'normale 1991-2020 (approchée)';
+    const cPos=opts.invert?'#7fa0ff':'#ff5040', cNeg=opts.invert?'#ff5040':'#7fa0ff';
+    info.innerHTML=an!=null?('Anomalie moyenne '+per+' : <b style="color:'+(an>=0?cPos:cNeg)+'">'+(an>=0?'+':'')+an.toFixed(2)+U+'</b> vs '+ref):'';
   }
 }
+/* ══════════════════════════════════════════════════════════════
+   INDICATEUR HYDRIQUE FRANCE — bilan climatique P − ETP cumulé
+   sur 30 jours glissants (mm), moyenne des 30 stations.
+   Rouge = plus sec que la référence · bleu = plus humide.
+   Référence = moyenne 2016-2025 au même jour (archive, cache 7 j).
+   ══════════════════════════════════════════════════════════════ */
+let _hydLoading=null,_hydNormLoading=null;
+function _hydRoll30(p,e){ /* série (P−ETP) cumulée 30 j ; null tant que la fenêtre est incomplète */
+  const n=p.length,out=new Array(n).fill(null);
+  let s=0,cnt=0;
+  const d=[];
+  for(let i=0;i<n;i++){
+    const v=(p[i]!=null&&e[i]!=null&&isFinite(p[i])&&isFinite(e[i]))?(p[i]-e[i]):null;
+    d.push(v);
+    if(v!=null){s+=v;cnt++;}
+    if(i>=30){const w=d[i-30];if(w!=null){s-=w;cnt--;}}
+    if(i>=29&&cnt>=26)out[i]=Math.round(s*10)/10;   /* tolère ≤4 jours manquants */
+  }
+  return out;
+}
+function _hydCacheLoad(){try{const o=JSON.parse(localStorage.getItem('pp_hydro_v1')||'null');if(o&&o.t&&(Date.now()-o.t)<3*3600e3&&o.d)return o.d;}catch(e){}return null;}
+function _hydCacheSave(d){try{localStorage.setItem('pp_hydro_v1',JSON.stringify({t:Date.now(),d}));}catch(e){}}
+async function _hydFetch(){
+  const cached=_hydCacheLoad();
+  if(cached)return cached;
+  if(_hydLoading)return _hydLoading;
+  _hydLoading=(async()=>{
+    const lats=_IND_ST.map(s=>s[1]).join(','),lons=_IND_ST.map(s=>s[2]).join(',');
+    const u='https://api.open-meteo.com/v1/forecast?latitude='+lats+'&longitude='+lons
+      +'&daily=precipitation_sum,et0_fao_evapotranspiration&past_days=92&forecast_days=16&timezone=Europe%2FParis';
+    const r=await _fetchTO(u,20000);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    let j=await r.json();if(!Array.isArray(j))j=[j];
+    if(j.length!==_IND_ST.length)throw new Error('réponse incomplète');
+    const time=j[0].daily.time;
+    /* bilan 30 j par station, puis moyenne France (≥24 stations) */
+    const per=j.map(o=>_hydRoll30(o.daily.precipitation_sum,o.daily.et0_fao_evapotranspiration));
+    const vals=time.map((_,di)=>{
+      const vs=per.map(a=>a[di]).filter(v=>v!=null);
+      return vs.length>=24?Math.round(vs.reduce((a,b)=>a+b,0)/vs.length*10)/10:null;
+    });
+    const now=new Date();
+    const todayKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    let i0=time.indexOf(todayKey);if(i0<0)i0=Math.max(0,time.length-16);
+    /* extrapolation courte : relaxation vers la référence du jour (si dispo) sinon plateau */
+    const xDates=[];const lastD=new Date(time[time.length-1]+'T12:00');
+    for(let k=1;k<=13;k++){const d2=new Date(lastD.getTime()+k*86400e3);xDates.push(d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0'));}
+    const start=vals[vals.length-1];
+    const xVals=xDates.map((_,k)=>start!=null?Math.round(start*10)/10:null);
+    const d={time:time.concat(xDates),vals:vals.concat(xVals),i0,iX:time.length,xSrc:'relax'};
+    /* fenêtre affichée : on coupe les 31 premiers jours (fenêtre 30 j incomplète) */
+    d.cut=31;
+    _hydCacheSave(d);
+    return d;
+  })();
+  try{return await _hydLoading;}finally{_hydLoading=null;}
+}
+function _hydNormCacheLoad(){try{const o=JSON.parse(localStorage.getItem('pp_hydronorm_v1')||'null');if(o&&o.t&&(Date.now()-o.t)<7*86400e3&&o.a&&o.a.length===366)return o.a;}catch(e){}return null;}
+async function _hydNormFetch(){
+  const cached=_hydNormCacheLoad();
+  if(cached)return cached;
+  if(_hydNormLoading)return _hydNormLoading;
+  _hydNormLoading=(async()=>{
+    const lats=_IND_ST.map(s=>s[1]).join(','),lons=_IND_ST.map(s=>s[2]).join(',');
+    const u='https://archive-api.open-meteo.com/v1/archive?latitude='+lats+'&longitude='+lons
+      +'&start_date=2015-12-01&end_date=2025-12-31'
+      +'&daily=precipitation_sum,et0_fao_evapotranspiration&timezone=Europe%2FParis';
+    const r=await _fetchTO(u,40000);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    let j=await r.json();if(!Array.isArray(j))j=[j];
+    if(j.length!==_IND_ST.length)throw new Error('réponse incomplète');
+    const time=j[0].daily.time;
+    const per=j.map(o=>_hydRoll30(o.daily.precipitation_sum,o.daily.et0_fao_evapotranspiration));
+    const nat=time.map((_,di)=>{
+      const vs=per.map(a=>a[di]).filter(v=>v!=null);
+      return vs.length>=24?vs.reduce((a,b)=>a+b,0)/vs.length:null;
+    });
+    /* moyenne par jour de l'année (2016-2025), lissée ±3 j */
+    const sum=new Array(366).fill(0),cnt=new Array(366).fill(0);
+    time.forEach((dk,di)=>{
+      const y=+dk.slice(0,4);if(y<2016)return;
+      const v=nat[di];if(v==null)return;
+      const doy=Math.round((new Date(dk+'T12:00')-new Date(y,0,1,12))/86400e3);
+      if(doy>=0&&doy<366){sum[doy]+=v;cnt[doy]++;}
+    });
+    const raw=sum.map((s,k)=>cnt[k]?s/cnt[k]:null);
+    const a=raw.map((_,k)=>{
+      let s=0,n=0;
+      for(let o=-3;o<=3;o++){const v=raw[(k+o+366)%366];if(v!=null){s+=v;n++;}}
+      return n?Math.round(s/n*10)/10:null;
+    });
+    try{localStorage.setItem('pp_hydronorm_v1',JSON.stringify({t:Date.now(),a}));}catch(e){}
+    return a;
+  })();
+  try{return await _hydNormLoading;}finally{_hydNormLoading=null;}
+}
+function closeHydro(){const p=document.getElementById('indicPanel');if(p)p.classList.remove('open');}
+async function openHydro(){
+  const p=document.getElementById('indicPanel');if(p)p.classList.add('open');
+  _indMode='hyd';
+  const _mm2={indM2:'2m',indM40:'y40',indMc:'y40c',indMyr:'yr'};
+  Object.keys(_mm2).forEach(id=>{const b=document.getElementById(id);if(b)b.classList.remove('on');});
+  const bh=document.getElementById('indMhyd');if(bh)bh.classList.add('on');
+  const st=document.getElementById('indicStatus');
+  if(st){st.style.display='block';st.textContent='⏳ Bilan hydrique 30 stations (P − ETP, 30 j glissants)…';}
+  let d,norm=null;
+  try{d=await _hydFetch();}
+  catch(e){if(st){st.textContent='✕ '+e.message;}return;}
+  try{norm=await _hydNormFetch();}catch(e){}
+  if(st)st.style.display='none';
+  const a=d.cut||0;
+  let end=d.vals.length;while(end>0&&d.vals[end-1]==null)end--;
+  const doy0=Math.round((new Date(d.time[a]+'T12:00')-new Date(+d.time[a].slice(0,4),0,1,12))/86400e3);
+  const sub={time:d.time.slice(a,end),vals:d.vals.slice(a,end),i0:d.i0-a,iX:Math.max(0,d.iX-a),xSrc:d.xSrc};
+  _indRenderYear(sub,{doy0:doy0,ticks:'days',unit:' mm',invert:true,
+    normArr:norm||undefined,
+    obsLabel:'Bilan P−ETP 30 j (2026)',
+    normLabel:norm?'Référence 2016-2025':'(référence indisponible)',
+    refLabel:'référence 2016-2025',
+    label:'sur la fenêtre'});
+  const ttl=document.querySelector('#indicPanel .tm-ttl');
+  if(ttl)ttl.innerHTML='💧 Indicateur hydrique France';
+  const nt=document.querySelector('#indicPanel .tm-note');
+  if(nt)nt.innerHTML="Bilan hydrique climatique : pluie − évapotranspiration (ETP FAO) cumulées sur 30 jours glissants, moyenne des 30 stations (mm). <b style='color:#ff5040'>Rouge = plus sec</b> que la référence 2016-2025 (archive ERA5, lissée ±3 j, cache 7 j) · <b style='color:#7fa0ff'>bleu = plus humide</b> · extrapolation : plateau indicatif.";
+}
+
 async function openIndic(mode){
   if(mode)_indMode=mode;
   const p=document.getElementById('indicPanel');if(p)p.classList.add('open');
-  const _mm={indM2:'2m',indM40:'y40',indMc:'y40c',indMyr:'yr'};
+  const _mm={indM2:'2m',indM40:'y40',indMc:'y40c',indMyr:'yr',indMhyd:'hyd'};
+  const _ttl=document.querySelector('#indicPanel .tm-ttl');
+  if(_ttl)_ttl.innerHTML='🌡 Indicateur thermique France';
+  const _nt=document.querySelector('#indicPanel .tm-note');
+  if(_nt)_nt.innerHTML="Moyenne de 30 stations réparties ((Tmin+Tmax)/2) — liste approchée de l'indicateur Météo-France (écart possible ±0,3°). Historique 2 mois &amp; prévision = médiane pondérée des 23 modèles (calcul de l'appli) · extrapolation J+16→J+28 · seuils MF : pic 25,3° / vague 23,4° · cache 3 h.";
   Object.keys(_mm).forEach(id=>{const b=document.getElementById(id);if(b)b.classList.toggle('on',_mm[id]===_indMode);});
   const st=document.getElementById('indicStatus');
   if(st){st.style.display='block';st.textContent=_indMode==='yr'?'⏳ Année complète (archive ERA5 + prévision)…':'⏳ 30 stations × 2 mois + prévision…';}
@@ -6601,6 +6738,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
         <button id="indM40" onclick="openIndic('y40')">40 j</button>
         <button id="indMc" onclick="openIndic('y40c')">Cône</button>
         <button id="indMyr" onclick="openIndic('yr')">Année</button>
+        <button id="indMhyd" onclick="openHydro()">💧</button>
       </div>
       <button onclick="closeIndic()" aria-label="Fermer" class="hl-x">✕</button>
     </div>
@@ -6614,7 +6752,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
 <div id="tmapPanel">
   <div id="tmapCard">
     <div class="tm-head">
-      <div class="tm-ttl"><small style="color:#3a3a3a;font-size:8px">t7</small> 🗺 T° France — <span id="tmapLbl">…</span></div>
+      <div class="tm-ttl">🗺 T° France — <span id="tmapLbl">…</span></div>
       <button onclick="closeTMap()" aria-label="Fermer" class="hl-x">✕</button>
     </div>
     <div id="tmapMap"></div>
@@ -6647,6 +6785,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
     <div class="hl-quick">
       <button style="color:#ffd07f" onclick="closeHealth();openTMap()">🗺 Carte T° France <small>min/max → J+14</small></button>
       <button style="color:#ff9d3c" onclick="closeHealth();openIndic()">🌡 Indicateur thermique <small>2 mois → J+28</small></button>
+    </div>
+    <div class="hl-quick">
+      <button style="color:#7fc4ff" onclick="closeHealth();openHydro()">💧 Indicateur hydrique <small>P−ETP 30 j vs 2016-2025</small></button>
     </div>
     <div class="hl-sub">🩺 Santé des données</div>
     <div id="healthBody"></div>
