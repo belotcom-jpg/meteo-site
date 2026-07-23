@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v2.0 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v2.1 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v2.0</title>
+<title>MultiMaps — géographie (collège & lycée) — v2.1</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -477,8 +477,10 @@
       <button id="btn-annuler" title="Annuler le dernier trait (Ctrl+Z)">↩ Annuler</button>
       <button id="btn-effacer" title="Effacer toutes les annotations du calque actif">🗑 Effacer</button>
       <button id="btn-image" title="Exporter la vue actuelle en image PNG">🖼 Image</button>
+      <button id="btn-fiche" title="Fiche A4 imprimable : la carte actuelle, sa légende complète et ses sources, mises en page pour le classeur ou la photocopieuse. S'ouvre dans un onglet prêt à imprimer (ou à enregistrer en PDF via l'imprimante).">🖨 Fiche A4</button>
       <button id="btn-options" title="Options : seuil des tops 50, fenêtres">⚙️ Options</button>
       <button id="btn-gpx" title="Importer une trace GPX : elle devient un trait sur le calque actif">📈 GPX</button>
+      <button id="btn-lien" title="Copie un lien qui rouvre exactement cette carte : position, zoom et couches actives. Collez-le dans Pronote ou l'ENT — la classe ouvre votre vue préparée.">🔗 Copier le lien de cette carte</button>
       <button id="btn-quiz" title="Quiz : 5 questions sur les départements, à partir des données de l'atlas — cliquez le bon département sur la carte !">🎓 Quiz</button>
       <button id="btn-fichiers" title="La liste des fichiers de données à télécharger pour débloquer les prochaines couches, avec leurs liens officiels">📥 Fichiers à télécharger</button>
       <button id="btn-aide" title="Aide : mode d'emploi rapide ou guide détaillé de toutes les fonctions">❓ Aide</button>
@@ -575,8 +577,11 @@
       <option value="osm">Source : OSM — vecteur (stylable 🎨)</option>
     </select>
     <button class="calque-ajout donnee" id="btn-fleuves" title="Le réseau hydrographique complet de l'IGN : fleuves, rivières et cours d'eau, du Rhône au moindre ruisseau selon le zoom. La couche s'affine en zoomant.">💧 Fleuves, rivières &amp; cours d'eau (IGN)</button>
+    <button class="calque-ajout donnee" id="btn-bassins" title="Les grands bassins versants, coloriés par mer réceptrice : toute goutte de pluie tombée dans une zone rejoint la même mer. Tracé SCHÉMATIQUE (lignes de partage des eaux simplifiées à ±30 km) — l'idée du partage des eaux, pas un document d'arpentage. Survolez pour la mer de destination et les grands fleuves collecteurs.">💦 Bassins versants (vers quelle mer ?)</button>
     <button class="calque-ajout donnee" id="btn-fleuves-noms" title="Les noms des grands fleuves et rivières de France, posés le long de leur cours : Seine, Loire, Rhône, Garonne, Rhin, Meuse, Moselle, Saône, Dordogne, Durance, Isère…">🏷 Noms des grands fleuves</button>
-    <button class="calque-ajout donnee" id="btn-smassifs" title="Le niveau fin du relief : 78 massifs nommés — enrichis d'après les cartes de référence des Alpes (Aiguilles Rouges, Mont-Cenis, Escreins, Chambeyron, Préalpes de Digne / Castellane / Nice, Trois-Évêchés, Pelat, Bochaine, Embrunais, monts de Vaucluse…) — délimités automatiquement par le relief, les vallées faisant frontière. Case « noms seulement » pour un affichage épuré — les massifs alpins (Chartreuse, Belledonne, Vercors, Vanoise, Écrins…), le Jura, les Vosges, le Massif central (Aubrac, Cantal, Cévennes…), les Pyrénées et la Corse. Le complément précis des grandes chaînes du widget ⛰ Montagnes.">🏔 Sous-massifs (Chartreuse, Belledonne…)</button>
+    <button class="calque-ajout donnee" id="btn-devinettes" title="Le jeu du relief : l'app tire au sort un massif, un sommet culminant ou une grande vallée, et vous devez cliquer sur la carte où il se trouve. Cinq questions, tolérance selon la taille de la cible, score final — parfait en classe entière au vidéoprojecteur.">🎯 Devinettes relief (5 questions)</button>
+    <button class="calque-ajout donnee" id="btn-glaciers" title="Les glaciers cartographiés dans OpenStreetMap, pour la zone affichée (zoom 8 minimum) : Mer de Glace, glaciers de la Vanoise, des Écrins… En bleu glacier — et le support parfait pour parler du recul glaciaire avec le widget Climat.">❄ Glaciers (OSM, vue)</button>
+    <button class="calque-ajout donnee" id="btn-smassifs" title="Le niveau fin du relief : 87 massifs — dont les 42 massifs géologiques officiels des Alpes (carte CGET : Genevois, Chambotte, Terres Froides, Chambaran, Arvan-Villards, Monges, Grand Coyer, Verdon, Haut Var, Ubaye…), tracés d'après la carte de référence et découpés par le relief, les vallées faisant frontière. Case « noms seulement » pour un affichage épuré — les massifs alpins (Chartreuse, Belledonne, Vercors, Vanoise, Écrins…), le Jura, les Vosges, le Massif central (Aubrac, Cantal, Cévennes…), les Pyrénées et la Corse. Le complément précis des grandes chaînes du widget ⛰ Montagnes.">🏔 Sous-massifs (Chartreuse, Belledonne…)</button>
     <label class="velo-filtre"><input type="checkbox" id="chk-smassifs-noms"> Noms seulement <small>(sans délimitation)</small></label>
     <button class="calque-ajout donnee" id="btn-vallees" title="51 vallées tracées le long de leur rivière réelle — sillon alpin complet (Grésivaudan + Combe de Savoie), Haute-Durance, Alpes, Pyrénées, Massif central, Vosges, Jura : Grésivaudan, Maurienne, Tarentaise, Oisans, Ubaye, Vésubie, vallée d'Aspe… Les axes de vie de la montagne, en bleu le long des rivières.">🏞 Vallées (Grésivaudan, Oisans…)</button>
   <div style="border-top:1px solid var(--trait);margin:6px 0"></div>
@@ -618,6 +623,7 @@
   <div class="widget-corps"><button class="calque-ajout donnee" id="btn-lim-reg" title="Contours des 13 régions métropolitaines + outre-mer (Admin Express COG Carto, IGN) — trait épais">🗾 Limites des régions</button>
       <button class="calque-ajout donnee" id="btn-lim-dep" title="Contours des 101 départements (Admin Express COG Carto, IGN) — trait moyen">🗾 Limites des départements</button>
       <button class="calque-ajout donnee" id="btn-lim-com" title="Contours des communes visibles à l'écran (Admin Express COG Carto, IGN) — trait fin, zoomez au niveau départemental (9+)">🗾 Limites des communes</button>
+      <button class="calque-ajout donnee" id="btn-provinces" title="La France d'avant 1790 : les provinces d'Ancien Régime, reconstituées en coloriant les départements actuels selon leur province d'origine (approximation assumée — les limites provinciales ne suivaient pas exactement nos départements). Survolez : nom de la province et, le cas échéant, date de rattachement à la France (Savoie et Nice 1860, Corse 1768, Lorraine 1766, Alsace XVIIe, Comtat papal 1791…).">⚜ Provinces d'Ancien Régime (~1789)</button>
     </div>
 </div>
 
@@ -715,6 +721,8 @@
       <input type="file" id="fichier-insee" accept=".zip,.csv,.gz" style="display:none">
       <button class="calque-ajout" style="display:none" id="btn-inventaire" title="Inventaire complet des bases déposées : nombre de communes, liste des colonnes avec leur libellé officiel (dictionnaire meta), indicateurs débloqués par fichier">📚 Contenu des bases déposées</button>
       <div id="couches-insee" class="nav-grille">
+        <button class="calque-ajout donnee" id="btn-densite-dep" title="La densité de population par département (2023), en habitants par km² : population INSEE embarquée dans l'app, superficie calculée directement depuis le contour officiel de chaque département — six classes, de la Lozère (~15 hab/km²) à Paris (~20 000).">👥 Densité par département (2023)</button>
+        <button class="calque-ajout donnee" id="btn-dvf" title="Les prix immobiliers réels : armez le mode puis cliquez une commune — l'app interroge les Demandes de Valeurs Foncières (DVF, données publiques des ventes notariées) via le service communautaire api.cquest.org et affiche le prix médian au m² des maisons et appartements vendus. Service tiers : s'il ne répond pas, un message honnête vous le dit.">💶 Prix immobiliers (DVF) — clic commune</button>
         <button class="calque-ajout donnee" id="btn-riches" title="Les 50 communes de plus de 20 000 habitants au niveau de vie médian le plus élevé (INSEE Filosofi)">💎 Plus riches</button>
         <button class="calque-ajout donnee" id="btn-pauvres" title="Les 50 communes de plus de 20 000 habitants au taux de pauvreté le plus élevé (INSEE Filosofi)">🥀 Plus pauvres</button>
         <button class="calque-ajout donnee verrou" id="btn-inegal" title="Les 50 communes de plus de 20 000 habitants les plus inégalitaires : rapport entre les revenus des 10 % les plus riches et des 10 % les plus pauvres (INSEE Filosofi)">⚖️ Plus inégalitaires</button>
@@ -788,10 +796,14 @@
     <label class="velo-filtre"><input type="radio" name="tex3d" value="carte" checked> Fond carte (OSM)</label>
     <label class="velo-filtre"><input type="radio" name="tex3d" value="sat"> Fond satellite (IGN)</label>
     <label class="velo-filtre"><input type="checkbox" id="chk-3d-depart"> ⟳ Pivoter depuis le point de départ <small>(vue à la 1ʳᵉ personne)</small></label>
+    <label class="velo-filtre"><input type="checkbox" id="chk-3d-dyn" checked> 🔍 Précision dynamique <small>(recalcule relief et image en zoomant — max des sources)</small></label>
     <div style="display:flex;align-items:center;gap:6px;margin:3px 0;font-size:11.5px">Relief ×
       <input type="range" id="curseur-3d-exag" min="10" max="30" step="1" value="16" style="flex:1">
       <b id="valeur-3d-exag">1,6</b>
     </div>
+    <div style="border-top:1px solid var(--trait);margin:6px 0"></div>
+    <button class="calque-ajout donnee" id="btn-profil" title="Deux clics sur la carte : le profil altimétrique du trait entre les deux points s'affiche — courbe, distance, altitudes min/max, dénivelés D+ et D−. Altitudes SRTM (~90 m), échantillonnage en 240 points.">📈 Profil altimétrique (2 clics)</button>
+    <button class="calque-ajout donnee" id="btn-profil-gpx" title="Trace le profil altimétrique de la dernière trace GPX importée (outil 🧰 → import GPX) : la courbe de votre randonnée, avec D+ et D− calculés sur les altitudes SRTM.">📈 Profil du dernier GPX</button>
     <button class="calque-ajout donnee" id="btn-3d-ouvrir" title="Construit la scène 3D : terrain réel (altitudes SRTM) drapé du fond choisi, caméra placée au point de vue, regard vers la cible. Glissez pour orbiter, molette pour avancer.">🏔 Ouvrir la vue 3D</button>
   </div>
 </div>
@@ -835,7 +847,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v2.0</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v2.1</small></span>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
   <div class="widget-corps">
@@ -879,7 +891,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v2.0</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v2.1</small></h2>
     <p class="sous">Seuil « villes » des tops 50</p>
     <select class="opt-select" id="sel-seuil" aria-label="Seuil de population des tops 50">
       <option value="5000">5 000 habitants et +</option>
@@ -897,6 +909,15 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<div id="profil-fond" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:99980;background:#fff;border:1px solid #c9c4b4;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.25);padding:8px 10px 6px">
+  <div style="display:flex;align-items:center;gap:10px;font:600 12px system-ui;color:#3b3830">
+    <span id="profil-titre">Profil altimétrique</span>
+    <span id="profil-stats" style="font-weight:400;color:#6b6656"></span>
+    <span id="profil-survol" style="font-weight:400;color:#0e7490;margin-left:auto"></span>
+    <button id="profil-fermer" style="border:1px solid var(--trait);border-radius:7px;background:#fff;cursor:pointer;padding:1px 9px">✕</button>
+  </div>
+  <canvas id="profil-canvas" width="760" height="230" style="display:block;margin-top:4px"></canvas>
+</div>
 <div id="scene3d-fond" style="display:none;position:fixed;inset:0;background:#0b1020;z-index:99990">
   <canvas id="scene3d-canvas" style="width:100%;height:100%;display:block"></canvas>
   <div style="position:absolute;top:10px;left:12px;color:#fff;font:600 13px system-ui;text-shadow:0 1px 3px #000" id="scene3d-titre">Vue 3D</div>
@@ -971,7 +992,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v2.0';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v2.1';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -3734,7 +3755,7 @@
   });
 
   // ---------- 🏔 Sous-massifs & vallées ----------
-  const RELIEF_FIN = {"familles":{"alpN":["Alpes du Nord","#1d4ed8"],"alpS":["Alpes du Sud","#7c3aed"],"jura":["Jura","#0e7490"],"mc":["Massif central","#b45309"],"pyr":["Pyrénées","#be185d"],"vosges":["Vosges","#15803d"],"corse":["Corse","#a16207"]},"massifs":[["Chablais",46.25,6.65,"alpN",750,17.7,[[46.4,6.5],[46.39,6.72],[46.3,6.87],[46.18,6.8],[46.14,6.62],[46.22,6.48],[46.33,6.43]]],["Aravis",45.95,6.47,"alpN",800,13.2,[[45.99,6.42],[45.97,6.55],[45.86,6.52],[45.85,6.4],[45.92,6.36]]],["Bornes",45.97,6.33,"alpN",750,12.6,[[46.08,6.3],[46.05,6.45],[45.95,6.42],[45.93,6.28],[46.0,6.22]]],["Bauges",45.65,6.15,"alpN",650,16.2,[[45.75,6.05],[45.73,6.25],[45.62,6.3],[45.52,6.2],[45.53,6.04],[45.64,5.98]]],["Chartreuse",45.35,5.8,"alpN",650,17.5,[[45.47,5.8],[45.45,5.93],[45.36,5.97],[45.24,5.92],[45.19,5.8],[45.24,5.72],[45.38,5.72]]],["Vercors",45.05,5.45,"alpN",650,30.0,[[45.24,5.42],[45.18,5.58],[45.08,5.66],[44.95,5.65],[44.84,5.56],[44.81,5.42],[44.9,5.26],[45.04,5.18],[45.16,5.25]]],["Belledonne",45.25,6.05,"alpN",850,26.9,[[45.47,6.1],[45.44,6.18],[45.3,6.12],[45.15,6.03],[45.07,5.95],[45.1,5.9],[45.22,5.96],[45.38,6.03]]],["Grandes Rousses",45.12,6.1,"alpN",1000,9.7,[[45.2,6.05],[45.17,6.14],[45.06,6.12],[45.05,6.03],[45.13,6.0]]],["Taillefer",45.03,5.9,"alpN",900,10.5,[[45.06,5.85],[45.04,5.97],[44.96,5.96],[44.95,5.85],[45.0,5.82]]],["Écrins",44.92,6.35,"alpN",1200,27.4,[[45.03,6.15],[45.0,6.42],[44.92,6.52],[44.8,6.5],[44.72,6.38],[44.74,6.18],[44.85,6.06],[44.97,6.07]]],["Cerces",45.05,6.55,"alpN",1200,11.9,[[45.12,6.42],[45.1,6.62],[44.98,6.63],[44.96,6.45],[45.05,6.38]]],["Vanoise",45.35,6.85,"alpN",1100,22.0,[[45.5,6.68],[45.47,6.92],[45.4,7.02],[45.28,7.0],[45.24,6.82],[45.3,6.65],[45.42,6.6]]],["Beaufortain",45.7,6.6,"alpN",900,14.9,[[45.8,6.55],[45.77,6.72],[45.65,6.75],[45.6,6.58],[45.68,6.48]]],["Mont-Blanc",45.85,6.9,"alpN",1100,16.6,[[45.93,6.92],[46.0,7.02],[45.88,7.05],[45.78,6.95],[45.8,6.82],[45.9,6.8]]],["Lauzière",45.5,6.35,"alpN",900,11.2,[[45.6,6.3],[45.57,6.43],[45.46,6.42],[45.44,6.3],[45.52,6.25]]],["Haut-Giffre",46.05,6.75,"alpN",800,12.4,[[46.14,6.62],[46.18,6.8],[46.08,6.92],[46.0,6.85],[46.02,6.68],[46.08,6.6]]],["Queyras",44.7,6.85,"alpS",1300,19.1,[[44.85,6.7],[44.82,6.95],[44.72,7.05],[44.6,6.98],[44.58,6.82],[44.68,6.68],[44.78,6.64]]],["Dévoluy",44.7,5.95,"alpS",900,15.2,[[44.82,5.86],[44.79,6.02],[44.68,6.06],[44.6,5.98],[44.62,5.85],[44.72,5.79]]],["Mercantour",44.15,7.25,"alpS",1000,40.6,[[44.35,6.8],[44.3,7.1],[44.22,7.42],[44.1,7.48],[44.02,7.28],[44.06,7.0],[44.15,6.82],[44.26,6.75]]],["Baronnies",44.3,5.35,"alpS",700,23.5,[[44.45,5.15],[44.42,5.5],[44.3,5.6],[44.18,5.5],[44.16,5.25],[44.28,5.1]]],["Diois",44.65,5.45,"alpS",700,20.9,[[44.8,5.28],[44.75,5.55],[44.62,5.62],[44.52,5.55],[44.52,5.35],[44.63,5.22]]],["Parpaillon",44.48,6.6,"alpS",1300,12.0,[[44.56,6.48],[44.53,6.65],[44.42,6.68],[44.38,6.55],[44.46,6.44]]],["Haut-Jura",46.4,6.0,"jura",800,34.4],["Bugey",45.9,5.6,"jura",500,21.9],["Hautes-Vosges",48.0,7.0,"vosges",700,27.5],["Vosges du Nord",48.95,7.55,"vosges",300,19.8],["Chaîne des Puys",45.78,2.96,"mc",850,18.2],["Monts Dore",45.55,2.85,"mc",900,13.7],["Cézallier",45.4,2.9,"mc",900,13.7],["Monts du Cantal",45.1,2.7,"mc",900,20.8],["Aubrac",44.65,3.0,"mc",950,20.1],["Margeride",44.85,3.45,"mc",950,22.0],["Cévennes",44.2,3.75,"mc",600,31.4],["Livradois",45.45,3.55,"mc",700,22.0],["Forez",45.65,3.8,"mc",800,24.8],["Pilat",45.4,4.6,"mc",700,15.4],["Morvan",47.1,4.05,"mc",400,27.2],["Vivarais",44.8,4.3,"mc",700,25.4],["Vallée d'Ossau (Béarn)",42.85,-0.45,"pyr",800,20.0],["Bigorre",42.9,0.1,"pyr",900,24.7],["Luchonnais",42.75,0.55,"pyr",1000,16.6],["Couserans",42.85,1.15,"pyr",900,21.3],["Haute-Ariège",42.65,1.6,"pyr",1000,29.1],["Monte Cinto",42.38,8.95,"corse",800,16.7],["Aiguilles d'Arves",45.1,6.28,"alpN",1300,12,[[45.2,6.2],[45.17,6.33],[45.05,6.32],[45.03,6.2],[45.12,6.15]]],["Luberon",43.83,5.35,"alpS",500,26,[[43.88,5.15],[43.86,5.55],[43.79,5.58],[43.77,5.2],[43.82,5.1]]],["Mont Ventoux",44.17,5.28,"alpS",900,13,[[44.21,5.15],[44.19,5.4],[44.13,5.42],[44.11,5.18],[44.16,5.1]]],["Montagne de Lure",44.1,5.8,"alpS",900,18,[[44.15,5.65],[44.12,5.95],[44.04,5.95],[44.05,5.68]]],["Sainte-Baume",43.33,5.75,"alpS",600,12],["Sainte-Victoire",43.53,5.6,"alpS",500,10],["Alpilles",43.75,4.85,"alpS",120,13],["Maures",43.25,6.35,"alpS",300,22],["Esterel",43.47,6.88,"alpS",250,10],["Préalpes de Grasse",43.72,6.9,"alpS",700,16,[[43.8,6.8],[43.78,7.05],[43.68,7.05],[43.65,6.85],[43.72,6.75]]],["Monte Rotondo",42.22,9.05,"corse",1200,14],["Monte Renoso",42.06,9.13,"corse",1200,12],["Monte Incudine",41.85,9.2,"corse",1100,12],["San Petrone",42.47,9.34,"corse",900,12],["Mézenc-Gerbier",44.91,4.19,"mc",1100,13],["Lévézou",44.2,2.85,"mc",900,15],["Monts de Lacaune",43.7,2.7,"mc",800,15],["Montagne Noire",43.42,2.35,"mc",600,18],["Espinouse-Caroux",43.6,2.95,"mc",700,12],["Carlit",42.57,1.93,"pyr",1800,15],["Canigou",42.52,2.46,"pyr",1200,14],["Aiguilles Rouges",45.97,6.85,"alpN",1400,9,[[46.02,6.68],[46.0,6.85],[45.93,6.92],[45.9,6.8],[45.95,6.7]]],["Mont-Cenis",45.25,6.95,"alpN",1500,11,[[45.3,6.9],[45.28,7.08],[45.18,7.1],[45.15,6.95],[45.22,6.87]]],["Montagne de l'Épine",45.57,5.83,"alpN",600,8,[[45.65,5.8],[45.62,5.88],[45.5,5.86],[45.5,5.79],[45.58,5.76]]],["Escreins",44.62,6.72,"alpS",1500,9,[[44.7,6.62],[44.66,6.78],[44.56,6.75],[44.56,6.62],[44.63,6.56]]],["Chambeyron",44.55,6.85,"alpS",1800,10,[[44.62,6.78],[44.58,6.95],[44.48,6.92],[44.47,6.78],[44.54,6.72]]],["Bochaine",44.55,5.75,"alpS",800,14,[[44.62,5.62],[44.6,5.82],[44.48,5.85],[44.42,5.7],[44.5,5.58]]],["Préalpes de Digne",44.2,6.3,"alpS",800,19,[[44.3,6.12],[44.26,6.38],[44.12,6.45],[44.0,6.35],[44.02,6.12],[44.15,6.02]]],["Trois-Évêchés",44.32,6.55,"alpS",1300,11,[[44.4,6.45],[44.37,6.62],[44.25,6.62],[44.22,6.48],[44.3,6.4]]],["Pelat",44.26,6.68,"alpS",1500,9,[[44.32,6.62],[44.28,6.78],[44.18,6.75],[44.18,6.62],[44.25,6.57]]],["Embrunais",44.6,6.48,"alpS",1000,11,[[44.66,6.35],[44.62,6.52],[44.5,6.52],[44.48,6.38],[44.56,6.3]]],["Préalpes de Castellane",43.85,6.55,"alpS",700,18,[[43.95,6.35],[43.92,6.7],[43.82,6.8],[43.72,6.62],[43.75,6.38],[43.85,6.28]]],["Préalpes de Nice",43.85,7.25,"alpS",500,15,[[44.0,7.2],[43.96,7.42],[43.82,7.45],[43.78,7.28],[43.86,7.12]]],["Monts de Vaucluse",44.05,5.3,"alpS",500,15,[[44.12,5.15],[44.1,5.45],[44.0,5.48],[43.96,5.25],[44.03,5.12]]]],"vallees":[["Grésivaudan","Isère",[45.15,5.7,45.49,6.09],[[45.2,5.77],[45.32,5.92],[45.44,6.02]]],["Maurienne","Arc",[45.15,6.23,45.6,6.95],[[45.55,6.3],[45.28,6.35],[45.2,6.66],[45.29,6.88]]],["Tarentaise","Isère",[45.43,6.32,45.72,6.84],[[45.67,6.39],[45.48,6.53],[45.62,6.77]]],["Vallée de l'Arve","Arve",[45.87,6.33,46.13,6.94],[[46.08,6.4],[45.94,6.63],[45.92,6.87]]],["Oisans (Romanche)","Romanche",[45.0,5.7,45.13,6.37],[[45.08,5.77],[45.06,6.03],[45.05,6.3]]],["Vallouise","Gyronde",[44.74,6.37,44.93,6.63],[[44.79,6.56],[44.85,6.49],[44.88,6.44]]],["Champsaur","Drac",[44.6,5.98,44.74,6.4],[[44.65,6.05],[44.68,6.2],[44.69,6.33]]],["Valgaudemar","Séveraisse",[44.73,5.93,44.87,6.26],[[44.78,6.0],[44.82,6.19]]],["Queyras (Guil)","Guil",[44.61,6.58,44.84,7.0],[[44.66,6.65],[44.76,6.8],[44.79,6.93]]],["Ubaye","Ubaye",[44.34,6.37,44.58,6.83],[[44.43,6.44],[44.39,6.65],[44.53,6.76]]],["Clarée","Clarée",[44.87,6.54,45.07,6.7],[[44.92,6.63],[45.02,6.61]]],["Vésubie","Vésubie",[43.8,7.13,44.12,7.38],[[43.85,7.2],[43.97,7.31],[44.07,7.26]]],["Tinée","Tinée",[43.85,6.85,44.31,7.22],[[43.9,7.15],[44.08,7.1],[44.26,6.92]]],["Roya","Roya",[43.89,7.44,44.14,7.66],[[43.94,7.51],[44.09,7.59]]],["Trièves","Drac",[44.77,5.56,44.97,5.82],[[44.92,5.63],[44.82,5.75]]],["Royans","Bourne",[44.96,5.22,45.11,5.41],[[45.06,5.34],[45.01,5.29]]],["Val d'Abondance","Dranse d'Abondance",[46.23,6.45,46.39,6.79],[[46.34,6.52],[46.28,6.72]]],["Vallée du Giffre","Giffre",[46.01,6.52,46.16,6.85],[[46.11,6.59],[46.08,6.73],[46.06,6.78]]],["Belleville","Doron de Belleville",[45.25,6.46,45.51,6.65],[[45.46,6.53],[45.3,6.58]]],["Vallée d'Ossau","Gave d'Ossau",[42.85,-0.5,43.1,-0.35],[[43.05,-0.42],[42.9,-0.43]]],["Vallée d'Aspe","Gave d'Aspe",[42.82,-0.67,43.1,-0.49],[[43.05,-0.6],[42.87,-0.56]]],["Vallée de la Guisane","Guisane",[44.85,6.44,45.03,6.7],[[44.9,6.63],[44.98,6.51]]],["Vallée du Vénéon","Vénéon",[44.88,5.98,45.09,6.35],[[45.04,6.05],[44.94,6.18],[44.93,6.28]]],["Valbonnais","Bonne",[44.81,5.83,44.97,6.12],[[44.92,5.9],[44.86,6.05]]],["Val Montjoie","Bon Nant",[45.77,6.64,45.94,6.8],[[45.89,6.71],[45.82,6.73]]],["Val d'Arly","Arly",[45.7,6.35,45.91,6.69],[[45.75,6.42],[45.82,6.51],[45.86,6.62]]],["Haut-Verdon","Verdon",[43.92,6.44,44.25,6.72],[[44.2,6.65],[44.08,6.56],[43.97,6.51]]],["Vallée de la Bléone","Bléone",[44.0,6.13,44.22,6.42],[[44.05,6.2],[44.17,6.35]]],["Haut-Var","Var",[43.9,6.74,44.14,6.92],[[43.95,6.81],[44.09,6.85]]],["Vallée de l'Estéron","Estéron",[43.75,6.95,43.91,7.25],[[43.8,7.18],[43.86,7.02]]],["Vallée du Cians","Cians",[43.9,6.92,44.15,7.09],[[43.95,7.02],[44.1,6.99]]],["Vallée d'Aure","Neste",[42.77,0.25,43.0,0.44],[[42.95,0.37],[42.82,0.32]]],["Vallée du Louron","Neste du Louron",[42.75,0.3,42.95,0.48],[[42.9,0.37],[42.8,0.41]]],["Vallée de Campan","Adour",[42.9,0.08,43.11,0.27],[[43.06,0.15],[42.95,0.2]]],["Vallée de Cauterets","Gave de Cauterets",[42.84,-0.18,43.01,0.0],[[42.96,-0.07],[42.89,-0.11]]],["Vallée de Luz-Gavarnie","Gave de Pau",[42.69,-0.14,43.01,0.07],[[42.96,-0.07],[42.87,0.0],[42.74,-0.01]]],["Val d'Azun","Gave d'Azun",[42.91,-0.28,43.05,-0.03],[[43.0,-0.1],[42.96,-0.21]]],["Vallée de l'Ariège","Ariège",[42.67,1.53,43.01,1.91],[[42.96,1.61],[42.85,1.6],[42.72,1.84]]],["Vallée du Vicdessos","Vicdessos",[42.71,1.41,42.9,1.67],[[42.85,1.6],[42.76,1.48]]],["Vallée de Munster","Fecht",[47.99,7.07,48.14,7.35],[[48.09,7.28],[48.04,7.14]]],["Vallée de la Thur","Thur",[47.76,6.96,47.92,7.17],[[47.81,7.1],[47.87,7.03]]],["Vallée de la Bruche","Bruche",[48.43,7.15,48.59,7.56],[[48.54,7.49],[48.48,7.22]]],["Vallée de la Valserine","Valserine",[46.06,5.76,46.42,6.06],[[46.11,5.83],[46.37,5.99]]],["Vallée de la Loue","Loue",[46.98,6.07,47.15,6.35],[[47.1,6.14],[47.03,6.28]]],["Haut-Allier","Allier",[44.92,3.42,45.15,3.71],[[45.1,3.49],[44.97,3.64]]],["Haute vallée de la Dordogne","Dordogne",[45.04,1.97,45.45,2.57],[[45.4,2.5],[45.25,2.3],[45.09,2.04]]],["Vallée du Lot (haute)","Lot",[44.45,2.7,44.57,3.52],[[44.52,3.45],[44.5,3.1],[44.52,2.77]]],["Gorges de la Truyère","Truyère",[44.6,2.5,45.02,3.24],[[44.97,3.17],[44.8,2.85],[44.65,2.57]]],["Vallée du Tarn","Tarn",[44.05,3.01,44.37,3.66],[[44.32,3.59],[44.2,3.35],[44.1,3.08]]],["Combe de Savoie","Isère",[45.42,5.98,45.62,6.37],[[45.57,6.3],[45.52,6.2],[45.47,6.05]]],["Haute-Durance","Durance",[44.51,6.43,44.95,6.7],[[44.9,6.63],[44.75,6.58],[44.56,6.5]]]]};
+  const RELIEF_FIN = {"familles":{"alpN":["Alpes du Nord","#1d4ed8"],"alpS":["Alpes du Sud","#7c3aed"],"jura":["Jura","#0e7490"],"mc":["Massif central","#b45309"],"pyr":["Pyrénées","#be185d"],"vosges":["Vosges","#15803d"],"corse":["Corse","#a16207"]},"massifs":[["Chablais",46.25,6.65,"alpN",750,17.7,[[46.4,6.5],[46.39,6.72],[46.3,6.87],[46.18,6.8],[46.14,6.62],[46.22,6.48],[46.33,6.43]]],["Aravis",45.95,6.47,"alpN",800,13.2,[[45.99,6.42],[45.97,6.55],[45.86,6.52],[45.85,6.4],[45.92,6.36]]],["Bornes",45.97,6.33,"alpN",750,12.6,[[46.08,6.3],[46.05,6.45],[45.95,6.42],[45.93,6.28],[46.0,6.22]]],["Bauges",45.65,6.15,"alpN",650,16.2,[[45.75,6.05],[45.73,6.25],[45.62,6.3],[45.52,6.2],[45.53,6.04],[45.64,5.98]]],["Chartreuse",45.35,5.8,"alpN",650,17.5,[[45.47,5.8],[45.45,5.93],[45.36,5.97],[45.24,5.92],[45.19,5.8],[45.24,5.72],[45.38,5.72]]],["Vercors",45.05,5.45,"alpN",650,30.0,[[45.24,5.42],[45.18,5.58],[45.08,5.66],[44.95,5.65],[44.84,5.56],[44.81,5.42],[44.9,5.26],[45.04,5.18],[45.16,5.25]]],["Belledonne",45.25,6.05,"alpN",850,26.9,[[45.47,6.1],[45.44,6.18],[45.3,6.12],[45.15,6.03],[45.07,5.95],[45.1,5.9],[45.22,5.96],[45.38,6.03]]],["Grandes Rousses",45.12,6.1,"alpN",1000,9.7,[[45.2,6.05],[45.17,6.14],[45.06,6.12],[45.05,6.03],[45.13,6.0]]],["Taillefer",45.03,5.9,"alpN",900,10.5,[[45.06,5.85],[45.04,5.97],[44.96,5.96],[44.95,5.85],[45.0,5.82]]],["Écrins",44.92,6.35,"alpN",1200,27.4,[[45.03,6.15],[45.0,6.42],[44.92,6.52],[44.8,6.5],[44.72,6.38],[44.74,6.18],[44.85,6.06],[44.97,6.07]]],["Cerces",45.05,6.55,"alpN",1200,11.9,[[45.12,6.42],[45.1,6.62],[44.98,6.63],[44.96,6.45],[45.05,6.38]]],["Vanoise",45.35,6.85,"alpN",1100,22.0,[[45.5,6.68],[45.47,6.92],[45.4,7.02],[45.28,7.0],[45.24,6.82],[45.3,6.65],[45.42,6.6]]],["Beaufortain",45.7,6.6,"alpN",900,14.9,[[45.8,6.55],[45.77,6.72],[45.65,6.75],[45.6,6.58],[45.68,6.48]]],["Mont-Blanc",45.85,6.9,"alpN",1100,16.6,[[45.93,6.92],[46.0,7.02],[45.88,7.05],[45.78,6.95],[45.8,6.82],[45.9,6.8]]],["Lauzière",45.5,6.35,"alpN",900,11.2,[[45.6,6.3],[45.57,6.43],[45.46,6.42],[45.44,6.3],[45.52,6.25]]],["Haut-Giffre",46.05,6.75,"alpN",800,12.4,[[46.14,6.62],[46.18,6.8],[46.08,6.92],[46.0,6.85],[46.02,6.68],[46.08,6.6]]],["Queyras",44.7,6.85,"alpS",1300,19.1,[[44.85,6.7],[44.82,6.95],[44.72,7.05],[44.6,6.98],[44.58,6.82],[44.68,6.68],[44.78,6.64]]],["Dévoluy",44.7,5.95,"alpS",900,15.2,[[44.82,5.86],[44.79,6.02],[44.68,6.06],[44.6,5.98],[44.62,5.85],[44.72,5.79]]],["Mercantour",44.15,7.25,"alpS",1000,40.6,[[44.35,6.8],[44.3,7.1],[44.22,7.42],[44.1,7.48],[44.02,7.28],[44.06,7.0],[44.15,6.82],[44.26,6.75]]],["Baronnies provençales",44.3,5.35,"alpS",700,23.5,[[44.45,5.15],[44.42,5.5],[44.3,5.6],[44.18,5.5],[44.16,5.25],[44.28,5.1]]],["Diois",44.65,5.45,"alpS",700,20.9,[[44.8,5.28],[44.75,5.55],[44.62,5.62],[44.52,5.55],[44.52,5.35],[44.63,5.22]]],["Parpaillon",44.48,6.6,"alpS",1300,12.0,[[44.56,6.48],[44.53,6.65],[44.42,6.68],[44.38,6.55],[44.46,6.44]]],["Haut-Jura",46.4,6.0,"jura",800,34.4],["Bugey",45.9,5.6,"jura",500,21.9],["Hautes-Vosges",48.0,7.0,"vosges",700,27.5],["Vosges du Nord",48.95,7.55,"vosges",300,19.8],["Chaîne des Puys",45.78,2.96,"mc",850,18.2],["Monts Dore",45.55,2.85,"mc",900,13.7],["Cézallier",45.4,2.9,"mc",900,13.7],["Monts du Cantal",45.1,2.7,"mc",900,20.8],["Aubrac",44.65,3.0,"mc",950,20.1],["Margeride",44.85,3.45,"mc",950,22.0],["Cévennes",44.2,3.75,"mc",600,31.4],["Livradois",45.45,3.55,"mc",700,22.0],["Forez",45.65,3.8,"mc",800,24.8],["Pilat",45.4,4.6,"mc",700,15.4],["Morvan",47.1,4.05,"mc",400,27.2],["Vivarais",44.8,4.3,"mc",700,25.4],["Vallée d'Ossau (Béarn)",42.85,-0.45,"pyr",800,20.0],["Bigorre",42.9,0.1,"pyr",900,24.7],["Luchonnais",42.75,0.55,"pyr",1000,16.6],["Couserans",42.85,1.15,"pyr",900,21.3],["Haute-Ariège",42.65,1.6,"pyr",1000,29.1],["Monte Cinto",42.38,8.95,"corse",800,16.7],["Arvan-Villards",45.1,6.28,"alpN",1300,12,[[45.2,6.2],[45.17,6.33],[45.05,6.32],[45.03,6.2],[45.12,6.15]]],["Luberon",43.83,5.35,"alpS",500,26,[[43.88,5.15],[43.86,5.55],[43.79,5.58],[43.77,5.2],[43.82,5.1]]],["Mont Ventoux",44.17,5.28,"alpS",900,13,[[44.21,5.15],[44.19,5.4],[44.13,5.42],[44.11,5.18],[44.16,5.1]]],["Montagne de Lure",44.1,5.8,"alpS",900,18,[[44.15,5.65],[44.12,5.95],[44.04,5.95],[44.05,5.68]]],["Sainte-Baume",43.33,5.75,"alpS",600,12],["Sainte-Victoire",43.53,5.6,"alpS",500,10],["Alpilles",43.75,4.85,"alpS",120,13],["Maures",43.25,6.35,"alpS",300,22],["Esterel",43.47,6.88,"alpS",250,10],["Préalpes de Grasse",43.72,6.9,"alpS",700,16,[[43.8,6.8],[43.78,7.05],[43.68,7.05],[43.65,6.85],[43.72,6.75]]],["Monte Rotondo",42.22,9.05,"corse",1200,14],["Monte Renoso",42.06,9.13,"corse",1200,12],["Monte Incudine",41.85,9.2,"corse",1100,12],["San Petrone",42.47,9.34,"corse",900,12],["Mézenc-Gerbier",44.91,4.19,"mc",1100,13],["Lévézou",44.2,2.85,"mc",900,15],["Monts de Lacaune",43.7,2.7,"mc",800,15],["Montagne Noire",43.42,2.35,"mc",600,18],["Espinouse-Caroux",43.6,2.95,"mc",700,12],["Carlit",42.57,1.93,"pyr",1800,15],["Canigou",42.52,2.46,"pyr",1200,14],["Aiguilles Rouges",45.97,6.85,"alpN",1400,9,[[46.02,6.68],[46.0,6.85],[45.93,6.92],[45.9,6.8],[45.95,6.7]]],["Mont-Cenis",45.25,6.95,"alpN",1500,11,[[45.3,6.9],[45.28,7.08],[45.18,7.1],[45.15,6.95],[45.22,6.87]]],["Montagne de l'Épine",45.57,5.83,"alpN",600,8,[[45.65,5.8],[45.62,5.88],[45.5,5.86],[45.5,5.79],[45.58,5.76]]],["Escreins",44.62,6.72,"alpS",1500,9,[[44.7,6.62],[44.66,6.78],[44.56,6.75],[44.56,6.62],[44.63,6.56]]],["Chambeyron",44.55,6.85,"alpS",1800,10,[[44.62,6.78],[44.58,6.95],[44.48,6.92],[44.47,6.78],[44.54,6.72]]],["Bochaine",44.55,5.75,"alpS",800,14,[[44.62,5.62],[44.6,5.82],[44.48,5.85],[44.42,5.7],[44.5,5.58]]],["Préalpes de Digne",44.2,6.3,"alpS",800,19,[[44.3,6.12],[44.26,6.38],[44.12,6.45],[44.0,6.35],[44.02,6.12],[44.15,6.02]]],["Trois-Évêchés",44.32,6.55,"alpS",1300,11,[[44.4,6.45],[44.37,6.62],[44.25,6.62],[44.22,6.48],[44.3,6.4]]],["Pelat",44.26,6.68,"alpS",1500,9,[[44.32,6.62],[44.28,6.78],[44.18,6.75],[44.18,6.62],[44.25,6.57]]],["Embrunais",44.6,6.48,"alpS",1000,11,[[44.66,6.35],[44.62,6.52],[44.5,6.52],[44.48,6.38],[44.56,6.3]]],["Préalpes de Castellane",43.85,6.55,"alpS",700,18,[[43.95,6.35],[43.92,6.58],[43.82,6.62],[43.72,6.55],[43.75,6.38],[43.85,6.28]]],["Préalpes de Nice",43.85,7.25,"alpS",500,15,[[44.0,7.2],[43.96,7.42],[43.82,7.45],[43.78,7.28],[43.86,7.12]]],["Monts de Vaucluse",44.05,5.3,"alpS",500,15,[[44.12,5.15],[44.1,5.45],[44.0,5.48],[43.96,5.25],[44.03,5.12]]],["Genevois",46.06,6.13,"alpN",700,13,[[46.15,6.05],[46.12,6.22],[46.02,6.28],[45.95,6.18],[45.98,6.03],[46.08,5.98]]],["Chambotte",45.72,5.92,"alpN",500,6,[[45.78,5.9],[45.76,5.97],[45.68,5.96],[45.67,5.9],[45.73,5.87]]],["Terres Froides",45.47,5.44,"alpN",400,14,[[45.58,5.35],[45.55,5.55],[45.42,5.58],[45.36,5.45],[45.42,5.3],[45.52,5.28]]],["Chambaran",45.27,5.15,"alpN",350,15,[[45.38,5.05],[45.35,5.25],[45.22,5.3],[45.15,5.18],[45.2,5.02],[45.32,4.98]]],["Monges",44.36,6.19,"alpS",1000,13,[[44.45,6.1],[44.42,6.3],[44.3,6.32],[44.26,6.18],[44.33,6.05]]],["Grand Coyer",44.17,6.66,"alpS",1300,9,[[44.24,6.6],[44.22,6.75],[44.12,6.76],[44.1,6.62],[44.17,6.55]]],["Verdon",43.77,6.36,"alpS",700,14,[[43.85,6.25],[43.83,6.5],[43.72,6.52],[43.68,6.32],[43.76,6.2]]],["Haut Var",43.9,6.73,"alpS",900,12,[[43.98,6.62],[43.95,6.85],[43.84,6.86],[43.82,6.66],[43.9,6.58]]],["Ubaye",44.41,6.71,"alpS",1500,11,[[44.48,6.62],[44.45,6.8],[44.36,6.82],[44.33,6.68],[44.4,6.58]]]],"vallees":[["Grésivaudan","Isère",[45.15,5.7,45.49,6.09],[[45.2,5.77],[45.32,5.92],[45.44,6.02]]],["Maurienne","Arc",[45.15,6.23,45.6,6.95],[[45.55,6.3],[45.28,6.35],[45.2,6.66],[45.29,6.88]]],["Tarentaise","Isère",[45.43,6.32,45.72,6.84],[[45.67,6.39],[45.48,6.53],[45.62,6.77]]],["Vallée de l'Arve","Arve",[45.87,6.33,46.13,6.94],[[46.08,6.4],[45.94,6.63],[45.92,6.87]]],["Oisans (Romanche)","Romanche",[45.0,5.7,45.13,6.37],[[45.08,5.77],[45.06,6.03],[45.05,6.3]]],["Vallouise","Gyronde",[44.74,6.37,44.93,6.63],[[44.79,6.56],[44.85,6.49],[44.88,6.44]]],["Champsaur","Drac",[44.6,5.98,44.74,6.4],[[44.65,6.05],[44.68,6.2],[44.69,6.33]]],["Valgaudemar","Séveraisse",[44.73,5.93,44.87,6.26],[[44.78,6.0],[44.82,6.19]]],["Queyras (Guil)","Guil",[44.61,6.58,44.84,7.0],[[44.66,6.65],[44.76,6.8],[44.79,6.93]]],["Ubaye","Ubaye",[44.34,6.37,44.58,6.83],[[44.43,6.44],[44.39,6.65],[44.53,6.76]]],["Clarée","Clarée",[44.87,6.54,45.07,6.7],[[44.92,6.63],[45.02,6.61]]],["Vésubie","Vésubie",[43.8,7.13,44.12,7.38],[[43.85,7.2],[43.97,7.31],[44.07,7.26]]],["Tinée","Tinée",[43.85,6.85,44.31,7.22],[[43.9,7.15],[44.08,7.1],[44.26,6.92]]],["Roya","Roya",[43.89,7.44,44.14,7.66],[[43.94,7.51],[44.09,7.59]]],["Trièves","Drac",[44.77,5.56,44.97,5.82],[[44.92,5.63],[44.82,5.75]]],["Royans","Bourne",[44.96,5.22,45.11,5.41],[[45.06,5.34],[45.01,5.29]]],["Val d'Abondance","Dranse d'Abondance",[46.23,6.45,46.39,6.79],[[46.34,6.52],[46.28,6.72]]],["Vallée du Giffre","Giffre",[46.01,6.52,46.16,6.85],[[46.11,6.59],[46.08,6.73],[46.06,6.78]]],["Belleville","Doron de Belleville",[45.25,6.46,45.51,6.65],[[45.46,6.53],[45.3,6.58]]],["Vallée d'Ossau","Gave d'Ossau",[42.85,-0.5,43.1,-0.35],[[43.05,-0.42],[42.9,-0.43]]],["Vallée d'Aspe","Gave d'Aspe",[42.82,-0.67,43.1,-0.49],[[43.05,-0.6],[42.87,-0.56]]],["Vallée de la Guisane","Guisane",[44.85,6.44,45.03,6.7],[[44.9,6.63],[44.98,6.51]]],["Vallée du Vénéon","Vénéon",[44.88,5.98,45.09,6.35],[[45.04,6.05],[44.94,6.18],[44.93,6.28]]],["Valbonnais","Bonne",[44.81,5.83,44.97,6.12],[[44.92,5.9],[44.86,6.05]]],["Val Montjoie","Bon Nant",[45.77,6.64,45.94,6.8],[[45.89,6.71],[45.82,6.73]]],["Val d'Arly","Arly",[45.7,6.35,45.91,6.69],[[45.75,6.42],[45.82,6.51],[45.86,6.62]]],["Haut-Verdon","Verdon",[43.92,6.44,44.25,6.72],[[44.2,6.65],[44.08,6.56],[43.97,6.51]]],["Vallée de la Bléone","Bléone",[44.0,6.13,44.22,6.42],[[44.05,6.2],[44.17,6.35]]],["Haut-Var","Var",[43.9,6.74,44.14,6.92],[[43.95,6.81],[44.09,6.85]]],["Vallée de l'Estéron","Estéron",[43.75,6.95,43.91,7.25],[[43.8,7.18],[43.86,7.02]]],["Vallée du Cians","Cians",[43.9,6.92,44.15,7.09],[[43.95,7.02],[44.1,6.99]]],["Vallée d'Aure","Neste",[42.77,0.25,43.0,0.44],[[42.95,0.37],[42.82,0.32]]],["Vallée du Louron","Neste du Louron",[42.75,0.3,42.95,0.48],[[42.9,0.37],[42.8,0.41]]],["Vallée de Campan","Adour",[42.9,0.08,43.11,0.27],[[43.06,0.15],[42.95,0.2]]],["Vallée de Cauterets","Gave de Cauterets",[42.84,-0.18,43.01,0.0],[[42.96,-0.07],[42.89,-0.11]]],["Vallée de Luz-Gavarnie","Gave de Pau",[42.69,-0.14,43.01,0.07],[[42.96,-0.07],[42.87,0.0],[42.74,-0.01]]],["Val d'Azun","Gave d'Azun",[42.91,-0.28,43.05,-0.03],[[43.0,-0.1],[42.96,-0.21]]],["Vallée de l'Ariège","Ariège",[42.67,1.53,43.01,1.91],[[42.96,1.61],[42.85,1.6],[42.72,1.84]]],["Vallée du Vicdessos","Vicdessos",[42.71,1.41,42.9,1.67],[[42.85,1.6],[42.76,1.48]]],["Vallée de Munster","Fecht",[47.99,7.07,48.14,7.35],[[48.09,7.28],[48.04,7.14]]],["Vallée de la Thur","Thur",[47.76,6.96,47.92,7.17],[[47.81,7.1],[47.87,7.03]]],["Vallée de la Bruche","Bruche",[48.43,7.15,48.59,7.56],[[48.54,7.49],[48.48,7.22]]],["Vallée de la Valserine","Valserine",[46.06,5.76,46.42,6.06],[[46.11,5.83],[46.37,5.99]]],["Vallée de la Loue","Loue",[46.98,6.07,47.15,6.35],[[47.1,6.14],[47.03,6.28]]],["Haut-Allier","Allier",[44.92,3.42,45.15,3.71],[[45.1,3.49],[44.97,3.64]]],["Haute vallée de la Dordogne","Dordogne",[45.04,1.97,45.45,2.57],[[45.4,2.5],[45.25,2.3],[45.09,2.04]]],["Vallée du Lot (haute)","Lot",[44.45,2.7,44.57,3.52],[[44.52,3.45],[44.5,3.1],[44.52,2.77]]],["Gorges de la Truyère","Truyère",[44.6,2.5,45.02,3.24],[[44.97,3.17],[44.8,2.85],[44.65,2.57]]],["Vallée du Tarn","Tarn",[44.05,3.01,44.37,3.66],[[44.32,3.59],[44.2,3.35],[44.1,3.08]]],["Combe de Savoie","Isère",[45.42,5.98,45.62,6.37],[[45.57,6.3],[45.52,6.2],[45.47,6.05]]],["Haute-Durance","Durance",[44.51,6.43,44.95,6.7],[[44.9,6.63],[44.75,6.58],[44.56,6.5]]]]};
   // ---------- 💧 Fleuves, rivières & cours d'eau ----------
   if(location.protocol === 'file:'){
     setTimeout(()=>afficherInfo('\u26a0\ufe0f Fichier ouvert en direct (file://) : le navigateur bloque les donn\u00e9es (choropl\u00e8thes, vall\u00e9es, sites OSM\u2026). Testez via le site GitHub Pages ou un petit serveur local (python -m http.server).', 12000), 1500);
@@ -3857,6 +3878,362 @@
     etatFleuvesNoms.actif = true;
     basculerBouton(btn, true, '🏷 Noms \u2715', '', '#2563eb');
   });
+
+
+  // ---------- 👥 Densité 2023 (pop embarquée / aire calculée du contour) ----------
+  function aireKm2(geom){
+    const anneau = (r)=>{
+      if(!r || r.length < 3) return 0;
+      const ky = 110.57, kx = 111.32*Math.cos(r[0][1]*Math.PI/180);
+      let s = 0;
+      for(let i=0; i<r.length; i++){
+        const [x1, y1] = r[i], [x2, y2] = r[(i+1)%r.length];
+        s += (x2*kx)*(y1*ky) - (x1*kx)*(y2*ky);
+      }
+      return Math.abs(s)/2;
+    };
+    const poly = (p)=> Math.max(0, anneau(p[0]) - p.slice(1).reduce((a, t)=>a+anneau(t), 0));
+    if(geom.type === 'Polygon') return poly(geom.coordinates);
+    if(geom.type === 'MultiPolygon') return geom.coordinates.reduce((a, p)=>a+poly(p), 0);
+    return 0;
+  }
+  const DENSITE_CLASSES = [[40,'#ffffcc'],[80,'#ffeda0'],[150,'#feb24c'],[400,'#fd8d3c'],[1000,'#f03b20'],[Infinity,'#bd0026']];
+  const etatDensite = { actif:false, groupe:null };
+  document.getElementById('btn-densite-dep').addEventListener('click', async ()=>{
+    const btn = document.getElementById('btn-densite-dep');
+    if(etatDensite.actif){
+      etatDensite.actif = false;
+      if(etatDensite.groupe) map.removeLayer(etatDensite.groupe);
+      basculerBouton(btn, false, '', '👥 Densit\u00e9 de population (2023)');
+      majLegende();
+      return;
+    }
+    etatDensite.actif = true;
+    basculerBouton(btn, true, '👥 Densit\u00e9 \u2715', '', '#bd0026');
+    if(!etatDensite.groupe){
+      afficherInfo('👥 Calcul des densit\u00e9s\u2026', 0);
+      try{
+        if(!map.getPane('choro')){ const el = map.createPane('choro'); if(el && el.style) el.style.zIndex = 350; }
+        const features = await contoursDep();
+        if(!etatDensite.actif) return;
+        etatDensite.groupe = L.layerGroup();
+        const codeDep = (f)=> String((f.properties && (f.properties.insee_dep || f.properties.code_insee || f.properties.insee || f.properties.code)) || '');
+        L.geoJSON({type:'FeatureCollection', features}, {
+          filter: (f)=> !!ORIGINES.popDep[codeDep(f)],
+          style: (f)=>{
+            const pop = ORIGINES.popDep[codeDep(f)];
+            if(!pop) return { stroke:false, fill:false };
+            const a = aireKm2(f.geometry);
+            const d = a > 0 ? pop/a : 0;
+            const cl = DENSITE_CLASSES.find(c=>d < c[0]) || DENSITE_CLASSES[5];
+            return { pane:'choro', color:'#ffffff', weight:0.8, opacity:0.85, fillColor:cl[1], fillOpacity:0.72 };
+          },
+          onEachFeature: (f, couche)=>{
+            const pop = ORIGINES.popDep[codeDep(f)];
+            if(!pop) return;
+            const a = aireKm2(f.geometry);
+            const d = a > 0 ? pop/a : 0;
+            const nom = (f.properties && (f.properties.nom || f.properties.nom_m)) || codeDep(f);
+            couche.bindTooltip('<b>'+echap(nom)+'</b><br><b>'+(d<100 ? d.toFixed(1) : Math.round(d).toLocaleString('fr-FR'))+' hab/km\u00b2</b>'
+              +'<br>'+pop.toLocaleString('fr-FR')+' hab \u00b7 '+Math.round(a).toLocaleString('fr-FR')+' km\u00b2'
+              +'<br><small>pop. INSEE 2023 \u00b7 aire calcul\u00e9e du contour officiel</small>', {sticky:true});
+          }
+        }).addTo(etatDensite.groupe);
+        cacherInfo();
+      }catch(e){
+        cacherInfo();
+        etatDensite.actif = false;
+        basculerBouton(btn, false, '', '👥 Densit\u00e9 de population (2023)');
+        afficherInfo('👥 Contours inaccessibles \u2014 r\u00e9essayez', 5000);
+        return;
+      }
+    }
+    etatDensite.groupe.addTo(map);
+    afficherInfo('👥 Densit\u00e9 2023 \u2014 six classes, survolez pour le d\u00e9tail', 4500);
+    majLegende();
+  });
+
+  // ---------- 💶 Prix immobiliers DVF (service communautaire, au clic) ----------
+  const DVF = { actif:false };
+  document.getElementById('btn-dvf').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-dvf');
+    if(DVF.actif){
+      DVF.actif = false;
+      basculerBouton(btn, false, '', '💶 Prix immobiliers (DVF) \u2014 clic commune');
+      return;
+    }
+    PROFIL.visee = 0; ETAT3D.visee = 0; DEVIN.actif = false;
+    DVF.actif = true;
+    basculerBouton(btn, true, '💶 DVF : cliquez une commune \u2715', '', '#166534');
+    afficherInfo('💶 Cliquez une commune \u2014 prix m\u00e9dians des ventes r\u00e9elles (DVF)', 6000);
+  });
+  map.on('click', async (ev)=>{
+    if(!DVF.actif) return;
+    afficherInfo('💶 Identification de la commune\u2026', 0);
+    try{
+      const d = 0.0015;
+      const url = WFS_GEOPF+'&TYPENAMES=ADMINEXPRESS-COG-CARTO.LATEST:commune&COUNT=1'
+        +'&BBOX='+[ev.latlng.lng-d, ev.latlng.lat-d, ev.latlng.lng+d, ev.latlng.lat+d, 'CRS:84'].join(',');
+      const rc = await fetch(url);
+      const dc = await rc.json();
+      const f = (dc.features||[])[0];
+      const insee = f && f.properties && (f.properties.insee_com || f.properties.code_insee || f.properties.insee);
+      const nomC = (f && f.properties && (f.properties.nom || f.properties.nom_m)) || 'la commune';
+      if(!insee){ cacherInfo(); afficherInfo('💶 Commune non identifi\u00e9e ici \u2014 cliquez plus au centre', 4500); return; }
+      afficherInfo('💶 Interrogation DVF pour '+nomC+'\u2026', 0);
+      const rv = await fetch('https://api.cquest.org/dvf?code_commune='+insee);
+      const dv = await rv.json();
+      const ventes = (dv.resultats || dv.features || []).map(v=>v.properties || v);
+      const prix = [];
+      let anMin = 9999, anMax = 0;
+      ventes.forEach(v=>{
+        const val = parseFloat(v.valeur_fonciere);
+        const surf = parseFloat(v.surface_relle_bati || v.surface_reelle_bati);
+        const type = v.type_local || '';
+        if(!isFinite(val) || !isFinite(surf) || surf < 10 || val < 1000) return;
+        if(type !== 'Maison' && type !== 'Appartement') return;
+        prix.push(val/surf);
+        const an = parseInt(String(v.date_mutation||'').slice(0,4), 10);
+        if(isFinite(an) && an > 1900){ anMin = Math.min(anMin, an); anMax = Math.max(anMax, an); }
+      });
+      cacherInfo();
+      if(!prix.length){
+        L.popup().setLatLng(ev.latlng).setContent('<b>💶 '+echap(nomC)+'</b><br>Aucune vente exploitable dans DVF pour cette commune.<br><small>Base des ventes notari\u00e9es \u2014 certaines communes (Alsace-Moselle, Mayotte) n\u2019y figurent pas.</small>').openOn(map);
+        return;
+      }
+      prix.sort((a,b)=>a-b);
+      const med = prix[Math.floor(prix.length/2)];
+      L.popup().setLatLng(ev.latlng).setContent('<b>💶 '+echap(nomC)+'</b>'
+        +'<br><b>'+Math.round(med).toLocaleString('fr-FR')+' \u20ac/m\u00b2</b> (m\u00e9diane maisons + appartements)'
+        +'<br>'+prix.length.toLocaleString('fr-FR')+' ventes analys\u00e9es'+(anMax ? ' \u00b7 '+anMin+'\u2013'+anMax : '')
+        +'<br><small>DVF (ventes notari\u00e9es publiques) via api.cquest.org \u2014 service communautaire, ordres de grandeur</small>').openOn(map);
+    }catch(e){
+      cacherInfo();
+      afficherInfo('💶 Le service DVF communautaire ne r\u00e9pond pas \u2014 r\u00e9essayez plus tard (source tierce, hors de notre contr\u00f4le)', 6500);
+    }
+  });
+
+  // ---------- ⚜ Provinces d'Ancien Régime (approximation par départements) ----------
+  const PROVINCES_DEP = {
+    '59':['Flandre & Hainaut','rattach\u00e9s au XVIIe si\u00e8cle (trait\u00e9s de 1659-1678)'], '62':['Artois','rattach\u00e9 en 1659'],
+    '80':['Picardie',''], '02':['Picardie',''], '60':['Picardie',''],
+    '75':['\u00cele-de-France',''], '77':['\u00cele-de-France',''], '78':['\u00cele-de-France',''], '91':['\u00cele-de-France',''],
+    '92':['\u00cele-de-France',''], '93':['\u00cele-de-France',''], '94':['\u00cele-de-France',''], '95':['\u00cele-de-France',''],
+    '08':['Champagne',''], '10':['Champagne',''], '51':['Champagne',''], '52':['Champagne',''],
+    '54':['Lorraine','rattach\u00e9e en 1766'], '55':['Lorraine (Barrois)','rattach\u00e9e en 1766'], '57':['Lorraine (Trois-\u00c9v\u00each\u00e9s 1552)',''], '88':['Lorraine','rattach\u00e9e en 1766'],
+    '67':['Alsace','rattach\u00e9e 1648-1681'], '68':['Alsace','rattach\u00e9e 1648-1681'],
+    '14':['Normandie',''], '27':['Normandie',''], '50':['Normandie',''], '61':['Normandie',''], '76':['Normandie',''],
+    '22':['Bretagne','unie \u00e0 la France en 1532'], '29':['Bretagne','unie en 1532'], '35':['Bretagne','unie en 1532'], '56':['Bretagne','unie en 1532'], '44':['Bretagne','unie en 1532'],
+    '53':['Maine',''], '72':['Maine',''], '49':['Anjou',''], '37':['Touraine',''],
+    '45':['Orl\u00e9anais',''], '28':['Orl\u00e9anais (Beauce)',''], '41':['Orl\u00e9anais (Blaisois)',''],
+    '18':['Berry',''], '36':['Berry',''], '58':['Nivernais',''],
+    '21':['Bourgogne',''], '71':['Bourgogne',''], '89':['Bourgogne',''], '01':['Bourgogne (Bresse-Bugey)','rattach\u00e9s en 1601'],
+    '25':['Franche-Comt\u00e9','rattach\u00e9e en 1678'], '39':['Franche-Comt\u00e9','rattach\u00e9e en 1678'], '70':['Franche-Comt\u00e9','rattach\u00e9e en 1678'], '90':['Franche-Comt\u00e9 (Belfort)','rattach\u00e9e en 1678'],
+    '79':['Poitou',''], '86':['Poitou',''], '85':['Poitou',''],
+    '17':['Aunis & Saintonge',''], '16':['Angoumois',''],
+    '87':['Limousin',''], '19':['Limousin',''], '23':['Marche',''],
+    '63':['Auvergne',''], '15':['Auvergne',''], '43':['Auvergne (Velay)',''],
+    '03':['Bourbonnais',''], '69':['Lyonnais & Beaujolais',''], '42':['Lyonnais (Forez)',''],
+    '38':['Dauphin\u00e9','rattach\u00e9 en 1349'], '26':['Dauphin\u00e9','rattach\u00e9 en 1349'], '05':['Dauphin\u00e9','rattach\u00e9 en 1349'],
+    '13':['Provence','unie en 1481'], '83':['Provence','unie en 1481'], '04':['Provence','unie en 1481'],
+    '84':['Comtat Venaissin & Avignon','\u00c9tats du pape jusqu\u2019en 1791'],
+    '06':['Comt\u00e9 de Nice','rattach\u00e9 en 1860'], '73':['Savoie','rattach\u00e9e en 1860'], '74':['Savoie','rattach\u00e9e en 1860'],
+    '30':['Languedoc',''], '34':['Languedoc',''], '11':['Languedoc',''], '48':['Languedoc (G\u00e9vaudan)',''], '07':['Languedoc (Vivarais)',''],
+    '31':['Languedoc',''], '81':['Languedoc (Albigeois)',''],
+    '66':['Roussillon','rattach\u00e9 en 1659'], '09':['Comt\u00e9 de Foix',''],
+    '33':['Guyenne & Gascogne',''], '24':['Guyenne (P\u00e9rigord)',''], '46':['Guyenne (Quercy)',''], '47':['Guyenne (Agenais)',''],
+    '40':['Gascogne (Landes)',''], '32':['Gascogne (Armagnac)',''], '65':['Gascogne (Bigorre)',''], '82':['Guyenne (Quercy)',''], '12':['Guyenne (Rouergue)',''],
+    '64':['B\u00e9arn & Basse-Navarre','couronne r\u00e9unie en 1620'],
+    '2A':['Corse','rattach\u00e9e en 1768'], '2B':['Corse','rattach\u00e9e en 1768']
+  };
+  const PROVINCES_COULEURS = ['#7c3aed','#0e7490','#b45309','#15803d','#be185d','#1d4ed8','#a16207','#dc2626','#0d9488','#6d28d9','#ca8a04','#166534','#9f1239','#0369a1','#92400e','#4d7c0f','#c2410c','#5b21b6'];
+  function provinceCouleur(nom){
+    const base = nom.split(' (')[0];
+    let h = 0;
+    for(let i=0; i<base.length; i++) h = (h*31 + base.charCodeAt(i)) >>> 0;
+    return PROVINCES_COULEURS[h % PROVINCES_COULEURS.length];
+  }
+  const etatProvinces = { actif:false, groupe:null };
+  document.getElementById('btn-provinces').addEventListener('click', async ()=>{
+    const btn = document.getElementById('btn-provinces');
+    if(etatProvinces.actif){
+      etatProvinces.actif = false;
+      if(etatProvinces.groupe) map.removeLayer(etatProvinces.groupe);
+      basculerBouton(btn, false, '', '\u269c Provinces d\u2019Ancien R\u00e9gime (~1789)');
+      majLegende();
+      return;
+    }
+    etatProvinces.actif = true;
+    basculerBouton(btn, true, '\u269c Provinces \u2715', '', '#7c3aed');
+    if(!etatProvinces.groupe){
+      afficherInfo('\u269c Chargement des contours\u2026', 0);
+      try{
+        if(!map.getPane('choro')){ const el = map.createPane('choro'); if(el && el.style) el.style.zIndex = 350; }
+        const features = await contoursDep();
+        if(!etatProvinces.actif) return;
+        etatProvinces.groupe = L.layerGroup();
+        const codeDep = (f)=> String((f.properties && (f.properties.insee_dep || f.properties.code_insee || f.properties.insee || f.properties.code)) || '');
+        L.geoJSON({type:'FeatureCollection', features}, {
+          filter: (f)=> !!PROVINCES_DEP[codeDep(f)],
+          style: (f)=>{
+            const p = PROVINCES_DEP[codeDep(f)];
+            if(!p) return { stroke:false, fill:false };
+            return { pane:'choro', color:'#ffffff', weight:0.8, opacity:0.85, fillColor:provinceCouleur(p[0]), fillOpacity:0.62 };
+          },
+          onEachFeature: (f, couche)=>{
+            const p = PROVINCES_DEP[codeDep(f)];
+            if(!p) return;
+            couche.bindTooltip('<b>\u269c '+p[0]+'</b>'+(p[1] ? '<br>'+p[1] : '')
+              +'<br><small>approximation par le d\u00e9partement actuel</small>', {sticky:true});
+          }
+        }).addTo(etatProvinces.groupe);
+        cacherInfo();
+      }catch(e){
+        cacherInfo();
+        etatProvinces.actif = false;
+        basculerBouton(btn, false, '', '\u269c Provinces d\u2019Ancien R\u00e9gime (~1789)');
+        afficherInfo('\u269c Contours d\u00e9partementaux inaccessibles \u2014 r\u00e9essayez', 5000);
+        return;
+      }
+    }
+    etatProvinces.groupe.addTo(map);
+    afficherInfo('\u269c La France de 1789 \u2014 une couleur par province, survolez pour les rattachements', 5500);
+    majLegende();
+  });
+
+  // ---------- 💦 Bassins versants schématiques ----------
+  const BASSINS = [
+    ['La Manche', '#7dd3fc', 'Seine, c\u00f4tiers normands et bretons du nord',
+     [[51.0,2.0],[50.1,1.5],[49.6,0.1],[49.7,-1.9],[49.4,-1.8],[48.7,-3.5],[48.6,-4.7],[48.3,-4.6],[48.2,-2.8],[48.1,-1.5],[48.2,-0.5],[48.3,0.8],[47.9,1.9],[47.4,3.0],[47.2,4.2],[47.7,4.9],[48.1,5.3],[48.6,5.5],[49.3,5.3],[49.8,4.3],[50.0,2.9],[50.9,1.7]]],
+    ['L\u2019oc\u00e9an Atlantique', '#2563eb', 'Loire, Garonne, Adour, Charente, c\u00f4tiers bretons du sud',
+     [[48.6,-4.7],[48.3,-4.6],[47.8,-4.1],[47.3,-2.5],[46.9,-2.0],[46.2,-1.2],[45.6,-1.1],[44.6,-1.3],[43.4,-1.8],[43.1,-0.6],[42.9,0.7],[43.0,1.8],[43.4,2.3],[43.9,3.2],[44.6,3.6],[44.9,3.9],[45.6,3.9],[46.3,4.1],[47.0,4.3],[47.2,4.2],[47.4,3.0],[47.9,1.9],[48.3,0.8],[48.2,-0.5],[48.1,-1.5],[48.2,-2.8]]],
+    ['La mer M\u00e9diterran\u00e9e', '#14b8a6', 'Rh\u00f4ne-Sa\u00f4ne, Aude, H\u00e9rault, Var, c\u00f4tiers proven\u00e7aux',
+     [[42.4,3.2],[42.6,2.0],[43.0,1.8],[43.4,2.3],[43.9,3.2],[44.6,3.6],[44.9,3.9],[45.6,3.9],[46.3,4.1],[47.0,4.3],[47.7,4.9],[47.8,6.4],[47.5,7.5],[46.8,6.4],[46.4,6.9],[45.9,7.0],[45.1,7.1],[44.7,7.0],[44.2,7.6],[43.8,7.5],[43.1,6.6],[43.3,5.3],[43.3,4.6],[42.9,3.1]]],
+    ['La mer du Nord', '#8b5cf6', 'Escaut, Meuse, Moselle et Rhin alsacien',
+     [[51.1,2.6],[50.9,1.7],[50.0,2.9],[49.8,4.3],[49.3,5.3],[48.6,5.5],[48.1,5.3],[47.7,4.9],[47.8,6.4],[47.5,7.5],[48.9,8.2],[50.3,4.9],[51.0,3.6]]],
+    ['La mer M\u00e9diterran\u00e9e (Corse)', '#14b8a6', 'fleuves c\u00f4tiers corses (Golo, Tavignano\u2026)',
+     [[43.05,9.35],[42.0,9.6],[41.3,9.2],[41.6,8.6],[42.4,8.5],[43.0,9.3]]]
+  ];
+  const etatBassins = { actif:false, groupe:null };
+  document.getElementById('btn-bassins').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-bassins');
+    if(etatBassins.actif){
+      etatBassins.actif = false;
+      map.removeLayer(etatBassins.groupe);
+      basculerBouton(btn, false, '', '💦 Bassins versants (vers quelle mer ?)');
+      majLegende();
+      return;
+    }
+    etatBassins.actif = true;
+    if(!etatBassins.groupe){
+      etatBassins.groupe = L.layerGroup();
+      if(!map.getPane('choro')){ const el = map.createPane('choro'); if(el && el.style) el.style.zIndex = 350; }
+      BASSINS.forEach(bv=>{
+        L.polygon(bv[3].map(p=>L.latLng(p[0], p[1])), {
+          pane:'choro', color:'#ffffff', weight:1.6, opacity:0.9, fillColor:bv[1], fillOpacity:0.32
+        }).bindTooltip('<b>\u2192 '+bv[0]+'</b><br>'+bv[2]+'<br><small>bassin sch\u00e9matique \u2014 lignes de partage simplifi\u00e9es</small>', {sticky:true})
+          .addTo(etatBassins.groupe);
+      });
+    }
+    etatBassins.groupe.addTo(map);
+    basculerBouton(btn, true, '💦 Bassins versants \u2715', '', '#0369a1');
+    afficherInfo('💦 Chaque goutte rejoint la mer de sa couleur \u2014 trac\u00e9 sch\u00e9matique du partage des eaux', 5500);
+    majLegende();
+  });
+
+  // ---------- 🎯 Devinettes relief ----------
+  const DEVIN = { actif:false, tour:0, score:0, cible:null, marque:null };
+  function tirerDevinette(){
+    const univers = [];
+    RELIEF_FIN.massifs.forEach(m=>univers.push({t:'le massif', n:m[0], lat:m[1], lon:m[2], tol:Math.max(20, m[5]*1.4)}));
+    MONTAGNES.sommets.filter(s=>s[5]===1).forEach(s=>univers.push({t:'le sommet', n:s[0], lat:s[1], lon:s[2], tol:25}));
+    RELIEF_FIN.vallees.forEach(v=>{
+      const mi = v[3][Math.floor(v[3].length/2)];
+      univers.push({t:'la vall\u00e9e', n:v[0], lat:mi[0], lon:mi[1], tol:30});
+    });
+    return univers[Math.floor(Math.random()*univers.length)];
+  }
+  function questionDevinette(){
+    DEVIN.tour++;
+    DEVIN.cible = tirerDevinette();
+    afficherInfo('🎯 Question '+DEVIN.tour+'/5 \u2014 cliquez o\u00f9 se trouve '+DEVIN.cible.t+' \u00ab '+DEVIN.cible.n+' \u00bb', 0);
+  }
+  document.getElementById('btn-devinettes').addEventListener('click', ()=>{
+    PROFIL.visee = 0; ETAT3D.visee = 0;
+    DEVIN.actif = true; DEVIN.tour = 0; DEVIN.score = 0;
+    questionDevinette();
+  });
+  map.on('click', (ev)=>{
+    if(!DEVIN.actif || !DEVIN.cible) return;
+    const kx = 111.32*Math.cos(ev.latlng.lat*Math.PI/180);
+    const d = Math.hypot((ev.latlng.lat-DEVIN.cible.lat)*110.57, (ev.latlng.lng-DEVIN.cible.lon)*kx);
+    const gagne = d <= DEVIN.cible.tol;
+    if(gagne) DEVIN.score++;
+    if(DEVIN.marque) map.removeLayer(DEVIN.marque);
+    DEVIN.marque = L.marker(L.latLng(DEVIN.cible.lat, DEVIN.cible.lon), { keyboard:false,
+      icon: L.divIcon({className:'vise3d', html: gagne ? '\u2705' : '\u274c', iconSize:null}) }).addTo(map);
+    const verdict = gagne ? '\u2705 Trouv\u00e9 ('+Math.round(d)+' km)' : '\u274c Rat\u00e9 \u2014 c\u2019\u00e9tait ici, \u00e0 '+Math.round(d)+' km de votre clic';
+    if(DEVIN.tour >= 5){
+      DEVIN.actif = false;
+      afficherInfo(verdict+' \u00b7 Score final : '+DEVIN.score+'/5 '+(DEVIN.score>=4?'\u2014 g\u00e9ographe confirm\u00e9 !':(DEVIN.score>=2?'\u2014 pas mal !':'\u2014 on r\u00e9vise le relief \ud83d\ude09')), 9000);
+      setTimeout(()=>{ if(DEVIN.marque){ map.removeLayer(DEVIN.marque); DEVIN.marque = null; } }, 9000);
+    }else{
+      afficherInfo(verdict, 2600);
+      setTimeout(()=>{ if(DEVIN.actif) questionDevinette(); }, 2700);
+    }
+  });
+
+  // ---------- ❄ Glaciers (OSM, vue courante) ----------
+  const etatGlaciers = { actif:false, groupe:null };
+  document.getElementById('btn-glaciers').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-glaciers');
+    if(etatGlaciers.actif){
+      etatGlaciers.actif = false;
+      if(etatGlaciers.groupe) map.removeLayer(etatGlaciers.groupe);
+      basculerBouton(btn, false, '', '\u2744 Glaciers (OSM, vue)');
+      majLegende();
+      return;
+    }
+    etatGlaciers.actif = true;
+    basculerBouton(btn, true, '\u2744 Glaciers \u2715', '', '#0891b2');
+    chargerGlaciers();
+  });
+  async function chargerGlaciers(){
+    if(!etatGlaciers.actif) return;
+    if(map.getZoom() < 8){
+      afficherInfo('\u2744 Zoomez (niveau 8 minimum) sur un massif englac\u00e9 \u2014 Mont-Blanc, Vanoise, \u00c9crins\u2026', 4500);
+      return;
+    }
+    const b = map.getBounds();
+    const bbox = [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()].map(x=>x.toFixed(4)).join(',');
+    const requete = '[out:json][timeout:25];(way["natural"="glacier"]('+bbox+');relation["natural"="glacier"]('+bbox+'););out geom 300;';
+    try{
+      const rep = await overpassRequete(requete);
+      const r = await rep.json();
+      if(!etatGlaciers.actif) return;
+      if(!etatGlaciers.groupe) etatGlaciers.groupe = L.layerGroup();
+      etatGlaciers.groupe.clearLayers();
+      let nb = 0;
+      (r.elements||[]).forEach(el=>{
+        const geoms = el.geometry ? [el.geometry] : (el.members||[]).filter(m=>m.geometry).map(m=>m.geometry);
+        geoms.forEach(g=>{
+          if(g.length < 3) return;
+          L.polygon(g.map(p=>L.latLng(p.lat, p.lon)), {
+            color:'#0e7490', weight:1.2, opacity:0.85, fillColor:'#bfe6f2', fillOpacity:0.75
+          }).bindTooltip('<b>'+echap((el.tags && el.tags.name) || 'Glacier')+'</b><br><small>OpenStreetMap</small>', {sticky:true})
+            .addTo(etatGlaciers.groupe);
+          nb++;
+        });
+      });
+      etatGlaciers.nb = nb;
+      etatGlaciers.groupe.addTo(map);
+      majLegende();
+      afficherInfo('\u2744 '+nb+' glaciers dans la vue \u2014 \u00e0 croiser avec le widget Climat pour parler du recul', 5000);
+    }catch(e){
+      afficherInfo('\u2744 Overpass ne r\u00e9pond pas \u2014 r\u00e9essayez dans un instant', 5000);
+    }
+  }
+  map.on('moveend', ()=>{ if(etatGlaciers.actif){ clearTimeout(etatGlaciers.tempo); etatGlaciers.tempo = setTimeout(chargerGlaciers, 500); } });
 
   const famCoul = (k)=> coulStyle('fam_'+k, RELIEF_FIN.familles[k][1]);
   const etatSmassifs = { actif:false, groupe:null };
@@ -4086,6 +4463,7 @@
   }
   document.getElementById('btn-3d-viser').addEventListener('click', ()=>{
     const btn = document.getElementById('btn-3d-viser');
+    PROFIL.visee = 0;
     ETAT3D.marqueurs.forEach(mq=>map.removeLayer(mq));
     ETAT3D.marqueurs = [];
     ETAT3D.visee = 1;
@@ -4144,90 +4522,122 @@
     afficherInfo('🏔 Construction du terrain 3D\u2026', 0);
     try{
       await chargerTroisJs();
-      // r\u00e9gion : carr\u00e9 centr\u00e9 sur le milieu A-B
+      // rep\u00e8re-monde fixe (centre initial A-B) : la cam\u00e9ra survit aux reconstructions
       const kx = 111320 * Math.cos((A.lat+B.lat)/2 * Math.PI/180), ky = 110570;
+      const cLat0 = (A.lat+B.lat)/2, cLon0 = (A.lon+B.lon)/2;
+      const monde = (lat, lon, alt)=> new THREE.Vector3((lon-cLon0)*kx, alt*ETAT3D.exag, (cLat0-lat)*ky);
       const dAB = Math.hypot((B.lat-A.lat)*ky, (B.lon-A.lon)*kx);
-      const taille = Math.max(6000, Math.min(40000, dAB * 1.8));
-      const cLat = (A.lat+B.lat)/2, cLon = (A.lon+B.lon)/2;
-      const dLat = taille/2/ky, dLon = taille/2/kx;
-      const z = taille <= 10000 ? 12 : (taille <= 22000 ? 11 : 10);
-      const zTex = Math.min(z + 2, 15); // texture 4\u00d7 plus fine que le relief
-      const x1 = tuileX(cLon-dLon, z), x2 = tuileX(cLon+dLon, z);
-      const y1 = tuileY(cLat+dLat, z), y2 = tuileY(cLat-dLat, z);
-      const nx = x2-x1+1, ny = y2-y1+1;
-      const fT = Math.pow(2, zTex - z);
-      const x1t = x1*fT, y1t = y1*fT, nxT = nx*fT, nyT = ny*fT;
-      // 1) altitudes (terrarium, z) et 2) texture (zTex), assembl\u00e9es sur canvas
-      const [alts, texs] = await Promise.all([
-        Promise.all(Array.from({length:nx*ny}, (_,i)=>{
-          const x = x1 + (i % nx), y = y1 + Math.floor(i/nx);
-          return chargerImage('https://s3.amazonaws.com/elevation-tiles-prod/terrarium/'+z+'/'+x+'/'+y+'.png').then(im=>({x,y,im}));
-        })),
-        Promise.all(Array.from({length:nxT*nyT}, (_,i)=>{
-          const x = x1t + (i % nxT), y = y1t + Math.floor(i/nxT);
-          return chargerImage(tuileTexture3d(mode, zTex, x, y)).then(im=>({x,y,im}));
-        }))
-      ]);
-      const cvA = document.createElement('canvas'); cvA.width = nx*256; cvA.height = ny*256;
-      const cxA = cvA.getContext('2d');
-      alts.forEach(t=>{ if(t.im) cxA.drawImage(t.im, (t.x-x1)*256, (t.y-y1)*256); });
-      const dA = cxA.getImageData(0, 0, cvA.width, cvA.height).data;
-      const cvT = document.createElement('canvas'); cvT.width = nxT*256; cvT.height = nyT*256;
-      const cxT = cvT.getContext('2d');
-      cxT.fillStyle = '#3a4a3a'; cxT.fillRect(0,0,cvT.width,cvT.height);
-      texs.forEach(t=>{ if(t.im) cxT.drawImage(t.im, (t.x-x1t)*256, (t.y-y1t)*256); });
-      // grille de terrain (bornes g\u00e9o exactes des tuiles)
-      const lonG = lonDeX(x1, z), lonD = lonDeX(x2+1, z);
-      const latH = latDeY(y1, z), latB2 = latDeY(y2+1, z);
-      const N = 128;
-      const geo = new THREE.PlaneGeometry(1, 1, N-1, N-1);
-      const pos = geo.attributes.position;
-      const largM = (lonD-lonG) * kx, hautM = (latH-latB2) * ky;
-      const altDe = (u, v)=>{ // u,v \u2208 [0,1] ouest\u2192est / nord\u2192sud
-        const px = Math.min(cvA.width-1, Math.round(u*(cvA.width-1)));
-        const py = Math.min(cvA.height-1, Math.round(v*(cvA.height-1)));
-        const i = (py*cvA.width + px) * 4;
-        return dA[i]*256 + dA[i+1] + dA[i+2]/256 - 32768;
-      };
-      for(let iy=0; iy<N; iy++) for(let ix=0; ix<N; ix++){
-        const idx = iy*N + ix, u = ix/(N-1), v = iy/(N-1);
-        pos.setXYZ(idx, (u-0.5)*largM, Math.max(-50, altDe(u, v))*ETAT3D.exag, (v-0.5)*hautM);
-      }
-      geo.computeVertexNormals();
-      const texture = new THREE.CanvasTexture(cvT);
+      const taille0 = Math.max(6000, Math.min(40000, dAB * 1.8));
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0x0b1020);
-      scene.fog = new THREE.Fog(0x0b1020, taille*0.9, taille*2.2);
+      scene.fog = new THREE.Fog(0x0b1020, taille0*0.9, taille0*2.4);
       scene.add(new THREE.AmbientLight(0xffffff, 0.75));
       const soleil = new THREE.DirectionalLight(0xffffff, 0.6);
-      soleil.position.set(-taille, taille, taille);
+      soleil.position.set(-taille0, taille0, taille0);
       scene.add(soleil);
-      scene.add(new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: texture })));
-      const enM = (p)=> [ ((p.lon-lonG)/(lonD-lonG)-0.5)*largM,
-                          ((latH-p.lat)/(latH-latB2)) ];
-      const posDe = (p, dessus)=>{
-        const u = (p.lon-lonG)/(lonD-lonG), v = (latH-p.lat)/(latH-latB2);
-        return new THREE.Vector3((u-0.5)*largM, (altDe(u,v)+dessus)*ETAT3D.exag, (v-0.5)*hautM);
-      };
-      const bouleB = new THREE.Mesh(new THREE.SphereGeometry(taille*0.006, 12, 12),
-        new THREE.MeshBasicMaterial({ color: 0xef4444 }));
-      bouleB.position.copy(posDe(B, 25));
-      scene.add(bouleB);
-      const oeil = posDe(A, 60);
-      const cible = posDe(B, 0);
       const canvas = document.getElementById('scene3d-canvas');
       document.getElementById('scene3d-fond').style.display = 'block';
-      document.getElementById('scene3d-titre').textContent =
-        'Vue 3D \u2014 '+(A.nom||'point choisi')+' \u2192 '+(B.nom||'cible')+' \u00b7 relief \u00d7'+ETAT3D.exag.toLocaleString('fr-FR')+' \u00b7 '+(mode==='sat'?'satellite IGN':'carte OSM');
       const rendu = new THREE.WebGLRenderer({ canvas, antialias:true });
       rendu.setPixelRatio(window.devicePixelRatio || 1);
       rendu.setSize(canvas.clientWidth, canvas.clientHeight, false);
-      texture.anisotropy = rendu.capabilities.getMaxAnisotropy ? rendu.capabilities.getMaxAnisotropy() : 1;
-      texture.needsUpdate = true;
-      const camera = new THREE.PerspectiveCamera(55, canvas.clientWidth/canvas.clientHeight, 5, taille*4);
+      const camera = new THREE.PerspectiveCamera(55, canvas.clientWidth/canvas.clientHeight, 4, taille0*4);
+      let terrain = null, altDeCourant = null, cadre = null;
+      let generation = 0;
+      async function construireTerrain(cLat, cLon, taille){
+        const gen = ++generation;
+        const z = taille <= 2500 ? 14 : (taille <= 5000 ? 13 : (taille <= 10000 ? 12 : (taille <= 22000 ? 11 : 10)));
+        const zTex = Math.min(z + 2, 17); // le maximum raisonnable des sources
+        const dLat = taille/2/ky, dLon = taille/2/kx;
+        const x1 = tuileX(cLon-dLon, z), x2 = tuileX(cLon+dLon, z);
+        const y1 = tuileY(cLat+dLat, z), y2 = tuileY(cLat-dLat, z);
+        const nx = x2-x1+1, ny = y2-y1+1;
+        const fT = Math.pow(2, zTex - z);
+        const x1t = x1*fT, y1t = y1*fT, nxT = nx*fT, nyT = ny*fT;
+        const [alts, texs] = await Promise.all([
+          Promise.all(Array.from({length:nx*ny}, (_,i)=>{
+            const x = x1 + (i % nx), y = y1 + Math.floor(i/nx);
+            return chargerImage('https://s3.amazonaws.com/elevation-tiles-prod/terrarium/'+z+'/'+x+'/'+y+'.png').then(im=>({x,y,im}));
+          })),
+          Promise.all(Array.from({length:nxT*nyT}, (_,i)=>{
+            const x = x1t + (i % nxT), y = y1t + Math.floor(i/nxT);
+            return chargerImage(tuileTexture3d(mode, zTex, x, y)).then(im=>({x,y,im}));
+          }))
+        ]);
+        if(gen !== generation) return; // une reconstruction plus r\u00e9cente a pris la main
+        const cvA = document.createElement('canvas'); cvA.width = nx*256; cvA.height = ny*256;
+        const cxA = cvA.getContext('2d');
+        alts.forEach(t=>{ if(t.im) cxA.drawImage(t.im, (t.x-x1)*256, (t.y-y1)*256); });
+        const dA = cxA.getImageData(0, 0, cvA.width, cvA.height).data;
+        const cvT = document.createElement('canvas'); cvT.width = nxT*256; cvT.height = nyT*256;
+        const cxT = cvT.getContext('2d');
+        cxT.fillStyle = '#3a4a3a'; cxT.fillRect(0,0,cvT.width,cvT.height);
+        texs.forEach(t=>{ if(t.im) cxT.drawImage(t.im, (t.x-x1t)*256, (t.y-y1t)*256); });
+        const lonG = lonDeX(x1, z), lonD = lonDeX(x2+1, z);
+        const latH = latDeY(y1, z), latB2 = latDeY(y2+1, z);
+        const altDe = (lat, lon)=>{
+          const u = (lon-lonG)/(lonD-lonG), v = (latH-lat)/(latH-latB2);
+          if(u < 0 || u > 1 || v < 0 || v > 1) return 0;
+          const px = Math.min(cvA.width-1, Math.round(u*(cvA.width-1)));
+          const py = Math.min(cvA.height-1, Math.round(v*(cvA.height-1)));
+          const i = (py*cvA.width + px) * 4;
+          return dA[i]*256 + dA[i+1] + dA[i+2]/256 - 32768;
+        };
+        const N = 144;
+        const geo = new THREE.PlaneGeometry(1, 1, N-1, N-1);
+        const pos = geo.attributes.position;
+        for(let iy=0; iy<N; iy++) for(let ix=0; ix<N; ix++){
+          const idx = iy*N + ix;
+          const lon = lonG + (lonD-lonG)*ix/(N-1), lat = latH - (latH-latB2)*iy/(N-1);
+          const w = monde(lat, lon, Math.max(-50, altDe(lat, lon)));
+          pos.setXYZ(idx, w.x, w.y, w.z);
+        }
+        geo.computeVertexNormals();
+        const texture = new THREE.CanvasTexture(cvT);
+        texture.anisotropy = rendu.capabilities.getMaxAnisotropy ? rendu.capabilities.getMaxAnisotropy() : 1;
+        if(terrain){
+          scene.remove(terrain);
+          terrain.geometry.dispose();
+          if(terrain.material.map) terrain.material.map.dispose();
+          terrain.material.dispose();
+        }
+        terrain = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: texture }));
+        scene.add(terrain);
+        altDeCourant = altDe;
+        cadre = { cLat, cLon, taille, z, zTex };
+      }
+      afficherInfo('🏔 Terrain initial\u2026', 0);
+      await construireTerrain(cLat0, cLon0, taille0);
+      const altA = altDeCourant(A.lat, A.lon), altB = altDeCourant(B.lat, B.lon);
+      const oeil = monde(A.lat, A.lon, altA + 60);
+      const cible = monde(B.lat, B.lon, altB);
+      const bouleB = new THREE.Mesh(new THREE.SphereGeometry(taille0*0.006, 12, 12),
+        new THREE.MeshBasicMaterial({ color: 0xef4444 }));
+      bouleB.position.copy(monde(B.lat, B.lon, altB + 25));
+      scene.add(bouleB);
+      // trace GPX \u00e9ventuelle, pos\u00e9e sur le terrain
+      try{
+        const tGpx3d = traces.slice().reverse().find(t=>t.gpx && t.layerObj && t.layerObj.getLatLngs);
+        if(tGpx3d){
+          let ll3 = tGpx3d.layerObj.getLatLngs();
+          while(Array.isArray(ll3[0])) ll3 = ll3.flat();
+          const pas = Math.max(1, Math.floor(ll3.length/400));
+          const pts3 = [];
+          for(let k=0; k<ll3.length; k+=pas){
+            const q = ll3[k];
+            pts3.push(monde(q.lat, q.lng, Math.max(-40, altDeCourant(q.lat, q.lng)) + 14));
+          }
+          if(pts3.length > 1){
+            const geoT = new THREE.BufferGeometry().setFromPoints(pts3);
+            scene.add(new THREE.Line(geoT, new THREE.LineBasicMaterial({ color: new THREE.Color(gpxCouleur || '#1d4ed8'), linewidth: 2 })));
+            document.getElementById('scene3d-titre').textContent += ' \u00b7 + trace GPX';
+          }
+        }
+      }catch(e){ /* pas de trace : tant pis */ }
+      document.getElementById('scene3d-titre').textContent =
+        'Vue 3D \u2014 '+(A.nom||'point choisi')+' \u2192 '+(B.nom||'cible')+' \u00b7 relief \u00d7'+ETAT3D.exag.toLocaleString('fr-FR')+' \u00b7 '+(mode==='sat'?'satellite IGN':'carte OSM');
       camera.position.copy(oeil);
       camera.lookAt(cible);
-      // contr\u00f4les : orbite autour de la cible, OU 1\u02b3\u1d49 personne pivot\u00e9e sur le point de d\u00e9part
+      // contr\u00f4les (orbite / 1\u02b3\u1d49 personne) + pr\u00e9cision dynamique au zoom
       const modeDepart = document.getElementById('chk-3d-depart').checked;
       const dv = new THREE.Vector3().subVectors(modeDepart ? cible : oeil, modeDepart ? oeil : cible);
       let rayon = dv.length(), theta = Math.atan2(dv.x, dv.z), phi = Math.acos(Math.max(-1, Math.min(1, dv.y/rayon)));
@@ -4244,6 +4654,27 @@
         }
       };
       appliquer();
+      const latLonDeMonde = (v)=> ({ lat: cLat0 - v.z/ky, lon: cLon0 + v.x/kx });
+      let tempoDyn = null;
+      function precisionDynamique(){
+        if(!document.getElementById('chk-3d-dyn').checked) return;
+        clearTimeout(tempoDyn);
+        tempoDyn = setTimeout(()=>{
+          let foyer, portee;
+          if(modeDepart){
+            const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
+            foyer = new THREE.Vector3().copy(camera.position).addScaledVector(dir, 1500);
+            portee = Math.max(1200, Math.min(taille0, rayon));
+          }else{
+            foyer = cible;
+            portee = Math.max(1200, Math.min(taille0, rayon * 2.2));
+          }
+          if(cadre && Math.abs(portee - cadre.taille) / cadre.taille < 0.25) return;
+          const ll = latLonDeMonde(foyer);
+          afficherInfo('🔍 Pr\u00e9cision recalcul\u00e9e ('+(portee/1000).toFixed(1)+' km de c\u00f4t\u00e9)\u2026', 0);
+          construireTerrain(ll.lat, ll.lon, portee).then(()=>cacherInfo());
+        }, 650);
+      }
       canvas.onmousedown = (e)=>{ glisse = {x:e.clientX, y:e.clientY}; };
       window.onmouseup = ()=>{ glisse = null; };
       canvas.onmousemove = (e)=>{
@@ -4256,11 +4687,13 @@
         e.preventDefault();
         if(modeDepart){
           const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
-          camera.position.addScaledVector(dir, e.deltaY>0 ? -taille*0.02 : taille*0.02);
+          camera.position.addScaledVector(dir, e.deltaY>0 ? -taille0*0.02 : taille0*0.02);
+          rayon = Math.max(300, rayon * (e.deltaY>0 ? 1.1 : 0.9));
         }else{
-          rayon = Math.max(200, Math.min(taille*3, rayon*(e.deltaY>0?1.12:0.89)));
+          rayon = Math.max(160, Math.min(taille0*3, rayon*(e.deltaY>0?1.12:0.89)));
         }
         appliquer();
+        precisionDynamique();
       };
       let anime = true;
       ETAT3D.rendu = { arret:()=>{ anime = false; rendu.dispose(); } };
@@ -4274,6 +4707,185 @@
   document.getElementById('scene3d-fermer').addEventListener('click', ()=>{
     document.getElementById('scene3d-fond').style.display = 'none';
     if(ETAT3D.rendu){ ETAT3D.rendu.arret(); ETAT3D.rendu = null; }
+  });
+
+  // ---------- 🔗 Lien d'état partageable ----------
+  document.getElementById('btn-lien').addEventListener('click', ()=>{
+    const c = map.getCenter();
+    const actifs = Array.prototype.slice.call(document.querySelectorAll('.calque-ajout'))
+      .filter(b=>b.id && b.textContent.includes('\u2715')).map(b=>b.id);
+    const h = '#v='+c.lat.toFixed(4)+','+c.lng.toFixed(4)+','+map.getZoom()
+      + (actifs.length ? '&c='+actifs.join('.') : '');
+    const url = location.origin + location.pathname + h;
+    const fini = ()=>afficherInfo('🔗 Lien copi\u00e9 \u2014 il rouvre cette vue avec '+actifs.length+' couche(s)', 5000);
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(fini, ()=>window.prompt('Copiez le lien :', url));
+    }else window.prompt('Copiez le lien :', url);
+  });
+  (function restaurerLien(){
+    if(!location.hash || location.hash.length < 4) return;
+    try{
+      const p = {};
+      location.hash.slice(1).split('&').forEach(kv=>{ const i = kv.indexOf('='); p[kv.slice(0,i)] = kv.slice(i+1); });
+      setTimeout(()=>{
+        if(p.v){
+          const morceaux = p.v.split(',').map(Number);
+          if(isFinite(morceaux[0]) && isFinite(morceaux[1]))
+            map.setView([morceaux[0], morceaux[1]], isFinite(morceaux[2]) ? morceaux[2] : map.getZoom(), { animate:false });
+        }
+        if(p.c) p.c.split('.').forEach(id=>{
+          const b = document.getElementById(id);
+          if(b && !b.textContent.includes('\u2715')) b.click();
+        });
+        afficherInfo('🔗 Vue partag\u00e9e restaur\u00e9e', 4000);
+      }, 700);
+    }catch(e){ /* lien malform\u00e9 : on ignore */ }
+  })();
+
+  // ---------- 📈 Profil altimétrique (2 clics ou trace GPX) ----------
+  const PROFIL = { visee:0, marqueurs:[], points:null };
+  const tuilesAlt = new Map();
+  async function tuileAltitude(z, x, y){
+    const cle = z+'/'+x+'/'+y;
+    if(!tuilesAlt.has(cle)){
+      tuilesAlt.set(cle, chargerImage('https://s3.amazonaws.com/elevation-tiles-prod/terrarium/'+cle+'.png').then(im=>{
+        if(!im) return null;
+        const cv = document.createElement('canvas'); cv.width = 256; cv.height = 256;
+        const cx = cv.getContext('2d'); cx.drawImage(im, 0, 0);
+        return cx.getImageData(0, 0, 256, 256).data;
+      }));
+    }
+    return tuilesAlt.get(cle);
+  }
+  async function altitudesLeLong(pts, nb){
+    // \u00e9chantillonne nb points le long de la polyligne pts=[{lat,lon}...]
+    const seg = [0];
+    const kx = 111.32*Math.cos(pts[0].lat*Math.PI/180), ky = 110.57;
+    for(let i=1; i<pts.length; i++)
+      seg.push(seg[i-1] + Math.hypot((pts[i].lat-pts[i-1].lat)*ky, (pts[i].lon-pts[i-1].lon)*kx));
+    const total = seg[seg.length-1];
+    const lats = [], lons = [], dists = [];
+    for(let k=0; k<nb; k++){
+      const d = total*k/(nb-1);
+      let i = 1; while(i < seg.length-1 && seg[i] < d) i++;
+      const t = (d-seg[i-1]) / Math.max(1e-9, seg[i]-seg[i-1]);
+      lats.push(pts[i-1].lat + (pts[i].lat-pts[i-1].lat)*t);
+      lons.push(pts[i-1].lon + (pts[i].lon-pts[i-1].lon)*t);
+      dists.push(d);
+    }
+    const z = total > 40 ? 11 : (total > 12 ? 12 : 13);
+    const besoins = new Map();
+    for(let k=0; k<nb; k++) besoins.set(tuileX(lons[k], z)+'_'+tuileY(lats[k], z), [tuileX(lons[k], z), tuileY(lats[k], z)]);
+    await Promise.all(Array.from(besoins.values()).map(([x,y])=>tuileAltitude(z, x, y)));
+    const alts = [];
+    for(let k=0; k<nb; k++){
+      const xT = tuileX(lons[k], z), yT = tuileY(lats[k], z);
+      const d = await tuileAltitude(z, xT, yT);
+      if(!d){ alts.push(0); continue; }
+      const px = Math.min(255, Math.floor(((lons[k]+180)/360*Math.pow(2,z) - xT)*256));
+      const lr = lats[k]*Math.PI/180;
+      const py = Math.min(255, Math.floor(((1 - Math.log(Math.tan(lr)+1/Math.cos(lr))/Math.PI)/2*Math.pow(2,z) - yT)*256));
+      const i = (py*256 + px)*4;
+      alts.push(d[i]*256 + d[i+1] + d[i+2]/256 - 32768);
+    }
+    return { dists, alts, total };
+  }
+  function dessinerProfil(titre, p){
+    const cv = document.getElementById('profil-canvas');
+    const cx = cv.getContext('2d');
+    const L = 60, R = 12, H = 22, B = 26, W = cv.width, Hc = cv.height;
+    const aMin = Math.min.apply(null, p.alts), aMax = Math.max.apply(null, p.alts);
+    const marge = Math.max(20, (aMax-aMin)*0.08);
+    const y0 = aMin - marge, y1 = aMax + marge;
+    const X = (d)=> L + (W-L-R)*d/p.total;
+    const Y = (a)=> Hc-B - (Hc-B-H)*(a-y0)/(y1-y0);
+    const rendre = (survol)=>{
+      cx.clearRect(0, 0, W, Hc);
+      cx.fillStyle = '#f8f7f2'; cx.fillRect(0, 0, W, Hc);
+      // aire + ligne
+      cx.beginPath(); cx.moveTo(X(0), Y(p.alts[0]));
+      for(let k=1; k<p.alts.length; k++) cx.lineTo(X(p.dists[k]), Y(p.alts[k]));
+      cx.lineTo(X(p.total), Hc-B); cx.lineTo(X(0), Hc-B); cx.closePath();
+      cx.fillStyle = 'rgba(147,197,253,.55)'; cx.fill();
+      cx.beginPath(); cx.moveTo(X(0), Y(p.alts[0]));
+      for(let k=1; k<p.alts.length; k++) cx.lineTo(X(p.dists[k]), Y(p.alts[k]));
+      cx.strokeStyle = '#1d4ed8'; cx.lineWidth = 2; cx.stroke();
+      // axes
+      cx.strokeStyle = '#9a9483'; cx.lineWidth = 1;
+      cx.strokeRect(L, H, W-L-R, Hc-B-H);
+      cx.fillStyle = '#57534a'; cx.font = '10.5px system-ui';
+      [y0+marge, (y0+y1)/2, y1-marge].forEach(a=>{
+        cx.fillText(Math.round(a)+' m', 6, Y(a)+3);
+        cx.strokeStyle = 'rgba(0,0,0,.07)';
+        cx.beginPath(); cx.moveTo(L, Y(a)); cx.lineTo(W-R, Y(a)); cx.stroke();
+      });
+      const pas = p.total > 60 ? 20 : (p.total > 24 ? 10 : (p.total > 8 ? 5 : 1));
+      for(let d=0; d<=p.total; d+=pas) cx.fillText(d+' km', X(d)-8, Hc-8);
+      if(survol != null){
+        cx.strokeStyle = '#0e7490'; cx.lineWidth = 1;
+        cx.beginPath(); cx.moveTo(X(p.dists[survol]), H); cx.lineTo(X(p.dists[survol]), Hc-B); cx.stroke();
+        cx.fillStyle = '#0e7490';
+        cx.beginPath(); cx.arc(X(p.dists[survol]), Y(p.alts[survol]), 3.5, 0, 7); cx.fill();
+      }
+    };
+    rendre(null);
+    // stats : D+ / D- liss\u00e9s sur 3 \u00e9chantillons
+    let dPlus = 0, dMoins = 0;
+    for(let k=3; k<p.alts.length; k+=3){
+      const dz = p.alts[k] - p.alts[k-3];
+      if(dz > 0) dPlus += dz; else dMoins -= dz;
+    }
+    document.getElementById('profil-titre').textContent = titre;
+    document.getElementById('profil-stats').textContent =
+      p.total.toFixed(1)+' km \u00b7 '+Math.round(aMin)+' \u2192 '+Math.round(aMax)+' m \u00b7 D+ '+Math.round(dPlus)+' m \u00b7 D\u2212 '+Math.round(dMoins)+' m';
+    document.getElementById('profil-fond').style.display = 'block';
+    cv.onmousemove = (e)=>{
+      const r = cv.getBoundingClientRect();
+      const d = (e.clientX - r.left - L) / (W-L-R) * p.total;
+      let k = 0; while(k < p.dists.length-1 && p.dists[k] < d) k++;
+      rendre(k);
+      document.getElementById('profil-survol').textContent =
+        p.dists[k].toFixed(1)+' km \u00b7 '+Math.round(p.alts[k])+' m';
+    };
+    cv.onmouseleave = ()=>{ rendre(null); document.getElementById('profil-survol').textContent = ''; };
+  }
+  document.getElementById('profil-fermer').addEventListener('click', ()=>{
+    document.getElementById('profil-fond').style.display = 'none';
+    PROFIL.marqueurs.forEach(mq=>map.removeLayer(mq)); PROFIL.marqueurs = [];
+  });
+  document.getElementById('btn-profil').addEventListener('click', ()=>{
+    ETAT3D.visee = 0;
+    PROFIL.marqueurs.forEach(mq=>map.removeLayer(mq)); PROFIL.marqueurs = [];
+    PROFIL.visee = 1; PROFIL.a = null;
+    afficherInfo('📈 1er clic = d\u00e9part du profil \u00b7 2e clic = arriv\u00e9e', 6000);
+  });
+  map.on('click', async (ev)=>{
+    if(!PROFIL.visee) return;
+    const mq = L.marker(ev.latlng, { keyboard:false, icon: L.divIcon({className:'vise3d', html:'📈', iconSize:null}) }).addTo(map);
+    PROFIL.marqueurs.push(mq);
+    if(PROFIL.visee === 1){ PROFIL.a = {lat:ev.latlng.lat, lon:ev.latlng.lng}; PROFIL.visee = 2; return; }
+    PROFIL.visee = 0;
+    const bPt = {lat:ev.latlng.lat, lon:ev.latlng.lng};
+    afficherInfo('📈 Calcul du profil\u2026', 0);
+    try{
+      const p = await altitudesLeLong([PROFIL.a, bPt], 240);
+      cacherInfo();
+      dessinerProfil('Profil altim\u00e9trique (2 points)', p);
+    }catch(e){ cacherInfo(); afficherInfo('📈 Tuiles d\u2019altitude inaccessibles', 5000); }
+  });
+  document.getElementById('btn-profil-gpx').addEventListener('click', async ()=>{
+    const tGpx = traces.slice().reverse().find(t=>t.gpx && t.layerObj && t.layerObj.getLatLngs);
+    if(!tGpx){ afficherInfo('📈 Aucune trace GPX \u2014 importez-en une via 🧰 Actions \u2192 import GPX', 5500); return; }
+    let ll = tGpx.layerObj.getLatLngs();
+    while(Array.isArray(ll[0])) ll = ll.flat();
+    const pts = ll.map(q=>({lat:q.lat, lon:q.lng}));
+    if(pts.length < 2){ afficherInfo('📈 Trace trop courte', 4000); return; }
+    afficherInfo('📈 Calcul du profil de la trace ('+pts.length+' points)\u2026', 0);
+    try{
+      const p = await altitudesLeLong(pts, 240);
+      cacherInfo();
+      dessinerProfil('Profil de la trace GPX', p);
+    }catch(e){ cacherInfo(); afficherInfo('📈 Tuiles d\u2019altitude inaccessibles', 5000); }
   });
 
   // ---------- 🏠 Logements menacés par la montée des eaux (classes par département) ----------
@@ -5743,6 +6355,33 @@
   });
 
   // ================= Export image PNG =================
+  const FICHE = { demande:false };
+  function ouvrirFiche(url){
+    const w = window.open('', '_blank');
+    if(!w){ afficherInfo('🖨 Fen\u00eatre bloqu\u00e9e \u2014 autorisez les popups pour la fiche A4', 6000); return; }
+    const leg = document.getElementById('legende-corps');
+    w.document.write('<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>'+TITRE_BASE.replace(/</g,'&lt;')+'</title>'
+      +'<style>@page{size:A4;margin:12mm} body{font:12px system-ui;color:#1f2937;margin:0}'
+      +'h1{font-size:16px;margin:0 0 2px} .date{color:#6b7280;font-size:11px;margin-bottom:8px}'
+      +'img{width:100%;border:1px solid #d1d5db;border-radius:4px}'
+      +'.leg{columns:2;gap:18px;margin-top:8px;font-size:11px} .leg .leg-ligne{break-inside:avoid;display:flex;gap:6px;align-items:center;margin:2px 0}'
+      +'.leg .leg-carre,.leg .leg-rond{width:11px;height:11px;display:inline-block;border-radius:2px;flex:none}'
+      +'.leg .leg-rond{border-radius:50%} .leg .leg-titre,.leg .leg-sous{font-weight:600;margin-top:5px}'
+      +'.src{margin-top:10px;padding-top:6px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:10px}</style></head><body>'
+      +'<h1>'+TITRE_BASE.replace(/</g,'&lt;')+'</h1>'
+      +'<div class="date">Fiche \u00e9dit\u00e9e le '+new Date().toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'})+'</div>'
+      +'<img src="'+url+'" alt="Carte">'
+      +'<div class="leg">'+(leg ? leg.innerHTML : '')+'</div>'
+      +'<div class="src">Sources : \u00a9 OpenStreetMap et contributeurs \u00b7 IGN / G\u00e9oplateforme (admin, forets, orthophotos, hydrographie) \u00b7 INSEE \u00b7 Cerema \u00b7 Copernicus EFFIS \u00b7 altitudes SRTM (AWS Terrain Tiles) \u00b7 min. Int\u00e9rieur / ANCT \u2014 MultiMaps, \u00e9dition g\u00e9ographie.</div>'
+      +'</body></html>');
+    w.document.close();
+    setTimeout(()=>{ try{ w.print(); }catch(e){} }, 450);
+  }
+  document.getElementById('btn-fiche').addEventListener('click', ()=>{
+    FICHE.demande = true;
+    afficherInfo('🖨 Composition de la fiche A4\u2026', 0);
+    document.getElementById('btn-image').click();
+  });
   document.getElementById('btn-image').addEventListener('click', ()=>{
     afficherInfo('🖼 Génération de l\u2019image…', 0);
     try{
@@ -5913,6 +6552,12 @@
         ctx.fillText(entree.legende, 32, y+14);
         y += 22;
       });
+      if(FICHE.demande){
+        FICHE.demande = false;
+        ouvrirFiche(canvas.toDataURL('image/png'));
+        cacherInfo();
+        return;
+      }
       canvas.toBlob((blob)=>{
         if(!blob){ afficherInfo('Export impossible dans ce navigateur'); return; }
         const a = document.createElement('a');
@@ -6208,13 +6853,34 @@
               VELO_NIVEAUX[t].libelle+' <small>('+({t1:'trait large',t2:'trait moyen',t3:'trait fin'})[t]+')</small>',
               'carre', 'Relev\u00e9 OpenStreetMap \u2014 la qualit\u00e9 d\u00e9pend du terrain r\u00e9el')).join(''));
     }
+    if(etatDensite.actif){
+      blocs.push('<div class="leg-sous">👥 Densit\u00e9 2023 <small>(hab/km\u00b2)</small></div>'
+        + ligneLegende('#ffffcc','moins de 40','carre','') + ligneLegende('#ffeda0','40 \u2013 80','carre','')
+        + ligneLegende('#feb24c','80 \u2013 150','carre','') + ligneLegende('#fd8d3c','150 \u2013 400','carre','')
+        + ligneLegende('#f03b20','400 \u2013 1000','carre','') + ligneLegende('#bd0026','plus de 1000','carre','Population INSEE 2023 \u00b7 aires calcul\u00e9es des contours officiels'));
+    }
+    if(etatProvinces.actif){
+      blocs.push(ligneLegende('#7c3aed', '\u269c Provinces d\u2019Ancien R\u00e9gime', 'carre',
+        'Une couleur par province, d\u00e9partements actuels comme approximation \u2014 survolez la carte pour les noms et dates de rattachement'));
+    }
+    if(etatBassins.actif){
+      blocs.push('<div class="leg-sous">💦 Bassins versants <small>(sch\u00e9matiques)</small></div>'
+        + ligneLegende('#7dd3fc','\u2192 la Manche','carre','')
+        + ligneLegende('#2563eb','\u2192 l\u2019Atlantique','carre','')
+        + ligneLegende('#14b8a6','\u2192 la M\u00e9diterran\u00e9e','carre','')
+        + ligneLegende('#8b5cf6','\u2192 la mer du Nord','carre','Lignes de partage simplifi\u00e9es (\u00b130 km) \u2014 sch\u00e9ma p\u00e9dagogique'));
+    }
+    if(etatGlaciers.actif){
+      blocs.push(ligneLegende('#bfe6f2', '\u2744 Glaciers <small>('+(etatGlaciers.nb||0)+' dans la vue)</small>', 'carre',
+        'Emprises OpenStreetMap \u2014 la r\u00e9alit\u00e9 recule plus vite que la carte'));
+    }
     if(etatFleuves.actif){
       blocs.push(ligneLegende('#2563eb', '💧 Fleuves, rivi\u00e8res & cours d\u2019eau', 'carre',
         'R\u00e9seau hydrographique IGN \u2014 le d\u00e9tail s\u2019affine avec le zoom'));
     }
     if(etatSmassifs.actif){
       const fams = RELIEF_FIN.familles;
-      blocs.push('<div class="leg-sous">Sous-massifs <small>('+RELIEF_FIN.massifs.length+' \u00b7 Alpes : trac\u00e9s d\u2019apr\u00e8s les cartes de r\u00e9f\u00e9rence, d\u00e9coup\u00e9s par le relief \u2014 ailleurs : d\u00e9limitation automatique, les vall\u00e9es formant fronti\u00e8res)</small></div>'
+      blocs.push('<div class="leg-sous">Sous-massifs <small>('+RELIEF_FIN.massifs.length+' \u00b7 Alpes : les 42 massifs g\u00e9ologiques officiels (CGET), trac\u00e9s d\u2019apr\u00e8s la carte de r\u00e9f\u00e9rence, d\u00e9coup\u00e9s par le relief \u2014 ailleurs : d\u00e9limitation automatique, les vall\u00e9es formant fronti\u00e8res)</small></div>'
         + Object.keys(fams).map(k=>ligneLegende(famCoul(k), fams[k][0], 'carre', '')).join(''));
     }
     if(etatVallees.actif){
