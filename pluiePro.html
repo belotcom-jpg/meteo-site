@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>PluiePro v3.1</title>
+<title>PluiePro v3.2</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -322,11 +322,26 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   #healthBtn{position:relative;background:#161616;border:1px solid #333;border-radius:10px;color:#ccc;font-size:17px;cursor:pointer;padding:0 11px;line-height:1;transition:background .15s}
   #healthBtn:hover{background:#222}
   #healthPip{position:absolute;top:2px;right:2px;width:9px;height:9px;border-radius:50%;background:#3ad07a;box-shadow:0 0 0 2px #161616;pointer-events:none}
+  /* ── Vérif modèles ── */
+  #verifPanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:10004;padding:8px}
+  #verifPanel.open{display:flex}
+  #verifCard{flex:1;display:flex;flex-direction:column;background:#0d0d0d;border:1px solid #2a2a2a;border-radius:12px;padding:10px;max-width:1100px;margin:0 auto;width:100%;min-height:0}
+  #vfInfo{flex:none;font-family:'Courier New',monospace;font-size:12.5px;color:#ccc;margin:2px 0 8px;line-height:1.5}
+  #vfScroll{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}
+  .vf-act{background:#16222e;border:1px solid #33455a;border-radius:8px;color:#a5c8e8;font-family:'Courier New',monospace;font-size:11px;font-weight:900;padding:4px 10px;cursor:pointer}
+  .vf-act:hover{background:#1b2b3b}
+  .vf-cw{position:relative;width:100%;margin-bottom:8px}
+  .vf-t{border-collapse:collapse;width:100%;min-width:720px;font-family:'Courier New',monospace}
+  #vfTable{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .vf-t th{position:sticky;top:0;background:#101820;color:#9fc0dd;font-size:11px;font-weight:900;padding:6px 8px;border-bottom:1px solid #223;text-align:center}
+  .vf-t td{padding:5px 8px;text-align:center;font-size:13px;font-weight:700;border-bottom:1px solid #151515}
+  .vf-t .vf-n{text-align:left;font-size:12px;color:#ddd;white-space:nowrap}
+  .vf-t .vf-syn td{background:#0e1a1a;border-top:1px solid #1f4444;border-bottom:1px solid #1f4444}
   /* ── Indicateur thermique France ── */
   #indicPanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:10004;padding:8px}
   #indicPanel.open{display:flex}
   #indicCard{flex:1;display:flex;flex-direction:column;background:#0d0d0d;border:1px solid #2a2a2a;border-radius:12px;padding:10px;max-width:1100px;margin:0 auto;width:100%;min-height:0}
-  .ind-modes{display:flex;gap:6px;margin-left:auto;margin-right:10px}
+  .ind-modes{display:flex;gap:6px;margin-left:auto;margin-right:10px;flex-wrap:wrap;justify-content:flex-end}
   .ind-modes button{background:#141c26;border:1px solid #33455a;border-radius:8px;color:#a5c8e8;font-family:'Courier New',monospace;font-size:11px;font-weight:900;padding:5px 10px;cursor:pointer}
   .ind-modes button.on{background:#2a1c10;border-color:#ff9d3c;color:#ff9d3c}
   #indicInfo{flex:none;font-family:'Courier New',monospace;font-size:13px;color:#ccc;margin:2px 0 8px}
@@ -1929,6 +1944,444 @@ async function _indFetchYear(){
   try{return await _indYrLoading;}finally{_indYrLoading=null;}
 }
 
+/* ══════════════════════════════════════════════════════════════
+   VÉRIF MODÈLES — compare les prévisions passées (Previous Runs
+   API : ce que chaque modèle annonçait à J-1/J-2/J-3/J-5) à
+   l'observé, sur la ville courante, fenêtre 35 jours.
+   Score la SYNTHÈSE (médiane pondérée) comme un modèle, et
+   calibre le P80 pluie (fréquence réelle de dépassement).
+   ══════════════════════════════════════════════════════════════ */
+let _VF_MODELS=null;                       /* résolu au 1er appel */
+let _vfWindow=35;                          /* 35 ou 92 jours */
+let _vfScope='city';                       /* 'city' = ville courante (23 modèles) · 'fr' = 30 stations (8 modèles longs) */
+let _vfLeadCap=7;                          /* rabaissé à 5 si l'API refuse previous_day6/7 (HTTP 400) */
+function _vfLeads(){const b=_vfScope==='fr'?[1,2,3,5]:[1,2,3,4,5,6,7];return b.filter(L=>L<=_vfLeadCap);}
+let _vfLoading=null,_vfMetric='tmax';
+function _vfDayAgg(hourly,varBase,lead){ /* {date:{tmax,tmin,rain}} depuis les tableaux horaires previous_dayL */
+  const t=hourly.time,out={};
+  const arr=hourly[varBase+'_previous_day'+lead];
+  if(!arr)return out;
+  for(let i=0;i<t.length;i++){
+    const dk=t[i].slice(0,10),v=arr[i];
+    if(v==null||!isFinite(v))continue;
+    if(!out[dk])out[dk]={max:-Infinity,min:Infinity,sum:0,n:0};
+    const o=out[dk];
+    if(v>o.max)o.max=v;
+    if(v<o.min)o.min=v;
+    o.sum+=v;o.n++;
+  }
+  Object.keys(out).forEach(dk=>{if(out[dk].n<20)delete out[dk];});   /* jours incomplets exclus */
+  return out;
+}
+function _vfMae(pairs){ /* [{p,o}] → {mae,bias,n} */
+  const v=pairs.filter(x=>x.p!=null&&x.o!=null&&isFinite(x.p)&&isFinite(x.o));
+  if(v.length<10)return null;
+  let s=0,b=0;
+  v.forEach(x=>{s+=Math.abs(x.p-x.o);b+=(x.p-x.o);});
+  return {mae:s/v.length,bias:b/v.length,n:v.length};
+}
+function _vfRainHit(pairs){ /* accord jour de pluie (seuil 0,5 mm) */
+  const v=pairs.filter(x=>x.p!=null&&x.o!=null);
+  if(v.length<10)return null;
+  let ok=0;
+  v.forEach(x=>{if((x.p>=0.5)===(x.o>=0.5))ok++;});
+  return ok/v.length;
+}
+function _vfCacheKey(){return 'pp_verif_v3_'+_vfScope+'_'+_vfWindow+(_vfScope==='fr'?'':('_'+(Math.round(_cityLat*20)/20)+'_'+(Math.round(_cityLon*20)/20)));}
+async function _vfFetch(){
+  try{const o=JSON.parse(localStorage.getItem(_vfCacheKey())||'null');if(o&&o.t&&(Date.now()-o.t)<(_vfScope==='fr'?12:6)*3600e3&&o.d)return o.d;}catch(e){}
+  if(_vfLoading)return _vfLoading;
+  const lat0=_cityLat,lon0=_cityLon;
+  _vfLoading=(async()=>{
+    if(!_VF_MODELS)_VF_MODELS=_SYN_MODELS.split(',');
+    const st=document.getElementById('vfStatus');
+    let LEADS=_vfLeads();
+    const fr=(_vfScope==='fr');
+    const MODELS=fr?_TMAP_SYN_MODELS.split(','):_VF_MODELS;
+    const LOCS=fr?_IND_ST.map(s=>({lat:s[1],lon:s[2]})):[{lat:lat0,lon:lon0}];
+    /* 1) vérité (daily, toutes les localisations en 1 requête) */
+    const uT='https://api.open-meteo.com/v1/forecast?latitude='+LOCS.map(l=>l.lat).join(',')+'&longitude='+LOCS.map(l=>l.lon).join(',')
+      +'&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&past_days='+_vfWindow+'&forecast_days=1&timezone=Europe%2FParis';
+    const rT=await _fetchTO(uT,20000);
+    if(!rT.ok)throw new Error('HTTP '+rT.status);
+    let jT=await rT.json();if(!Array.isArray(jT))jT=[jT];
+    if(jT.length!==LOCS.length)throw new Error('vérité incomplète');
+    const truth=jT.map(o=>{const m={};o.daily.time.forEach((dk,i)=>{m[dk]={tmax:o.daily.temperature_2m_max[i],tmin:o.daily.temperature_2m_min[i],rain:o.daily.precipitation_sum[i]};});return m;});
+    const todayKey=jT[0].daily.time[jT[0].daily.time.length-1];
+    /* 2) prévisions passées : par modèle (et par paquets de 10 stations en mode France) */
+    const mkHv=()=>{const a=[];LEADS.forEach(L=>{a.push('temperature_2m_previous_day'+L,'precipitation_previous_day'+L);});return a;};
+    let hv=mkHv();
+    const CH=fr?10:1;
+    const preds={};   /* preds[model][locIdx][lead][date]={tmax,tmin,rain} */
+    for(let mi=0;mi<MODELS.length;mi++){
+      const mo=MODELS[mi];
+      preds[mo]=new Array(LOCS.length);
+      let dead=false;
+      for(let s=0;s<LOCS.length&&!dead;s+=CH){
+        const seg=LOCS.slice(s,s+CH);
+        if(st){st.style.display='block';st.textContent='⏳ '+prettyModelName(mo)+' ('+(mi+1)+'/'+MODELS.length+')'+(fr?(' · stations '+(s+1)+'-'+(s+seg.length)):'')+'…';}
+        let ok=false;
+        for(let att=0;att<4&&!ok;att++){
+          const u='https://previous-runs-api.open-meteo.com/v1/forecast?latitude='+seg.map(l=>l.lat).join(',')+'&longitude='+seg.map(l=>l.lon).join(',')
+            +'&hourly='+hv.join(',')+'&models='+mo+'&past_days='+_vfWindow+'&forecast_days=1&timezone=Europe%2FParis';
+          try{
+            const r=await _fetchTO(u,30000);
+            if(r.status===429){await new Promise(res=>setTimeout(res,3000*(att+1)));continue;}
+            if(r.status===400&&LEADS.some(L=>L>5)){
+              /* l'API refuse previous_day6/7 → repli J-1/2/3/5, mémorisé pour la session */
+              _vfLeadCap=5;LEADS=LEADS.filter(L=>L<=5);hv=mkHv();
+              att--;continue;
+            }
+            if(!r.ok)throw new Error('HTTP '+r.status);
+            let j=await r.json();if(!Array.isArray(j))j=[j];
+            if(j.length!==seg.length)throw new Error('incomplet');
+            j.forEach((o,k)=>{
+              if(!(o&&o.hourly&&o.hourly.time))return;
+              const byLead={};
+              for(const L of LEADS){
+                const T=_vfDayAgg(o.hourly,'temperature_2m',L);
+                const P=_vfDayAgg(o.hourly,'precipitation',L);
+                const m={};
+                Object.keys(T).forEach(dk=>{if(dk<todayKey)m[dk]={tmax:T[dk].max,tmin:T[dk].min,rain:(P[dk]?Math.round(P[dk].sum*10)/10:null)};});
+                byLead[L]=m;
+              }
+              preds[mo][s+k]=byLead;
+            });
+            ok=true;
+          }catch(e){
+            if(att>=3){if(s===0)dead=true;ok=true;}
+            else await new Promise(res=>setTimeout(res,1500*(att+1)));
+          }
+        }
+        if(s+CH<LOCS.length)await new Promise(res=>setTimeout(res,fr?800:400));
+      }
+      if(dead)preds[mo]=null;
+      if(mi<MODELS.length-1)await new Promise(res=>setTimeout(res,400));
+    }
+    if(lat0!==_cityLat||lon0!==_cityLon)throw new Error('ville changée');
+    /* 3) SYNTHÈSE par (localisation, jour, échéance) */
+    for(const L of LEADS){
+      for(let li=0;li<LOCS.length;li++){
+        const dates=new Set();
+        MODELS.forEach(mo=>{const p=preds[mo]&&preds[mo][li]&&preds[mo][li][L];if(p)Object.keys(p).forEach(dk=>dates.add(dk));});
+        dates.forEach(dk=>{
+          const pT=[],pN=[],pR=[];
+          MODELS.forEach(mo=>{
+            const p=preds[mo]&&preds[mo][li]&&preds[mo][li][L]&&preds[mo][li][L][dk];
+            if(!p)return;
+            const wT=_modelWeight('temperature_2m_max_'+mo,L);
+            if(p.tmax!=null)pT.push({v:p.tmax,w:wT});
+            if(p.tmin!=null)pN.push({v:p.tmin,w:wT});
+            if(p.rain!=null)pR.push({v:p.rain,w:wT});
+          });
+          preds['SYNTH']=preds['SYNTH']||{};
+          preds['SYNTH'][li]=preds['SYNTH'][li]||{};
+          preds['SYNTH'][li][L]=preds['SYNTH'][li][L]||{};
+          preds['SYNTH'][li][L][dk]={tmax:pT.length>=3?_weightedMedian(pT):null,
+            tmin:pN.length>=3?_weightedMedian(pN):null,
+            rain:pR.length>=3?Math.round(_weightedMedian(pR)*10)/10:null,
+            rainP80:pR.length>=4?Math.round(_dvPct(pR.map(x=>x.v),80)*10)/10:null};
+        });
+      }
+    }
+    /* 4) scores : paires (localisation × jour) POOLÉES */
+    const rows=[];
+    const names=MODELS.filter(mo=>preds[mo]).concat(['SYNTH']);
+    for(const mo of names){
+      const row={model:mo,scores:{}};
+      for(const L of LEADS){
+        const mk=key=>{
+          const pairs=[];
+          for(let li=0;li<LOCS.length;li++){
+            const P=preds[mo]&&preds[mo][li]&&preds[mo][li][L];
+            if(!P)continue;
+            Object.keys(P).forEach(dk=>{pairs.push({p:P[dk][key],o:truth[li][dk]?truth[li][dk][key]:null});});
+          }
+          return pairs;
+        };
+        row.scores[L]={tmax:_vfMae(mk('tmax')),tmin:_vfMae(mk('tmin')),rain:_vfMae(mk('rain')),hit:_vfRainHit(mk('rain'))};
+      }
+      rows.push(row);
+    }
+    /* 5) calibrage P80 (J-2, poolé) */
+    let p80info=null;
+    {
+      const pp=[];
+      for(let li=0;li<LOCS.length;li++){
+        const S2=preds['SYNTH']&&preds['SYNTH'][li]&&preds['SYNTH'][li][2];
+        if(!S2)continue;
+        Object.keys(S2).forEach(dk=>{const p=S2[dk].rainP80,o=truth[li][dk]?truth[li][dk].rain:null;if(p!=null&&o!=null)pp.push({p,o});});
+      }
+      if(pp.length>=15){
+        const exceed=pp.filter(x=>x.o>x.p+0.05).length/pp.length;
+        p80info={exceed:Math.round(exceed*100),n:pp.length};
+      }
+    }
+    const effDays={};
+    LEADS.forEach(L=>{let mx=0;rows.forEach(r=>{const s=r.scores[L];['tmax','tmin','rain'].forEach(k=>{if(s[k]&&s[k].n>mx)mx=s[k].n;});});effDays[L]=mx;});
+    /* ── Poids vérifiés : facteurs par modèle/tranche + SYNTHÈSE en validation croisée ── */
+    const BUCK={b1:[1,2],b2:[3,4,5],b3:[6,7]};
+    const bOf=L=>L<=2?'b1':(L<=5?'b2':'b3');
+    const pairsOf=(mo,L,filter)=>{ /* paires {p:{tmax,tmin},o,dk} filtrées par parité d'index de date */
+      const out=[];
+      for(let li=0;li<LOCS.length;li++){
+        const P=preds[mo]&&preds[mo][li]&&preds[mo][li][L];
+        if(!P)continue;
+        const ks=Object.keys(P).sort();
+        ks.forEach((dk,ix)=>{
+          if(filter&&!filter(ix))return;
+          const o=truth[li][dk];
+          if(o)out.push({p:P[dk],o,li,dk});
+        });
+      }
+      return out;
+    };
+    const maeT=(list)=>{ /* MAE (tmax+tmin)/2 + n */
+      let s=0,n=0;
+      list.forEach(x=>{
+        if(x.p.tmax!=null&&x.o.tmax!=null){s+=Math.abs(x.p.tmax-x.o.tmax);n++;}
+        if(x.p.tmin!=null&&x.o.tmin!=null){s+=Math.abs(x.p.tmin-x.o.tmin);n++;}
+      });
+      return n?{mae:s/n,n}:null;
+    };
+    const factorsFrom=(filter)=>{ /* {model:{b1,b2,b3}} appris sur les paires filtrées */
+      const F={};
+      for(const b of Object.keys(BUCK)){
+        const Ls=BUCK[b].filter(L=>LEADS.includes(L));
+        if(!Ls.length)continue;
+        const per={};
+        MODELS.forEach(mo=>{
+          if(!preds[mo])return;
+          let all=[];
+          Ls.forEach(L=>{all=all.concat(pairsOf(mo,L,filter));});
+          const m=maeT(all);
+          if(m&&m.n>=10)per[mo]=m;
+        });
+        const maes=Object.values(per).map(x=>x.mae).sort((a,b2)=>a-b2);
+        if(maes.length<3)continue;
+        const ref=maes[Math.floor(maes.length/2)];
+        Object.keys(per).forEach(mo=>{
+          const raw=Math.pow(ref/Math.max(0.15,per[mo].mae),2);
+          const lam=per[mo].n/(per[mo].n+40);
+          const f=Math.max(0.4,Math.min(2.5,1+lam*(raw-1)));
+          F[mo]=F[mo]||{};F[mo][b]=Math.round(f*100)/100;
+        });
+      }
+      Object.keys(F).forEach(mo=>{if(F[mo].b2&&!F[mo].b3)F[mo].b3=F[mo].b2;if(F[mo].b1&&!F[mo].b2)F[mo].b2=F[mo].b1;});
+      return F;
+    };
+    const wSug=factorsFrom(null);
+    /* SYNTHÈSE (poids vérifiés) en VALIDATION CROISÉE : appris sur pairs, testé sur impairs, et inversement */
+    {
+      const rowC={model:'SYNTHCAL',scores:{}};
+      for(const L of LEADS){
+        const allPairs=[];
+        for(const parity of [0,1]){
+          const Ftr=factorsFrom(ix=>ix%2===parity);           /* appris sur une moitié */
+          const test=ix=>ix%2!==parity;                        /* testé sur l'autre */
+          for(let li=0;li<LOCS.length;li++){
+            const dates=new Set();
+            MODELS.forEach(mo=>{const p=preds[mo]&&preds[mo][li]&&preds[mo][li][L];if(p)Object.keys(p).sort().forEach((dk,ix)=>{if(test(ix))dates.add(dk);});});
+            dates.forEach(dk=>{
+              const pT=[],pN=[],pR=[];
+              MODELS.forEach(mo=>{
+                const p=preds[mo]&&preds[mo][li]&&preds[mo][li][L]&&preds[mo][li][L][dk];
+                if(!p)return;
+                const fk=(Ftr[mo]&&Ftr[mo][bOf(L)])||1;
+                const wT=_modelWeightBase('temperature_2m_max_'+mo,L)*fk;
+                if(p.tmax!=null)pT.push({v:p.tmax,w:wT});
+                if(p.tmin!=null)pN.push({v:p.tmin,w:wT});
+                if(p.rain!=null)pR.push({v:p.rain,w:wT});
+              });
+              if(pT.length>=3){
+                const o=truth[li][dk];
+                if(o)allPairs.push({tmax:{p:_weightedMedian(pT),o:o.tmax},tmin:{p:pN.length>=3?_weightedMedian(pN):null,o:o.tmin},rain:{p:pR.length>=3?Math.round(_weightedMedian(pR)*10)/10:null,o:o.rain}});
+              }
+            });
+          }
+        }
+        const mk=key=>allPairs.map(x=>({p:x[key].p,o:x[key].o}));
+        rowC.scores[L]={tmax:_vfMae(mk('tmax')),tmin:_vfMae(mk('tmin')),rain:_vfMae(mk('rain')),hit:_vfRainHit(mk('rain'))};
+      }
+      rows.push(rowC);
+    }
+    _vfGlobalIndex(rows,LEADS);
+    const d={rows,p80info,city:fr?'France (30 stations)':(cityName||''),window:_vfWindow,effDays,leads:LEADS,scope:_vfScope,wSug,wActive:!!_wCalGet()};
+    try{localStorage.setItem(_vfCacheKey(),JSON.stringify({t:Date.now(),d}));}catch(e){}
+    return d;
+  })();
+  try{return await _vfLoading;}finally{_vfLoading=null;}
+}
+function _vfGlobalIndex(rows,LEADS){
+  /* rang percentile (0 = meilleur) par case métrique×échéance, moyenné avec poids :
+     T°max 0.2 + T°min 0.2 + pluie 0.4 + jours✓ 0.2 ; échéances J-1..J-5 : 1 / 1 / 0.8 / 0.6 */
+  const WM={tmax:0.2,tmin:0.2,rain:0.4,hit:0.2};
+  const WL={1:1,2:1,3:0.8,4:0.7,5:0.6,6:0.5,7:0.4};
+  const cellVal=(r,L,m)=>{const s=r.scores[L];if(!s)return null;
+    if(m==='hit')return s.hit!=null?(1-s.hit):null;      /* plus petit = mieux, comme les MAE */
+    return s[m]?s[m].mae:null;};
+  rows.forEach(r=>{r._gs=0;r._gw=0;});
+  for(const L of LEADS)for(const m of Object.keys(WM)){
+    const pool=rows.map(r=>({r,v:cellVal(r,L,m)})).filter(x=>x.v!=null);
+    if(pool.length<3)continue;
+    const sorted=[...pool].sort((a,b)=>a.v-b.v);
+    pool.forEach(x=>{
+      const rk=sorted.findIndex(y=>y.v>=x.v)/(sorted.length-1||1);
+      const w=WM[m]*WL[L];
+      x.r._gs+=(1-rk)*w;x.r._gw+=w;
+    });
+  }
+  rows.forEach(r=>{r.gi=r._gw?Math.round(100*r._gs/r._gw):null;delete r._gs;delete r._gw;});
+}
+function closeVerif(){const p=document.getElementById('verifPanel');if(p)p.classList.remove('open');}
+function _vfCell(s,metric){
+  if(!s||!s[metric]===undefined)return '<td>·</td>';
+  if(metric==='hit'){
+    const v=s.hit;
+    if(v==null)return '<td>·</td>';
+    const c=v>=0.85?'#52e88f':v>=0.75?'#ffd800':'#ff7040';
+    return '<td style="color:'+c+'">'+Math.round(v*100)+'%</td>';
+  }
+  const m=s[metric];
+  if(!m)return '<td>·</td>';
+  const lim=metric==='rain'?[1.2,2.5]:[1.2,2.2];
+  const c=m.mae<=lim[0]?'#52e88f':m.mae<=lim[1]?'#ffd800':'#ff7040';
+  return '<td style="color:'+c+'" title="biais '+(m.bias>=0?'+':'')+m.bias.toFixed(1)+' · n='+m.n+'">'+m.mae.toFixed(1)+'</td>';
+}
+let _vfCharts={bar:null,line:null};
+const _VF_PAL=['#7ff','#ff9d3c','#52e88f','#ffd800','#ff7040','#c792ea','#7fa0ff','#f07178'];
+function _vfRender(d){
+  const host=document.getElementById('vfTable');
+  if(!host)return;
+  const metric=_vfMetric;
+  const rows=[...d.rows].sort((a,b)=>(b.gi||-1)-(a.gi||-1));   /* CLASSEMENT par indice global */
+  /* — tableau — */
+  const LEADS=d.leads||[1,2,3,5];
+  let html='<table class="vf-t"><tr><th>#</th><th>Modèle</th><th>Indice</th>'+LEADS.map(L=>'<th>J-'+L+'</th>').join('')+'</tr>';
+  rows.forEach((r,k)=>{
+    const med=k===0?'🥇':k===1?'🥈':k===2?'🥉':String(k+1);
+    const nm=r.model==='SYNTH'?'<b style="color:#7ff">★ SYNTHÈSE (poids actifs)</b>':(r.model==='SYNTHCAL'?'<b style="color:#ffd800">★ SYNTHÈSE (poids vérifiés · VC)</b>':prettyModelName(r.model));
+    const gic=r.gi==null?'#666':(r.gi>=75?'#52e88f':r.gi>=55?'#ffd800':'#ff7040');
+    html+='<tr'+((r.model==='SYNTH'||r.model==='SYNTHCAL')?' class="vf-syn"':'')+'><td>'+med+'</td><td class="vf-n">'+nm+'</td><td style="color:'+gic+';font-weight:900">'+(r.gi!=null?r.gi:'·')+'</td>'+LEADS.map(L=>_vfCell(r.scores[L],metric)).join('')+'</tr>';
+  });
+  html+='</table>';
+  host.innerHTML=html;
+  /* — barres de l'indice global — */
+  const bc=document.getElementById('vfBar');
+  if(bc){
+    if(_vfCharts.bar){_vfCharts.bar.destroy();_vfCharts.bar=null;}
+    const rr=rows.filter(r=>r.gi!=null);
+    bc.parentElement.style.height=Math.max(140,rr.length*16+40)+'px';
+    _vfCharts.bar=new Chart(bc.getContext('2d'),{type:'bar',
+      data:{labels:rr.map(r=>r.model==='SYNTH'?'★ SYNTHÈSE':(r.model==='SYNTHCAL'?'★ SYNTH. vérifiée':prettyModelName(r.model))),
+        datasets:[{data:rr.map(r=>r.gi),backgroundColor:rr.map(r=>r.model==='SYNTH'?'#00e0e0':(r.model==='SYNTHCAL'?'#ffd800':(r.gi>=75?'#3da85f':r.gi>=55?'#c0a000':'#c05030'))),borderWidth:0,barThickness:9}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,animation:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' indice '+c.parsed.x+'/100'}}},
+        scales:{x:{min:0,max:100,ticks:{color:'#888',font:{family:'Courier New',size:10}},grid:{color:'#181818'}},
+                y:{ticks:{color:'#bbb',font:{family:'Courier New',size:10},autoSkip:false},grid:{display:false}}}}});
+  }
+  /* — courbes MAE par échéance (SYNTHÈSE + top 5) — */
+  const lc=document.getElementById('vfLine');
+  if(lc){
+    if(_vfCharts.line){_vfCharts.line.destroy();_vfCharts.line=null;}
+    const top=rows.filter(r=>r.model!=='SYNTH'&&r.model!=='SYNTHCAL').slice(0,4);
+    const calR=rows.find(r=>r.model==='SYNTHCAL');
+    const synR=rows.find(r=>r.model==='SYNTH');
+    const sel=(synR?[synR]:[]).concat(calR?[calR]:[]).concat(top);
+    const val=(r,L)=>{const s=r.scores[L];if(!s)return null;if(metric==='hit')return s.hit!=null?Math.round((1-s.hit)*100):null;return s[metric]?Math.round(s[metric].mae*100)/100:null;};
+    _vfCharts.line=new Chart(lc.getContext('2d'),{type:'line',
+      data:{labels:LEADS.map(L=>'J-'+L),
+        datasets:sel.map((r,k)=>({label:r.model==='SYNTH'?'★ SYNTHÈSE':(r.model==='SYNTHCAL'?'★ SYNTH. vérifiée':prettyModelName(r.model)),
+          data:LEADS.map(L=>val(r,L)),
+          borderColor:r.model==='SYNTHCAL'?'#ffd800':_VF_PAL[k%_VF_PAL.length],borderWidth:(r.model==='SYNTH'||r.model==='SYNTHCAL')?3:1.6,borderDash:r.model==='SYNTHCAL'?[6,4]:undefined,
+          pointRadius:3,tension:0.2,spanGaps:true}))},
+      options:{responsive:true,maintainAspectRatio:false,animation:false,
+        plugins:{legend:{labels:{color:'#ccc',font:{family:'Courier New',size:10},boxWidth:14}},
+          tooltip:{callbacks:{label:c=>' '+c.dataset.label+' : '+c.parsed.y+(metric==='hit'?' % err.':(metric==='rain'?' mm':'°'))}}},
+        scales:{x:{ticks:{color:'#aaa',font:{family:'Courier New',size:11}},grid:{color:'#181818'}},
+                y:{beginAtZero:true,ticks:{color:'#ccc',font:{family:'Courier New',size:10}},grid:{color:'#181818'}}}}});
+  }
+  const info=document.getElementById('vfInfo');
+  if(info){
+    const best=rows[0];
+    const eff=LEADS.map(L=>'J-'+L+' : '+(d.effDays&&d.effDays[L]||0)+' j').join(' · ');
+    let msg='Classement par <b>indice global /100</b> (T° 40 % · pluie 40 % · jours ✓ 20 %, échéances pondérées) — fenêtre demandée '+d.window+' j, <b>jours effectifs</b> '+eff+' — '+(d.city||'ville courante')+'.';
+    if(best)msg+='<br>🥇 <b>'+(best.model==='SYNTH'?'★ SYNTHÈSE':prettyModelName(best.model))+'</b> ('+best.gi+'/100).';
+    if(d.p80info)msg+=' Calibrage P80 pluie (J-2) : dépassé <b>'+d.p80info.exceed+'%</b> du temps (attendu ~20 %'+(Math.abs(d.p80info.exceed-20)<=7?' — ✓ bien calibré':d.p80info.exceed>20?' — sous-estime, viser P'+Math.min(95,80+Math.round((d.p80info.exceed-20)/2)*5):' — surestime, P'+Math.max(60,80-Math.round((20-d.p80info.exceed)/2)*5)+' suffirait')+', n='+d.p80info.n+').';
+    /* comparaison synthèses + application des poids */
+    const sA=rows.find(r=>r.model==='SYNTH'),sC=rows.find(r=>r.model==='SYNTHCAL');
+    if(sA&&sC&&sA.scores[2]&&sC.scores[2]&&sA.scores[2].tmax&&sC.scores[2].tmax){
+      const a=sA.scores[2].tmax.mae,c=sC.scores[2].tmax.mae;
+      const g=Math.round((a-c)/a*1000)/10;
+      msg+='<br>Poids vérifiés (validation croisée, J-2 T°max) : <b>'+c.toFixed(2)+'°</b> vs actifs '+a.toFixed(2)+'° → '+(g>0?('<b style="color:#52e88f">−'+g+'%</b> d\'erreur'):('<b style="color:#ff7040">+'+(-g)+'%</b> (n\'appliquez pas)'));
+    }
+    const wActive=!!_wCalGet();   /* état LIVE, jamais celui figé dans le cache d'analyse */
+    msg+='<br>'+(wActive?'<b style="color:#ffd800">Poids vérifiés ACTIFS</b> dans toute l\'appli · <button class="vf-act" onclick="vfClearW()">× Revenir aux poids manuels</button>':'<button class="vf-act" onclick="vfApplyW()">✔ Appliquer les poids vérifiés à la synthèse</button>')+' <small style="color:#666">(réversible, expire en 30 j, vide les caches concernés)</small>';
+    info.innerHTML=msg;
+  }
+}
+function vfMetric(m){_vfMetric=m;['tmax','tmin','rain','hit'].forEach(k=>{const b=document.getElementById('vfM_'+k);if(b)b.classList.toggle('on',k===m);});const c=window._vfLast;if(c)_vfRender(c);}
+function _vfCachePurge(){
+  try{
+    ['pp_tmap_syn_v3','pp_indic_v5','pp_indicyr_v2'].forEach(k=>localStorage.removeItem(k));
+    /* + caches d'analyse (la ligne ★ SYNTHÈSE y est figée avec les poids de l'époque) */
+    const rm=[];
+    for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('pp_verif_')===0)rm.push(k);}
+    rm.forEach(k=>localStorage.removeItem(k));
+  }catch(e){}
+}
+function vfApplyW(){
+  const d=window._vfLast;
+  if(!d||!d.wSug){return;}
+  try{localStorage.setItem('pp_wcal_v1',JSON.stringify({t:Date.now(),f:d.wSug,src:d.city+' · '+d.window+' j'}));}catch(e){}
+  _wCal=undefined;
+  _vfCachePurge();
+  window._vfLast=null;
+  openVerif();          /* re-vérification : la ligne « poids actifs » reflète les NOUVEAUX poids */
+}
+function vfClearW(){
+  try{localStorage.removeItem('pp_wcal_v1');}catch(e){}
+  _wCal=undefined;
+  _vfCachePurge();
+  window._vfLast=null;
+  openVerif();
+}
+function vfRefresh(){
+  try{localStorage.removeItem(_vfCacheKey());}catch(e){}
+  window._vfLast=null;
+  openVerif();
+}
+function vfScope(s){
+  _vfScope=s;
+  const bc=document.getElementById('vfSc_city'),bf=document.getElementById('vfSc_fr');
+  if(bc)bc.classList.toggle('on',s==='city');
+  if(bf)bf.classList.toggle('on',s==='fr');
+  window._vfLast=null;
+  openVerif();
+}
+function vfWindow(w){
+  _vfWindow=w;
+  const b35=document.getElementById('vfW35'),b92=document.getElementById('vfW92');
+  if(b35)b35.classList.toggle('on',w===35);
+  if(b92)b92.classList.toggle('on',w===92);
+  window._vfLast=null;
+  openVerif();
+}
+async function openVerif(){
+  const p=document.getElementById('verifPanel');if(p)p.classList.add('open');
+  const st=document.getElementById('vfStatus');
+  if(typeof _cityLat==='undefined'||_cityLat==null){if(st){st.style.display='block';st.textContent='Cherchez une ville d’abord.';}return;}
+  if(st){st.style.display='block';st.textContent='⏳ Vérification sur 35 jours…';}
+  try{
+    const d=await _vfFetch();
+    window._vfLast=d;
+    if(st)st.style.display='none';
+    _vfRender(d);
+  }catch(e){
+    if(st){st.style.display='block';st.textContent='✕ '+e.message;}
+  }
+}
+
 function closeIndic(){const p=document.getElementById('indicPanel');if(p)p.classList.remove('open');}
 function _indRenderYear(d,opts){
   opts=opts||{};const doy0=opts.doy0||0;
@@ -1938,7 +2391,7 @@ function _indRenderYear(d,opts){
   const isMob=window.innerWidth<700;
   const U=opts.unit||'°';
   const norm=opts.normArr
-    ?d.time.map((_,i)=>{const v=opts.normArr[(doy0+i)%opts.normArr.length];return (v!=null&&isFinite(v))?Math.round(v*10)/10:null;})
+    ?d.time.map((_,i)=>{const k=opts.doyArr?opts.doyArr[i]:((doy0+i)%opts.normArr.length);const v=opts.normArr[k%opts.normArr.length];return (v!=null&&isFinite(v))?Math.round(v*10)/10:null;})
     :d.time.map((_,i)=>Math.round(_IND_NORM(doy0+i)*10)/10);
   const HOT=opts.invert?'#3c5ae1':'#e3402a', COLD=opts.invert?'#e3402a':'#3c5ae1';
   const HOTF=opts.invert?'rgba(60,90,225,0.22)':'rgba(227,60,40,0.20)', COLDF=opts.invert?'rgba(227,60,40,0.20)':'rgba(60,90,225,0.22)';
@@ -1996,8 +2449,9 @@ function _indRenderYear(d,opts){
         x:{ticks:{color:'#aaa',font:{family:'Courier New',size:isMob?9:11},maxRotation:0,autoSkip:false,
           callback:function(v,idx){const t=d.time[idx];if(!t)return '';const dt=new Date(t+'T12:00');
             if(opts.ticks==='days'){const d1=dt.getDate()===1,lun=dt.getDay()===1&&dt.getDate()>=4&&dt.getDate()<=27;return (d1||lun)?(dt.getDate()+'/'+(dt.getMonth()+1)):'';}
+            if(opts.ticks==='years'){const ys=opts.yearStep||1;if(dt.getDate()<=((d.K||1))&&dt.getMonth()===0&&dt.getFullYear()%ys===0)return String(dt.getFullYear());if(ys===1&&dt.getDate()<=((d.K||1))&&dt.getMonth()%3===0&&dt.getMonth()!==0)return MN[dt.getMonth()];return '';}
             return dt.getDate()===1?MN[dt.getMonth()]:'';}},
-          grid:{color:(c)=>{const t=d.time[c.index];if(!t)return 'transparent';const dt=new Date(t+'T12:00');const on=(opts.ticks==='days')?(dt.getDay()===1):(dt.getDate()===1);return on?'#1c1c1c':'transparent';}}},
+          grid:{color:(c)=>{const t=d.time[c.index];if(!t)return 'transparent';const dt=new Date(t+'T12:00');const K=d.K||1;const on=(opts.ticks==='days')?(dt.getDay()===1):(opts.ticks==='years'?(dt.getDate()<=K&&(( (opts.yearStep||1)>1)?(dt.getMonth()===0):(dt.getMonth()%3===0))):(dt.getDate()===1));return on?'#1c1c1c':'transparent';}}},
         y:{min:_yMin,max:_yMax,ticks:{color:'#ccc',font:{family:'Courier New',size:isMob?10:12},callback:v=>v+U},grid:{color:'#181818'}}
       }},
     plugins:[fillPlug]
@@ -2020,7 +2474,8 @@ function _indRenderYear(d,opts){
    Rouge = plus sec que la référence · bleu = plus humide.
    Référence = moyenne 2016-2025 au même jour (archive, cache 7 j).
    ══════════════════════════════════════════════════════════════ */
-let _hydLoading=null,_hydNormLoading=null;
+let _hydLoading=null,_hydNormLoading=null,_hydSpan='2m';
+const _hydLongLoading={};
 function _hydRoll30(p,e){ /* série (P−ETP) cumulée 30 j ; null tant que la fenêtre est incomplète */
   const n=p.length,out=new Array(n).fill(null);
   let s=0,cnt=0;
@@ -2071,6 +2526,96 @@ async function _hydFetch(){
   })();
   try{return await _hydLoading;}finally{_hydLoading=null;}
 }
+const _HYD_SPANS={
+  '1y':{yr:1,K:1,ttl:7,chunk:30},
+  '3y':{yr:3,K:2,ttl:7,chunk:30},
+  '5y':{yr:5,K:3,ttl:7,chunk:30},
+  '10y':{yr:10,K:5,ttl:14,chunk:15},
+  '30y':{yr:30,K:10,ttl:30,chunk:10},
+  '50y':{yr:50,K:15,ttl:30,chunk:10}
+};
+function _hydArchCacheLoad(span){try{const o=JSON.parse(localStorage.getItem('pp_hydArch_'+span+'_v1')||'null');const cfg=_HYD_SPANS[span];if(o&&o.t&&cfg&&(Date.now()-o.t)<cfg.ttl*86400e3&&o.d&&o.d.time)return o.d;}catch(e){}return null;}
+function _hydArchCacheSave(span,d){try{localStorage.setItem('pp_hydArch_'+span+'_v1',JSON.stringify({t:Date.now(),d}));}catch(e){}}
+async function _hydArchFetch(span){
+  const cached=_hydArchCacheLoad(span);
+  if(cached)return cached;
+  const cfg=_HYD_SPANS[span];
+  const now=new Date();
+  const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const startNominal=new Date(now.getTime()-cfg.yr*365.25*86400e3);
+  const startFetch=new Date(startNominal.getTime()-31*86400e3);
+  const endArch=new Date(now.getTime()-6*86400e3);
+  const st=document.getElementById('indicStatus');
+  const per=new Array(_IND_ST.length);
+  const nCh=Math.ceil(_IND_ST.length/cfg.chunk);
+  let tA=null;
+  for(let s=0,ci=0;s<_IND_ST.length;s+=cfg.chunk,ci++){
+    const seg=_IND_ST.slice(s,s+cfg.chunk);
+    const u='https://archive-api.open-meteo.com/v1/archive?latitude='+seg.map(x=>x[1]).join(',')
+      +'&longitude='+seg.map(x=>x[2]).join(',')
+      +'&start_date='+fmt(startFetch)+'&end_date='+fmt(endArch)
+      +'&daily=precipitation_sum,et0_fao_evapotranspiration&timezone=Europe%2FParis';
+    let ok=false;
+    for(let att=0;att<5&&!ok;att++){
+      if(st){st.style.display='block';st.textContent='⏳ Archive '+cfg.yr+' an(s) : requête '+(ci+1)+'/'+nCh+(att?(' (nouvel essai '+att+')'):'')+'…';}
+      try{
+        const r=await _fetchTO(u,90000);
+        if(r.status===429){await new Promise(res=>setTimeout(res,4000*(att+1)));continue;}
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        let jj=await r.json();if(!Array.isArray(jj))jj=[jj];
+        if(jj.length!==seg.length)throw new Error('réponse incomplète');
+        if(!tA)tA=jj[0].daily.time;
+        jj.forEach((o,k)=>{per[s+k]=_hydRoll30(o.daily.precipitation_sum,o.daily.et0_fao_evapotranspiration);});
+        ok=true;
+      }catch(e){
+        if(att>=4)throw e;
+        await new Promise(res=>setTimeout(res,2500*(att+1)));
+      }
+    }
+    if(!ok)throw new Error('archive indisponible (quota ?)');
+    if(s+cfg.chunk<_IND_ST.length)await new Promise(res=>setTimeout(res,1500));
+  }
+  const vals=tA.map((_,di)=>{
+    const vs=per.map(a=>a&&a[di]).filter(v=>v!=null);
+    return vs.length>=24?Math.round(vs.reduce((a,b)=>a+b,0)/vs.length*10)/10:null;
+  });
+  /* on ne garde que depuis startNominal (l'amorce 31 j a servi à remplir la fenêtre) */
+  const cut=tA.findIndex(dk=>dk>=fmt(startNominal));
+  const d={time:tA.slice(Math.max(0,cut)),vals:vals.slice(Math.max(0,cut))};
+  _hydArchCacheSave(span,d);
+  return d;
+}
+function _hydDS(time,vals,K){ /* moyennes par blocs de K jours (date = milieu de bloc) */
+  if(K<=1)return {time:time.slice(),vals:vals.slice()};
+  const T=[],V=[];
+  for(let i=0;i<time.length;i+=K){
+    const tv=vals.slice(i,i+K).filter(v=>v!=null);
+    T.push(time[Math.min(time.length-1,i+Math.floor(K/2))]);
+    V.push(tv.length>=Math.ceil(K/2)?Math.round(tv.reduce((a,b)=>a+b,0)/tv.length*10)/10:null);
+  }
+  return {time:T,vals:V};
+}
+async function _hydLongFetch(span){
+  const cfg=_HYD_SPANS[span]||_HYD_SPANS['1y'];
+  const base=await _hydFetch();
+  const arch=await _hydArchFetch(span);
+  const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const now=new Date();
+  const todayKey=fmt(now),xStartKey=base.time[base.iX];
+  const archMap={};arch.time.forEach((dk,i)=>{if(arch.vals[i]!=null)archMap[dk]=arch.vals[i];});
+  const baseMap={};base.time.forEach((dk,i)=>{baseMap[dk]=base.vals[i];});
+  const time=[],vals=[];
+  const endD=new Date(base.time[base.time.length-1]+'T12:00');
+  for(let d=new Date(arch.time[0]+'T12:00');d<=endD;d=new Date(d.getTime()+86400e3)){
+    const dk=fmt(d);
+    time.push(dk);
+    vals.push(archMap[dk]!=null?archMap[dk]:(baseMap[dk]!=null?baseMap[dk]:null));
+  }
+  const ds=_hydDS(time,vals,cfg.K);
+  let i0=ds.time.findIndex(dk=>dk>=todayKey);if(i0<0)i0=ds.time.length-1;
+  let iX=ds.time.findIndex(dk=>dk>=xStartKey);if(iX<0)iX=ds.time.length-1;
+  return {time:ds.time,vals:ds.vals,i0,iX,xSrc:base.xSrc,K:cfg.K};
+}
 function _hydNormCacheLoad(){try{const o=JSON.parse(localStorage.getItem('pp_hydronorm_v1')||'null');if(o&&o.t&&(Date.now()-o.t)<7*86400e3&&o.a&&o.a.length===366)return o.a;}catch(e){}return null;}
 async function _hydNormFetch(){
   const cached=_hydNormCacheLoad();
@@ -2111,16 +2656,18 @@ async function _hydNormFetch(){
   try{return await _hydNormLoading;}finally{_hydNormLoading=null;}
 }
 function closeHydro(){const p=document.getElementById('indicPanel');if(p)p.classList.remove('open');}
-async function openHydro(){
+async function openHydro(span){
+  if(span)_hydSpan=span; else _hydSpan='2m';
   const p=document.getElementById('indicPanel');if(p)p.classList.add('open');
   _indMode='hyd';
   const _mm2={indM2:'2m',indM40:'y40',indMc:'y40c',indMyr:'yr'};
   Object.keys(_mm2).forEach(id=>{const b=document.getElementById(id);if(b)b.classList.remove('on');});
-  const bh=document.getElementById('indMhyd');if(bh)bh.classList.add('on');
+  const _sp=['2m','1y','3y','5y','10y','30y','50y'],_spId=['indMhyd','indMh1','indMh3','indMh5','indMh10','indMh30','indMh50'];
+  _spId.forEach((id,k)=>{const b=document.getElementById(id);if(b)b.classList.toggle('on',_sp[k]===_hydSpan);});
   const st=document.getElementById('indicStatus');
   if(st){st.style.display='block';st.textContent='⏳ Bilan hydrique 30 stations (P − ETP, 30 j glissants)…';}
   let d,norm=null;
-  try{d=await _hydFetch();}
+  try{d=(_hydSpan==='2m')?await _hydFetch():await _hydLongFetch(_hydSpan);}
   catch(e){if(st){st.textContent='✕ '+e.message;}return;}
   try{norm=await _hydNormFetch();}catch(e){}
   if(st)st.style.display='none';
@@ -2128,12 +2675,17 @@ async function openHydro(){
   let end=d.vals.length;while(end>0&&d.vals[end-1]==null)end--;
   const doy0=Math.round((new Date(d.time[a]+'T12:00')-new Date(+d.time[a].slice(0,4),0,1,12))/86400e3);
   const sub={time:d.time.slice(a,end),vals:d.vals.slice(a,end),i0:d.i0-a,iX:Math.max(0,d.iX-a),xSrc:d.xSrc};
-  _indRenderYear(sub,{doy0:doy0,ticks:'days',unit:' mm',invert:true,
+  const _tk=_hydSpan==='2m'?'days':(_hydSpan==='1y'?'months':'years');
+  const _LBL={'2m':'sur la fenêtre','1y':'sur 1 an','3y':'sur 3 ans','5y':'sur 5 ans','10y':'sur 10 ans','30y':'sur 30 ans','50y':'sur 50 ans'};
+  const _lb=_LBL[_hydSpan]||'sur la fenêtre';
+  const _ys=(_hydSpan==='30y')?2:((_hydSpan==='50y')?5:1);
+  const _doyArr=sub.time.map(dk=>{const dt=new Date(dk+'T12:00');return Math.round((dt-new Date(dt.getFullYear(),0,1,12))/86400e3)%366;});
+  _indRenderYear(sub,{doy0:doy0,ticks:_tk,unit:' mm',invert:true,yearStep:_ys,doyArr:_doyArr,
     normArr:norm||undefined,
     obsLabel:'Bilan P−ETP 30 j (2026)',
     normLabel:norm?'Référence 2016-2025':'(référence indisponible)',
     refLabel:'référence 2016-2025',
-    label:'sur la fenêtre'});
+    label:_lb});
   const ttl=document.querySelector('#indicPanel .tm-ttl');
   if(ttl)ttl.innerHTML='💧 Indicateur hydrique France';
   const nt=document.querySelector('#indicPanel .tm-note');
@@ -2143,7 +2695,7 @@ async function openHydro(){
 async function openIndic(mode){
   if(mode)_indMode=mode;
   const p=document.getElementById('indicPanel');if(p)p.classList.add('open');
-  const _mm={indM2:'2m',indM40:'y40',indMc:'y40c',indMyr:'yr',indMhyd:'hyd'};
+  const _mm={indM2:'2m',indM40:'y40',indMc:'y40c',indMyr:'yr',indMhyd:'hyd',indMh1:'h1',indMh3:'h3',indMh5:'h5',indMh10:'h10',indMh30:'h30',indMh50:'h50'};
   const _ttl=document.querySelector('#indicPanel .tm-ttl');
   if(_ttl)_ttl.innerHTML='🌡 Indicateur thermique France';
   const _nt=document.querySelector('#indicPanel .tm-note');
@@ -3793,7 +4345,14 @@ function _stdev(arr){
   return Math.sqrt(v.reduce((s,x)=>s+(x-m)*(x-m),0)/v.length);
 }
 /* Poids d'un modèle selon l'échéance (jour) : régionaux forts à court terme, globaux à long terme */
-function _modelWeight(key,day){
+let _wCal=undefined;   /* facteurs vérifiés : {model:{b1,b2,b3}} ou null */
+function _wCalGet(){
+  if(_wCal!==undefined)return _wCal;
+  _wCal=null;
+  try{const o=JSON.parse(localStorage.getItem('pp_wcal_v1')||'null');if(o&&o.t&&(Date.now()-o.t)<30*86400e3&&o.f)_wCal=o.f;}catch(e){}
+  return _wCal;
+}
+function _modelWeightBase(key,day){
   const k=key.toLowerCase();
   const isRegional=/arome|icon_d2|icon_eu|harmonie|meteoswiss|italia|knmi/.test(k);
   const isTopGlobal=/ifs|aifs|icon_seamless|icon_global/.test(k);
@@ -3801,6 +4360,17 @@ function _modelWeight(key,day){
   if(day<=3)return isRegional?1.5:(isTopGlobal?1.4:1);
   if(day<=6)return isRegional?0.7:(isTopGlobal?1.6:1.1);
   return isRegional?0.3:(isTopGlobal?1.7:1.2); /* J+7+ : globaux dominent */
+}
+function _modelWeight(key,day){
+  let w=_modelWeightBase(key,day);
+  const f=_wCalGet();
+  if(f){
+    const mo=key.replace(/^temperature_2m_(max|min)_/,'').replace(/^precipitation(_sum)?_/,'');
+    const b=day<=2?'b1':(day<=5?'b2':'b3');
+    const k=f[mo]&&f[mo][b];
+    if(k&&isFinite(k))w*=k;
+  }
+  return w;
 }
 /* Médiane pondérée : on duplique les valeurs selon le poids (×10 arrondi) puis médiane */
 function _weightedMedian(pairs){ /* pairs=[{v,w}] */
@@ -6729,6 +7299,34 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
     </div>
   </div>
 </div>
+<div id="verifPanel">
+  <div id="verifCard">
+    <div class="tm-head">
+      <div class="tm-ttl" style="color:#7ff">🔬 Vérif modèles — prévisions passées vs observé</div>
+      <div class="ind-modes">
+        <button id="vfM_tmax" class="on" onclick="vfMetric('tmax')">T°max</button>
+        <button id="vfM_tmin" onclick="vfMetric('tmin')">T°min</button>
+        <button id="vfM_rain" onclick="vfMetric('rain')">Pluie</button>
+        <button id="vfM_hit" onclick="vfMetric('hit')">Jours ✓</button>
+        <button id="vfW35" class="on" onclick="vfWindow(35)">35 j</button>
+        <button id="vfW92" onclick="vfWindow(92)">92 j</button>
+        <button id="vfSc_city" class="on" onclick="vfScope('city')">Ville</button>
+        <button id="vfSc_fr" onclick="vfScope('fr')">France 30 st.</button>
+        <button onclick="vfRefresh()" title="Relancer l'analyse (ignore le cache)">↻</button>
+      </div>
+      <button onclick="closeVerif()" aria-label="Fermer" class="hl-x">✕</button>
+    </div>
+    <div id="vfInfo"></div>
+    <div id="vfScroll">
+      <div class="vf-cw"><canvas id="vfBar"></canvas></div>
+      <div id="vfTable"></div>
+      <div class="vf-cw" style="height:240px;margin-top:10px"><canvas id="vfLine"></canvas></div>
+    </div>
+    <div class="tm-note">Ce que chaque modèle prévoyait (Previous Runs API) vs l'observé. <b>Ville</b> : 23 modèles, J-1→J-7, ville courante (cache 6 h). <b>France 30 st.</b> : 8 modèles longs, J-1/2/3/5, paires station×jour poolées sur les 30 stations de l'indicateur (~6 Mo, cache 12 h). MAE = erreur moyenne absolue (petit = bon) ; survol = biais. ★ SYNTHÈSE = notre médiane pondérée rejouée · « Jours ✓ » = accord pluie/sec (0,5 mm) · tableau défilable ↔.</div>
+    <div id="vfStatus" style="display:none"></div>
+  </div>
+</div>
+
 <div id="indicPanel">
   <div id="indicCard">
     <div class="tm-head">
@@ -6738,7 +7336,13 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
         <button id="indM40" onclick="openIndic('y40')">40 j</button>
         <button id="indMc" onclick="openIndic('y40c')">Cône</button>
         <button id="indMyr" onclick="openIndic('yr')">Année</button>
-        <button id="indMhyd" onclick="openHydro()">💧</button>
+        <button id="indMhyd" onclick="openHydro('2m')">💧</button>
+        <button id="indMh1" onclick="openHydro('1y')">1 a</button>
+        <button id="indMh3" onclick="openHydro('3y')">3 a</button>
+        <button id="indMh5" onclick="openHydro('5y')">5 a</button>
+        <button id="indMh10" onclick="openHydro('10y')">10 a</button>
+        <button id="indMh30" onclick="openHydro('30y')">30 a</button>
+        <button id="indMh50" onclick="openHydro('50y')">50 a</button>
       </div>
       <button onclick="closeIndic()" aria-label="Fermer" class="hl-x">✕</button>
     </div>
@@ -6788,6 +7392,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
     </div>
     <div class="hl-quick">
       <button style="color:#7fc4ff" onclick="closeHealth();openHydro()">💧 Indicateur hydrique <small>P−ETP 30 j vs 2016-2025</small></button>
+      <button style="color:#7ff" onclick="closeHealth();openVerif()">🔬 Vérif modèles <small>prévu vs observé · 35 j</small></button>
     </div>
     <div class="hl-sub">🩺 Santé des données</div>
     <div id="healthBody"></div>
