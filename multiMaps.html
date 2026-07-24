@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v2.1 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v2.2 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v2.1</title>
+<title>MultiMaps — géographie (collège & lycée) — v2.2</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -158,6 +158,12 @@
     white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.4);display:inline-block;transform:translate(-50%,-50%)}
   .hydro-forte{filter:saturate(2.6) contrast(1.35) brightness(0.88)}
   .vise3d{background:none;border:none;font-size:20px;transform:translate(-50%,-90%)}
+  .ville-meteo{background:none;border:none;white-space:nowrap;transform:translate(-50%,-50%);cursor:pointer}
+  .ville-meteo span{background:#0e7490;color:#fff;border-radius:9px;padding:1px 6px;font:700 11px system-ui;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+  .parc-etq{background:rgba(255,255,255,.82);border:1px solid rgba(0,0,0,.18);border-radius:5px;padding:0 3px;font:600 10.5px system-ui;white-space:nowrap;transform:translate(-50%,-50%)}
+  .pays-etq{background:rgba(255,255,255,.78);border:1px solid rgba(0,0,0,.15);border-radius:5px;padding:0 3px;font:600 10.5px system-ui;color:#3b3830;white-space:nowrap;transform:translate(-50%,-50%)}
+  .peuple-etq{background:none;border:none;font:700 11px system-ui;color:#7f1d1d;text-shadow:0 0 3px #fff,0 0 3px #fff;white-space:nowrap;transform:translate(-50%,-50%)}
+  .langue-etq{background:rgba(255,255,255,.85);border-radius:6px;padding:1px 5px;font:700 12px system-ui;white-space:nowrap;transform:translate(-50%,-50%)}
   .fleuve-etq{background:none;border:none;color:#1d4ed8;font-style:italic;font-weight:700;font-size:12px;
     white-space:nowrap;text-shadow:0 0 3px #fff,0 0 4px #fff,0 0 6px #fff;transform:translate(-50%,-50%)}
   body.mode-projo .fleuve-etq{font-size:15px}
@@ -581,6 +587,8 @@
     <button class="calque-ajout donnee" id="btn-fleuves-noms" title="Les noms des grands fleuves et rivières de France, posés le long de leur cours : Seine, Loire, Rhône, Garonne, Rhin, Meuse, Moselle, Saône, Dordogne, Durance, Isère…">🏷 Noms des grands fleuves</button>
     <button class="calque-ajout donnee" id="btn-devinettes" title="Le jeu du relief : l'app tire au sort un massif, un sommet culminant ou une grande vallée, et vous devez cliquer sur la carte où il se trouve. Cinq questions, tolérance selon la taille de la cible, score final — parfait en classe entière au vidéoprojecteur.">🎯 Devinettes relief (5 questions)</button>
     <button class="calque-ajout donnee" id="btn-glaciers" title="Les glaciers cartographiés dans OpenStreetMap, pour la zone affichée (zoom 8 minimum) : Mer de Glace, glaciers de la Vanoise, des Écrins… En bleu glacier — et le support parfait pour parler du recul glaciaire avec le widget Climat.">❄ Glaciers (OSM, vue)</button>
+    <label class="velo-filtre"><input type="checkbox" id="chk-smassifs-osm"> 🗺 Contour réel des massifs <small>(OSM, zoom 8 min.)</small>
+      <input type="color" id="coul-massifs-osm" value="#2563eb" title="Couleur de remplissage des contours réels" style="width:24px;height:18px;padding:0;border:1px solid var(--trait);border-radius:4px;cursor:pointer"></label>
     <button class="calque-ajout donnee" id="btn-smassifs" title="Le niveau fin du relief : 87 massifs — dont les 42 massifs géologiques officiels des Alpes (carte CGET : Genevois, Chambotte, Terres Froides, Chambaran, Arvan-Villards, Monges, Grand Coyer, Verdon, Haut Var, Ubaye…), tracés d'après la carte de référence et découpés par le relief, les vallées faisant frontière. Case « noms seulement » pour un affichage épuré — les massifs alpins (Chartreuse, Belledonne, Vercors, Vanoise, Écrins…), le Jura, les Vosges, le Massif central (Aubrac, Cantal, Cévennes…), les Pyrénées et la Corse. Le complément précis des grandes chaînes du widget ⛰ Montagnes.">🏔 Sous-massifs (Chartreuse, Belledonne…)</button>
     <label class="velo-filtre"><input type="checkbox" id="chk-smassifs-noms"> Noms seulement <small>(sans délimitation)</small></label>
     <button class="calque-ajout donnee" id="btn-vallees" title="51 vallées tracées le long de leur rivière réelle — sillon alpin complet (Grésivaudan + Combe de Savoie), Haute-Durance, Alpes, Pyrénées, Massif central, Vosges, Jura : Grésivaudan, Maurienne, Tarentaise, Oisans, Ubaye, Vésubie, vallée d'Aspe… Les axes de vie de la montagne, en bleu le long des rivières.">🏞 Vallées (Grésivaudan, Oisans…)</button>
@@ -623,7 +631,6 @@
   <div class="widget-corps"><button class="calque-ajout donnee" id="btn-lim-reg" title="Contours des 13 régions métropolitaines + outre-mer (Admin Express COG Carto, IGN) — trait épais">🗾 Limites des régions</button>
       <button class="calque-ajout donnee" id="btn-lim-dep" title="Contours des 101 départements (Admin Express COG Carto, IGN) — trait moyen">🗾 Limites des départements</button>
       <button class="calque-ajout donnee" id="btn-lim-com" title="Contours des communes visibles à l'écran (Admin Express COG Carto, IGN) — trait fin, zoomez au niveau départemental (9+)">🗾 Limites des communes</button>
-      <button class="calque-ajout donnee" id="btn-provinces" title="La France d'avant 1790 : les provinces d'Ancien Régime, reconstituées en coloriant les départements actuels selon leur province d'origine (approximation assumée — les limites provinciales ne suivaient pas exactement nos départements). Survolez : nom de la province et, le cas échéant, date de rattachement à la France (Savoie et Nice 1860, Corse 1768, Lorraine 1766, Alsace XVIIe, Comtat papal 1791…).">⚜ Provinces d'Ancien Régime (~1789)</button>
     </div>
 </div>
 
@@ -808,6 +815,137 @@
   </div>
 </div>
 
+<div class="widget" id="wg-feux" style="width:256px">
+  <div class="widget-tete">
+    <span class="widget-titre">🔥 Feux en cours</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
+  </div>
+  <div class="widget-corps">
+    <select id="feux-source" class="feux-annee" style="width:100%" title="La source est votre choix strict : aucune substitution automatique. Les deux services NASA GIBS ont des identifiants vérifiés ; les couches EFFIS suivent la convention officielle de nommage mais n'ont pas pu être testées — si l'une échoue, un message vous le dit et vous en choisissez une autre.">
+      <option value="gibs-viirs" selected>NASA GIBS — VIIRS 375 m (fin)</option>
+      <option value="gibs-modis">NASA GIBS — MODIS 1 km</option>
+      <option value="effis-viirs">EFFIS — points chauds VIIRS</option>
+      <option value="effis-modis">EFFIS — points chauds MODIS</option>
+      <option value="effis-fwi">EFFIS — danger d'incendie du jour (FWI)</option>
+    </select>
+    <select id="feux-jour" class="feux-annee" style="width:100%;margin-top:3px" title="Le jour observé. Les satellites passent plusieurs fois par jour, avec 2 à 3 h de délai : si rien n'apparaît aujourd'hui, essayez hier.">
+      <option value="0" selected>Aujourd'hui</option>
+      <option value="1">Hier</option>
+      <option value="2">Avant-hier</option>
+      <option value="3">Il y a 3 jours</option>
+    </select>
+    <button class="calque-ajout donnee" id="btn-feux-actifs" title="Affiche les points chauds détectés par les satellites : chaque point est une zone anormalement chaude vue depuis l'espace. Mise à jour 6 fois par jour, 2 à 3 h après le passage du satellite.">🔥 Afficher les feux détectés</button>
+    <div style="border-top:1px solid var(--trait);margin:6px 0 4px"></div>
+    <select id="cumul-periode" class="feux-annee" style="width:100%" title="La profondeur du cumul. Attention : les archives satellitaires ne remontent pas à l'infini — MODIS depuis 2000, VIIRS depuis 2012. Au-delà, la carte montre tout ce qui existe, pas davantage.">
+      <option value="0.5">Cumul : 6 derniers mois</option>
+      <option value="1" selected>Cumul : 1 an</option>
+      <option value="3">Cumul : 3 ans</option>
+      <option value="5">Cumul : 5 ans</option>
+      <option value="10">Cumul : 10 ans</option>
+      <option value="30">Cumul : 30 ans (tout l'archivé)</option>
+    </select>
+    <select id="cumul-syntaxe" class="feux-annee" style="width:100%;margin-top:3px" title="Comment la période est demandée au service EFFIS. « Liste d'années » utilise exactement la même écriture que le bouton 🔥 du widget Climat (année par année) : c'est le format le plus sûr. « Intervalle » est plus précis mais tous les serveurs ne l'acceptent pas. Si l'un ne donne rien, essayez l'autre.">
+      <option value="liste" selected>Période : liste d'années (sûr)</option>
+      <option value="intervalle">Période : intervalle début/fin (précis)</option>
+    </select>
+    <button class="calque-ajout donnee" id="btn-cumul-brule" title="Toutes les surfaces brûlées cartographiées sur la période choisie, superposées : la mémoire des incendies. Superbe sur le pourtour méditerranéen, les Landes et la Corse — et parlant quand on le croise avec les forêts menacées par le climat.">🟫 Cumul des surfaces brûlées</button>
+    <p class="sous" style="margin:4px 0 0">Points chauds satellitaires : ce ne sont pas des feux confirmés. Les nuages en cachent, et d'autres sources de chaleur (industrie, brûlages) peuvent être détectées. Pour les surfaces brûlées de l'année, voir 🔥 dans le widget Climat.</p>
+  </div>
+</div>
+
+<div class="widget" id="wg-meteo" style="width:254px">
+  <div class="widget-tete">
+    <span class="widget-titre">🌡 Météo</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
+  </div>
+  <div class="widget-corps">
+    <select id="meteo-quand" class="feux-annee" style="width:100%;margin-bottom:3px" title="Le moment prévu : maintenant (relevé), cet après-midi (15 h), cette nuit (3 h) ou demain après-midi. Les deux couches suivent votre choix.">
+      <option value="now" selected>⏱ Maintenant</option>
+      <option value="apm">☀ Cet après-midi (15 h)</option>
+      <option value="nuit">🌙 Cette nuit (3 h)</option>
+      <option value="demain">➡ Demain après-midi (15 h)</option>
+    </select>
+    <select id="meteo-couche" class="feux-annee" style="width:100%;margin-bottom:3px" title="Ce que la carte colorie : la température, la quantité de pluie attendue (en mm) ou le risque de pluie (en %).">
+      <option value="temp" selected>🌡 Carte : température</option>
+      <option value="mm">☔ Carte : quantité de pluie (mm)</option>
+      <option value="prob">💧 Carte : risque de pluie (%)</option>
+    </select>
+    <button class="calque-ajout donnee" id="btn-temp" title="La carte des températures de l'instant : une grille d'un demi-degré couvrant la France, interrogée auprès d'Open-Meteo, coloriée du bleu (froid) au rouge (chaud) et découpée sur les contours du pays. Le complément « temps qu'il fait » de vos couches climatiques.">🌡 Carte des températures (maintenant)</button>
+    <button class="calque-ajout donnee" id="btn-villes-meteo" title="Les 50 grandes villes avec leur température actuelle. Cliquez une ville : MultiMétéo s'ouvre sur ce point, avec tout le détail (modèles, heures, vigilance).">🏙 Villes : température &amp; clic vers MultiMétéo</button>
+    <div class="sous" style="margin:4px 0 2px">Fichier de MultiMétéo sur le site :</div>
+    <input type="text" id="url-meteo" value="pluiepro.html" spellcheck="false" title="Nom du fichier de votre application météo, sur le même site. Mémorisé." style="width:100%;font:11.5px system-ui;padding:2px 4px;border:1px solid var(--trait);border-radius:5px">
+    <p class="sous" style="margin:4px 0 0">Températures Open-Meteo (modèles météo publics), relevé de l'heure. Météo ≠ climat : à croiser avec 🌡 Canicules et 🔥 Feux.</p>
+  </div>
+</div>
+
+<div class="widget" id="wg-parcs" style="width:250px">
+  <div class="widget-tete">
+    <span class="widget-titre">🌲 Parcs naturels</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
+  </div>
+  <div class="widget-corps">
+    <button class="calque-ajout donnee" id="btn-pn" title="Les 11 parcs nationaux, du plus ancien (Vanoise et Port-Cros, 1963) au plus jeune (Forêts, 2019). Emprise approchée par un cercle : survolez pour l'année de création et la description.">🏞 Parcs nationaux (11)</button>
+    <button class="calque-ajout donnee" id="btn-pnr" title="Les parcs naturels régionaux : 58 embarqués, du premier (Scarpe-Escaut, 1968) aux plus récents (Ardenne, Corbières-Fenouillèdes, 2021). De nouveaux parcs sont classés régulièrement — la liste embarquée peut vieillir.">🌿 Parcs naturels régionaux (58)</button>
+    <label class="velo-filtre"><input type="checkbox" id="chk-parcs-osm"> 🗺 Contours réels <small>(OSM, zone affichée — zoom 8 min.)</small>
+      <input type="color" id="coul-parcs-osm" value="#2563eb" title="Couleur de remplissage des contours réels" style="width:24px;height:18px;padding:0;border:1px solid var(--trait);border-radius:4px;cursor:pointer"></label>
+    <label class="velo-filtre"><input type="checkbox" id="chk-parcs-noms" checked> Afficher les noms</label>
+    <select id="aller-parc" class="feux-annee" style="width:100%;margin-top:3px" title="Choisissez un parc : la carte s'y rend directement et allume la couche correspondante.">
+      <option value="">→ Aller à un parc…</option>
+    </select>
+  </div>
+</div>
+
+<div class="widget" id="wg-histoire" style="width:256px">
+  <div class="widget-tete">
+    <span class="widget-titre">🏛 Histoire</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
+  </div>
+  <div class="widget-corps">
+    <div class="sous" style="margin:0 0 3px">Quatre lectures du territoire, de l'Antiquité à aujourd'hui.</div>
+    <button class="calque-ajout donnee" id="btn-gaule" title="La Gaule des Romains : les grandes provinces (Narbonnaise, Aquitaine, Lyonnaise, Belgique, Germanie supérieure, Alpes, Corse), approchées en coloriant les départements actuels. Les limites antiques ne suivaient évidemment pas nos départements — c'est un repère, pas un calque.">🏛 Gaule romaine (provinces)</button>
+    <label class="velo-filtre"><input type="checkbox" id="chk-peuples"> ⚔ Peuples gaulois <small>(54 noms + capitale antique)</small></label>
+    <button class="calque-ajout donnee" id="btn-provinces" title="La France d'avant 1790 : les provinces d'Ancien Régime, reconstituées en coloriant les départements actuels selon leur province d'origine (approximation assumée — les limites provinciales ne suivaient pas exactement nos départements). Survolez : nom de la province et, le cas échéant, date de rattachement à la France (Savoie et Nice 1860, Corse 1768, Lorraine 1766, Alsace XVIIe, Comtat papal 1791…).">⚜ Provinces d'Ancien Régime (~1789)</button>
+    <button class="calque-ajout donnee" id="btn-pays" title="Les pays et régions naturelles : Beauce, Brie, Sologne, Perche, Camargue, Causses, Landes de Gascogne, Médoc, Côte d'Émeraude… Ces découpages d'usage, hérités de la géographie et de l'histoire longues, ne figurent sur aucune carte administrative — positions et étendues approximatives.">🌾 Pays et régions naturelles (137)</button>
+    <div id="pays-familles" style="margin:2px 0 3px"></div>
+    <button class="calque-ajout donnee" id="btn-langues" title="Les grands domaines linguistiques et la limite oïl / oc — la frontière la plus durable de France, tracée ici de façon approximative (le « croissant » est une zone de transition, pas une ligne).">🗣 Domaines linguistiques</button>
+  </div>
+</div>
+
+<div class="widget" id="wg-logement" style="width:252px">
+  <div class="widget-tete">
+    <span class="widget-titre">🏘 Logement — prix</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
+  </div>
+  <div class="widget-corps">
+    <button class="calque-ajout donnee" id="btn-logement" title="Cliquez une commune : l'app télécharge les ventes notariées réelles géolocalisées (DVF, DGFiP/Etalab), les regroupe par quartier et colorie chaque quartier selon son prix médian au m². Ce sont des transactions réelles, pas des estimations d'agence.">💶 Prix par quartier (clic commune)</button>
+    <select id="logement-type" class="feux-annee" style="width:100%;margin-top:3px" title="Type de bien retenu dans le calcul.">
+      <option value="tout">Maisons + appartements</option>
+      <option value="Appartement">Appartements seuls</option>
+      <option value="Maison">Maisons seules</option>
+    </select>
+    <div style="display:flex;gap:4px;margin-top:3px">
+      <select id="logement-maille" class="feux-annee" style="flex:1" title="Taille du « quartier » : plus la maille est fine, plus la carte est détaillée — mais il faut assez de ventes dans chaque case (3 minimum).">
+        <option value="150">Quartier fin (150 m)</option>
+        <option value="300" selected>Quartier moyen (300 m)</option>
+        <option value="600">Quartier large (600 m)</option>
+      </select>
+      <select id="logement-annee" class="feux-annee" style="flex:1" title="Année des ventes. « La plus récente » essaie les millésimes du plus récent au plus ancien.">
+        <option value="auto" selected>Année : la + récente</option>
+        <option value="2024">2024</option>
+        <option value="2023">2023</option>
+        <option value="2022">2022</option>
+      </select>
+    </div>
+    <label class="velo-filtre"><input type="checkbox" id="chk-logement-points"> Afficher chaque vente (point)</label>
+    <p class="sous" id="logement-bilan" style="margin:4px 0 0">Ventes notariées réelles — DVF géolocalisées (DGFiP / Etalab), licence ouverte.</p>
+  </div>
+</div>
+
 <div class="widget" id="wg-acces" style="width:268px">
   <div class="widget-tete">
     <span class="widget-titre">👁 Couleurs</span>
@@ -847,7 +985,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v2.1</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v2.2</small></span>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
   <div class="widget-corps">
@@ -871,6 +1009,11 @@
       <button class="pilote-btn" data-cible="wg-sites">⭐ Sites</button>
       <button class="pilote-btn" data-cible="wg-equip">🚉 Équipements</button>
       <button class="pilote-btn" data-cible="wg-climat">🌡 Climat</button>
+      <button class="pilote-btn" data-cible="wg-feux">🔥 Feux</button>
+      <button class="pilote-btn" data-cible="wg-meteo">🌡 Météo</button>
+      <button class="pilote-btn" data-cible="wg-parcs">🌲 Parcs</button>
+      <button class="pilote-btn" data-cible="wg-histoire">🏛 Histoire</button>
+      <button class="pilote-btn" data-cible="wg-logement">🏘 Logement</button>
       <button class="pilote-btn" data-cible="wg-3d">🏔 Vue 3D</button>
       <button class="pilote-btn" data-cible="wg-montagnes">⛰ Monts &amp; fleuves</button>
       <button class="pilote-btn" data-cible="wg-limites">🗾 Limites</button>
@@ -891,7 +1034,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v2.1</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v2.2</small></h2>
     <p class="sous">Seuil « villes » des tops 50</p>
     <select class="opt-select" id="sel-seuil" aria-label="Seuil de population des tops 50">
       <option value="5000">5 000 habitants et +</option>
@@ -992,7 +1135,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v2.1';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v2.2';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -1369,8 +1512,8 @@
 
   // ---------- 🏛 QPV officiels (données ANCT, open data) ----------
   const URLS_QPV = [
-    'https://opendata.caissedesdepots.fr/api/explore/v2.1/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-au-1er-janvier-2024/exports/geojson',
-    'https://equipements.sports.gouv.fr/api/explore/v2.1/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/exports/geojson'
+    'https://opendata.caissedesdepots.fr/api/explore/v2.2/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-au-1er-janvier-2024/exports/geojson',
+    'https://equipements.sports.gouv.fr/api/explore/v2.2/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/exports/geojson'
   ];
   let qpvGeojson = null, qpvLayer = null, qpvVisible = false, qpvChargement = false;
   let qpvPointsRep = null; // un point représentatif par QPV, pour les croisements
@@ -1498,7 +1641,7 @@
   btnQpv.addEventListener('click', basculerQpv);
 
   // ---------- 🎓📝 Couches éducation (data.education.gouv.fr, en direct sur la vue) ----------
-  const EDUC = 'https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/';
+  const EDUC = 'https://data.education.gouv.fr/api/explore/v2.2/catalog/datasets/';
 
   function couleurIps(v){
     if(v >= 120) return '#2e9e44';
@@ -1650,8 +1793,8 @@
   let acvActif = false, acvGroupe = null, acvCharge = false;
   const btnAcv = document.getElementById('btn-acv');
   const URLS_ACV = [
-    'https://opendata.caissedesdepots.fr/api/explore/v2.1/catalog/datasets/villes_action_coeurdeville/records?limit=100&offset=',
-    'https://opendata.caissedesdepots.fr/api/explore/v2.1/catalog/datasets/villes-action-coeur-de-ville-portail-open-data/records?limit=100&offset='
+    'https://opendata.caissedesdepots.fr/api/explore/v2.2/catalog/datasets/villes_action_coeurdeville/records?limit=100&offset=',
+    'https://opendata.caissedesdepots.fr/api/explore/v2.2/catalog/datasets/villes-action-coeur-de-ville-portail-open-data/records?limit=100&offset='
   ];
   btnAcv.addEventListener('click', async ()=>{
     if(acvActif){
@@ -1924,7 +2067,7 @@
     },
     gares: {
       btn:'btn-gares', libelle:'🚉 Gares SNCF', legende:'Gares SNCF', teinte:'#1d4ed8',
-      base:'https://ressources.data.sncf.com/api/explore/v2.1/catalog/datasets/',
+      base:'https://ressources.data.sncf.com/api/explore/v2.2/catalog/datasets/',
       datasets:['gares-de-voyageurs','referentiel-gares-voyageurs','liste-des-gares'],
       zoomMin:9, etiqu:['nom','nom_gare','alias_libelle_noncontraint','libelle','gare_alias_libelle_noncontraint'],
       sous:['commune','departement','segment_drg'],
@@ -1933,7 +2076,7 @@
     },
     mh: {
       btn:'btn-mh', libelle:'🏛️ Monuments historiques', legende:'Monuments historiques', teinte:'#7c2d12',
-      base:'https://data.culture.gouv.fr/api/explore/v2.1/catalog/datasets/',
+      base:'https://data.culture.gouv.fr/api/explore/v2.2/catalog/datasets/',
       datasets:['liste-des-immeubles-proteges-au-titre-des-monuments-historiques'],
       zoomMin:12, etiqu:['appellation_courante','titre_editorial_de_la_notice','denomination_de_l_edifice','tico'],
       sous:['commune_forme_editoriale','commune','adresse_forme_editoriale','siecle_de_la_campagne_principale_de_construction','denomination_de_l_edifice','typologie_de_la_protection'],
@@ -1942,7 +2085,7 @@
     },
     sport: {
       btn:'btn-sport', libelle:'🏊 Équipements sportifs', legende:'Équipements sportifs', teinte:'#059669',
-      base:'https://equipements.sports.gouv.fr/api/explore/v2.1/catalog/datasets/',
+      base:'https://equipements.sports.gouv.fr/api/explore/v2.2/catalog/datasets/',
       datasets:['data-es','res-recensement-des-equipements-sportifs'],
       zoomMin:13, etiqu:['inst_nom','equip_nom','nominstallation','nom'],
       sous:['equip_type_name','inst_com_nom','commune'],
@@ -4235,6 +4378,59 @@
   }
   map.on('moveend', ()=>{ if(etatGlaciers.actif){ clearTimeout(etatGlaciers.tempo); etatGlaciers.tempo = setTimeout(chargerGlaciers, 500); } });
 
+  // ---------- Contour reel des massifs (OSM) ----------
+  const etatMassifOsm = { groupe:null };
+  async function chargerMassifsOsm(){
+    const chk = document.getElementById('chk-smassifs-osm');
+    if(!chk.checked) return;
+    if(map.getZoom() < 8){
+      afficherInfo('\ud83d\uddfa Zoomez (niveau 8 minimum) pour charger le contour r\u00e9el des massifs', 4500);
+      return;
+    }
+    const b = map.getBounds();
+    const bbox = [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()].map(x=>x.toFixed(4)).join(',');
+    const requete = '[out:json][timeout:30];('
+      + 'relation["natural"="mountain_range"]('+bbox+');'
+      + 'relation["place"="region"]["region:type"="mountain_area"]('+bbox+');'
+      + ');out geom 40;';
+    try{
+      const rep = await overpassRequete(requete);
+      const r = await rep.json();
+      if(!chk.checked) return;
+      if(!etatMassifOsm.groupe) etatMassifOsm.groupe = L.layerGroup();
+      etatMassifOsm.groupe.clearLayers();
+      const remplissage = coulOsmMemo('coul-massifs-osm', '#2563eb');
+      let nb = 0;
+      (r.elements||[]).forEach(el=>{
+        anneauxOsm(el).forEach(an=>{
+          L.polygon(an.map(p=>L.latLng(p.lat, p.lon)), { color:remplissage, weight:2, opacity:0.95,
+            fillColor:remplissage, fillOpacity:0.3 })
+            .bindTooltip('<b>'+echap((el.tags && el.tags.name) || 'Massif')+'</b><br><small>contour r\u00e9el OpenStreetMap \u2014 remplissage r\u00e9glable</small>', {sticky:true})
+            .addTo(etatMassifOsm.groupe);
+          nb++;
+        });
+      });
+      etatMassifOsm.groupe.addTo(map);
+      afficherInfo(nb ? '\ud83d\uddfa '+nb+' contour(s) r\u00e9el(s) de massif charg\u00e9(s) \u2014 le masque de relief reste dessous'
+        : '\ud83d\uddfa OpenStreetMap ne cartographie aucun massif ici \u2014 les trac\u00e9s de r\u00e9f\u00e9rence restent seuls', 5500);
+    }catch(e){
+      afficherInfo('\ud83d\uddfa Overpass ne r\u00e9pond pas \u2014 r\u00e9essayez dans un instant', 5000);
+    }
+  }
+  document.getElementById('chk-smassifs-osm').addEventListener('change', (e)=>{
+    if(e.target.checked) chargerMassifsOsm();
+    else if(etatMassifOsm.groupe){ map.removeLayer(etatMassifOsm.groupe); etatMassifOsm.groupe = null; }
+  });
+  document.getElementById('coul-massifs-osm').addEventListener('input', (e)=>{
+    localStorage.setItem('geo-coul-massifs-osm', e.target.value);
+    if(document.getElementById('chk-smassifs-osm').checked) chargerMassifsOsm();
+  });
+  map.on('moveend', ()=>{
+    if(document.getElementById('chk-smassifs-osm').checked){
+      clearTimeout(etatMassifOsm.tempo);
+      etatMassifOsm.tempo = setTimeout(chargerMassifsOsm, 500);
+    }
+  });
   const famCoul = (k)=> coulStyle('fam_'+k, RELIEF_FIN.familles[k][1]);
   const etatSmassifs = { actif:false, groupe:null };
   document.getElementById('btn-smassifs').addEventListener('click', ()=>{
@@ -4707,6 +4903,907 @@
   document.getElementById('scene3d-fermer').addEventListener('click', ()=>{
     document.getElementById('scene3d-fond').style.display = 'none';
     if(ETAT3D.rendu){ ETAT3D.rendu.arret(); ETAT3D.rendu = null; }
+  });
+
+  // ---------- 🏘 Logement : prix par quartier (DVF géolocalisées, DGFiP/Etalab) ----------
+  const PARCS = {"pn":[["Vanoise",45.4,6.85,22,1963,"Savoie — premier parc national français, refuge du bouquetin"],["Port-Cros",43.01,6.39,6,1963,"Var — premier parc marin d'Europe, îles d'Hyères"],["Pyrénées",42.83,-0.15,38,1967,"Hautes-Pyrénées et Pyrénées-Atlantiques — Gavarnie, isards"],["Cévennes",44.25,3.6,30,1970,"Lozère, Gard — le seul parc national habité de métropole"],["Écrins",44.85,6.35,30,1973,"Hautes-Alpes, Isère — la Barre des Écrins, 4 102 m"],["Mercantour",44.2,7.05,28,1979,"Alpes-Maritimes, Alpes-de-Haute-Provence — vallée des Merveilles, loups"],["Guadeloupe",16.18,-61.66,12,1989,"Forêt tropicale humide et volcan de la Soufrière"],["La Réunion",-21.1,55.48,25,2007,"Pitons, cirques et remparts — patrimoine mondial UNESCO"],["Guyane",3.1,-53.3,90,2007,"Le plus vaste parc de France : forêt amazonienne"],["Calanques",43.2,5.5,10,2012,"Bouches-du-Rhône — premier parc périurbain terrestre et marin"],["Forêts",47.9,4.95,20,2019,"Champagne et Bourgogne — le plus jeune, forêt feuillue de plaine"]],"pnr":[["Armorique",48.35,-4.05,20,1969],["Ballons des Vosges",47.9,6.9,35,1989],["Baronnies provençales",44.3,5.5,30,2015],["Boucles de la Seine normande",49.45,0.7,20,1974],["Brenne",46.75,1.2,22,1989],["Brière",47.35,-2.15,12,1970],["Camargue",43.5,4.45,20,1970],["Caps et Marais d'Opale",50.75,1.85,22,1986],["Causses du Quercy",44.55,1.65,25,1999],["Chartreuse",45.35,5.85,18,1995],["Corse",42.2,9.05,45,1972],["Forêt d'Orient",48.28,4.35,15,1970],["Gâtinais français",48.35,2.45,18,1999],["Grands Causses",44.05,3.05,35,1995],["Haut-Jura",46.45,6.0,30,1986],["Haut-Languedoc",43.6,2.8,35,1973],["Haute Vallée de Chevreuse",48.65,1.95,15,1985],["Landes de Gascogne",44.3,-0.75,45,1970],["Livradois-Forez",45.6,3.65,35,1986],["Loire-Anjou-Touraine",47.25,0.05,35,1996],["Lorraine",48.9,5.9,30,1974],["Luberon",43.85,5.4,25,1977],["Marais du Cotentin et du Bessin",49.3,-1.2,18,1991],["Marais poitevin",46.35,-0.85,22,2014],["Massif des Bauges",45.65,6.15,18,1995],["Millevaches en Limousin",45.6,2.05,28,2004],["Monts d'Ardèche",44.7,4.25,28,2001],["Morvan",47.2,4.05,28,1970],["Narbonnaise en Méditerranée",43.05,3.0,18,2003],["Normandie-Maine",48.55,-0.25,28,1975],["Oise-Pays de France",49.2,2.6,15,2004],["Perche",48.45,0.75,22,1998],["Périgord-Limousin",45.55,0.75,25,1998],["Pilat",45.4,4.6,18,1974],["Préalpes d'Azur",43.8,6.9,20,2012],["Pyrénées ariégeoises",42.85,1.35,28,2009],["Pyrénées catalanes",42.55,2.1,22,2004],["Queyras",44.75,6.85,18,1977],["Scarpe-Escaut",50.45,3.45,15,1968],["Verdon",43.8,6.35,25,1997],["Vercors",44.95,5.45,28,1970],["Vexin français",49.1,1.85,20,1995],["Volcans d'Auvergne",45.4,2.85,40,1977],["Vosges du Nord",48.95,7.55,25,1975],["Avesnois",50.15,3.95,20,1998],["Golfe du Morbihan",47.6,-2.75,15,2014],["Ardenne",49.85,4.85,20,2021],["Aubrac",44.65,3.0,25,2018],["Baie de Somme Picardie maritime",50.15,1.75,20,2020],["Médoc",45.2,-0.9,25,2019],["Mont Ventoux",44.15,5.3,20,2020],["Sainte-Baume",43.35,5.8,18,2017],["Corbières-Fenouillèdes",42.85,2.55,25,2021],["Montagne de Reims",49.15,4.05,18,1976],["Alpilles",43.78,4.85,15,2007],["Martinique",14.7,-61.05,20,1976],["Guyane",4.2,-52.5,60,2001],["Doubs Horloger",47.1,6.7,20,2021]]};
+  const HISTOIRE = {"pays":[["Beauce",48.2,1.7,"plaine",45],["Brie",48.7,3.05,"plaine",42],["Champagne crayeuse",48.9,4.3,"plaine",55],["Santerre",49.83,2.8,"plaine",20],["Vermandois",49.85,3.3,"plaine",22],["Plaine de Caen",49.15,-0.35,"plaine",22],["Champagne berrichonne",46.95,2.0,"plaine",40],["Limagne",45.85,3.25,"plaine",35],["Lauragais",43.4,1.75,"plaine",32],["Plaine d'Alsace",48.4,7.6,"plaine",45],["Plaine de la Crau",43.55,4.85,"plaine",18],["Plaine du Forez",45.7,4.15,"plaine",25],["Plaine du Roussillon",42.7,2.85,"plaine",25],["Plaine de Valence",44.93,4.95,"plaine",20],["Aunis",46.15,-0.9,"plaine",22],["Plaine de France",49.02,2.45,"plaine",15],["Soissonnais",49.4,3.35,"plaine",25],["Valois",49.15,2.95,"plaine",20],["Bocage normand",48.8,-0.85,"bocage",40],["Bocage vendéen",46.75,-1.05,"bocage",35],["Gâtine poitevine",46.65,-0.45,"bocage",25],["Bocage bourbonnais",46.45,3.1,"bocage",35],["Perche",48.45,0.75,"bocage",35],["Thiérache",49.95,3.95,"bocage",25],["Ségala",44.3,2.25,"bocage",30],["Boulonnais",50.72,1.75,"bocage",20],["Pays d'Auge",49.1,0.15,"bocage",30],["Bessin",49.25,-0.75,"bocage",22],["Cotentin",49.45,-1.4,"bocage",35],["Avranchin",48.7,-1.3,"bocage",18],["Domfrontais",48.6,-0.65,"bocage",18],["Chalosse",43.7,-0.75,"bocage",20],["Houlme",48.75,-0.35,"bocage",15],["Marais poitevin",46.35,-0.85,"eau",25],["Marais breton",46.9,-2.0,"eau",20],["Grande Brière",47.35,-2.15,"eau",12],["Camargue",43.5,4.45,"eau",25],["Dombes",46.0,5.05,"eau",25],["Brenne",46.75,1.2,"eau",22],["Woëvre",49.1,5.75,"eau",25],["Marais de Dol",48.55,-1.7,"eau",12],["Marais audomarois",50.75,2.2,"eau",8],["Marais Vernier",49.43,0.42,"eau",8],["Marais de Saint-Gond",48.85,3.8,"eau",10],["Champagne humide",48.55,4.65,"eau",25],["Marais salants guérandais",47.32,-2.42,"eau",8],["Baie de Somme",50.2,1.6,"eau",15],["Marais de Rochefort",45.95,-0.95,"eau",15],["Causse Méjean",44.25,3.45,"causse",18],["Causse de Sauveterre",44.4,3.25,"causse",15],["Causse Noir",44.15,3.25,"causse",12],["Larzac",43.95,3.25,"causse",25],["Causses du Quercy",44.55,1.65,"causse",35],["Causse Comtal",44.45,2.55,"causse",15],["Vexin français",49.15,1.8,"causse",25],["Vexin normand",49.3,1.45,"causse",20],["Pays de Caux",49.65,0.75,"causse",35],["Pays de Bray",49.6,1.65,"causse",22],["Plateau de Langres",47.85,5.15,"causse",30],["Barrois",48.65,5.2,"causse",30],["Perthois",48.7,4.75,"causse",15],["Gâtinais",48.15,2.65,"causse",30],["Puisaye",47.65,3.15,"causse",25],["Auxois",47.35,4.45,"causse",25],["Châtillonnais",47.85,4.6,"causse",25],["Quercy blanc",44.3,1.2,"causse",20],["Périgord noir",44.9,1.2,"causse",25],["Périgord blanc",45.2,0.75,"causse",25],["Périgord vert",45.45,0.65,"causse",25],["Bas-Vivarais",44.45,4.4,"causse",20],["Plateau de Millevaches",45.6,2.05,"causse",25],["Xaintrie",45.15,2.15,"causse",15],["Rouergue",44.4,2.6,"causse",30],["Landes de Gascogne",44.3,-0.75,"foret",60],["Sologne",47.55,1.95,"foret",45],["Argonne",49.2,4.95,"foret",25],["La Double",45.05,0.15,"foret",18],["Forêt d'Orléans",47.95,2.3,"foret",20],["Forêt de Fontainebleau",48.4,2.65,"foret",12],["Forêt de Tronçais",46.65,2.7,"foret",12],["Forêt de Rambouillet",48.65,1.85,"foret",12],["Forêt de Compiègne",49.38,2.9,"foret",10],["Ardenne française",49.85,4.75,"foret",25],["Forêt d'Othe",48.15,3.75,"foret",15],["Forêt de Chaux",47.05,5.65,"foret",12],["Médoc",45.2,-0.85,"vigne",25],["Entre-deux-Mers",44.75,-0.3,"vigne",22],["Sauternais",44.53,-0.32,"vigne",10],["Libournais (Saint-Émilion)",44.9,-0.15,"vigne",12],["Champagne charentaise (Cognac)",45.68,-0.35,"vigne",25],["Côte de Beaune",46.98,4.78,"vigne",12],["Côte de Nuits",47.15,4.95,"vigne",12],["Chablisien",47.82,3.8,"vigne",12],["Montagne de Reims",49.15,4.05,"vigne",15],["Côte des Blancs",48.92,4.0,"vigne",12],["Côte des Bar",48.1,4.55,"vigne",15],["Beaujolais",46.1,4.65,"vigne",20],["Mâconnais",46.35,4.75,"vigne",15],["Côte chalonnaise",46.85,4.75,"vigne",12],["Route des vins d'Alsace",48.2,7.35,"vigne",30],["Coteaux du Layon",47.25,-0.55,"vigne",15],["Saumurois",47.25,-0.05,"vigne",15],["Chinonais et Bourgueil",47.2,0.2,"vigne",12],["Vouvray-Montlouis",47.4,0.85,"vigne",10],["Sancerrois",47.35,2.8,"vigne",12],["Vignoble nantais (Muscadet)",47.15,-1.35,"vigne",20],["Minervois",43.3,2.75,"vigne",20],["Corbières",43.05,2.65,"vigne",25],["Costières de Nîmes",43.75,4.45,"vigne",15],["Châteauneuf-du-Pape",44.05,4.85,"vigne",8],["Côte-Rôtie et Hermitage",45.15,4.83,"vigne",15],["Jurançon",43.25,-0.42,"vigne",10],["Gaillacois",43.9,1.9,"vigne",15],["Vignoble de Cahors",44.45,1.35,"vigne",15],["Vignoble du Jura (Arbois)",46.9,5.75,"vigne",15],["Vignoble de Savoie",45.55,6.05,"vigne",15],["Bandol",43.17,5.8,"vigne",8],["Coteaux varois",43.4,6.1,"vigne",25],["Patrimonio (Corse)",42.7,9.35,"vigne",10],["Côte d'Opale",50.8,1.6,"cote",25],["Côte d'Albâtre",49.8,0.7,"cote",30],["Côte Fleurie",49.35,0.05,"cote",15],["Côte de Nacre",49.32,-0.45,"cote",15],["Côte d'Émeraude",48.63,-2.1,"cote",20],["Côte de Granit rose",48.83,-3.45,"cote",18],["Côte des Légendes",48.63,-4.35,"cote",15],["Côte Sauvage (Quiberon)",47.52,-3.14,"cote",8],["Côte d'Amour",47.28,-2.4,"cote",10],["Côte de Jade",47.15,-2.15,"cote",10],["Côte de Lumière",46.5,-1.75,"cote",20],["Côte de Beauté",45.65,-1.05,"cote",15],["Côte d'Argent",44.5,-1.2,"cote",45],["Côte Basque",43.45,-1.6,"cote",12],["Côte Vermeille",42.5,3.1,"cote",10],["Côte Bleue",43.35,5.15,"cote",12],["Côte d'Azur",43.55,7.05,"cote",30],["Corniche d'Or (Esterel)",43.48,6.85,"cote",10]],"familles":{"plaine":["Plaines céréalières","#e0b452"],"bocage":["Bocages et pays d'élevage","#7fb069"],"eau":["Marais, étangs et deltas","#4f9dd4"],"causse":["Plateaux et causses","#b9a683"],"foret":["Forêts et landes","#2f6b34"],"vigne":["Vignobles","#8e3b5e"],"cote":["Littoraux nommés","#0f9b8e"]},"peuples":[["Arvernes",45.78,3.08,"Gergovie / Augustonemetum"],["Éduens",46.95,4.3,"Bibracte / Augustodunum"],["Séquanes",47.24,6.02,"Vesontio"],["Lingons",47.86,5.33,"Andematunnum"],["Rèmes",49.25,4.03,"Durocortorum"],["Suessions",49.38,3.32,"Noviodunum"],["Bellovaques",49.43,2.08,"Caesaromagus"],["Ambiens",49.89,2.3,"Samarobriva"],["Atrébates",50.29,2.78,"Nemetacum"],["Morins",50.65,2.15,"Tarvenna"],["Ménapiens",50.85,2.8,"Castellum"],["Nerviens",50.3,3.8,"Bagacum"],["Véliocasses",49.44,1.1,"Rotomagus"],["Calètes",49.72,0.6,"Juliobona"],["Lexoviens",49.15,0.23,"Noviomagus"],["Baïocasses",49.28,-0.7,"Augustodurum"],["Unelles",49.12,-1.35,"Cosedia"],["Abrincates",48.69,-1.36,"Ingena"],["Éburovices",49.02,1.15,"Mediolanum"],["Aulerques Cénomans",48.0,0.2,"Vindinum"],["Carnutes",48.45,1.49,"Autricum"],["Sénons",48.2,3.28,"Agedincum"],["Parisii",48.86,2.35,"Lutèce"],["Meldes",48.96,2.88,"Iatinum"],["Tricasses",48.3,4.08,"Augustobona"],["Turons",47.39,0.69,"Caesarodunum"],["Andécaves",47.47,-0.55,"Juliomagus"],["Namnètes",47.22,-1.55,"Condevincum"],["Vénètes",47.66,-2.76,"Darioritum"],["Osismes",48.28,-3.57,"Vorgium"],["Coriosolites",48.48,-2.17,"Fanum Martis"],["Riédones",48.11,-1.68,"Condate"],["Pictons",46.58,0.34,"Limonum"],["Santons",45.75,-0.63,"Mediolanum Santonum"],["Bituriges Cubes",47.08,2.4,"Avaricum"],["Bituriges Vivisques",44.84,-0.58,"Burdigala"],["Nitiobroges",44.2,0.62,"Aginnum"],["Cadurques",44.45,1.44,"Divona"],["Rutènes",44.35,2.57,"Segodunum"],["Gabales",44.6,3.35,"Anderitum"],["Vellaves",45.04,3.88,"Ruessium"],["Ségusiaves",45.74,4.22,"Forum Segusiavorum"],["Allobroges",45.52,4.87,"Vienna"],["Voconces",44.24,5.07,"Vasio"],["Salyens",43.53,5.44,"Entremont / Aquae Sextiae"],["Volques Arécomiques",43.84,4.36,"Nemausus"],["Volques Tectosages",43.6,1.44,"Tolosa"],["Helviens",44.55,4.6,"Alba"],["Tarbelles",43.72,-1.05,"Aquae Tarbellicae"],["Ausques",43.65,0.58,"Elimberrum"],["Convènes",43.03,0.58,"Lugdunum Convenarum"],["Médiomatriques",49.12,6.18,"Divodurum"],["Leuques",48.52,5.9,"Tullum"],["Ceutrons",45.57,6.65,"Axima"]],"gaule":{"04":"nar","05":"nar","06":"nar","07":"nar","11":"nar","13":"nar","26":"nar","30":"nar","34":"nar","38":"nar","48":"nar","66":"nar","83":"nar","84":"nar","09":"aqu","12":"aqu","15":"aqu","16":"aqu","17":"aqu","18":"aqu","19":"aqu","23":"aqu","24":"aqu","31":"aqu","32":"aqu","33":"aqu","36":"aqu","40":"aqu","43":"aqu","46":"aqu","47":"aqu","63":"aqu","64":"aqu","65":"aqu","79":"aqu","81":"aqu","82":"aqu","86":"aqu","87":"aqu","01":"lug","03":"lug","10":"lug","14":"lug","21":"lug","22":"lug","27":"lug","28":"lug","29":"lug","35":"lug","37":"lug","41":"lug","42":"lug","44":"lug","45":"lug","49":"lug","50":"lug","53":"lug","56":"lug","58":"lug","61":"lug","69":"lug","71":"lug","72":"lug","75":"lug","76":"lug","77":"lug","78":"lug","85":"lug","89":"lug","91":"lug","92":"lug","93":"lug","94":"lug","95":"lug","02":"bel","08":"bel","51":"bel","52":"bel","54":"bel","55":"bel","57":"bel","59":"bel","60":"bel","62":"bel","80":"bel","88":"bel","25":"ger","39":"ger","67":"ger","68":"ger","70":"ger","90":"ger","73":"alp","74":"alp","2A":"cor","2B":"cor"},"gprov":{"nar":["Gaule narbonnaise","#c1440e","Provincia romana dès -121 : la plus anciennement romanisée"],"aqu":["Aquitaine","#b8860b","Des Pyrénées à la Loire, réorganisée par Auguste"],"lug":["Lyonnaise","#2e6f9e","Capitale Lugdunum (Lyon), capitale des Gaules"],"bel":["Belgique","#6a4c93","Nord-est, des Rèmes aux Nerviens"],"ger":["Germanie supérieure","#4f772d","Rhin et Séquanes, frontière militaire"],"alp":["Alpes (Grées et Poenines)","#8d99ae","Petites provinces alpines de passage"],"cor":["Corse","#a4161a","Province de Corse et Sardaigne"]},"oiloc":[[45.35,-0.9],[45.5,-0.3],[45.7,0.3],[45.85,0.9],[45.9,1.5],[46.05,2.1],[46.1,2.6],[46.15,3.2],[46.1,3.8],[46.05,4.4],[46.0,5.0],[45.95,5.5]],"langues":[["Langue d'oïl",47.6,2.4,"#2e6f9e"],["Langue d'oc",44.0,2.0,"#c1440e"],["Francoprovençal",45.85,5.65,"#6a4c93"],["Breton",48.3,-3.8,"#0f9b8e"],["Basque",43.3,-1.2,"#8e3b5e"],["Catalan",42.6,2.6,"#e0b452"],["Alsacien et francique",48.7,7.4,"#4f772d"],["Flamand occidental",50.85,2.5,"#7fb069"],["Corse",42.2,9.1,"#a4161a"]]};
+  const LOGEMENT = { actif:false, groupe:null, cache:new Map(), ventes:null, nom:'', an:null, classes:null };
+  const DVF_ANNEES = [2025, 2024, 2023, 2022];
+  function decouperCsv(ligne){
+    const out = []; let cur = '', guill = false;
+    for(let i=0; i<ligne.length; i++){
+      const c = ligne[i];
+      if(guill){
+        if(c === '"'){ if(ligne[i+1] === '"'){ cur += '"'; i++; } else guill = false; }
+        else cur += c;
+      }else if(c === '"') guill = true;
+      else if(c === ','){ out.push(cur); cur = ''; }
+      else cur += c;
+    }
+    out.push(cur);
+    return out;
+  }
+  function mutationsDepuisCsv(txt){
+    const lignes = txt.split('\n');
+    if(lignes.length < 2) return [];
+    const I = {};
+    decouperCsv(lignes[0]).forEach((h, i)=>{ I[h.trim()] = i; });
+    const parMut = new Map();
+    for(let k=1; k<lignes.length; k++){
+      if(!lignes[k]) continue;
+      const c = decouperCsv(lignes[k]);
+      const nature = c[I.nature_mutation] || '';
+      if(nature.indexOf('Vente') !== 0) continue; // ventes et VEFA, ni \u00e9changes ni expropriations
+      const type = c[I.type_local] || '';
+      if(type !== 'Maison' && type !== 'Appartement') continue; // ni d\u00e9pendances ni terrains
+      const surf = parseFloat(c[I.surface_reelle_bati]);
+      const val = parseFloat(c[I.valeur_fonciere]);
+      const lat = parseFloat(c[I.latitude]), lon = parseFloat(c[I.longitude]);
+      if(!isFinite(surf) || surf < 9 || !isFinite(val) || val < 5000 || !isFinite(lat) || !isFinite(lon)) continue;
+      const id = c[I.id_mutation];
+      let m = parMut.get(id);
+      if(!m){
+        m = { val:val, surf:0, lat:lat, lon:lon, mai:false, app:false,
+              voie:(c[I.adresse_nom_voie]||'').trim(), date:(c[I.date_mutation]||'').slice(0,7) };
+        parMut.set(id, m);
+      }
+      m.surf += surf; // une mutation = plusieurs lots : surfaces somm\u00e9es, prix compt\u00e9 une seule fois
+      if(type === 'Maison') m.mai = true; else m.app = true;
+    }
+    const res = [];
+    parMut.forEach(m=>{
+      const pm = m.val / m.surf;
+      if(pm < 300 || pm > 30000) return; // aberrations (ventes en bloc, viagers\u2026) \u00e9cart\u00e9es
+      res.push({ pm:pm, lat:m.lat, lon:m.lon, surf:m.surf, val:m.val, voie:m.voie, date:m.date,
+                 type: (m.mai && m.app) ? 'mixte' : (m.mai ? 'Maison' : 'Appartement') });
+    });
+    return res;
+  }
+  async function ventesCommune(insee, an){
+    const cle = insee+'/'+an;
+    if(LOGEMENT.cache.has(cle)) return LOGEMENT.cache.get(cle);
+    const dep = /^9[78]/.test(insee) ? insee.slice(0,3) : insee.slice(0,2);
+    const r = await fetch('https://files.data.gouv.fr/geo-dvf/latest/csv/'+an+'/communes/'+dep+'/'+insee+'.csv');
+    if(!r.ok) throw new Error('millesime absent');
+    const v = mutationsDepuisCsv(await r.text());
+    LOGEMENT.cache.set(cle, v);
+    return v;
+  }
+  function medianeNb(t){ const s = t.slice().sort((a,b)=>a-b); return s[Math.floor(s.length/2)]; }
+  const PRIX_PALETTE = ['#fde68a','#fbbf24','#f97316','#dc2626','#7f1d1d'];
+  const PRIX_PALETTE_DALTON = ['#fde725','#5ec962','#21918c','#3b528b','#440154'];
+  function dessinerQuartiers(){
+    if(!LOGEMENT.ventes || !LOGEMENT.ventes.length) return;
+    if(!LOGEMENT.groupe) LOGEMENT.groupe = L.layerGroup();
+    LOGEMENT.groupe.clearLayers();
+    const filtre = document.getElementById('logement-type').value || 'tout'; // ceinture si la liste n'a pas de valeur
+    const maille = parseInt(document.getElementById('logement-maille').value, 10) || 300;
+    const retenues = LOGEMENT.ventes.filter(v=> filtre === 'tout' ? true : v.type === filtre);
+    const bilan = document.getElementById('logement-bilan');
+    if(retenues.length < 3){
+      LOGEMENT.classes = null;
+      bilan.innerHTML = '<b>'+echap(LOGEMENT.nom)+'</b> \u2014 trop peu de ventes de ce type ('+retenues.length+') pour une carte de quartiers.';
+      LOGEMENT.groupe.addTo(map); majLegende();
+      return;
+    }
+    const lat0 = retenues.reduce((s,v)=>s+v.lat, 0)/retenues.length;
+    const kx = 111320*Math.cos(lat0*Math.PI/180), ky = 110570;
+    const cellules = new Map();
+    retenues.forEach(v=>{
+      const cx = Math.floor(v.lon*kx/maille), cy = Math.floor(v.lat*ky/maille);
+      const cle = cx+'_'+cy;
+      let c = cellules.get(cle);
+      if(!c){ c = { cx:cx, cy:cy, prix:[], voies:{} }; cellules.set(cle, c); }
+      c.prix.push(v.pm);
+      if(v.voie) c.voies[v.voie] = (c.voies[v.voie]||0) + 1;
+    });
+    const quartiers = [];
+    cellules.forEach(c=>{
+      if(c.prix.length < 3) return; // bruit et vie priv\u00e9e : 3 ventes minimum par quartier
+      let voie = '', best = 0;
+      Object.keys(c.voies).forEach(v=>{ if(c.voies[v] > best){ best = c.voies[v]; voie = v; } });
+      quartiers.push({ cx:c.cx, cy:c.cy, med:medianeNb(c.prix), nb:c.prix.length, voie:voie,
+                       mini:Math.min.apply(null, c.prix), maxi:Math.max.apply(null, c.prix) });
+    });
+    const palette = (typeof modeCouleurs !== 'undefined' && modeCouleurs === 'daltonien') ? PRIX_PALETTE_DALTON : PRIX_PALETTE;
+    const medCom = medianeNb(retenues.map(v=>v.pm));
+    if(quartiers.length){
+      const tries = quartiers.map(q=>q.med).sort((a,b)=>a-b);
+      const seuils = [0.2, 0.4, 0.6, 0.8].map(p=>tries[Math.floor(tries.length*p)]);
+      const classeDe = (v)=>{ let i = 0; while(i < seuils.length && v >= seuils[i]) i++; return i; };
+      LOGEMENT.classes = { seuils:seuils, palette:palette, maille:maille };
+      quartiers.forEach(q=>{
+        const lon1 = q.cx*maille/kx, lon2 = (q.cx+1)*maille/kx;
+        const lat1 = q.cy*maille/ky, lat2 = (q.cy+1)*maille/ky;
+        L.polygon([[lat1, lon1], [lat1, lon2], [lat2, lon2], [lat2, lon1]], {
+          color:'#ffffff', weight:0.6, opacity:0.85, fillColor:palette[classeDe(q.med)], fillOpacity:0.68
+        }).bindTooltip('<b>Quartier'+(q.voie ? ' \u2014 '+echap(q.voie) : '')+'</b><br>'
+            +'<b>'+Math.round(q.med).toLocaleString('fr-FR')+' \u20ac/m\u00b2</b> (m\u00e9diane)<br>'
+            +q.nb+' vente'+(q.nb>1?'s':'')+' \u00b7 de '+Math.round(q.mini).toLocaleString('fr-FR')
+            +' \u00e0 '+Math.round(q.maxi).toLocaleString('fr-FR')+' \u20ac/m\u00b2', {sticky:true})
+          .addTo(LOGEMENT.groupe);
+      });
+    }else LOGEMENT.classes = null;
+    if(document.getElementById('chk-logement-points').checked){
+      retenues.forEach(v=>{
+        L.circleMarker(L.latLng(v.lat, v.lon), { radius:3, color:'#1f2937', weight:0.6, opacity:0.8,
+          fillColor: palette[Math.max(0, Math.min(4, Math.floor(v.pm/Math.max(1, medCom)*2)))], fillOpacity:0.9 })
+          .bindTooltip(Math.round(v.pm).toLocaleString('fr-FR')+' \u20ac/m\u00b2 \u00b7 '+echap(v.type)+' '+Math.round(v.surf)
+            +' m\u00b2 \u00b7 '+Math.round(v.val).toLocaleString('fr-FR')+' \u20ac<br><small>'+echap(v.voie||'')+' \u00b7 '+v.date+'</small>', {sticky:true})
+          .addTo(LOGEMENT.groupe);
+      });
+    }
+    const extremes = quartiers.length
+      ? ' \u00b7 quartiers de <b>'+Math.round(Math.min.apply(null, quartiers.map(q=>q.med))).toLocaleString('fr-FR')
+        +'</b> \u00e0 <b>'+Math.round(Math.max.apply(null, quartiers.map(q=>q.med))).toLocaleString('fr-FR')+' \u20ac/m\u00b2</b>'
+      : ' \u00b7 aucun quartier avec 3 ventes \u2014 \u00e9largissez la maille';
+    bilan.innerHTML = '<b>'+echap(LOGEMENT.nom)+'</b> ('+LOGEMENT.an+') \u2014 m\u00e9diane commune <b>'
+      + Math.round(medCom).toLocaleString('fr-FR')+' \u20ac/m\u00b2</b> sur '+retenues.length.toLocaleString('fr-FR')+' ventes'
+      + extremes + '.<br><small>DVF \u2014 ventes notari\u00e9es r\u00e9elles, pas des estimations.</small>';
+    LOGEMENT.groupe.addTo(map);
+    majLegende();
+  }
+  document.getElementById('btn-logement').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-logement');
+    if(LOGEMENT.actif){
+      LOGEMENT.actif = false;
+      if(LOGEMENT.groupe) map.removeLayer(LOGEMENT.groupe);
+      LOGEMENT.classes = null;
+      basculerBouton(btn, false, '', '\ud83d\udcb6 Prix par quartier (clic commune)');
+      majLegende();
+      return;
+    }
+    PROFIL.visee = 0; ETAT3D.visee = 0; DEVIN.actif = false; DVF.actif = false;
+    LOGEMENT.actif = true;
+    basculerBouton(btn, true, '\ud83d\udcb6 Cliquez une commune \u2715', '', '#166534');
+    afficherInfo('\ud83d\udcb6 Cliquez une commune : ses ventes r\u00e9elles seront regroup\u00e9es par quartier', 6000);
+  });
+  ['logement-type','logement-maille','chk-logement-points'].forEach(id=>{
+    document.getElementById(id).addEventListener('change', ()=>{ if(LOGEMENT.ventes) dessinerQuartiers(); });
+  });
+  document.getElementById('logement-annee').addEventListener('change', ()=>{
+    if(LOGEMENT.actif) afficherInfo('\ud83d\udcb6 Ann\u00e9e chang\u00e9e \u2014 recliquez une commune', 4000);
+  });
+  map.on('click', async (ev)=>{
+    if(!LOGEMENT.actif) return;
+    afficherInfo('\ud83d\udcb6 Identification de la commune\u2026', 0);
+    try{
+      const d = 0.0015;
+      const rc = await fetch(WFS_GEOPF+'&TYPENAMES=ADMINEXPRESS-COG-CARTO.LATEST:commune&COUNT=1'
+        +'&BBOX='+[ev.latlng.lng-d, ev.latlng.lat-d, ev.latlng.lng+d, ev.latlng.lat+d, 'CRS:84'].join(','));
+      const dc = await rc.json();
+      const f = (dc.features||[])[0];
+      const insee = f && f.properties && (f.properties.insee_com || f.properties.code_insee || f.properties.insee);
+      if(!insee){ cacherInfo(); afficherInfo('\ud83d\udcb6 Commune non identifi\u00e9e ici \u2014 cliquez plus au centre', 4500); return; }
+      LOGEMENT.nom = (f.properties.nom || f.properties.nom_m || 'Commune');
+      const choix = document.getElementById('logement-annee').value;
+      const essais = choix === 'auto' ? DVF_ANNEES : [parseInt(choix, 10)];
+      afficherInfo('\ud83d\udcb6 T\u00e9l\u00e9chargement des ventes de '+LOGEMENT.nom+'\u2026 (fichier officiel, quelques secondes)', 0);
+      let ventes = null;
+      for(let i=0; i<essais.length; i++){
+        try{ ventes = await ventesCommune(String(insee), essais[i]); LOGEMENT.an = essais[i]; break; }
+        catch(e){ /* mill\u00e9sime absent : on essaie le pr\u00e9c\u00e9dent */ }
+      }
+      cacherInfo();
+      if(!ventes){
+        afficherInfo('\ud83d\udcb6 Aucun fichier DVF pour cette commune \u2014 l\u2019Alsace-Moselle et Mayotte n\u2019y figurent pas (cadastre propre)', 7000);
+        return;
+      }
+      if(!ventes.length){
+        afficherInfo('\ud83d\udcb6 '+LOGEMENT.nom+' : aucune vente de logement exploitable en '+LOGEMENT.an, 5500);
+        return;
+      }
+      LOGEMENT.ventes = ventes;
+      dessinerQuartiers();
+      afficherInfo('\ud83d\udcb6 '+LOGEMENT.nom+' \u2014 '+ventes.length.toLocaleString('fr-FR')+' ventes r\u00e9elles regroup\u00e9es par quartier', 5000);
+    }catch(e){
+      cacherInfo();
+      afficherInfo('\ud83d\udcb6 T\u00e9l\u00e9chargement impossible \u2014 v\u00e9rifiez la connexion (fichiers data.gouv.fr)', 6000);
+    }
+  });
+
+  // ---------- 🏛 Histoire : Gaule romaine, pays naturels, domaines linguistiques ----------
+  // ---------- Parcs naturels : nationaux, regionaux, contours reels OSM ----------
+  // ---------- Meteo : carte des temperatures + villes cliquables vers MultiMeteo ----------
+  // ---------- Feux en cours : points chauds satellitaires (choix strict de la source) ----------
+  const SOURCES_FEUX = {
+    'gibs-viirs': { type:'gibs', couche:'VIIRS_SNPP_Thermal_Anomalies_375m_All', nom:'NASA GIBS \u2014 VIIRS 375 m' },
+    'gibs-modis': { type:'gibs', couche:'MODIS_Combined_Thermal_Anomalies_All', nom:'NASA GIBS \u2014 MODIS 1 km' },
+    'effis-viirs': { type:'effis', couche:'viirs.hs', nom:'EFFIS \u2014 points chauds VIIRS' },
+    'effis-modis': { type:'effis', couche:'modis.hs', nom:'EFFIS \u2014 points chauds MODIS' },
+    'effis-fwi':   { type:'effis', couche:'ecmwf007.fwi', nom:'EFFIS \u2014 danger d\u2019incendie (FWI)' }
+  };
+  const etatCumulBrule = { actif:false, layer:null };
+  document.getElementById('btn-cumul-brule').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-cumul-brule');
+    if(etatCumulBrule.actif){
+      etatCumulBrule.actif = false;
+      if(etatCumulBrule.layer) map.removeLayer(etatCumulBrule.layer);
+      basculerBouton(btn, false, '', '\ud83d\udfeb Cumul des surfaces br\u00fbl\u00e9es');
+      majLegende();
+      return;
+    }
+    const ans = parseFloat((document.getElementById('cumul-periode')||{value:'1'}).value) || 1;
+    const syntaxe = (document.getElementById('cumul-syntaxe')||{value:'liste'}).value || 'liste';
+    const fin = new Date();
+    const deb = new Date(fin.getTime() - ans*365.25*86400000);
+    const fmt = (d)=> d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    let intervalle;
+    if(syntaxe === 'intervalle'){
+      intervalle = fmt(deb)+'/'+fmt(fin);
+    }else{
+      const debutAn = Math.max(2000, deb.getFullYear()); // pas d'archive satellitaire avant 2000
+      const annees = [];
+      for(let a = fin.getFullYear(); a >= debutAn; a--) annees.push(a);
+      intervalle = annees.join(','); // m\u00eame \u00e9criture que le bouton \u00e0 l'ann\u00e9e, r\u00e9p\u00e9t\u00e9e
+    }
+    etatCumulBrule.actif = true;
+    etatCumulBrule.periode = ans;
+    etatCumulBrule.intervalle = intervalle;
+    basculerBouton(btn, true, '\ud83d\udfeb Cumul br\u00fbl\u00e9 \u2715', '', '#7c2d12');
+    if(etatCumulBrule.layer) map.removeLayer(etatCumulBrule.layer);
+    const couche = L.tileLayer.wms('https://maps.effis.emergency.copernicus.eu/effis?', {
+      layers:'viirs.ba.poly,modis.ba.poly', format:'image/png', transparent:true, version:'1.1.1',
+      opacity:0.8, time:intervalle, attribution:'&copy; Copernicus EFFIS' });
+    let signale = false;
+    couche.on('tileerror', ()=>{
+      if(signale || !etatCumulBrule.actif) return;
+      signale = true; // source unique et assum\u00e9e : pas de repli automatique
+      afficherInfo('\ud83d\udfeb EFFIS n\u2019accepte pas cette \u00e9criture de p\u00e9riode ('+intervalle.slice(0, 30)+'\u2026) \u2014 basculez le menu sur l\u2019autre format, ou raccourcissez la dur\u00e9e', 8000);
+    });
+    etatCumulBrule.layer = couche;
+    couche.addTo(map);
+    majLegende();
+    const libelle = ans < 1 ? '6 derniers mois' : (ans === 30 ? 'tout l\u2019archiv\u00e9 (MODIS depuis 2000)' : ans+' ans');
+    afficherInfo('\ud83d\udfeb Surfaces br\u00fbl\u00e9es cumul\u00e9es \u2014 '+libelle+' \u00b7 la m\u00e9moire des incendies, p\u00e9rim\u00e8tres cartographi\u00e9s par satellite', 6500);
+  });
+  ['cumul-periode','cumul-syntaxe'].forEach(id=>{
+    document.getElementById(id).addEventListener('change', ()=>{
+      const b = document.getElementById('btn-cumul-brule');
+      if(b.textContent.indexOf('\u2715') !== -1){ b.click(); b.click(); }
+    });
+  });
+
+  const etatFeuxActifs = { actif:false, layer:null };
+  function jourFeux(){
+    const n = parseInt((document.getElementById('feux-jour')||{value:'0'}).value, 10) || 0;
+    const d = new Date(Date.now() - n*86400000);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  document.getElementById('btn-feux-actifs').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-feux-actifs');
+    if(etatFeuxActifs.actif){
+      etatFeuxActifs.actif = false;
+      if(etatFeuxActifs.layer) map.removeLayer(etatFeuxActifs.layer);
+      basculerBouton(btn, false, '', '\ud83d\udd25 Afficher les feux d\u00e9tect\u00e9s');
+      majLegende();
+      return;
+    }
+    const cle = (document.getElementById('feux-source')||{value:'gibs-viirs'}).value || 'gibs-viirs';
+    const conf = SOURCES_FEUX[cle];
+    if(!conf) return;
+    const jour = jourFeux();
+    etatFeuxActifs.actif = true;
+    etatFeuxActifs.source = conf;
+    etatFeuxActifs.jour = jour;
+    basculerBouton(btn, true, '\ud83d\udd25 Feux d\u00e9tect\u00e9s \u2715', '', '#dc2626');
+    if(etatFeuxActifs.layer) map.removeLayer(etatFeuxActifs.layer);
+    let couche;
+    if(conf.type === 'gibs'){
+      const opts = { layers:conf.couche, format:'image/png', transparent:true, version:'1.3.0',
+        opacity:0.9, time:jour, attribution:'NASA EOSDIS GIBS / FIRMS' };
+      if(typeof L.CRS !== 'undefined' && L.CRS.EPSG4326) opts.crs = L.CRS.EPSG4326;
+      couche = L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg4326/all/wms.cgi?', opts);
+    }else{
+      couche = L.tileLayer.wms('https://maps.effis.emergency.copernicus.eu/effis?', {
+        layers:conf.couche, format:'image/png', transparent:true, version:'1.1.1',
+        opacity:0.85, time:jour, attribution:'&copy; Copernicus EFFIS' });
+    }
+    let signale = false;
+    couche.on('tileerror', ()=>{
+      if(signale || !etatFeuxActifs.actif) return;
+      signale = true; // la source choisie reste : aucune substitution automatique
+      afficherInfo('\ud83d\udd25 La source \u00ab '+conf.nom+' \u00bb ne r\u00e9pond pas pour le '+jour+' \u2014 choisissez-en une autre dans le menu, ou un autre jour', 7000);
+    });
+    etatFeuxActifs.layer = couche;
+    couche.addTo(map);
+    majLegende();
+    afficherInfo('\ud83d\udd25 '+conf.nom+' \u2014 '+jour+' \u00b7 points chauds vus par satellite (2 \u00e0 3 h de d\u00e9lai)', 6000);
+  });
+  ['feux-source','feux-jour'].forEach(id=>{
+    document.getElementById(id).addEventListener('change', ()=>{
+      const b = document.getElementById('btn-feux-actifs');
+      if(b.textContent.indexOf('\u2715') !== -1){ b.click(); b.click(); } // on rejoue avec le nouveau choix
+    });
+  });
+
+  const VILLES_METEO = [["Paris",48.857,2.352],["Marseille",43.296,5.370],["Lyon",45.764,4.836],
+   ["Toulouse",43.605,1.444],["Nice",43.700,7.265],["Nantes",47.218,-1.554],["Montpellier",43.611,3.877],
+   ["Strasbourg",48.573,7.752],["Bordeaux",44.838,-0.579],["Lille",50.633,3.066],["Rennes",48.117,-1.677],
+   ["Toulon",43.125,5.930],["Reims",49.258,4.032],["Saint-Étienne",45.440,4.387],["Le Havre",49.494,0.108],
+   ["Dijon",47.322,5.041],["Angers",47.472,-0.554],["Grenoble",45.188,5.724],["Nîmes",43.837,4.360],
+   ["Clermont-Ferrand",45.777,3.087],["Le Mans",48.006,0.199],["Brest",48.390,-4.486],["Tours",47.394,0.684],
+   ["Amiens",49.894,2.296],["Annecy",45.899,6.129],["Limoges",45.833,1.261],["Metz",49.120,6.176],
+   ["Perpignan",42.689,2.895],["Besançon",47.238,6.024],["Orléans",47.902,1.909],["Rouen",49.443,1.099],
+   ["Caen",49.183,-0.370],["Mulhouse",47.750,7.340],["Nancy",48.692,6.184],["Poitiers",46.580,0.340],
+   ["Ajaccio",41.927,8.737],["Bastia",42.700,9.450],["La Rochelle",46.160,-1.151],["Pau",43.295,-0.370],
+   ["Bayonne",43.493,-1.475],["Chambéry",45.564,5.917],["Troyes",48.297,4.074],["Lorient",47.748,-3.367],
+   ["Valence",44.933,4.892],["Avignon",43.949,4.806],["Colmar",48.079,7.358],["Charleville-Mézières",49.773,4.720],
+   ["Aurillac",44.926,2.440],["Gap",44.559,6.079],["Rodez",44.350,2.575]];
+  const etatMeteo = { temp:{actif:false, groupe:null}, villes:{actif:false, groupe:null} };
+  function coulTemp(t){
+    if(t === null || t === undefined || !isFinite(t)) return null;
+    const P = [[-10,'#313695'],[-5,'#4575b4'],[0,'#74add1'],[5,'#abd9e9'],[10,'#e0f3f8'],
+               [15,'#ffffbf'],[20,'#fee090'],[25,'#fdae61'],[30,'#f46d43'],[35,'#d73027'],[40,'#a50026']];
+    let c = P[0][1];
+    for(let i=0; i<P.length; i++) if(t >= P[i][0]) c = P[i][1];
+    return c;
+  }
+  const CIELS = [[0,'\u2600\ufe0f','ciel clair'],[1,'\ud83c\udf24\ufe0f','peu nuageux'],[2,'\u26c5','passages nuageux'],
+    [3,'\u2601\ufe0f','couvert'],[45,'\ud83c\udf2b\ufe0f','brouillard'],[48,'\ud83c\udf2b\ufe0f','brouillard givrant'],
+    [51,'\ud83c\udf26\ufe0f','bruine'],[53,'\ud83c\udf26\ufe0f','bruine'],[55,'\ud83c\udf26\ufe0f','bruine dense'],
+    [61,'\ud83c\udf27\ufe0f','pluie faible'],[63,'\ud83c\udf27\ufe0f','pluie'],[65,'\ud83c\udf27\ufe0f','pluie forte'],
+    [66,'\ud83c\udf27\ufe0f','pluie verglaçante'],[67,'\ud83c\udf27\ufe0f','pluie verglaçante'],
+    [71,'\ud83c\udf28\ufe0f','neige faible'],[73,'\ud83c\udf28\ufe0f','neige'],[75,'\ud83c\udf28\ufe0f','neige forte'],
+    [77,'\ud83c\udf28\ufe0f','grésil'],[80,'\ud83c\udf26\ufe0f','averses'],[81,'\ud83c\udf26\ufe0f','averses'],
+    [82,'\ud83c\udf26\ufe0f','averses fortes'],[85,'\ud83c\udf28\ufe0f','averses de neige'],[86,'\ud83c\udf28\ufe0f','averses de neige'],
+    [95,'\u26c8\ufe0f','orage'],[96,'\u26c8\ufe0f','orage gr\u00easigène'],[99,'\u26c8\ufe0f','orage violent']];
+  function cielDe(code){
+    if(code === null || code === undefined) return ['\u2753',''];
+    let r = CIELS[0];
+    for(let i=0; i<CIELS.length; i++) if(code >= CIELS[i][0]) r = CIELS[i];
+    return [r[1], r[2]];
+  }
+  function creneauMeteo(){
+    const q = (document.getElementById('meteo-quand')||{value:'now'}).value;
+    const d = new Date();
+    const ymd = (x)=> x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+    const demain = new Date(d.getTime() + 86400000);
+    if(q === 'apm')    return { cle:q, heure: ymd(d)+'T15:00',      titre:'cet apr\u00e8s-midi (15 h)' };
+    if(q === 'nuit')   return { cle:q, heure: ymd(demain)+'T03:00', titre:'cette nuit (3 h)' };
+    if(q === 'demain') return { cle:q, heure: ymd(demain)+'T15:00', titre:'demain apr\u00e8s-midi (15 h)' };
+    const h = new Date(d.getTime());
+    return { cle:'now', heure: ymd(h)+'T'+String(h.getHours()).padStart(2,'0')+':00', titre:'maintenant' };
+  }
+  async function meteoPour(points){
+    const cr = creneauMeteo();
+    const out = [];
+    for(let i=0; i<points.length; i += 100){
+      const lot = points.slice(i, i+100);
+      let url = 'https://api.open-meteo.com/v1/forecast?latitude='+lot.map(p=>p[0].toFixed(3)).join(',')
+        +'&longitude='+lot.map(p=>p[1].toFixed(3)).join(',')+'&timezone=Europe%2FParis';
+      url += cr.heure
+        ? '&hourly=temperature_2m,weather_code,precipitation,precipitation_probability&start_hour='+cr.heure+'&end_hour='+cr.heure
+        : '&current=temperature_2m,weather_code,precipitation';
+      const r = await fetch(url);
+      if(!r.ok) throw new Error('Open-Meteo indisponible');
+      const d = await r.json();
+      (Array.isArray(d) ? d : [d]).forEach(x=>{
+        if(cr.heure && x && x.hourly && x.hourly.time){
+          let k = x.hourly.time.indexOf(cr.heure);
+          if(k < 0) k = 0; // l'API a renvoy\u00e9 une autre tranche : on prend la premi\u00e8re
+          out.push({ t:x.hourly.temperature_2m ? x.hourly.temperature_2m[k] : null,
+                     code:x.hourly.weather_code ? x.hourly.weather_code[k] : null,
+                     mm:x.hourly.precipitation ? x.hourly.precipitation[k] : null,
+                     prob:x.hourly.precipitation_probability ? x.hourly.precipitation_probability[k] : null });
+        }else if(x && x.current){
+          out.push({ t:x.current.temperature_2m, code:x.current.weather_code, mm:x.current.precipitation, prob:null });
+        }else out.push({ t:null, code:null, mm:null, prob:null });
+      });
+    }
+    return out;
+  }
+  function coucheMeteo(){ const el = document.getElementById('meteo-couche'); return (el && el.value) || 'temp'; } // repli si la liste n'a pas de valeur
+  const ECHELLE_MM = [[0.1,'#eef6ff'],[0.5,'#cfe4f7'],[1,'#9ecae1'],[2,'#6baed6'],[5,'#3182bd'],[10,'#08519c'],[20,'#54278f']];
+  const ECHELLE_PROB = [[10,'#f2f7fb'],[20,'#dbeaf5'],[40,'#a9cfe8'],[60,'#6aaed6'],[80,'#2b7bba'],[101,'#08306b']];
+  function coulSeuils(v, echelle){
+    if(v === null || v === undefined || !isFinite(v)) return null;
+    for(let i=0; i<echelle.length; i++) if(v < echelle[i][0]) return echelle[i][1];
+    return echelle[echelle.length-1][1];
+  }
+  function valeurCouche(m){
+    const c = coucheMeteo();
+    return c === 'temp' ? m.t : (c === 'mm' ? m.mm : m.prob);
+  }
+  function coulCouche(m){
+    const c = coucheMeteo();
+    if(c === 'temp') return coulTemp(m.t);
+    if(c === 'mm') return coulSeuils(m.mm, ECHELLE_MM);
+    return coulSeuils(m.prob, ECHELLE_PROB);
+  }
+  function texteePluie(m){
+    const bouts = [];
+    if(m.mm !== null && m.mm !== undefined && m.mm > 0) bouts.push('\u2614 '+(Math.round(m.mm*10)/10).toLocaleString('fr-FR')+' mm');
+    if(m.prob !== null && m.prob !== undefined) bouts.push('risque de pluie '+Math.round(m.prob)+' %');
+    return bouts.length ? bouts.join(' \u00b7 ') : 'pas de pluie pr\u00e9vue';
+  }
+  let masqueFrance = null;
+  function dansAnneau(lat, lon, ext){
+    let dedans = false;
+    for(let i=0, j=ext.length-1; i<ext.length; j=i++){
+      const xi = ext[i][0], yi = ext[i][1], xj = ext[j][0], yj = ext[j][1];
+      if(((yi > lat) !== (yj > lat)) && (lon < (xj-xi)*(lat-yi)/(yj-yi)+xi)) dedans = !dedans;
+    }
+    return dedans;
+  }
+  async function chargerMasqueFrance(){
+    if(masqueFrance) return masqueFrance;
+    const feats = await contoursDep();
+    const anneaux = [];
+    (feats||[]).forEach(f=>{
+      const g = f.geometry;
+      if(!g) return;
+      const polys = g.type === 'Polygon' ? [g.coordinates] : (g.type === 'MultiPolygon' ? g.coordinates : []);
+      polys.forEach(p=>{
+        const ext = p[0];
+        if(!ext || ext.length < 4) return;
+        let minx = 1e9, maxx = -1e9, miny = 1e9, maxy = -1e9;
+        ext.forEach(c=>{ if(c[0]<minx)minx=c[0]; if(c[0]>maxx)maxx=c[0]; if(c[1]<miny)miny=c[1]; if(c[1]>maxy)maxy=c[1]; });
+        anneaux.push({ext:ext, minx:minx, maxx:maxx, miny:miny, maxy:maxy});
+      });
+    });
+    masqueFrance = anneaux.length ? anneaux : null;
+    return masqueFrance;
+  }
+  function enFrance(lat, lon){
+    if(!masqueFrance) return true; // masque indisponible : on n'invente pas de d\u00e9coupe
+    for(let i=0; i<masqueFrance.length; i++){
+      const a = masqueFrance[i];
+      if(lon < a.minx || lon > a.maxx || lat < a.miny || lat > a.maxy) continue;
+      if(dansAnneau(lat, lon, a.ext)) return true;
+    }
+    return false;
+  }
+  document.getElementById('btn-temp').addEventListener('click', async ()=>{
+    const btn = document.getElementById('btn-temp');
+    const e = etatMeteo.temp;
+    if(e.actif){
+      e.actif = false;
+      if(e.groupe) map.removeLayer(e.groupe);
+      basculerBouton(btn, false, '', '\ud83c\udf21 Carte des temp\u00e9ratures (maintenant)');
+      majLegende();
+      return;
+    }
+    e.actif = true;
+    basculerBouton(btn, true, '\ud83c\udf21 Temp\u00e9ratures \u2715', '', '#f46d43');
+    afficherInfo('\ud83c\udf21 Interrogation des mod\u00e8les m\u00e9t\u00e9o\u2026 (grille d\u2019un demi-degr\u00e9 sur la France)', 0);
+    try{
+      await chargerMasqueFrance();
+      const pas = 0.5, cellules = [];
+      for(let lat = 42.0; lat <= 51.2; lat += pas)
+        for(let lon = -5.0; lon <= 8.5; lon += pas)
+          if(enFrance(lat + pas/2, lon + pas/2)) cellules.push([lat, lon]);
+      const valeurs = await meteoPour(cellules.map(c=>[c[0] + pas/2, c[1] + pas/2]));
+      if(!e.actif) return;
+      e.groupe = L.layerGroup();
+      let mini = 99, maxi = -99, n = 0;
+      const cr = creneauMeteo();
+      cellules.forEach((c, i)=>{
+        const m = valeurs[i] || {}, t = m.t, coul = coulCouche(m);
+        if(coul === null) return;
+        const v = valeurCouche(m);
+        if(v !== null && v !== undefined && isFinite(v)){
+          if(v < mini) mini = v;
+          if(v > maxi) maxi = v;
+        }
+        n++;
+        const ciel = cielDe(m.code);
+        const sec = coucheMeteo() !== 'temp' && (!v || v <= 0);
+        L.polygon([[c[0], c[1]], [c[0], c[1]+pas], [c[0]+pas, c[1]+pas], [c[0]+pas, c[1]]], {
+          stroke:false, fillColor:coul, fillOpacity: sec ? 0.12 : 0.6
+        }).bindTooltip('<b>'+(Math.round(t*10)/10).toLocaleString('fr-FR')+' \u00b0C</b> '+ciel[0]+' '+ciel[1]
+          +'<br>'+texteePluie(m)+'<br><small>'+cr.titre+'</small>', {sticky:true}).addTo(e.groupe);
+      });
+      etatMeteo.bornes = [mini, maxi];
+      e.groupe.addTo(map);
+      cacherInfo();
+      majLegende();
+      const unite = coucheMeteo() === 'temp' ? ' \u00b0C' : (coucheMeteo() === 'mm' ? ' mm' : ' %');
+      afficherInfo('\ud83c\udf21 '+n+' mailles \u2014 de '+Math.round(mini*10)/10+unite+' \u00e0 '+Math.round(maxi*10)/10+unite+' en France, '+cr.titre, 6000);
+    }catch(err){
+      cacherInfo();
+      e.actif = false;
+      basculerBouton(btn, false, '', '\ud83c\udf21 Carte des temp\u00e9ratures (maintenant)');
+      afficherInfo('\ud83c\udf21 Open-Meteo ne r\u00e9pond pas \u2014 r\u00e9essayez dans un instant (service tiers)', 6000);
+    }
+  });
+  document.getElementById('meteo-couche').addEventListener('change', ()=>{
+    const b = document.getElementById('btn-temp');
+    if(b.textContent.indexOf('\u2715') !== -1){ b.click(); b.click(); }
+    majLegende();
+  });
+  document.getElementById('meteo-quand').addEventListener('change', ()=>{
+    ['btn-temp','btn-villes-meteo'].forEach(id=>{
+      const b = document.getElementById(id);
+      if(b.textContent.indexOf('\u2715') !== -1){ b.click(); b.click(); } // \u00e9teint puis rallume avec le nouveau cr\u00e9neau
+    });
+  });
+  function urlMultiMeteo(){
+    const champ = document.getElementById('url-meteo');
+    const memo = localStorage.getItem('geo-url-meteo');
+    if(memo && champ) champ.value = memo;
+    return (champ && champ.value.trim()) || 'pluiepro.html';
+  }
+  document.getElementById('url-meteo').addEventListener('change', (ev)=>{
+    localStorage.setItem('geo-url-meteo', ev.target.value.trim());
+    afficherInfo('\ud83c\udf21 MultiM\u00e9t\u00e9o : lien enregistr\u00e9 (' + ev.target.value.trim() + ')', 4000);
+  });
+  document.getElementById('btn-villes-meteo').addEventListener('click', async ()=>{
+    const btn = document.getElementById('btn-villes-meteo');
+    const e = etatMeteo.villes;
+    if(e.actif){
+      e.actif = false;
+      if(e.groupe) map.removeLayer(e.groupe);
+      basculerBouton(btn, false, '', '\ud83c\udfd9 Villes : temp\u00e9rature & clic vers MultiM\u00e9t\u00e9o');
+      majLegende();
+      return;
+    }
+    e.actif = true;
+    basculerBouton(btn, true, '\ud83c\udfd9 Villes m\u00e9t\u00e9o \u2715', '', '#0e7490');
+    afficherInfo('\ud83c\udfd9 Temp\u00e9ratures des 50 villes\u2026', 0);
+    try{
+      const valeurs = await meteoPour(VILLES_METEO.map(v=>[v[1], v[2]]));
+      if(!e.actif) return;
+      e.groupe = L.layerGroup();
+      const base = urlMultiMeteo();
+      const cr = creneauMeteo();
+      VILLES_METEO.forEach((v, i)=>{
+        const m = valeurs[i] || {}, t = m.t, coul = coulTemp(t) || '#9ca3af';
+        const ciel = cielDe(m.code);
+        const lien = base + '#v=' + v[1].toFixed(4) + ',' + v[2].toFixed(4) + ',11';
+        const pluieCourte = (m.prob !== null && m.prob !== undefined && m.prob >= 30)
+          ? '<i>'+Math.round(m.prob)+'%</i>' : '';
+        L.marker(L.latLng(v[1], v[2]), { keyboard:false, icon: L.divIcon({ className:'ville-meteo',
+          html:'<span style="background:'+coul+'">'+ciel[0]+' '+echap(v[0])+' '+(t === null ? '?' : Math.round(t))+'\u00b0'+pluieCourte+'</span>',
+          iconSize:null }) })
+          .bindTooltip('<b>'+echap(v[0])+'</b> '+ciel[0]+' '+ciel[1]
+            +'<br>'+(t === null ? 'temp\u00e9rature indisponible' : (Math.round(t*10)/10).toLocaleString('fr-FR')+' \u00b0C')
+            +'<br>'+texteePluie(m)
+            +'<br><small>'+cr.titre+' \u00b7 cliquez : ouvre MultiM\u00e9t\u00e9o sur cette ville</small>', {direction:'top'})
+          .on('click', ()=>{ if(typeof window !== 'undefined' && window.open) window.open(lien, '_blank'); })
+          .addTo(e.groupe);
+      });
+      e.groupe.addTo(map);
+      cacherInfo();
+      majLegende();
+      afficherInfo('\ud83c\udfd9 50 villes, '+cr.titre+' \u2014 cliquez-en une : MultiM\u00e9t\u00e9o s\u2019ouvre dessus (' + base + ')', 6000);
+    }catch(err){
+      cacherInfo();
+      e.actif = false;
+      basculerBouton(btn, false, '', '\ud83c\udfd9 Villes : temp\u00e9rature & clic vers MultiM\u00e9t\u00e9o');
+      afficherInfo('\ud83c\udfd9 Open-Meteo ne r\u00e9pond pas \u2014 r\u00e9essayez dans un instant', 6000);
+    }
+  });
+
+  function assemblerAnneaux(segments){
+    const restants = segments.slice(), anneaux = [];
+    const proche = (a, b)=> Math.abs(a.lat-b.lat) < 1e-6 && Math.abs(a.lon-b.lon) < 1e-6;
+    while(restants.length){
+      let cur = restants.shift().slice(), progres = true;
+      while(progres){
+        progres = false;
+        for(let i=0; i<restants.length; i++){
+          const s = restants[i], deb = cur[0], fin = cur[cur.length-1];
+          if(proche(fin, s[0])){ cur = cur.concat(s.slice(1)); }
+          else if(proche(fin, s[s.length-1])){ cur = cur.concat(s.slice().reverse().slice(1)); }
+          else if(proche(deb, s[s.length-1])){ cur = s.slice(0, -1).concat(cur); }
+          else if(proche(deb, s[0])){ cur = s.slice().reverse().slice(0, -1).concat(cur); }
+          else continue;
+          restants.splice(i, 1); progres = true; break;
+        }
+      }
+      if(cur.length > 2) anneaux.push(cur);
+    }
+    return anneaux;
+  }
+  function anneauxOsm(el){
+    if(el.geometry && el.geometry.length > 2) return [el.geometry];
+    return assemblerAnneaux((el.members||[]).filter(m=>m.geometry && m.geometry.length > 1 && m.role !== 'inner').map(m=>m.geometry));
+  }
+  function coulOsmMemo(id, defaut){
+    const el = document.getElementById(id);
+    const v = localStorage.getItem('geo-'+id);
+    if(v && el) el.value = v;
+    return (el && el.value) || defaut;
+  }
+  const PARC_STYLE = { pn:['#b5651d','\ud83c\udfde parc national'], pnr:['#5f9e5f','\ud83c\udf3f parc naturel r\u00e9gional'] };
+  const etatParcs = { pn:{actif:false, groupe:null}, pnr:{actif:false, groupe:null}, osm:null };
+  const normNomParc = (s)=> (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,' ').trim();
+  function couvertParOsm(nom){
+    if(!etatParcs.osm || !etatParcs.osmNoms || !etatParcs.osmNoms.size) return false;
+    const n = normNomParc(nom);
+    if(!n) return false;
+    let trouve = false;
+    etatParcs.osmNoms.forEach(o=>{ if(o.indexOf(n) !== -1) trouve = true; });
+    return trouve; // le contour r\u00e9el remplace le disque approch\u00e9
+  }
+  function dessinerParcs(genre){
+    const e = etatParcs[genre];
+    if(!e.groupe) e.groupe = L.layerGroup();
+    e.groupe.clearLayers();
+    const noms = document.getElementById('chk-parcs-noms').checked;
+    const coul = PARC_STYLE[genre][0];
+    let masques = 0;
+    (genre === 'pn' ? PARCS.pn : PARCS.pnr).forEach(p=>{
+      if(couvertParOsm(p[0])){ masques++; return; } // trac\u00e9 exact d\u00e9j\u00e0 affich\u00e9 : pas de disque
+      const detail = genre === 'pn'
+        ? '<br>cr\u00e9\u00e9 en '+p[4]+'<br><small>'+echap(p[5])+'</small>'
+        : '<br>class\u00e9 en '+p[4];
+      L.polygon(cercleGeo(p[1], p[2], p[3], 28), {
+        color:coul, weight:1.4, opacity:0.9, fillColor:coul, fillOpacity:0.3
+      }).bindTooltip('<b>'+echap(p[0])+'</b><br>'+PARC_STYLE[genre][1]+detail
+        +'<br><small>emprise approch\u00e9e (\u2248 '+p[3]+' km de rayon) \u2014 cochez \u00ab contours r\u00e9els \u00bb pour le trac\u00e9 exact</small>', {sticky:true})
+        .addTo(e.groupe);
+      if(noms) L.marker(L.latLng(p[1], p[2]), { keyboard:false,
+        icon: L.divIcon({ className:'parc-etq', html:'<span style="color:'+coul+'">'+echap(p[0])+'</span>', iconSize:null }) }).addTo(e.groupe);
+    });
+    e.masques = masques;
+    e.groupe.addTo(map);
+    majLegende();
+  }
+  ['pn','pnr'].forEach(genre=>{
+    document.getElementById('btn-'+genre).addEventListener('click', ()=>{
+      const btn = document.getElementById('btn-'+genre);
+      const e = etatParcs[genre];
+      const libelle = genre === 'pn' ? '\ud83c\udfde Parcs nationaux (11)' : '\ud83c\udf3f Parcs naturels r\u00e9gionaux (58)';
+      if(e.actif){
+        e.actif = false;
+        if(e.groupe) map.removeLayer(e.groupe);
+        basculerBouton(btn, false, '', libelle);
+        majLegende();
+        return;
+      }
+      e.actif = true;
+      basculerBouton(btn, true, (genre === 'pn' ? '\ud83c\udfde Parcs nationaux \u2715' : '\ud83c\udf3f PNR \u2715'), '', PARC_STYLE[genre][0]);
+      dessinerParcs(genre);
+      afficherInfo(genre === 'pn'
+        ? '\ud83c\udfde 11 parcs nationaux \u2014 de la Vanoise (1963) aux For\u00eats (2019)'
+        : '\ud83c\udf3f 58 parcs naturels r\u00e9gionaux embarqu\u00e9s \u2014 de Scarpe-Escaut (1968) \u00e0 2021', 5500);
+    });
+  });
+  document.getElementById('chk-parcs-noms').addEventListener('change', ()=>{
+    ['pn','pnr'].forEach(g=>{ if(etatParcs[g].actif) dessinerParcs(g); });
+  });
+  async function chargerParcsOsm(){
+    if(!document.getElementById('chk-parcs-osm').checked) return;
+    if(map.getZoom() < 8){
+      afficherInfo('\ud83d\uddfa Zoomez (niveau 8 minimum) pour charger les contours r\u00e9els des parcs', 4500);
+      return;
+    }
+    const b = map.getBounds();
+    const bbox = [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()].map(x=>x.toFixed(4)).join(',');
+    const requete = '[out:json][timeout:30];('
+      + 'relation["boundary"="national_park"]('+bbox+');'
+      + 'relation["boundary"="protected_area"]["protect_class"="5"]('+bbox+');'
+      + ');out geom 60;';
+    try{
+      const rep = await overpassRequete(requete);
+      const r = await rep.json();
+      if(!document.getElementById('chk-parcs-osm').checked) return;
+      if(!etatParcs.osm) etatParcs.osm = L.layerGroup();
+      etatParcs.osm.clearLayers();
+      etatParcs.osmNoms = new Set();
+      let nb = 0;
+      (r.elements||[]).forEach(el=>{
+        if(el.tags && el.tags.name) etatParcs.osmNoms.add(normNomParc(el.tags.name));
+        const national = el.tags && el.tags.boundary === 'national_park';
+        const coul = national ? PARC_STYLE.pn[0] : PARC_STYLE.pnr[0];
+        const remplissage = coulOsmMemo('coul-parcs-osm', '#2563eb');
+        anneauxOsm(el).forEach(an=>{
+          L.polygon(an.map(p=>L.latLng(p.lat, p.lon)), { color:coul, weight:2.2, opacity:0.95,
+            fillColor:remplissage, fillOpacity:0.32 })
+            .bindTooltip('<b>'+echap((el.tags && el.tags.name) || 'Parc')+'</b><br><small>contour r\u00e9el OpenStreetMap \u2014 remplissage r\u00e9glable</small>', {sticky:true})
+            .addTo(etatParcs.osm);
+          nb++;
+        });
+      });
+      etatParcs.osm.addTo(map);
+      ['pn','pnr'].forEach(g=>{ if(etatParcs[g].actif) dessinerParcs(g); }); // les disques c\u00e8dent la place aux trac\u00e9s
+      const remplaces = (etatParcs.pn.masques||0) + (etatParcs.pnr.masques||0);
+      afficherInfo('\ud83d\uddfa '+nb+' tron\u00e7ons de contours r\u00e9els (OpenStreetMap)'
+        + (remplaces ? ' \u2014 '+remplaces+' disque'+(remplaces>1?'s':'')+' approch\u00e9'+(remplaces>1?'s':'')+' effac\u00e9'+(remplaces>1?'s':'')+' au profit du trac\u00e9 exact' : ''), 5000);
+    }catch(e){
+      afficherInfo('\ud83d\uddfa Overpass ne r\u00e9pond pas \u2014 r\u00e9essayez dans un instant', 5000);
+    }
+  }
+  document.getElementById('coul-parcs-osm').addEventListener('input', (e)=>{
+    localStorage.setItem('geo-coul-parcs-osm', e.target.value);
+    if(document.getElementById('chk-parcs-osm').checked) chargerParcsOsm();
+  });
+  document.getElementById('chk-parcs-osm').addEventListener('change', (e)=>{
+    if(e.target.checked) chargerParcsOsm();
+    else{
+      if(etatParcs.osm) map.removeLayer(etatParcs.osm);
+      etatParcs.osm = null; etatParcs.osmNoms = null;
+      ['pn','pnr'].forEach(g=>{ if(etatParcs[g].actif) dessinerParcs(g); }); // les disques reviennent
+    }
+  });
+  map.on('moveend', ()=>{
+    if(document.getElementById('chk-parcs-osm').checked){
+      clearTimeout(etatParcs.tempo);
+      etatParcs.tempo = setTimeout(chargerParcsOsm, 500);
+    }
+  });
+  (function remplirAllerParc(){
+    const sel = document.getElementById('aller-parc');
+    const ajouter = (titre, liste, genre)=>{
+      const gr = document.createElement('optgroup');
+      gr.label = titre;
+      liste.slice().sort((a,b)=>a[0].localeCompare(b[0],'fr')).forEach(p=>{
+        const o = document.createElement('option');
+        o.value = genre+'|'+p[1]+'|'+p[2]+'|'+p[3];
+        o.textContent = p[0];
+        gr.appendChild(o);
+      });
+      sel.appendChild(gr);
+    };
+    ajouter('Parcs nationaux', PARCS.pn, 'pn');
+    ajouter('Parcs naturels r\u00e9gionaux', PARCS.pnr, 'pnr');
+    sel.addEventListener('change', ()=>{
+      if(!sel.value) return;
+      const m = sel.value.split('|');
+      const rayon = parseFloat(m[3]);
+      map.setView([parseFloat(m[1]), parseFloat(m[2])], rayon > 35 ? 8 : (rayon > 18 ? 9 : 10));
+      if(!etatParcs[m[0]].actif) document.getElementById('btn-'+m[0]).click();
+    });
+  })();
+
+  const cercleGeo = (lat, lon, rayonKm, n)=>{
+    const pts = [], ky = 110.57, kx = 111.32*Math.cos(lat*Math.PI/180);
+    for(let i=0; i<n; i++){
+      const a = 2*Math.PI*i/n;
+      pts.push([lat + rayonKm*Math.sin(a)/ky, lon + rayonKm*Math.cos(a)/kx]);
+    }
+    return pts;
+  };
+  // --- Gaule romaine (provinces approch\u00e9es par d\u00e9partements) + peuples ---
+  const etatGaule = { actif:false, groupe:null, peuples:null };
+  document.getElementById('btn-gaule').addEventListener('click', async ()=>{
+    const btn = document.getElementById('btn-gaule');
+    if(etatGaule.actif){
+      etatGaule.actif = false;
+      if(etatGaule.groupe) map.removeLayer(etatGaule.groupe);
+      basculerBouton(btn, false, '', '\ud83c\udfdb Gaule romaine (provinces)');
+      majLegende();
+      return;
+    }
+    etatGaule.actif = true;
+    basculerBouton(btn, true, '\ud83c\udfdb Gaule romaine \u2715', '', '#c1440e');
+    if(!etatGaule.groupe){
+      afficherInfo('\ud83c\udfdb Chargement des contours\u2026', 0);
+      try{
+        if(!map.getPane('choro')){ const el = map.createPane('choro'); if(el && el.style) el.style.zIndex = 350; }
+        const features = await contoursDep();
+        if(!etatGaule.actif) return;
+        etatGaule.groupe = L.layerGroup();
+        const codeDep = (f)=> String((f.properties && (f.properties.insee_dep || f.properties.code_insee || f.properties.insee || f.properties.code)) || '');
+        L.geoJSON({type:'FeatureCollection', features}, {
+          filter: (f)=> !!HISTOIRE.gaule[codeDep(f)],
+          style: (f)=>{
+            const p = HISTOIRE.gprov[HISTOIRE.gaule[codeDep(f)]];
+            if(!p) return { stroke:false, fill:false };
+            return { pane:'choro', color:'#ffffff', weight:1, opacity:0.8, fillColor:p[1], fillOpacity:0.6 };
+          },
+          onEachFeature: (f, couche)=>{
+            const p = HISTOIRE.gprov[HISTOIRE.gaule[codeDep(f)]];
+            if(!p) return;
+            const nom = (f.properties && (f.properties.nom || f.properties.nom_m)) || codeDep(f);
+            couche.bindTooltip('<b>'+echap(p[0])+'</b><br>'+echap(nom)+'<br><small>'+echap(p[2])
+              +'<br>Approximation par d\u00e9partements actuels</small>', {sticky:true});
+          }
+        }).addTo(etatGaule.groupe);
+        cacherInfo();
+      }catch(e){
+        cacherInfo();
+        etatGaule.actif = false;
+        basculerBouton(btn, false, '', '\ud83c\udfdb Gaule romaine (provinces)');
+        afficherInfo('\ud83c\udfdb Contours d\u00e9partementaux inaccessibles \u2014 r\u00e9essayez', 5000);
+        return;
+      }
+    }
+    etatGaule.groupe.addTo(map);
+    majLegende();
+    afficherInfo('\ud83c\udfdb Les provinces de la Gaule romaine \u2014 survolez pour le d\u00e9tail', 5000);
+  });
+  document.getElementById('chk-peuples').addEventListener('change', (e)=>{
+    if(e.target.checked){
+      if(!etatGaule.peuples){
+        etatGaule.peuples = L.layerGroup();
+        HISTOIRE.peuples.forEach(p=>{
+          L.marker(L.latLng(p[1], p[2]), { keyboard:false,
+            icon: L.divIcon({ className:'peuple-etq', html:echap(p[0]), iconSize:null }) })
+            .bindTooltip('<b>\u2694 '+echap(p[0])+'</b><br>Capitale : '+echap(p[3])
+              +'<br><small>Position approximative du peuple gaulois</small>', {direction:'top'})
+            .addTo(etatGaule.peuples);
+        });
+      }
+      etatGaule.peuples.addTo(map);
+      afficherInfo('\u2694 54 peuples gaulois \u2014 les Arvernes de Vercing\u00e9torix, les \u00c9duens all\u00e9s de Rome, les Parisii\u2026', 6000);
+    }else if(etatGaule.peuples) map.removeLayer(etatGaule.peuples);
+    majLegende();
+  });
+  // --- Pays et r\u00e9gions naturelles ---
+  const etatPays = { actif:false, groupe:null, familles:new Set(Object.keys(HISTOIRE.familles)) };
+  (function construireFamillesPays(){
+    const boite = document.getElementById('pays-familles');
+    const nb = {};
+    HISTOIRE.pays.forEach(p=>{ nb[p[3]] = (nb[p[3]]||0) + 1; });
+    boite.innerHTML = Object.keys(HISTOIRE.familles).map(k=>
+      '<label class="velo-filtre"><input type="checkbox" data-pfam="'+k+'" checked> '
+      +'<span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:'+HISTOIRE.familles[k][1]+'"></span> '
+      +HISTOIRE.familles[k][0]+' <small>('+(nb[k]||0)+')</small></label>').join('');
+    boite.addEventListener('change', (ev)=>{
+      const c = ev.target;
+      if(!c || !c.dataset || !c.dataset.pfam) return;
+      if(c.checked) etatPays.familles.add(c.dataset.pfam); else etatPays.familles.delete(c.dataset.pfam);
+      if(etatPays.actif) dessinerPays();
+    });
+  })();
+  function dessinerPays(){
+    if(!etatPays.groupe) etatPays.groupe = L.layerGroup();
+    etatPays.groupe.clearLayers();
+    let nb = 0;
+    HISTOIRE.pays.forEach(p=>{
+      if(!etatPays.familles.has(p[3])) return;
+      const fam = HISTOIRE.familles[p[3]];
+      L.polygon(cercleGeo(p[1], p[2], p[4], 28), {
+        color:fam[1], weight:1.1, opacity:0.85, fillColor:fam[1], fillOpacity:0.22
+      }).bindTooltip('<b>'+echap(p[0])+'</b><br>'+echap(fam[0])
+        +'<br><small>\u00e9tendue approximative (\u2248 '+p[4]+' km de rayon) \u2014 pays d\u2019usage, sans limite officielle</small>', {sticky:true})
+        .addTo(etatPays.groupe);
+      L.marker(L.latLng(p[1], p[2]), { keyboard:false,
+        icon: L.divIcon({ className:'pays-etq', html:echap(p[0]), iconSize:null }) }).addTo(etatPays.groupe);
+      nb++;
+    });
+    etatPays.nb = nb;
+    etatPays.groupe.addTo(map);
+    majLegende();
+  }
+  document.getElementById('btn-pays').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-pays');
+    if(etatPays.actif){
+      etatPays.actif = false;
+      if(etatPays.groupe) map.removeLayer(etatPays.groupe);
+      basculerBouton(btn, false, '', '\ud83c\udf3e Pays et r\u00e9gions naturelles (137)');
+      majLegende();
+      return;
+    }
+    etatPays.actif = true;
+    basculerBouton(btn, true, '\ud83c\udf3e Pays naturels \u2715', '', '#7fb069');
+    dessinerPays();
+    afficherInfo('\ud83c\udf3e '+(etatPays.nb||0)+' pays \u2014 la France des Beauce, Sologne, Camargue et Causses, celle qu\u2019aucune pr\u00e9fecture ne d\u00e9limite', 6500);
+  });
+  // --- Domaines linguistiques ---
+  const etatLangues = { actif:false, groupe:null };
+  document.getElementById('btn-langues').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-langues');
+    if(etatLangues.actif){
+      etatLangues.actif = false;
+      if(etatLangues.groupe) map.removeLayer(etatLangues.groupe);
+      basculerBouton(btn, false, '', '\ud83d\udde3 Domaines linguistiques');
+      majLegende();
+      return;
+    }
+    etatLangues.actif = true;
+    basculerBouton(btn, true, '\ud83d\udde3 Domaines linguistiques \u2715', '', '#6a4c93');
+    if(!etatLangues.groupe){
+      etatLangues.groupe = L.layerGroup();
+      L.polyline(HISTOIRE.oiloc.map(p=>L.latLng(p[0], p[1])), {
+        color:'#111827', weight:3, opacity:0.85, dashArray:'9 6'
+      }).bindTooltip('<b>Limite oïl / oc</b><br><small>Trac\u00e9 approximatif : le \u00ab croissant \u00bb est une large zone de transition, pas une ligne</small>', {sticky:true})
+        .addTo(etatLangues.groupe);
+      HISTOIRE.langues.forEach(l=>{
+        L.marker(L.latLng(l[1], l[2]), { keyboard:false,
+          icon: L.divIcon({ className:'langue-etq', html:'<span style="color:'+l[3]+'">'+echap(l[0])+'</span>', iconSize:null }) })
+          .bindTooltip('<b>'+echap(l[0])+'</b><br><small>Domaine linguistique historique (\u00e9tat ancien, avant la g\u00e9n\u00e9ralisation du fran\u00e7ais)</small>', {direction:'top'})
+          .addTo(etatLangues.groupe);
+      });
+    }
+    etatLangues.groupe.addTo(map);
+    majLegende();
+    afficherInfo('\ud83d\udde3 Domaines linguistiques \u2014 la limite oïl/oc, plus vieille fronti\u00e8re de France', 6000);
   });
 
   // ---------- 🔗 Lien d'état partageable ----------
@@ -6590,8 +7687,8 @@
   });
 
   // ================= Fenêtres flottantes (widgets) =================
-  const WIDGETS = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-sites','wg-equip','wg-climat','wg-montagnes','wg-3d','wg-limites','wg-foret','wg-pilote'];
-  const WIDGETS_PILOTABLES = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-sites','wg-equip','wg-climat','wg-montagnes','wg-3d','wg-limites','wg-foret'];
+  const WIDGETS = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-sites','wg-equip','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-3d','wg-limites','wg-foret','wg-pilote'];
+  const WIDGETS_PILOTABLES = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-sites','wg-equip','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-3d','wg-limites','wg-foret'];
   const WIDGETS_CASES = []; // remplacées par la fenêtre 🧭 pilote
   let posWidgets = {};
   try{ posWidgets = JSON.parse(localStorage.getItem('geo-widgets3')||'{}'); }catch(e){}
@@ -6672,6 +7769,11 @@
   initWidget('wg-equip',     { left:'12px', top:'70px', replie:true, cache:true });
   initWidget('wg-climat',    { left:'12px', top:'110px', replie:true, cache:true });
   initWidget('wg-montagnes', { left:'12px', top:'150px', replie:true, cache:true });
+  initWidget('wg-feux',     { left:'12px', top:'140px', replie:true, cache:true });
+  initWidget('wg-meteo',    { left:'12px', top:'180px', replie:true, cache:true });
+  initWidget('wg-parcs',    { left:'12px', top:'220px', replie:true, cache:true });
+  initWidget('wg-histoire', { left:'12px', top:'260px', replie:true, cache:true });
+  initWidget('wg-logement', { left:'12px', top:'300px', replie:true, cache:true });
   initWidget('wg-3d',       { left:'12px', top:'340px', replie:true, cache:true });
   initWidget('wg-limites',   { left:'12px', top:'190px', replie:true, cache:true });
   initWidget('wg-foret',     { left:'12px', top:'230px', replie:true, cache:true });
@@ -6869,6 +7971,67 @@
         + ligneLegende('#2563eb','\u2192 l\u2019Atlantique','carre','')
         + ligneLegende('#14b8a6','\u2192 la M\u00e9diterran\u00e9e','carre','')
         + ligneLegende('#8b5cf6','\u2192 la mer du Nord','carre','Lignes de partage simplifi\u00e9es (\u00b130 km) \u2014 sch\u00e9ma p\u00e9dagogique'));
+    }
+    if(etatCumulBrule.actif){
+      const a = etatCumulBrule.periode;
+      const lib = a < 1 ? '6 derniers mois' : (a === 30 ? 'tout l\u2019archiv\u00e9' : a+' ans');
+      blocs.push(ligneLegende('#7c2d12', '\ud83d\udfeb Surfaces br\u00fbl\u00e9es cumul\u00e9es <small>('+lib+')</small>', 'carre',
+        'P\u00e9rim\u00e8tres EFFIS/Copernicus \u2014 archives satellitaires : MODIS depuis 2000, VIIRS depuis 2012 ; les petits feux (< 30 ha) \u00e9chappent souvent \u00e0 la d\u00e9tection'));
+    }
+    if(etatFeuxActifs.actif){
+      const s = etatFeuxActifs.source || {};
+      blocs.push(ligneLegende('#dc2626', '\ud83d\udd25 Feux d\u00e9tect\u00e9s <small>('+(etatFeuxActifs.jour||'')+')</small>', 'carre',
+        (s.nom||'')+' \u2014 points chauds satellitaires : ni exhaustifs (nuages) ni tous des incendies'));
+    }
+    if(etatMeteo.temp.actif || etatMeteo.villes.actif){
+      const b = etatMeteo.bornes;
+      const c = coucheMeteo();
+      const titreC = c === 'temp' ? '\ud83c\udf21 Temp\u00e9rature de l\u2019air'
+        : (c === 'mm' ? '\u2614 Quantit\u00e9 de pluie' : '\ud83d\udca7 Risque de pluie');
+      const lignesC = c === 'temp'
+        ? [[-5,'moins de 0 \u00b0C'],[5,'0 \u00e0 10 \u00b0C'],[12,'10 \u00e0 15 \u00b0C'],[17,'15 \u00e0 20 \u00b0C'],
+           [22,'20 \u00e0 25 \u00b0C'],[27,'25 \u00e0 30 \u00b0C'],[32,'30 \u00e0 35 \u00b0C'],[37,'plus de 35 \u00b0C']]
+            .map(p=>ligneLegende(coulTemp(p[0]), p[1], 'carre', ''))
+        : (c === 'mm'
+          ? [[0.05,'moins de 0,1 mm'],[0.3,'0,1 \u00e0 0,5 mm'],[0.7,'0,5 \u00e0 1 mm'],[1.5,'1 \u00e0 2 mm'],
+             [3,'2 \u00e0 5 mm'],[7,'5 \u00e0 10 mm'],[15,'10 \u00e0 20 mm'],[25,'plus de 20 mm']]
+              .map(p=>ligneLegende(coulSeuils(p[0], ECHELLE_MM), p[1], 'carre', ''))
+          : [[5,'moins de 10 %'],[15,'10 \u00e0 20 %'],[30,'20 \u00e0 40 %'],[50,'40 \u00e0 60 %'],
+             [70,'60 \u00e0 80 %'],[90,'plus de 80 %']]
+              .map(p=>ligneLegende(coulSeuils(p[0], ECHELLE_PROB), p[1], 'carre', '')));
+      blocs.push('<div class="leg-sous">'+titreC+' <small>(Open-Meteo \u00b7 mod\u00e8les publics)</small></div>'
+        + lignesC.join('')
+        + '<div class="leg-note">Cr\u00e9neau : '+creneauMeteo().titre+' \u00b7 icône = ciel pr\u00e9vu, \u2614 = pluie (mm) et risque en %</div>'
+        + (b ? '<div class="leg-note">Amplitude en France : de '+Math.round(b[0])+' \u00b0C \u00e0 '+Math.round(b[1])+' \u00b0C</div>' : ''));
+    }
+    if(etatParcs.pn.actif || etatParcs.pnr.actif){
+      blocs.push('<div class="leg-sous">\ud83c\udf32 Parcs naturels <small>(emprises approch\u00e9es \u00b7 contours r\u00e9els via OSM)</small></div>'
+        + (etatParcs.pn.actif ? ligneLegende(PARC_STYLE.pn[0], 'Parcs nationaux <small>(11)</small>', 'carre', 'Protection forte : c\u0153ur de parc r\u00e9glement\u00e9') : '')
+        + (etatParcs.pnr.actif ? ligneLegende(PARC_STYLE.pnr[0], 'Parcs naturels r\u00e9gionaux <small>(58)</small>', 'carre', 'Territoires ruraux habit\u00e9s, charte volontaire') : ''));
+    }
+    if(etatGaule.actif){
+      blocs.push('<div class="leg-sous">\ud83c\udfdb Gaule romaine <small>(provinces \u00b7 approximation par d\u00e9partements)</small></div>'
+        + Object.keys(HISTOIRE.gprov).map(k=>ligneLegende(HISTOIRE.gprov[k][1], HISTOIRE.gprov[k][0], 'carre', HISTOIRE.gprov[k][2])).join(''));
+    }
+    if(etatPays.actif){
+      blocs.push('<div class="leg-sous">\ud83c\udf3e Pays et r\u00e9gions naturelles <small>('+(etatPays.nb||0)+' affich\u00e9s \u00b7 \u00e9tendues approximatives)</small></div>'
+        + Object.keys(HISTOIRE.familles).filter(k=>etatPays.familles.has(k))
+            .map(k=>ligneLegende(HISTOIRE.familles[k][1], HISTOIRE.familles[k][0], 'carre', '')).join(''));
+    }
+    if(etatLangues.actif){
+      blocs.push(ligneLegende('#111827', '\ud83d\udde3 Limite oïl / oc <small>(trac\u00e9 approximatif)</small>', 'carre',
+        'Le \u00ab croissant \u00bb est une zone de transition, pas une ligne'));
+    }
+    if(LOGEMENT.classes){
+      const cl = LOGEMENT.classes;
+      const bornes = ['moins de '+Math.round(cl.seuils[0]).toLocaleString('fr-FR'),
+        Math.round(cl.seuils[0]).toLocaleString('fr-FR')+' \u2013 '+Math.round(cl.seuils[1]).toLocaleString('fr-FR'),
+        Math.round(cl.seuils[1]).toLocaleString('fr-FR')+' \u2013 '+Math.round(cl.seuils[2]).toLocaleString('fr-FR'),
+        Math.round(cl.seuils[2]).toLocaleString('fr-FR')+' \u2013 '+Math.round(cl.seuils[3]).toLocaleString('fr-FR'),
+        'plus de '+Math.round(cl.seuils[3]).toLocaleString('fr-FR')];
+      blocs.push('<div class="leg-sous">\ud83c\udfd8 Prix par quartier <small>(m\u00e9diane \u20ac/m\u00b2 \u00b7 maille '+cl.maille+' m \u00b7 DVF '+(LOGEMENT.an||'')+')</small></div>'
+        + cl.palette.map((c, i)=>ligneLegende(c, bornes[i]+' \u20ac/m\u00b2', 'carre',
+            'Ventes notari\u00e9es r\u00e9elles (DGFiP/Etalab) \u2014 3 ventes minimum par quartier')).join(''));
     }
     if(etatGlaciers.actif){
       blocs.push(ligneLegende('#bfe6f2', '\u2744 Glaciers <small>('+(etatGlaciers.nb||0)+' dans la vue)</small>', 'carre',
