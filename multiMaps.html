@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v2.4 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v2.5 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v2.4</title>
+<title>MultiMaps — géographie (collège & lycée) — v2.5</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -159,6 +159,7 @@
   .hydro-forte{filter:saturate(2.6) contrast(1.35) brightness(0.88)}
   .vise3d{background:none;border:none;font-size:20px;transform:translate(-50%,-90%)}
   .res-ligne:hover{background:#efece2}
+  .reseau-picto{background:none;border:none;line-height:1;transform:translate(-50%,-50%);text-shadow:0 0 3px #fff,0 0 3px #fff}
   .vent-fleche{background:none;border:none;font:700 17px system-ui;transform:translate(-50%,-50%);text-shadow:0 0 3px #fff,0 0 3px #fff}
   .vent-fleche span{display:inline-block}
   .ville-meteo{background:none;border:none;white-space:nowrap;transform:translate(-50%,-50%);cursor:pointer}
@@ -534,6 +535,15 @@
     <label class="velo-filtre"><input type="checkbox" id="chk-rando-chemins" checked>
       <span class="velo-trait" style="height:2px;background:repeating-linear-gradient(90deg,#6b7280 0 5px,transparent 5px 9px)"></span> Petits chemins <small>(sentiers &amp; pistes non balisés)</small></label>
     <p class="sous" id="rando-bilan" style="margin:4px 0 0">Source : OpenStreetMap</p>
+    <div style="border-top:1px solid var(--trait);margin:6px 0 4px;padding-top:4px;font-weight:600">🧩 Occupation des sols</div>
+    <select id="clc-annee" class="feux-annee" style="width:100%" title="Le millésime CORINE Land Cover. 2018 est vérifié ; les millésimes anciens suivent la même convention de nommage mais n'ont pas pu être testés — si l'un ne s'affiche pas, un message vous le dit et vous en choisissez un autre.">
+      <option value="CLC18" selected>Occupation des sols 2018 (vérifié)</option>
+      <option value="CLC12">Millésime 2012 (à tester)</option>
+      <option value="CLC06">Millésime 2006 (à tester)</option>
+      <option value="CLC00">Millésime 2000 (à tester)</option>
+      <option value="CLC90">Millésime 1990 (à tester)</option>
+    </select>
+    <button class="calque-ajout donnee" id="btn-clc" title="CORINE Land Cover : l'inventaire européen de l'occupation des terres en 44 postes — tissu urbain, cultures, prairies, forêts, milieux naturels, zones humides, eau. Le socle des chapitres « paysages » et « artificialisation ». Astuce : combinez deux millésimes avec le rideau comparatif pour voir la ville grignoter les champs.">🧩 Occupation des sols (CLC)</button>
   </div>
 </div>
 
@@ -674,6 +684,9 @@
     <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
   </div>
   <div class="widget-corps">
+      <button class="calque-ajout donnee" id="btn-aeroports" title="Les 53 aéroports français, métropole et Outre-mer : gros symboles pour les grandes plateformes (plus de 5 millions de passagers), moyens pour les aéroports régionaux, petits pour les autres. Positions approchées.">✈ Aéroports (53)</button>
+      <button class="calque-ajout donnee" id="btn-ports" title="Les grands ports maritimes (Marseille-Fos, Le Havre, Dunkerque, Rouen, Nantes-Saint-Nazaire, La Rochelle, Bordeaux et les quatre d'Outre-mer) et les principaux ports secondaires. Positions approchées.">⚓ Ports maritimes (25)</button>
+      <button class="calque-ajout donnee" id="btn-axes" title="Autoroutes et lignes à grande vitesse de la zone affichée, tracées d'après OpenStreetMap (zoom 8 minimum). Le squelette de la mobilité française : l'étoile autoroutière et le réseau LGV en éventail depuis Paris.">🛣 Autoroutes et LGV (vue)</button>
       <button class="calque-ajout donnee" id="btn-gares" title="Gares de voyageurs SNCF (SNCF Open Data) — cliquez une pastille pour le détail">🚉 Gares SNCF</button>
       <button class="calque-ajout donnee" id="btn-mh" title="Immeubles protégés au titre des monuments historiques (base Mérimée, ministère de la Culture). Zoomez au niveau d'un quartier.">🏛️ Monuments historiques</button>
       <button class="calque-ajout donnee" id="btn-sport" title="Recensement des équipements sportifs — piscines, gymnases, stades, skateparks… (ministère des Sports). Zoomez fortement, ils sont très nombreux.">🏊 Équipements sportifs</button>
@@ -844,6 +857,33 @@
       <button class="widget-btn" id="btn-seance-open" title="Rejoue la séance : éteint tout, rallume les couches enregistrées, replace la vue.">▶</button>
       <button class="widget-btn" id="btn-seance-del" title="Supprime la séance sélectionnée.">🗑</button>
     </div>
+    <div style="border-top:1px solid var(--trait);margin:6px 0 4px;padding-top:4px;font-weight:600">🎬 Récit guidé</div>
+    <select id="recit-modele" class="feux-annee" style="width:100%" title="Un récit est une suite d'étapes commentées : à chaque étape, la carte se place et les bonnes couches s'allument. Deux récits sont fournis, prêts à projeter.">
+      <option value="">— choisir un récit —</option>
+      <option value="risques">Les risques naturels en France (5 étapes)</option>
+      <option value="peuplement">Où vivent les Français ? (5 étapes)</option>
+      <option value="perso">Mon récit (étapes ajoutées à la main)</option>
+    </select>
+    <div style="display:flex;gap:4px;margin-top:3px">
+      <button class="widget-btn" id="btn-recit-lire" style="flex:1" title="Lance le récit : bandeau de commentaire en bas, navigation aux flèches ou aux boutons.">▶ Projeter</button>
+      <button class="widget-btn" id="btn-recit-ajout" title="Ajoute l'état actuel (vue + couches allumées) comme nouvelle étape de « Mon récit », avec un commentaire.">➕ Étape</button>
+      <button class="widget-btn" id="btn-recit-vider" title="Efface toutes les étapes de « Mon récit ».">🗑</button>
+    </div>
+    <div style="border-top:1px solid var(--trait);margin:6px 0 4px;padding-top:4px;font-weight:600">🌍 Territoires</div>
+    <select id="aller-territoire" class="feux-annee" style="width:100%" title="Emmène la carte sur un territoire. Attention : beaucoup de couches ne couvrent que la métropole — les contours, le relief, les parcs et les prix DVF fonctionnent outre-mer, pas les choroplèthes communales ni les feux EFFIS.">
+      <option value="">→ Aller à un territoire…</option>
+      <option value="46.6,2.4,6">France métropolitaine</option>
+      <option value="16.19,-61.55,10">Guadeloupe</option>
+      <option value="14.64,-61.02,10">Martinique</option>
+      <option value="3.93,-53.10,7">Guyane</option>
+      <option value="-21.13,55.53,10">La Réunion</option>
+      <option value="-12.82,45.15,11">Mayotte</option>
+      <option value="46.87,-56.32,11">Saint-Pierre-et-Miquelon</option>
+      <option value="18.06,-63.06,12">Saint-Martin et Saint-Barthélemy</option>
+      <option value="-21.30,165.50,7">Nouvelle-Calédonie</option>
+      <option value="-17.65,-149.45,9">Polynésie française</option>
+      <option value="-13.28,-176.17,11">Wallis-et-Futuna</option>
+    </select>
     <div style="border-top:1px solid var(--trait);margin:6px 0 4px;padding-top:4px;font-weight:600">↔ Rideau comparatif</div>
     <label class="velo-filtre"><input type="checkbox" id="chk-rideau"> Activer le rideau <small>(glissez la barre)</small></label>
     <select id="fond-rideau" class="feux-annee" style="width:100%;margin-top:2px" title="Le fond révélé à gauche de la barre. Idéal : photo aérienne à gauche, carte à droite.">
@@ -1019,7 +1059,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v2.4</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v2.5</small></span>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
   <div class="widget-corps">
@@ -1075,7 +1115,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v2.4</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v2.5</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -1103,6 +1143,17 @@
     <button id="profil-fermer" style="border:1px solid var(--trait);border-radius:7px;background:#fff;cursor:pointer;padding:1px 9px">✕</button>
   </div>
   <canvas id="profil-canvas" width="760" height="230" style="display:block;margin-top:4px"></canvas>
+</div>
+<div id="recit-bandeau" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:1300;max-width:min(760px,92vw);background:rgba(20,18,14,.93);color:#fff;border-radius:12px;box-shadow:0 6px 26px rgba(0,0,0,.45);padding:9px 12px;font:13.5px system-ui">
+  <div style="display:flex;align-items:center;gap:10px">
+    <button id="recit-prec" style="border:1px solid #6b6656;background:#2b2822;color:#fff;border-radius:8px;cursor:pointer;padding:2px 10px;font-size:15px">◀</button>
+    <div style="flex:1">
+      <div id="recit-titre" style="font-weight:700"></div>
+      <div id="recit-texte" style="opacity:.9;margin-top:2px"></div>
+    </div>
+    <button id="recit-suiv" style="border:1px solid #6b6656;background:#2b2822;color:#fff;border-radius:8px;cursor:pointer;padding:2px 10px;font-size:15px">▶</button>
+    <button id="recit-fin" style="border:1px solid #6b6656;background:none;color:#cbd5e1;border-radius:8px;cursor:pointer;padding:2px 9px">✕</button>
+  </div>
 </div>
 <div id="bandeau-local" style="display:none;position:fixed;left:0;right:0;top:0;z-index:1400;background:#7c2d12;color:#fff;font:13px system-ui;padding:7px 12px;box-shadow:0 2px 8px rgba(0,0,0,.4)">
   <b>⚠ Page ouverte en fichier local (file://)</b> — le navigateur interdit tout chargement de données : choroplèthes, vallées, sites OSM, prix DVF, météo, feux…
@@ -1190,7 +1241,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v2.4';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v2.5';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -1567,8 +1618,8 @@
 
   // ---------- 🏛 QPV officiels (données ANCT, open data) ----------
   const URLS_QPV = [
-    'https://opendata.caissedesdepots.fr/api/explore/v2.4/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-au-1er-janvier-2024/exports/geojson',
-    'https://equipements.sports.gouv.fr/api/explore/v2.4/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/exports/geojson'
+    'https://opendata.caissedesdepots.fr/api/explore/v2.5/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-au-1er-janvier-2024/exports/geojson',
+    'https://equipements.sports.gouv.fr/api/explore/v2.5/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/exports/geojson'
   ];
   let qpvGeojson = null, qpvLayer = null, qpvVisible = false, qpvChargement = false;
   let qpvPointsRep = null; // un point représentatif par QPV, pour les croisements
@@ -1696,7 +1747,7 @@
   btnQpv.addEventListener('click', basculerQpv);
 
   // ---------- 🎓📝 Couches éducation (data.education.gouv.fr, en direct sur la vue) ----------
-  const EDUC = 'https://data.education.gouv.fr/api/explore/v2.4/catalog/datasets/';
+  const EDUC = 'https://data.education.gouv.fr/api/explore/v2.5/catalog/datasets/';
 
   function couleurIps(v){
     if(v >= 120) return '#2e9e44';
@@ -1848,8 +1899,8 @@
   let acvActif = false, acvGroupe = null, acvCharge = false;
   const btnAcv = document.getElementById('btn-acv');
   const URLS_ACV = [
-    'https://opendata.caissedesdepots.fr/api/explore/v2.4/catalog/datasets/villes_action_coeurdeville/records?limit=100&offset=',
-    'https://opendata.caissedesdepots.fr/api/explore/v2.4/catalog/datasets/villes-action-coeur-de-ville-portail-open-data/records?limit=100&offset='
+    'https://opendata.caissedesdepots.fr/api/explore/v2.5/catalog/datasets/villes_action_coeurdeville/records?limit=100&offset=',
+    'https://opendata.caissedesdepots.fr/api/explore/v2.5/catalog/datasets/villes-action-coeur-de-ville-portail-open-data/records?limit=100&offset='
   ];
   btnAcv.addEventListener('click', async ()=>{
     if(acvActif){
@@ -2122,7 +2173,7 @@
     },
     gares: {
       btn:'btn-gares', libelle:'🚉 Gares SNCF', legende:'Gares SNCF', teinte:'#1d4ed8',
-      base:'https://ressources.data.sncf.com/api/explore/v2.4/catalog/datasets/',
+      base:'https://ressources.data.sncf.com/api/explore/v2.5/catalog/datasets/',
       datasets:['gares-de-voyageurs','referentiel-gares-voyageurs','liste-des-gares'],
       zoomMin:9, etiqu:['nom','nom_gare','alias_libelle_noncontraint','libelle','gare_alias_libelle_noncontraint'],
       sous:['commune','departement','segment_drg'],
@@ -2131,7 +2182,7 @@
     },
     mh: {
       btn:'btn-mh', libelle:'🏛️ Monuments historiques', legende:'Monuments historiques', teinte:'#7c2d12',
-      base:'https://data.culture.gouv.fr/api/explore/v2.4/catalog/datasets/',
+      base:'https://data.culture.gouv.fr/api/explore/v2.5/catalog/datasets/',
       datasets:['liste-des-immeubles-proteges-au-titre-des-monuments-historiques'],
       zoomMin:12, etiqu:['appellation_courante','titre_editorial_de_la_notice','denomination_de_l_edifice','tico'],
       sous:['commune_forme_editoriale','commune','adresse_forme_editoriale','siecle_de_la_campagne_principale_de_construction','denomination_de_l_edifice','typologie_de_la_protection'],
@@ -2140,7 +2191,7 @@
     },
     sport: {
       btn:'btn-sport', libelle:'🏊 Équipements sportifs', legende:'Équipements sportifs', teinte:'#059669',
-      base:'https://equipements.sports.gouv.fr/api/explore/v2.4/catalog/datasets/',
+      base:'https://equipements.sports.gouv.fr/api/explore/v2.5/catalog/datasets/',
       datasets:['data-es','res-recensement-des-equipements-sportifs'],
       zoomMin:13, etiqu:['inst_nom','equip_nom','nominstallation','nom'],
       sous:['equip_type_name','inst_com_nom','commune'],
@@ -5253,6 +5304,217 @@
     afficherInfo(fermees
       ? '\ud83e\uddaf '+fermees+' fen\u00eatre(s) referm\u00e9e(s) \u2014 les couches restent affich\u00e9es'
       : '\ud83e\uddaf Toutes les fen\u00eatres \u00e9taient d\u00e9j\u00e0 ferm\u00e9es', 5000);
+  });
+
+  const PACK_RESEAUX = {"aero":[["Paris-Charles-de-Gaulle",49.01,2.548,1],["Paris-Orly",48.726,2.365,1],["Nice-Côte d'Azur",43.665,7.215,1],["Lyon-Saint-Exupéry",45.726,5.081,1],["Marseille-Provence",43.436,5.215,1],["Toulouse-Blagnac",43.63,1.368,1],["Bordeaux-Mérignac",44.828,-0.715,1],["Nantes-Atlantique",47.157,-1.611,1],["Bâle-Mulhouse",47.59,7.529,1],["Beauvais-Tillé",49.454,2.113,2],["Montpellier-Méditerranée",43.579,3.963,2],["Lille-Lesquin",50.563,3.089,2],["Strasbourg-Entzheim",48.538,7.628,2],["Brest-Bretagne",48.448,-4.418,2],["Rennes-Saint-Jacques",48.07,-1.734,2],["Ajaccio-Napoléon-Bonaparte",41.924,8.803,2],["Bastia-Poretta",42.552,9.484,2],["Figari-Sud Corse",41.501,9.098,3],["Calvi-Sainte-Catherine",42.524,8.793,3],["Biarritz-Pays basque",43.47,-1.531,2],["Pau-Pyrénées",43.38,-0.418,3],["Perpignan-Rivesaltes",42.74,2.871,3],["Toulon-Hyères",43.097,6.146,3],["Clermont-Ferrand-Auvergne",45.786,3.163,3],["Limoges-Bellegarde",45.863,1.179,3],["Tours-Val de Loire",47.432,0.727,3],["Caen-Carpiquet",49.173,-0.45,3],["Deauville-Normandie",49.365,0.154,3],["Metz-Nancy-Lorraine",48.982,6.251,3],["Dijon-Bourgogne",47.269,5.09,3],["Grenoble-Alpes-Isère",45.363,5.329,3],["Chambéry-Savoie",45.638,5.88,3],["Annecy-Mont-Blanc",45.929,6.099,3],["La Rochelle-Île de Ré",46.179,-1.195,3],["Poitiers-Biard",46.588,0.307,3],["Rodez-Aveyron",44.408,2.483,3],["Béziers-Cap d'Agde",43.324,3.354,3],["Carcassonne-Sud de France",43.216,2.306,3],["Nîmes-Alès-Camargue",43.757,4.416,3],["Avignon-Provence",43.907,4.902,3],["Lorient-Bretagne Sud",47.761,-3.44,3],["Quimper-Bretagne",47.975,-4.168,3],["Dinard-Pleurtuit",48.588,-2.08,3],["Angers-Loire",47.56,-0.312,3],["Le Havre-Octeville",49.534,0.088,3],["Rouen-Vallée de Seine",49.387,1.175,3],["Pointe-à-Pitre-Le Raizet",16.266,-61.532,1],["Fort-de-France-Aimé Césaire",14.591,-61.003,1],["Cayenne-Félix Éboué",4.822,-52.36,2],["La Réunion-Roland-Garros",-20.887,55.51,1],["Dzaoudzi-Pamandzi",-12.805,45.281,2],["Nouméa-La Tontouta",-22.015,166.213,2],["Papeete-Faa'a",-17.556,-149.611,2]],"ports":[["Marseille-Fos",43.34,5.32,1],["Le Havre",49.483,0.12,1],["Dunkerque",51.035,2.37,1],["Rouen",49.44,1.06,1],["Nantes-Saint-Nazaire",47.27,-2.2,1],["La Rochelle",46.158,-1.222,1],["Bordeaux",44.86,-0.56,1],["Calais",50.968,1.86,2],["Boulogne-sur-Mer",50.727,1.595,2],["Sète",43.4,3.7,2],["Brest",48.383,-4.495,2],["Lorient",47.73,-3.365,2],["Cherbourg",49.65,-1.617,2],["Toulon",43.118,5.93,2],["Bayonne",43.52,-1.47,2],["Port-la-Nouvelle",43.017,3.062,2],["Caen-Ouistreham",49.28,-0.25,2],["Dieppe",49.93,1.085,2],["Saint-Malo",48.645,-2.02,2],["Ajaccio",41.92,8.74,2],["Bastia",42.7,9.452,2],["Guadeloupe (Jarry)",16.235,-61.55,1],["Martinique (Fort-de-France)",14.605,-61.07,1],["Guyane (Dégrad-des-Cannes)",4.855,-52.275,1],["La Réunion (Port Réunion)",-20.936,55.297,1]]};
+  // ---------- Grands reseaux : aeroports, ports, autoroutes et LGV ----------
+  const RESEAUX = PACK_RESEAUX;
+  const etatReseaux = { aero:{actif:false, groupe:null}, ports:{actif:false, groupe:null}, axes:{actif:false, groupe:null} };
+  function dessinerPoints(cle, liste, couleur, picto, libelle){
+    const e = etatReseaux[cle];
+    if(!e.groupe) e.groupe = L.layerGroup();
+    e.groupe.clearLayers();
+    liste.forEach(p=>{
+      const taille = p[3] === 1 ? 19 : (p[3] === 2 ? 14 : 10);
+      const rang = p[3] === 1 ? 'grande plateforme' : (p[3] === 2 ? 'important' : 'secondaire');
+      L.marker(L.latLng(p[1], p[2]), { keyboard:false, icon: L.divIcon({ className:'reseau-picto',
+        html:'<span style="color:'+couleur+';font-size:'+taille+'px">'+picto+'</span>', iconSize:null }) })
+        .bindTooltip('<b>'+echap(p[0])+'</b><br>'+libelle+' \u00b7 '+rang
+          +'<br><small>position approch\u00e9e</small>', {direction:'top'})
+        .addTo(e.groupe);
+    });
+    e.groupe.addTo(map);
+    majLegende();
+  }
+  document.getElementById('btn-aeroports').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-aeroports'), e = etatReseaux.aero;
+    if(e.actif){ e.actif = false; if(e.groupe) map.removeLayer(e.groupe);
+      basculerBouton(btn, false, '', '\u2708 A\u00e9roports (53)'); majLegende(); return; }
+    e.actif = true;
+    basculerBouton(btn, true, '\u2708 A\u00e9roports \u2715', '', '#1d4ed8');
+    dessinerPoints('aero', RESEAUX.aero, '#1d4ed8', '\u2708', 'a\u00e9roport');
+    afficherInfo('\u2708 53 a\u00e9roports \u2014 Roissy et Orly concentrent \u00e0 eux seuls plus de la moiti\u00e9 du trafic fran\u00e7ais', 6000);
+  });
+  document.getElementById('btn-ports').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-ports'), e = etatReseaux.ports;
+    if(e.actif){ e.actif = false; if(e.groupe) map.removeLayer(e.groupe);
+      basculerBouton(btn, false, '', '\u2693 Ports maritimes (25)'); majLegende(); return; }
+    e.actif = true;
+    basculerBouton(btn, true, '\u2693 Ports \u2715', '', '#0e7490');
+    dessinerPoints('ports', RESEAUX.ports, '#0e7490', '\u2693', 'port maritime');
+    afficherInfo('\u2693 25 ports \u2014 Marseille-Fos et Le Havre en t\u00eate, loin derri\u00e8re Rotterdam ou Anvers', 6000);
+  });
+  async function chargerAxes(){
+    const e = etatReseaux.axes;
+    if(!e.actif) return;
+    if(map.getZoom() < 8){
+      afficherInfo('\ud83d\udee3 Zoomez (niveau 8 minimum) pour tracer les autoroutes et les LGV de la zone', 4500);
+      return;
+    }
+    const b = map.getBounds();
+    const bbox = [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()].map(x=>x.toFixed(4)).join(',');
+    const requete = '[out:json][timeout:30];('
+      + 'way["highway"="motorway"]('+bbox+');'
+      + 'way["railway"="rail"]["highspeed"="yes"]('+bbox+');'
+      + ');out geom 900;';
+    try{
+      const rep = await overpassRequete(requete);
+      const r = await rep.json();
+      if(!e.actif) return;
+      if(!e.groupe) e.groupe = L.layerGroup();
+      e.groupe.clearLayers();
+      let auto = 0, lgv = 0;
+      (r.elements||[]).forEach(el=>{
+        if(!el.geometry || el.geometry.length < 2) return;
+        const estLgv = el.tags && el.tags.railway === 'rail';
+        if(estLgv) lgv++; else auto++;
+        L.polyline(el.geometry.map(p=>L.latLng(p.lat, p.lon)), {
+          color: estLgv ? '#be185d' : '#1d4ed8', weight: estLgv ? 2.6 : 3.2,
+          opacity:0.9, dashArray: estLgv ? '10 5' : null
+        }).bindTooltip('<b>'+echap((el.tags && (el.tags.name || el.tags.ref)) || (estLgv ? 'Ligne \u00e0 grande vitesse' : 'Autoroute'))+'</b>'
+          +'<br><small>'+(estLgv ? 'LGV' : 'autoroute')+' \u00b7 trac\u00e9 OpenStreetMap</small>', {sticky:true})
+          .addTo(e.groupe);
+      });
+      e.nb = { auto:auto, lgv:lgv };
+      e.groupe.addTo(map);
+      majLegende();
+      afficherInfo('\ud83d\udee3 '+auto+' tron\u00e7on(s) d\u2019autoroute et '+lgv+' de LGV dans la vue', 5000);
+    }catch(err){
+      afficherInfo('\ud83d\udee3 Overpass ne r\u00e9pond pas \u2014 r\u00e9essayez dans un instant', 5000);
+    }
+  }
+  document.getElementById('btn-axes').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-axes'), e = etatReseaux.axes;
+    if(e.actif){ e.actif = false; if(e.groupe) map.removeLayer(e.groupe);
+      basculerBouton(btn, false, '', '\ud83d\udee3 Autoroutes et LGV (vue)'); majLegende(); return; }
+    e.actif = true;
+    basculerBouton(btn, true, '\ud83d\udee3 Autoroutes et LGV \u2715', '', '#1d4ed8');
+    chargerAxes();
+  });
+  map.on('moveend', ()=>{
+    if(etatReseaux.axes.actif){ clearTimeout(etatReseaux.tempo); etatReseaux.tempo = setTimeout(chargerAxes, 500); }
+  });
+
+  // ---------- Occupation des sols : CORINE Land Cover ----------
+  const etatClc = { actif:false, layer:null };
+  document.getElementById('btn-clc').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-clc');
+    if(etatClc.actif){
+      etatClc.actif = false;
+      if(etatClc.layer) map.removeLayer(etatClc.layer);
+      basculerBouton(btn, false, '', '\ud83e\udde9 Occupation des sols (CLC)');
+      majLegende();
+      return;
+    }
+    const mill = (document.getElementById('clc-annee')||{value:'CLC18'}).value || 'CLC18';
+    etatClc.actif = true;
+    etatClc.mill = mill;
+    basculerBouton(btn, true, '\ud83e\udde9 Occupation des sols \u2715', '', '#b45309');
+    if(etatClc.layer) map.removeLayer(etatClc.layer);
+    const couche = L.tileLayer.wms(WMS_GEOPF, { layers:'LANDCOVER.'+mill, format:'image/png',
+      transparent:true, version:'1.3.0', opacity:0.72, attribution:'CORINE Land Cover \u2014 SDES / Copernicus (IGN)' });
+    let signale = false;
+    couche.on('tileerror', ()=>{
+      if(signale || !etatClc.actif) return;
+      signale = true; // choix strict : on ne substitue pas un autre mill\u00e9sime
+      afficherInfo('\ud83e\udde9 Le mill\u00e9sime '+mill.replace('CLC','')+' ne r\u00e9pond pas \u2014 revenez \u00e0 2018 (v\u00e9rifi\u00e9) dans la liste', 7000);
+    });
+    etatClc.layer = couche;
+    couche.addTo(map);
+    majLegende();
+    afficherInfo('\ud83e\udde9 Occupation des sols \u2014 rouge : tissu urbain \u00b7 jaune et ocre : cultures \u00b7 vert : for\u00eats et prairies \u00b7 bleu : eau et zones humides', 7000);
+  });
+  document.getElementById('clc-annee').addEventListener('change', ()=>{
+    const b = document.getElementById('btn-clc');
+    if(b.textContent.indexOf('\u2715') !== -1){ b.click(); b.click(); }
+  });
+
+  // ---------- Recit guide (diaporama de cartes) et territoires ----------
+  const RECITS_PRETS = {
+    risques: { nom:'Les risques naturels en France', etapes:[
+      { titre:'1. La terre tremble aussi en France', texte:'Magnitude et profondeur des s\u00e9ismes r\u00e9cents : Pyr\u00e9n\u00e9es, Alpes du Sud, foss\u00e9 rh\u00e9nan et Armorique ressortent.', couches:['btn-seismes'], vue:[46.6, 2.4, 6] },
+      { titre:'2. La m\u00e9moire du feu', texte:'Toutes les surfaces br\u00fbl\u00e9es des derni\u00e8res ann\u00e9es superpos\u00e9es : le pourtour m\u00e9diterran\u00e9en, les Landes, la Corse.', couches:['btn-cumul-brule'], vue:[43.8, 5.0, 7] },
+      { titre:'3. La mer avance', texte:'Secteurs du littoral en \u00e9rosion ou submersibles, et nombre de logements menac\u00e9s d\u2019ici 2100.', couches:['btn-littoral','btn-logements-mer'], vue:[46.5, -1.5, 6] },
+      { titre:'4. Ce que l\u2019\u00c9tat a d\u00e9j\u00e0 reconnu', texte:'Arr\u00eat\u00e9s de catastrophe naturelle par commune : inondations, s\u00e9cheresse, mouvements de terrain.', couches:['btn-choro-catnat'], vue:[46.6, 2.4, 6] },
+      { titre:'5. Et la for\u00eat, demain', texte:'Massifs menac\u00e9s par le climat : incendie, scolytes, d\u00e9p\u00e9rissement, stress hydrique.', couches:['btn-foret-climat'], vue:[45.5, 3.5, 6] }
+    ]},
+    peuplement: { nom:'O\u00f9 vivent les Fran\u00e7ais ?', etapes:[
+      { titre:'1. La densit\u00e9, d\u2019abord', texte:'Le vide diagonal des Ardennes aux Landes, les pleins urbains et littoraux.', couches:['btn-choro-dens'], vue:[46.6, 2.4, 6] },
+      { titre:'2. Les m\u00e9tropoles', texte:'Vingt-deux m\u00e9tropoles concentrent emplois, universit\u00e9s et d\u00e9cisions.', couches:['btn-metropoles'], vue:[46.6, 2.4, 6] },
+      { titre:'3. Aires d\u2019attraction', texte:'Chaque ville rayonne bien au-del\u00e0 de ses limites : la France r\u00e9elle des bassins de vie.', couches:['btn-choro-aav'], vue:[46.6, 2.4, 6] },
+      { titre:'4. On dort ici, on travaille l\u00e0', texte:'Part des actifs qui quittent leur commune chaque matin : la p\u00e9riurbanisation en un coup d\u2019\u0153il.', couches:['btn-navetteurs'], vue:[46.6, 2.4, 6] },
+      { titre:'5. Qui gagne, qui perd', texte:'Communes en croissance et communes en d\u00e9clin d\u00e9mographique.', couches:['btn-croissance'], vue:[46.6, 2.4, 6] }
+    ]}
+  };
+  const RECIT = { etapes:[], i:0, actif:false };
+  function lireRecitPerso(){
+    try{ return JSON.parse(localStorage.getItem('geo-recit-perso') || '[]'); }catch(e){ return []; }
+  }
+  function ecrireRecitPerso(t){ localStorage.setItem('geo-recit-perso', JSON.stringify(t)); }
+  function jouerEtape(){
+    const e = RECIT.etapes[RECIT.i];
+    if(!e) return;
+    HISTO.enCours = true;
+    etatCouchesActives().forEach(id=>{
+      if((e.couches||[]).indexOf(id) === -1){ const b = document.getElementById(id); if(b) b.click(); }
+    });
+    (e.couches||[]).forEach(id=>{
+      const b = document.getElementById(id);
+      if(b && (b.textContent||'').indexOf('\u2715') === -1) b.click();
+    });
+    HISTO.enCours = false;
+    if(e.vue) map.setView([e.vue[0], e.vue[1]], e.vue[2]);
+    document.getElementById('recit-titre').textContent = e.titre + '   (' + (RECIT.i+1) + '/' + RECIT.etapes.length + ')';
+    document.getElementById('recit-texte').textContent = e.texte || '';
+  }
+  function ouvrirRecit(etapes){
+    if(!etapes || !etapes.length){ afficherInfo('\ud83c\udfac Ce r\u00e9cit n\u2019a aucune \u00e9tape', 4000); return; }
+    RECIT.etapes = etapes; RECIT.i = 0; RECIT.actif = true;
+    document.getElementById('recit-bandeau').style.display = 'block';
+    jouerEtape();
+    afficherInfo('\ud83c\udfac R\u00e9cit lanc\u00e9 \u2014 fl\u00e8ches du clavier ou boutons pour avancer', 6000);
+  }
+  document.getElementById('btn-recit-lire').addEventListener('click', ()=>{
+    const choix = document.getElementById('recit-modele').value;
+    if(!choix){ afficherInfo('\ud83c\udfac Choisissez d\u2019abord un r\u00e9cit dans la liste', 4000); return; }
+    ouvrirRecit(choix === 'perso' ? lireRecitPerso() : (RECITS_PRETS[choix] || {}).etapes);
+  });
+  document.getElementById('btn-recit-ajout').addEventListener('click', ()=>{
+    const t = window.prompt('Commentaire de cette \u00e9tape (ce que la classe doit retenir) :', '');
+    if(t === null) return;
+    const c = map.getCenter();
+    const etapes = lireRecitPerso();
+    etapes.push({ titre:'\u00c9tape '+(etapes.length+1), texte:t, couches:etatCouchesActives(), vue:[c.lat, c.lng, map.getZoom()] });
+    ecrireRecitPerso(etapes);
+    document.getElementById('recit-modele').value = 'perso';
+    afficherInfo('\u2795 \u00c9tape '+etapes.length+' ajout\u00e9e \u00e0 \u00ab Mon r\u00e9cit \u00bb ('+etatCouchesActives().length+' couche(s))', 5000);
+  });
+  document.getElementById('btn-recit-vider').addEventListener('click', ()=>{
+    ecrireRecitPerso([]);
+    afficherInfo('\ud83d\uddd1 \u00ab Mon r\u00e9cit \u00bb vid\u00e9', 4000);
+  });
+  document.getElementById('recit-prec').addEventListener('click', ()=>{ if(RECIT.i > 0){ RECIT.i--; jouerEtape(); } });
+  document.getElementById('recit-suiv').addEventListener('click', ()=>{
+    if(RECIT.i < RECIT.etapes.length - 1){ RECIT.i++; jouerEtape(); }
+    else afficherInfo('\ud83c\udfac Fin du r\u00e9cit', 3500);
+  });
+  document.getElementById('recit-fin').addEventListener('click', ()=>{
+    RECIT.actif = false;
+    document.getElementById('recit-bandeau').style.display = 'none';
+  });
+  document.addEventListener('keydown', (ev)=>{
+    if(!RECIT.actif) return;
+    if(ev.target && /INPUT|TEXTAREA|SELECT/.test(ev.target.tagName || '')) return;
+    if(ev.key === 'ArrowRight') document.getElementById('recit-suiv').click();
+    else if(ev.key === 'ArrowLeft') document.getElementById('recit-prec').click();
+    else if(ev.key === 'Escape') document.getElementById('recit-fin').click();
+  });
+  document.getElementById('aller-territoire').addEventListener('change', (ev)=>{
+    if(!ev.target.value) return;
+    const p = ev.target.value.split(',').map(Number);
+    map.setView([p[0], p[1]], p[2]);
+    const nom = ev.target.options ? '' : '';
+    afficherInfo('\ud83c\udf0d Territoire affich\u00e9 \u2014 contours, relief, parcs et prix DVF y fonctionnent ; les choropl\u00e8thes communales et les feux EFFIS couvrent surtout la m\u00e9tropole', 7000);
   });
 
   // ---------- Recherche universelle, seances enregistrees, rideau comparatif ----------
@@ -8541,6 +8803,23 @@
         + ligneLegende('#f97316', '10 \u00e0 30 km', 'carre', '')
         + ligneLegende('#7c3aed', '30 \u00e0 70 km', 'carre', '')
         + ligneLegende('#1e3a8a', 'plus de 70 km', 'carre', 'Catalogue USGS \u2014 magnitude \u2265 2'));
+    }
+    if(etatReseaux.aero.actif || etatReseaux.ports.actif || etatReseaux.axes.actif){
+      const nbA = etatReseaux.axes.nb || {};
+      blocs.push('<div class="leg-sous">\ud83d\udee3 Grands r\u00e9seaux</div>'
+        + (etatReseaux.aero.actif ? ligneLegende('#1d4ed8', '\u2708 A\u00e9roports <small>(taille = importance du trafic)</small>', 'carre', 'Positions approch\u00e9es \u00b7 m\u00e9tropole et Outre-mer') : '')
+        + (etatReseaux.ports.actif ? ligneLegende('#0e7490', '\u2693 Ports maritimes <small>(taille = rang)</small>', 'carre', 'Sept grands ports maritimes en m\u00e9tropole, quatre outre-mer') : '')
+        + (etatReseaux.axes.actif ? ligneLegende('#1d4ed8', 'Autoroutes'+(nbA.auto ? ' <small>('+nbA.auto+' tron\u00e7ons)</small>' : ''), 'carre', 'Trac\u00e9s OpenStreetMap de la zone affich\u00e9e')
+            + ligneLegende('#be185d', 'Lignes \u00e0 grande vitesse'+(nbA.lgv ? ' <small>('+nbA.lgv+' tron\u00e7ons)</small>' : ''), 'carre', 'En tiret\u00e9') : ''));
+    }
+    if(etatClc.actif){
+      blocs.push('<div class="leg-sous">\ud83e\udde9 Occupation des sols <small>(CORINE Land Cover '+(etatClc.mill||'').replace('CLC','')+' \u00b7 44 postes)</small></div>'
+        + ligneLegende('#e6004d', 'Territoires artificialis\u00e9s <small>(urbain, industrie, r\u00e9seaux)</small>', 'carre', 'Le rouge s\u2019\u00e9tend \u00e0 chaque mill\u00e9sime : c\u2019est l\u2019artificialisation')
+        + ligneLegende('#ffffa8', 'Terres arables et cultures', 'carre', '')
+        + ligneLegende('#e6e64d', 'Prairies et zones agricoles h\u00e9t\u00e9rog\u00e8nes', 'carre', '')
+        + ligneLegende('#80ff00', 'For\u00eats et milieux semi-naturels', 'carre', '')
+        + ligneLegende('#a6a6ff', 'Zones humides', 'carre', '')
+        + ligneLegende('#00ccf2', 'Surfaces en eau', 'carre', 'Couleurs officielles de la nomenclature europ\u00e9enne'));
     }
     if(etatMeteo.temp.actif || etatMeteo.villes.actif){
       const b = etatMeteo.bornes;
