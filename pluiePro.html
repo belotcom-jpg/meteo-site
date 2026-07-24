@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>MultiMeteo v3.2</title>
+<title>MultiMeteo v3.3</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -366,6 +366,11 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   .tm-ticks span{position:absolute;transform:translateX(-50%);font-family:'Courier New',monospace;font-size:10px;color:#999;top:1px}
   .tm-note{flex:none;font-family:'Courier New',monospace;font-size:10px;color:#666;text-align:center;margin:-6px 0 6px}
   #tmapStatus{flex:none;text-align:center;color:#aaa;font-family:'Courier New',monospace;font-size:13px;padding:8px 0}
+  #apiUseBox{margin:0 0 12px;font-family:'Courier New',monospace;font-size:12px;color:#bbb;line-height:1.55}
+  .au-l{font-size:13px;color:#ddd;margin-bottom:5px}
+  .au-bar{height:9px;background:#141c26;border:1px solid #263443;border-radius:6px;overflow:hidden;margin:0 0 6px}
+  .au-bar i{display:block;height:100%;border-radius:5px;transition:width .3s}
+  .au-s{font-size:11.5px;color:#9ab}
   .hl-quick{display:flex;gap:8px;margin:0 0 12px}
   .hl-quick button{flex:1;background:#141c26;border:1px solid #33455a;border-radius:9px;color:#a5c8e8;font-family:'Courier New',monospace;font-size:13px;font-weight:900;padding:10px 6px;cursor:pointer}
   .hl-quick button:hover{background:#1b2736}
@@ -1261,6 +1266,89 @@ function closeOpt(){const p=document.getElementById('optPanel');if(p)p.classList
    ═══════════════════════════════════════════════════════════════ */
 let _healthLast=null,_healthTimer=null,_lastLoadTs=0;
 function _fetchTO(url,ms){ms=ms||10000;const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);return fetch(url,{signal:c.signal}).finally(()=>clearTimeout(t));} /* fetch avec timeout */
+/* ══════════════════════════════════════════════════════════════
+   USAGE API OPEN-METEO — estimation LOCALE (l'API ne renvoie
+   aucun compteur). Quotas gratuits non commerciaux :
+   10 000 unités/jour · 5 000/h · 600/min. Le coût d'un appel
+   croît avec le nombre de variables, de modèles, de points et
+   de jours demandés : on l'estime avec la même logique.
+   ══════════════════════════════════════════════════════════════ */
+const _AU_LIM={day:10000,hour:5000,min:600};
+let _auD=null;
+function _auKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function _auGet(){
+  if(!_auD){try{const o=JSON.parse(localStorage.getItem('pp_apiuse_v1')||'null');if(o&&o.k)_auD=o;}catch(e){}}
+  if(!_auD||_auD.k!==_auKey())_auD={k:_auKey(),n:0,w:0,cat:{},ev:[]};
+  if(!_auD.ev)_auD.ev=[];
+  return _auD;
+}
+function _auSave(){try{localStorage.setItem('pp_apiuse_v1',JSON.stringify(_auD));}catch(e){}}
+function _auCat(u){
+  if(u.indexOf('previous-runs-api')>=0)return 'Vérif modèles';
+  if(u.indexOf('archive-api')>=0)return 'Archives ERA5';
+  if(u.indexOf('seasonal-api')>=0)return 'Saisonnier CFS';
+  if(u.indexOf('ensemble-api')>=0)return 'Ensemble';
+  if(u.indexOf('historical-forecast-api')>=0)return 'Prév. archivées';
+  if(u.indexOf('geocoding-api')>=0)return 'Géocodage';
+  if(u.indexOf('air-quality-api')>=0)return 'Qualité air';
+  if(u.indexOf('minutely_15')>=0)return 'Pluie fine';
+  return 'Prévision';
+}
+function _auWeight(u){
+  const q=k=>{const m=u.match(new RegExp('[?&]'+k+'=([^&]*)'));return m?decodeURIComponent(m[1]):'';};
+  const cnt=s=>s?s.split(',').filter(Boolean).length:0;
+  const vars=Math.max(1,cnt(q('hourly'))+cnt(q('daily'))+cnt(q('minutely_15'))+cnt(q('current')));
+  const models=Math.max(1,cnt(q('models')));
+  const locs=Math.max(1,cnt(q('latitude')));
+  let days=(parseInt(q('past_days'),10)||0)+(parseInt(q('forecast_days'),10)||0);
+  if(!days){
+    const s=q('start_date'),e=q('end_date');
+    if(s&&e){const dd=(new Date(e+'T12:00')-new Date(s+'T12:00'))/86400e3+1;if(isFinite(dd)&&dd>0)days=dd;}
+  }
+  if(!days)days=7;
+  return Math.max(1,Math.ceil(vars*models/10)*locs*Math.ceil(days/7));
+}
+function _auBump(u){
+  const d=_auGet(),w=_auWeight(u);
+  d.n++;d.w+=w;
+  const c=_auCat(u);d.cat[c]=(d.cat[c]||0)+w;
+  d.ev.push([Date.now(),w]);
+  if(d.ev.length>800)d.ev=d.ev.slice(-800);
+  _auSave();
+}
+function _auStats(){
+  const d=_auGet(),now=Date.now();
+  d.ev=d.ev.filter(x=>now-x[0]<3600e3);
+  let h=0,m=0;
+  d.ev.forEach(x=>{h+=x[1];if(now-x[0]<60e3)m+=x[1];});
+  return {n:d.n,w:d.w,hour:h,min:m,cat:d.cat};
+}
+function auReset(){_auD={k:_auKey(),n:0,w:0,cat:{},ev:[]};_auSave();_auRender();}
+function _auRender(){
+  const box=document.getElementById('apiUseBox');
+  if(!box)return;
+  const s=_auStats();
+  const fm=v=>String(v).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+  const pct=Math.round(s.w/_AU_LIM.day*100);
+  const col=pct<50?'#52e88f':(pct<80?'#ffd800':'#ff7040');
+  const ph=Math.round(s.hour/_AU_LIM.hour*100),pm=Math.round(s.min/_AU_LIM.min*100);
+  const cats=Object.keys(s.cat).map(k=>[k,s.cat[k]]).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  box.innerHTML=
+    '<div class="au-l"><b style="color:'+col+'">'+fm(s.w)+'</b> / '+fm(_AU_LIM.day)+' unités estimées aujourd\u2019hui (<b style="color:'+col+'">'+pct+' %</b>) · '+fm(s.n)+' requêtes</div>'+
+    '<div class="au-bar"><i style="width:'+Math.min(100,pct)+'%;background:'+col+'"></i></div>'+
+    '<div class="au-s">Dernière heure : '+fm(s.hour)+' / '+fm(_AU_LIM.hour)+' ('+ph+' %) · dernière minute : '+fm(s.min)+' / '+_AU_LIM.min+' ('+pm+' %)</div>'+
+    (cats.length?('<div class="au-s">Répartition : '+cats.map(c=>c[0]+' <b>'+fm(c[1])+'</b>').join(' · ')+'</div>'):'')+
+    '<div class="au-s" style="color:#666">Estimation locale — Open-Meteo ne publie pas de compteur. Poids ≈ (variables × modèles ÷ 10) × points × (jours ÷ 7), comme leur facturation d\u2019appels. Remise à zéro automatique chaque jour. <button class="vf-act" onclick="auReset()">× RàZ</button></div>';
+}
+(function(){
+  if(typeof window==='undefined'||!window.fetch||window.__auHooked)return;
+  window.__auHooked=true;
+  const of=window.fetch.bind(window);
+  window.fetch=function(u,o){
+    try{const s=(typeof u==='string')?u:((u&&u.url)||'');if(s.indexOf('open-meteo.com')>=0)_auBump(s);}catch(e){}
+    return of(u,o);
+  };
+})();
 const _hlDOW=['dim','lun','mar','mer','jeu','ven','sam'];
 function _hlDay(i){try{const d=new Date();d.setDate(d.getDate()+i);return _hlDOW[d.getDay()]+' '+d.getDate();}catch(_){return 'J+'+i;}}
 function _hlFin(x){return typeof x==='number'&&isFinite(x);}
@@ -1881,7 +1969,7 @@ function _indRuns(vals,norm,limit){
   push();
   return runs;
 }
-let _indMode='2m';
+let _indMode='y40c';   /* mode par défaut à l'ouverture : Cône */
 function _indYrCacheLoad(){try{const o=JSON.parse(localStorage.getItem('pp_indicyr_v2')||'null');if(o&&o.t&&(Date.now()-o.t)<6*3600e3&&o.d&&o.k===(new Date()).toISOString().slice(0,10))return o.d;}catch(e){}return null;}
 function _indYrCacheSave(d){try{localStorage.setItem('pp_indicyr_v2',JSON.stringify({t:Date.now(),k:(new Date()).toISOString().slice(0,10),d}));}catch(e){}}
 let _indYrLoading=null;
@@ -2694,6 +2782,7 @@ async function openHydro(span){
 
 async function openIndic(mode){
   if(mode)_indMode=mode;
+  else if(['2m','y40','y40c','yr'].indexOf(_indMode)<0)_indMode='y40c';   /* retour depuis 💧 → Cône */
   const p=document.getElementById('indicPanel');if(p)p.classList.add('open');
   const _mm={indM2:'2m',indM40:'y40',indMc:'y40c',indMyr:'yr',indMhyd:'hyd',indMh1:'h1',indMh3:'h3',indMh5:'h5',indMh10:'h10',indMh30:'h30',indMh50:'h50'};
   const _ttl=document.querySelector('#indicPanel .tm-ttl');
@@ -2811,7 +2900,7 @@ async function openIndic(mode){
   }
 }
 
-function openHealth(){runHealthCheck();renderHealth();const p=document.getElementById('healthPanel');if(p)p.classList.add('open');}
+function openHealth(){runHealthCheck();renderHealth();_auRender();const p=document.getElementById('healthPanel');if(p)p.classList.add('open');}
 function closeHealth(){const p=document.getElementById('healthPanel');if(p)p.classList.remove('open');}
 function startHealthMonitor(){if(_healthTimer)return;runHealthCheck();_healthTimer=setInterval(runHealthCheck,10000);}
 function rerunHealth(btn){
@@ -4253,7 +4342,7 @@ async function fetchNowcast(lat,lon){
     function(){
       const ctrl=new AbortController();
       setTimeout(function(){ctrl.abort();},6000);
-      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/3.2'}});
+      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/3.3'}});
     },
     function(){
       const ctrl=new AbortController();
@@ -7332,9 +7421,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
     <div class="tm-head">
       <div class="tm-ttl" style="color:#ff9d3c">🌡 Indicateur thermique France</div>
       <div class="ind-modes">
-        <button id="indM2" class="on" onclick="openIndic('2m')">2 mois</button>
+        <button id="indM2" onclick="openIndic('2m')">2 mois</button>
         <button id="indM40" onclick="openIndic('y40')">40 j</button>
-        <button id="indMc" onclick="openIndic('y40c')">Cône</button>
+        <button id="indMc" class="on" onclick="openIndic('y40c')">Cône</button>
         <button id="indMyr" onclick="openIndic('yr')">Année</button>
         <button id="indMhyd" onclick="openHydro('2m')">💧</button>
         <button id="indMh1" onclick="openHydro('1y')">1 a</button>
@@ -7388,12 +7477,14 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
     </div>
     <div class="hl-quick">
       <button style="color:#ffd07f" onclick="closeHealth();openTMap()">🗺 Carte T° France <small>min/max → J+14</small></button>
-      <button style="color:#ff9d3c" onclick="closeHealth();openIndic()">🌡 Indicateur thermique <small>2 mois → J+28</small></button>
+      <button style="color:#ff9d3c" onclick="closeHealth();openIndic()">🌡 Indicateur thermique <small>cône 40 j → J+28</small></button>
     </div>
     <div class="hl-quick">
       <button style="color:#7fc4ff" onclick="closeHealth();openHydro()">💧 Indicateur hydrique <small>P−ETP 30 j vs 2016-2025</small></button>
       <button style="color:#7ff" onclick="closeHealth();openVerif()">🔬 Vérif modèles <small>prévu vs observé · 35 j</small></button>
     </div>
+    <div class="hl-sub">📊 Usage API Open-Meteo <small style="color:#7a8a99;font-weight:400">estimation locale · quotas gratuits</small></div>
+    <div id="apiUseBox"></div>
     <div class="hl-sub">🩺 Santé des données</div>
     <div id="healthBody"></div>
     <div class="hl-actions">
