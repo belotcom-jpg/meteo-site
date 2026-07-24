@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v2.2 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v2.4 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v2.2</title>
+<title>MultiMaps — géographie (collège & lycée) — v2.4</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -1019,14 +1019,15 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v2.2</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v2.4</small></span>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
   <div class="widget-corps">
-    <div class="pilote-grille" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="pilote-grille" style="grid-template-columns:1fr 1fr">
       <button class="pilote-btn" id="btn-histo-annuler" title="Annule la dernière couche allumée ou éteinte. Fonctionne aussi après un « tout désactiver » ou une séance rejouée.">↶ Annuler</button>
       <button class="pilote-btn" id="btn-refaire" title="Rétablit ce qui vient d'être annulé.">↷ Reprendre</button>
-      <button class="pilote-btn" id="btn-tout-off" title="Éteint toutes les couches actives et referme toutes les fenêtres, d'un coup. Annulable.">⛔ Tout désactiver</button>
+      <button class="pilote-btn" id="btn-tout-off" title="Éteint toutes les couches actives d'un coup, sans toucher aux fenêtres. Annulable avec ↶.">⛔ Tout désactiver</button>
+      <button class="pilote-btn" id="btn-fermer-fenetres" title="Referme toutes les fenêtres (sauf ce pilote) pour dégager la carte — utile avant de projeter. Les couches restent affichées ; rouvrez une fenêtre en cliquant son nom ci-dessous.">🪟 Fermer les fenêtres</button>
     </div>
     <div class="pilote-sep"></div>
     <div class="pilote-grille">
@@ -1074,9 +1075,9 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v2.2</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v2.4</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
-    <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html.">
+    <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
     <select class="opt-select" id="sel-seuil" aria-label="Seuil de population des tops 50">
       <option value="5000">5 000 habitants et +</option>
@@ -1102,6 +1103,15 @@
     <button id="profil-fermer" style="border:1px solid var(--trait);border-radius:7px;background:#fff;cursor:pointer;padding:1px 9px">✕</button>
   </div>
   <canvas id="profil-canvas" width="760" height="230" style="display:block;margin-top:4px"></canvas>
+</div>
+<div id="bandeau-local" style="display:none;position:fixed;left:0;right:0;top:0;z-index:1400;background:#7c2d12;color:#fff;font:13px system-ui;padding:7px 12px;box-shadow:0 2px 8px rgba(0,0,0,.4)">
+  <b>⚠ Page ouverte en fichier local (file://)</b> — le navigateur interdit tout chargement de données : choroplèthes, vallées, sites OSM, prix DVF, météo, feux…
+  <label style="margin-left:8px;background:#fff;color:#7c2d12;border-radius:6px;padding:2px 8px;cursor:pointer;font-weight:600">
+    📂 Charger carte-france-geo-donnees.json
+    <input type="file" id="fichier-donnees" accept=".json,application/json" style="display:none">
+  </label>
+  <span style="opacity:.85;margin-left:8px">— ou ouvrez l'atlas depuis le site (https), tout fonctionnera.</span>
+  <button id="bandeau-fermer" style="float:right;background:none;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:6px;cursor:pointer;padding:1px 8px">✕</button>
 </div>
 <div id="rideau-barre" style="display:none;position:fixed;top:0;bottom:0;left:50%;width:4px;background:#fff;box-shadow:0 0 6px rgba(0,0,0,.5);z-index:1200;cursor:ew-resize">
   <div style="position:absolute;top:50%;left:-13px;width:30px;height:30px;margin-top:-15px;border-radius:50%;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font:700 13px system-ui;color:#3b3830">↔</div>
@@ -1180,7 +1190,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v2.2';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v2.4';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -1557,8 +1567,8 @@
 
   // ---------- 🏛 QPV officiels (données ANCT, open data) ----------
   const URLS_QPV = [
-    'https://opendata.caissedesdepots.fr/api/explore/v2.2/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-au-1er-janvier-2024/exports/geojson',
-    'https://equipements.sports.gouv.fr/api/explore/v2.2/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/exports/geojson'
+    'https://opendata.caissedesdepots.fr/api/explore/v2.4/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-au-1er-janvier-2024/exports/geojson',
+    'https://equipements.sports.gouv.fr/api/explore/v2.4/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/exports/geojson'
   ];
   let qpvGeojson = null, qpvLayer = null, qpvVisible = false, qpvChargement = false;
   let qpvPointsRep = null; // un point représentatif par QPV, pour les croisements
@@ -1686,7 +1696,7 @@
   btnQpv.addEventListener('click', basculerQpv);
 
   // ---------- 🎓📝 Couches éducation (data.education.gouv.fr, en direct sur la vue) ----------
-  const EDUC = 'https://data.education.gouv.fr/api/explore/v2.2/catalog/datasets/';
+  const EDUC = 'https://data.education.gouv.fr/api/explore/v2.4/catalog/datasets/';
 
   function couleurIps(v){
     if(v >= 120) return '#2e9e44';
@@ -1838,8 +1848,8 @@
   let acvActif = false, acvGroupe = null, acvCharge = false;
   const btnAcv = document.getElementById('btn-acv');
   const URLS_ACV = [
-    'https://opendata.caissedesdepots.fr/api/explore/v2.2/catalog/datasets/villes_action_coeurdeville/records?limit=100&offset=',
-    'https://opendata.caissedesdepots.fr/api/explore/v2.2/catalog/datasets/villes-action-coeur-de-ville-portail-open-data/records?limit=100&offset='
+    'https://opendata.caissedesdepots.fr/api/explore/v2.4/catalog/datasets/villes_action_coeurdeville/records?limit=100&offset=',
+    'https://opendata.caissedesdepots.fr/api/explore/v2.4/catalog/datasets/villes-action-coeur-de-ville-portail-open-data/records?limit=100&offset='
   ];
   btnAcv.addEventListener('click', async ()=>{
     if(acvActif){
@@ -2112,7 +2122,7 @@
     },
     gares: {
       btn:'btn-gares', libelle:'🚉 Gares SNCF', legende:'Gares SNCF', teinte:'#1d4ed8',
-      base:'https://ressources.data.sncf.com/api/explore/v2.2/catalog/datasets/',
+      base:'https://ressources.data.sncf.com/api/explore/v2.4/catalog/datasets/',
       datasets:['gares-de-voyageurs','referentiel-gares-voyageurs','liste-des-gares'],
       zoomMin:9, etiqu:['nom','nom_gare','alias_libelle_noncontraint','libelle','gare_alias_libelle_noncontraint'],
       sous:['commune','departement','segment_drg'],
@@ -2121,7 +2131,7 @@
     },
     mh: {
       btn:'btn-mh', libelle:'🏛️ Monuments historiques', legende:'Monuments historiques', teinte:'#7c2d12',
-      base:'https://data.culture.gouv.fr/api/explore/v2.2/catalog/datasets/',
+      base:'https://data.culture.gouv.fr/api/explore/v2.4/catalog/datasets/',
       datasets:['liste-des-immeubles-proteges-au-titre-des-monuments-historiques'],
       zoomMin:12, etiqu:['appellation_courante','titre_editorial_de_la_notice','denomination_de_l_edifice','tico'],
       sous:['commune_forme_editoriale','commune','adresse_forme_editoriale','siecle_de_la_campagne_principale_de_construction','denomination_de_l_edifice','typologie_de_la_protection'],
@@ -2130,7 +2140,7 @@
     },
     sport: {
       btn:'btn-sport', libelle:'🏊 Équipements sportifs', legende:'Équipements sportifs', teinte:'#059669',
-      base:'https://equipements.sports.gouv.fr/api/explore/v2.2/catalog/datasets/',
+      base:'https://equipements.sports.gouv.fr/api/explore/v2.4/catalog/datasets/',
       datasets:['data-es','res-recensement-des-equipements-sportifs'],
       zoomMin:13, etiqu:['inst_nom','equip_nom','nominstallation','nom'],
       sous:['equip_type_name','inst_com_nom','commune'],
@@ -2691,6 +2701,34 @@
       donneesErreur = detail;
       afficherInfo('\u26a0 Donn\u00e9es non charg\u00e9es \u2014 '+detail, 12000);
     });
+  (function modeLocal(){
+    if(location.protocol !== 'file:') return;
+    const bandeau = document.getElementById('bandeau-local');
+    if(!bandeau) return;
+    bandeau.style.display = 'block';
+    document.getElementById('bandeau-fermer').addEventListener('click', ()=>{ bandeau.style.display = 'none'; });
+    document.getElementById('fichier-donnees').addEventListener('change', (ev)=>{
+      const f = ev.target.files && ev.target.files[0];
+      if(!f) return;
+      const lecteur = new FileReader();
+      lecteur.onload = ()=>{
+        try{
+          const d = JSON.parse(lecteur.result);
+          if(!d || !d.choro || !d.trio) throw new Error('ce n\u2019est pas le fichier de donn\u00e9es de l\u2019atlas');
+          CHORO_PACKS = d.choro; TRIO_PACKS = d.trio;
+          donneesErreur = null;
+          const c = document.getElementById('curseur-annee');
+          if(c && TRIO_PACKS) c.max = TRIO_PACKS.histo.annees.length - 1;
+          bandeau.style.display = 'none';
+          afficherInfo('\u2705 Donn\u00e9es charg\u00e9es depuis votre disque \u2014 les choropl\u00e8thes fonctionnent. Les couches en ligne (OSM, DVF, m\u00e9t\u00e9o, feux) resteront bloqu\u00e9es en mode fichier local.', 9000);
+        }catch(e){
+          afficherInfo('\u26a0 Fichier illisible : '+(e && e.message ? e.message : 'format inattendu'), 7000);
+        }
+      };
+      lecteur.onerror = ()=>afficherInfo('\u26a0 Lecture du fichier impossible', 5000);
+      lecteur.readAsText(f);
+    });
+  })();
   const CHORO_DEFS = {
     dens: {
       btn:'btn-choro-dens', libelle:'👥 Densité de population',
@@ -3946,7 +3984,7 @@
   const RELIEF_FIN = {"familles":{"alpN":["Alpes du Nord","#1d4ed8"],"alpS":["Alpes du Sud","#7c3aed"],"jura":["Jura","#0e7490"],"mc":["Massif central","#b45309"],"pyr":["Pyrénées","#be185d"],"vosges":["Vosges","#15803d"],"corse":["Corse","#a16207"]},"massifs":[["Chablais",46.25,6.65,"alpN",750,17.7,[[46.4,6.5],[46.39,6.72],[46.3,6.87],[46.18,6.8],[46.14,6.62],[46.22,6.48],[46.33,6.43]]],["Aravis",45.95,6.47,"alpN",800,13.2,[[45.99,6.42],[45.97,6.55],[45.86,6.52],[45.85,6.4],[45.92,6.36]]],["Bornes",45.97,6.33,"alpN",750,12.6,[[46.08,6.3],[46.05,6.45],[45.95,6.42],[45.93,6.28],[46.0,6.22]]],["Bauges",45.65,6.15,"alpN",650,16.2,[[45.75,6.05],[45.73,6.25],[45.62,6.3],[45.52,6.2],[45.53,6.04],[45.64,5.98]]],["Chartreuse",45.35,5.8,"alpN",650,17.5,[[45.47,5.8],[45.45,5.93],[45.36,5.97],[45.24,5.92],[45.19,5.8],[45.24,5.72],[45.38,5.72]]],["Vercors",45.05,5.45,"alpN",650,30.0,[[45.24,5.42],[45.18,5.58],[45.08,5.66],[44.95,5.65],[44.84,5.56],[44.81,5.42],[44.9,5.26],[45.04,5.18],[45.16,5.25]]],["Belledonne",45.25,6.05,"alpN",850,26.9,[[45.47,6.1],[45.44,6.18],[45.3,6.12],[45.15,6.03],[45.07,5.95],[45.1,5.9],[45.22,5.96],[45.38,6.03]]],["Grandes Rousses",45.12,6.1,"alpN",1000,9.7,[[45.2,6.05],[45.17,6.14],[45.06,6.12],[45.05,6.03],[45.13,6.0]]],["Taillefer",45.03,5.9,"alpN",900,10.5,[[45.06,5.85],[45.04,5.97],[44.96,5.96],[44.95,5.85],[45.0,5.82]]],["Écrins",44.92,6.35,"alpN",1200,27.4,[[45.03,6.15],[45.0,6.42],[44.92,6.52],[44.8,6.5],[44.72,6.38],[44.74,6.18],[44.85,6.06],[44.97,6.07]]],["Cerces",45.05,6.55,"alpN",1200,11.9,[[45.12,6.42],[45.1,6.62],[44.98,6.63],[44.96,6.45],[45.05,6.38]]],["Vanoise",45.35,6.85,"alpN",1100,22.0,[[45.5,6.68],[45.47,6.92],[45.4,7.02],[45.28,7.0],[45.24,6.82],[45.3,6.65],[45.42,6.6]]],["Beaufortain",45.7,6.6,"alpN",900,14.9,[[45.8,6.55],[45.77,6.72],[45.65,6.75],[45.6,6.58],[45.68,6.48]]],["Mont-Blanc",45.85,6.9,"alpN",1100,16.6,[[45.93,6.92],[46.0,7.02],[45.88,7.05],[45.78,6.95],[45.8,6.82],[45.9,6.8]]],["Lauzière",45.5,6.35,"alpN",900,11.2,[[45.6,6.3],[45.57,6.43],[45.46,6.42],[45.44,6.3],[45.52,6.25]]],["Haut-Giffre",46.05,6.75,"alpN",800,12.4,[[46.14,6.62],[46.18,6.8],[46.08,6.92],[46.0,6.85],[46.02,6.68],[46.08,6.6]]],["Queyras",44.7,6.85,"alpS",1300,19.1,[[44.85,6.7],[44.82,6.95],[44.72,7.05],[44.6,6.98],[44.58,6.82],[44.68,6.68],[44.78,6.64]]],["Dévoluy",44.7,5.95,"alpS",900,15.2,[[44.82,5.86],[44.79,6.02],[44.68,6.06],[44.6,5.98],[44.62,5.85],[44.72,5.79]]],["Mercantour",44.15,7.25,"alpS",1000,40.6,[[44.35,6.8],[44.3,7.1],[44.22,7.42],[44.1,7.48],[44.02,7.28],[44.06,7.0],[44.15,6.82],[44.26,6.75]]],["Baronnies provençales",44.3,5.35,"alpS",700,23.5,[[44.45,5.15],[44.42,5.5],[44.3,5.6],[44.18,5.5],[44.16,5.25],[44.28,5.1]]],["Diois",44.65,5.45,"alpS",700,20.9,[[44.8,5.28],[44.75,5.55],[44.62,5.62],[44.52,5.55],[44.52,5.35],[44.63,5.22]]],["Parpaillon",44.48,6.6,"alpS",1300,12.0,[[44.56,6.48],[44.53,6.65],[44.42,6.68],[44.38,6.55],[44.46,6.44]]],["Haut-Jura",46.4,6.0,"jura",800,34.4],["Bugey",45.9,5.6,"jura",500,21.9],["Hautes-Vosges",48.0,7.0,"vosges",700,27.5],["Vosges du Nord",48.95,7.55,"vosges",300,19.8],["Chaîne des Puys",45.78,2.96,"mc",850,18.2],["Monts Dore",45.55,2.85,"mc",900,13.7],["Cézallier",45.4,2.9,"mc",900,13.7],["Monts du Cantal",45.1,2.7,"mc",900,20.8],["Aubrac",44.65,3.0,"mc",950,20.1],["Margeride",44.85,3.45,"mc",950,22.0],["Cévennes",44.2,3.75,"mc",600,31.4],["Livradois",45.45,3.55,"mc",700,22.0],["Forez",45.65,3.8,"mc",800,24.8],["Pilat",45.4,4.6,"mc",700,15.4],["Morvan",47.1,4.05,"mc",400,27.2],["Vivarais",44.8,4.3,"mc",700,25.4],["Vallée d'Ossau (Béarn)",42.85,-0.45,"pyr",800,20.0],["Bigorre",42.9,0.1,"pyr",900,24.7],["Luchonnais",42.75,0.55,"pyr",1000,16.6],["Couserans",42.85,1.15,"pyr",900,21.3],["Haute-Ariège",42.65,1.6,"pyr",1000,29.1],["Monte Cinto",42.38,8.95,"corse",800,16.7],["Arvan-Villards",45.1,6.28,"alpN",1300,12,[[45.2,6.2],[45.17,6.33],[45.05,6.32],[45.03,6.2],[45.12,6.15]]],["Luberon",43.83,5.35,"alpS",500,26,[[43.88,5.15],[43.86,5.55],[43.79,5.58],[43.77,5.2],[43.82,5.1]]],["Mont Ventoux",44.17,5.28,"alpS",900,13,[[44.21,5.15],[44.19,5.4],[44.13,5.42],[44.11,5.18],[44.16,5.1]]],["Montagne de Lure",44.1,5.8,"alpS",900,18,[[44.15,5.65],[44.12,5.95],[44.04,5.95],[44.05,5.68]]],["Sainte-Baume",43.33,5.75,"alpS",600,12],["Sainte-Victoire",43.53,5.6,"alpS",500,10],["Alpilles",43.75,4.85,"alpS",120,13],["Maures",43.25,6.35,"alpS",300,22],["Esterel",43.47,6.88,"alpS",250,10],["Préalpes de Grasse",43.72,6.9,"alpS",700,16,[[43.8,6.8],[43.78,7.05],[43.68,7.05],[43.65,6.85],[43.72,6.75]]],["Monte Rotondo",42.22,9.05,"corse",1200,14],["Monte Renoso",42.06,9.13,"corse",1200,12],["Monte Incudine",41.85,9.2,"corse",1100,12],["San Petrone",42.47,9.34,"corse",900,12],["Mézenc-Gerbier",44.91,4.19,"mc",1100,13],["Lévézou",44.2,2.85,"mc",900,15],["Monts de Lacaune",43.7,2.7,"mc",800,15],["Montagne Noire",43.42,2.35,"mc",600,18],["Espinouse-Caroux",43.6,2.95,"mc",700,12],["Carlit",42.57,1.93,"pyr",1800,15],["Canigou",42.52,2.46,"pyr",1200,14],["Aiguilles Rouges",45.97,6.85,"alpN",1400,9,[[46.02,6.68],[46.0,6.85],[45.93,6.92],[45.9,6.8],[45.95,6.7]]],["Mont-Cenis",45.25,6.95,"alpN",1500,11,[[45.3,6.9],[45.28,7.08],[45.18,7.1],[45.15,6.95],[45.22,6.87]]],["Montagne de l'Épine",45.57,5.83,"alpN",600,8,[[45.65,5.8],[45.62,5.88],[45.5,5.86],[45.5,5.79],[45.58,5.76]]],["Escreins",44.62,6.72,"alpS",1500,9,[[44.7,6.62],[44.66,6.78],[44.56,6.75],[44.56,6.62],[44.63,6.56]]],["Chambeyron",44.55,6.85,"alpS",1800,10,[[44.62,6.78],[44.58,6.95],[44.48,6.92],[44.47,6.78],[44.54,6.72]]],["Bochaine",44.55,5.75,"alpS",800,14,[[44.62,5.62],[44.6,5.82],[44.48,5.85],[44.42,5.7],[44.5,5.58]]],["Préalpes de Digne",44.2,6.3,"alpS",800,19,[[44.3,6.12],[44.26,6.38],[44.12,6.45],[44.0,6.35],[44.02,6.12],[44.15,6.02]]],["Trois-Évêchés",44.32,6.55,"alpS",1300,11,[[44.4,6.45],[44.37,6.62],[44.25,6.62],[44.22,6.48],[44.3,6.4]]],["Pelat",44.26,6.68,"alpS",1500,9,[[44.32,6.62],[44.28,6.78],[44.18,6.75],[44.18,6.62],[44.25,6.57]]],["Embrunais",44.6,6.48,"alpS",1000,11,[[44.66,6.35],[44.62,6.52],[44.5,6.52],[44.48,6.38],[44.56,6.3]]],["Préalpes de Castellane",43.85,6.55,"alpS",700,18,[[43.95,6.35],[43.92,6.58],[43.82,6.62],[43.72,6.55],[43.75,6.38],[43.85,6.28]]],["Préalpes de Nice",43.85,7.25,"alpS",500,15,[[44.0,7.2],[43.96,7.42],[43.82,7.45],[43.78,7.28],[43.86,7.12]]],["Monts de Vaucluse",44.05,5.3,"alpS",500,15,[[44.12,5.15],[44.1,5.45],[44.0,5.48],[43.96,5.25],[44.03,5.12]]],["Genevois",46.06,6.13,"alpN",700,13,[[46.15,6.05],[46.12,6.22],[46.02,6.28],[45.95,6.18],[45.98,6.03],[46.08,5.98]]],["Chambotte",45.72,5.92,"alpN",500,6,[[45.78,5.9],[45.76,5.97],[45.68,5.96],[45.67,5.9],[45.73,5.87]]],["Terres Froides",45.47,5.44,"alpN",400,14,[[45.58,5.35],[45.55,5.55],[45.42,5.58],[45.36,5.45],[45.42,5.3],[45.52,5.28]]],["Chambaran",45.27,5.15,"alpN",350,15,[[45.38,5.05],[45.35,5.25],[45.22,5.3],[45.15,5.18],[45.2,5.02],[45.32,4.98]]],["Monges",44.36,6.19,"alpS",1000,13,[[44.45,6.1],[44.42,6.3],[44.3,6.32],[44.26,6.18],[44.33,6.05]]],["Grand Coyer",44.17,6.66,"alpS",1300,9,[[44.24,6.6],[44.22,6.75],[44.12,6.76],[44.1,6.62],[44.17,6.55]]],["Verdon",43.77,6.36,"alpS",700,14,[[43.85,6.25],[43.83,6.5],[43.72,6.52],[43.68,6.32],[43.76,6.2]]],["Haut Var",43.9,6.73,"alpS",900,12,[[43.98,6.62],[43.95,6.85],[43.84,6.86],[43.82,6.66],[43.9,6.58]]],["Ubaye",44.41,6.71,"alpS",1500,11,[[44.48,6.62],[44.45,6.8],[44.36,6.82],[44.33,6.68],[44.4,6.58]]]],"vallees":[["Grésivaudan","Isère",[45.15,5.7,45.49,6.09],[[45.2,5.77],[45.32,5.92],[45.44,6.02]]],["Maurienne","Arc",[45.15,6.23,45.6,6.95],[[45.55,6.3],[45.28,6.35],[45.2,6.66],[45.29,6.88]]],["Tarentaise","Isère",[45.43,6.32,45.72,6.84],[[45.67,6.39],[45.48,6.53],[45.62,6.77]]],["Vallée de l'Arve","Arve",[45.87,6.33,46.13,6.94],[[46.08,6.4],[45.94,6.63],[45.92,6.87]]],["Oisans (Romanche)","Romanche",[45.0,5.7,45.13,6.37],[[45.08,5.77],[45.06,6.03],[45.05,6.3]]],["Vallouise","Gyronde",[44.74,6.37,44.93,6.63],[[44.79,6.56],[44.85,6.49],[44.88,6.44]]],["Champsaur","Drac",[44.6,5.98,44.74,6.4],[[44.65,6.05],[44.68,6.2],[44.69,6.33]]],["Valgaudemar","Séveraisse",[44.73,5.93,44.87,6.26],[[44.78,6.0],[44.82,6.19]]],["Queyras (Guil)","Guil",[44.61,6.58,44.84,7.0],[[44.66,6.65],[44.76,6.8],[44.79,6.93]]],["Ubaye","Ubaye",[44.34,6.37,44.58,6.83],[[44.43,6.44],[44.39,6.65],[44.53,6.76]]],["Clarée","Clarée",[44.87,6.54,45.07,6.7],[[44.92,6.63],[45.02,6.61]]],["Vésubie","Vésubie",[43.8,7.13,44.12,7.38],[[43.85,7.2],[43.97,7.31],[44.07,7.26]]],["Tinée","Tinée",[43.85,6.85,44.31,7.22],[[43.9,7.15],[44.08,7.1],[44.26,6.92]]],["Roya","Roya",[43.89,7.44,44.14,7.66],[[43.94,7.51],[44.09,7.59]]],["Trièves","Drac",[44.77,5.56,44.97,5.82],[[44.92,5.63],[44.82,5.75]]],["Royans","Bourne",[44.96,5.22,45.11,5.41],[[45.06,5.34],[45.01,5.29]]],["Val d'Abondance","Dranse d'Abondance",[46.23,6.45,46.39,6.79],[[46.34,6.52],[46.28,6.72]]],["Vallée du Giffre","Giffre",[46.01,6.52,46.16,6.85],[[46.11,6.59],[46.08,6.73],[46.06,6.78]]],["Belleville","Doron de Belleville",[45.25,6.46,45.51,6.65],[[45.46,6.53],[45.3,6.58]]],["Vallée d'Ossau","Gave d'Ossau",[42.85,-0.5,43.1,-0.35],[[43.05,-0.42],[42.9,-0.43]]],["Vallée d'Aspe","Gave d'Aspe",[42.82,-0.67,43.1,-0.49],[[43.05,-0.6],[42.87,-0.56]]],["Vallée de la Guisane","Guisane",[44.85,6.44,45.03,6.7],[[44.9,6.63],[44.98,6.51]]],["Vallée du Vénéon","Vénéon",[44.88,5.98,45.09,6.35],[[45.04,6.05],[44.94,6.18],[44.93,6.28]]],["Valbonnais","Bonne",[44.81,5.83,44.97,6.12],[[44.92,5.9],[44.86,6.05]]],["Val Montjoie","Bon Nant",[45.77,6.64,45.94,6.8],[[45.89,6.71],[45.82,6.73]]],["Val d'Arly","Arly",[45.7,6.35,45.91,6.69],[[45.75,6.42],[45.82,6.51],[45.86,6.62]]],["Haut-Verdon","Verdon",[43.92,6.44,44.25,6.72],[[44.2,6.65],[44.08,6.56],[43.97,6.51]]],["Vallée de la Bléone","Bléone",[44.0,6.13,44.22,6.42],[[44.05,6.2],[44.17,6.35]]],["Haut-Var","Var",[43.9,6.74,44.14,6.92],[[43.95,6.81],[44.09,6.85]]],["Vallée de l'Estéron","Estéron",[43.75,6.95,43.91,7.25],[[43.8,7.18],[43.86,7.02]]],["Vallée du Cians","Cians",[43.9,6.92,44.15,7.09],[[43.95,7.02],[44.1,6.99]]],["Vallée d'Aure","Neste",[42.77,0.25,43.0,0.44],[[42.95,0.37],[42.82,0.32]]],["Vallée du Louron","Neste du Louron",[42.75,0.3,42.95,0.48],[[42.9,0.37],[42.8,0.41]]],["Vallée de Campan","Adour",[42.9,0.08,43.11,0.27],[[43.06,0.15],[42.95,0.2]]],["Vallée de Cauterets","Gave de Cauterets",[42.84,-0.18,43.01,0.0],[[42.96,-0.07],[42.89,-0.11]]],["Vallée de Luz-Gavarnie","Gave de Pau",[42.69,-0.14,43.01,0.07],[[42.96,-0.07],[42.87,0.0],[42.74,-0.01]]],["Val d'Azun","Gave d'Azun",[42.91,-0.28,43.05,-0.03],[[43.0,-0.1],[42.96,-0.21]]],["Vallée de l'Ariège","Ariège",[42.67,1.53,43.01,1.91],[[42.96,1.61],[42.85,1.6],[42.72,1.84]]],["Vallée du Vicdessos","Vicdessos",[42.71,1.41,42.9,1.67],[[42.85,1.6],[42.76,1.48]]],["Vallée de Munster","Fecht",[47.99,7.07,48.14,7.35],[[48.09,7.28],[48.04,7.14]]],["Vallée de la Thur","Thur",[47.76,6.96,47.92,7.17],[[47.81,7.1],[47.87,7.03]]],["Vallée de la Bruche","Bruche",[48.43,7.15,48.59,7.56],[[48.54,7.49],[48.48,7.22]]],["Vallée de la Valserine","Valserine",[46.06,5.76,46.42,6.06],[[46.11,5.83],[46.37,5.99]]],["Vallée de la Loue","Loue",[46.98,6.07,47.15,6.35],[[47.1,6.14],[47.03,6.28]]],["Haut-Allier","Allier",[44.92,3.42,45.15,3.71],[[45.1,3.49],[44.97,3.64]]],["Haute vallée de la Dordogne","Dordogne",[45.04,1.97,45.45,2.57],[[45.4,2.5],[45.25,2.3],[45.09,2.04]]],["Vallée du Lot (haute)","Lot",[44.45,2.7,44.57,3.52],[[44.52,3.45],[44.5,3.1],[44.52,2.77]]],["Gorges de la Truyère","Truyère",[44.6,2.5,45.02,3.24],[[44.97,3.17],[44.8,2.85],[44.65,2.57]]],["Vallée du Tarn","Tarn",[44.05,3.01,44.37,3.66],[[44.32,3.59],[44.2,3.35],[44.1,3.08]]],["Combe de Savoie","Isère",[45.42,5.98,45.62,6.37],[[45.57,6.3],[45.52,6.2],[45.47,6.05]]],["Haute-Durance","Durance",[44.51,6.43,44.95,6.7],[[44.9,6.63],[44.75,6.58],[44.56,6.5]]]]};
   // ---------- 💧 Fleuves, rivières & cours d'eau ----------
   if(location.protocol === 'file:'){
-    setTimeout(()=>afficherInfo('\u26a0\ufe0f Fichier ouvert en direct (file://) : le navigateur bloque les donn\u00e9es (choropl\u00e8thes, vall\u00e9es, sites OSM\u2026). Testez via le site GitHub Pages ou un petit serveur local (python -m http.server).', 12000), 1500);
+    setTimeout(()=>afficherInfo('\u26a0\ufe0f Mode fichier local : voyez le bandeau en haut pour charger les donn\u00e9es depuis votre disque', 9000), 1500);
   }
   const etatFleuves = { actif:false, layer:null, alerte:false };
   document.getElementById('btn-fleuves').addEventListener('click', ()=>{
@@ -5198,13 +5236,23 @@
     HISTO.enCours = true;
     avant.forEach(id=>{ const b = document.getElementById(id); if(b) b.click(); });
     HISTO.enCours = false;
-    let fermees = 0;
-    (typeof PILOTABLES !== 'undefined' ? PILOTABLES : []).forEach(id=>{
-      const w = document.getElementById(id);
-      if(w && w.style && w.style.display !== 'none'){ w.style.display = 'none'; fermees++; }
-    });
     majLegende();
-    afficherInfo('\u26d4 '+avant.length+' couche(s) \u00e9teinte(s) et '+fermees+' fen\u00eatre(s) referm\u00e9e(s) \u2014 \u21b6 Annuler r\u00e9tablit tout', 6500);
+    afficherInfo(avant.length
+      ? '\u26d4 '+avant.length+' couche(s) \u00e9teinte(s) \u2014 \u21b6 Annuler r\u00e9tablit tout'
+      : '\u26d4 Aucune couche n\u2019\u00e9tait active', 5500);
+  });
+  document.getElementById('btn-fermer-fenetres').addEventListener('click', ()=>{
+    const liste = (typeof WIDGETS_PILOTABLES !== 'undefined' ? WIDGETS_PILOTABLES : []);
+    let fermees = 0;
+    liste.forEach(id=>{
+      const w = document.getElementById(id);
+      if(w && !w.classList.contains('cache')){ w.classList.add('cache'); fermees++; } // m\u00eame m\u00e9canisme que le pilote
+    });
+    if(typeof majPilote === 'function') majPilote();
+    if(typeof sauverWidgets === 'function') sauverWidgets();
+    afficherInfo(fermees
+      ? '\ud83e\uddaf '+fermees+' fen\u00eatre(s) referm\u00e9e(s) \u2014 les couches restent affich\u00e9es'
+      : '\ud83e\uddaf Toutes les fen\u00eatres \u00e9taient d\u00e9j\u00e0 ferm\u00e9es', 5000);
   });
 
   // ---------- Recherche universelle, seances enregistrees, rideau comparatif ----------
@@ -5885,7 +5933,7 @@
       VILLES_METEO.forEach((v, i)=>{
         const m = valeurs[i] || {}, t = m.t, coul = coulTemp(t) || '#9ca3af';
         const ciel = cielDe(m.code);
-        const lien = base + '#v=' + v[1].toFixed(4) + ',' + v[2].toFixed(4) + ',11';
+        const lien = base + '?ville=' + encodeURIComponent(v[0]); // MultiM\u00e9t\u00e9o attend le nom de la ville
         const pluieCourte = (m.prob !== null && m.prob !== undefined && m.prob >= 30)
           ? '<i>'+Math.round(m.prob)+'%</i>' : '';
         L.marker(L.latLng(v[1], v[2]), { keyboard:false, icon: L.divIcon({ className:'ville-meteo',
@@ -5894,7 +5942,7 @@
           .bindTooltip('<b>'+echap(v[0])+'</b> '+ciel[0]+' '+ciel[1]
             +'<br>'+(t === null ? 'temp\u00e9rature indisponible' : (Math.round(t*10)/10).toLocaleString('fr-FR')+' \u00b0C')
             +'<br>'+texteePluie(m)
-            +'<br><small>'+cr.titre+' \u00b7 cliquez : ouvre MultiM\u00e9t\u00e9o sur cette ville</small>', {direction:'top'})
+            +'<br><small>'+cr.titre+' \u00b7 cliquez : ouvre MultiM\u00e9t\u00e9o pour '+echap(v[0])+'</small>', {direction:'top'})
           .on('click', ()=>{ if(typeof window !== 'undefined' && window.open) window.open(lien, '_blank'); })
           .addTo(e.groupe);
       });
