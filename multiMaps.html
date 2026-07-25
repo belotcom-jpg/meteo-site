@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v3.1 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v3.2 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v3.1</title>
+<title>MultiMaps — géographie (collège & lycée) — v3.2</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -159,6 +159,7 @@
   .hydro-forte{filter:saturate(2.6) contrast(1.35) brightness(0.88)}
   .vise3d{background:none;border:none;font-size:20px;transform:translate(-50%,-90%)}
   .res-ligne:hover{background:#efece2}
+  .orage-picto{background:none;border:none;font-size:22px;line-height:1;transform:translate(-50%,-50%);filter:drop-shadow(0 0 2px #fff)}
   .reseau-picto{background:none;border:none;line-height:1;transform:translate(-50%,-50%);text-shadow:0 0 3px #fff,0 0 3px #fff}
   .vent-fleche{background:none;border:none;font:700 17px system-ui;transform:translate(-50%,-50%);text-shadow:0 0 3px #fff,0 0 3px #fff}
   .vent-fleche span{display:inline-block}
@@ -946,6 +947,8 @@
     <button class="calque-ajout donnee" id="btn-temp" title="La carte des températures de l'instant : une grille d'un demi-degré couvrant la France, interrogée auprès d'Open-Meteo, coloriée du bleu (froid) au rouge (chaud) et découpée sur les contours du pays. Le complément « temps qu'il fait » de vos couches climatiques.">🌡 Carte des températures (maintenant)</button>
     <button class="calque-ajout donnee" id="btn-air" title="L'indice européen de qualité de l'air (particules fines PM2,5 et PM10, dioxyde d'azote, ozone), colorié du turquoise « très bon » au violet « extrêmement mauvais ». Même grille que les températures, découpée sur la France.">🫁 Qualité de l'air (indice européen)</button>
     <button class="calque-ajout donnee" id="btn-vent" title="Le vent : une flèche par maille, orientée dans le sens où souffle le vent, colorée selon la force, avec la rafale au survol. Spectaculaire sur le couloir rhodanien un jour de mistral.">💨 Vent : direction et force</button>
+    <button class="calque-ajout donnee" id="btn-radar" title="Radar de pluie animé (RainViewer) : précipitations observées ces dernières heures + prévision immédiate (nowcast), en boucle. Comme dans MultiMétéo.">🌧️ Radar de pluie (animé)</button>
+    <button class="calque-ajout donnee" id="btn-orages" title="Les orages en cours d'après les modèles météo (fortes averses orageuses) : un pictogramme ⛈️ sur chaque zone concernée. C'est le diagnostic des modèles, pas des impacts de foudre mesurés.">⛈️ Orages en cours</button>
     <button class="calque-ajout donnee" id="btn-villes-meteo" title="Les 50 grandes villes avec leur température actuelle. Cliquez une ville : MultiMétéo s'ouvre sur ce point, avec tout le détail (modèles, heures, vigilance).">🏙 Villes : température &amp; clic vers MultiMétéo</button>
     <p class="sous" style="margin:4px 0 0">Températures Open-Meteo (modèles météo publics), relevé de l'heure. Météo ≠ climat : à croiser avec 🌡 Canicules et 🔥 Feux.</p>
   </div>
@@ -1056,7 +1059,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v3.1</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v3.2</small></span>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
   <div class="widget-corps">
@@ -1112,7 +1115,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v3.1</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v3.2</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -1187,6 +1190,12 @@
     <feMerge><feMergeNode in="fill"/><feMergeNode in="outline"/></feMerge>
   </filter>
 </defs></svg>
+<div id="radar-ctrl" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:1250;background:rgba(20,18,14,.92);color:#fff;border-radius:12px;box-shadow:0 6px 26px rgba(0,0,0,.45);padding:7px 12px;font:13px system-ui;align-items:center;gap:10px">
+  <button id="radar-play" title="Lecture / pause" style="border:1px solid #6b6656;background:#2b2822;color:#fff;border-radius:8px;cursor:pointer;padding:2px 11px;font-size:15px">⏸</button>
+  <input type="range" id="radar-slider" min="0" max="0" value="0" title="Glissez dans le temps : passé → maintenant → prévu (extrapolation)" style="width:230px;accent-color:#38bdf8">
+  <span id="radar-heure" style="min-width:104px;text-align:right;font-variant-numeric:tabular-nums"></span>
+  <button id="radar-ferme" title="Fermer le radar" style="border:1px solid #6b6656;background:none;color:#cbd5e1;border-radius:8px;cursor:pointer;padding:2px 9px">✕</button>
+</div>
 <div id="bandeau-local" style="display:none;position:fixed;left:0;right:0;top:0;z-index:1400;background:#7c2d12;color:#fff;font:13px system-ui;padding:7px 12px;box-shadow:0 2px 8px rgba(0,0,0,.4)">
   <b>⚠ Page ouverte en fichier local (file://)</b> — le navigateur interdit tout chargement de données : choroplèthes, vallées, sites OSM, prix DVF, météo, feux…
   <label style="margin-left:8px;background:#fff;color:#7c2d12;border-radius:6px;padding:2px 8px;cursor:pointer;font-weight:600">
@@ -1273,7 +1282,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v3.1';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v3.2';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -1650,8 +1659,8 @@
 
   // ---------- 🏛 QPV officiels (données ANCT, open data) ----------
   const URLS_QPV = [
-    'https://opendata.caissedesdepots.fr/api/explore/v3.1/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-au-1er-janvier-2024/exports/geojson',
-    'https://equipements.sports.gouv.fr/api/explore/v3.1/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/exports/geojson'
+    'https://opendata.caissedesdepots.fr/api/explore/v3.2/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-au-1er-janvier-2024/exports/geojson',
+    'https://equipements.sports.gouv.fr/api/explore/v3.2/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/exports/geojson'
   ];
   let qpvGeojson = null, qpvLayer = null, qpvVisible = false, qpvChargement = false;
   let qpvPointsRep = null; // un point représentatif par QPV, pour les croisements
@@ -1779,7 +1788,7 @@
   btnQpv.addEventListener('click', basculerQpv);
 
   // ---------- 🎓📝 Couches éducation (data.education.gouv.fr, en direct sur la vue) ----------
-  const EDUC = 'https://data.education.gouv.fr/api/explore/v3.1/catalog/datasets/';
+  const EDUC = 'https://data.education.gouv.fr/api/explore/v3.2/catalog/datasets/';
 
   function couleurIps(v){
     if(v >= 120) return '#2e9e44';
@@ -1931,8 +1940,8 @@
   let acvActif = false, acvGroupe = null, acvCharge = false;
   const btnAcv = document.getElementById('btn-acv');
   const URLS_ACV = [
-    'https://opendata.caissedesdepots.fr/api/explore/v3.1/catalog/datasets/villes_action_coeurdeville/records?limit=100&offset=',
-    'https://opendata.caissedesdepots.fr/api/explore/v3.1/catalog/datasets/villes-action-coeur-de-ville-portail-open-data/records?limit=100&offset='
+    'https://opendata.caissedesdepots.fr/api/explore/v3.2/catalog/datasets/villes_action_coeurdeville/records?limit=100&offset=',
+    'https://opendata.caissedesdepots.fr/api/explore/v3.2/catalog/datasets/villes-action-coeur-de-ville-portail-open-data/records?limit=100&offset='
   ];
   btnAcv.addEventListener('click', async ()=>{
     if(acvActif){
@@ -2205,7 +2214,7 @@
     },
     gares: {
       btn:'btn-gares', libelle:'🚉 Gares SNCF', legende:'Gares SNCF', teinte:'#1d4ed8',
-      base:'https://ressources.data.sncf.com/api/explore/v3.1/catalog/datasets/',
+      base:'https://ressources.data.sncf.com/api/explore/v3.2/catalog/datasets/',
       datasets:['gares-de-voyageurs','referentiel-gares-voyageurs','liste-des-gares'],
       zoomMin:9, etiqu:['nom','nom_gare','alias_libelle_noncontraint','libelle','gare_alias_libelle_noncontraint'],
       sous:['commune','departement','segment_drg'],
@@ -2214,7 +2223,7 @@
     },
     mh: {
       btn:'btn-mh', libelle:'🏛️ Monuments historiques', legende:'Monuments historiques', teinte:'#7c2d12',
-      base:'https://data.culture.gouv.fr/api/explore/v3.1/catalog/datasets/',
+      base:'https://data.culture.gouv.fr/api/explore/v3.2/catalog/datasets/',
       datasets:['liste-des-immeubles-proteges-au-titre-des-monuments-historiques'],
       zoomMin:12, etiqu:['appellation_courante','titre_editorial_de_la_notice','denomination_de_l_edifice','tico'],
       sous:['commune_forme_editoriale','commune','adresse_forme_editoriale','siecle_de_la_campagne_principale_de_construction','denomination_de_l_edifice','typologie_de_la_protection'],
@@ -2223,7 +2232,7 @@
     },
     sport: {
       btn:'btn-sport', libelle:'🏊 Équipements sportifs', legende:'Équipements sportifs', teinte:'#059669',
-      base:'https://equipements.sports.gouv.fr/api/explore/v3.1/catalog/datasets/',
+      base:'https://equipements.sports.gouv.fr/api/explore/v3.2/catalog/datasets/',
       datasets:['data-es','res-recensement-des-equipements-sportifs'],
       zoomMin:13, etiqu:['inst_nom','equip_nom','nominstallation','nom'],
       sous:['equip_type_name','inst_com_nom','commune'],
@@ -6155,6 +6164,136 @@
     majLegende();
     afficherInfo('\ud83d\udd36 Risque d\u2019incendie du jour (indice FWI) \u2014 hachures : du vert \u00ab faible \u00bb au rouge \u00ab extr\u00eame \u00bb. C\u2019est le danger pr\u00e9vu, pas des feux.', 8000);
   });
+  // ---------- Radar de pluie anim\u00e9 (RainViewer) ----------
+  const etatRadar = { actif:false, layers:[], frames:[], host:'', i:0, timer:null, tmo:null, nPast:0 };
+  async function chargerRadar(){
+    const r = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+    if(!r.ok) throw new Error('RainViewer');
+    const d = await r.json();
+    etatRadar.host = d.host || 'https://tilecache.rainviewer.com';
+    const past = (d.radar && d.radar.past) || [], now = (d.radar && d.radar.nowcast) || [];
+    etatRadar.frames = past.concat(now);
+    etatRadar.nPast = past.length;
+    return etatRadar.frames.length > 0;
+  }
+  function montrerFrameRadar(){
+    etatRadar.layers.forEach(function(l, k){ if(l && l.setOpacity) l.setOpacity(k === etatRadar.i ? 0.78 : 0); });
+    const f = etatRadar.frames[etatRadar.i]; if(!f) return;
+    const futur = etatRadar.i >= etatRadar.nPast, dt = new Date(f.time*1000);
+    const sl = document.getElementById('radar-slider'); if(sl) sl.value = etatRadar.i;
+    const hr = document.getElementById('radar-heure'); if(hr){ hr.textContent = dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+(futur ? ' \u00b7 pr\u00e9vu' : ''); hr.style.color = futur ? '#fca5a5' : '#e5e7eb'; }
+  }
+  function radarLecture(on){
+    const b = document.getElementById('radar-play');
+    if(etatRadar.timer){ clearInterval(etatRadar.timer); etatRadar.timer = null; }
+    if(on){ etatRadar.timer = setInterval(function(){ etatRadar.i = (etatRadar.i + 1) % etatRadar.frames.length; montrerFrameRadar(); }, 700); if(b) b.textContent = '\u23f8'; }
+    else if(b) b.textContent = '\u25b6';
+  }
+  function viderRadar(){ etatRadar.layers.forEach(function(l){ if(l) map.removeLayer(l); }); etatRadar.layers = []; if(etatRadar.timer){ clearInterval(etatRadar.timer); etatRadar.timer = null; } if(etatRadar.tmo){ clearTimeout(etatRadar.tmo); etatRadar.tmo = null; } const cb = document.getElementById('radar-ctrl'); if(cb) cb.style.display = 'none'; }
+  (function initRadarCtrl(){
+    const pb = document.getElementById('radar-play'), sl = document.getElementById('radar-slider'), fm = document.getElementById('radar-ferme');
+    if(pb && pb.addEventListener) pb.addEventListener('click', function(){ radarLecture(!etatRadar.timer); });
+    if(sl && sl.addEventListener) sl.addEventListener('input', function(e){ radarLecture(false); etatRadar.i = parseInt(e.target.value, 10) || 0; montrerFrameRadar(); });
+    if(fm && fm.addEventListener) fm.addEventListener('click', function(){ const b = document.getElementById('btn-radar'); if(b) b.click(); });
+  })();
+  document.getElementById('btn-radar').addEventListener('click', async ()=>{
+    const btn = document.getElementById('btn-radar');
+    if(etatRadar.actif){
+      etatRadar.actif = false; viderRadar();
+      basculerBouton(btn, false, '', '\ud83c\udf27\ufe0f Radar de pluie (anim\u00e9)');
+      majLegende();
+      return;
+    }
+    if(map.createPane && (!map.getPane || !map.getPane('radarPluie'))){ const p = map.createPane('radarPluie'); if(p && p.style){ p.style.zIndex = 390; p.style.pointerEvents = 'none'; } }
+    etatRadar.actif = true;
+    basculerBouton(btn, true, '\ud83c\udf27\ufe0f Radar \u2715', '', '#0284c7');
+    afficherInfo('\ud83c\udf27\ufe0f Chargement du radar de pluie\u2026', 0);
+    try{
+      const ok = await chargerRadar();
+      if(!etatRadar.actif) return;
+      if(!ok) throw new Error('aucune image radar');
+      etatRadar.i = Math.max(0, etatRadar.nPast - 1);
+      const slR = document.getElementById('radar-slider'); if(slR){ slR.max = etatRadar.frames.length - 1; slR.value = etatRadar.i; }
+      const cbR = document.getElementById('radar-ctrl'); if(cbR) cbR.style.display = 'flex';
+      // pr\u00e9chargement : on cr\u00e9e toutes les images (opacit\u00e9 0), on ATTEND qu'elles soient charg\u00e9es, puis on d\u00e9marre
+      let demarre = false, signale = false;
+      const charges = etatRadar.frames.map(function(){ return false; });
+      function demarrerRadar(){
+        if(demarre || !etatRadar.actif) return; demarre = true;
+        if(etatRadar.tmo){ clearTimeout(etatRadar.tmo); etatRadar.tmo = null; }
+        cacherInfo(); montrerFrameRadar(); radarLecture(true); majLegende();
+      }
+      etatRadar.layers = etatRadar.frames.map(function(f, k){
+        const l = L.tileLayer(etatRadar.host + f.path + '/256/{z}/{x}/{y}/4/1_1.png', { opacity:0, pane:'radarPluie', attribution:'&copy; RainViewer', maxNativeZoom:12, maxZoom:19, keepBuffer:16, updateWhenIdle:false });
+        if(l.on){
+          l.on('load', function(){ if(!charges[k]){ charges[k] = true; if(charges.every(Boolean)) demarrerRadar(); } });
+          l.on('tileerror', function(){ if(signale) return; signale = true; afficherInfo('\ud83c\udf27\ufe0f Certaines tuiles radar ne se chargent pas \u2014 v\u00e9rifiez la connexion (ou testez en ligne)', 6000); });
+        }
+        if(l.addTo) l.addTo(map);
+        return l;
+      });
+      afficherInfo('\ud83c\udf27\ufe0f Pr\u00e9chargement des images radar\u2026', 0);
+      etatRadar.tmo = setTimeout(demarrerRadar, 9000);      // filet : on d\u00e9marre m\u00eame si une image tarde
+    }catch(e){
+      cacherInfo(); etatRadar.actif = false; viderRadar();
+      basculerBouton(btn, false, '', '\ud83c\udf27\ufe0f Radar de pluie (anim\u00e9)');
+      afficherInfo('\ud83c\udf27\ufe0f Radar indisponible ('+(e && e.message ? e.message : e)+') \u2014 impossible en mode fichier local ; \u00e0 tester en ligne', 8000);
+    }
+  });
+  // ---------- Orages en cours (mod\u00e8les m\u00e9t\u00e9o) ----------
+  const etatOrages = { actif:false, groupe:null };
+  async function codesOrage(points){
+    const out = [];
+    for(let i=0;i<points.length;i+=100){
+      const lot = points.slice(i, i+100);
+      const url = 'https://api.open-meteo.com/v1/forecast?latitude='+lot.map(p=>p[0].toFixed(3)).join(',')
+        +'&longitude='+lot.map(p=>p[1].toFixed(3)).join(',')+'&current=weather_code&timezone=Europe%2FParis';
+      const r = await fetch(url); if(!r.ok) throw new Error('Open-Meteo');
+      const d = await r.json();
+      (Array.isArray(d) ? d : [d]).forEach(function(x){ out.push(x && x.current ? x.current.weather_code : null); });
+    }
+    return out;
+  }
+  document.getElementById('btn-orages').addEventListener('click', async ()=>{
+    const btn = document.getElementById('btn-orages');
+    if(etatOrages.actif){
+      etatOrages.actif = false;
+      if(etatOrages.groupe) map.removeLayer(etatOrages.groupe);
+      etatOrages.groupe = null;
+      basculerBouton(btn, false, '', '\u26c8\ufe0f Orages en cours');
+      majLegende();
+      return;
+    }
+    etatOrages.actif = true;
+    basculerBouton(btn, true, '\u26c8\ufe0f Orages \u2715', '', '#6a1b9a');
+    afficherInfo('\u26c8\ufe0f Recherche des orages en cours\u2026', 0);
+    try{
+      try{ await chargerMasqueFrance(); }catch(e){}
+      const pts = [];
+      for(let lat=42.5; lat<=51.2; lat+=0.9) for(let lon=-4.6; lon<=8.2; lon+=0.9){ if(typeof enFrance !== 'function' || enFrance(lat, lon)) pts.push([lat, lon]); }
+      const codes = await codesOrage(pts);
+      if(!etatOrages.actif) return;
+      etatOrages.groupe = L.layerGroup();
+      let n = 0;
+      pts.forEach(function(p, i){
+        const c = codes[i];
+        if(c != null && c >= 95){
+          n++;
+          L.marker(L.latLng(p[0], p[1]), { keyboard:false, icon: L.divIcon({ className:'orage-picto', html:'<span>\u26c8\ufe0f</span>', iconSize:null }) })
+            .bindTooltip('Orage en cours <small>(d\u2019apr\u00e8s les mod\u00e8les m\u00e9t\u00e9o)</small>', {direction:'top'})
+            .addTo(etatOrages.groupe);
+        }
+      });
+      etatOrages.groupe.addTo(map);
+      cacherInfo();
+      majLegende();
+      afficherInfo(n ? ('\u26c8\ufe0f '+n+' zone(s) d\u2019orage d\u00e9tect\u00e9e(s) en France \u2014 diagnostic des mod\u00e8les, pas des impacts de foudre') : '\u26c8\ufe0f Aucun orage d\u00e9tect\u00e9 en France en ce moment', 7000);
+    }catch(e){
+      cacherInfo(); etatOrages.actif = false;
+      basculerBouton(btn, false, '', '\u26c8\ufe0f Orages en cours');
+      afficherInfo('\u26c8\ufe0f Service m\u00e9t\u00e9o indisponible \u2014 r\u00e9essayez dans un instant', 6000);
+    }
+  });
   const VILLES_METEO = [["Paris",48.857,2.352],["Marseille",43.296,5.370],["Lyon",45.764,4.836],
    ["Toulouse",43.605,1.444],["Nice",43.700,7.265],["Nantes",47.218,-1.554],["Montpellier",43.611,3.877],
    ["Strasbourg",48.573,7.752],["Bordeaux",44.838,-0.579],["Lille",50.633,3.066],["Rennes",48.117,-1.677],
@@ -9170,6 +9309,17 @@
     if(etatVent.actif){
       blocs.push('<div class="leg-sous">\ud83d\udca8 Vent \u00e0 10 m <small>(fl\u00e8che = sens du souffle'+(etatVent.maxi ? ' \u00b7 rafale max '+Math.round(etatVent.maxi)+' km/h' : '')+')</small></div>'
         + VENT_BANDES.map((b, i)=>ligneLegende(b[1], b[2]+' <small>('+(i ? VENT_BANDES[i-1][0] : 0)+(b[0]>200 ? '+' : ' \u2013 '+b[0])+' km/h)</small>', 'carre', '')).join(''));
+    }
+    if(etatRadar.actif){
+      blocs.push('<div class="leg-sous">\ud83c\udf27\ufe0f Radar de pluie <small>(RainViewer, anim\u00e9)</small></div>'
+        + ligneLegende('#4fc3f7', 'Pluie faible', 'carre', '')
+        + ligneLegende('#1e88e5', 'Pluie mod\u00e9r\u00e9e', 'carre', '')
+        + ligneLegende('#ffb300', 'Averse forte', 'carre', '')
+        + ligneLegende('#e53935', 'Orage / gr\u00eale', 'carre', 'Observ\u00e9 + pr\u00e9vision imm\u00e9diate'));
+    }
+    if(etatOrages.actif){
+      blocs.push('<div class="leg-sous">\u26c8\ufe0f Orages en cours <small>(mod\u00e8les)</small></div>'
+        + ligneLegende('#6a1b9a', 'Zone d\u2019averses orageuses', 'carre', 'Diagnostic des mod\u00e8les m\u00e9t\u00e9o, pas des impacts de foudre'));
     }
     if(etatSeismes.actif){
       blocs.push('<div class="leg-sous">\ud83c\udf0d S\u00e9ismes <small>('+(etatSeismes.nb||0)+' \u00b7 taille = magnitude, couleur = profondeur)</small></div>'
