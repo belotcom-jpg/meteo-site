@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v3.0 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v3.1 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v4.0</title>
+<title>MultiMaps — géographie (collège & lycée) — v3.1</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -905,7 +905,9 @@
       <div style="display:flex;flex-wrap:wrap;gap:1px 7px"><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="0" checked> auj.</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="1" checked> J-1</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="2" checked> J-2</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="3" checked> J-3</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="4" checked> J-4</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="5" checked> J-5</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="7" checked> J-7</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="9" checked> J-9</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="11" checked> J-11</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="13" checked> J-13</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="15" checked> J-15</label></div>
     </div>
     <button class="calque-ajout donnee" id="btn-feux-actifs" title="Affiche les points chauds détectés par les satellites : chaque point est une zone anormalement chaude vue depuis l'espace. Toutes les sources (NASA GIBS et EFFIS, VIIRS et MODIS) sont superposées d'un coup : celle qui répond s'affiche. Mise à jour 6 fois par jour, 2 à 3 h après le passage du satellite.">🔥 Afficher les feux détectés</button>
-    <button class="calque-ajout donnee" id="btn-zones-feux" title="Dessine un halo jaune translucide, entouré d'un liseré ambre, autour des secteurs où les points chauds se concentrent — calculé en direct dans le navigateur à partir des détections satellite (flou + seuil), sans données ni clé externes. Calculé pour la zone affichée puis figé sur la carte : il grandit et rétrécit avec le zoom sans disparaître. Recentrez (zone entière visible) puis relancez pour un autre secteur.">🟡 Zones de feux (halo)
+    <button class="calque-ajout donnee" id="btn-zones-feux" title="Dessine un halo jaune translucide, entouré d'un liseré ambre, autour des secteurs où les points chauds se concentrent — calculé en direct dans le navigateur à partir des détections satellite (flou + seuil), sans données ni clé externes. Calculé pour la zone affichée puis figé sur la carte : il grandit et rétrécit avec le zoom sans disparaître. Recentrez (zone entière visible) puis relancez pour un autre secteur.">🟡 Zones de feux (halo)</button>
+    <button class="calque-ajout donnee" id="btn-fleches" title="Sur chaque foyer : une flèche ROUGE = sens de propagation du feu (déduit de l'historique 15 jours, du plus ancien vers le plus récent), et des flèches BLEUES = vent qui pousse le feu, maintenant et prévu à +24 h et +48 h. Activez d'abord « Zones de feux ».">➤ Flèches : propagation &amp; vent</button>
+    <button class="calque-ajout donnee" id="btn-risque-feu" title="Le risque d'incendie du jour (indice Feu Météo / FWI, EFFIS-Copernicus) : du vert « faible » au rouge « extrême », en HACHURES pour laisser voir la carte et se distinguer des feux réels. C'est le DANGER prévu, pas des feux détectés.">🔶 Risque incendie (hachuré)</button>
     <div style="border-top:1px solid var(--trait);margin:6px 0 4px"></div>
     <select id="cumul-periode" class="feux-annee" style="width:100%" title="La profondeur du cumul. Attention : les archives satellitaires ne remontent pas à l'infini — MODIS depuis 2000, VIIRS depuis 2012. Au-delà, la carte montre tout ce qui existe, pas davantage.">
       <option value="d7">Feux cumulés : 7 derniers jours</option>
@@ -1054,7 +1056,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v4.0</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v3.1</small></span>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
   <div class="widget-corps">
@@ -1110,7 +1112,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v4.0</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v3.1</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -1271,7 +1273,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v4.0';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v3.1';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -1648,8 +1650,8 @@
 
   // ---------- 🏛 QPV officiels (données ANCT, open data) ----------
   const URLS_QPV = [
-    'https://opendata.caissedesdepots.fr/api/explore/v4.0/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-au-1er-janvier-2024/exports/geojson',
-    'https://equipements.sports.gouv.fr/api/explore/v4.0/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/exports/geojson'
+    'https://opendata.caissedesdepots.fr/api/explore/v3.1/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-au-1er-janvier-2024/exports/geojson',
+    'https://equipements.sports.gouv.fr/api/explore/v3.1/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/exports/geojson'
   ];
   let qpvGeojson = null, qpvLayer = null, qpvVisible = false, qpvChargement = false;
   let qpvPointsRep = null; // un point représentatif par QPV, pour les croisements
@@ -1777,7 +1779,7 @@
   btnQpv.addEventListener('click', basculerQpv);
 
   // ---------- 🎓📝 Couches éducation (data.education.gouv.fr, en direct sur la vue) ----------
-  const EDUC = 'https://data.education.gouv.fr/api/explore/v4.0/catalog/datasets/';
+  const EDUC = 'https://data.education.gouv.fr/api/explore/v3.1/catalog/datasets/';
 
   function couleurIps(v){
     if(v >= 120) return '#2e9e44';
@@ -1929,8 +1931,8 @@
   let acvActif = false, acvGroupe = null, acvCharge = false;
   const btnAcv = document.getElementById('btn-acv');
   const URLS_ACV = [
-    'https://opendata.caissedesdepots.fr/api/explore/v4.0/catalog/datasets/villes_action_coeurdeville/records?limit=100&offset=',
-    'https://opendata.caissedesdepots.fr/api/explore/v4.0/catalog/datasets/villes-action-coeur-de-ville-portail-open-data/records?limit=100&offset='
+    'https://opendata.caissedesdepots.fr/api/explore/v3.1/catalog/datasets/villes_action_coeurdeville/records?limit=100&offset=',
+    'https://opendata.caissedesdepots.fr/api/explore/v3.1/catalog/datasets/villes-action-coeur-de-ville-portail-open-data/records?limit=100&offset='
   ];
   btnAcv.addEventListener('click', async ()=>{
     if(acvActif){
@@ -2203,7 +2205,7 @@
     },
     gares: {
       btn:'btn-gares', libelle:'🚉 Gares SNCF', legende:'Gares SNCF', teinte:'#1d4ed8',
-      base:'https://ressources.data.sncf.com/api/explore/v4.0/catalog/datasets/',
+      base:'https://ressources.data.sncf.com/api/explore/v3.1/catalog/datasets/',
       datasets:['gares-de-voyageurs','referentiel-gares-voyageurs','liste-des-gares'],
       zoomMin:9, etiqu:['nom','nom_gare','alias_libelle_noncontraint','libelle','gare_alias_libelle_noncontraint'],
       sous:['commune','departement','segment_drg'],
@@ -2212,7 +2214,7 @@
     },
     mh: {
       btn:'btn-mh', libelle:'🏛️ Monuments historiques', legende:'Monuments historiques', teinte:'#7c2d12',
-      base:'https://data.culture.gouv.fr/api/explore/v4.0/catalog/datasets/',
+      base:'https://data.culture.gouv.fr/api/explore/v3.1/catalog/datasets/',
       datasets:['liste-des-immeubles-proteges-au-titre-des-monuments-historiques'],
       zoomMin:12, etiqu:['appellation_courante','titre_editorial_de_la_notice','denomination_de_l_edifice','tico'],
       sous:['commune_forme_editoriale','commune','adresse_forme_editoriale','siecle_de_la_campagne_principale_de_construction','denomination_de_l_edifice','typologie_de_la_protection'],
@@ -2221,7 +2223,7 @@
     },
     sport: {
       btn:'btn-sport', libelle:'🏊 Équipements sportifs', legende:'Équipements sportifs', teinte:'#059669',
-      base:'https://equipements.sports.gouv.fr/api/explore/v4.0/catalog/datasets/',
+      base:'https://equipements.sports.gouv.fr/api/explore/v3.1/catalog/datasets/',
       datasets:['data-es','res-recensement-des-equipements-sportifs'],
       zoomMin:13, etiqu:['inst_nom','equip_nom','nominstallation','nom'],
       sous:['equip_type_name','inst_com_nom','commune'],
@@ -5745,7 +5747,7 @@
   function assurerPanesFeux(){
     if(panesFeuxPrets || !map.createPane) return;
     const pz = map.createPane('feuxZones'); if(pz && pz.style){ pz.style.filter = 'url(#fx-zones-feux)'; pz.style.zIndex = 240; }
-    const pd = map.createPane('feuxDots');  if(pd && pd.style){ pd.style.filter = 'url(#fx-grossir-feux)'; pd.style.zIndex = 250; }
+    const pd = map.createPane('feuxDots');  if(pd && pd.style){ pd.style.filter = 'url(#fx-grossir-feux)'; pd.style.zIndex = 460; pd.style.pointerEvents = 'none'; }
     panesFeuxPrets = true;
   } // FWI (danger, pas points chauds) \u00e9cart\u00e9 de la synth\u00e8se
   const etatCumulBrule = { actif:false, groupe:null };
@@ -5827,7 +5829,7 @@
     FEUX_BUCKETS.forEach(function(b, i){
       if(!map.getPane || !map.getPane(b.pane)){
         const p = map.createPane(b.pane);
-        if(p && p.style){ p.style.filter = 'url(#fx-age-b'+i+')'; p.style.zIndex = 252 - i; p.style.pointerEvents = 'none'; } // r\u00e9cent au-dessus ; clics vers le halo
+        if(p && p.style){ p.style.filter = 'url(#fx-age-b'+i+')'; p.style.zIndex = 465 - i; p.style.pointerEvents = 'none'; } // au-dessus des surcouches ; r\u00e9cent au-dessus ; clics vers le halo
       }
     });
   }
@@ -5851,8 +5853,8 @@
   function paneParJour(d){ if(d<=0) return 'ageB0'; if(d===1) return 'ageB1'; if(d<=4) return 'ageB2'; if(d<=9) return 'ageB3'; return 'ageB4'; }
   function libJour(d){ return d===0 ? 'aujourd\u2019hui' : (d===1 ? 'hier' : 'J-'+d); }
   function retirerHaloFeu(i){
-    const ov = etatZonesFeux.overlays && etatZonesFeux.overlays[i];
-    if(ov){ map.removeLayer(ov); etatZonesFeux.overlays[i] = null; afficherInfo('\ud83d\uddd1 Halo de ce foyer retir\u00e9', 3500); }
+    const c = etatZonesFeux.foyers && etatZonesFeux.foyers[i];
+    if(c && c.overlay){ map.removeLayer(c.overlay); etatZonesFeux.foyers[i] = null; afficherInfo('\ud83d\uddd1 Halo de ce foyer retir\u00e9', 3500); }
     return false;
   }
   if(typeof window !== 'undefined') window.retirerHaloFeu = retirerHaloFeu;
@@ -5884,7 +5886,7 @@
     majLegende();
     afficherInfo('\ud83d\udd25 Feux \u2014 jours coch\u00e9s, color\u00e9s par \u00e2ge : rouge aujourd\u2019hui \u2192 orange \u2192 jaune \u2192 noir (d\u00e9j\u00e0 br\u00fbl\u00e9)', 7000);
   });
-  const etatZonesFeux = { actif:false, overlays:[] };
+  const etatZonesFeux = { actif:false, foyers:[] };
   function flouBox(src, W, H, r){
     // flou box s\u00e9parable (horizontal puis vertical) sur la carte de densit\u00e9
     const tmp = new Float32Array(W*H), out = new Float32Array(W*H), d = 2*r+1;
@@ -5932,7 +5934,7 @@
       try{ dat = ctx.getImageData(0,0,W,H).data; }catch(e){ throw new Error('lecture image bloqu\u00e9e (CORS)'); }
       for(let i=0;i<N;i++){ if(dat[i*4+3]>60 && dat[i*4]>110 && dat[i*4]-dat[i*4+1]>28){ bits[i] |= (1<<k); vus++; } }
     });
-    if(!vus) return [];                                      // aucun feu dans la vue
+    if(!vus){ etatZonesFeux.gridPropag = []; return []; }     // aucun feu dans la vue
     const mask = new Float32Array(N); for(let i=0;i<N;i++) mask[i] = bits[i] ? 1 : 0;
     // fermeture morphologique : \u00e9pouse le contour des pixels
     function dilate(a, r){ const b = flouBox(a, W, H, r), o = new Float32Array(N); for(let i=0;i<N;i++) o[i] = b[i] > 0.0004 ? 1 : 0; return o; }
@@ -5946,24 +5948,45 @@
     for(let s=0;s<N;s++){
       if(!zone[s] || label[s]) continue;
       cur++; let sp = 0; pile[sp++] = s; label[s] = cur;
-      let minx=W,miny=H,maxx=0,maxy=0,sx=0,sy=0,area=0,db=0;
+      let minx=W,miny=H,maxx=0,maxy=0,sx=0,sy=0,area=0,db=0,rsx=0,rsy=0,rW=0,osx=0,osy=0,oW=0;
       while(sp>0){
         const p = pile[--sp], px = p % W, py = (p/W)|0;
         area++; sx+=px; sy+=py; db |= bits[p];
         if(px<minx)minx=px; if(px>maxx)maxx=px; if(py<miny)miny=py; if(py>maxy)maxy=py;
+        if(bits[p]){ let mk=0; while(mk<jours.length && !(bits[p] & (1<<mk))) mk++; const dn = jours[mk]||0, wr = Math.max(0, 15-dn), wo = dn; rsx+=px*wr; rsy+=py*wr; rW+=wr; osx+=px*wo; osy+=py*wo; oW+=wo; }
         if(px>0 && zone[p-1] && !label[p-1]){ label[p-1]=cur; pile[sp++]=p-1; }
         if(px<W-1 && zone[p+1] && !label[p+1]){ label[p+1]=cur; pile[sp++]=p+1; }
         if(py>0 && zone[p-W] && !label[p-W]){ label[p-W]=cur; pile[sp++]=p-W; }
         if(py<H-1 && zone[p+W] && !label[p+W]){ label[p+W]=cur; pile[sp++]=p+W; }
       }
-      amas.push({ id:cur, minx:minx, miny:miny, maxx:maxx, maxy:maxy, cx:sx/area, cy:sy/area, area:area, db:db });
+      let propAngle = null;                                   // sens : du centre des foyers anciens vers le centre des r\u00e9cents
+      if(rW>0 && oW>0){ const vx = rsx/rW - osx/oW, vy = rsy/rW - osy/oW; if(vx*vx+vy*vy > 4) propAngle = Math.atan2(vx, -vy)*180/Math.PI; }
+      amas.push({ id:cur, minx:minx, miny:miny, maxx:maxx, maxy:maxy, cx:sx/area, cy:sy/area, area:area, db:db, propAngle:propAngle });
     }
     const minAire = Math.max(30, N*0.0006);
     const gros = amas.filter(function(c){ return c.area >= minAire; });
-    if(!gros.length) return [];
-    if(map.createPane && (!map.getPane || !map.getPane('haloZone'))){ const ph = map.createPane('haloZone'); if(ph && ph.style) ph.style.zIndex = 235; }
+    if(!gros.length){ etatZonesFeux.gridPropag = []; return []; }
+    if(map.createPane && (!map.getPane || !map.getPane('haloZone'))){ const ph = map.createPane('haloZone'); if(ph && ph.style) ph.style.zIndex = 450; }
     function pxLL(px, py){ const mx = sw.x + (px/W)*(ne.x-sw.x), my = ne.y - (py/H)*(ne.y-sw.y); return map.options.crs.unproject(L.point(mx, my)); }
     const dxm = (ne.x-sw.x)/W, dym = (ne.y-sw.y)/H;          // m\u00e8tres mercator par pixel
+    // champ de fl\u00e8ches de propagation : sur une grille, vecteur local ancien -> r\u00e9cent
+    const grille = [], pas = 46, rad = 40;
+    for(let gy=(pas>>1); gy<H; gy+=pas) for(let gx=(pas>>1); gx<W; gx+=pas){
+      let rsx=0,rsy=0,rW=0,osx=0,osy=0,oW=0,nb=0;
+      for(let dy=-rad; dy<=rad; dy+=2) for(let dx=-rad; dx<=rad; dx+=2){
+        const x=gx+dx, y=gy+dy; if(x<0||x>=W||y<0||y>=H) continue;
+        const p = y*W+x; if(!bits[p]) continue;
+        nb++; let mk=0; while(mk<jours.length && !(bits[p] & (1<<mk))) mk++;
+        const dn=jours[mk]||0, wr=Math.max(0,15-dn), wo=dn;
+        rsx+=x*wr; rsy+=y*wr; rW+=wr; osx+=x*wo; osy+=y*wo; oW+=wo;
+      }
+      if(nb < 6 || rW<=0 || oW<=0) continue;
+      const vx=rsx/rW-osx/oW, vy=rsy/rW-osy/oW;
+      if(vx*vx+vy*vy < 1.2) continue;                       // pas de direction locale nette
+      grille.push({ ll: pxLL(gx, gy), ang: Math.atan2(vx, -vy)*180/Math.PI });
+      if(grille.length >= 140) break;
+    }
+    etatZonesFeux.gridPropag = grille;
     const out = [];
     gros.forEach(function(c){
       const mrg = 6, x0 = Math.max(0,c.minx-mrg), y0 = Math.max(0,c.miny-mrg), x1 = Math.min(W-1,c.maxx+mrg), y1 = Math.min(H-1,c.maxy+mrg);
@@ -5995,7 +6018,7 @@
         + '<small>points chauds satellite \u2014 pas un p\u00e9rim\u00e8tre officiel</small><br>'
         + '<a href="#" onclick="return retirerHaloFeu('+idx+')" style="color:#b45309;font-weight:600">\ud83d\uddd1 Retirer ce halo</a>',
         { maxWidth:240 });
-      out.push(ov);
+      out.push({ overlay:ov, centre:centre, propAngle:c.propAngle, km2:km2, jActifs:jActifs });
     });
     return out;
   }
@@ -6011,8 +6034,9 @@
     const btn = document.getElementById('btn-zones-feux');
     if(etatZonesFeux.actif){
       etatZonesFeux.actif = false;
-      (etatZonesFeux.overlays||[]).forEach(function(o){ if(o) map.removeLayer(o); });
-      etatZonesFeux.overlays = [];
+      (etatZonesFeux.foyers||[]).forEach(function(c){ if(c && c.overlay) map.removeLayer(c.overlay); });
+      etatZonesFeux.foyers = [];
+      retirerFleches();
       basculerBouton(btn, false, '', '\ud83d\udfe1 Zones de feux (halo)');
       majLegende();
       return;
@@ -6022,16 +6046,17 @@
     afficherInfo('\ud83d\udfe1 Calcul des zones de feux sur la vue\u2026', 0);
     try{
       const overlays = await construireHalo();
-      if(!etatZonesFeux.actif){ (overlays||[]).forEach(function(o){ map.removeLayer(o); }); return; }
-      (etatZonesFeux.overlays||[]).forEach(function(o){ if(o) map.removeLayer(o); });
+      if(!etatZonesFeux.actif){ (overlays||[]).forEach(function(c){ if(c && c.overlay) map.removeLayer(c.overlay); }); return; }
+      (etatZonesFeux.foyers||[]).forEach(function(c){ if(c && c.overlay) map.removeLayer(c.overlay); });
+      retirerFleches();
       cacherInfo();
       if(overlays && overlays.length){
-        etatZonesFeux.overlays = overlays;
-        overlays.forEach(function(o){ o.addTo(map); });
+        etatZonesFeux.foyers = overlays;
+        overlays.forEach(function(c){ c.overlay.addTo(map); });
         majLegende();
         afficherInfo('\ud83d\udfe1 '+overlays.length+' foyer(s) entour\u00e9(s) \u2014 cliquez un halo pour l\u2019info du feu et le retirer ; l\u2019ensemble suit le zoom', 8000);
       } else {
-        etatZonesFeux.overlays = [];
+        etatZonesFeux.foyers = [];
         etatZonesFeux.actif = false;
         basculerBouton(btn, false, '', '\ud83d\udfe1 Zones de feux (halo)');
         afficherInfo('\ud83d\udfe1 Aucun feu d\u00e9tect\u00e9 dans la vue \u2014 recentrez sur la zone de feux puis relancez', 7500);
@@ -6044,6 +6069,92 @@
     }
   });
 
+  // ---------- Fleches : sens de propagation (donnees) + vent actuel/futur (Open-Meteo) ----------
+  function flecheIcon(angle, couleur, taille, epais){
+    taille = taille || 46; epais = epais || 3.5;
+    const svg = '<svg width="'+taille+'" height="'+taille+'" viewBox="0 0 100 100" style="transform:rotate('+(angle||0).toFixed(0)+'deg);overflow:visible">'
+      + '<line x1="50" y1="82" x2="50" y2="26" stroke="'+couleur+'" stroke-width="'+epais+'" stroke-linecap="round"/>'
+      + '<path d="M50 12 L38 34 L50 27 L62 34 Z" fill="'+couleur+'"/></svg>';
+    return L.divIcon({ className:'fleche-feu', html:svg, iconSize:[taille, taille], iconAnchor:[taille/2, taille/2] });
+  }
+  async function ventFoyer(ll){
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude='+ll.lat.toFixed(3)+'&longitude='+ll.lng.toFixed(3)
+      + '&current=wind_speed_10m,wind_direction_10m&hourly=wind_speed_10m,wind_direction_10m&forecast_days=3&timezone=Europe%2FParis';
+    const r = await fetch(url); if(!r.ok) return null;
+    const d = await r.json();
+    const now = d.current ? { dir:d.current.wind_direction_10m, spd:d.current.wind_speed_10m } : null;
+    const h = d.hourly || {}, i0 = new Date().getHours();
+    const at = function(k){ return (h.wind_direction_10m && h.wind_direction_10m[k]!=null) ? { dir:h.wind_direction_10m[k], spd:h.wind_speed_10m[k] } : null; };
+    return { now:now, h24:at(i0+24), h48:at(i0+48) };
+  }
+  const etatFleches = { actif:false, marks:[] };
+  function retirerFleches(){
+    (etatFleches.marks||[]).forEach(function(m){ map.removeLayer(m); });
+    etatFleches.marks = [];
+    if(etatFleches.actif){ etatFleches.actif = false; const b = document.getElementById('btn-fleches'); if(b) basculerBouton(b, false, '', '\u27a4 Fl\u00e8ches : propagation & vent'); majLegende(); }
+  }
+  document.getElementById('btn-fleches').addEventListener('click', async ()=>{
+    const btn = document.getElementById('btn-fleches');
+    if(etatFleches.actif){ retirerFleches(); return; }
+    const foyers = (etatZonesFeux.foyers||[]).filter(Boolean);
+    if(!foyers.length){ afficherInfo('\u27a4 Activez d\u2019abord \u00ab Zones de feux \u00bb : les fl\u00e8ches se placent sur chaque foyer', 6000); return; }
+    etatFleches.actif = true; etatFleches.marks = [];
+    basculerBouton(btn, true, '\u27a4 Fl\u00e8ches \u2715', '', '#dc2626');
+    const sel = foyers.slice(0, 8);
+    // propagation : champ de fl\u00e8ches locales (rouge) r\u00e9parties sur toute la zone de feu
+    (etatZonesFeux.gridPropag || []).forEach(function(g){
+      const m = L.marker(g.ll, { icon: flecheIcon(g.ang, '#dc2626', 32, 3.4), keyboard:false });
+      m.addTo(map); etatFleches.marks.push(m);
+    });
+    majLegende();
+    afficherInfo('\u27a4 Rel\u00e8ve du vent sur chaque foyer\u2026', 0);
+    try{
+      await Promise.all(sel.map(async function(c){
+        const w = await ventFoyer(c.centre);
+        if(!w || !etatFleches.actif) return;
+        [[w.now,'#1d4ed8',48,'maintenant'],[w.h24,'#60a5fa',42,'+24 h'],[w.h48,'#93c5fd',36,'+48 h']].forEach(function(sp){
+          const v = sp[0]; if(!v || v.dir==null) return;
+          const m = L.marker(c.centre, { icon: flecheIcon((v.dir+180)%360, sp[1], sp[2], 3.5), keyboard:false });
+          m.bindTooltip('\ud83d\udca8 Vent '+sp[3]+' : '+Math.round(v.spd||0)+' km/h <small>(pousse le feu vers l\u2019aval)</small>', {direction:'top'});
+          m.addTo(map); etatFleches.marks.push(m);
+        });
+      }));
+    }catch(e){}
+    cacherInfo();
+    if(etatFleches.actif) afficherInfo('\u27a4 Rouge = sens de propagation (historique) \u00b7 bleu = vent qui pousse le feu (maintenant, +24 h, +48 h)', 8500);
+  });
+  // ---------- Risque d'incendie du jour (indice FWI d'EFFIS), en hachures ----------
+  const etatRisqueFeu = { actif:false, layer:null };
+  document.getElementById('btn-risque-feu').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-risque-feu');
+    if(etatRisqueFeu.actif){
+      etatRisqueFeu.actif = false;
+      if(etatRisqueFeu.layer) map.removeLayer(etatRisqueFeu.layer);
+      etatRisqueFeu.layer = null;
+      basculerBouton(btn, false, '', '\ud83d\udd36 Risque incendie (hachur\u00e9)');
+      majLegende();
+      return;
+    }
+    if(map.createPane && (!map.getPane || !map.getPane('risqueFeu'))){
+      const pr = map.createPane('risqueFeu');
+      if(pr && pr.style){
+        pr.style.zIndex = 445; pr.style.pointerEvents = 'none';
+        const hach = 'repeating-linear-gradient(45deg, #000 0, #000 3px, transparent 3px, transparent 8px)';
+        pr.style.webkitMaskImage = hach; pr.style.maskImage = hach;   // \u2192 le raster n'appara\u00eet que dans les hachures
+      }
+    }
+    etatRisqueFeu.actif = true;
+    basculerBouton(btn, true, '\ud83d\udd36 Risque incendie \u2715', '', '#ea580c');
+    const couche = L.tileLayer.wms('https://maps.effis.emergency.copernicus.eu/effis?', {
+      layers:'ecmwf007.fwi', format:'image/png', transparent:true, version:'1.1.1',
+      opacity:0.8, time:dateJour(0), pane:'risqueFeu', attribution:'&copy; Copernicus EFFIS \u2014 indice FWI (ECMWF)' });
+    let signale = false;
+    couche.on('tileerror', function(){ if(signale) return; signale = true; afficherInfo('\ud83d\udd36 L\u2019indice de risque EFFIS ne r\u00e9pond pas \u2014 r\u00e9essayez plus tard', 6000); });
+    etatRisqueFeu.layer = couche;
+    couche.addTo(map);
+    majLegende();
+    afficherInfo('\ud83d\udd36 Risque d\u2019incendie du jour (indice FWI) \u2014 hachures : du vert \u00ab faible \u00bb au rouge \u00ab extr\u00eame \u00bb. C\u2019est le danger pr\u00e9vu, pas des feux.', 8000);
+  });
   const VILLES_METEO = [["Paris",48.857,2.352],["Marseille",43.296,5.370],["Lyon",45.764,4.836],
    ["Toulouse",43.605,1.444],["Nice",43.700,7.265],["Nantes",47.218,-1.554],["Montpellier",43.611,3.877],
    ["Strasbourg",48.573,7.752],["Bordeaux",44.838,-0.579],["Lille",50.633,3.066],["Rennes",48.117,-1.677],
@@ -9036,6 +9147,21 @@
     if(etatZonesFeux.actif){
       blocs.push(ligneLegende('#f0a000', '\ud83d\udfe1 Zones de feux <small>(halo, 15 j)</small>', 'carre',
         'Halo jaune calcul\u00e9 depuis les points chauds satellite (image fig\u00e9e sur la carte, scale au zoom) \u2014 approxime les zones parcourues, pas des p\u00e9rim\u00e8tres officiels'));
+    }
+    if(etatRisqueFeu.actif){
+      blocs.push('<div class="leg-sous">\ud83d\udd36 Risque d\u2019incendie <small>(indice FWI, hachur\u00e9)</small></div>'
+        + ligneLegende('#1a9850', 'Faible', 'carre', '')
+        + ligneLegende('#fee08b', 'Mod\u00e9r\u00e9', 'carre', '')
+        + ligneLegende('#fdae61', '\u00c9lev\u00e9', 'carre', '')
+        + ligneLegende('#d73027', 'Tr\u00e8s \u00e9lev\u00e9', 'carre', '')
+        + ligneLegende('#7f0000', 'Extr\u00eame', 'carre', 'Danger pr\u00e9vu (EFFIS / ECMWF) \u2014 pas des feux d\u00e9tect\u00e9s'));
+    }
+    if(etatFleches.actif){
+      blocs.push('<div class="leg-sous">\u27a4 Fl\u00e8ches feu &amp; vent</div>'
+        + ligneLegende('#dc2626', 'Sens de propagation <small>(historique 15 j)</small>', 'carre', '')
+        + ligneLegende('#1d4ed8', 'Vent maintenant', 'carre', '')
+        + ligneLegende('#60a5fa', 'Vent +24 h', 'carre', '')
+        + ligneLegende('#93c5fd', 'Vent +48 h <small>(pousse le feu vers l\u2019aval)</small>', 'carre', ''));
     }
     if(etatAir.actif){
       blocs.push('<div class="leg-sous">\ud83e\udec1 Qualit\u00e9 de l\u2019air <small>(indice europ\u00e9en \u00b7 Open-Meteo)</small></div>'
