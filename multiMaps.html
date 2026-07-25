@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v2.5 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v4.0 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v2.5</title>
+<title>MultiMaps — géographie (collège & lycée) — v4.0</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -900,22 +900,17 @@
     <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
   </div>
   <div class="widget-corps">
-    <select id="feux-source" class="feux-annee" style="width:100%" title="La source est votre choix strict : aucune substitution automatique. Les deux services NASA GIBS ont des identifiants vérifiés ; les couches EFFIS suivent la convention officielle de nommage mais n'ont pas pu être testées — si l'une échoue, un message vous le dit et vous en choisissez une autre.">
-      <option value="gibs-viirs" selected>NASA GIBS — VIIRS 375 m (fin)</option>
-      <option value="gibs-modis">NASA GIBS — MODIS 1 km</option>
-      <option value="effis-viirs">EFFIS — points chauds VIIRS</option>
-      <option value="effis-modis">EFFIS — points chauds MODIS</option>
-      <option value="effis-fwi">EFFIS — danger d'incendie du jour (FWI)</option>
-    </select>
-    <select id="feux-jour" class="feux-annee" style="width:100%;margin-top:3px" title="Le jour observé. Les satellites passent plusieurs fois par jour, avec 2 à 3 h de délai : si rien n'apparaît aujourd'hui, essayez hier.">
-      <option value="0" selected>Aujourd'hui</option>
-      <option value="1">Hier</option>
-      <option value="2">Avant-hier</option>
-      <option value="3">Il y a 3 jours</option>
-    </select>
-    <button class="calque-ajout donnee" id="btn-feux-actifs" title="Affiche les points chauds détectés par les satellites : chaque point est une zone anormalement chaude vue depuis l'espace. Mise à jour 6 fois par jour, 2 à 3 h après le passage du satellite.">🔥 Afficher les feux détectés</button>
+    <div style="margin:2px 0 4px;font-size:11px">
+      <div style="color:#8a8577;margin-bottom:1px" title="Choisissez les jours à afficher (points et halo). Décochez pour masquer un jour.">Jours affichés :</div>
+      <div style="display:flex;flex-wrap:wrap;gap:1px 7px"><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="0" checked> auj.</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="1" checked> J-1</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="2" checked> J-2</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="3" checked> J-3</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="4" checked> J-4</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="5" checked> J-5</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="7" checked> J-7</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="9" checked> J-9</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="11" checked> J-11</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="13" checked> J-13</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="15" checked> J-15</label></div>
+    </div>
+    <button class="calque-ajout donnee" id="btn-feux-actifs" title="Affiche les points chauds détectés par les satellites : chaque point est une zone anormalement chaude vue depuis l'espace. Toutes les sources (NASA GIBS et EFFIS, VIIRS et MODIS) sont superposées d'un coup : celle qui répond s'affiche. Mise à jour 6 fois par jour, 2 à 3 h après le passage du satellite.">🔥 Afficher les feux détectés</button>
+    <button class="calque-ajout donnee" id="btn-zones-feux" title="Dessine un halo jaune translucide, entouré d'un liseré ambre, autour des secteurs où les points chauds se concentrent — calculé en direct dans le navigateur à partir des détections satellite (flou + seuil), sans données ni clé externes. Calculé pour la zone affichée puis figé sur la carte : il grandit et rétrécit avec le zoom sans disparaître. Recentrez (zone entière visible) puis relancez pour un autre secteur.">🟡 Zones de feux (halo)
     <div style="border-top:1px solid var(--trait);margin:6px 0 4px"></div>
     <select id="cumul-periode" class="feux-annee" style="width:100%" title="La profondeur du cumul. Attention : les archives satellitaires ne remontent pas à l'infini — MODIS depuis 2000, VIIRS depuis 2012. Au-delà, la carte montre tout ce qui existe, pas davantage.">
+      <option value="d7">Feux cumulés : 7 derniers jours</option>
+      <option value="d15">Feux cumulés : 15 derniers jours</option>
+      <option value="d30">Feux cumulés : 30 derniers jours</option>
       <option value="0.5">Cumul : 6 derniers mois</option>
       <option value="1" selected>Cumul : 1 an</option>
       <option value="3">Cumul : 3 ans</option>
@@ -1059,7 +1054,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v2.5</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v4.0</small></span>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
   <div class="widget-corps">
@@ -1115,7 +1110,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v2.5</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v4.0</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -1155,6 +1150,41 @@
     <button id="recit-fin" style="border:1px solid #6b6656;background:none;color:#cbd5e1;border-radius:8px;cursor:pointer;padding:2px 9px">✕</button>
   </div>
 </div>
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;left:-9999px"><defs>
+  <filter id="fx-age-b0" x="-20%" y="-20%" width="140%" height="140%">
+    <feMorphology operator="dilate" radius="3.5" result="g"/>
+    <feColorMatrix in="g" type="matrix" values="0 0 0 0 0.902  0 0 0 0 0.098  0 0 0 0 0.098  0 0 0 1 0"/>
+  </filter>
+  <filter id="fx-age-b1" x="-20%" y="-20%" width="140%" height="140%">
+    <feMorphology operator="dilate" radius="3.5" result="g"/>
+    <feColorMatrix in="g" type="matrix" values="0 0 0 0 0.961  0 0 0 0 0.471  0 0 0 0 0.000  0 0 0 1 0"/>
+  </filter>
+  <filter id="fx-age-b2" x="-20%" y="-20%" width="140%" height="140%">
+    <feMorphology operator="dilate" radius="3.5" result="g"/>
+    <feColorMatrix in="g" type="matrix" values="0 0 0 0 1.000  0 0 0 0 0.784  0 0 0 0 0.000  0 0 0 1 0"/>
+  </filter>
+  <filter id="fx-age-b3" x="-20%" y="-20%" width="140%" height="140%">
+    <feMorphology operator="dilate" radius="3.5" result="g"/>
+    <feColorMatrix in="g" type="matrix" values="0 0 0 0 0.588  0 0 0 0 0.353  0 0 0 0 0.078  0 0 0 1 0"/>
+  </filter>
+  <filter id="fx-age-b4" x="-20%" y="-20%" width="140%" height="140%">
+    <feMorphology operator="dilate" radius="3.5" result="g"/>
+    <feColorMatrix in="g" type="matrix" values="0 0 0 0 0.098  0 0 0 0 0.098  0 0 0 0 0.098  0 0 0 1 0"/>
+  </filter>
+  <filter id="fx-grossir-feux" x="-18%" y="-18%" width="136%" height="136%">
+    <feMorphology operator="dilate" radius="3"/>
+  </filter>
+  <filter id="fx-zones-feux" x="-45%" y="-45%" width="190%" height="190%">
+    <feGaussianBlur id="fx-zblur" stdDeviation="10" result="b"/>
+    <feComponentTransfer in="b" result="z"><feFuncA type="linear" slope="9" intercept="-0.5"/></feComponentTransfer>
+    <feMorphology id="fx-zdil" in="z" operator="dilate" radius="6" result="zf"/>
+    <feColorMatrix in="zf" type="matrix" values="0 0 0 0 1  0 0 0 0 0.85  0 0 0 0 0  0 0 0 0.38 0" result="fill"/>
+    <feMorphology in="zf" operator="dilate" radius="3" result="zd"/>
+    <feComposite in="zd" in2="zf" operator="out" result="ring"/>
+    <feColorMatrix in="ring" type="matrix" values="0 0 0 0 0.94  0 0 0 0 0.62  0 0 0 0 0  0 0 0 0.95 0" result="outline"/>
+    <feMerge><feMergeNode in="fill"/><feMergeNode in="outline"/></feMerge>
+  </filter>
+</defs></svg>
 <div id="bandeau-local" style="display:none;position:fixed;left:0;right:0;top:0;z-index:1400;background:#7c2d12;color:#fff;font:13px system-ui;padding:7px 12px;box-shadow:0 2px 8px rgba(0,0,0,.4)">
   <b>⚠ Page ouverte en fichier local (file://)</b> — le navigateur interdit tout chargement de données : choroplèthes, vallées, sites OSM, prix DVF, météo, feux…
   <label style="margin-left:8px;background:#fff;color:#7c2d12;border-radius:6px;padding:2px 8px;cursor:pointer;font-weight:600">
@@ -1241,7 +1271,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v2.5';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v4.0';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -1618,8 +1648,8 @@
 
   // ---------- 🏛 QPV officiels (données ANCT, open data) ----------
   const URLS_QPV = [
-    'https://opendata.caissedesdepots.fr/api/explore/v2.5/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-au-1er-janvier-2024/exports/geojson',
-    'https://equipements.sports.gouv.fr/api/explore/v2.5/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/exports/geojson'
+    'https://opendata.caissedesdepots.fr/api/explore/v4.0/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-au-1er-janvier-2024/exports/geojson',
+    'https://equipements.sports.gouv.fr/api/explore/v4.0/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/exports/geojson'
   ];
   let qpvGeojson = null, qpvLayer = null, qpvVisible = false, qpvChargement = false;
   let qpvPointsRep = null; // un point représentatif par QPV, pour les croisements
@@ -1747,7 +1777,7 @@
   btnQpv.addEventListener('click', basculerQpv);
 
   // ---------- 🎓📝 Couches éducation (data.education.gouv.fr, en direct sur la vue) ----------
-  const EDUC = 'https://data.education.gouv.fr/api/explore/v2.5/catalog/datasets/';
+  const EDUC = 'https://data.education.gouv.fr/api/explore/v4.0/catalog/datasets/';
 
   function couleurIps(v){
     if(v >= 120) return '#2e9e44';
@@ -1899,8 +1929,8 @@
   let acvActif = false, acvGroupe = null, acvCharge = false;
   const btnAcv = document.getElementById('btn-acv');
   const URLS_ACV = [
-    'https://opendata.caissedesdepots.fr/api/explore/v2.5/catalog/datasets/villes_action_coeurdeville/records?limit=100&offset=',
-    'https://opendata.caissedesdepots.fr/api/explore/v2.5/catalog/datasets/villes-action-coeur-de-ville-portail-open-data/records?limit=100&offset='
+    'https://opendata.caissedesdepots.fr/api/explore/v4.0/catalog/datasets/villes_action_coeurdeville/records?limit=100&offset=',
+    'https://opendata.caissedesdepots.fr/api/explore/v4.0/catalog/datasets/villes-action-coeur-de-ville-portail-open-data/records?limit=100&offset='
   ];
   btnAcv.addEventListener('click', async ()=>{
     if(acvActif){
@@ -2173,7 +2203,7 @@
     },
     gares: {
       btn:'btn-gares', libelle:'🚉 Gares SNCF', legende:'Gares SNCF', teinte:'#1d4ed8',
-      base:'https://ressources.data.sncf.com/api/explore/v2.5/catalog/datasets/',
+      base:'https://ressources.data.sncf.com/api/explore/v4.0/catalog/datasets/',
       datasets:['gares-de-voyageurs','referentiel-gares-voyageurs','liste-des-gares'],
       zoomMin:9, etiqu:['nom','nom_gare','alias_libelle_noncontraint','libelle','gare_alias_libelle_noncontraint'],
       sous:['commune','departement','segment_drg'],
@@ -2182,7 +2212,7 @@
     },
     mh: {
       btn:'btn-mh', libelle:'🏛️ Monuments historiques', legende:'Monuments historiques', teinte:'#7c2d12',
-      base:'https://data.culture.gouv.fr/api/explore/v2.5/catalog/datasets/',
+      base:'https://data.culture.gouv.fr/api/explore/v4.0/catalog/datasets/',
       datasets:['liste-des-immeubles-proteges-au-titre-des-monuments-historiques'],
       zoomMin:12, etiqu:['appellation_courante','titre_editorial_de_la_notice','denomination_de_l_edifice','tico'],
       sous:['commune_forme_editoriale','commune','adresse_forme_editoriale','siecle_de_la_campagne_principale_de_construction','denomination_de_l_edifice','typologie_de_la_protection'],
@@ -2191,7 +2221,7 @@
     },
     sport: {
       btn:'btn-sport', libelle:'🏊 Équipements sportifs', legende:'Équipements sportifs', teinte:'#059669',
-      base:'https://equipements.sports.gouv.fr/api/explore/v2.5/catalog/datasets/',
+      base:'https://equipements.sports.gouv.fr/api/explore/v4.0/catalog/datasets/',
       datasets:['data-es','res-recensement-des-equipements-sportifs'],
       zoomMin:13, etiqu:['inst_nom','equip_nom','nominstallation','nom'],
       sous:['equip_type_name','inst_com_nom','commune'],
@@ -5708,103 +5738,310 @@
     'gibs-viirs': { type:'gibs', couche:'VIIRS_SNPP_Thermal_Anomalies_375m_All', nom:'NASA GIBS \u2014 VIIRS 375 m' },
     'gibs-modis': { type:'gibs', couche:'MODIS_Combined_Thermal_Anomalies_All', nom:'NASA GIBS \u2014 MODIS 1 km' },
     'effis-viirs': { type:'effis', couche:'viirs.hs', nom:'EFFIS \u2014 points chauds VIIRS' },
-    'effis-modis': { type:'effis', couche:'modis.hs', nom:'EFFIS \u2014 points chauds MODIS' },
-    'effis-fwi':   { type:'effis', couche:'ecmwf007.fwi', nom:'EFFIS \u2014 danger d\u2019incendie (FWI)' }
+    'effis-modis': { type:'effis', couche:'modis.hs', nom:'EFFIS \u2014 points chauds MODIS' }
   };
+  const FEUX_SYNTHESE = ['gibs-viirs','gibs-modis','effis-viirs','effis-modis'];
+  let panesFeuxPrets = false;
+  function assurerPanesFeux(){
+    if(panesFeuxPrets || !map.createPane) return;
+    const pz = map.createPane('feuxZones'); if(pz && pz.style){ pz.style.filter = 'url(#fx-zones-feux)'; pz.style.zIndex = 240; }
+    const pd = map.createPane('feuxDots');  if(pd && pd.style){ pd.style.filter = 'url(#fx-grossir-feux)'; pd.style.zIndex = 250; }
+    panesFeuxPrets = true;
+  } // FWI (danger, pas points chauds) \u00e9cart\u00e9 de la synth\u00e8se
   const etatCumulBrule = { actif:false, groupe:null };
   document.getElementById('btn-cumul-brule').addEventListener('click', ()=>{
     const btn = document.getElementById('btn-cumul-brule');
     if(etatCumulBrule.actif){
       etatCumulBrule.actif = false;
       if(etatCumulBrule.groupe) map.removeLayer(etatCumulBrule.groupe);
-      basculerBouton(btn, false, '', '\ud83d\udfeb Cumul des surfaces br\u00fbl\u00e9es');
+      basculerBouton(btn, false, '', '\ud83d\udfeb Surfaces br\u00fbl\u00e9es');
       majLegende();
       return;
     }
-    const ans = parseFloat((document.getElementById('cumul-periode')||{value:'1'}).value) || 1;
-    const anCourant = new Date().getFullYear();
-    const premier = Math.max(2000, anCourant - Math.ceil(ans) + 1); // archives satellitaires : rien avant 2000
+    const val = (document.getElementById('cumul-periode')||{value:'1'}).value;
     etatCumulBrule.actif = true;
-    etatCumulBrule.periode = ans;
-    etatCumulBrule.annees = [];
-    basculerBouton(btn, true, '\ud83d\udfeb Cumul br\u00fbl\u00e9 \u2715', '', '#7c2d12');
+    basculerBouton(btn, true, '\ud83d\udfeb Surfaces br\u00fbl\u00e9es \u2715', '', '#7c2d12');
     if(etatCumulBrule.groupe) map.removeLayer(etatCumulBrule.groupe);
     etatCumulBrule.groupe = L.layerGroup();
+    assurerPanesFeux();
     let alerte = false;
-    for(let a = anCourant; a >= premier; a--){
-      etatCumulBrule.annees.push(a);
-      // une couche par ann\u00e9e : exactement l'\u00e9criture TIME qui fonctionne d\u00e9j\u00e0 (ann\u00e9e simple)
-      const couche = L.tileLayer.wms('https://maps.effis.emergency.copernicus.eu/effis?', {
-        layers:'viirs.ba.poly,modis.ba.poly', format:'image/png', transparent:true, version:'1.1.1',
-        opacity:0.75, time:String(a), attribution:'&copy; Copernicus EFFIS' });
-      couche.on('tileerror', ()=>{
-        if(alerte || !etatCumulBrule.actif) return;
-        alerte = true;
-        afficherInfo('\ud83d\udfeb EFFIS ne r\u00e9pond pas pour certaines ann\u00e9es \u2014 les autres restent affich\u00e9es', 6000);
-      });
-      couche.addTo(etatCumulBrule.groupe);
+    const brancher = (couche, msg)=> couche.on('tileerror', ()=>{ if(alerte || !etatCumulBrule.actif) return; alerte = true; afficherInfo(msg, 6500); });
+    if(/^d/.test(val)){
+      // cumul r\u00e9cent : on empile les points chauds quotidiens (GIBS VIIRS, la source qui r\u00e9pond) \u2014 aucun intervalle EFFIS, marche en direct
+      const jours = parseInt(val.slice(1), 10) || 30;
+      etatCumulBrule.annees = null;
+      etatCumulBrule.jours = jours;
+      etatCumulBrule.libelle = jours+' derniers jours';
+      const op = Math.max(0.22, Math.min(0.55, 4/jours)); // moins opaque quand on empile plus de jours — évite l'accumulation vers le noir
+      for(let n = 0; n < jours; n++){
+        const d = new Date(Date.now() - n*86400000);
+        const jour = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+        const opts = { layers:'VIIRS_SNPP_Thermal_Anomalies_375m_All', format:'image/png', transparent:true, version:'1.3.0',
+          pane:'feuxDots', opacity:op, time:jour, attribution:'NASA EOSDIS GIBS / FIRMS' };
+        if(typeof L.CRS !== 'undefined' && L.CRS.EPSG4326) opts.crs = L.CRS.EPSG4326;
+        const couche = L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg4326/all/wms.cgi?', opts);
+        brancher(couche, '\ud83d\udfeb Certains jours ne r\u00e9pondent pas \u2014 les autres restent affich\u00e9s');
+        couche.addTo(etatCumulBrule.groupe);
+      }
+      etatCumulBrule.groupe.addTo(map);
+      majLegende();
+      afficherInfo('\ud83d\udfeb '+jours+' jours de points chauds cumul\u00e9s \u2014 les foyers de la p\u00e9riode, directement depuis le satellite (VIIRS), sans passer par EFFIS', 7000);
+    }else{
+      // ann\u00e9es : empilement (l'\u00e9criture TIME qui fonctionne)
+      const ans = parseFloat(val) || 1;
+      const anCourant = new Date().getFullYear();
+      const premier = Math.max(2000, anCourant - Math.ceil(ans) + 1); // rien avant 2000
+      etatCumulBrule.annees = [];
+      etatCumulBrule.jours = null;
+      etatCumulBrule.libelle = null;
+      for(let a = anCourant; a >= premier; a--){
+        etatCumulBrule.annees.push(a);
+        const couche = L.tileLayer.wms('https://maps.effis.emergency.copernicus.eu/effis?', {
+          layers:'viirs.ba.poly,modis.ba.poly', format:'image/png', transparent:true, version:'1.1.1',
+          opacity:0.75, time:String(a), attribution:'&copy; Copernicus EFFIS' });
+        brancher(couche, '\ud83d\udfeb EFFIS ne r\u00e9pond pas pour certaines ann\u00e9es \u2014 les autres restent affich\u00e9es');
+        couche.addTo(etatCumulBrule.groupe);
+      }
+      etatCumulBrule.groupe.addTo(map);
+      majLegende();
+      afficherInfo('\ud83d\udfeb Surfaces br\u00fbl\u00e9es \u2014 '+etatCumulBrule.annees.length+' ann\u00e9e(s) empil\u00e9e(s), de '+premier+' \u00e0 '+anCourant+' \u00b7 la m\u00e9moire des incendies', 6500);
     }
-    etatCumulBrule.groupe.addTo(map);
-    majLegende();
-    afficherInfo('\ud83d\udfeb Surfaces br\u00fbl\u00e9es \u2014 '+etatCumulBrule.annees.length+' ann\u00e9e(s) empil\u00e9e(s), de '+premier+' \u00e0 '+anCourant
-      +' \u00b7 la m\u00e9moire des incendies', 6500);
   });
   document.getElementById('cumul-periode').addEventListener('change', ()=>{
     const b = document.getElementById('btn-cumul-brule');
     if(b.textContent.indexOf('\u2715') !== -1){ b.click(); b.click(); }
   });
 
-  const etatFeuxActifs = { actif:false, layer:null };
-  function jourFeux(){
-    const n = parseInt((document.getElementById('feux-jour')||{value:'0'}).value, 10) || 0;
-    const d = new Date(Date.now() - n*86400000);
-    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const etatFeuxActifs = { actif:false, layers:[] };
+  const FEUX_BUCKETS = [
+    { pane:'ageB0', jours:[0],        lib:'aujourd\u2019hui' },
+    { pane:'ageB1', jours:[1],        lib:'hier' },
+    { pane:'ageB2', jours:[2,3,4],    lib:'2 \u00e0 4 jours' },
+    { pane:'ageB3', jours:[5,7,9],    lib:'5 \u00e0 9 jours' },
+    { pane:'ageB4', jours:[11,13,15], lib:'10 \u00e0 15 jours' }
+  ];
+  const JOURS_ECH = FEUX_BUCKETS.reduce(function(a, b){ return a.concat(b.jours); }, []); // 11 jours \u00e9chantillonn\u00e9s
+  function dateJour(n){ const d = new Date(Date.now() - n*86400000); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function assurerPanesAge(){
+    if(!map.createPane) return;
+    FEUX_BUCKETS.forEach(function(b, i){
+      if(!map.getPane || !map.getPane(b.pane)){
+        const p = map.createPane(b.pane);
+        if(p && p.style){ p.style.filter = 'url(#fx-age-b'+i+')'; p.style.zIndex = 252 - i; p.style.pointerEvents = 'none'; } // r\u00e9cent au-dessus ; clics vers le halo
+      }
+    });
   }
+  // pendant l'animation de zoom, on masque les calques de POINTS (leurs filtres SVG clignoteraient) ; le halo, lui, est une image g\u00e9ographique qui scale toute seule
+  const PANES_FEUX = ['ageB0','ageB1','ageB2','ageB3','ageB4','feuxDots'];
+  function masquerFeuxZoom(masquer){
+    PANES_FEUX.forEach(function(id){
+      const p = map.getPane && map.getPane(id);
+      if(p && p.style) p.style.visibility = masquer ? 'hidden' : '';
+    });
+  }
+  if(map.on){
+    map.on('zoomstart', function(){ masquerFeuxZoom(true); });
+    map.on('zoomend', function(){ masquerFeuxZoom(false); });
+  }
+  function joursSelectionnes(){
+    const cbs = document.querySelectorAll('.jour-feu'), j = [];
+    Array.prototype.forEach.call(cbs, function(c){ if(c.checked) j.push(parseInt(c.value, 10)); });
+    return j.length ? j : [0,1,2,3,4,5,7,9,11,13,15];
+  }
+  function paneParJour(d){ if(d<=0) return 'ageB0'; if(d===1) return 'ageB1'; if(d<=4) return 'ageB2'; if(d<=9) return 'ageB3'; return 'ageB4'; }
+  function libJour(d){ return d===0 ? 'aujourd\u2019hui' : (d===1 ? 'hier' : 'J-'+d); }
+  function retirerHaloFeu(i){
+    const ov = etatZonesFeux.overlays && etatZonesFeux.overlays[i];
+    if(ov){ map.removeLayer(ov); etatZonesFeux.overlays[i] = null; afficherInfo('\ud83d\uddd1 Halo de ce foyer retir\u00e9', 3500); }
+    return false;
+  }
+  if(typeof window !== 'undefined') window.retirerHaloFeu = retirerHaloFeu;
   document.getElementById('btn-feux-actifs').addEventListener('click', ()=>{
     const btn = document.getElementById('btn-feux-actifs');
     if(etatFeuxActifs.actif){
       etatFeuxActifs.actif = false;
-      if(etatFeuxActifs.layer) map.removeLayer(etatFeuxActifs.layer);
+      (etatFeuxActifs.layers||[]).forEach(l=>map.removeLayer(l));
+      etatFeuxActifs.layers = [];
       basculerBouton(btn, false, '', '\ud83d\udd25 Afficher les feux d\u00e9tect\u00e9s');
       majLegende();
       return;
     }
-    const cle = (document.getElementById('feux-source')||{value:'gibs-viirs'}).value || 'gibs-viirs';
-    const conf = SOURCES_FEUX[cle];
-    if(!conf) return;
-    const jour = jourFeux();
+    assurerPanesFeux(); assurerPanesAge();
     etatFeuxActifs.actif = true;
-    etatFeuxActifs.source = conf;
-    etatFeuxActifs.jour = jour;
+    etatFeuxActifs.layers = [];
     basculerBouton(btn, true, '\ud83d\udd25 Feux d\u00e9tect\u00e9s \u2715', '', '#dc2626');
-    if(etatFeuxActifs.layer) map.removeLayer(etatFeuxActifs.layer);
-    let couche;
-    if(conf.type === 'gibs'){
-      const opts = { layers:conf.couche, format:'image/png', transparent:true, version:'1.3.0',
-        opacity:0.9, time:jour, attribution:'NASA EOSDIS GIBS / FIRMS' };
-      if(typeof L.CRS !== 'undefined' && L.CRS.EPSG4326) opts.crs = L.CRS.EPSG4326;
-      couche = L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg4326/all/wms.cgi?', opts);
-    }else{
-      couche = L.tileLayer.wms('https://maps.effis.emergency.copernicus.eu/effis?', {
-        layers:conf.couche, format:'image/png', transparent:true, version:'1.1.1',
-        opacity:0.85, time:jour, attribution:'&copy; Copernicus EFFIS' });
-    }
     let signale = false;
-    couche.on('tileerror', ()=>{
-      if(signale || !etatFeuxActifs.actif) return;
-      signale = true; // la source choisie reste : aucune substitution automatique
-      afficherInfo('\ud83d\udd25 La source \u00ab '+conf.nom+' \u00bb ne r\u00e9pond pas pour le '+jour+' \u2014 choisissez-en une autre dans le menu, ou un autre jour', 7000);
+    // un calque par jour coch\u00e9, color\u00e9 selon son \u00e2ge : r\u00e9cent = chaud, ancien = noir (d\u00e9j\u00e0 br\u00fbl\u00e9)
+    joursSelectionnes().forEach(function(n){
+      const opts = { layers:'VIIRS_SNPP_Thermal_Anomalies_375m_All', format:'image/png', transparent:true, version:'1.3.0',
+        pane:paneParJour(n), opacity:1, time:dateJour(n), attribution:'NASA EOSDIS GIBS / FIRMS' };
+      if(typeof L.CRS !== 'undefined' && L.CRS.EPSG4326) opts.crs = L.CRS.EPSG4326;
+      const couche = L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg4326/all/wms.cgi?', opts);
+      couche.on('tileerror', function(){ if(signale || !etatFeuxActifs.actif) return; signale = true; afficherInfo('\ud83d\udd25 Certains jours ne r\u00e9pondent pas \u2014 les autres restent affich\u00e9s', 6000); });
+      couche.addTo(map);
+      etatFeuxActifs.layers.push(couche);
     });
-    etatFeuxActifs.layer = couche;
-    couche.addTo(map);
     majLegende();
-    afficherInfo('\ud83d\udd25 '+conf.nom+' \u2014 '+jour+' \u00b7 points chauds vus par satellite (2 \u00e0 3 h de d\u00e9lai)', 6000);
+    afficherInfo('\ud83d\udd25 Feux \u2014 jours coch\u00e9s, color\u00e9s par \u00e2ge : rouge aujourd\u2019hui \u2192 orange \u2192 jaune \u2192 noir (d\u00e9j\u00e0 br\u00fbl\u00e9)', 7000);
   });
-  ['feux-source','feux-jour'].forEach(id=>{
-    document.getElementById(id).addEventListener('change', ()=>{
-      const b = document.getElementById('btn-feux-actifs');
-      if(b.textContent.indexOf('\u2715') !== -1){ b.click(); b.click(); } // on rejoue avec le nouveau choix
+  const etatZonesFeux = { actif:false, overlays:[] };
+  function flouBox(src, W, H, r){
+    // flou box s\u00e9parable (horizontal puis vertical) sur la carte de densit\u00e9
+    const tmp = new Float32Array(W*H), out = new Float32Array(W*H), d = 2*r+1;
+    for(let y=0; y<H; y++){
+      let acc = 0;
+      for(let x=-r; x<=r; x++){ const xx = Math.min(W-1, Math.max(0, x)); acc += src[y*W+xx]; }
+      for(let x=0; x<W; x++){ tmp[y*W+x] = acc/d; acc += src[y*W+Math.min(W-1,x+r+1)] - src[y*W+Math.max(0,x-r)]; }
+    }
+    for(let x=0; x<W; x++){
+      let acc = 0;
+      for(let y=-r; y<=r; y++){ const yy = Math.min(H-1, Math.max(0, y)); acc += tmp[yy*W+x]; }
+      for(let y=0; y<H; y++){ out[y*W+x] = acc/d; acc += tmp[Math.min(H-1,y+r+1)*W+x] - tmp[Math.max(0,y-r)*W+x]; }
+    }
+    return out;
+  }
+  async function construireHalo(){
+    if(!map.getBounds || !map.options || !map.options.crs || typeof document.createElement !== 'function') throw new Error('environnement');
+    const bnds = map.getBounds().pad(0.15);
+    const sw = map.options.crs.project(bnds.getSouthWest());
+    const ne = map.options.crs.project(bnds.getNorthEast());
+    const W = Math.max(220, Math.min(820, Math.round((map.getSize().x||700)*1.2)));
+    const H = Math.max(160, Math.round(W * (ne.y - sw.y) / Math.max(1, (ne.x - sw.x))));
+    const bbox = sw.x+','+sw.y+','+ne.x+','+ne.y;           // EPSG:3857 : minx,miny,maxx,maxy
+    const base = 'https://gibs.earthdata.nasa.gov/wms/epsg3857/all/wms.cgi?SERVICE=WMS&REQUEST=GetMap&VERSION=1.1.1'
+      + '&LAYERS=VIIRS_SNPP_Thermal_Anomalies_375m_All&SRS=EPSG:3857&FORMAT=image/png&TRANSPARENT=true'
+      + '&WIDTH='+W+'&HEIGHT='+H+'&BBOX='+bbox;
+    const jours = joursSelectionnes();
+    const imgs = await Promise.all(jours.map(function(n){
+      return new Promise(function(res){
+        const im = new Image(); im.crossOrigin = 'anonymous';
+        im.onload = function(){ res(im); }; im.onerror = function(){ res(null); };
+        im.src = base + '&TIME=' + dateJour(n);
+      });
+    }));
+    const cnv = document.createElement('canvas'); cnv.width = W; cnv.height = H;
+    const ctx = cnv.getContext && cnv.getContext('2d');
+    if(!ctx) throw new Error('canvas indisponible');
+    const N = W*H;
+    const bits = new Int32Array(N);                          // par pixel : bits des jours qui l'ont d\u00e9tect\u00e9
+    let vus = 0;
+    imgs.forEach(function(im, k){
+      if(!im) return;
+      ctx.clearRect(0,0,W,H); ctx.drawImage(im, 0, 0, W, H);
+      let dat;
+      try{ dat = ctx.getImageData(0,0,W,H).data; }catch(e){ throw new Error('lecture image bloqu\u00e9e (CORS)'); }
+      for(let i=0;i<N;i++){ if(dat[i*4+3]>60 && dat[i*4]>110 && dat[i*4]-dat[i*4+1]>28){ bits[i] |= (1<<k); vus++; } }
     });
+    if(!vus) return [];                                      // aucun feu dans la vue
+    const mask = new Float32Array(N); for(let i=0;i<N;i++) mask[i] = bits[i] ? 1 : 0;
+    // fermeture morphologique : \u00e9pouse le contour des pixels
+    function dilate(a, r){ const b = flouBox(a, W, H, r), o = new Float32Array(N); for(let i=0;i<N;i++) o[i] = b[i] > 0.0004 ? 1 : 0; return o; }
+    const dil = dilate(mask, 8);
+    const invA = new Float32Array(N); for(let i=0;i<N;i++) invA[i] = dil[i] ? 0 : 1;
+    const invd = dilate(invA, 5);
+    const zone = new Uint8Array(N); for(let i=0;i<N;i++) zone[i] = invd[i] ? 0 : 1;
+    // \u00e9tiquetage des amas (composantes connexes) \u2014 un amas = un foyer
+    const label = new Int32Array(N), pile = new Int32Array(N), amas = [];
+    let cur = 0;
+    for(let s=0;s<N;s++){
+      if(!zone[s] || label[s]) continue;
+      cur++; let sp = 0; pile[sp++] = s; label[s] = cur;
+      let minx=W,miny=H,maxx=0,maxy=0,sx=0,sy=0,area=0,db=0;
+      while(sp>0){
+        const p = pile[--sp], px = p % W, py = (p/W)|0;
+        area++; sx+=px; sy+=py; db |= bits[p];
+        if(px<minx)minx=px; if(px>maxx)maxx=px; if(py<miny)miny=py; if(py>maxy)maxy=py;
+        if(px>0 && zone[p-1] && !label[p-1]){ label[p-1]=cur; pile[sp++]=p-1; }
+        if(px<W-1 && zone[p+1] && !label[p+1]){ label[p+1]=cur; pile[sp++]=p+1; }
+        if(py>0 && zone[p-W] && !label[p-W]){ label[p-W]=cur; pile[sp++]=p-W; }
+        if(py<H-1 && zone[p+W] && !label[p+W]){ label[p+W]=cur; pile[sp++]=p+W; }
+      }
+      amas.push({ id:cur, minx:minx, miny:miny, maxx:maxx, maxy:maxy, cx:sx/area, cy:sy/area, area:area, db:db });
+    }
+    const minAire = Math.max(30, N*0.0006);
+    const gros = amas.filter(function(c){ return c.area >= minAire; });
+    if(!gros.length) return [];
+    if(map.createPane && (!map.getPane || !map.getPane('haloZone'))){ const ph = map.createPane('haloZone'); if(ph && ph.style) ph.style.zIndex = 235; }
+    function pxLL(px, py){ const mx = sw.x + (px/W)*(ne.x-sw.x), my = ne.y - (py/H)*(ne.y-sw.y); return map.options.crs.unproject(L.point(mx, my)); }
+    const dxm = (ne.x-sw.x)/W, dym = (ne.y-sw.y)/H;          // m\u00e8tres mercator par pixel
+    const out = [];
+    gros.forEach(function(c){
+      const mrg = 6, x0 = Math.max(0,c.minx-mrg), y0 = Math.max(0,c.miny-mrg), x1 = Math.min(W-1,c.maxx+mrg), y1 = Math.min(H-1,c.maxy+mrg);
+      const cw = x1-x0+1, ch = y1-y0+1;
+      const cc = document.createElement('canvas'); cc.width = cw; cc.height = ch;
+      const cctx = cc.getContext('2d'), ci = cctx.createImageData(cw, ch), cd = ci.data;
+      for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
+        const gi = y*W+x; if(label[gi]!==c.id) continue;
+        const li = (y-y0)*cw + (x-x0);
+        let bord = (x>0&&label[gi-1]!==c.id) || (x<W-1&&label[gi+1]!==c.id) || (y>0&&label[gi-W]!==c.id) || (y<H-1&&label[gi+W]!==c.id);
+        if(bord){ cd[li*4]=240; cd[li*4+1]=158; cd[li*4+2]=0; cd[li*4+3]=235; }
+        else { cd[li*4]=255; cd[li*4+1]=232; cd[li*4+2]=0; cd[li*4+3]=87; }
+      }
+      cctx.putImageData(ci, 0, 0);
+      const bounds = L.latLngBounds(pxLL(x0, y0), pxLL(x1+1, y1+1));
+      const ov = L.imageOverlay(cc.toDataURL('image/png'), bounds, { opacity:1, interactive:true, pane:'haloZone' });
+      const centre = pxLL(c.cx, c.cy), latC = centre.lat * Math.PI/180;
+      const km2 = c.area * dxm * dym * Math.cos(latC) * Math.cos(latC) / 1e6;
+      const jActifs = []; jours.forEach(function(day, k){ if(c.db & (1<<k)) jActifs.push(day); });
+      jActifs.sort(function(a,b){ return a-b; });
+      const recent = jActifs.length ? jActifs[0] : null;
+      const etat = recent===0 ? 'actif aujourd\u2019hui' : (recent===1 ? 'vu hier' : (recent!==null ? 'dernier signal il y a '+recent+' j' : ''));
+      const idx = out.length;
+      ov.bindPopup('<b>\ud83d\udd25 Foyer d\u00e9tect\u00e9</b><br>'
+        + '<b>'+etat+'</b><br>'
+        + 'centre \u2248 '+centre.lat.toFixed(3)+', '+centre.lng.toFixed(3)+'<br>'
+        + '\u00e9tendue \u2248 '+(km2<1 ? (Math.round(km2*100)/100) : (Math.round(km2*10)/10))+' km\u00b2<br>'
+        + 'd\u00e9tect\u00e9 : '+jActifs.map(libJour).join(', ')+'<br>'
+        + '<small>points chauds satellite \u2014 pas un p\u00e9rim\u00e8tre officiel</small><br>'
+        + '<a href="#" onclick="return retirerHaloFeu('+idx+')" style="color:#b45309;font-weight:600">\ud83d\uddd1 Retirer ce halo</a>',
+        { maxWidth:240 });
+      out.push(ov);
+    });
+    return out;
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.jour-feu'), function(c){
+    c.addEventListener('change', function(){
+      ['btn-feux-actifs','btn-zones-feux'].forEach(function(id){
+        const b = document.getElementById(id);
+        if(b && b.textContent.indexOf('\u2715') !== -1){ b.click(); b.click(); } // \u00e9teint puis rallume avec les nouveaux jours
+      });
+    });
+  });
+  document.getElementById('btn-zones-feux').addEventListener('click', async ()=>{
+    const btn = document.getElementById('btn-zones-feux');
+    if(etatZonesFeux.actif){
+      etatZonesFeux.actif = false;
+      (etatZonesFeux.overlays||[]).forEach(function(o){ if(o) map.removeLayer(o); });
+      etatZonesFeux.overlays = [];
+      basculerBouton(btn, false, '', '\ud83d\udfe1 Zones de feux (halo)');
+      majLegende();
+      return;
+    }
+    etatZonesFeux.actif = true;
+    basculerBouton(btn, true, '\ud83d\udfe1 Zones de feux \u2715', '', '#f0a000');
+    afficherInfo('\ud83d\udfe1 Calcul des zones de feux sur la vue\u2026', 0);
+    try{
+      const overlays = await construireHalo();
+      if(!etatZonesFeux.actif){ (overlays||[]).forEach(function(o){ map.removeLayer(o); }); return; }
+      (etatZonesFeux.overlays||[]).forEach(function(o){ if(o) map.removeLayer(o); });
+      cacherInfo();
+      if(overlays && overlays.length){
+        etatZonesFeux.overlays = overlays;
+        overlays.forEach(function(o){ o.addTo(map); });
+        majLegende();
+        afficherInfo('\ud83d\udfe1 '+overlays.length+' foyer(s) entour\u00e9(s) \u2014 cliquez un halo pour l\u2019info du feu et le retirer ; l\u2019ensemble suit le zoom', 8000);
+      } else {
+        etatZonesFeux.overlays = [];
+        etatZonesFeux.actif = false;
+        basculerBouton(btn, false, '', '\ud83d\udfe1 Zones de feux (halo)');
+        afficherInfo('\ud83d\udfe1 Aucun feu d\u00e9tect\u00e9 dans la vue \u2014 recentrez sur la zone de feux puis relancez', 7500);
+      }
+    }catch(e){
+      cacherInfo();
+      etatZonesFeux.actif = false;
+      basculerBouton(btn, false, '', '\ud83d\udfe1 Zones de feux (halo)');
+      afficherInfo('\ud83d\udfe1 Halo indisponible ('+(e && e.message ? e.message : e)+') \u2014 impossible en mode fichier local ; \u00e0 tester depuis le site en ligne', 8000);
+    }
   });
 
   const VILLES_METEO = [["Paris",48.857,2.352],["Marseille",43.296,5.370],["Lyon",45.764,4.836],
@@ -8778,16 +9015,27 @@
         + ligneLegende('#8b5cf6','\u2192 la mer du Nord','carre','Lignes de partage simplifi\u00e9es (\u00b130 km) \u2014 sch\u00e9ma p\u00e9dagogique'));
     }
     if(etatCumulBrule.actif){
-      const a = etatCumulBrule.periode;
-      const an = etatCumulBrule.annees || [];
-      const lib = an.length ? (an.length === 1 ? 'ann\u00e9e '+an[0] : an[an.length-1]+'\u2013'+an[0]+' \u00b7 '+an.length+' ann\u00e9es') : a+' ans';
-      blocs.push(ligneLegende('#7c2d12', '\ud83d\udfeb Surfaces br\u00fbl\u00e9es cumul\u00e9es <small>('+lib+')</small>', 'carre',
-        'P\u00e9rim\u00e8tres EFFIS/Copernicus \u2014 archives satellitaires : MODIS depuis 2000, VIIRS depuis 2012 ; les petits feux (< 30 ha) \u00e9chappent souvent \u00e0 la d\u00e9tection'));
+      if(etatCumulBrule.jours){
+        blocs.push(ligneLegende('#dc2626', '\ud83d\udd25 Feux cumul\u00e9s <small>('+etatCumulBrule.jours+' derniers jours)</small>', 'carre',
+          'Points chauds d\u00e9tect\u00e9s jour apr\u00e8s jour par VIIRS (NASA) \u2014 directement depuis le satellite, sans EFFIS ; approxime les zones parcourues r\u00e9cemment par le feu'));
+      }else{
+        const an = etatCumulBrule.annees || [];
+        const lib = an.length ? (an.length === 1 ? 'ann\u00e9e '+an[0] : an[an.length-1]+'\u2013'+an[0]+' \u00b7 '+an.length+' ann\u00e9es') : '';
+        blocs.push(ligneLegende('#7c2d12', '\ud83d\udfeb Surfaces br\u00fbl\u00e9es <small>('+lib+')</small>', 'carre',
+          'P\u00e9rim\u00e8tres EFFIS/Copernicus \u2014 archives satellitaires : MODIS depuis 2000, VIIRS depuis 2012 ; les petits feux (< 30 ha) \u00e9chappent souvent \u00e0 la d\u00e9tection'));
+      }
     }
     if(etatFeuxActifs.actif){
-      const s = etatFeuxActifs.source || {};
-      blocs.push(ligneLegende('#dc2626', '\ud83d\udd25 Feux d\u00e9tect\u00e9s <small>('+(etatFeuxActifs.jour||'')+')</small>', 'carre',
-        (s.nom||'')+' \u2014 points chauds satellitaires : ni exhaustifs (nuages) ni tous des incendies'));
+      blocs.push('<div class="leg-sous">\ud83d\udd25 Feux des 15 derniers jours <small>(couleur = \u00e2ge)</small></div>'
+        + ligneLegende('rgb(230,25,25)', 'Aujourd\u2019hui', 'carre', '')
+        + ligneLegende('rgb(245,120,0)', 'Hier', 'carre', '')
+        + ligneLegende('rgb(255,200,0)', '2 \u00e0 4 jours', 'carre', '')
+        + ligneLegende('rgb(150,90,20)', '5 \u00e0 9 jours', 'carre', '')
+        + ligneLegende('rgb(25,25,25)', '10 \u00e0 15 jours \u2014 d\u00e9j\u00e0 br\u00fbl\u00e9', 'carre', 'Points chauds VIIRS agrandis \u2014 ni exhaustifs (nuages) ni tous des incendies'));
+    }
+    if(etatZonesFeux.actif){
+      blocs.push(ligneLegende('#f0a000', '\ud83d\udfe1 Zones de feux <small>(halo, 15 j)</small>', 'carre',
+        'Halo jaune calcul\u00e9 depuis les points chauds satellite (image fig\u00e9e sur la carte, scale au zoom) \u2014 approxime les zones parcourues, pas des p\u00e9rim\u00e8tres officiels'));
     }
     if(etatAir.actif){
       blocs.push('<div class="leg-sous">\ud83e\udec1 Qualit\u00e9 de l\u2019air <small>(indice europ\u00e9en \u00b7 Open-Meteo)</small></div>'
