@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>MultiMeteo v3.3</title>
+<title>MultiMeteo v3.4</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -422,6 +422,33 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   .dvx-val small{font-size:12px;color:#b8b8b8;font-weight:600;margin-left:3px;letter-spacing:0}
   .dvx-detail{display:none;grid-column:1/-1;flex-direction:column;gap:4px;padding:4px 0 6px}
   .dvx-item.open .dvx-detail{display:flex}
+  #divDetailPanel{position:fixed;top:0;right:0;bottom:0;width:min(400px,88vw);transform:translateX(102%);transition:transform .22s ease;z-index:10050;pointer-events:none}
+  #divDetailPanel.open{transform:translateX(0);pointer-events:auto}
+  #divDetailCard{height:100%;background:#0c0c0c;border-left:1px solid #2a2a2a;overflow-y:auto;padding:12px 15px 20px;box-shadow:-14px 0 40px rgba(0,0,0,0.55);display:flex;flex-direction:column}
+  #divDetailPanel .scen-head{position:sticky;top:0;background:#0c0c0c;padding-bottom:8px;margin-bottom:2px;border-bottom:1px solid #1c2530;z-index:2}
+  #divDetailTitle{font-size:15px;font-weight:800;color:#e8e8e8;text-transform:capitalize}
+  .dvd-src{font-size:11.5px;color:#8aa;margin:2px 0 12px;padding-bottom:8px;border-bottom:1px solid #1c2530}
+  .dvx-clic{cursor:pointer}
+  .dvx-more{color:#5a7a9a;font-weight:900;margin-left:5px;font-size:15px}
+  .dvx-clic:active{background:#141c26}
+  .dvm-grp{margin:2px 0 7px}
+  .dvm-hd{font-size:12px;color:#9fb3c8;font-weight:700;margin:0 0 3px;border-bottom:1px solid #1c2530;padding-bottom:2px}
+  .dvm-hd small{color:#7a8a99;font-weight:400;font-size:10.5px}
+  .dvm-row{display:grid;grid-template-columns:104px 1fr 54px auto;align-items:center;gap:7px;padding:2px 0}
+  .dvm-med{position:absolute;top:-2px;bottom:-2px;width:0;border-left:1.5px dashed #cfa;opacity:.5}
+  .dvm-dev{font-size:10.5px;font-weight:700;min-width:34px;text-align:right;font-variant-numeric:tabular-nums}
+  .dvm-dev0{color:#667}
+  .ind-day-main{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:8px 0 12px}
+  .ind-day-main>span:first-child{font-size:32px;font-weight:800;letter-spacing:-1px}
+  .ind-day-an{font-size:13px;font-weight:700}
+  .ind-day-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #151515;font-family:'Courier New',monospace}
+  .ind-day-k{font-size:12.5px;color:#aaa}
+  .ind-day-v{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+  .dvd-hint{font-size:10.5px;color:#7a8a99;margin:6px 0 4px;line-height:1.5}
+  .dvm-nm{font-size:11.5px;color:#cfe0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dvm-track{position:relative;height:5px;background:#141c26;border-radius:3px}
+  .dvm-track i{position:absolute;top:50%;width:8px;height:8px;margin-top:-4px;margin-left:-4px;border-radius:50%;box-shadow:0 0 0 1px #0d0d0d}
+  .dvm-v{font-size:12.5px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
   .dvx-detline{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
   .dvx-detic{font-size:13px;color:#9fb3c8;font-weight:700;min-width:32px}
   .dvx-scen{margin-top:2px;align-self:flex-start;background:#16222e;border:1px solid #33455a;border-radius:8px;color:#a5c8e8;font-family:'Courier New',monospace;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer}
@@ -1949,7 +1976,7 @@ function _IND_NORM(doy){
 function _indRuns(vals,norm,limit){
   const runs=[];let cur=null;
   const push=()=>{if(cur&&cur.pts.length>=2)runs.push(cur);cur=null;};
-  for(let i=0;i<limit;i++){
+  for(let i=0;i<=limit;i++){   /* <=limit : on ferme le remplissage PILE sur aujourd'hui (évite le débordement sous le cône) */
     const v=vals[i],n=norm[i];
     if(v==null||n==null){push();continue;}
     const s=v>=n?1:-1;
@@ -1969,7 +1996,7 @@ function _indRuns(vals,norm,limit){
   push();
   return runs;
 }
-let _indMode='y40c';   /* mode par défaut à l'ouverture : Cône */
+let _indMode='y12c';   /* mode par défaut à l'ouverture : Cône+12 (borne J+12) */
 function _indYrCacheLoad(){try{const o=JSON.parse(localStorage.getItem('pp_indicyr_v2')||'null');if(o&&o.t&&(Date.now()-o.t)<6*3600e3&&o.d&&o.k===(new Date()).toISOString().slice(0,10))return o.d;}catch(e){}return null;}
 function _indYrCacheSave(d){try{localStorage.setItem('pp_indicyr_v2',JSON.stringify({t:Date.now(),k:(new Date()).toISOString().slice(0,10),d}));}catch(e){}}
 let _indYrLoading=null;
@@ -2476,7 +2503,7 @@ function _indRenderYear(d,opts){
   const cv=document.getElementById('indicCanvas');
   if(_indChart){_indChart.destroy();_indChart=null;}
   const N=d.time.length;
-  const isMob=window.innerWidth<700;
+  const isMob=(typeof _isMob!=='undefined')?_isMob:(window.innerWidth<500);   /* seuil unifié appli — fix cône PC/iPhone */
   const U=opts.unit||'°';
   const norm=opts.normArr
     ?d.time.map((_,i)=>{const k=opts.doyArr?opts.doyArr[i]:((doy0+i)%opts.normArr.length);const v=opts.normArr[k%opts.normArr.length];return (v!=null&&isFinite(v))?Math.round(v*10)/10:null;})
@@ -2516,15 +2543,20 @@ function _indRenderYear(d,opts){
   const dsets=[
       {label:(opts.obsLabel||'2026 observé'),data:obs,borderWidth:2,pointRadius:0,tension:0.2,spanGaps:true,
        segment:{borderColor:c=>{const i=c.p1DataIndex;const v=d.vals[i],n=norm[i];return (v!=null&&n!=null&&v>=n)?HOT:COLD;}},borderColor:HOT},
-      {label:'Prévision',data:prev,borderColor:'#ff9d3c',borderWidth:2.2,pointRadius:0,tension:0.2,spanGaps:true},
+      {label:'Prévision',data:prev,borderColor:'#ff9d3c',borderWidth:2.2,pointRadius:0,tension:0.2,spanGaps:true,
+       segment:{borderDash:c=>{const i=c.p1DataIndex;return (i>=d.iX-2&&i<d.iX)?[5,4]:undefined;}}},   /* 2 derniers jours déterministes (≈J+13/J+14) en pointillé : confiance moindre au bord d'échéance */
       {label:'Extrapolation '+(d.xSrc==='cfs'?'(CFS)':'(stat.)'),data:extra,borderColor:'#999',borderDash:[6,5],borderWidth:1.6,pointRadius:0,tension:0.2,spanGaps:true},
       {label:(opts.normLabel||'Normale 1991-2020'),data:norm,borderColor:'#9a9a9a',borderDash:[5,4],borderWidth:1.5,pointRadius:0,tension:0.3,spanGaps:true}
   ];
   if(opts.cone&&d.envHi&&d.envLo){
     const hi=d.envHi.map((v,i)=>i>=d.i0?v:null);
     const lo=d.envLo.map((v,i)=>i>=d.i0?v:null);
-    dsets.push({label:'Cône min-max (modèles/membres)',data:hi,borderColor:'rgba(255,157,60,0.55)',borderWidth:1,borderDash:[3,3],pointRadius:0,tension:0.2,spanGaps:true,fill:'+1',backgroundColor:'rgba(255,157,60,0.13)'});
-    dsets.push({label:'',data:lo,borderColor:'rgba(255,157,60,0.55)',borderWidth:1,borderDash:[3,3],pointRadius:0,tension:0.2,spanGaps:true});
+    /* cône BLEU */
+    dsets.push({label:'Cône min-max (modèles/membres)',data:hi,borderColor:'rgba(90,150,255,0.6)',borderWidth:1,borderDash:[3,3],pointRadius:0,tension:0.2,spanGaps:true,fill:'+1',backgroundColor:'rgba(90,150,255,0.15)'});
+    dsets.push({label:'',data:lo,borderColor:'rgba(90,150,255,0.6)',borderWidth:1,borderDash:[3,3],pointRadius:0,tension:0.2,spanGaps:true});
+    /* prévision JAUNE (en mode cône uniquement) */
+    const pv=dsets.find(x=>x.label==='Prévision');
+    if(pv){pv.borderColor='#ffd400';if(pv.segment&&pv.segment.borderDash){const _od=pv.segment.borderDash;pv.segment=Object.assign({},pv.segment);}}
   }
   _indChart=new Chart(cv.getContext('2d'),{
     type:'line',
@@ -2532,7 +2564,7 @@ function _indRenderYear(d,opts){
     options:{responsive:true,maintainAspectRatio:false,animation:false,
       interaction:{mode:'index',intersect:false},
       plugins:{legend:{labels:{color:'#ccc',font:{family:'Courier New',size:isMob?9:12},boxWidth:isMob?14:24,filter:(it)=>!!it.text}},
-        tooltip:{callbacks:{label:(c)=>c.dataset.label?(' '+c.dataset.label+' : '+(c.parsed.y!=null?c.parsed.y.toFixed(1)+U:'—')):null}},},
+        tooltip:{enabled:!opts.cone,callbacks:{label:(c)=>c.dataset.label?(' '+c.dataset.label+' : '+(c.parsed.y!=null?c.parsed.y.toFixed(1)+U:'—')):null}},},
       scales:{
         x:{ticks:{color:'#aaa',font:{family:'Courier New',size:isMob?9:11},maxRotation:0,autoSkip:false,
           callback:function(v,idx){const t=d.time[idx];if(!t)return '';const dt=new Date(t+'T12:00');
@@ -2544,6 +2576,23 @@ function _indRenderYear(d,opts){
       }},
     plugins:[fillPlug]
   });
+  /* Clic NATIF sur le canvas → panneau latéral (plus fiable que Chart.onClick sous Safari en plein écran) */
+  try{
+    cv.style.cursor='pointer';
+    cv.onclick=function(ev){
+      if(!_indChart)return;
+      const el=_indChart.getElementsAtEventForMode(ev,'index',{intersect:false},true);
+      let idx=(el&&el.length)?el[0].index:null;
+      if(idx==null){
+        /* repli : convertir la position X du clic en index via l'échelle */
+        const rect=cv.getBoundingClientRect();
+        const xPix=ev.clientX-rect.left;
+        const sc=_indChart.scales.x;
+        if(sc){const v=sc.getValueForPixel(xPix);if(v!=null&&isFinite(v))idx=Math.max(0,Math.min(d.time.length-1,Math.round(v)));}
+      }
+      if(idx!=null)_indShowDay(d,norm,idx,opts,U);
+    };
+  }catch(_){}
   const info=document.getElementById('indicInfo');
   if(info){
     /* anomalie moyenne de l'année écoulée */
@@ -2748,7 +2797,7 @@ async function openHydro(span){
   if(span)_hydSpan=span; else _hydSpan='2m';
   const p=document.getElementById('indicPanel');if(p)p.classList.add('open');
   _indMode='hyd';
-  const _mm2={indM2:'2m',indM40:'y40',indMc:'y40c',indMyr:'yr'};
+  const _mm2={indMc12:'y12c',indM2:'2m',indM40:'y40',indMc:'y40c',indMyr:'yr'};
   Object.keys(_mm2).forEach(id=>{const b=document.getElementById(id);if(b)b.classList.remove('on');});
   const _sp=['2m','1y','3y','5y','10y','30y','50y'],_spId=['indMhyd','indMh1','indMh3','indMh5','indMh10','indMh30','indMh50'];
   _spId.forEach((id,k)=>{const b=document.getElementById(id);if(b)b.classList.toggle('on',_sp[k]===_hydSpan);});
@@ -2782,9 +2831,9 @@ async function openHydro(span){
 
 async function openIndic(mode){
   if(mode)_indMode=mode;
-  else if(['2m','y40','y40c','yr'].indexOf(_indMode)<0)_indMode='y40c';   /* retour depuis 💧 → Cône */
+  else if(['2m','y40','y40c','y12c','yr'].indexOf(_indMode)<0)_indMode='y12c';   /* retour depuis 💧 → Cône+12 */
   const p=document.getElementById('indicPanel');if(p)p.classList.add('open');
-  const _mm={indM2:'2m',indM40:'y40',indMc:'y40c',indMyr:'yr',indMhyd:'hyd',indMh1:'h1',indMh3:'h3',indMh5:'h5',indMh10:'h10',indMh30:'h30',indMh50:'h50'};
+  const _mm={indMc12:'y12c',indM2:'2m',indM40:'y40',indMc:'y40c',indMyr:'yr',indMhyd:'hyd',indMh1:'h1',indMh3:'h3',indMh5:'h5',indMh10:'h10',indMh30:'h30',indMh50:'h50'};
   const _ttl=document.querySelector('#indicPanel .tm-ttl');
   if(_ttl)_ttl.innerHTML='🌡 Indicateur thermique France';
   const _nt=document.querySelector('#indicPanel .tm-note');
@@ -2793,7 +2842,7 @@ async function openIndic(mode){
   const st=document.getElementById('indicStatus');
   if(st){st.style.display='block';st.textContent=_indMode==='yr'?'⏳ Année complète (archive ERA5 + prévision)…':'⏳ 30 stations × 2 mois + prévision…';}
   let d;
-  try{d=(_indMode==='yr'||_indMode==='y40'||_indMode==='y40c')?await _indFetchYear():await _indFetch();}
+  try{d=(_indMode==='yr'||_indMode==='y40'||_indMode==='y40c'||_indMode==='y12c')?await _indFetchYear():await _indFetch();}
   catch(e){if(st){st.textContent='✕ '+e.message;}return;}
   if(st)st.style.display='none';
   if(_indMode==='yr'){_indRenderYear(d,{ticks:'months'});return;}
@@ -2805,6 +2854,15 @@ async function openIndic(mode){
     _indRenderYear(sub,{doy0:a,ticks:'days',label:'sur 40 jours',cone:_indMode==='y40c'});
     return;
   }
+  if(_indMode==='y12c'){
+    /* 40 j de passé (comme le Cône 40j) → J+12, cône activé, borne droite = aujourd'hui + 12 */
+    const a=Math.max(0,d.i0-40);
+    let end=Math.min(d.vals.length,d.i0+13);   /* i0 inclus → J+12 inclus */
+    const sub={time:d.time.slice(a,end),vals:d.vals.slice(a,end),i0:d.i0-a,iX:Math.max(0,d.iX-a),xSrc:d.xSrc,
+      envLo:d.envLo?d.envLo.slice(a,end):null,envHi:d.envHi?d.envHi.slice(a,end):null};
+    _indRenderYear(sub,{doy0:a,ticks:'days',label:'sur 12 jours',cone:true});
+    return;
+  }
   const cv=document.getElementById('indicCanvas');
   if(_indChart){_indChart.destroy();_indChart=null;}
   const N=d.time.length;
@@ -2813,7 +2871,7 @@ async function openIndic(mode){
   if(d.i0>0)prev[d.i0-1]=d.vals[d.i0-1]; /* jonction */
   const extra=d.vals.map((v,i)=>i>=d.iX?v:null);
   if(d.iX>0)extra[d.iX-1]=d.vals[d.iX-1];
-  const isMob=window.innerWidth<700;
+  const isMob=(typeof _isMob!=='undefined')?_isMob:(window.innerWidth<500);   /* seuil unifié appli — fix cône PC/iPhone */
   const _vv=d.vals.filter(v=>v!=null&&isFinite(v));
   const _yMin=_vv.length?Math.floor((Math.min.apply(null,_vv)-0.5)*2)/2:14;
   const _yMax=_vv.length?Math.ceil((Math.max.apply(null,_vv)+0.5)*2)/2:32;
@@ -3014,12 +3072,86 @@ function _divCell(c,scale,isRain){
     +'<div class="dvx-bar"><span class="dvx-rng" style="left:'+loP.toFixed(1)+'%;width:'+Math.max(2,hiP-loP).toFixed(1)+'%;background:'+col+'"></span><span class="dvx-med" style="left:'+medP.toFixed(1)+'%"></span></div>'
     +'<span class="dvx-val" style="color:'+col+'">'+fMed(c.med)+'<small>'+fR(c.lo)+'–'+fR(c.hi)+'</small></span></div>';
 }
+function closeIndDay(){const p=document.getElementById('divDetailPanel');if(p){p.classList.remove('open');p.style.transform='';p.style.pointerEvents='';}}
+function _indShowDay(d,norm,idx,opts,U){
+  const body=document.getElementById('divDetailBody'),ttl=document.getElementById('divDetailTitle');
+  if(!body)return;
+  U=U||'°';
+  const dk=d.time[idx];
+  const dt=dk?new Date(dk+'T12:00'):null;
+  const lbl=(dt&&!isNaN(dt))?dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}):('point '+idx);
+  const fmt=v=>(v==null||!isFinite(v))?'—':(Math.round(v*10)/10).toFixed(1)+U;
+  const val=d.vals[idx], nrm=norm[idx];
+  const isFut=idx>=d.i0;
+  const isExt=idx>=d.iX;
+  const kind=isExt?'Extrapolation '+(d.xSrc==='cfs'?'(CFS)':'(stat.)'):(isFut?'Prévision':'Observé');
+  const kcol=isExt?'#999':(isFut?'#ff9d3c':'#e3402a');
+  if(ttl)ttl.textContent='🌡️ '+lbl;
+  let html='<div class="dvd-src">'+kind+(dk?(' · '+dk):'')+'</div>';
+  /* valeur principale + écart normale */
+  html+='<div class="ind-day-main"><span style="color:'+kcol+'">'+fmt(val)+'</span>';
+  if(val!=null&&nrm!=null&&isFinite(val)&&isFinite(nrm)){
+    const an=val-nrm, ac=opts.invert?(an<=0?'#ff5040':'#7fa0ff'):(an>=0?'#ff5040':'#7fa0ff');
+    html+='<span class="ind-day-an" style="color:'+ac+'">'+(an>=0?'+':'')+(Math.round(an*10)/10).toFixed(1)+U+' vs normale</span>';
+  }
+  html+='</div>';
+  /* lignes détail */
+  const row=(k,v,c)=>'<div class="ind-day-row"><span class="ind-day-k">'+k+'</span><span class="ind-day-v"'+(c?(' style="color:'+c+'"'):'')+'>'+v+'</span></div>';
+  html+='<div class="dvm-grp">';
+  html+=row('Valeur',fmt(val),kcol);
+  html+=row('Normale 1991-2020',fmt(nrm),'#9a9a9a');
+  /* enveloppe (cône) si dispo et jour futur */
+  if(d.envHi&&d.envLo&&d.envHi[idx]!=null&&d.envLo[idx]!=null&&isFut){
+    const lo=d.envLo[idx],hi=d.envHi[idx];
+    html+=row('Fourchette modèles',fmt(lo)+' → '+fmt(hi),'#ff9d3c');
+    html+=row('Amplitude',fmt(hi-lo).replace(U,'')+U,'#ff9d3c');
+    const label=isExt?'membres CFS':'modèles';
+    html+='<div class="dvd-hint">Fourchette = min–max des '+label+' pour ce jour. Plus elle est large, plus les scénarios divergent.</div>';
+  }
+  html+='</div>';
+  body.innerHTML=html;
+  const pan=document.getElementById('divDetailPanel');
+  if(pan){
+    pan.classList.add('open');
+    /* garde-fou : forcer l'affichage même si une règle CSS ou un z-index de panneau plein écran interfère */
+    pan.style.transform='translateX(0)';
+    pan.style.pointerEvents='auto';
+    pan.style.zIndex='10060';
+  }
+}
+function _dvmDetail(ic,c,isRain,rich){
+  if(!c||!c.models||!c.models.length)return '';
+  const u=isRain?' mm':'°';
+  const fmt=v=>isRain?(Math.round(v*10)/10).toFixed(1):String(Math.round(v));
+  const fmtd=v=>{const r=isRain?(Math.round(v*10)/10).toFixed(1):String(Math.round(v));return (v>=0?'+':'')+r;};
+  const s=c.models.slice().sort((a,b)=>b.val-a.val);
+  const lo=Math.min.apply(null,s.map(m=>m.val)), hi=Math.max.apply(null,s.map(m=>m.val));
+  const span=(hi-lo)||1, med=c.med;
+  const label={max:'🌡️ max',min:'🌡️ min',mm:'🌧️ pluie'}[ic]||ic;
+  const medP=((med-lo)/span*100);   /* position de la médiane sur la piste */
+  let rows='';
+  s.forEach(m=>{
+    const pos=((m.val-lo)/span*100);
+    const dev=m.val-med;
+    const col=isRain?(m.val>med+1?'#5aa0ff':(m.val<med-1?'#c58a4a':'#9fb3c8'))
+                     :(dev>=1.5?'#ff7040':(dev<=-1.5?'#5aa0ff':'#9fd0a0'));
+    const devTxt=(Math.abs(dev)<0.5&&!isRain)?'<span class="dvm-dev dvm-dev0">±0'+'</span>':'<span class="dvm-dev" style="color:'+col+'">'+fmtd(dev)+'</span>';
+    rows+='<div class="dvm-row"><span class="dvm-nm">'+m.name+'</span>'
+      +'<span class="dvm-track"><span class="dvm-med" style="left:'+medP.toFixed(1)+'%"></span><i style="left:'+pos.toFixed(1)+'%;background:'+col+'"></i></span>'
+      +'<span class="dvm-v" style="color:'+col+'">'+fmt(m.val)+u+'</span>'
+      +(rich?devTxt:'')
+      +'</div>';
+  });
+  const amp=(hi-lo);
+  const ampTxt=rich?(' · amplitude '+fmt(amp)+u):'';
+  return '<div class="dvm-grp"><div class="dvm-hd">'+label+' <small>'+s.length+' modèles · '+fmt(lo)+'–'+fmt(hi)+u+' · méd '+fmt(med)+u+ampTxt+'</small></div>'+rows+'</div>';
+}
 function renderExt30Divergence(){
   const list=document.getElementById('ext30List');if(!list)return;
   const S=_buildDivSeries();
   if(!S.rows.length){list.innerHTML='<div class="dv-empty">Comparaison des modèles indisponible pour le moment. Patientez quelques secondes puis rouvrez.</div>';return;}
   let html='<div class="dvx"><div class="dvx-head"><div class="dvx-hd-day">Jour</div><div class="dvx-hd">🌡️max</div><div class="dvx-hd">🌡️min</div><div class="dvx-hd">🌧️mm</div></div>';
-  const detLine=(ic,c,isRain)=>{if(!c)return '';const u=isRain?' mm':'°';const s=c.models.slice().sort((a,b)=>b.val-a.val);let x='';s.forEach(m=>{x+='<span class="dv-mod"><b>'+m.name+'</b> '+(isRain?(Math.round(m.val*10)/10).toFixed(1):Math.round(m.val))+u+'</span>';});return '<div class="dvx-detline"><span class="dvx-detic">'+ic+'</span>'+x+'</div>';};
+  const detLine=(ic,c,isRain)=>_dvmDetail(ic,c,isRain);
   S.rows.forEach(r=>{
     const dt=r.date?new Date(r.date+'T00:00:00'):null;
     const lbl=(dt&&!isNaN(dt))?(_hlDOW[dt.getDay()]+' '+dt.getDate()):('J+'+r.day);
@@ -3027,15 +3159,33 @@ function renderExt30Divergence(){
     const ens=_tag?('<span class="dv-src">'+_tag+'</span>'):'';
     const det=detLine('max',r.tmax,false)+detLine('min',r.tmin,false)+detLine('mm',r.rain,true);
     const scenBtn=(r.src==='ens'||r.src==='mix')?'<button class="dvx-scen" onclick="event.stopPropagation();showScenarios('+r.day+')">👥 Tous les membres</button>':'';
-    html+='<div class="dvx-item" onclick="this.classList.toggle(\'open\')">'
-      +'<div class="dvx-row"><div class="dvx-day">'+lbl+ens+'</div>'
+    html+='<div class="dvx-item dvx-clic" onclick="showDayDetail('+r.day+')">'
+      +'<div class="dvx-row"><div class="dvx-day">'+lbl+ens+'<span class="dvx-more">›</span></div>'
       +_divCell(r.tmax,S.sMax,false)+_divCell(r.tmin,S.sMin,false)+_divCell(r.rain,S.sRain,true)
-      +'</div><div class="dvx-detail">'+det+scenBtn+'</div></div>';
+      +'</div></div>';
   });
-  html+='</div><div class="dv-foot">Déterministes J0→J+13 · au-delà : ensembles (éventail = p10–p90 des membres) fusionnés avec les déterministes longs (tag « det+ens ») · Open-Meteo · touchez une ligne pour le détail</div>';
+  html+='</div><div class="dv-foot">Déterministes J0→J+13 · au-delà : ensembles (éventail = p10–p90 des membres) fusionnés avec les déterministes longs (tag « det+ens ») · Open-Meteo · <b>touchez une ligne → détail des modèles en pop-up</b></div>';
   list.innerHTML=html;
 }
 /* ── Panneau membres d'ensemble (jours « ens » de la vue J+28) ── */
+function closeDayDetail(){const p=document.getElementById('divDetailPanel');if(p){p.classList.remove('open');p.style.transform='';p.style.pointerEvents='';}}
+function showDayDetail(day){
+  const S=(typeof _buildDivSeries==='function')?_buildDivSeries():null;
+  if(!S||!S.rows)return;
+  const r=S.rows.find(x=>x.day===day);
+  const body=document.getElementById('divDetailBody'),ttl=document.getElementById('divDetailTitle');
+  if(!r||!body)return;
+  const dt=r.date?new Date(r.date+'T00:00:00'):null;
+  const lbl=(dt&&!isNaN(dt))?dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}):('J+'+r.day);
+  const srcTxt=r.src==='ens'?'ensembles (éventail = membres)':(r.src==='mix'?'déterministes longs + ensembles fusionnés':(r.day>=14?'déterministes longs':'déterministes'));
+  if(ttl)ttl.textContent='🔬 '+lbl;
+  const det=_dvmDetail('max',r.tmax,false,true)+_dvmDetail('min',r.tmin,false,true)+_dvmDetail('mm',r.rain,true,true);
+  const scenBtn=(r.src==='ens'||r.src==='mix')?'<button class="dvx-scen" onclick="showScenarios('+r.day+')">👥 Voir tous les membres d\'ensemble</button>':'';
+  const hint='<div class="dvd-hint">◆ = médiane · point coloré = position du modèle · l\'écart signé indique de combien il s\'écarte de la médiane.</div>';
+  body.innerHTML='<div class="dvd-src">Source : '+srcTxt+'</div>'+det+hint+scenBtn;
+  const pan=document.getElementById('divDetailPanel');
+  if(pan){pan.classList.add('open');pan.style.transform='translateX(0)';pan.style.pointerEvents='auto';pan.style.zIndex='10060';}
+}
 function closeScenarios(){const p=document.getElementById('scenPanel');if(p)p.classList.remove('open');}
 function showScenarios(day){
   const ext=(window._ext30Days||[]);
@@ -3215,7 +3365,7 @@ async function openGraph(){
   if(typeof _cityLat==='undefined'||_cityLat==null){if(status){status.style.display='block';status.textContent='Cherchez une ville d\'abord.';}hide();return;}
   if(status){status.style.display='block';status.textContent='⏳ Chargement…';}
   hide();
-  if(ttl)ttl.textContent='📈 '+((typeof cityName!=='undefined'&&cityName)?cityName+' — ':'')+'J → J+15';
+  if(ttl)ttl.textContent='📈 '+((typeof cityName!=='undefined'&&cityName)?cityName+' — ':'')+'J → J+13';
   try{
     const dn=['dim','lun','mar','mer','jeu','ven','sam'];
     let labels=[],tmax=[],tmin=[],rain=[],codes=[];
@@ -3224,7 +3374,7 @@ async function openGraph(){
     /* ── J → J+15 (prévision déterministe, synthèse multi-modèles de la vue principale) — au-delà, voir la vue J+28 ── */
     if(_tempByDay&&_tempByDay.length&&_rainByDay&&_rainByDay.length){
       const today=new Date();
-      const N15=Math.min(16,_tempByDay.length,_rainByDay.length);
+      const N15=Math.min(14,_tempByDay.length,_rainByDay.length);   /* J→J+13 : les 2 derniers jours (J+14, J+15) retirés */
       for(let d=0;d<N15;d++){
         const dt=new Date(today);dt.setDate(today.getDate()+d);
         labels.push([dn[dt.getDay()],String(dt.getDate())]);
@@ -3242,6 +3392,7 @@ async function openGraph(){
       const d=await r.json();const dy=d&&d.daily;
       if(!dy||!dy.time)throw new Error('pas de données');
       dy.time.forEach((t,i)=>{
+        if(i>=14)return;   /* J→J+13 */
         const dt=new Date(t+'T12:00:00');
         labels.push([dn[dt.getDay()],String(dt.getDate())]);
         tmax.push(dy.temperature_2m_max[i]==null?null:Math.round(dy.temperature_2m_max[i]));
@@ -4342,7 +4493,7 @@ async function fetchNowcast(lat,lon){
     function(){
       const ctrl=new AbortController();
       setTimeout(function(){ctrl.abort();},6000);
-      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/3.3'}});
+      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/3.4'}});
     },
     function(){
       const ctrl=new AbortController();
@@ -5475,7 +5626,7 @@ function processData(omMain,omM15,rainMx,probMx){
   } else if(_viewMode==='j8'||_viewMode==='j14'){
     for(let hr=0;hr<24;hr++){const idx=24+hr;if(idx<N_HRS)push(hr+'h',1,idx);}
     for(let d=2;d<=4;d++)for(let hr=0;hr<24;hr+=3){const idx=d*24+hr;if(idx<N_HRS)push(hr+'h',d,idx);}
-    const maxD=_viewMode==='j14'?14:8;
+    const maxD=_viewMode==='j14'?13:8;   /* Détail horaire : dernier jour (J+14) retiré des vues */
     for(let d=5;d<=maxD;d++)for(let hr=0;hr<24;hr+=8){const idx=d*24+hr;if(idx<N_HRS)push(hr+'h',d,idx);}
     const _sentIdx=(maxD+1)*24;if(_sentIdx<N_HRS)push('0h',maxD+1,_sentIdx); /* borne droite : rend le dernier jour pleine largeur (sinon masqué par le garde-fou cellW<50) */
   }
@@ -7421,9 +7572,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
     <div class="tm-head">
       <div class="tm-ttl" style="color:#ff9d3c">🌡 Indicateur thermique France</div>
       <div class="ind-modes">
+        <button id="indMc12" class="on" onclick="openIndic('y12c')">Cône+12</button>
         <button id="indM2" onclick="openIndic('2m')">2 mois</button>
         <button id="indM40" onclick="openIndic('y40')">40 j</button>
-        <button id="indMc" class="on" onclick="openIndic('y40c')">Cône</button>
+        <button id="indMc" onclick="openIndic('y40c')">Cône 40j</button>
         <button id="indMyr" onclick="openIndic('yr')">Année</button>
         <button id="indMhyd" onclick="openHydro('2m')">💧</button>
         <button id="indMh1" onclick="openHydro('1y')">1 a</button>
@@ -7477,7 +7629,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
     </div>
     <div class="hl-quick">
       <button style="color:#ffd07f" onclick="closeHealth();openTMap()">🗺 Carte T° France <small>min/max → J+14</small></button>
-      <button style="color:#ff9d3c" onclick="closeHealth();openIndic()">🌡 Indicateur thermique <small>cône 40 j → J+28</small></button>
+      <button style="color:#ff9d3c" onclick="closeHealth();openIndic()">🌡 Indicateur thermique <small>cône → J+12</small></button>
     </div>
     <div class="hl-quick">
       <button style="color:#7fc4ff" onclick="closeHealth();openHydro()">💧 Indicateur hydrique <small>P−ETP 30 j vs 2016-2025</small></button>
@@ -7493,6 +7645,16 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
   </div>
 </div>
 
+
+<div id="divDetailPanel">
+  <div id="divDetailCard">
+    <div class="scen-head">
+      <div id="divDetailTitle">🔬 Détail</div>
+      <button onclick="closeDayDetail()" aria-label="Fermer" class="scen-x">✕</button>
+    </div>
+    <div id="divDetailBody"></div>
+  </div>
+</div>
 
 <div id="scenPanel">
   <div id="scenCard">
