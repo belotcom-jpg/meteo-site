@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>MultiMeteo v3.4</title>
+<title>MultiMeteo v3.5</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -444,6 +444,11 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   .ind-day-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #151515;font-family:'Courier New',monospace}
   .ind-day-k{font-size:12.5px;color:#aaa}
   .ind-day-v{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+  .ep-row{display:grid;grid-template-columns:24px 74px 1fr auto;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid #151515;font-family:'Courier New',monospace}
+  .ep-n{font-size:12px;font-weight:700}
+  .ep-d{font-size:12px;color:#bbb}
+  .ep-tag{font-size:11px}
+  .ep-v{font-size:13.5px;font-weight:800;font-variant-numeric:tabular-nums}
   .dvd-hint{font-size:10.5px;color:#7a8a99;margin:6px 0 4px;line-height:1.5}
   .dvm-nm{font-size:11.5px;color:#cfe0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .dvm-track{position:relative;height:5px;background:#141c26;border-radius:3px}
@@ -1350,6 +1355,19 @@ function _auStats(){
   d.ev.forEach(x=>{h+=x[1];if(now-x[0]<60e3)m+=x[1];});
   return {n:d.n,w:d.w,hour:h,min:m,cat:d.cat};
 }
+function purgeAllCaches(btn){
+  let n=0;
+  try{
+    const rm=[];
+    for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('pp_')===0&&k!=='pp_favs'&&k!=='pp_wcal_v1')rm.push(k);}
+    rm.forEach(k=>{localStorage.removeItem(k);n++;});
+  }catch(e){}
+  /* réinitialiser les caches mémoire connus pour forcer un vrai rechargement */
+  try{_wCal=undefined;}catch(e){}
+  try{if(typeof _ext30Loaded!=='undefined')_ext30Loaded=false;}catch(e){}
+  try{window._vfLast=null;}catch(e){}
+  if(btn){btn.textContent='✓ '+n+' cache(s) vidé(s) — rouvrez les vues';btn.disabled=true;setTimeout(()=>{btn.textContent='🗑 Vider tous les caches (pp_*)';btn.disabled=false;},2600);}
+}
 function auReset(){_auD={k:_auKey(),n:0,w:0,cat:{},ev:[]};_auSave();_auRender();}
 function _auRender(){
   const box=document.getElementById('apiUseBox');
@@ -1361,11 +1379,11 @@ function _auRender(){
   const ph=Math.round(s.hour/_AU_LIM.hour*100),pm=Math.round(s.min/_AU_LIM.min*100);
   const cats=Object.keys(s.cat).map(k=>[k,s.cat[k]]).sort((a,b)=>b[1]-a[1]).slice(0,5);
   box.innerHTML=
-    '<div class="au-l"><b style="color:'+col+'">'+fm(s.w)+'</b> / '+fm(_AU_LIM.day)+' unités estimées aujourd\u2019hui (<b style="color:'+col+'">'+pct+' %</b>) · '+fm(s.n)+' requêtes</div>'+
+    '<div class="au-l">~<b style="color:'+col+'">'+fm(s.w)+'</b> / '+fm(_AU_LIM.day)+' u. <span style="color:#8aa">(ordre de grandeur, ~'+pct+' %)</span> · '+fm(s.n)+' requêtes</div>'+
     '<div class="au-bar"><i style="width:'+Math.min(100,pct)+'%;background:'+col+'"></i></div>'+
     '<div class="au-s">Dernière heure : '+fm(s.hour)+' / '+fm(_AU_LIM.hour)+' ('+ph+' %) · dernière minute : '+fm(s.min)+' / '+_AU_LIM.min+' ('+pm+' %)</div>'+
     (cats.length?('<div class="au-s">Répartition : '+cats.map(c=>c[0]+' <b>'+fm(c[1])+'</b>').join(' · ')+'</div>'):'')+
-    '<div class="au-s" style="color:#666">Estimation locale — Open-Meteo ne publie pas de compteur. Poids ≈ (variables × modèles ÷ 10) × points × (jours ÷ 7), comme leur facturation d\u2019appels. Remise à zéro automatique chaque jour. <button class="vf-act" onclick="auReset()">× RàZ</button></div>';
+    '<div class="au-s" style="color:#666"><b style="color:#c58a4a">Ordre de grandeur, pas une garantie</b> — Open-Meteo ne publie aucun compteur ; un 429 peut tomber même « sous » ce total. Poids ≈ (variables × modèles ÷ 10) × points × (jours ÷ 7). RàZ auto chaque jour. <button class="vf-act" onclick="auReset()">× RàZ</button></div>';
 }
 (function(){
   if(typeof window==='undefined'||!window.fetch||window.__auHooked)return;
@@ -1893,21 +1911,23 @@ async function _indFetch(){
     };
     const rows=jA.map(o=>({max:time.map((_,di)=>_wpick(o.daily,'temperature_2m_max',di)),min:time.map((_,di)=>_wpick(o.daily,'temperature_2m_min',di))}));
     /* Enveloppe : indicateur de CHAQUE modèle (moyenne de ses 30 stations) → min/max par jour */
-    const perModel=[];
+    const perModel=[];       /* {name, arr[]} par modèle */
     for(const mo of _mods){
       const rowsM=jA.map(o=>({max:(o.daily['temperature_2m_max_'+mo]||[]),min:(o.daily['temperature_2m_min_'+mo]||[])}));
       const arr=time.map((_,di)=>_indMean(rowsM,di));   /* null si <24 stations couvertes */
-      if(arr.some(v=>v!=null))perModel.push(arr);
+      if(arr.some(v=>v!=null))perModel.push({name:mo,arr:arr});
     }
-    const envLoA=time.map((_,di)=>{const vs=perModel.map(a=>a[di]).filter(v=>v!=null);return vs.length>=3?Math.round(Math.min.apply(null,vs)*10)/10:null;});
-    const envHiA=time.map((_,di)=>{const vs=perModel.map(a=>a[di]).filter(v=>v!=null);return vs.length>=3?Math.round(Math.max.apply(null,vs)*10)/10:null;});
+    const envLoA=time.map((_,di)=>{const vs=perModel.map(m=>m.arr[di]).filter(v=>v!=null);return vs.length>=3?Math.round(Math.min.apply(null,vs)*10)/10:null;});
+    const envHiA=time.map((_,di)=>{const vs=perModel.map(m=>m.arr[di]).filter(v=>v!=null);return vs.length>=3?Math.round(Math.max.apply(null,vs)*10)/10:null;});
+    /* détail par modèle et par jour (pour le panneau latéral) : [ {name,val}, ... ] */
+    const envModelsA=time.map((_,di)=>{const l=[];perModel.forEach(m=>{const v=m.arr[di];if(v!=null&&isFinite(v))l.push({name:m.name,val:Math.round(v*10)/10});});return l.length?l:null;});
     const vals=time.map((_,di)=>_indMean(rows,di));
     /* index du jour J0 */
     const now=new Date();
     const todayKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
     let i0=time.indexOf(todayKey);if(i0<0)i0=Math.max(0,time.length-16);
     /* B) extrapolation J+16 → J+28 : saisonnier CFS (best-effort) sinon relaxation */
-    let xDates=[],xVals=[],xSrc='relax',xLo=null,xHi=null;
+    let xDates=[],xVals=[],xSrc='relax',xLo=null,xHi=null,xMem=null;
     const lastD=new Date(time[time.length-1]+'T12:00');
     for(let k=1;k<=13;k++){const d=new Date(lastD.getTime()+k*86400e3);xDates.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));}
     const lats=_IND_ST.map(s=>s[1]).join(','),lons=_IND_ST.map(s=>s[2]).join(',');
@@ -1945,6 +1965,7 @@ async function _indFetch(){
               if(perMem.length>=2){
                 xLo=xDates.map((_,k)=>{const vs=perMem.map(a=>a[k]).filter(v=>v!=null);return vs.length>=2?Math.round(Math.min.apply(null,vs)*10)/10:null;});
                 xHi=xDates.map((_,k)=>{const vs=perMem.map(a=>a[k]).filter(v=>v!=null);return vs.length>=2?Math.round(Math.max.apply(null,vs)*10)/10:null;});
+                xMem=xDates.map((_,k)=>{const l=[];mems.forEach((me,mi)=>{const v=perMem[mi][k];if(v!=null&&isFinite(v))l.push({name:me.replace('member','membre '),val:Math.round(v*10)/10});});return l.length?l:null;});
               }
             }
           }
@@ -1961,7 +1982,8 @@ async function _indFetch(){
     const _nulls=n=>Array.from({length:n},()=>null);
     const d={time:time.concat(xDates),vals:vals.concat(xVals),i0,iX:time.length,xSrc,
       envLo:envLoA.concat(xLo||_nulls(xDates.length)),
-      envHi:envHiA.concat(xHi||_nulls(xDates.length))};
+      envHi:envHiA.concat(xHi||_nulls(xDates.length)),
+      envModels:envModelsA.concat(xMem||_nulls(xDates.length))};
     _indCacheSave(d);
     return d;
   })();
@@ -2028,11 +2050,11 @@ async function _indFetchYear(){
       }
     }catch(e){}
     /* axe année complète */
-    const time=[],vals=[],envLo=[],envHi=[];
+    const time=[],vals=[],envLo=[],envHi=[],envModels=[];
     const jan1=new Date(Y,0,1,12);
     const nD=(new Date(Y,11,31)-new Date(Y,0,1))/86400e3+1;
-    const baseMap={},envLoM={},envHiM={};
-    base.time.forEach((dk,i)=>{baseMap[dk]=base.vals[i];if(base.envLo)envLoM[dk]=base.envLo[i];if(base.envHi)envHiM[dk]=base.envHi[i];});
+    const baseMap={},envLoM={},envHiM={},envModM={};
+    base.time.forEach((dk,i)=>{baseMap[dk]=base.vals[i];if(base.envLo)envLoM[dk]=base.envLo[i];if(base.envHi)envHiM[dk]=base.envHi[i];if(base.envModels)envModM[dk]=base.envModels[i];});
     const todayKey=fmt(now);
     let i0=-1,iX=-1;
     const xStartKey=base.time[base.iX];
@@ -2047,12 +2069,13 @@ async function _indFetchYear(){
       vals.push(v);
       envLo.push(envLoM[dk]!=null?envLoM[dk]:null);
       envHi.push(envHiM[dk]!=null?envHiM[dk]:null);
+      envModels.push(envModM[dk]!=null?envModM[dk]:null);
       if(dk===todayKey)i0=k;
       if(dk===xStartKey)iX=k;
     }
     if(i0<0)i0=Math.min(nD-1,Math.floor((now-jan1)/86400e3));
     if(iX<0)iX=Math.min(nD-1,i0+16);
-    const d={time,vals,i0,iX,xSrc:base.xSrc,envLo,envHi};
+    const d={time,vals,i0,iX,xSrc:base.xSrc,envLo,envHi,envModels};
     _indYrCacheSave(d);
     return d;
   })();
@@ -2795,6 +2818,18 @@ async function _hydNormFetch(){
 function closeHydro(){const p=document.getElementById('indicPanel');if(p)p.classList.remove('open');}
 async function openHydro(span){
   if(span)_hydSpan=span; else _hydSpan='2m';
+  /* garde-fou coût : 30/50 ans ≈ plusieurs milliers d'unités API si pas en cache */
+  if((_hydSpan==='30y'||_hydSpan==='50y')){
+    let cached=false;
+    try{cached=!!localStorage.getItem('pp_hydArch_'+_hydSpan+'_v1');}catch(e){}
+    if(!cached){
+      const yrs=_hydSpan==='50y'?'50':'30';
+      const est=_hydSpan==='50y'?'~8-11 Mo, ~25 000+ unités API estimées':'~5-7 Mo, ~15 000+ unités API estimées';
+      if(!confirm('Vue '+yrs+' ans : premier chargement lourd ('+est+').\n\nEnsuite mis en cache '+( _hydSpan==='50y'?'30':'30')+' jours. Continuer ?')){
+        return;
+      }
+    }
+  }
   const p=document.getElementById('indicPanel');if(p)p.classList.add('open');
   _indMode='hyd';
   const _mm2={indMc12:'y12c',indM2:'2m',indM40:'y40',indMc:'y40c',indMyr:'yr'};
@@ -2850,7 +2885,7 @@ async function openIndic(mode){
     const a=Math.max(0,d.i0-40);
     let end=d.vals.length;while(end>0&&d.vals[end-1]==null)end--;
     const sub={time:d.time.slice(a,end),vals:d.vals.slice(a,end),i0:d.i0-a,iX:Math.max(0,d.iX-a),xSrc:d.xSrc,
-      envLo:d.envLo?d.envLo.slice(a,end):null,envHi:d.envHi?d.envHi.slice(a,end):null};
+      envLo:d.envLo?d.envLo.slice(a,end):null,envHi:d.envHi?d.envHi.slice(a,end):null,envModels:d.envModels?d.envModels.slice(a,end):null};
     _indRenderYear(sub,{doy0:a,ticks:'days',label:'sur 40 jours',cone:_indMode==='y40c'});
     return;
   }
@@ -2859,7 +2894,7 @@ async function openIndic(mode){
     const a=Math.max(0,d.i0-40);
     let end=Math.min(d.vals.length,d.i0+13);   /* i0 inclus → J+12 inclus */
     const sub={time:d.time.slice(a,end),vals:d.vals.slice(a,end),i0:d.i0-a,iX:Math.max(0,d.iX-a),xSrc:d.xSrc,
-      envLo:d.envLo?d.envLo.slice(a,end):null,envHi:d.envHi?d.envHi.slice(a,end):null};
+      envLo:d.envLo?d.envLo.slice(a,end):null,envHi:d.envHi?d.envHi.slice(a,end):null,envModels:d.envModels?d.envModels.slice(a,end):null};
     _indRenderYear(sub,{doy0:a,ticks:'days',label:'sur 12 jours',cone:true});
     return;
   }
@@ -3073,6 +3108,43 @@ function _divCell(c,scale,isRain){
     +'<span class="dvx-val" style="color:'+col+'">'+fMed(c.med)+'<small>'+fR(c.lo)+'–'+fR(c.hi)+'</small></span></div>';
 }
 function closeIndDay(){const p=document.getElementById('divDetailPanel');if(p){p.classList.remove('open');p.style.transform='';p.style.pointerEvents='';}}
+function _indHeatEpisodes(){
+  /* lit la série longue en cache (année) et détecte les épisodes ≥ 23,4° (seuil vague MF),
+     retourne pour chacun : pic (valeur+date) et si c'est passé/en cours/à venir */
+  let full=null;
+  try{const o=JSON.parse(localStorage.getItem('pp_indicyr_v2')||'null');if(o&&o.d)full=o.d;}catch(e){}
+  if(!full||!full.time||!full.vals)return null;
+  const SEUIL=23.4, PIC=25.3, PIC_TOL=25.0;   /* tolérance ±0,3° : stations approchées */
+  const GAP=3;                                  /* fusion des épisodes séparés de < 3 jours */
+  const t=full.time, v=full.vals, i0=full.i0!=null?full.i0:v.length;
+  let raw=[]; let cur=null;
+  for(let i=0;i<v.length;i++){
+    const x=v[i];
+    if(x!=null&&isFinite(x)&&x>=SEUIL){
+      if(!cur)cur={s:i,e:i,pk:-Infinity,pki:-1};
+      cur.e=i;
+      if(x>cur.pk){cur.pk=x;cur.pki=i;}
+    }else{
+      if(cur&&(cur.e-cur.s)>=1){raw.push(cur);} cur=null;
+    }
+  }
+  if(cur&&(cur.e-cur.s)>=1)raw.push(cur);
+  /* fusion : si le début de l'épisode k+1 est à < GAP jours de la fin de l'épisode k → un seul */
+  const merged=[];
+  for(const e of raw){
+    const last=merged[merged.length-1];
+    if(last&&(e.s-last.e-1)<GAP){   /* trou réel en jours = début_suivant − fin_précédent − 1 */
+      last.e=e.e;
+      if(e.pk>last.pk){last.pk=e.pk;last.pki=e.pki;}   /* on garde le pic le plus fort */
+    }else merged.push(Object.assign({},e));
+  }
+  return merged.map(e=>({
+    pk:Math.round(e.pk*10)/10,
+    date:t[e.pki],
+    canic:e.pk>=PIC_TOL,   /* ≥25,0° chez nous ≈ ≥25,3° officiel (±0,3°) */
+    when:e.pki<i0-1?'passé':(e.pki>i0+1?'à venir':'en cours')
+  }));
+}
 function _indShowDay(d,norm,idx,opts,U){
   const body=document.getElementById('divDetailBody'),ttl=document.getElementById('divDetailTitle');
   if(!body)return;
@@ -3101,14 +3173,59 @@ function _indShowDay(d,norm,idx,opts,U){
   html+=row('Valeur',fmt(val),kcol);
   html+=row('Normale 1991-2020',fmt(nrm),'#9a9a9a');
   /* enveloppe (cône) si dispo et jour futur */
+  const models=(d.envModels&&d.envModels[idx])?d.envModels[idx]:null;
   if(d.envHi&&d.envLo&&d.envHi[idx]!=null&&d.envLo[idx]!=null&&isFut){
     const lo=d.envLo[idx],hi=d.envHi[idx];
     html+=row('Fourchette modèles',fmt(lo)+' → '+fmt(hi),'#ff9d3c');
     html+=row('Amplitude',fmt(hi-lo).replace(U,'')+U,'#ff9d3c');
-    const label=isExt?'membres CFS':'modèles';
-    html+='<div class="dvd-hint">Fourchette = min–max des '+label+' pour ce jour. Plus elle est large, plus les scénarios divergent.</div>';
   }
   html+='</div>';
+  /* détail modèle par modèle (trié, positionné, coloré par écart à la médiane) */
+  if(models&&models.length){
+    const med=(val!=null&&isFinite(val))?val:(models.reduce((a,b)=>a+b.val,0)/models.length);
+    const s=models.slice().sort((a,b)=>b.val-a.val);
+    const lo=Math.min.apply(null,s.map(m=>m.val)), hi=Math.max.apply(null,s.map(m=>m.val));
+    const span=(hi-lo)||1;
+    const medP=((med-lo)/span*100);
+    const label=isExt?'membres CFS':'modèles';
+    let rows2='';
+    s.forEach(m=>{
+      const pos=((m.val-lo)/span*100);
+      const dev=m.val-med;
+      const col=dev>=1.5?'#ff7040':(dev<=-1.5?'#5aa0ff':'#9fd0a0');
+      const nm=(typeof prettyModelName==='function'&&!isExt)?prettyModelName(m.name):m.name;
+      const devTxt=Math.abs(dev)<0.5?'<span class="dvm-dev dvm-dev0">±0</span>':'<span class="dvm-dev" style="color:'+col+'">'+(dev>=0?'+':'')+(Math.round(dev*10)/10).toFixed(1)+'</span>';
+      rows2+='<div class="dvm-row"><span class="dvm-nm">'+nm+'</span>'
+        +'<span class="dvm-track"><span class="dvm-med" style="left:'+medP.toFixed(1)+'%"></span><i style="left:'+pos.toFixed(1)+'%;background:'+col+'"></i></span>'
+        +'<span class="dvm-v" style="color:'+col+'">'+fmt(m.val)+'</span>'+devTxt+'</div>';
+    });
+    html+='<div class="dvm-grp"><div class="dvm-hd">🌡️ Détail des '+label+' <small>'+s.length+' · '+fmt(lo).replace(U,'')+'–'+fmt(hi)+' · méd '+fmt(med)+'</small></div>'+rows2+'</div>';
+    const nTot=(typeof _SYN_MODELS!=='undefined')?_SYN_MODELS.split(',').length:23;
+    const excl=(!isExt&&s.length<nTot)?(nTot-s.length):0;
+    html+='<div class="dvd-hint">◆ = médiane pondérée (= la valeur du jour) · point coloré = position du '+(isExt?'membre':'modèle')+' · écart signé vs médiane. Plus la dispersion est large, plus les scénarios divergent.'
+      +(excl>0?(' <br><b style="color:#c58a4a">'+excl+' modèle(s) régionaux écartés</b> ici : ils ne couvrent pas les 30 stations (≥24 requises pour une moyenne France fiable — AROME, HARMONIE, ICON-CH…). Seuls les modèles couvrant tout le pays comptent dans l\'indicateur national.'):'')
+      +'</div>';
+  }else if(isFut){
+    html+='<div class="dvd-hint">Détail par modèle indisponible pour ce jour.</div>';
+  }
+  /* ── Comparaison : épisodes de chaleur de la saison ── */
+  const eps=_indHeatEpisodes();
+  if(eps&&eps.length){
+    const moFR=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+    const fmtD=dk=>{const dt=dk?new Date(dk+'T12:00'):null;return (dt&&!isNaN(dt))?(dt.getDate()+' '+moFR[dt.getMonth()]):'?';};
+    let rows='';
+    eps.forEach((e,k)=>{
+      const wc=e.when==='à venir'?'#ffd400':(e.when==='en cours'?'#ff9d3c':'#cfe0f0');
+      const tag=e.canic?'<span style="color:#ff5040;font-weight:900">canicule</span>':'<span style="color:#c58a4a">vague</span>';
+      const cur=(idx!=null&&d.time&&d.time[idx]===e.date)?' ◀':'';
+      rows+='<div class="ep-row"><span class="ep-n" style="color:'+wc+'">'+(k+1)+'.</span>'
+        +'<span class="ep-d">'+fmtD(e.date)+'</span>'
+        +'<span class="ep-tag">'+tag+'</span>'
+        +'<span class="ep-v" style="color:'+wc+'">'+e.pk.toFixed(1)+'°'+cur+'</span></div>';
+    });
+    html+='<div class="dvm-grp" style="margin-top:14px"><div class="dvm-hd">🗓️ Épisodes de chaleur 2026 <small>pic de chaque vague ≥23,4°</small></div>'+rows
+      +'<div class="dvd-hint">Détectés sur la moyenne des 30 stations (épisodes proches fusionnés). « canicule » = pic ≥25,0° chez nous (≈ seuil MF 25,3° à ±0,3° près). Comparez l\'ampleur des épisodes.</div></div>';
+  }
   body.innerHTML=html;
   const pan=document.getElementById('divDetailPanel');
   if(pan){
@@ -3451,7 +3568,7 @@ async function openGraph(){
         }
       }catch(e){deltaT=[];deltaR=[];}
     }
-    const isMob=window.innerWidth<600;
+    const isMob=(typeof _isMob!=='undefined')?_isMob:(window.innerWidth<500);   /* seuil unifié appli */
     const vmax=tmax.filter(v=>v!=null),vmin=tmin.filter(v=>v!=null);
     const _lo=(vmin.length?Math.min.apply(null,vmin):0),_hi=(vmax.length?Math.max.apply(null,vmax):30);
     const yMin=Math.floor((_lo-3)/5)*5;
@@ -4493,7 +4610,7 @@ async function fetchNowcast(lat,lon){
     function(){
       const ctrl=new AbortController();
       setTimeout(function(){ctrl.abort();},6000);
-      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/3.4'}});
+      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/3.5'}});
     },
     function(){
       const ctrl=new AbortController();
@@ -7637,6 +7754,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
     </div>
     <div class="hl-sub">📊 Usage API Open-Meteo <small style="color:#7a8a99;font-weight:400">estimation locale · quotas gratuits</small></div>
     <div id="apiUseBox"></div>
+    <div id="cachePurgeBox"><button class="vf-act" onclick="purgeAllCaches(this)">🗑 Vider tous les caches (pp_*)</button> <small style="color:#7a8a99">force le rechargement des données — utile si l'affichage semble figé</small></div>
     <div class="hl-sub">🩺 Santé des données</div>
     <div id="healthBody"></div>
     <div class="hl-actions">
