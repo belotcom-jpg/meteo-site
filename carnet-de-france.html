@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carnet de France — mon tour de France noté</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,450;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+
+:root{
+  --parchment:#EDE6D6;
+  --card:#F7F3E9;
+  --card-2:#F1EADA;
+  --ink:#1F2A44;
+  --ink-70: rgba(31,42,68,.72);
+  --green:#3F6B44;
+  --green-deep:#2C4E30;
+  --green-tint:#E3EBE0;
+  --rust:#A8402A;
+  --gold:#B4872A;
+  --line:#c9c0ac;
+  --line-strong:#8B8479;
+  --radius:14px;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} *{animation-duration:.001ms !important; transition-duration:.001ms !important;} }
+
+body{
+  margin:0;
+  background:var(--parchment);
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(31,42,68,.055) 1px, transparent 0);
+  background-size:22px 22px;
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  line-height:1.5;
+}
+h1,h2,h3,.display{font-family:'Fraunces',serif; margin:0; letter-spacing:-.01em;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+a{color:inherit;}
+button{font-family:inherit;}
+:focus-visible{outline:2.5px solid var(--rust); outline-offset:2px;}
+
+.wrap{max-width:1080px; margin:0 auto; padding:0 20px;}
+
+.masthead{padding:38px 0 18px;}
+.eyebrow{
+  font-family:'IBM Plex Mono',monospace; font-size:12.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--green-deep); display:flex; align-items:center; gap:10px; margin-bottom:10px;
+}
+.eyebrow::before{content:''; width:26px; height:1px; background:var(--green-deep);}
+h1.title{font-size:clamp(34px,5vw,54px); font-weight:700; color:var(--ink);}
+.subtitle{max-width:560px; margin-top:10px; color:var(--ink-70); font-size:15.5px;}
+.steps-strip{display:flex; gap:0; flex-wrap:wrap; margin-top:18px; border:1px solid var(--line); border-radius:12px; background:var(--card); overflow:hidden;}
+.step{flex:1; min-width:190px; padding:12px 16px; display:flex; align-items:center; gap:10px; border-right:1px dashed var(--line);}
+.step:last-child{border-right:none;}
+.step .num{font-family:'Fraunces',serif; font-weight:600; font-size:19px; color:var(--green-deep); flex-shrink:0;}
+.step .txt{font-size:12.8px; color:var(--ink-70); line-height:1.35;}
+.step .txt strong{color:var(--ink); font-weight:600;}
+
+.stats-strip{display:flex; gap:12px; flex-wrap:wrap; margin:18px 0 4px;}
+.stat-card{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 18px; min-width:150px;}
+.stat-card .num{font-family:'Fraunces',serif; font-size:22px; font-weight:600; color:var(--green-deep); line-height:1.1;}
+.stat-card .lab{font-size:10.5px; color:var(--ink-70); text-transform:uppercase; letter-spacing:.06em; font-family:'IBM Plex Mono',monospace; margin-top:3px;}
+
+.toolbar-row{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:14px 0 0;}
+.ghost-btn{background:transparent; border:1px solid var(--line-strong); color:var(--ink); padding:7px 14px; border-radius:8px; font-size:12.5px; font-weight:600; cursor:pointer;}
+.ghost-btn:hover{background:var(--card-2);}
+input[type=file]{display:none;}
+
+nav.tabs{
+  position:sticky; top:0; z-index:30; background:linear-gradient(var(--parchment) 78%, transparent);
+  padding:14px 0 10px;
+}
+.tabs-inner{
+  display:flex; gap:4px; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:4px;
+  width:max-content; max-width:100%; overflow-x:auto;
+}
+.tab-btn{
+  border:none; background:transparent; color:var(--ink-70); padding:9px 18px; border-radius:999px;
+  font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap; transition:background .18s,color .18s;
+}
+.tab-btn.active{background:var(--ink); color:var(--card);}
+.tab-btn:hover:not(.active){background:var(--card-2);}
+
+section.panel{display:none; padding:26px 0 60px; animation:fade .35s ease;}
+section.panel.active{display:block;}
+@keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+.section-head{display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap;}
+.section-head h2{font-size:26px;}
+.count-pill{font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--green-deep); background:var(--green-tint); padding:4px 11px; border-radius:999px; border:1px solid rgba(63,107,68,.25);}
+
+.stamp{
+  --size:44px; width:var(--size); height:var(--size); border-radius:50%;
+  border:2px dashed var(--card); background:var(--green); color:var(--card);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  box-shadow:0 0 0 2px var(--green-deep);
+  font-family:'IBM Plex Mono',monospace; font-weight:600;
+}
+.stamp .n{font-size:14px; line-height:1;}
+.stamp .d{font-size:7px; opacity:.85; margin-top:1px;}
+.stamp.small{--size:30px;}
+.stamp.small .n{font-size:11px;}
+.stamp.gold{background:var(--gold); box-shadow:0 0 0 2px #8a6a1f;}
+.stamp.muted{background:#9aa39a; box-shadow:0 0 0 2px #7c847c;}
+
+.map-card{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  padding:18px; position:relative; overflow:hidden;
+}
+.map-caption{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px;}
+.map-caption .mono{font-size:11.5px; color:var(--ink-70);}
+#map-status{font-size:12px; color:var(--ink-70); font-style:italic;}
+.legend-row{display:flex; flex-wrap:wrap; gap:14px; margin-bottom:8px;}
+.legend{display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink-70);}
+.legend .dot{width:10px; height:10px; border-radius:50%; background:var(--green); display:inline-block;}
+.legend .sw{width:13px; height:13px; border-radius:3px; display:inline-block; border:1px solid var(--line);}
+svg#map-svg{width:100%; height:auto; display:block;}
+.region-path{stroke:var(--line); stroke-width:.6; transition:opacity .15s;}
+.region-path:hover{opacity:.82;}
+.city-dot{cursor:pointer;}
+.city-dot circle{fill:var(--green); stroke:var(--card); stroke-width:2;}
+.city-dot:hover circle{fill:var(--rust);}
+.city-dot text{font-family:'IBM Plex Mono',monospace; font-size:7.5px; fill:var(--card); font-weight:600; pointer-events:none;}
+.map-empty{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; padding:30px; color:var(--ink-70); font-size:14px; background:rgba(247,243,233,.85);}
+
+.form-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:26px; max-width:640px;}
+.edit-banner{background:var(--green-tint); border:1px solid rgba(63,107,68,.3); color:var(--green-deep); padding:10px 14px; border-radius:8px; font-size:13px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+.edit-banner button{background:none; border:none; color:var(--rust); font-weight:600; cursor:pointer; font-size:12.5px;}
+.field{margin-bottom:18px;}
+.field label{display:block; font-size:13.5px; font-weight:600; margin-bottom:6px;}
+.field input[type=text], .field textarea{
+  width:100%; padding:10px 12px; border:1px solid var(--line-strong); border-radius:8px; background:var(--parchment);
+  font-family:'Inter',sans-serif; font-size:14.5px; color:var(--ink);
+}
+.field textarea{min-height:70px; resize:vertical;}
+.criteria-grid{display:grid; gap:14px;}
+.crit-row{display:grid; grid-template-columns:170px 1fr 40px; align-items:center; gap:12px;}
+.crit-row label{margin:0; font-size:13.5px; font-weight:500;}
+.crit-row input[type=range]{width:100%; accent-color:var(--green);}
+.crit-row .val{font-family:'IBM Plex Mono',monospace; font-size:13px; text-align:right;}
+.avg-line{display:flex; align-items:center; gap:14px; margin:20px 0 6px; padding-top:16px; border-top:1px dashed var(--line-strong);}
+.avg-line .label{font-size:13.5px; color:var(--ink-70);}
+.submit-row{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+.submit-btn{
+  background:var(--ink); color:var(--card); border:none; padding:12px 22px; border-radius:8px;
+  font-weight:600; font-size:14.5px; cursor:pointer; margin-top:8px;
+}
+.submit-btn:disabled{opacity:.55; cursor:progress;}
+.submit-btn:hover:not(:disabled){background:var(--green-deep);}
+.form-note{font-size:12px; color:var(--ink-70); margin-top:10px;}
+.form-status{font-size:13px; margin-top:10px;}
+.form-status:empty{margin-top:0;}
+.confirm-card{background:var(--green-tint); border:1px solid rgba(63,107,68,.3); border-radius:10px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+.confirm-card span{font-size:13.5px; color:var(--green-deep); font-weight:600;}
+.confirm-card .links{display:flex; gap:8px; flex-wrap:wrap;}
+.confirm-card button{background:none; border:1px solid rgba(63,107,68,.4); color:var(--green-deep); border-radius:7px; padding:6px 12px; font-size:12.5px; font-weight:600; cursor:pointer;}
+.confirm-card button:hover{background:var(--green-deep); color:var(--card);}
+.warn-status{font-style:italic; color:var(--ink-70);}
+
+.mode-toggle{display:inline-flex; background:var(--parchment); border:1px solid var(--line-strong); border-radius:999px; padding:3px; margin-bottom:16px;}
+.mode-btn{border:none; background:transparent; padding:7px 16px; border-radius:999px; font-size:13px; font-weight:600; color:var(--ink-70); cursor:pointer;}
+.mode-btn.active{background:var(--ink); color:var(--card);}
+.quick-note-row{display:flex; align-items:center; gap:16px; margin-bottom:6px;}
+.quick-note-row input[type=range]{flex:1; accent-color:var(--green);}
+.quick-note-row .val{font-family:'IBM Plex Mono',monospace; font-size:15px; min-width:44px; text-align:right;}
+.mode-hint{font-size:12px; color:var(--ink-70); margin:-4px 0 18px;}
+
+.filter-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center;}
+.filter-row input[type=search], .filter-row select{
+  padding:8px 12px; border:1px solid var(--line-strong); border-radius:8px; background:var(--card); font-size:13.5px; font-family:'Inter',sans-serif; color:var(--ink);
+}
+.filter-row input[type=search]{flex:1; min-width:170px;}
+
+table.classement{width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;}
+table.classement th{
+  text-align:left; font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--ink-70); padding:10px 12px; border-bottom:1px solid var(--line); background:var(--card-2);
+}
+table.classement th.sortable{cursor:pointer; user-select:none; white-space:nowrap;}
+table.classement th.sortable:hover{color:var(--ink);}
+table.classement th.sort-active{color:var(--green-deep);}
+.sort-arrow{font-size:9px; margin-left:3px; display:inline-block;}
+table.classement td{padding:12px; border-bottom:1px solid var(--line); font-size:13.5px; vertical-align:middle;}
+table.classement tr:last-child td{border-bottom:none;}
+.crit-cell{font-family:'IBM Plex Mono',monospace; text-align:center; color:var(--ink-70);}
+.ville-cell{display:flex; align-items:center; gap:12px; font-weight:600;}
+.memo-badge{font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--ink-70); background:var(--card-2); border-radius:999px; padding:1px 6px; font-weight:500;}
+
+.podium{display:flex; gap:14px; align-items:flex-end; margin-bottom:22px; flex-wrap:wrap;}
+.podium-card{flex:1; min-width:160px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; text-align:center;}
+.podium-card.first{order:2; padding-top:24px; border-color:var(--gold); box-shadow:0 3px 0 var(--gold) inset;}
+.podium-card.second{order:1;}
+.podium-card.third{order:3;}
+.podium-card .stamp{margin:0 auto 10px;}
+.podium-card .pv-name{font-family:'Fraunces',serif; font-weight:600; font-size:15.5px;}
+.podium-card .pv-note{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-70); margin-top:2px;}
+.ville-thumb{width:38px; height:38px; border-radius:6px; object-fit:cover; background:var(--card-2); flex-shrink:0;}
+.row-actions{display:flex; gap:6px;}
+.del-btn, .edit-btn, .refresh-btn{border-radius:6px; padding:4px 9px; font-size:11.5px; cursor:pointer; background:none;}
+.del-btn{border:1px solid var(--line-strong); color:var(--rust);}
+.del-btn:hover{background:var(--rust); color:var(--card); border-color:var(--rust);}
+.edit-btn{border:1px solid var(--line-strong); color:var(--green-deep);}
+.edit-btn:hover{background:var(--green-deep); color:var(--card); border-color:var(--green-deep);}
+.refresh-btn{border:1px solid var(--line-strong); color:var(--ink-70);}
+.refresh-btn:hover{background:var(--ink); color:var(--card);}
+.refresh-btn:disabled{opacity:.55; cursor:progress;}
+
+.gallery{display:grid; grid-template-columns:repeat(auto-fill, minmax(300px,1fr)); gap:20px;}
+.city-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; display:flex; flex-direction:column;}
+.city-photo{height:170px; background:linear-gradient(135deg,var(--green-tint),var(--card-2)); position:relative; display:flex; align-items:center; justify-content:center;}
+.city-photo img{width:100%; height:100%; object-fit:cover;}
+.city-photo .initial{font-family:'Fraunces',serif; font-size:52px; color:var(--green-deep); opacity:.35;}
+.city-photo .stamp{position:absolute; bottom:-4px; right:12px;}
+.city-body{padding:16px 16px 18px; display:flex; flex-direction:column; gap:10px; flex:1;}
+.city-body h3{font-size:19px;}
+.city-meta{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-70);}
+.bars{display:grid; gap:5px; margin-top:2px;}
+.bar-row{display:grid; grid-template-columns:130px 1fr 22px; align-items:center; gap:8px; font-size:11.5px; color:var(--ink-70);}
+.bar-track{height:5px; background:var(--card-2); border-radius:3px; overflow:hidden;}
+.bar-fill{height:100%; background:var(--green);}
+.anecdote{font-size:13px; color:var(--ink); border-top:1px dashed var(--line-strong); padding-top:10px; margin-top:2px;}
+.anecdote .src{font-size:10.5px; color:var(--ink-70); font-style:italic; display:block; margin-top:4px;}
+.city-footer{display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:8px; flex-wrap:wrap; gap:8px;}
+
+.memo-block{border-top:1px dashed var(--line-strong); padding-top:10px; margin-top:2px;}
+.memo-block .memo-title{font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-70); font-family:'IBM Plex Mono',monospace; margin-bottom:7px;}
+.memo-list{display:grid; gap:6px; margin-bottom:8px;}
+.memo-item{display:flex; justify-content:space-between; align-items:flex-start; gap:8px; background:var(--card-2); border-radius:7px; padding:7px 10px;}
+.memo-item .txt{font-size:12.5px; color:var(--ink); flex:1; word-break:break-word;}
+.memo-item .memo-date{display:block; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ink-70); margin-top:3px;}
+.memo-item .memo-del{background:none; border:none; color:var(--rust); cursor:pointer; font-size:14px; line-height:1; padding:2px;}
+.memo-add-row{display:flex; gap:6px;}
+.memo-add-row input{flex:1; padding:7px 10px; border:1px solid var(--line-strong); border-radius:7px; background:var(--parchment); font-size:12.5px; font-family:'Inter',sans-serif; color:var(--ink);}
+.memo-add-row button{background:var(--ink); color:var(--card); border:none; border-radius:7px; padding:7px 13px; font-size:12px; font-weight:600; cursor:pointer;}
+.memo-add-row button:hover{background:var(--green-deep);}
+
+.empty-state{
+  border:1px dashed var(--line-strong); border-radius:var(--radius); padding:40px 24px; text-align:center; color:var(--ink-70);
+  background:var(--card);
+}
+.empty-state strong{display:block; color:var(--ink); font-family:'Fraunces',serif; font-size:19px; margin-bottom:6px; font-weight:600;}
+.cta-btn{background:var(--green-deep); color:var(--card); border:none; padding:10px 20px; border-radius:8px; font-weight:600; font-size:13.5px; cursor:pointer; margin-top:14px;}
+.cta-btn:hover{background:var(--ink);}
+
+.fab{
+  position:fixed; right:22px; bottom:22px; z-index:40;
+  width:56px; height:56px; border-radius:50%; border:2px dashed var(--card);
+  background:var(--rust); color:var(--card); box-shadow:0 4px 14px rgba(31,42,68,.28), 0 0 0 2px #7a2c1c;
+  font-family:'Fraunces',serif; font-size:28px; line-height:1; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.fab:hover{background:var(--green-deep); box-shadow:0 4px 14px rgba(31,42,68,.28), 0 0 0 2px var(--green-deep);}
+.fab-label{position:fixed; right:88px; bottom:38px; z-index:40; background:var(--ink); color:var(--card); font-size:12px; padding:6px 11px; border-radius:6px; opacity:0; pointer-events:none; transition:opacity .15s;}
+.fab:hover + .fab-label{opacity:1;}
+@media (max-width:640px){ .fab-label{display:none;} }
+
+.idea-list{display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(280px,1fr));}
+.idea-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px;}
+.idea-card h4{font-family:'Fraunces',serif; font-size:15.5px; font-weight:600; margin-bottom:6px;}
+.idea-card p{font-size:12.8px; color:var(--ink-70); margin:0;}
+
+footer{padding:30px 0 60px; text-align:center; font-size:12px; color:var(--ink-70);}
+
+@media (max-width:640px){
+  .crit-row{grid-template-columns:1fr; row-gap:4px;}
+  .crit-row .val{text-align:left;}
+  table.classement{display:block; overflow-x:auto;}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap masthead">
+  <div class="eyebrow">Carnet personnel · France</div>
+  <h1 class="title">Mon carnet de France</h1>
+  <p class="subtitle">Chaque ville ou village noté devient un tampon sur la carte. Beauté, calme, sécurité, nature, accessibilité sans voiture — cinq critères, une note sur 20, un souvenir qui reste.</p>
+
+  <div class="steps-strip">
+    <div class="step"><span class="num">1</span><span class="txt"><strong>Note</strong> une ville — 10&nbsp;secondes en mode rapide</span></div>
+    <div class="step"><span class="num">2</span><span class="txt">Elle devient un <strong>tampon sur la carte</strong></span></div>
+    <div class="step"><span class="num">3</span><span class="txt">Suis ton <strong>palmarès</strong> et ton carnet photo</span></div>
+  </div>
+
+  <div class="stats-strip" id="stats-strip"></div>
+  <div class="toolbar-row">
+    <button class="ghost-btn" id="export-btn">Exporter mes données (.json)</button>
+    <button class="ghost-btn" id="import-btn">Importer une sauvegarde</button>
+    <input type="file" id="import-file" accept="application/json">
+  </div>
+</div>
+
+<nav class="tabs"><div class="wrap"><div class="tabs-inner">
+  <button class="tab-btn active" data-tab="carte">Carte</button>
+  <button class="tab-btn" data-tab="ajouter">Ajouter une ville</button>
+  <button class="tab-btn" data-tab="palmares">Palmarès</button>
+  <button class="tab-btn" data-tab="carnet">Carnet photo</button>
+  <button class="tab-btn" data-tab="idees">Idées</button>
+</div></div></nav>
+
+<div class="wrap">
+
+  <section class="panel active" id="panel-carte">
+    <div class="section-head">
+      <h2>La carte</h2>
+      <span class="count-pill mono" id="carte-count">0 lieu noté</span>
+    </div>
+    <div class="map-card">
+      <div class="map-caption">
+        <span class="mono" id="map-status">Chargement du fond de carte (contours IGN/INSEE, dépôt open data france-geojson)…</span>
+      </div>
+      <div class="legend-row">
+        <span class="legend"><span class="dot"></span> ville ou village noté (plus le tampon est grand, plus la note est haute)</span>
+        <span class="legend">régions explorées :
+          <span class="sw" style="background:#F1EADA;"></span>0
+          <span class="sw" style="background:#C3DBBC;"></span>1-2
+          <span class="sw" style="background:#7CAE72;"></span>3-4
+          <span class="sw" style="background:#3F6B44;"></span>5+
+        </span>
+      </div>
+      <div style="position:relative;">
+        <svg id="map-svg" viewBox="0 0 520 560" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="map-empty" id="map-empty-msg" style="display:none;">
+          <div>
+            Aucun tampon pour l'instant.<br>Note une première ville pour la voir apparaître ici.<br>
+            <button type="button" class="cta-btn" id="map-cta-btn">Ajouter ma première ville</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-ajouter">
+    <div class="section-head"><h2 id="ajouter-title">Ajouter une ville ou un village</h2></div>
+    <div class="form-card">
+      <div class="edit-banner" id="edit-banner" style="display:none;">
+        <span>Modification de <strong id="edit-banner-name"></strong></span>
+        <button type="button" id="cancel-edit-btn">Annuler la modification</button>
+      </div>
+      <form id="ville-form">
+        <div class="field">
+          <label for="f-nom">Nom de la ville / du village</label>
+          <input type="text" id="f-nom" placeholder="ex. Rocamadour" required>
+        </div>
+
+        <div class="mode-toggle" role="group" aria-label="Mode de notation">
+          <button type="button" class="mode-btn active" id="mode-rapide-btn">Notation rapide</button>
+          <button type="button" class="mode-btn" id="mode-detail-btn">Notation détaillée (5 critères)</button>
+        </div>
+
+        <div id="quick-mode-block">
+          <div class="quick-note-row">
+            <input type="range" min="0" max="20" step="1" value="10" id="quick-note">
+            <span class="val mono" id="quick-note-val">10<span style="opacity:.6;">/20</span></span>
+          </div>
+          <p class="mode-hint">Une seule note, appliquée aux 5 critères. Tu pourras l'affiner plus tard depuis « Modifier ».</p>
+        </div>
+
+        <div class="criteria-grid" id="criteria-grid" style="display:none;"></div>
+
+        <div class="avg-line">
+          <span class="label">Moyenne provisoire</span>
+          <span class="stamp small gold" id="live-avg"><span class="n">10</span></span>
+        </div>
+
+        <div class="field" style="margin-top:6px;">
+          <label for="f-anecdote">Ton souvenir ou une anecdote (optionnel)</label>
+          <textarea id="f-anecdote" placeholder="Un détail à ne pas oublier : le marché du dimanche, la vue depuis le beffroi, ce restaurant..."></textarea>
+        </div>
+
+        <div class="submit-row">
+          <button type="submit" class="submit-btn" id="submit-btn">Ajouter au carnet</button>
+        </div>
+        <div class="form-status mono" id="form-status" aria-live="polite"></div>
+        <p class="form-note">La position est retrouvée automatiquement (OpenStreetMap) et une photo + un court descriptif sont récupérés sur Wikipédia quand ils existent. Rien n'est trouvé ? La ville est quand même enregistrée avec ton souvenir — tu pourras relancer la recherche plus tard depuis sa fiche.</p>
+      </form>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-palmares">
+    <div class="section-head">
+      <h2>Palmarès</h2>
+      <span class="count-pill mono" id="palmares-count">0 lieu noté</span>
+    </div>
+    <div class="filter-row">
+      <input type="search" id="palmares-search" placeholder="Rechercher une ville...">
+    </div>
+    <div id="palmares-content"></div>
+  </section>
+
+  <section class="panel" id="panel-carnet">
+    <div class="section-head">
+      <h2>Carnet photo</h2>
+      <span class="count-pill mono" id="carnet-count">0 lieu noté</span>
+    </div>
+    <div class="filter-row">
+      <input type="search" id="carnet-search" placeholder="Rechercher une ville...">
+      <select id="carnet-sort">
+        <option value="note">Trier par note</option>
+        <option value="date">Plus récent d'abord</option>
+        <option value="alpha">Alphabétique</option>
+      </select>
+    </div>
+    <div id="carnet-content"></div>
+  </section>
+
+  <section class="panel" id="panel-idees">
+    <div class="section-head"><h2>Idées pour aller plus loin</h2></div>
+    <div class="idea-list">
+      <div class="idea-card"><h4>Carte des régions à explorer</h4><p>Repérer en un coup d'œil les régions encore vides sur la carte, pour orienter le prochain week-end.</p></div>
+      <div class="idea-card"><h4>Notes par saison</h4><p>Ajouter une note "meilleure période" pour se souvenir quand y retourner.</p></div>
+      <div class="idea-card"><h4>Itinéraires</h4><p>Relier plusieurs villes notées pour dessiner un road-trip et l'exporter.</p></div>
+      <div class="idea-card"><h4>Partage</h4><p>Générer une page en lecture seule à partager avec des amis qui préparent un voyage.</p></div>
+      <div class="idea-card"><h4>Badges</h4><p>Débloquer des tampons spéciaux : "10 villages", "5 villes nature 18+/20", etc.</p></div>
+      <div class="idea-card"><h4>Météo du souvenir</h4><p>Enregistrer la météo du jour de la visite pour compléter l'anecdote.</p></div>
+    </div>
+  </section>
+
+</div>
+
+<button type="button" class="fab" id="fab-add-btn" aria-label="Ajouter une ville">+</button>
+<span class="fab-label">Ajouter une ville</span>
+
+<footer class="wrap">Fond de carte : contours des régions françaises (open data, IGN/INSEE via le dépôt <span class="mono">france-geojson</span>). Géocodage : OpenStreetMap Nominatim. Photos et descriptifs : Wikipédia.</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  const CRITERIA = [
+    {key:'beaute', label:'Beauté'},
+    {key:'calme', label:'Calme'},
+    {key:'securite', label:'Sécurité'},
+    {key:'nature', label:'Nature'},
+    {key:'accessibilite', label:'Accessibilité sans voiture'}
+  ];
+  const STORAGE_KEY = 'carnet-de-france-villes';
+  const GEOJSON_URL = 'https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/regions-version-simplifiee.geojson';
+  const REGION_TINTS = ['#F1EADA','#DCE9D8','#C3DBBC','#A0C495','#7CAE72','#3F6B44'];
+
+  let villes = [];
+  let projector = null;
+  let mapDataCache = null;
+  let regionPathCache = null;
+  let editingId = null;
+  let refreshingIds = new Set();
+  let carnetQuery = '';
+  let carnetSort = 'note';
+  let palmaresQuery = '';
+  let palmaresSortKey = 'moyenne';
+  let palmaresSortDir = 'desc';
+  let formMode = 'rapide';
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function round1(n){ return Math.round(n*10)/10; }
+  function computeMoyenne(notes){
+    const vals = CRITERIA.map(c => Number(notes[c.key]) || 0);
+    return round1(vals.reduce((a,b)=>a+b,0) / vals.length);
+  }
+  function initialLetter(nom){ return (nom||'?').trim().charAt(0).toUpperCase(); }
+  function normalize(s){
+    return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  }
+
+  async function loadVilles(){
+    try{
+      const res = await window.storage.get(STORAGE_KEY, false);
+      villes = res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){
+      villes = [];
+    }
+  }
+  async function saveVilles(){
+    try{
+      await window.storage.set(STORAGE_KEY, JSON.stringify(villes), false);
+    }catch(e){
+      console.error('Echec de sauvegarde', e);
+    }
+  }
+
+  async function geocodeVille(nom){
+    try{
+      const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=fr&addressdetails=1&q=' + encodeURIComponent(nom);
+      const r = await fetch(url, {headers:{'Accept':'application/json'}});
+      if(!r.ok) return null;
+      const data = await r.json();
+      if(data && data.length){
+        const best = data.find(d => d.class === 'place') || data[0];
+        const addr = best.address || {};
+        return {
+          lat: parseFloat(best.lat),
+          lon: parseFloat(best.lon),
+          region: addr.state || addr.region || null
+        };
+      }
+      return null;
+    }catch(e){ return null; }
+  }
+
+  async function wikiInfo(nom){
+    try{
+      const url = 'https://fr.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(nom);
+      const r = await fetch(url);
+      if(!r.ok) return null;
+      const data = await r.json();
+      if(!data.type || data.type !== 'disambiguation'){
+        return {
+          extract: data.extract || null,
+          photo: (data.thumbnail && data.thumbnail.source) ? data.thumbnail.source : (data.originalimage ? data.originalimage.source : null),
+          pageUrl: (data.content_urls && data.content_urls.desktop) ? data.content_urls.desktop.page : null
+        };
+      }
+      return null;
+    }catch(e){ return null; }
+  }
+
+  function buildProjector(bbox, w, h, padding){
+    const minLon=bbox[0], minLat=bbox[1], maxLon=bbox[2], maxLat=bbox[3];
+    const midLat = (minLat+maxLat)/2;
+    const k = Math.cos(midLat*Math.PI/180);
+    const spanX = (maxLon-minLon)*k;
+    const spanY = (maxLat-minLat);
+    const scale = Math.min((w-2*padding)/spanX, (h-2*padding)/spanY);
+    const offX = padding + (w-2*padding-spanX*scale)/2;
+    const offY = padding + (h-2*padding-spanY*scale)/2;
+    return function(lon,lat){
+      const x = offX + (lon-minLon)*k*scale;
+      const y = offY + (maxLat-lat)*scale;
+      return [x,y];
+    };
+  }
+
+  function ringToPath(ring, proj){
+    let d = '';
+    ring.forEach((pt,i) => {
+      const xy = proj(pt[0], pt[1]);
+      d += (i===0 ? 'M' : 'L') + xy[0].toFixed(1) + ',' + xy[1].toFixed(1) + ' ';
+    });
+    return d + 'Z ';
+  }
+
+  function featurePathD(feature, proj){
+    const geom = feature.geometry;
+    if(!geom) return '';
+    let d = '';
+    if(geom.type === 'Polygon'){
+      geom.coordinates.forEach(ring => d += ringToPath(ring, proj));
+    } else if(geom.type === 'MultiPolygon'){
+      geom.coordinates.forEach(poly => poly.forEach(ring => d += ringToPath(ring, proj)));
+    }
+    return d.trim();
+  }
+
+  function computeBbox(features){
+    let minLon=Infinity, minLat=Infinity, maxLon=-Infinity, maxLat=-Infinity;
+    function walkRing(ring){
+      ring.forEach(pt => {
+        if(pt[0]<minLon) minLon=pt[0];
+        if(pt[0]>maxLon) maxLon=pt[0];
+        if(pt[1]<minLat) minLat=pt[1];
+        if(pt[1]>maxLat) maxLat=pt[1];
+      });
+    }
+    features.forEach(f => {
+      const geom = f.geometry;
+      if(!geom) return;
+      if(geom.type === 'Polygon') geom.coordinates.forEach(walkRing);
+      else if(geom.type === 'MultiPolygon') geom.coordinates.forEach(poly => poly.forEach(walkRing));
+    });
+    return [minLon,minLat,maxLon,maxLat];
+  }
+
+  const FALLBACK_GEOJSON = {
+    type:'FeatureCollection',
+    features:[{
+      type:'Feature', properties:{nom:null},
+      geometry:{type:'Polygon', coordinates:[[
+        [2.55,51.09],[3.3,50.8],[4.2,50.3],[6.0,49.45],[8.23,48.96],[7.59,47.59],
+        [6.85,46.0],[7.0,45.0],[7.55,44.15],[7.0,43.7],[6.5,43.1],[4.9,43.2],
+        [3.1,42.9],[1.8,42.5],[0.7,42.7],[-1.5,43.3],[-1.8,44.0],[-1.2,46.0],
+        [-2.0,47.0],[-4.5,47.9],[-4.3,48.4],[-2.9,48.6],[-1.9,49.7],[-1.6,49.4],
+        [0.15,49.7],[1.5,50.0],[2.55,51.09]
+      ]]}
+    }]
+  };
+
+  async function loadMapData(){
+    const statusEl = document.getElementById('map-status');
+    try{
+      const r = await fetch(GEOJSON_URL);
+      if(!r.ok) throw new Error('reseau');
+      const gj = await r.json();
+      statusEl.textContent = 'Fond de carte : regions de France (open data, IGN/INSEE - depot france-geojson).';
+      return gj;
+    }catch(e){
+      statusEl.textContent = "Fond de carte hors-ligne : trace simplifie (le fond detaille n'a pas pu etre charge).";
+      return FALLBACK_GEOJSON;
+    }
+  }
+
+  function regionCounts(){
+    const counts = {};
+    villes.forEach(v => {
+      if(v.region){
+        const key = normalize(v.region);
+        counts[key] = (counts[key]||0) + 1;
+      }
+    });
+    return counts;
+  }
+
+  function tintForCount(count){
+    if(count<=0) return REGION_TINTS[0];
+    if(count<=2) return REGION_TINTS[2];
+    if(count<=4) return REGION_TINTS[3];
+    return REGION_TINTS[5];
+  }
+
+  function renderMap(){
+    const svg = document.getElementById('map-svg');
+    const emptyMsg = document.getElementById('map-empty-msg');
+    if(!mapDataCache) return;
+
+    if(!regionPathCache){
+      const W = 520, H = 560, PAD = 14;
+      const bbox = computeBbox(mapDataCache.features);
+      projector = buildProjector(bbox, W, H, PAD);
+      regionPathCache = mapDataCache.features.map(f => ({
+        nom: f.properties && f.properties.nom,
+        d: featurePathD(f, projector)
+      })).filter(rp => rp.d);
+    }
+
+    const counts = regionCounts();
+    const isFallback = mapDataCache.features.length === 1 && !mapDataCache.features[0].properties.nom;
+    const totalCount = villes.filter(function(v){return v.lat!=null;}).length;
+
+    let svgContent = '';
+    regionPathCache.forEach(rp => {
+      let fill, label;
+      if(isFallback){
+        fill = tintForCount(totalCount);
+        label = 'France';
+      } else {
+        const key = normalize(rp.nom);
+        const n = counts[key] || 0;
+        fill = tintForCount(n);
+        label = (rp.nom || 'Region') + ' - ' + n + (n>1 ? ' lieux notes' : ' lieu note');
+      }
+      svgContent += '<path class="region-path" style="fill:' + fill + '" d="' + rp.d + '"><title>' + escapeHtml(label) + '</title></path>';
+    });
+
+    const placeables = villes.filter(v => v.lat != null && v.lon != null);
+    placeables.forEach(v => {
+      const xy = projector(v.lon, v.lat);
+      const x = xy[0], y = xy[1];
+      const r = 6 + (v.moyenne/20)*7;
+      svgContent += '<g class="city-dot" data-id="' + v.id + '" tabindex="0" role="button" aria-label="' +
+        escapeHtml(v.nom) + ', note ' + v.moyenne + ' sur 20">' +
+        '<title>' + escapeHtml(v.nom) + ' - ' + v.moyenne + '/20</title>' +
+        '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + r.toFixed(1) + '"></circle>' +
+        '<text x="' + x.toFixed(1) + '" y="' + (y+2.4).toFixed(1) + '" text-anchor="middle">' + Math.round(v.moyenne) + '</text>' +
+        '</g>';
+    });
+
+    svg.innerHTML = svgContent;
+    emptyMsg.style.display = placeables.length === 0 ? 'flex' : 'none';
+
+    svg.querySelectorAll('.city-dot').forEach(el => {
+      el.addEventListener('click', () => {
+        activateTab('carnet');
+        setTimeout(() => {
+          const card = document.querySelector('.city-card[data-id="' + el.dataset.id + '"]');
+          if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
+        }, 80);
+      });
+    });
+  }
+
+  function buildCriteriaInputs(){
+    const grid = document.getElementById('criteria-grid');
+    grid.innerHTML = CRITERIA.map(c => (
+      '<div class="crit-row">' +
+        '<label for="crit-' + c.key + '">' + c.label + '</label>' +
+        '<input type="range" min="0" max="20" step="1" value="10" id="crit-' + c.key + '" data-key="' + c.key + '">' +
+        '<span class="val mono" id="val-' + c.key + '">10</span>' +
+      '</div>'
+    )).join('');
+
+    grid.querySelectorAll('input[type=range]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        document.getElementById('val-' + inp.dataset.key).textContent = inp.value;
+        updateLiveAverage();
+      });
+    });
+  }
+
+  function currentNotes(){
+    const notes = {};
+    CRITERIA.forEach(c => { notes[c.key] = Number(document.getElementById('crit-' + c.key).value); });
+    return notes;
+  }
+
+  function updateLiveAverage(){
+    const avg = computeMoyenne(currentNotes());
+    document.getElementById('live-avg').querySelector('.n').textContent = avg;
+  }
+
+  function setFormNotes(notes){
+    CRITERIA.forEach(c => {
+      document.getElementById('crit-' + c.key).value = notes[c.key];
+      document.getElementById('val-' + c.key).textContent = notes[c.key];
+    });
+    updateLiveAverage();
+  }
+
+  function applyQuickNote(val){
+    document.getElementById('quick-note').value = val;
+    document.getElementById('quick-note-val').firstChild.textContent = val;
+    setFormNotes({beaute:val, calme:val, securite:val, nature:val, accessibilite:val});
+  }
+
+  function setMode(mode){
+    formMode = mode;
+    document.getElementById('mode-rapide-btn').classList.toggle('active', mode === 'rapide');
+    document.getElementById('mode-detail-btn').classList.toggle('active', mode === 'detail');
+    document.getElementById('quick-mode-block').style.display = mode === 'rapide' ? 'block' : 'none';
+    document.getElementById('criteria-grid').style.display = mode === 'detail' ? 'grid' : 'none';
+    if(mode === 'rapide'){
+      const avg = Math.round(computeMoyenne(currentNotes()));
+      applyQuickNote(avg);
+    }
+  }
+
+  function resetForm(){
+    document.getElementById('f-nom').value = '';
+    document.getElementById('f-anecdote').value = '';
+    setFormNotes({beaute:10,calme:10,securite:10,nature:10,accessibilite:10});
+    applyQuickNote(10);
+    setMode('rapide');
+  }
+
+  function startEdit(id){
+    const v = villes.find(x => x.id === id);
+    if(!v) return;
+    editingId = id;
+    document.getElementById('f-nom').value = v.nom;
+    document.getElementById('f-anecdote').value = v.anecdotePerso || '';
+    setFormNotes(v.notes);
+    setMode('detail');
+    document.getElementById('edit-banner').style.display = 'flex';
+    document.getElementById('edit-banner-name').textContent = v.nom;
+    document.getElementById('submit-btn').textContent = 'Enregistrer les modifications';
+    document.getElementById('ajouter-title').textContent = 'Modifier une note';
+    activateTab('ajouter');
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  function cancelEdit(){
+    editingId = null;
+    resetForm();
+    document.getElementById('edit-banner').style.display = 'none';
+    document.getElementById('submit-btn').textContent = 'Ajouter au carnet';
+    document.getElementById('ajouter-title').textContent = 'Ajouter une ville ou un village';
+  }
+
+  function cancelEditByUser(){
+    cancelEdit();
+    document.getElementById('form-status').textContent = '';
+  }
+
+  async function handleSubmit(e){
+    e.preventDefault();
+    const nomInput = document.getElementById('f-nom');
+    const nom = nomInput.value.trim();
+    if(!nom) return;
+    const notes = currentNotes();
+    const anecdotePerso = document.getElementById('f-anecdote').value.trim();
+    const btn = document.getElementById('submit-btn');
+    const status = document.getElementById('form-status');
+
+    if(!editingId){
+      const dup = villes.find(v => normalize(v.nom) === normalize(nom));
+      if(dup){
+        const goEdit = confirm(nom + ' est deja dans ton carnet (note actuelle : ' + dup.moyenne + '/20).\n\nOK pour modifier cette fiche existante.\nAnnuler pour ne rien faire (renomme legerement si c\u2019est vraiment un autre lieu).');
+        if(goEdit){ startEdit(dup.id); } else { status.textContent = ''; }
+        return;
+      }
+    }
+
+    btn.disabled = true;
+
+    if(editingId){
+      const idx = villes.findIndex(v => v.id === editingId);
+      if(idx === -1){ cancelEdit(); btn.disabled = false; return; }
+      const existing = villes[idx];
+      const nameChanged = normalize(nom) !== normalize(existing.nom);
+      let geo = {lat:existing.lat, lon:existing.lon, region:existing.region};
+      let wiki = {photo:existing.photo, extract:existing.anecdoteWiki, pageUrl:existing.wikiUrl};
+      if(nameChanged){
+        status.textContent = 'Nouveau nom : recherche de la position et des infos...';
+        const res = await Promise.all([geocodeVille(nom), wikiInfo(nom)]);
+        geo = res[0] || {lat:null, lon:null, region:null};
+        wiki = res[1] || {photo:null, extract:null, pageUrl:null};
+      }
+      villes[idx] = Object.assign({}, existing, {
+        nom: nom,
+        notes: notes,
+        moyenne: computeMoyenne(notes),
+        anecdotePerso: anecdotePerso || null,
+        lat: geo.lat, lon: geo.lon, region: geo.region,
+        photo: wiki.photo, anecdoteWiki: wiki.extract, wikiUrl: wiki.pageUrl
+      });
+      await saveVilles();
+      cancelEdit();
+      status.innerHTML = '<div class="confirm-card"><span>' + escapeHtml(nom) + ' mise a jour ✓</span>' +
+        '<div class="links"><button type="button" id="status-see-carnet">Voir dans le carnet</button></div></div>';
+      document.getElementById('status-see-carnet').addEventListener('click', () => activateTab('carnet'));
+    } else {
+      status.textContent = 'Recherche de la position et des infos...';
+      const res = await Promise.all([geocodeVille(nom), wikiInfo(nom)]);
+      const geo = res[0], wiki = res[1];
+      const ville = {
+        id: 'v' + Date.now(),
+        nom: nom,
+        notes: notes,
+        moyenne: computeMoyenne(notes),
+        lat: geo ? geo.lat : null,
+        lon: geo ? geo.lon : null,
+        region: geo ? geo.region : null,
+        photo: wiki ? wiki.photo : null,
+        anecdoteWiki: wiki ? wiki.extract : null,
+        wikiUrl: wiki ? wiki.pageUrl : null,
+        anecdotePerso: anecdotePerso || null,
+        memos: [],
+        dateAjout: new Date().toISOString()
+      };
+      villes.push(ville);
+      await saveVilles();
+      let warn = '';
+      if(!geo) warn += " Position introuvable pour l'instant : la ville n'apparaitra pas sur la carte, mais tu pourras reessayer depuis sa fiche.";
+      if(!wiki) warn += ' Aucune fiche Wikipedia trouvee.';
+      status.innerHTML = '<div class="confirm-card"><span>' + escapeHtml(nom) + ' ajoutee au carnet ✓</span>' +
+        '<div class="links"><button type="button" id="status-see-carnet">Voir dans le carnet</button><button type="button" id="status-see-map">Voir sur la carte</button></div></div>' +
+        (warn ? '<p class="warn-status">' + escapeHtml(warn.trim()) + '</p>' : '');
+      document.getElementById('status-see-carnet').addEventListener('click', () => activateTab('carnet'));
+      document.getElementById('status-see-map').addEventListener('click', () => activateTab('carte'));
+      resetForm();
+    }
+
+    btn.disabled = false;
+    renderAll();
+  }
+
+  async function refreshVille(id){
+    const v = villes.find(x => x.id === id);
+    if(!v) return;
+    refreshingIds.add(id);
+    renderCarnet();
+    const res = await Promise.all([geocodeVille(v.nom), wikiInfo(v.nom)]);
+    const geo = res[0], wiki = res[1];
+    if(geo){ v.lat = geo.lat; v.lon = geo.lon; v.region = geo.region; }
+    if(wiki){ v.photo = wiki.photo; v.anecdoteWiki = wiki.extract; v.wikiUrl = wiki.pageUrl; }
+    await saveVilles();
+    refreshingIds.delete(id);
+    renderAll();
+  }
+
+  async function addMemo(id, texte){
+    const v = villes.find(x => x.id === id);
+    if(!v || !texte.trim()) return;
+    if(!v.memos) v.memos = [];
+    v.memos.push({id: 'm' + Date.now(), texte: texte.trim(), date: new Date().toISOString()});
+    await saveVilles();
+    renderCarnet();
+    renderPalmares();
+    const input = document.querySelector('.memo-input[data-ville="' + id + '"]');
+    if(input) input.focus();
+  }
+
+  async function deleteMemo(villeId, memoId){
+    const v = villes.find(x => x.id === villeId);
+    if(!v || !v.memos) return;
+    v.memos = v.memos.filter(m => m.id !== memoId);
+    await saveVilles();
+    renderCarnet();
+    renderPalmares();
+  }
+
+  function computeStats(){
+    const n = villes.length;
+    if(n === 0) return null;
+    const moyGen = round1(villes.reduce((a,v)=>a+v.moyenne,0)/n);
+    const avgs = CRITERIA.map(c => ({label:c.label, avg: round1(villes.reduce((a,v)=>a+v.notes[c.key],0)/n)}));
+    avgs.sort((a,b)=>b.avg-a.avg);
+    const regionCountsMap = {};
+    villes.forEach(v => { if(v.region) regionCountsMap[v.region] = (regionCountsMap[v.region]||0)+1; });
+    const regionArr = Object.entries(regionCountsMap).sort((a,b)=>b[1]-a[1]);
+    return {
+      n: n, moyGen: moyGen,
+      bestCrit: avgs[0],
+      topRegion: regionArr.length ? regionArr[0] : null
+    };
+  }
+
+  function renderStats(){
+    const el = document.getElementById('stats-strip');
+    const s = computeStats();
+    if(!s){ el.innerHTML = ''; return; }
+    el.innerHTML =
+      '<div class="stat-card"><div class="num">' + s.n + '</div><div class="lab">lieux notes</div></div>' +
+      '<div class="stat-card"><div class="num">' + s.moyGen + '/20</div><div class="lab">moyenne generale</div></div>' +
+      '<div class="stat-card"><div class="num">' + s.bestCrit.avg + '/20</div><div class="lab">meilleur critere - ' + escapeHtml(s.bestCrit.label) + '</div></div>' +
+      '<div class="stat-card"><div class="num">' + (s.topRegion ? s.topRegion[1] : '-') + '</div><div class="lab">' + (s.topRegion ? escapeHtml(s.topRegion[0]) : 'region dominante') + '</div></div>';
+  }
+
+  const SORT_LABELS = {nom:'Ville', moyenne:'Moyenne'};
+  CRITERIA.forEach(c => { SORT_LABELS[c.key] = c.label; });
+
+  function sortVal(v, key){
+    if(key === 'nom') return v.nom;
+    if(key === 'moyenne') return v.moyenne;
+    return v.notes[key];
+  }
+
+  function setPalmaresSort(key){
+    if(palmaresSortKey === key){
+      palmaresSortDir = palmaresSortDir === 'desc' ? 'asc' : 'desc';
+    } else {
+      palmaresSortKey = key;
+      palmaresSortDir = key === 'nom' ? 'asc' : 'desc';
+    }
+    renderPalmares();
+  }
+
+  function renderPalmares(){
+    const el = document.getElementById('palmares-content');
+    if(villes.length === 0){
+      el.innerHTML = '<div class="empty-state"><strong>Le palmares est vide.</strong>Note une ville ou un village pour lancer ton classement.<br><button type="button" class="cta-btn" id="palmares-cta-btn">Ajouter une ville</button></div>';
+      document.getElementById('palmares-cta-btn').addEventListener('click', goToAddForm);
+      return;
+    }
+
+    const byMoyenne = [...villes].sort((a,b) => b.moyenne - a.moyenne);
+    const rankOf = {};
+    byMoyenne.forEach((v,i) => { rankOf[v.id] = i+1; });
+
+    const q = normalize(palmaresQuery);
+    const filtered = villes.filter(v => !q || normalize(v.nom).includes(q));
+
+    if(filtered.length === 0){
+      el.innerHTML = '<div class="empty-state"><strong>Aucun resultat.</strong>Essaie un autre nom de ville.</div>';
+      return;
+    }
+
+    // podium (toujours base sur la moyenne, independant du tri du tableau)
+    let podiumHtml = '';
+    if(!q){
+      const top3 = byMoyenne.slice(0, Math.min(3, byMoyenne.length));
+      podiumHtml = '<div class="podium">' + top3.map((v,i) => {
+        const posClass = i===0 ? 'first' : (i===1 ? 'second' : 'third');
+        const stampCls = i===0 ? 'gold' : (i===1 ? '' : 'muted');
+        return '<div class="podium-card ' + posClass + '">' +
+          '<span class="stamp ' + stampCls + '"><span class="n">' + (i+1) + '</span></span>' +
+          '<div class="pv-name">' + escapeHtml(v.nom) + '</div>' +
+          '<div class="pv-note">' + v.moyenne + '/20</div>' +
+        '</div>';
+      }).join('') + '</div>';
+    }
+
+    const sorted = [...filtered].sort((a,b) => {
+      const av = sortVal(a, palmaresSortKey), bv = sortVal(b, palmaresSortKey);
+      let cmp = typeof av === 'string' ? av.localeCompare(bv, 'fr') : av - bv;
+      return palmaresSortDir === 'asc' ? cmp : -cmp;
+    });
+
+    function arrow(key){
+      if(palmaresSortKey !== key) return '';
+      return '<span class="sort-arrow">' + (palmaresSortDir === 'desc' ? '\u25BC' : '\u25B2') + '</span>';
+    }
+    function th(key, label){
+      return '<th class="sortable' + (palmaresSortKey===key?' sort-active':'') + '" data-sortkey="' + key + '">' + escapeHtml(label) + arrow(key) + '</th>';
+    }
+
+    let rows = sorted.map(function(v){
+      const rank = rankOf[v.id];
+      const stampClass = rank===1 ? 'gold' : (rank<=3 ? '' : 'muted');
+      const memoCount = (v.memos || []).length;
+      return '<tr>' +
+        '<td><span class="stamp small ' + stampClass + '"><span class="n">' + rank + '</span></span></td>' +
+        '<td class="ville-cell">' +
+          (v.photo ? '<img class="ville-thumb" src="' + v.photo + '" alt="" loading="lazy" decoding="async">' : '<span class="ville-thumb" style="display:flex;align-items:center;justify-content:center;font-family:Fraunces,serif;color:var(--green-deep);">' + escapeHtml(initialLetter(v.nom)) + '</span>') +
+          '<span>' + escapeHtml(v.nom) + (memoCount ? ' <span class="memo-badge">' + memoCount + ' note' + (memoCount>1?'s':'') + '</span>' : '') + '</span>' +
+        '</td>' +
+        CRITERIA.map(c => '<td class="crit-cell">' + v.notes[c.key] + '</td>').join('') +
+        '<td class="crit-cell" style="font-weight:700; color:var(--ink);">' + v.moyenne + '</td>' +
+        '<td><div class="row-actions"><button class="edit-btn" data-id="' + v.id + '">Modifier</button><button class="del-btn" data-id="' + v.id + '">Retirer</button></div></td>' +
+      '</tr>';
+    }).join('');
+
+    el.innerHTML = podiumHtml + '<table class="classement"><thead><tr>' +
+      '<th>Rang</th>' + th('nom','Ville') + CRITERIA.map(c => th(c.key, c.label)).join('') + th('moyenne','Moyenne') + '<th></th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table>';
+
+    el.querySelectorAll('.del-btn').forEach(b => b.addEventListener('click', () => removeVille(b.dataset.id)));
+    el.querySelectorAll('.edit-btn').forEach(b => b.addEventListener('click', () => startEdit(b.dataset.id)));
+    el.querySelectorAll('th.sortable').forEach(b => b.addEventListener('click', () => setPalmaresSort(b.dataset.sortkey)));
+  }
+
+  function renderCarnet(){
+    const el = document.getElementById('carnet-content');
+    if(villes.length === 0){
+      el.innerHTML = '<div class="empty-state"><strong>Le carnet est encore blanc.</strong>Chaque ville notee devient ici une page avec sa photo et son anecdote.<br><button type="button" class="cta-btn" id="carnet-cta-btn">Ajouter une ville</button></div>';
+      document.getElementById('carnet-cta-btn').addEventListener('click', goToAddForm);
+      return;
+    }
+    const q = normalize(carnetQuery);
+    let list = villes.filter(v => !q || normalize(v.nom).includes(q));
+    if(carnetSort === 'note') list = [...list].sort((a,b) => b.moyenne - a.moyenne);
+    else if(carnetSort === 'date') list = [...list].sort((a,b) => new Date(b.dateAjout) - new Date(a.dateAjout));
+    else if(carnetSort === 'alpha') list = [...list].sort((a,b) => a.nom.localeCompare(b.nom, 'fr'));
+
+    if(list.length === 0){
+      el.innerHTML = '<div class="empty-state"><strong>Aucun resultat.</strong>Essaie un autre nom de ville.</div>';
+      return;
+    }
+
+    el.innerHTML = '<div class="gallery">' + list.map(v => {
+      const dateStr = new Date(v.dateAjout).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
+      const bars = CRITERIA.map(c => (
+        '<div class="bar-row"><span>' + c.label + '</span>' +
+        '<span class="bar-track"><span class="bar-fill" style="width:' + (v.notes[c.key]/20*100) + '%"></span></span>' +
+        '<span class="mono">' + v.notes[c.key] + '</span></div>'
+      )).join('');
+      let anecdoteHtml = '';
+      if(v.anecdotePerso) anecdoteHtml += '<p class="anecdote">' + escapeHtml(v.anecdotePerso) + '</p>';
+      if(v.anecdoteWiki) anecdoteHtml += '<p class="anecdote">' + escapeHtml(v.anecdoteWiki.slice(0,320)) + (v.anecdoteWiki.length>320?'...':'') +
+        (v.wikiUrl ? '<span class="src">Source : <a href="' + v.wikiUrl + '" target="_blank" rel="noopener">Wikipedia</a></span>' : '<span class="src">Source : Wikipedia</span>') + '</p>';
+      if(!anecdoteHtml) anecdoteHtml = '<p class="anecdote" style="color:var(--ink-70); font-style:italic;">Pas encore d\u2019anecdote pour ce lieu.</p>';
+
+      const memos = v.memos || [];
+      const memoItemsHtml = memos.map(m => {
+        const mDate = new Date(m.date).toLocaleDateString('fr-FR', {day:'numeric', month:'short', year:'numeric'});
+        return '<div class="memo-item"><span class="txt">' + escapeHtml(m.texte) + '<span class="memo-date">' + mDate + '</span></span>' +
+          '<button type="button" class="memo-del" data-ville="' + v.id + '" data-memo="' + m.id + '" aria-label="Supprimer cette note">\u00D7</button></div>';
+      }).join('');
+      const memoHtml = '<div class="memo-block">' +
+        '<div class="memo-title">Petites notes' + (memos.length ? ' (' + memos.length + ')' : '') + '</div>' +
+        '<div class="memo-list">' + memoItemsHtml + '</div>' +
+        '<div class="memo-add-row"><input type="text" placeholder="Ajouter une petite note..." data-ville="' + v.id + '" class="memo-input"><button type="button" class="memo-add" data-ville="' + v.id + '">Ajouter</button></div>' +
+      '</div>';
+
+      const isRefreshing = refreshingIds.has(v.id);
+      const needsRefresh = v.lat == null || (!v.photo && !v.anecdoteWiki);
+
+      return '<article class="city-card" data-id="' + v.id + '">' +
+        '<div class="city-photo">' +
+          (v.photo ? '<img src="' + v.photo + '" alt="' + escapeHtml(v.nom) + '" loading="lazy" decoding="async">' : '<span class="initial">' + escapeHtml(initialLetter(v.nom)) + '</span>') +
+          '<span class="stamp"><span class="n">' + v.moyenne + '</span><span class="d">/20</span></span>' +
+        '</div>' +
+        '<div class="city-body">' +
+          '<h3>' + escapeHtml(v.nom) + '</h3>' +
+          '<span class="city-meta">Note le ' + dateStr + (v.lat==null ? ' - position non localisee' : '') + '</span>' +
+          '<div class="bars">' + bars + '</div>' +
+          anecdoteHtml +
+          memoHtml +
+          '<div class="city-footer">' +
+            '<div class="row-actions">' +
+              '<button class="edit-btn" data-id="' + v.id + '">Modifier</button>' +
+              '<button class="del-btn" data-id="' + v.id + '">Retirer</button>' +
+            '</div>' +
+            (needsRefresh ? '<button class="refresh-btn" data-id="' + v.id + '" ' + (isRefreshing?'disabled':'') + '>' + (isRefreshing ? 'Recherche...' : 'Relocaliser / rafraichir') + '</button>' : '') +
+          '</div>' +
+        '</div>' +
+      '</article>';
+    }).join('') + '</div>';
+
+    el.querySelectorAll('.del-btn').forEach(b => b.addEventListener('click', () => removeVille(b.dataset.id)));
+    el.querySelectorAll('.edit-btn').forEach(b => b.addEventListener('click', () => startEdit(b.dataset.id)));
+    el.querySelectorAll('.refresh-btn').forEach(b => b.addEventListener('click', () => refreshVille(b.dataset.id)));
+    el.querySelectorAll('.memo-del').forEach(b => b.addEventListener('click', () => deleteMemo(b.dataset.ville, b.dataset.memo)));
+    el.querySelectorAll('.memo-add').forEach(b => {
+      const submitMemo = () => {
+        const input = el.querySelector('.memo-input[data-ville="' + b.dataset.ville + '"]');
+        if(input && input.value.trim()){ addMemo(b.dataset.ville, input.value); }
+      };
+      b.addEventListener('click', submitMemo);
+    });
+    el.querySelectorAll('.memo-input').forEach(inp => {
+      inp.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter'){
+          e.preventDefault();
+          if(inp.value.trim()) addMemo(inp.dataset.ville, inp.value);
+        }
+      });
+    });
+  }
+
+  async function removeVille(id){
+    if(editingId === id) cancelEdit();
+    villes = villes.filter(v => v.id !== id);
+    await saveVilles();
+    renderAll();
+  }
+
+  function updateCounts(){
+    const n = villes.length;
+    const label = n + (n===1 ? ' lieu note' : ' lieux notes');
+    document.getElementById('carte-count').textContent = label;
+    document.getElementById('palmares-count').textContent = label;
+    document.getElementById('carnet-count').textContent = label;
+  }
+
+  function renderAll(){
+    renderMap();
+    renderPalmares();
+    renderCarnet();
+    renderStats();
+    updateCounts();
+  }
+
+  function exportData(){
+    const blob = new Blob([JSON.stringify(villes, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'carnet-de-france.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function importData(file){
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try{
+        const parsed = JSON.parse(reader.result);
+        if(!Array.isArray(parsed)) throw new Error('format invalide');
+        const ok = confirm('Remplacer ton carnet actuel (' + villes.length + ' lieux) par cette sauvegarde (' + parsed.length + ' lieux) ?');
+        if(!ok) return;
+        villes = parsed;
+        await saveVilles();
+        cancelEdit();
+        renderAll();
+      }catch(e){
+        alert("Ce fichier n'a pas pu etre lu comme une sauvegarde du carnet.");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function activateTab(name){
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    document.querySelectorAll('section.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
+  }
+  document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => activateTab(b.dataset.tab)));
+
+  function goToAddForm(){
+    activateTab('ajouter');
+    setTimeout(() => {
+      const el = document.getElementById('f-nom');
+      if(el) el.focus();
+    }, 60);
+  }
+
+  async function init(){
+    buildCriteriaInputs();
+    updateLiveAverage();
+    document.getElementById('ville-form').addEventListener('submit', handleSubmit);
+    document.getElementById('cancel-edit-btn').addEventListener('click', cancelEditByUser);
+
+    document.getElementById('mode-rapide-btn').addEventListener('click', () => setMode('rapide'));
+    document.getElementById('mode-detail-btn').addEventListener('click', () => setMode('detail'));
+    document.getElementById('quick-note').addEventListener('input', (e) => applyQuickNote(Number(e.target.value)));
+
+    document.getElementById('fab-add-btn').addEventListener('click', goToAddForm);
+    document.getElementById('map-cta-btn').addEventListener('click', goToAddForm);
+
+    document.getElementById('export-btn').addEventListener('click', exportData);
+    document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file').click());
+    document.getElementById('import-file').addEventListener('change', (e) => {
+      if(e.target.files && e.target.files[0]) importData(e.target.files[0]);
+      e.target.value = '';
+    });
+
+    document.getElementById('carnet-search').addEventListener('input', (e) => { carnetQuery = e.target.value; renderCarnet(); });
+    document.getElementById('carnet-sort').addEventListener('change', (e) => { carnetSort = e.target.value; renderCarnet(); });
+    document.getElementById('palmares-search').addEventListener('input', (e) => { palmaresQuery = e.target.value; renderPalmares(); });
+
+    await loadVilles();
+    renderPalmares();
+    renderCarnet();
+    renderStats();
+    updateCounts();
+    if(villes.length === 0) goToAddForm();
+
+    mapDataCache = await loadMapData();
+    renderMap();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
