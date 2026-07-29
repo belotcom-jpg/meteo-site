@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v3.5 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v4.0 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v3.5</title>
+<title>MultiMaps — géographie (collège & lycée) — v4.0</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -403,6 +403,16 @@
   @media (prefers-reduced-motion:reduce){
     *{transition:none !important}
   }
+  .jour-range{position:absolute;left:0;top:0;width:100%;height:24px;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
+  .jour-range::-webkit-slider-runnable-track{background:none;height:24px}
+  .jour-range::-moz-range-track{background:none;height:24px}
+  .jour-range::-webkit-slider-thumb{pointer-events:auto;-webkit-appearance:none;appearance:none;width:16px;height:16px;margin-top:4px;border-radius:50%;background:#dc2626;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.45);cursor:pointer}
+  .jour-range::-moz-range-thumb{pointer-events:auto;width:16px;height:16px;border-radius:50%;background:#dc2626;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.45);cursor:pointer}
+  body.projection .widget{ display:none !important }
+  body.projection #wg-legende, body.projection #wg-feux, body.projection #wg-explic{ display:block !important }
+  body.projection #wg-legende{ font-size:15px }
+  body.projection #feu-temps{ transform:translateX(-50%) scale(1.28); transform-origin:center bottom }
+  body.projection .leaflet-tooltip{ font-size:15px }
 </style>
 </head>
 <body>
@@ -874,6 +884,7 @@
       <option value="">— choisir un récit —</option>
       <option value="risques">Les risques naturels en France (5 étapes)</option>
       <option value="peuplement">Où vivent les Français ? (5 étapes)</option>
+      <option value="feux">Feux de forêt : observer, comprendre, douter (5 étapes)</option>
       <option value="perso">Mon récit (étapes ajoutées à la main)</option>
     </select>
     <div style="display:flex;gap:4px;margin-top:3px">
@@ -918,6 +929,23 @@
       <label style="white-space:nowrap;cursor:pointer"><input type="checkbox" class="seveso-filtre" value="bas" checked> <span style="color:#ea580c;font-weight:600">● seuil bas</span></label>
     </div>
     <button class="calque-ajout donnee" id="btn-seveso" title="Les établissements classés Seveso (seuil haut / seuil bas) de la zone affichée, d\'après l\'API Géorisques (source officielle de l\'État). Zoomez sur une région (niveau 8 minimum) : la vue est pavée par mailles de ~10 km.">☢️ Afficher les sites Seveso (vue)</button>
+  </div>
+</div>
+<div class="widget" id="wg-explic" style="width:252px">
+  <div class="widget-tete">
+    <span class="widget-titre">💬 Explication & partage</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
+  </div>
+  <div class="widget-corps">
+    <button class="calque-ajout donnee" id="btn-tweet-vue" title="Génère un texte prêt à publier (≤ 200 caractères) décrivant la vue actuelle, avec le message de précaution, et le copie dans le presse-papier.">🐦 Tweet de la vue (200 car. max)</button>
+    <textarea id="tweet-zone" readonly style="width:100%;height:92px;font:11px/1.4 system-ui;border:1px solid #d6d0c2;border-radius:8px;padding:6px;resize:vertical;display:none;background:#faf9f5;box-sizing:border-box"></textarea>
+    <div id="tweet-compte" style="display:none;font-size:10px;color:#8a8577;text-align:right;margin-top:2px"></div>
+    <button class="calque-ajout donnee" id="btn-explic-plus" title="Ouvre une fenêtre déplaçable : le tweet + une explication détaillée de ce que montre la carte.">🪟 Explication détaillée</button>
+    <button class="calque-ajout donnee" id="btn-explic-max" title="Fenêtre déplaçable avec l’explication complète : données, méthode, limites et messages de précaution.">📚 Explication complète + précautions</button>
+    <button class="calque-ajout donnee" id="btn-export-png" title="Télécharge une image PNG de la vue actuelle avec le bandeau de précaution INCRUSTÉ dans l’image — impossible de partager la carte sans l’avertissement.">📸 Image de la vue (précaution incrustée)</button>
+    <button class="calque-ajout donnee" id="btn-lien-vue" title="Copie un LIEN qui rouvre exactement cette vue : position, zoom, couches actives et horloge. Parfait pour un tweet ou une consigne de classe.">🔗 Copier le lien de cette vue</button>
+    <button class="calque-ajout donnee" id="btn-projection" title="Mode PROJECTION pour la classe : masque les fenêtres secondaires, grossit la légende, la barre de temps et les infobulles. Re-cliquez pour revenir à l’affichage normal.">📽️ Mode projection (classe)</button>
   </div>
 </div>
 <div class="widget" id="wg-reperes" style="width:248px">
@@ -971,28 +999,54 @@
   </div>
   <div class="widget-corps">
     <div style="margin:2px 0 4px;font-size:11px">
-      <div style="color:#8a8577;margin-bottom:1px" title="Choisissez les jours à afficher (points et halo). Décochez pour masquer un jour.">Jours affichés :</div>
-      <div style="display:flex;flex-wrap:wrap;gap:1px 7px"><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="0" checked> auj.</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="1" checked> J-1</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="2" checked> J-2</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="3" checked> J-3</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="4" checked> J-4</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="5" checked> J-5</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="7" checked> J-7</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="9" checked> J-9</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="11" checked> J-11</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="13" checked> J-13</label><label style="white-space:nowrap"><input type="checkbox" class="jour-feu" value="15" checked> J-15</label></div>
+      <div style="color:#8a8577;margin-bottom:2px" title="Faites glisser les deux poignées pour choisir la plage de jours affichés (points et halo du feu).">Jours affichés : <span id="jour-plage-lbl" style="color:#1c1917;font-weight:600">aujourd’hui → J-15</span></div>
+      <div id="jour-plage" style="position:relative;height:24px;margin:0 5px 2px">
+        <div style="position:absolute;top:10px;left:0;right:0;height:4px;background:#e5e0d5;border-radius:3px"></div>
+        <div id="jour-plage-bar" style="position:absolute;top:10px;height:4px;background:#dc2626;border-radius:3px;left:0%;width:100%"></div>
+        <input type="range" class="jour-range" id="jour-min" min="0" max="15" value="0" title="Jour le plus récent affiché">
+        <input type="range" class="jour-range" id="jour-max" min="0" max="15" value="15" title="Jour le plus ancien affiché">
+      </div>
     </div>
-    <button class="calque-ajout donnee" id="btn-feux-actifs" title="Affiche les points chauds détectés par les satellites : chaque point est une zone anormalement chaude vue depuis l'espace. Toutes les sources (NASA GIBS et EFFIS, VIIRS et MODIS) sont superposées d'un coup : celle qui répond s'affiche. Mise à jour 6 fois par jour, 2 à 3 h après le passage du satellite.">🔥 Afficher les feux détectés</button>
+    <button class="calque-ajout donnee" id="btn-feux-actifs" title="Affiche les points chauds détectés par les satellites : chaque point est une zone anormalement chaude vue depuis l'espace. Toutes les sources (NASA GIBS et EFFIS, VIIRS et MODIS) sont superposées d'un coup : celle qui répond s'affiche. Mise à jour 6 fois par jour, 2 à 3 h après le passage du satellite.">🔥 Feux détectés</button>
     <button class="calque-ajout donnee" id="btn-zones-feux" title="Dessine un halo jaune translucide, entouré d'un liseré ambre, autour des secteurs où les points chauds se concentrent — calculé en direct dans le navigateur à partir des détections satellite (flou + seuil), sans données ni clé externes. Calculé pour la zone affichée puis figé sur la carte : il grandit et rétrécit avec le zoom sans disparaître. Recentrez (zone entière visible) puis relancez pour un autre secteur.">🟡 Zones de feux (halo)</button>
-    <button class="calque-ajout donnee" id="btn-fleches" title="Sur chaque foyer : une flèche ROUGE = sens de propagation du feu (déduit de l'historique 15 jours, du plus ancien vers le plus récent), et des flèches BLEUES = vent qui pousse le feu, maintenant et prévu à +24 h et +48 h. Activez d'abord « Zones de feux ».">➤ Flèches : propagation &amp; vent</button>
+    <button class="calque-ajout donnee" id="btn-fleches" style="display:none" title="Sur chaque foyer : une flèche ROUGE = sens de propagation du feu (déduit de l'historique 15 jours, du plus ancien vers le plus récent), et des flèches BLEUES = vent qui pousse le feu, maintenant et prévu à +24 h et +48 h. Activez d'abord « Zones de feux ».">➤ Flèches : propagation &amp; vent</button>
     <button class="calque-ajout donnee" id="btn-risque-feu" title="Le risque d'incendie du jour (indice Feu Météo / FWI, EFFIS-Copernicus) : du vert « faible » au rouge « extrême », en HACHURES pour laisser voir la carte et se distinguer des feux réels. C'est le DANGER prévu, pas des feux détectés.">🔶 Risque incendie (hachuré)</button>
-    <button class="calque-ajout donnee" id="btn-fumees" title="Sur chaque foyer, dans le sens du vent : un CÔNE orange = zone d'évolution probable du feu, et un PANACHE gris = dérive des fumées (visibilité, qualité de l'air en aval). Activez d'abord « Zones de feux ».">🌫️ Fumées &amp; cône d'évolution</button>
-    <button class="calque-ajout donnee" id="btn-panache" title="Vue « panache animé » : chaque foyer devient une flamme cerclée (taille selon l'étendue), avec son panache de fumée et le vent. Un curseur fait défiler l'évolution PRÉVUE jusqu'à +48 h (le vent futur réoriente le panache). Calcule les foyers tout seul.">🔥 Panache animé + évolution</button>
-    <button class="calque-ajout donnee" id="btn-rejeu" title="Rejoue le feu des 15 derniers jours, jour par jour, à partir des passages satellite. Case « historique » : cochée = les jours passés restent affichés (on voit le feu grandir) ; décochée = seulement le jour en cours (instantané qui se déplace).">🎞️ Rejouer le feu (15 j)</button>
+    <button class="calque-ajout donnee" id="btn-fumees" style="display:none" title="Sur chaque foyer, dans le sens du vent : un CÔNE orange = zone d'évolution probable du feu, et un PANACHE gris = dérive des fumées (visibilité, qualité de l'air en aval). Activez d'abord « Zones de feux ».">🌫️ Fumées &amp; cône d'évolution</button>
+    <button class="calque-ajout donnee" id="btn-panache" style="display:none" title="Vue « panache animé » : chaque foyer devient une flamme cerclée (taille selon l'étendue), avec son panache de fumée et le vent. Un curseur fait défiler l'évolution PRÉVUE jusqu'à +48 h (le vent futur réoriente le panache). Calcule les foyers tout seul.">🔥 Panache animé + évolution</button>
+        <button class="calque-ajout donnee" id="btn-extension" title="PROPAGATION regroupée : sens de propagation (flèche bleue), cône d'évolution et zone d'extension probable, orientés par le vent prévu. Se déroule dans le temps avec la barre « Temps du feu ». Illustration, pas une prévision.">➤ Propagation (sens + cône + zone)</button>
+    <button class="calque-ajout donnee" id="btn-vent-feu" title="Le vent : direction et force. La flèche s'épaissit et s'allonge avec la vitesse (barbules). Même vent que le widget Météo.">💨 Vent (direction + force)</button>
+    <button class="calque-ajout donnee" id="btn-animfeu" title="HISTORIQUE : déroule les observations satellite des 7 derniers jours, cumulées jour après jour, sur l'horloge unique.">🎞️ Historique (J-7 → aujourd'hui)</button>
+    <button class="calque-ajout donnee" id="btn-prospfeu" title="PROSPECTIVE : cônes d'évolution qui s'estompent + trace parcourue, déroulés de maintenant à +48 h sur l'horloge unique (rien d'autre). Illustration, pas une prévision.">🔮 Prospective (→ +48 h)</button>
+    <button class="calque-ajout donnee" id="btn-veriffeu" title="VÉRIFICATION : redessine le cône qui aurait été calculé HIER (foyers et météo d’hier, via archives) et superpose les détections satellite d’AUJOURD’HUI — pour juger soi-même la fiabilité de l’illustration.">🔍 Vérifier une prospective passée</button>
+    <select id="verif-jour" class="feux-annee" style="width:100%" title="Quel jour passé vérifier : le cône est recalculé avec les foyers et la météo de ce jour-là, puis comparé aux détections d’aujourd’hui.">
+      <option value="1" selected>Vérifier : hier (J-1)</option>
+      <option value="2">J-2</option><option value="3">J-3</option><option value="4">J-4</option><option value="5">J-5</option><option value="6">J-6</option>
+    </select>
+    <button class="calque-ajout donnee" id="btn-fwi" title="Carte OFFICIELLE du danger d’incendie : indice FWI du jour calculé par EFFIS / Copernicus — celle que consultent les services d’incendie européens.">🗺️ Danger FWI (EFFIS)</button>
+    <button class="calque-ajout donnee" id="btn-france-feux" title="VUE D'ENSEMBLE : bulles proportionnelles à l’ampleur estimée des groupes de détections satellite sur toute la France, colorées selon la récence. Précision réelle si une clé FIRMS gratuite est renseignée ; sinon estimation grossière par comptage de pixels. Ce n’est PAS le statut officiel (voir feuxdeforet.fr / PSFDF).">🗺️ Vue d’ensemble France</button>
+    <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#57534e;margin:3px 0 1px">
+      <span>Fenêtre :</span>
+      <input type="range" id="france-jours" min="0" max="40" value="7" style="flex:1;accent-color:#7c2d12">
+      <span id="france-jours-lbl" style="min-width:44px;text-align:right;font-variant-numeric:tabular-nums">7 j</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#8a8577;margin-bottom:3px">
+      <input type="text" id="firms-key" placeholder="Clé FIRMS (optionnelle, gratuite) — active la mesure réelle" style="flex:1;font-size:10px;padding:2px 5px;border:1px solid #d6d0c2;border-radius:5px;box-sizing:border-box">
+      <a href="#" onclick="window.open('https://firms.modaps.eosdis.nasa.gov/api/map_key/','_blank');return false;" title="Obtenir une clé FIRMS gratuite (email, instantané)" style="white-space:nowrap;color:#b45309;text-decoration:underline">🔑 obtenir</a>
+    </div>
+    <button class="calque-ajout donnee" id="btn-simfeu" style="display:none" title="SIMULATION animée de propagation, cellule par cellule, selon la végétation (Corine Land Cover), le vent et la sécheresse. Modèle pédagogique simplifié — INDICATIF, non opérationnel.">🔥 Simulation de propagation</button>
     <div style="border-top:1px solid var(--trait);margin:6px 0 4px"></div>
     <select id="cumul-periode" class="feux-annee" style="width:100%" title="La profondeur du cumul. Attention : les archives satellitaires ne remontent pas à l'infini — MODIS depuis 2000, VIIRS depuis 2012. Au-delà, la carte montre tout ce qui existe, pas davantage.">
       <option value="d7">Feux cumulés : 7 derniers jours</option>
       <option value="d15">Feux cumulés : 15 derniers jours</option>
-      <option value="d30">Feux cumulés : 30 derniers jours</option>
+      <option value="d30" selected>Feux cumulés : 30 derniers jours</option>
       <option value="0.5">Cumul : 6 derniers mois</option>
-      <option value="1" selected>Cumul : 1 an</option>
+      <option value="1">Cumul : 1 an</option>
       <option value="3">Cumul : 3 ans</option>
       <option value="5">Cumul : 5 ans</option>
       <option value="10">Cumul : 10 ans</option>
       <option value="30">Cumul : 30 ans (tout l'archivé)</option>
     </select>
+    <label title="Ajouter la seconde source satellite (MODIS Terra+Aqua) en plus de VIIRS : deux capteurs indépendants, couverture plus complète des périodes en jours" style="display:flex;align-items:center;gap:4px;font-size:11px;color:#8a8577;margin:3px 0;cursor:pointer"><input type="checkbox" id="cumul-mcd" style="accent-color:#7c2d12"> + source MODIS (2ᵉ satellite)</label>
     <button class="calque-ajout donnee" id="btn-cumul-brule" title="Toutes les surfaces brûlées cartographiées sur la période choisie, superposées : la mémoire des incendies. Superbe sur le pourtour méditerranéen, les Landes et la Corse — et parlant quand on le croise avec les forêts menacées par le climat.">🟫 Cumul des surfaces brûlées</button>
     <p class="sous" style="margin:4px 0 0">Points chauds satellitaires : ce ne sont pas des feux confirmés. Les nuages en cachent, et d'autres sources de chaleur (industrie, brûlages) peuvent être détectées. Pour les surfaces brûlées de l'année, voir 🔥 dans le widget Climat.</p>
   </div>
@@ -1019,6 +1073,7 @@
     <button class="calque-ajout donnee" id="btn-temp" title="La carte des températures de l'instant : une grille d'un demi-degré couvrant la France, interrogée auprès d'Open-Meteo, coloriée du bleu (froid) au rouge (chaud) et découpée sur les contours du pays. Le complément « temps qu'il fait » de vos couches climatiques.">🌡 Carte des températures (maintenant)</button>
     <button class="calque-ajout donnee" id="btn-air" title="L'indice européen de qualité de l'air (particules fines PM2,5 et PM10, dioxyde d'azote, ozone), colorié du turquoise « très bon » au violet « extrêmement mauvais ». Même grille que les températures, découpée sur la France.">🫁 Qualité de l'air (indice européen)</button>
     <button class="calque-ajout donnee" id="btn-vent" title="Le vent : une flèche par maille, orientée dans le sens où souffle le vent, colorée selon la force, avec la rafale au survol. Spectaculaire sur le couloir rhodanien un jour de mistral.">💨 Vent : direction et force</button>
+    <button class="calque-ajout donnee" id="btn-vent48" title="Météogramme du vent au centre de la carte sur les 48 prochaines heures : une flèche toutes les 3 h (sens + force), pour anticiper les bascules de vent.">💨 Évolution du vent (48 h)</button>
     <button class="calque-ajout donnee" id="btn-radar" title="Radar de pluie animé (RainViewer) : précipitations observées ces dernières heures + prévision immédiate (nowcast), en boucle. Comme dans MultiMétéo.">🌧️ Radar de pluie (animé)</button>
     <button class="calque-ajout donnee" id="btn-orages" title="Les orages en cours d'après les modèles météo (fortes averses orageuses) : un pictogramme ⛈️ sur chaque zone concernée. C'est le diagnostic des modèles, pas des impacts de foudre mesurés.">⛈️ Orages en cours</button>
     <button class="calque-ajout donnee" id="btn-villes-meteo" title="Les 50 grandes villes avec leur température actuelle. Cliquez une ville : MultiMétéo s'ouvre sur ce point, avec tout le détail (modèles, heures, vigilance).">🏙 Villes : température &amp; clic vers MultiMétéo</button>
@@ -1131,7 +1186,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v3.5</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v4.0</small></span>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
   <div class="widget-corps">
@@ -1175,6 +1230,7 @@
       <button class="pilote-btn" data-cible="wg-montagnes">⛰ Monts &amp; fleuves</button>
       <button class="pilote-btn" data-cible="wg-limites">🗾 Limites</button>
       <button class="pilote-btn" data-cible="wg-foret">🌲 Forêts</button>
+      <button class="pilote-btn" data-cible="wg-explic">💬 Explication & partage</button>
     </div>
   </div>
 </div>
@@ -1191,7 +1247,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v3.5</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v4.0</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -1266,19 +1322,35 @@
     <feMerge><feMergeNode in="fill"/><feMergeNode in="outline"/></feMerge>
   </filter>
 </defs></svg>
-<div id="panache-ctrl" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:1250;background:rgba(20,18,14,.92);color:#fff;border-radius:12px;box-shadow:0 6px 26px rgba(0,0,0,.45);padding:7px 12px;font:13px system-ui;align-items:center;gap:10px">
-  <button id="panache-play" title="Animer l'évolution prévue" style="border:1px solid #6b6656;background:#2b2822;color:#fff;border-radius:8px;cursor:pointer;padding:2px 11px;font-size:15px">▶</button>
-  <input type="range" id="panache-slider" min="0" max="48" value="0" title="Faites glisser dans le temps : maintenant → +48 h (le vent prévu réoriente le panache)" style="width:210px;accent-color:#f97316">
-  <span id="panache-heure" style="min-width:190px;text-align:right;font-variant-numeric:tabular-nums"></span>
-  <button id="panache-ferme" title="Fermer" style="border:1px solid #6b6656;background:none;color:#cbd5e1;border-radius:8px;cursor:pointer;padding:2px 9px">✕</button>
+<div id="vent48" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:1260;background:rgba(20,18,14,.95);color:#fff;border-radius:12px;box-shadow:0 6px 26px rgba(0,0,0,.5);padding:9px 13px;font:12px system-ui;max-width:96vw;overflow-x:auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;gap:14px"><b id="vent48-titre">💨 Évolution du vent — 48 h</b><button id="vent48-ferme" style="border:1px solid #6b6656;background:none;color:#cbd5e1;border-radius:6px;cursor:pointer;padding:1px 8px">✕</button></div>
+  <div id="vent48-corps" style="display:flex;gap:5px"></div>
 </div>
-<div id="rejeu-ctrl" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:56px;z-index:1250;background:rgba(20,18,14,.92);color:#fff;border-radius:12px;box-shadow:0 6px 26px rgba(0,0,0,.45);padding:7px 12px;font:13px system-ui;align-items:center;gap:10px">
-  <button id="rejeu-play" title="Lecture / pause" style="border:1px solid #6b6656;background:#2b2822;color:#fff;border-radius:8px;cursor:pointer;padding:2px 11px;font-size:15px">▶</button>
-  <input type="range" id="rejeu-slider" min="0" max="15" value="0" title="Glissez dans le temps : il y a 15 jours → aujourd'hui" style="width:200px;accent-color:#f97316">
-  <span id="rejeu-date" style="min-width:150px;text-align:right;font-variant-numeric:tabular-nums"></span>
-  <label style="font-size:12px;white-space:nowrap;cursor:pointer" title="Cochée : les jours passés restent affichés. Décochée : seulement le jour en cours."><input type="checkbox" id="rejeu-cumul" checked> historique</label>
-  <button id="rejeu-ferme" title="Fermer" style="border:1px solid #6b6656;background:none;color:#cbd5e1;border-radius:8px;cursor:pointer;padding:2px 9px">✕</button>
+<div id="explic-pop" style="display:none;position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:1350;background:#fff;color:#1c1917;border:1px solid #e7e5e4;border-radius:12px;box-shadow:0 10px 34px rgba(0,0,0,.45);width:min(560px,94vw);max-height:74vh;flex-direction:column">
+  <div id="explic-pop-tete" style="cursor:move;display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f5f2ea;border-radius:12px 12px 0 0;font:600 13px system-ui;user-select:none">
+    <span id="explic-pop-titre">💬 Explication</span>
+    <span style="display:flex;gap:6px">
+      <button id="explic-pop-copie" title="Copier le texte" style="border:1px solid #d6d0c2;background:#fff;border-radius:7px;cursor:pointer;padding:2px 9px;font-size:11px">📋 Copier</button>
+      <button id="explic-pop-ferme" style="border:1px solid #d6d0c2;background:#fff;border-radius:7px;cursor:pointer;padding:2px 9px">✕</button>
+    </span>
+  </div>
+  <div id="explic-pop-corps" style="padding:11px 14px;overflow-y:auto;font:12px/1.55 system-ui"></div>
 </div>
+<div id="feu-temps" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:1255;background:rgba(20,18,14,.93);color:#fff;border-radius:12px;box-shadow:0 6px 26px rgba(0,0,0,.45);padding:7px 12px;font:13px system-ui;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;max-width:96vw">
+  <span style="font-size:12px;color:#fca5a5">⏱ Temps du feu</span>
+  <button id="feu-temps-play" title="Lecture / pause" style="border:1px solid #6b6656;background:#2b2822;color:#fff;border-radius:8px;cursor:pointer;padding:2px 11px;font-size:15px">▶</button>
+  <button id="feu-recalc" title="Recalculer sur la vue actuelle : foyers, végétation, zones brûlées et météo rechargés (l’horloge repart de maintenant)" style="border:1px solid #6b6656;background:#2b2822;color:#fff;border-radius:8px;cursor:pointer;padding:2px 10px;font-size:14px">↻</button>
+  <label title="Afficher aussi la zone grise parcourue par le front (estimation)" style="display:flex;align-items:center;gap:3px;font-size:11px;color:#cbd5e1;cursor:pointer"><input type="checkbox" id="feu-trace" checked style="accent-color:#6b7280"> trace</label>
+  <label title="Mode avancé : simulation cellule par cellule sur la végétation réelle, recalée sur les mêmes vitesses que les cônes" style="display:flex;align-items:center;gap:3px;font-size:11px;color:#cbd5e1;cursor:pointer"><input type="checkbox" id="feu-simcase" style="accent-color:#ef4444"> simulation</label>
+  <label title="Superpose le cône SANS intervention (contour pointillé clair) à celui de votre réglage 🚒 : l’écart visualise l’effet des secours" style="display:flex;align-items:center;gap:3px;font-size:11px;color:#cbd5e1;cursor:pointer"><input type="checkbox" id="feu-compare" style="accent-color:#fb923c"> comparer 🚒</label>
+  <span title="Intervention des secours : à gauche = intervention maximum (freine fortement), à droite = zéro intervention (feu libre)" style="display:flex;align-items:center;gap:4px;font-size:11px;color:#cbd5e1">🚒<input type="range" id="feu-pompiers" min="0" max="100" value="45" step="5" style="width:80px;accent-color:#ef4444"><span id="feu-pompiers-lbl" style="min-width:56px"></span></span>
+  <input type="range" id="feu-temps-slider" min="0" max="48" value="0" step="1" title="Déroulé commun : maintenant → +48 h (panache, extension et simulation ensemble)" style="width:min(230px,44vw);accent-color:#f97316">
+  <span id="feu-temps-lbl" style="min-width:150px;text-align:right;font-variant-numeric:tabular-nums"></span>
+  <button id="feu-temps-ferme" title="Fermer les vues du feu" style="border:1px solid #6b6656;background:none;color:#cbd5e1;border-radius:8px;cursor:pointer;padding:2px 9px">✕</button>
+</div>
+<div id="feu-badge" style="display:none;position:fixed;top:56px;right:12px;z-index:1290;background:#7f1d1d;color:#fff;padding:6px 12px;border-radius:9px;font:600 12px/1.4 system-ui;max-width:300px;box-shadow:0 4px 16px rgba(0,0,0,.4)"></div>
+<div id="feu-avert" style="display:none;position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:1300;background:#7f1d1d;color:#fff;padding:6px 13px;border-radius:8px;font:12px/1.4 system-ui;max-width:94vw;text-align:center;box-shadow:0 3px 14px rgba(0,0,0,.45)">⚠️ <b>Illustration, pas une prévision.</b> Montre comment le vent, la végétation et la sécheresse influencent un feu — les distances et durées ne sont ni calibrées ni validées. Ne pas utiliser pour une décision de terrain : les secours utilisent ForeFire / Météo-France. <button id="feu-methode-btn" style="margin-left:6px;background:#fecaca;color:#7f1d1d;border:none;border-radius:6px;padding:1px 8px;cursor:pointer;font-size:11px;font-weight:600;white-space:nowrap">ℹ️ Comment c’est calculé ?</button></div>
+<div id="feu-methode" style="display:none;position:fixed;top:66px;left:50%;transform:translateX(-50%);z-index:1300;background:#fff;color:#1c1917;padding:13px 16px;border-radius:10px;font:12px/1.5 system-ui;max-width:min(580px,94vw);max-height:72vh;overflow-y:auto;box-shadow:0 8px 30px rgba(0,0,0,.4);border:1px solid #e7e5e4;text-align:left"><div style="font-weight:700;font-size:13px;margin-bottom:6px">Comment ces estimations sont calculées</div><div style="font-weight:600;color:#b91c1c;margin:9px 0 2px">🔥 Propagation (cônes)</div><div>Depuis chaque foyer détecté aujourd’hui par satellite, on trace un cône orienté dans le sens où le vent pousse. La vitesse du front = une base (~0,08 km/h) × force du vent prévu × sécheresse × pente × végétation (Corine Land Cover : forêt rapide, cultures lentes, eau/urbain quasi-stop) × intervention des secours (molette 🚒). Les zones déjà brûlées (détections satellite J-1 à J-7) freinent fortement le front (combustible consommé), et la végétation est lue le long du trajet, pas seulement au départ. Le cône représente la zone atteignable dans les ~6 prochaines heures : sa longueur suit la vitesse potentielle du feu, son ouverture suit la variabilité du vent prévu (statistique circulaire), et il ne descend jamais sous une incertitude minimale qui croît avec l’horizon (√t) — car même un feu combattu garde un aléa (reprises, sautes de feu). L’intervention des secours réduit fortement la distance parcourue (trace), mais beaucoup moins l’incertitude (cône). La trace grise (option) montre le chemin déjà parcouru. Les foyers proches (≤ 3 km) sont regroupés en une seule emprise. Les grands axes routiers et cours d’eau (Géoplateforme) freinent fortement le front (coupures).</div><div style="font-weight:600;color:#b91c1c;margin:9px 0 2px">🔥 Simulation cellulaire</div><div>La zone est découpée en une grille. Pour chaque cellule, on lit la végétation réelle (Corine Land Cover) : forêt et broussailles = combustible élevé, cultures = moyen, eau et zones urbaines = barrière. Le feu part des foyers du jour ; à chaque étape, une cellule en feu peut enflammer ses voisines avec une probabilité = base × combustible de la voisine × sécheresse × alignement au vent (renforcé sous le vent, réduit au vent).</div><div style="font-weight:600;margin:9px 0 2px">Le facteur « sécheresse »</div><div>En priorité, l’indice officiel <b>FWI</b> (Fire Weather Index) du jour est lu auprès d’EFFIS / Copernicus au niveau des foyers. S’il est inaccessible, une estimation locale prend le relais : température, humidité de l’air, pluie du moment et des 5 derniers jours.</div><div style="font-weight:600;margin:9px 0 2px">Données utilisées</div><div>Foyers : NASA VIIRS (satellite) · Vent, température, humidité : Open-Meteo · Végétation : Corine Land Cover (Copernicus / IGN).</div><div style="font-weight:600;color:#7f1d1d;margin:9px 0 2px">Ce qui n’est PAS pris en compte</div><div>La pente, l’humidité réelle du combustible, les sautes de feu (braises projetées loin devant), les changements de vent au fil de la journée, l’action des secours, et le fait qu’un grand feu crée son propre vent. Surtout, les paramètres ne sont pas calibrés sur des feux réels : les distances et durées n’ont donc aucune valeur prédictive.</div><div style="text-align:right;margin-top:10px"><button id="feu-methode-ferme" style="background:#1c1917;color:#fff;border:none;border-radius:7px;padding:4px 14px;cursor:pointer;font-size:12px">Fermer</button></div></div>
 <div id="radar-ctrl" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:1250;background:rgba(20,18,14,.92);color:#fff;border-radius:12px;box-shadow:0 6px 26px rgba(0,0,0,.45);padding:7px 12px;font:13px system-ui;align-items:center;gap:10px">
   <button id="radar-play" title="Lecture / pause" style="border:1px solid #6b6656;background:#2b2822;color:#fff;border-radius:8px;cursor:pointer;padding:2px 11px;font-size:15px">⏸</button>
   <input type="range" id="radar-slider" min="0" max="0" value="0" title="Glissez dans le temps : passé → maintenant → prévu (extrapolation)" style="width:230px;accent-color:#38bdf8">
@@ -1348,7 +1420,7 @@
   if(!FONDS[fondActuelId]) fondActuelId = 'osm';
   let fondActuel = null;
   let fondOpacite = parseFloat(localStorage.getItem('geo-fond-opacite'));
-  if(!isFinite(fondOpacite)) fondOpacite = 1;
+  if(!isFinite(fondOpacite) || fondOpacite <= 0.05){ fondOpacite = 1; try{ localStorage.setItem('geo-fond-opacite','1'); }catch(e){} }  // un fond invisible (0%) sauvegardé ne doit jamais masquer toute la carte au rechargement
   function appliquerFond(id){
     const f = FONDS[id]; if(!f) return;
     if(fondActuel) map.removeLayer(fondActuel);
@@ -1405,7 +1477,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v3.5';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v4.0';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -1782,8 +1854,8 @@
 
   // ---------- 🏛 QPV officiels (données ANCT, open data) ----------
   const URLS_QPV = [
-    'https://opendata.caissedesdepots.fr/api/explore/v3.5/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-au-1er-janvier-2024/exports/geojson',
-    'https://equipements.sports.gouv.fr/api/explore/v3.5/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/exports/geojson'
+    'https://equipements-sgsocialgouv.opendatasoft.com/api/explore/v2.1/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/exports/geojson',
+    'https://opendata.caissedesdepots.fr/api/explore/v2.1/catalog/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-au-1er-janvier-2024/exports/geojson'
   ];
   let qpvGeojson = null, qpvLayer = null, qpvVisible = false, qpvChargement = false;
   let qpvPointsRep = null; // un point représentatif par QPV, pour les croisements
@@ -1911,7 +1983,7 @@
   btnQpv.addEventListener('click', basculerQpv);
 
   // ---------- 🎓📝 Couches éducation (data.education.gouv.fr, en direct sur la vue) ----------
-  const EDUC = 'https://data.education.gouv.fr/api/explore/v3.5/catalog/datasets/';
+  const EDUC = 'https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/';
 
   function couleurIps(v){
     if(v >= 120) return '#2e9e44';
@@ -2063,8 +2135,8 @@
   let acvActif = false, acvGroupe = null, acvCharge = false;
   const btnAcv = document.getElementById('btn-acv');
   const URLS_ACV = [
-    'https://opendata.caissedesdepots.fr/api/explore/v3.5/catalog/datasets/villes_action_coeurdeville/records?limit=100&offset=',
-    'https://opendata.caissedesdepots.fr/api/explore/v3.5/catalog/datasets/villes-action-coeur-de-ville-portail-open-data/records?limit=100&offset='
+    'https://opendata.caissedesdepots.fr/api/explore/v2.1/catalog/datasets/villes_action_coeurdeville/records?limit=100&offset=',
+    'https://opendata.caissedesdepots.fr/api/explore/v2.1/catalog/datasets/villes-action-coeur-de-ville-portail-open-data/records?limit=100&offset='
   ];
   btnAcv.addEventListener('click', async ()=>{
     if(acvActif){
@@ -2337,7 +2409,7 @@
     },
     gares: {
       btn:'btn-gares', libelle:'🚉 Gares SNCF', legende:'Gares SNCF', teinte:'#1d4ed8',
-      base:'https://ressources.data.sncf.com/api/explore/v3.5/catalog/datasets/',
+      base:'https://ressources.data.sncf.com/api/explore/v2.1/catalog/datasets/',
       datasets:['gares-de-voyageurs','referentiel-gares-voyageurs','liste-des-gares'],
       zoomMin:9, etiqu:['nom','nom_gare','alias_libelle_noncontraint','libelle','gare_alias_libelle_noncontraint'],
       sous:['commune','departement','segment_drg'],
@@ -2346,7 +2418,7 @@
     },
     mh: {
       btn:'btn-mh', libelle:'🏛️ Monuments historiques', legende:'Monuments historiques', teinte:'#7c2d12',
-      base:'https://data.culture.gouv.fr/api/explore/v3.5/catalog/datasets/',
+      base:'https://data.culture.gouv.fr/api/explore/v2.1/catalog/datasets/',
       datasets:['liste-des-immeubles-proteges-au-titre-des-monuments-historiques'],
       zoomMin:12, etiqu:['appellation_courante','titre_editorial_de_la_notice','denomination_de_l_edifice','tico'],
       sous:['commune_forme_editoriale','commune','adresse_forme_editoriale','siecle_de_la_campagne_principale_de_construction','denomination_de_l_edifice','typologie_de_la_protection'],
@@ -2355,7 +2427,7 @@
     },
     sport: {
       btn:'btn-sport', libelle:'🏊 Équipements sportifs', legende:'Équipements sportifs', teinte:'#059669',
-      base:'https://equipements.sports.gouv.fr/api/explore/v3.5/catalog/datasets/',
+      base:'https://equipements-sgsocialgouv.opendatasoft.com/api/explore/v2.1/catalog/datasets/',
       datasets:['data-es','res-recensement-des-equipements-sportifs'],
       zoomMin:13, etiqu:['inst_nom','equip_nom','nominstallation','nom'],
       sous:['equip_type_name','inst_com_nom','commune'],
@@ -5659,6 +5731,13 @@
       { titre:'3. Aires d\u2019attraction', texte:'Chaque ville rayonne bien au-del\u00e0 de ses limites : la France r\u00e9elle des bassins de vie.', couches:['btn-choro-aav'], vue:[46.6, 2.4, 6] },
       { titre:'4. On dort ici, on travaille l\u00e0', texte:'Part des actifs qui quittent leur commune chaque matin : la p\u00e9riurbanisation en un coup d\u2019\u0153il.', couches:['btn-navetteurs'], vue:[46.6, 2.4, 6] },
       { titre:'5. Qui gagne, qui perd', texte:'Communes en croissance et communes en d\u00e9clin d\u00e9mographique.', couches:['btn-croissance'], vue:[46.6, 2.4, 6] }
+    ]},
+    feux: { nom:'Feux de for\u00eat : observer, comprendre, douter', etapes:[
+      { titre:'1. Ce que voit le satellite', texte:'Les points chauds d\u00e9tect\u00e9s aujourd\u2019hui par VIIRS (NASA) : des observations directes, mises \u00e0 jour plusieurs fois par jour.', couches:['btn-feux-actifs'], vue:[44.6, -0.9, 9] },
+      { titre:'2. La m\u00e9moire du feu', texte:'Trente jours de d\u00e9tections cumul\u00e9es : l\u2019empreinte r\u00e9cente des incendies sur le territoire.', couches:['btn-cumul-brule'], vue:[44.6, -0.9, 9] },
+      { titre:'3. Le danger du jour', texte:'L\u2019indice FWI officiel (EFFIS / Copernicus) : la carte de danger que consultent les services d\u2019incendie europ\u00e9ens.', couches:['btn-fwi'], vue:[46.2, 2.5, 6] },
+      { titre:'4. Illustrer la propagation \u2014 avec prudence', texte:'Vent pr\u00e9vu, s\u00e9cheresse, v\u00e9g\u00e9tation, pente, zones br\u00fbl\u00e9es, coupures : le c\u00f4ne ILLUSTRE des m\u00e9canismes. Ce n\u2019est pas une pr\u00e9vision.', couches:['btn-extension'], vue:[44.6, -0.9, 10] },
+      { titre:'5. Douter : v\u00e9rifier hier', texte:'Le c\u00f4ne qui aurait \u00e9t\u00e9 calcul\u00e9 hier, face aux d\u00e9tections d\u2019aujourd\u2019hui, avec un score honn\u00eate : un mod\u00e8le s\u2019\u00e9value, toujours.', couches:['btn-veriffeu'], vue:[44.6, -0.9, 10] }
     ]}
   };
   const RECIT = { etapes:[], i:0, actif:false };
@@ -5934,6 +6013,7 @@
     panesFeuxPrets = true;
   } // FWI (danger, pas points chauds) \u00e9cart\u00e9 de la synth\u00e8se
   const etatCumulBrule = { actif:false, groupe:null };
+  (function(){ const cm = document.getElementById('cumul-mcd'); if(cm && cm.addEventListener) cm.addEventListener('change', function(){ const b = document.getElementById('btn-cumul-brule'); if(b && b.textContent.indexOf('\u2715') !== -1){ b.click(); b.click(); } }); })();
   document.getElementById('btn-cumul-brule').addEventListener('click', ()=>{
     const btn = document.getElementById('btn-cumul-brule');
     if(etatCumulBrule.actif){
@@ -5967,6 +6047,17 @@
         const couche = L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg4326/all/wms.cgi?', opts);
         brancher(couche, '\ud83d\udfeb Certains jours ne r\u00e9pondent pas \u2014 les autres restent affich\u00e9s');
         couche.addTo(etatCumulBrule.groupe);
+      }
+      if((document.getElementById('cumul-mcd')||{}).checked){
+        for(let n = 0; n < jours; n++){
+          const d2 = new Date(Date.now() - n*86400000);
+          const j2 = d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');
+          const o2 = { layers:'MODIS_Combined_Thermal_Anomalies_All', format:'image/png', transparent:true, version:'1.3.0', pane:'feuxDots', opacity:op*0.8, time:j2, attribution:'NASA EOSDIS GIBS / FIRMS (MODIS)' };
+          if(typeof L.CRS !== 'undefined' && L.CRS.EPSG4326) o2.crs = L.CRS.EPSG4326;
+          const c2 = L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg4326/all/wms.cgi?', o2);
+          brancher(c2, '\ud83d\udfeb MODIS : certains jours ne r\u00e9pondent pas \u2014 VIIRS reste affich\u00e9');
+          c2.addTo(etatCumulBrule.groupe);
+        }
       }
       etatCumulBrule.groupe.addTo(map);
       majLegende();
@@ -6029,9 +6120,9 @@
     map.on('zoomend', function(){ masquerFeuxZoom(false); });
   }
   function joursSelectionnes(){
-    const cbs = document.querySelectorAll('.jour-feu'), j = [];
-    Array.prototype.forEach.call(cbs, function(c){ if(c.checked) j.push(parseInt(c.value, 10)); });
-    return j.length ? j : [0,1,2,3,4,5,7,9,11,13,15];
+    const mn = document.getElementById('jour-min'), mx = document.getElementById('jour-max');
+    if(mn && mx){ let a = parseInt(mn.value, 10); let b = parseInt(mx.value, 10); if(isNaN(a)) a = 0; if(isNaN(b)) b = 15; if(a > b){ const t = a; a = b; b = t; } const j = []; for(let d = a; d <= b; d++) j.push(d); return j.length ? j : [0]; }
+    return [0,1,2,3,4,5,7,9,11,13,15];
   }
   function paneParJour(d){ if(d<=0) return 'ageB0'; if(d===1) return 'ageB1'; if(d<=4) return 'ageB2'; if(d<=9) return 'ageB3'; return 'ageB4'; }
   function libJour(d){ return d===0 ? 'aujourd\u2019hui' : (d===1 ? 'hier' : 'J-'+d); }
@@ -6047,7 +6138,8 @@
       etatFeuxActifs.actif = false;
       (etatFeuxActifs.layers||[]).forEach(l=>map.removeLayer(l));
       etatFeuxActifs.layers = [];
-      basculerBouton(btn, false, '', '\ud83d\udd25 Afficher les feux d\u00e9tect\u00e9s');
+      if(etatFeuxActifs.flammes){ map.removeLayer(etatFeuxActifs.flammes); etatFeuxActifs.flammes = null; }
+      basculerBouton(btn, false, '', '\ud83d\udd25 Feux d\u00e9tect\u00e9s');
       majLegende();
       return;
     }
@@ -6066,6 +6158,15 @@
       couche.addTo(map);
       etatFeuxActifs.layers.push(couche);
     });
+    (async function(){  // fl\u00e8che visuelle du widget Panache : une flamme cercl\u00e9e sur chaque foyer du jour
+      try{
+        const pts = await foyersDuJour();
+        if(!etatFeuxActifs.actif) return;
+        const g = L.layerGroup();
+        pts.forEach(function(p){ const taille = Math.round(18 + Math.min(22, Math.sqrt(Math.max(0, p.km2||0.5))*6)); L.marker([p.centre.lat, p.centre.lng], { icon:iconeFoyer(taille), keyboard:false }).addTo(g); });
+        g.addTo(map); etatFeuxActifs.flammes = g;
+      }catch(e){}
+    })();
     majLegende();
     afficherInfo('\ud83d\udd25 Feux \u2014 jours coch\u00e9s, color\u00e9s par \u00e2ge : rouge aujourd\u2019hui \u2192 orange \u2192 jaune \u2192 noir (d\u00e9j\u00e0 br\u00fbl\u00e9)', 7000);
   });
@@ -6136,14 +6237,14 @@
         const p = pile[--sp], px = p % W, py = (p/W)|0;
         area++; sx+=px; sy+=py; db |= bits[p];
         if(px<minx)minx=px; if(px>maxx)maxx=px; if(py<miny)miny=py; if(py>maxy)maxy=py;
-        if(bits[p]){ let mk=0; while(mk<jours.length && !(bits[p] & (1<<mk))) mk++; const dn = jours[mk]||0, wr = Math.max(0, 15-dn), wo = dn; rsx+=px*wr; rsy+=py*wr; rW+=wr; osx+=px*wo; osy+=py*wo; oW+=wo; }
+        if(bits[p]){ let mk=0; while(mk<jours.length && !(bits[p] & (1<<mk))) mk++; const dn = jours[mk]||0, wr = (15-dn)*(15-dn), wo = dn*dn; rsx+=px*wr; rsy+=py*wr; rW+=wr; osx+=px*wo; osy+=py*wo; oW+=wo; }
         if(px>0 && zone[p-1] && !label[p-1]){ label[p-1]=cur; pile[sp++]=p-1; }
         if(px<W-1 && zone[p+1] && !label[p+1]){ label[p+1]=cur; pile[sp++]=p+1; }
         if(py>0 && zone[p-W] && !label[p-W]){ label[p-W]=cur; pile[sp++]=p-W; }
         if(py<H-1 && zone[p+W] && !label[p+W]){ label[p+W]=cur; pile[sp++]=p+W; }
       }
       let propAngle = null;                                   // sens : du centre des foyers anciens vers le centre des r\u00e9cents
-      if(rW>0 && oW>0){ const vx = rsx/rW - osx/oW, vy = rsy/rW - osy/oW; if(vx*vx+vy*vy > 4) propAngle = Math.atan2(vx, -vy)*180/Math.PI; }
+      if(rW>0 && oW>0){ const vx = rsx/rW - osx/oW, vy = rsy/rW - osy/oW; if(vx*vx+vy*vy > 6) propAngle = Math.atan2(vx, -vy)*180/Math.PI; }
       amas.push({ id:cur, minx:minx, miny:miny, maxx:maxx, maxy:maxy, cx:sx/area, cy:sy/area, area:area, db:db, propAngle:propAngle });
     }
     const minAire = Math.max(30, N*0.0006);
@@ -6160,12 +6261,12 @@
         const x=gx+dx, y=gy+dy; if(x<0||x>=W||y<0||y>=H) continue;
         const p = y*W+x; if(!bits[p]) continue;
         nb++; let mk=0; while(mk<jours.length && !(bits[p] & (1<<mk))) mk++;
-        const dn=jours[mk]||0, wr=Math.max(0,15-dn), wo=dn;
+        const dn=jours[mk]||0, wr=(15-dn)*(15-dn), wo=dn*dn;
         rsx+=x*wr; rsy+=y*wr; rW+=wr; osx+=x*wo; osy+=y*wo; oW+=wo;
       }
-      if(nb < 6 || rW<=0 || oW<=0) continue;
+      if(nb < 10 || rW<=0 || oW<=0) continue;
       const vx=rsx/rW-osx/oW, vy=rsy/rW-osy/oW;
-      if(vx*vx+vy*vy < 1.2) continue;                       // pas de direction locale nette
+      if(vx*vx+vy*vy < 2.5) continue;                       // pas de direction locale nette
       grille.push({ ll: pxLL(gx, gy), ang: Math.atan2(vx, -vy)*180/Math.PI });
       if(grille.length >= 140) break;
     }
@@ -6205,14 +6306,25 @@
     });
     return out;
   }
-  Array.prototype.forEach.call(document.querySelectorAll('.jour-feu'), function(c){
-    c.addEventListener('change', function(){
-      ['btn-feux-actifs','btn-zones-feux'].forEach(function(id){
-        const b = document.getElementById(id);
-        if(b && b.textContent.indexOf('\u2715') !== -1){ b.click(); b.click(); } // \u00e9teint puis rallume avec les nouveaux jours
-      });
-    });
-  });
+  function majPlageJours(){
+    const mn = document.getElementById('jour-min'), mx = document.getElementById('jour-max'); if(!mn || !mx) return;
+    let a = parseInt(mn.value, 10); let b = parseInt(mx.value, 10); if(isNaN(a)) a = 0; if(isNaN(b)) b = 15; if(a > b){ const t = a; a = b; b = t; }
+    const bar = document.getElementById('jour-plage-bar'); if(bar){ bar.style.left = (a/15*100)+'%'; bar.style.width = ((b-a)/15*100)+'%'; }
+    const lbl = document.getElementById('jour-plage-lbl'); if(lbl) lbl.textContent = libJour(a)+' \u2192 '+libJour(b);
+  }
+  function rafraichirJoursFeux(){
+    ['btn-feux-actifs','btn-zones-feux'].forEach(function(id){ const b = document.getElementById(id); if(b && b.textContent.indexOf('\u2715') !== -1){ b.click(); b.click(); } });
+  }
+  (function(){
+    const mn = document.getElementById('jour-min'), mx = document.getElementById('jour-max');
+    if(mn && mx && mn.addEventListener){
+      mn.addEventListener('input', function(){ if(parseInt(mn.value,10) > parseInt(mx.value,10)) mn.value = mx.value; majPlageJours(); });
+      mx.addEventListener('input', function(){ if(parseInt(mx.value,10) < parseInt(mn.value,10)) mx.value = mn.value; majPlageJours(); });
+      mn.addEventListener('change', rafraichirJoursFeux);
+      mx.addEventListener('change', rafraichirJoursFeux);
+      majPlageJours();
+    }
+  })();
   document.getElementById('btn-zones-feux').addEventListener('click', async ()=>{
     const btn = document.getElementById('btn-zones-feux');
     if(etatZonesFeux.actif){
@@ -6499,15 +6611,15 @@
         const brg = (w.now.dir + 180) % 360, spd = w.now.spd || 0;
         const la = c.centre.lat, lo = c.centre.lng;
         // c\u00f4ne d'\u00e9volution du feu : court et large, orange
-        const lF = 2 + spd*0.16, aF = 24;
-        L.polygon([[la,lo], destPoint(la,lo,lF,brg-aF), destPoint(la,lo,lF*1.08,brg), destPoint(la,lo,lF,brg+aF)],
-          { color:'#ea580c', weight:1.5, fillColor:'#f97316', fillOpacity:0.28, pane:paneFum })
-          .bindTooltip('C\u00f4ne d\u2019\u00e9volution du feu \u2014 propagation probable avec le vent ('+Math.round(spd)+' km/h)', {sticky:true}).addTo(etatFumees.groupe);
+        const lF = 1.4 + spd*0.10, aF = 36;
+        L.polygon([[la,lo], destPoint(la,lo,lF,brg-aF), destPoint(la,lo,lF*1.06,brg), destPoint(la,lo,lF,brg+aF)],
+          { color:'#c2410c', weight:2.2, fillColor:'#f97316', fillOpacity:0.42, pane:paneFum })
+          .bindTooltip('🔥 C\u00f4ne d\u2019\u00e9volution du FEU \u2014 zone proche o\u00f9 les flammes progressent (vent '+Math.round(spd)+' km/h)', {sticky:true}).addTo(etatFumees.groupe);
         // panache de fum\u00e9e : long et \u00e9troit, gris
-        const lS = 6 + spd*0.6, aS = 9;
-        L.polygon([[la,lo], destPoint(la,lo,lS,brg-aS), destPoint(la,lo,lS*1.05,brg), destPoint(la,lo,lS,brg+aS)],
-          { color:'#6b7280', weight:1, fillColor:'#9ca3af', fillOpacity:0.20, pane:paneFum })
-          .bindTooltip('Panache de fum\u00e9e \u2014 d\u00e9rive sous le vent (visibilit\u00e9, qualit\u00e9 de l\u2019air en aval)', {sticky:true}).addTo(etatFumees.groupe);
+        const lS = 10 + spd*1.0, aS = 6;
+        L.polygon([[la,lo], destPoint(la,lo,lS,brg-aS), destPoint(la,lo,lS*1.04,brg), destPoint(la,lo,lS,brg+aS)],
+          { color:'#94a3b8', weight:1, dashArray:'6 5', fillColor:'#cbd5e1', fillOpacity:0.13, pane:paneFum })
+          .bindTooltip('💨 Panache de FUM\u00c9E \u2014 d\u00e9rive LOIN sous le vent (visibilit\u00e9, air respir\u00e9 en aval)', {sticky:true}).addTo(etatFumees.groupe);
       }));
       if(!etatFumees.actif) return;
       etatFumees.groupe.addTo(map);
@@ -6623,7 +6735,7 @@
     });
   });
   (function(){ const cl = document.getElementById('btn-reperes-clear'); if(cl) cl.addEventListener('click', function(){ etatReperes.marks.forEach(function(m){ map.removeLayer(m); }); etatReperes.marks = []; sauverReperes(); afficherInfo('\ud83d\uddd1 Tous les rep\u00e8res ont \u00e9t\u00e9 effac\u00e9s', 3500); }); })();
-  (function chargerReperes(){ try{ const s = JSON.parse(localStorage.getItem('geo-reperes') || '[]'); (s||[]).forEach(function(r){ if(r && isFinite(r.lat) && isFinite(r.lng)) ajouterRepere(r.lat, r.lng, r.ic || '\U0001f4cd'); }); }catch(e){} })();
+  (function chargerReperes(){ try{ const s = JSON.parse(localStorage.getItem('geo-reperes') || '[]'); (s||[]).forEach(function(r){ if(r && isFinite(r.lat) && isFinite(r.lng)) ajouterRepere(r.lat, r.lng, r.ic || '📍'); }); }catch(e){} })();
   // ---------- Panache anim\u00e9 : flamme sur CHAQUE foyer du jour + panache + vent, curseur d'\u00e9volution ----------
   const etatPanache = { actif:false, points:[], vent:null, centre:null, offset:0, groupeFlammes:null, groupePanaches:null, timer:null };
   function cardinal(d){ d = ((d%360)+360)%360; return ['nord','nord-est','est','sud-est','sud','sud-ouest','ouest','nord-ouest'][Math.round(d/45)%8]; }
@@ -6635,35 +6747,55 @@
       iconSize:[r, r], iconAnchor:[r/2, r/2] });
   }
   function paneHalo(){ return (map.getPane && map.getPane('haloZone')) ? 'haloZone' : undefined; }
+  const cacheMeteo = {};
+  function hashUrl(u){ let h = 5381; for(let i=0;i<u.length;i++){ h = ((h<<5)+h+u.charCodeAt(i))|0; } return 'om'+(h>>>0).toString(36); }
+  async function fetchMeteoJson(url, ttlMin){
+    const ttl = (ttlMin||45)*60000, t = Date.now(), m = cacheMeteo[url];
+    if(m && (t-m.t) < ttl) return m.d;
+    const cle = hashUrl(url);
+    try{ const brut = localStorage.getItem(cle); if(brut){ const o = JSON.parse(brut); if(o && (t-o.t) < ttl){ cacheMeteo[url] = o; return o.d; } } }catch(e){}
+    let r = await fetch(url);
+    if(r.status === 429){ await new Promise(function(res){ setTimeout(res, 1600); }); r = await fetch(url); }
+    if(r.status === 429){
+      if(m) return m.d;
+      try{ const brut = localStorage.getItem(cle); if(brut){ const o = JSON.parse(brut); if(o) return o.d; } }catch(e){}
+      afficherInfo('\ud83c\udf10 Open-Meteo : limite de requ\u00eates atteinte \u2014 attendez ~1 min, les donn\u00e9es d\u00e9j\u00e0 vues sont servies depuis le cache', 8000);
+      throw new Error('429');
+    }
+    if(!r.ok) throw new Error('meteo '+r.status);
+    const d = await r.json();
+    cacheMeteo[url] = { t:t, d:d };
+    try{ const s = JSON.stringify({t:t, d:d}); if(s.length < 90000) localStorage.setItem(cle, s); }catch(e){}
+    return d;
+  }
   async function ventFoyerH(ll){
     const url = 'https://api.open-meteo.com/v1/forecast?latitude='+ll.lat.toFixed(3)+'&longitude='+ll.lng.toFixed(3)
       + '&hourly=wind_speed_10m,wind_direction_10m&forecast_days=3&timezone=Europe%2FParis';
-    const r = await fetch(url); if(!r.ok) return null;
-    const d = await r.json(), h = d.hourly || {};
+    let d = null; try{ d = await fetchMeteoJson(url, 30); }catch(e){ return null; }
+    const h = d.hourly || {};
     return { dirs:h.wind_direction_10m || [], spds:h.wind_speed_10m || [], i0:new Date().getHours() };
   }
   // extrait tous les points chauds d'AUJOURD'HUI (carr\u00e9s rouges) comme composantes connexes
-  async function foyersDuJour(){
-    if(!map.getBounds || !map.options || !map.options.crs || typeof document.createElement !== 'function') throw new Error('environnement');
-    const bnds = map.getBounds().pad(0.1);
-    const sw = map.options.crs.project(bnds.getSouthWest());
-    const ne = map.options.crs.project(bnds.getNorthEast());
-    const W = Math.max(220, Math.min(900, Math.round((map.getSize().x||700)*1.2)));
-    const H = Math.max(160, Math.round(W * (ne.y - sw.y) / Math.max(1, (ne.x - sw.x))));
+  async function decoderMasqueJour(sw, ne, W, H, nJour){
     const bbox = sw.x+','+sw.y+','+ne.x+','+ne.y;
     const url = 'https://gibs.earthdata.nasa.gov/wms/epsg3857/all/wms.cgi?SERVICE=WMS&REQUEST=GetMap&VERSION=1.1.1'
       + '&LAYERS=VIIRS_SNPP_Thermal_Anomalies_375m_All&SRS=EPSG:3857&FORMAT=image/png&TRANSPARENT=true'
-      + '&WIDTH='+W+'&HEIGHT='+H+'&BBOX='+bbox+'&TIME='+dateJour(0);
+      + '&WIDTH='+W+'&HEIGHT='+H+'&BBOX='+bbox+'&TIME='+dateJour(nJour||0);
     const im = await new Promise(function(res){ const g = new Image(); g.crossOrigin='anonymous'; g.onload=function(){res(g);}; g.onerror=function(){res(null);}; g.src=url; });
-    if(!im) throw new Error('image du jour indisponible');
+    if(!im) return null;
     const cnv = document.createElement('canvas'); cnv.width = W; cnv.height = H;
-    const ctx = cnv.getContext && cnv.getContext('2d'); if(!ctx) throw new Error('canvas');
+    const ctx = cnv.getContext && cnv.getContext('2d'); if(!ctx) return null;
     ctx.drawImage(im, 0, 0, W, H);
-    let dat; try{ dat = ctx.getImageData(0,0,W,H).data; }catch(e){ throw new Error('lecture bloqu\u00e9e (CORS)'); }
+    let dat; try{ dat = ctx.getImageData(0,0,W,H).data; }catch(e){ return null; }
     const N = W*H, mask = new Uint8Array(N); let vus = 0;
     for(let k=0;k<N;k++){ if(dat[k*4+3]>60 && dat[k*4]>110 && dat[k*4]-dat[k*4+1]>28){ mask[k]=1; vus++; } }
-    if(!vus) return [];
-    const label = new Int32Array(N), pile = new Int32Array(N), pts = [];
+    return vus ? mask : new Uint8Array(N);
+  }
+  function avecDelai(promesse, ms){
+    return Promise.race([promesse, new Promise(function(res){ setTimeout(function(){ res(null); }, ms); })]);
+  }
+  function composantesConnexes(mask, sw, ne, W, H){
+    const N = W*H, label = new Int32Array(N), pile = new Int32Array(N), pts = [];
     const dxm = (ne.x-sw.x)/W, dym = (ne.y-sw.y)/H;
     function pxLL(px, py){ const mx = sw.x+(px/W)*(ne.x-sw.x), my = ne.y-(py/H)*(ne.y-sw.y); return map.options.crs.unproject(L.point(mx, my)); }
     let cur = 0;
@@ -6682,8 +6814,179 @@
       pts.push({ centre:centre, km2:km2 });
     }
     pts.sort(function(a,b){ return b.km2 - a.km2; });
-    return pts.slice(0, 220);   // un maximum raisonnable de flammes
+    return pts;
   }
+  async function foyersDuJour(nJour){
+    if(!map.getBounds || !map.options || !map.options.crs || typeof document.createElement !== 'function') throw new Error('environnement');
+    const bnds = map.getBounds().pad(0.1);
+    const sw = map.options.crs.project(bnds.getSouthWest());
+    const ne = map.options.crs.project(bnds.getNorthEast());
+    const largKm = bnds.getSouthWest().distanceTo(L.latLng(bnds.getSouthWest().lat, bnds.getNorthEast().lng))/1000;
+    const W = Math.max(200, Math.min(1000, Math.round(largKm/0.4)));
+    const H = Math.max(160, Math.round(W * (ne.y - sw.y) / Math.max(1, (ne.x - sw.x))));
+    const mask = await decoderMasqueJour(sw, ne, W, H, nJour);
+    if(!mask) throw new Error('image du jour indisponible');
+    const pts = composantesConnexes(mask, sw, ne, W, H);
+    return pts.slice(0, 220);
+  }
+  // ---------- 🗺️ Vue d'ensemble France (estimation à partir des détections satellite) ----------
+  function majFranceJoursLbl(){ const s = document.getElementById('france-jours'), l = document.getElementById('france-jours-lbl'); if(s && l) l.textContent = s.value+' j'; }
+  (function initFranceControles(){
+    const s = document.getElementById('france-jours'); if(s && s.addEventListener) s.addEventListener('input', majFranceJoursLbl); majFranceJoursLbl();
+    const k = document.getElementById('firms-key');
+    if(k){ try{ const sauve = localStorage.getItem('geo-firms-key'); if(sauve) k.value = sauve; }catch(e){} if(k.addEventListener) k.addEventListener('change', function(){ try{ localStorage.setItem('geo-firms-key', k.value.trim()); }catch(e){} }); }
+  })();
+  function isoJour(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  async function fetchFirmsCSV(cle, coords, dayRange, dateStr){
+    let url = 'https://firms.modaps.eosdis.nasa.gov/api/area/csv/'+encodeURIComponent(cle)+'/VIIRS_SNPP_NRT/'+coords+'/'+dayRange;
+    if(dateStr) url += '/'+dateStr;
+    let txt = null;
+    try{ txt = await avecDelai(fetch(url).then(function(rr){ return rr.ok ? rr.text() : null; }), 12000); }catch(e){ txt = null; }
+    if(!txt || txt.indexOf('Invalid') !== -1 || txt.indexOf('<') !== -1) return null;
+    const lignes = txt.split('\n').filter(function(l){ return l.trim().length; });
+    if(lignes.length < 1) return [];
+    const ent = lignes[0].split(',').map(function(s){ return s.trim().toLowerCase(); });
+    const iLat = ent.indexOf('latitude'), iLon = ent.indexOf('longitude'), iScan = ent.indexOf('scan'), iTrack = ent.indexOf('track'), iDate = ent.indexOf('acq_date');
+    if(iLat < 0 || iLon < 0 || iDate < 0) return [];
+    const out = [];
+    for(let k2=1;k2<lignes.length;k2++){
+      const c = lignes[k2].split(',');
+      const lat = parseFloat(c[iLat]), lon = parseFloat(c[iLon]); if(!isFinite(lat) || !isFinite(lon)) continue;
+      const scan = iScan>=0 ? parseFloat(c[iScan]) : NaN, track = iTrack>=0 ? parseFloat(c[iTrack]) : NaN;
+      const km2 = (isFinite(scan) && isFinite(track) && scan>0 && track>0) ? scan*track : 0.14;
+      out.push({ lat:lat, lon:lon, km2:km2, date:c[iDate] });
+    }
+    return out;
+  }
+  async function foyersFranceFirms(cle, coords, n){
+    const tout = []; let restant = n+1, offset = 0;
+    while(restant > 0){
+      const taille = Math.min(5, restant);
+      let dateStr = null;
+      if(offset > 0){ dateStr = isoJour(new Date(Date.now() - (offset+taille-1)*86400000)); }
+      const lot = await fetchFirmsCSV(cle, coords, taille, dateStr);
+      if(lot === null) return null;
+      tout.push.apply(tout, lot);
+      restant -= taille; offset += taille;
+    }
+    return tout;
+  }
+  function diffJoursDate(ds){
+    const p = ds.split('-'); const d = new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10));
+    const auj = new Date(); auj.setHours(0,0,0,0); d.setHours(0,0,0,0);
+    return Math.round((auj - d) / 86400000);
+  }
+  function grouperPointsFirms(pts, dKm){
+    const gr = [];
+    pts.forEach(function(p){
+      let mieux = null, dm = dKm;
+      gr.forEach(function(g){ const d = map.distance(L.latLng(p.lat, p.lon), L.latLng(g.la, g.lo))/1000; if(d < dm){ dm = d; mieux = g; } });
+      if(mieux){ mieux.parJour[p.statut] = (mieux.parJour[p.statut]||0) + p.km2; if(p.statut < mieux.statut) mieux.statut = p.statut; mieux.la = (mieux.la*mieux.n + p.lat)/(mieux.n+1); mieux.lo = (mieux.lo*mieux.n + p.lon)/(mieux.n+1); mieux.n++; }
+      else { const pj = {}; pj[p.statut] = p.km2; gr.push({ la:p.lat, lo:p.lon, statut:p.statut, n:1, parJour:pj }); }
+    });
+    gr.forEach(function(g){ let mx = 0; for(const k3 in g.parJour) if(g.parJour[k3] > mx) mx = g.parJour[k3]; g.km2 = mx; });
+    return gr;
+  }
+  const etatFranceFeux = { actif:false, groupe:null };
+  function jrsFR(){
+    return { sw:L.latLng(41.2, -5.2), ne:L.latLng(51.3, 9.7) };
+  }
+  document.getElementById('btn-france-feux').addEventListener('click', async ()=>{
+    const btn = document.getElementById('btn-france-feux');
+    if(etatFranceFeux.actif){
+      etatFranceFeux.actif = false;
+      if(etatFranceFeux.groupe) map.removeLayer(etatFranceFeux.groupe);
+      etatFranceFeux.groupe = null;
+      basculerBouton(btn, false, '', '🗺️ Vue d’ensemble France');
+      majLegende();
+      return;
+    }
+    etatFranceFeux.actif = true;
+    basculerBouton(btn, true, '🗺️ Vue d’ensemble ✕', '', '#7c2d12');
+    const nJ = Math.max(0, Math.min(40, parseInt((document.getElementById('france-jours')||{value:7}).value, 10)||7));
+    etatFranceFeux.nJours = nJ;
+    const cle = (document.getElementById('firms-key')||{value:''}).value.trim();
+    const b = jrsFR();
+    const coords = b.sw.lng.toFixed(2)+','+b.sw.lat.toFixed(2)+','+b.ne.lng.toFixed(2)+','+b.ne.lat.toFixed(2);
+    let gr = null, methode = '';
+    try{
+      if(cle){
+        afficherInfo('🗺️ Interrogation NASA FIRMS (mesure réelle, '+nJ+' j)…', 0);
+        const pts = await foyersFranceFirms(cle, coords, nJ);
+        if(!etatFranceFeux.actif) return;
+        if(pts !== null){
+          const ptsClasses = pts.map(function(p){ const df = diffJoursDate(p.date); return { lat:p.lat, lon:p.lon, km2:p.km2, statut:(df<=0?0:(df===1?1:2)) }; });
+          gr = grouperPointsFirms(ptsClasses, 3);
+          methode = 'firms';
+        }
+      }
+    }catch(e){ gr = null; }
+    if(gr === null){
+      if(!etatFranceFeux.actif) return;
+      afficherInfo('🗺️ '+(cle?'FIRMS indisponible — repli sur l\u2019estimation par image… ':'')+'Balayage satellite de la France ('+nJ+' j)…', 0);
+      try{
+        const sw = map.options.crs.project(b.sw), ne = map.options.crs.project(b.ne);
+        const largKmFR = b.sw.distanceTo(L.latLng(b.sw.lat, b.ne.lng))/1000;
+        const W = Math.max(1200, Math.min(2200, Math.round(largKmFR/0.45)));
+        const H = Math.max(700, Math.round(W * (ne.y-sw.y) / (ne.x-sw.x)));
+        const mask0 = await avecDelai(decoderMasqueJour(sw, ne, W, H, 0), 8000); if(!etatFranceFeux.actif) return;
+        const mask1 = nJ >= 1 ? await avecDelai(decoderMasqueJour(sw, ne, W, H, 1), 8000) : null; if(!etatFranceFeux.actif) return;
+        const N = W*H, maskOld = new Uint8Array(N);
+        if(nJ >= 2){
+          for(let d=2; d<=nJ; d++){
+            if((d % 5) === 0) afficherInfo('🗺️ Balayage satellite de la France ('+nJ+' j)… jour '+(d+1)+'/'+(nJ+1), 0);
+            const m = await avecDelai(decoderMasqueJour(sw, ne, W, H, d), 8000);
+            if(!etatFranceFeux.actif) return;
+            if(m) for(let i2=0;i2<N;i2++) if(m[i2]) maskOld[i2] = 1;
+          }
+        }
+        const pts0 = mask0 ? composantesConnexes(mask0, sw, ne, W, H).map(function(p){ p.statut = 0; return p; }) : [];
+        const pts1 = mask1 ? composantesConnexes(mask1, sw, ne, W, H).map(function(p){ p.statut = 1; return p; }) : [];
+        const ptsO = nJ >= 2 ? composantesConnexes(maskOld, sw, ne, W, H).map(function(p){ p.statut = 2; return p; }) : [];
+        const tous = pts0.concat(pts1).concat(ptsO);
+        const grLoc = [];
+        tous.forEach(function(p){
+          let mieux = null, dm = 12;
+          grLoc.forEach(function(g){ const d = map.distance(p.centre, L.latLng(g.la, g.lo))/1000; if(d < dm){ dm = d; mieux = g; } });
+          if(mieux){ mieux.km2 = Math.max(mieux.km2, p.km2); mieux.statut = Math.min(mieux.statut, p.statut); mieux.la = (mieux.la*mieux.n + p.centre.lat)/(mieux.n+1); mieux.lo = (mieux.lo*mieux.n + p.centre.lng)/(mieux.n+1); mieux.n++; }
+          else grLoc.push({ la:p.centre.lat, lo:p.centre.lng, km2:p.km2*0.32, statut:p.statut, n:1 });  // correction : réduit la surestimation par comptage de pixels
+        });
+        gr = grLoc; methode = 'image';
+      }catch(e){
+        cacherInfo(); etatFranceFeux.actif = false; basculerBouton(btn, false, '', '🗺️ Vue d’ensemble France');
+        afficherInfo('🗺️ Indisponible (' + (e && e.message || e) + ') — à tester en ligne', 7000);
+        return;
+      }
+    }
+    if(!etatFranceFeux.actif) return;
+    if(!gr || !gr.length){ etatFranceFeux.actif = false; basculerBouton(btn, false, '', '🗺️ Vue d’ensemble France'); afficherInfo('🗺️ Aucun point chaud détecté sur la France sur '+nJ+' j', 6000); return; }
+    gr.sort(function(a, b2){ return b2.km2 - a.km2; });
+    const grF = gr.filter(function(g){ return g.km2*100 >= 3; });
+    const COULEURS = ['#dc2626', '#f97316', '#eab308'];
+    const LIBS = nJ >= 2 ? ['détecté aujourd’hui', 'détecté hier (pas aujourd’hui)', 'détecté il y a 2 à '+nJ+' j (pas depuis)'] : (nJ === 1 ? ['détecté aujourd’hui', 'détecté hier (pas aujourd’hui)', ''] : ['détecté aujourd’hui', '', '']);
+    function arrondiHa(ha){ if(ha<50) return Math.round(ha/5)*5; if(ha<500) return Math.round(ha/25)*25; if(ha<5000) return Math.round(ha/100)*100; return Math.round(ha/500)*500; }
+    etatFranceFeux.groupe = L.layerGroup();
+    const noteMethode = methode === 'firms'
+      ? '<small><b>Mesure réelle</b> : taille effective des pixels satellite VIIRS détectés (NASA FIRMS), pas une image comptée en pixels d\u2019écran.</small>'
+      : '<small><b>Estimation grossière</b> (pas de clé FIRMS) : comptage de pixels sur l\u2019image satellite, corrigé à la baisse mais encore approximatif. <a href="#" onclick="document.getElementById(\'firms-key\').focus();return false;">Ajoutez une clé FIRMS gratuite</a> pour une mesure réelle.</small>';
+    grF.slice(0, 100).forEach(function(g){
+      const ha = g.km2*100, rayon = Math.max(6, Math.min(72, 6 + 3*Math.pow(ha, 0.32)));
+      const coul = COULEURS[g.statut];
+      const svgTaille = Math.round(rayon*2);
+      const htmlB = '<div style="position:relative;width:'+svgTaille+'px;height:'+svgTaille+'px">'
+        + '<div style="position:absolute;inset:0;border-radius:50%;border:2px solid #fff;background:'+coul+';opacity:0.85;box-shadow:0 2px 6px rgba(0,0,0,.35)"></div>'
+        + '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:'+Math.round(rayon*0.95)+'px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))">🔥</div></div>';
+      const m = L.marker([g.la, g.lo], { icon: L.divIcon({ className:'france-bulle', html:htmlB, iconSize:[svgTaille, svgTaille], iconAnchor:[svgTaille/2, svgTaille/2] }), keyboard:false });
+      m.bindPopup('<div style="font:12px/1.5 system-ui;min-width:220px"><b>🔥 Ampleur estimée : ~'+arrondiHa(ha)+' ha</b><br>'
+        + '<span style="color:'+coul+'">●</span> '+LIBS[g.statut]+'<br>'
+        + noteMethode + '<br>'
+        + '<small>Pas le statut officiel (maîtrisé/fixé/en cours). Pour le statut vérifié : <a href="#" onclick="ouvrirFeuxDeForet('+g.la.toFixed(3)+','+g.lo.toFixed(3)+');return false;">feuxdeforet.fr</a> / <a href="#" onclick="ouvrirPSFDF();return false;">PSFDF</a></small></div>');
+      m.addTo(etatFranceFeux.groupe);
+    });
+    etatFranceFeux.groupe.addTo(map);
+    cacherInfo(); majLegende();
+    afficherInfo('🗺️ '+grF.length+' zone(s) sur '+nJ+' j — '+(methode==='firms'?'mesure réelle (NASA FIRMS)':'ordre de grandeur (image satellite)')+' · rouge = aujourd’hui'+(nJ>=1?', orange = hier':'')+(nJ>=2?', jaune = 2 à '+nJ+' j':''), 11000);
+  });
   function dessinerFlammes(){
     if(!etatPanache.groupeFlammes) return;
     etatPanache.groupeFlammes.clearLayers();
@@ -6692,11 +6995,7 @@
       L.marker([p.centre.lat, p.centre.lng], { icon:iconeFoyer(taille), keyboard:false }).addTo(etatPanache.groupeFlammes);
     });
   }
-  function majEtiquettePanache(off, spd, card){
-    const hr = document.getElementById('panache-heure');
-    if(hr){ const h = new Date(Date.now()+off*3600000); hr.innerHTML = (off===0 ? 'maintenant' : '+'+off+' h')+' ('+h.getHours()+'h) \u00b7 vers le <b>'+card+'</b> \u00b7 '+Math.round(spd)+' km/h'; }
-    const sl = document.getElementById('panache-slider'); if(sl) sl.value = off;
-  }
+  function majEtiquettePanache(){ /* l'heure est affich\u00e9e par la barre unique Temps du feu */ }
   function dessinerPanaches(){
     if(!etatPanache.groupePanaches) return;
     etatPanache.groupePanaches.clearLayers();
@@ -6715,20 +7014,15 @@
     }
     majEtiquettePanache(off, spd, brg != null ? cardinal(brg) : '\u2014');
   }
-  function panacheLecture(on){
-    const b = document.getElementById('panache-play');
-    if(etatPanache.timer){ clearInterval(etatPanache.timer); etatPanache.timer = null; }
-    if(on){ etatPanache.timer = setInterval(function(){ etatPanache.offset = (etatPanache.offset+1)%49; dessinerPanaches(); }, 550); if(b) b.textContent = '\u23f8'; }
-    else if(b) b.textContent = '\u25b6';
-  }
+  function panacheLecture(){ if(etatPanache.timer){ clearInterval(etatPanache.timer); etatPanache.timer = null; } }
   document.getElementById('btn-panache').addEventListener('click', async ()=>{
     const btn = document.getElementById('btn-panache');
     if(etatPanache.actif){
       etatPanache.actif = false; panacheLecture(false);
       if(etatPanache.groupeFlammes) map.removeLayer(etatPanache.groupeFlammes);
       if(etatPanache.groupePanaches) map.removeLayer(etatPanache.groupePanaches);
-      etatPanache.groupeFlammes = etatPanache.groupePanaches = null;
-      const cb = document.getElementById('panache-ctrl'); if(cb) cb.style.display = 'none';
+      etatPanache.groupeFlammes = etatPanache.groupePanaches = null; majLegende();
+      majBarreTemps();
       basculerBouton(btn, false, '', '\ud83d\udd25 Panache anim\u00e9 + \u00e9volution');
       return;
     }
@@ -6747,75 +7041,20 @@
       etatPanache.points = pts; etatPanache.offset = 0;
       etatPanache.groupeFlammes = L.layerGroup(); etatPanache.groupePanaches = L.layerGroup();
       etatPanache.groupeFlammes.addTo(map); etatPanache.groupePanaches.addTo(map);
-      const sl = document.getElementById('panache-slider'); if(sl){ sl.max = 48; sl.value = 0; }
-      const cb = document.getElementById('panache-ctrl'); if(cb) cb.style.display = 'flex';
-      cacherInfo(); dessinerFlammes(); dessinerPanaches();
+      cacherInfo(); dessinerFlammes(); majLegende(); demarrerHorlogeFeu();
       afficherInfo('\ud83d\udd25 '+pts.length+' foyer(s) du jour \u2014 flamme sur chacun + panache \u00b7 glissez le curseur pour l\u2019\u00e9volution pr\u00e9vue (\u25b6 anime)', 9000);
     }catch(e){
       cacherInfo(); etatPanache.actif = false;
-      const cb = document.getElementById('panache-ctrl'); if(cb) cb.style.display = 'none';
       basculerBouton(btn, false, '', '\ud83d\udd25 Panache anim\u00e9 + \u00e9volution');
       afficherInfo('\ud83d\udd25 Indisponible ('+(e && e.message ? e.message : e)+') \u2014 \u00e0 tester en ligne (image du jour + Open-Meteo)', 8000);
     }
   });
-  (function initPanacheCtrl(){
-    const pb = document.getElementById('panache-play'), sl = document.getElementById('panache-slider'), fm = document.getElementById('panache-ferme');
-    if(pb && pb.addEventListener) pb.addEventListener('click', function(){ panacheLecture(!etatPanache.timer); });
-    if(sl && sl.addEventListener) sl.addEventListener('input', function(e){ panacheLecture(false); etatPanache.offset = parseInt(e.target.value, 10) || 0; dessinerPanaches(); });
-    if(fm && fm.addEventListener) fm.addEventListener('click', function(){ const b = document.getElementById('btn-panache'); if(b) b.click(); });
-  })();
   // ---------- Rejouer le feu : d\u00e9roul\u00e9 jour par jour, cumul\u00e9 ou instantan\u00e9 ----------
-  const etatRejeu = { actif:false, layers:[], t:0, timer:null, tmo:null, cumul:true };
   function bucketPourJour(d){ if(d<=0) return 0; if(d===1) return 1; if(d<=4) return 2; if(d<=9) return 3; return 4; }
   function assurerPanesRejeu(){
     if(!map.createPane) return;
     for(let D=0; D<=15; D++){ const id = 'rejeuJ'+D; if(!map.getPane || !map.getPane(id)){ const p = map.createPane(id); if(p && p.style){ p.style.filter = 'url(#fx-age-b'+bucketPourJour(D)+')'; p.style.zIndex = 470 - D; p.style.pointerEvents = 'none'; } } }
   }
-  function montrerRejeu(){
-    const dcur = 15 - etatRejeu.t;
-    etatRejeu.layers.forEach(function(l, D){ if(!l || !l.setOpacity) return; const vis = etatRejeu.cumul ? (D >= dcur) : (D === dcur); l.setOpacity(vis ? 0.92 : 0); });
-    const dt = new Date(Date.now() - dcur*86400000);
-    const dd = document.getElementById('rejeu-date'); if(dd) dd.textContent = (dcur===0 ? 'aujourd\u2019hui' : (dcur===1 ? 'hier' : 'il y a '+dcur+' j'))+' \u00b7 '+dt.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
-    const sl = document.getElementById('rejeu-slider'); if(sl) sl.value = etatRejeu.t;
-  }
-  function rejeuLecture(on){
-    const b = document.getElementById('rejeu-play');
-    if(etatRejeu.timer){ clearInterval(etatRejeu.timer); etatRejeu.timer = null; }
-    if(on){ etatRejeu.timer = setInterval(function(){ etatRejeu.t = (etatRejeu.t+1)%16; montrerRejeu(); }, 750); if(b) b.textContent = '\u23f8'; }
-    else if(b) b.textContent = '\u25b6';
-  }
-  function viderRejeu(){ etatRejeu.layers.forEach(function(l){ if(l) map.removeLayer(l); }); etatRejeu.layers = []; if(etatRejeu.timer){ clearInterval(etatRejeu.timer); etatRejeu.timer = null; } if(etatRejeu.tmo){ clearTimeout(etatRejeu.tmo); etatRejeu.tmo = null; } const cb = document.getElementById('rejeu-ctrl'); if(cb) cb.style.display = 'none'; }
-  document.getElementById('btn-rejeu').addEventListener('click', ()=>{
-    const btn = document.getElementById('btn-rejeu');
-    if(etatRejeu.actif){ etatRejeu.actif = false; viderRejeu(); basculerBouton(btn, false, '', '\ud83c\udf9e\ufe0f Rejouer le feu (15 j)'); return; }
-    assurerPanesRejeu();
-    etatRejeu.actif = true; etatRejeu.t = 0;
-    basculerBouton(btn, true, '\ud83c\udf9e\ufe0f Rejeu \u2715', '', '#dc2626');
-    const cb = document.getElementById('rejeu-ctrl'); if(cb) cb.style.display = 'flex';
-    afficherInfo('\ud83c\udf9e\ufe0f Pr\u00e9chargement des images (15 jours)\u2026', 0);
-    let demarre = false, signale = false;
-    const charges = [];
-    function demarrerRejeu(){ if(demarre || !etatRejeu.actif) return; demarre = true; if(etatRejeu.tmo){ clearTimeout(etatRejeu.tmo); etatRejeu.tmo = null; } cacherInfo(); montrerRejeu(); rejeuLecture(true); afficherInfo('\ud83c\udf9e\ufe0f Rejeu du feu \u2014 glissez ou \u25b6 ; case \u00ab historique \u00bb pour cumuler ou non les jours', 8000); }
-    etatRejeu.layers = [];
-    for(let D=0; D<=15; D++){
-      const opts = { layers:'VIIRS_SNPP_Thermal_Anomalies_375m_All', format:'image/png', transparent:true, version:'1.3.0', pane:'rejeuJ'+D, opacity:0, time:dateJour(D), attribution:'NASA EOSDIS GIBS / FIRMS', keepBuffer:16, updateWhenIdle:false };
-      if(typeof L.CRS !== 'undefined' && L.CRS.EPSG4326) opts.crs = L.CRS.EPSG4326;
-      const l = L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg4326/all/wms.cgi?', opts);
-      charges[D] = false;
-      if(l.on){ l.on('load', (function(idx){ return function(){ if(!charges[idx]){ charges[idx] = true; if(charges.length === 16 && charges.every(Boolean)) demarrerRejeu(); } }; })(D));
-        l.on('tileerror', function(){ if(signale) return; signale = true; afficherInfo('\ud83c\udf9e\ufe0f Certains jours ne se chargent pas \u2014 le reste se joue quand m\u00eame', 6000); }); }
-      if(l.addTo) l.addTo(map);
-      etatRejeu.layers[D] = l;
-    }
-    etatRejeu.tmo = setTimeout(demarrerRejeu, 9000);
-  });
-  (function initRejeuCtrl(){
-    const pb = document.getElementById('rejeu-play'), sl = document.getElementById('rejeu-slider'), fm = document.getElementById('rejeu-ferme'), cu = document.getElementById('rejeu-cumul');
-    if(pb && pb.addEventListener) pb.addEventListener('click', function(){ rejeuLecture(!etatRejeu.timer); });
-    if(sl && sl.addEventListener) sl.addEventListener('input', function(e){ rejeuLecture(false); etatRejeu.t = parseInt(e.target.value, 10) || 0; montrerRejeu(); });
-    if(cu && cu.addEventListener) cu.addEventListener('change', function(){ etatRejeu.cumul = !!cu.checked; montrerRejeu(); });
-    if(fm && fm.addEventListener) fm.addEventListener('click', function(){ const b = document.getElementById('btn-rejeu'); if(b) b.click(); });
-  })();
   // ---------- G\u00e9ologie (BRGM) & grands massifs ----------
   const etatGeol = { carte:{actif:false,layer:null}, m1:{actif:false,layer:null}, massifs:{actif:false,groupe:null} };
   function assurerPaneGeol(){ if(map.createPane && (!map.getPane || !map.getPane('geol'))){ const p = map.createPane('geol'); if(p && p.style) p.style.zIndex = 250; } }
@@ -6827,13 +7066,13 @@
       e.actif = true; basculerBouton(btn, true, libOn, '', '#7c3aed');
       e.layer = coucheBRGM(layer);
       let sig = false;
-      e.layer.on('tileerror', function(){ if(sig) return; sig = true; afficherInfo('\U0001faa8 Le service g\u00e9ologique BRGM ne r\u00e9pond pas \u2014 r\u00e9essayez dans un instant', 6000); });
+      e.layer.on('tileerror', function(){ if(sig) return; sig = true; afficherInfo('🪨 Le service g\u00e9ologique BRGM ne r\u00e9pond pas \u2014 r\u00e9essayez dans un instant', 6000); });
       e.layer.addTo(map); majLegende();
-      afficherInfo('\U0001faa8 Carte g\u00e9ologique (BRGM) \u2014 nature des roches et structures du sous-sol', 6000);
+      afficherInfo('🪨 Carte g\u00e9ologique (BRGM) \u2014 nature des roches et structures du sous-sol', 6000);
     });
   }
-  brancherGeol('carte', 'GEOLOGIE', 'btn-geolcarte', '\U0001faa8 Carte g\u00e9ologique \u2715', '\U0001faa8 Carte g\u00e9ologique (BRGM)');
-  brancherGeol('m1', 'SCAN_F_GEOL1M', 'btn-geol1m', '\U0001f5fa Vue d\u2019ensemble \u2715', '\U0001f5fa Vue d\u2019ensemble (1/1 000 000)');
+  brancherGeol('carte', 'GEOLOGIE', 'btn-geolcarte', '🪨 Carte g\u00e9ologique \u2715', '🪨 Carte g\u00e9ologique (BRGM)');
+  brancherGeol('m1', 'SCAN_F_GEOL1M', 'btn-geol1m', '🗺 Vue d\u2019ensemble \u2715', '🗺 Vue d\u2019ensemble (1/1 000 000)');
   const MASSIFS = [
     ['Alpes', 45.2, 6.4, 'alpin', 'Cha\u00eene r\u00e9cente (orog\u00e9n\u00e8se alpine, -65 Ma \u00e0 aujourd\u2019hui), n\u00e9e de la collision Afrique\u2013Europe. Roches vari\u00e9es : calcaires pliss\u00e9s, socle cristallin, ophiolites (anciens fonds oc\u00e9aniques).'],
     ['Jura', 46.6, 6.0, 'alpin', 'Cha\u00eene pliss\u00e9e r\u00e9cente : calcaires du Jurassique (qui a donn\u00e9 son nom \u00e0 la p\u00e9riode) pliss\u00e9s par la pouss\u00e9e alpine. Relief de plis, recul\u00e9es et karst.'],
@@ -6849,18 +7088,18 @@
   ];
   document.getElementById('btn-geolmassifs').addEventListener('click', ()=>{
     const btn = document.getElementById('btn-geolmassifs'), e = etatGeol.massifs;
-    if(e.actif){ e.actif = false; if(e.groupe) map.removeLayer(e.groupe); e.groupe = null; basculerBouton(btn, false, '', '\U0001f3d4 Grands massifs (\u00e2ge & tectonique)'); majLegende(); return; }
-    e.actif = true; basculerBouton(btn, true, '\U0001f3d4 Grands massifs \u2715', '', '#0e7490');
+    if(e.actif){ e.actif = false; if(e.groupe) map.removeLayer(e.groupe); e.groupe = null; basculerBouton(btn, false, '', '🏔 Grands massifs (\u00e2ge & tectonique)'); majLegende(); return; }
+    e.actif = true; basculerBouton(btn, true, '🏔 Grands massifs \u2715', '', '#0e7490');
     e.groupe = L.layerGroup();
     MASSIFS.forEach(function(m){
       const coul = m[3] === 'alpin' ? '#0e7490' : '#92400e';
-      const ic = L.divIcon({ className:'massif-lbl', html:'<span style="background:'+coul+';color:#fff;padding:2px 8px;border-radius:11px;font-size:12px;font-weight:600;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.4)">\U0001f3d4 '+m[0]+'</span>', iconSize:null });
+      const ic = L.divIcon({ className:'massif-lbl', html:'<span style="background:'+coul+';color:#fff;padding:2px 8px;border-radius:11px;font-size:12px;font-weight:600;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.4)">🏔 '+m[0]+'</span>', iconSize:null });
       L.marker([m[1], m[2]], { icon:ic, keyboard:false })
         .bindPopup('<b>'+m[0]+'</b><br><small style="color:'+coul+';font-weight:600">'+(m[3]==='alpin' ? 'Cha\u00eene r\u00e9cente \u2014 orog\u00e9n\u00e8se alpine' : 'Vieux socle hercynien')+'</small><br>'+m[4], { maxWidth:270 })
         .addTo(e.groupe);
     });
     e.groupe.addTo(map); majLegende();
-    afficherInfo('\U0001f3d4 Grands massifs \u2014 ocre = vieux socle hercynien \u00b7 bleu = cha\u00eene r\u00e9cente alpine \u00b7 cliquez pour la g\u00e9ologie', 7500);
+    afficherInfo('🏔 Grands massifs \u2014 ocre = vieux socle hercynien \u00b7 bleu = cha\u00eene r\u00e9cente alpine \u00b7 cliquez pour la g\u00e9ologie', 7500);
   });
   // ---------- Altitude en couleur (teinte hypsom\u00e9trique, \u00e9chelle adapt\u00e9e au zoom) ----------
   const RAMPE_ALT = [[0,60,150,60],[0.15,130,190,90],[0.35,235,225,130],[0.55,215,165,95],[0.75,165,105,60],[0.9,150,130,120],[1,245,245,245]];
@@ -6894,15 +7133,15 @@
   const etatAltitude = { actif:false, layer:null };
   document.getElementById('btn-altcouleur').addEventListener('click', ()=>{
     const btn = document.getElementById('btn-altcouleur');
-    if(etatAltitude.actif){ etatAltitude.actif = false; if(etatAltitude.layer) map.removeLayer(etatAltitude.layer); etatAltitude.layer = null; basculerBouton(btn, false, '', '\U0001f3d4 Altitude en couleur'); majLegende(); return; }
-    if(!CoucheAltitude){ afficherInfo('\U0001f3d4 Couche altitude indisponible sur ce navigateur', 5000); return; }
+    if(etatAltitude.actif){ etatAltitude.actif = false; if(etatAltitude.layer) map.removeLayer(etatAltitude.layer); etatAltitude.layer = null; basculerBouton(btn, false, '', '🏔 Altitude en couleur'); majLegende(); return; }
+    if(!CoucheAltitude){ afficherInfo('🏔 Couche altitude indisponible sur ce navigateur', 5000); return; }
     if(map.createPane && (!map.getPane || !map.getPane('altitude'))){ const p = map.createPane('altitude'); if(p && p.style){ p.style.zIndex = 245; p.style.pointerEvents = 'none'; } }
     etatAltitude.actif = true;
-    basculerBouton(btn, true, '\U0001f3d4 Altitude \u2715', '', '#166534');
+    basculerBouton(btn, true, '🏔 Altitude \u2715', '', '#166534');
     etatAltitude.layer = new CoucheAltitude({ pane:'altitude', maxNativeZoom:14, maxZoom:19, opacity:0.82, attribution:'Altitude : AWS Terrain Tiles (Mapzen / SRTM-NASADEM)' });
     etatAltitude.layer.addTo(map);
     majLegende();
-    afficherInfo('\U0001f3d4 Altitude en couleur \u2014 vert (plaines) \u2192 brun \u2192 blanc (sommets) \u00b7 l\u2019\u00e9chelle se resserre quand vous zoomez', 7500);
+    afficherInfo('🏔 Altitude en couleur \u2014 vert (plaines) \u2192 brun \u2192 blanc (sommets) \u00b7 l\u2019\u00e9chelle se resserre quand vous zoomez', 7500);
   });
   // ---------- Densit\u00e9 de population (jeu mondial GPW, NASA SEDAC via GIBS) ----------
   const etatPop = { actif:false, layer:null };
@@ -6914,18 +7153,692 @@
     if(typeof L.CRS !== 'undefined' && L.CRS.EPSG4326) opts.crs = L.CRS.EPSG4326;
     const l = L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg4326/all/wms.cgi?', opts);
     let sig = false;
-    l.on('tileerror', function(){ if(sig) return; sig = true; afficherInfo('\U0001f465 La couche population NASA ne r\u00e9pond pas \u2014 r\u00e9essayez dans un instant', 6000); });
+    l.on('tileerror', function(){ if(sig) return; sig = true; afficherInfo('👥 La couche population NASA ne r\u00e9pond pas \u2014 r\u00e9essayez dans un instant', 6000); });
     etatPop.layer = l; l.addTo(map); majLegende();
   }
   document.getElementById('btn-population').addEventListener('click', ()=>{
     const btn = document.getElementById('btn-population');
-    if(etatPop.actif){ etatPop.actif = false; if(etatPop.layer) map.removeLayer(etatPop.layer); etatPop.layer = null; basculerBouton(btn, false, '', '\U0001f465 Afficher la densit\u00e9'); majLegende(); return; }
+    if(etatPop.actif){ etatPop.actif = false; if(etatPop.layer) map.removeLayer(etatPop.layer); etatPop.layer = null; basculerBouton(btn, false, '', '👥 Afficher la densit\u00e9'); majLegende(); return; }
     etatPop.actif = true;
-    basculerBouton(btn, true, '\U0001f465 Densit\u00e9 \u2715', '', '#7c2d12');
+    basculerBouton(btn, true, '👥 Densit\u00e9 \u2715', '', '#7c2d12');
     chargerPop();
-    afficherInfo('\U0001f465 Densit\u00e9 de population (habitants/km\u00b2, jeu GPW) \u2014 comparez les ann\u00e9es pour voir l\u2019\u00e9volution', 7500);
+    afficherInfo('👥 Densit\u00e9 de population (habitants/km\u00b2, jeu GPW) \u2014 comparez les ann\u00e9es pour voir l\u2019\u00e9volution', 7500);
   });
   document.getElementById('pop-annee').addEventListener('change', ()=>{ if(etatPop.actif) chargerPop(); });
+  // ---------- Anticipation de propagation (INDICATIF, non op\u00e9rationnel) ----------
+  function majAvertFeu(){ const on = etatExt.actif || etatSim.actif || etatFranceFeux.actif; const el = document.getElementById('feu-avert'); if(el) el.style.display = on ? 'block' : 'none'; if(!on){ const p = document.getElementById('feu-methode'); if(p) p.style.display = 'none'; const bg = document.getElementById('feu-badge'); if(bg) bg.style.display = 'none'; } majLegende(); }
+  async function conditionsFeu(ll){
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude='+ll.lat.toFixed(3)+'&longitude='+ll.lng.toFixed(3)
+      + '&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_direction_10m'
+      + '&hourly=wind_speed_10m,wind_direction_10m,precipitation&daily=precipitation_sum&past_days=4&forecast_days=2&timezone=Europe%2FParis';
+    try{ const d = await fetchMeteoJson(url, 30); const c = d.current || {}, h = d.hourly || {};
+      let p5 = 0; const dp = (d.daily && d.daily.precipitation_sum) || []; for(let k=0;k<dp.length;k++){ if(dp[k]!=null) p5 += dp[k]; }
+      return { temp:(c.temperature_2m!=null?c.temperature_2m:25), rh:(c.relative_humidity_2m!=null?c.relative_humidity_2m:40), wspd:(c.wind_speed_10m||15), wdir:(c.wind_direction_10m||0), precip:(c.precipitation||0), precip5:p5, hdir:(h.wind_direction_10m||[]), hspd:(h.wind_speed_10m||[]), hpre:(h.precipitation||[]), i0:(4*24 + new Date().getHours()) };
+    }catch(e){ return { temp:25, rh:40, wspd:15, wdir:0, precip:0, precip5:0, hdir:[], hspd:[], hpre:[], i0:(4*24 + new Date().getHours()) }; }
+  }
+  function facteurSecheresse(T, RH, precip, precip5){ let f = 0.6 + ((T==null?20:T)-15)/40 + ((60-(RH==null?50:RH))/120); if(precip > 0) f -= Math.min(0.45, precip*0.3); if(precip5 != null) f -= Math.min(0.5, precip5*0.02); if(f<0.35) f=0.35; if(f>2) f=2; return f; }
+
+  // --- 1) Zones d'extension probable : ellipses de temps d'arriv\u00e9e ---
+  const etatExt = { actif:false, groupe:null, pts:null, cond:null, slopeF:1, ph:undefined };
+  function ellipsePolygon(lat, lon, brg, A, B, dCenter){
+    const c = destPoint(lat, lon, dCenter, brg), pts = [];
+    for(let k=0;k<=40;k++){ const th = k/40*2*Math.PI, along = A*Math.cos(th), cross = B*Math.sin(th);
+      const dist = Math.sqrt(along*along+cross*cross), bearing = brg + Math.atan2(cross, along)*180/Math.PI;
+      pts.push(destPoint(c[0], c[1], dist, bearing)); }
+    return pts;
+  }
+  document.getElementById('btn-extension').addEventListener('click', async ()=>{
+    const btn = document.getElementById('btn-extension');
+    if(etatExt.actif){ etatExt.actif = false; if(etatExt.groupe) map.removeLayer(etatExt.groupe); etatExt.groupe = null; basculerBouton(btn, false, '', '\u27a4 Propagation'); majAvertFeu(); if(typeof etatProsp !== 'undefined' && etatProsp.actif){ etatProsp.actif = false; const pb2 = document.getElementById('btn-prospfeu'); if(pb2) basculerBouton(pb2, false, '', '\ud83d\udd2e Prospective (\u2192 +48 h)'); } return; }
+    etatExt.actif = true; basculerBouton(btn, true, '\u27a4 Propagation \u2715', '', '#b91c1c'); majAvertFeu();
+    afficherInfo('\ud83d\udd25 Foyers du jour + conditions m\u00e9t\u00e9o\u2026', 0);
+    try{
+      const pts = await foyersDuJour(); if(!etatExt.actif) return;
+      if(!pts.length){ etatExt.actif = false; basculerBouton(btn, false, '', '\u27a4 Propagation'); majAvertFeu(); afficherInfo('\ud83d\udd25 Aucun foyer aujourd\u2019hui dans la vue \u2014 recentrez sur la zone', 7000); return; }
+      let la=0, lo=0; pts.forEach(function(p){ la+=p.centre.lat; lo+=p.centre.lng; }); la/=pts.length; lo/=pts.length;
+      const cond = await conditionsFeu(L.latLng(la, lo)); if(!etatExt.actif) return;
+      let slopeF = 1;
+      try{ const dwb = ((cond.wdir||0)+180)%360, dpt = destPoint(la, lo, 3, dwb), a0 = await altPoint(la, lo), a1 = await altPoint(dpt[0], dpt[1]); if(a0!=null && a1!=null){ const sl = (a1-a0)/3000; slopeF = sl>0 ? (1 + Math.min(1.8, 8*sl*sl)) : Math.max(0.5, 1+sl*1.5); } }catch(e){}
+      if(!etatExt.actif) return;
+      etatExt.pts = pts.slice(0, 60); etatExt.cond = cond; etatExt.slopeF = slopeF;
+      try{ etatExt.fwi = await fwiEffis(L.latLng(la, lo)); }catch(e){ etatExt.fwi = null; }
+      if(!etatExt.actif) return;
+      try{
+        const bg = document.getElementById('feu-badge');
+        if(bg){
+          let vmax = 0; for(let k=0;k<24;k++){ const s = cond.hspd[cond.i0+k]; if(s > vmax) vmax = s; }
+          if(etatExt.fwi != null && etatExt.fwi >= 30 && vmax >= 30){ bg.innerHTML = '\u26a0\ufe0f Conditions propices aux feux \u2014 FWI '+Math.round(etatExt.fwi)+' (EFFIS) + vent pr\u00e9vu '+Math.round(vmax)+' km/h <small>(donn\u00e9es officielles)</small>'; bg.style.display = 'block'; }
+          else bg.style.display = 'none';
+        }
+      }catch(e){}
+      etatExt.vueRef = { lat:map.getCenter().lat, lng:map.getCenter().lng, z:map.getZoom(), t:Date.now() };
+      etatExt.ph = (map.getPane && map.getPane('haloZone')) ? 'haloZone' : undefined;
+      try{ const bF = map.getBounds(), fg = await fuelDepuisCLC(bF, 96, 64); etatExt.fuelGrid = fg ? { fuel:fg, cols:96, rows:64, swP:map.options.crs.project(bF.getSouthWest()), neP:map.options.crs.project(bF.getNorthEast()) } : null; }catch(e){ etatExt.fuelGrid = null; }
+      if(!etatExt.actif) return;
+      try{ etatExt.brule = await chargerMasqueBrule(map.getBounds()); }catch(e){ etatExt.brule = null; }
+      if(!etatExt.actif) return;
+      try{ etatExt.coupe = await chargerCoupures(map.getBounds()); }catch(e){ etatExt.coupe = null; }
+      if(!etatExt.actif) return;
+      etatExt.groupe = L.layerGroup(); etatExt.groupe.addTo(map);
+      cacherInfo(); majAvertFeu(); demarrerHorlogeFeu();
+      afficherInfo('🔥 Extension — glissez le temps (0 → 48 h) : cône orange (imminent) → gris (à terme), orienté par le vent prévu, la pente et la sécheresse (▶ anime)', 9000);
+    }catch(e){ cacherInfo(); etatExt.actif = false; basculerBouton(btn, false, '', '\u27a4 Propagation'); majAvertFeu(); afficherInfo('\ud83d\udd25 Indisponible \u2014 \u00e0 tester en ligne (image du jour + Open-Meteo)', 7000); }
+  });
+
+  // ---------- Horloge commune du feu (panache + extension + simulation) ----------
+  const horlogeFeu = { h:0, timer:null };
+  const etatAnim = { actif:false, layers:[] };  // Animation compl\u00e8te J-7 \u2192 +48 h
+  function feuTempsActif(){ return etatPanache.actif || etatExt.actif || etatSim.actif || etatAnim.actif; }
+  function facteurPompiers(){ const el = document.getElementById('feu-pompiers'); let v = el ? parseFloat(el.value) : 45; if(isNaN(v)) v = 45; return 0.12 + 0.88*(v/100); }
+  function libellePompiers(){ const el = document.getElementById('feu-pompiers'); let v = el ? parseFloat(el.value) : 45; if(isNaN(v)) v = 45; return v <= 15 ? 'interv. max' : (v <= 45 ? 'interv. forte' : (v <= 75 ? 'interv. moy.' : (v >= 96 ? 'sans interv.' : 'interv. faible'))); }
+  function majPompiersLbl(){ const l = document.getElementById('feu-pompiers-lbl'); if(l) l.textContent = libellePompiers(); }
+  async function fwiEffis(ll){
+    try{
+      const dd = 0.35, bbox = (ll.lng-dd)+','+(ll.lat-dd)+','+(ll.lng+dd)+','+(ll.lat+dd);
+      const url = 'https://maps.effis.emergency.copernicus.eu/effis?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=ecmwf007.fwi&QUERY_LAYERS=ecmwf007.fwi&SRS=EPSG:4326&BBOX='+bbox+'&WIDTH=101&HEIGHT=101&X=50&Y=50&INFO_FORMAT=application/json&TIME='+dateJour(0);
+      const r = await fetch(url); if(!r.ok) return null;
+      const j = await r.json();
+      const f = j && j.features && j.features[0] && j.features[0].properties;
+      if(!f) return null;
+      for(const k in f){ const v = parseFloat(f[k]); if(isFinite(v) && v >= 0 && v <= 200) return v; }
+      return null;
+    }catch(e){ return null; }
+  }
+  function recalculerFeu(){
+    ['btn-panache','btn-simfeu','btn-extension'].forEach(function(id){ const b = document.getElementById(id); if(b && b.textContent.indexOf('\u2715') !== -1){ b.click(); b.click(); } });
+  }
+  function majBarreTemps(){ const b = document.getElementById('feu-temps'); const on = feuTempsActif(); if(b) b.style.display = on ? 'flex' : 'none'; const sc2 = document.getElementById('feu-simcase'); if(sc2) sc2.checked = !!etatSim.actif;
+    const sl = document.getElementById('feu-temps-slider'); if(sl){ sl.min = etatAnim.actif ? -168 : 0; sl.max = (etatPanache.actif || etatExt.actif || etatSim.actif) ? 48 : (etatAnim.actif ? 0 : 48); const mn = parseFloat(sl.min), mx = parseFloat(sl.max)||48, P = Math.max(0, Math.min(100, ((0-mn)/((mx-mn)||1))*100)); sl.style.background = 'linear-gradient(to right,#475569 0%,#475569 '+P+'%,#9a3412 '+P+'%,#f97316 100%)'; sl.style.borderRadius = '6px'; } if(!on && horlogeFeu.timer){ clearInterval(horlogeFeu.timer); horlogeFeu.timer = null; } }
+  function ventMoyenExt(t){
+    const cond = etatExt.cond; if(!cond) return { brg:0, spd:0, pre:0 };
+    let sx=0, sy=0, sp=0, pr=0, n=0;
+    for(let k=0;k<Math.max(1, Math.round(t));k++){ const idx=cond.i0+k, dir=cond.hdir[idx], spd=cond.hspd[idx]; if(dir==null) continue; const bk=(dir+180)%360; sx+=Math.sin(bk*Math.PI/180)*spd; sy+=Math.cos(bk*Math.PI/180)*spd; sp+=spd; pr+=(cond.hpre[idx]||0); n++; }
+    if(!n) return { brg:((cond.wdir||0)+180)%360, spd:cond.wspd||0, pre:cond.precip||0 };
+    return { brg:(Math.atan2(sx, sy)*180/Math.PI+360)%360, spd:sp/n, pre:pr };
+  }
+  async function chargerCoupures(bnds){
+    try{
+      if(typeof document.createElement !== 'function') return null;
+      const sw = map.options.crs.project(bnds.getSouthWest()), ne = map.options.crs.project(bnds.getNorthEast());
+      const cols = 96, rows = 64, mk = new Uint8Array(cols*rows), couches = ['HYDROGRAPHY.HYDROGRAPHY','TRANSPORTNETWORKS.ROADS'];
+      for(let k=0;k<couches.length;k++){
+        const url = WMS_GEOPF+'?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&LAYERS='+couches[k]+'&STYLES=&CRS=EPSG:3857&BBOX='+sw.x+','+sw.y+','+ne.x+','+ne.y+'&WIDTH='+cols+'&HEIGHT='+rows+'&FORMAT=image/png&TRANSPARENT=TRUE';
+        const img = await new Promise(function(res){ const g = new Image(); g.crossOrigin = 'anonymous'; g.onload = function(){ res(g); }; g.onerror = function(){ res(null); }; g.src = url; });
+        if(!img) continue;
+        const cv = document.createElement('canvas'); cv.width = cols; cv.height = rows; const cx = cv.getContext('2d'); if(!cx) continue;
+        cx.drawImage(img, 0, 0, cols, rows);
+        let dat; try{ dat = cx.getImageData(0, 0, cols, rows).data; }catch(e){ continue; }
+        for(let i=0;i<cols*rows;i++){ if(dat[i*4+3] > 50) mk[i] = 1; }
+      }
+      return { mk:mk, cols:cols, rows:rows, swP:sw, neP:ne };
+    }catch(e){ return null; }
+  }
+  async function chargerMasqueBrule(bnds){
+    try{
+      if(typeof document.createElement !== 'function') return null;
+      const sw = map.options.crs.project(bnds.getSouthWest()), ne = map.options.crs.project(bnds.getNorthEast());
+      const cols = 96, rows = 64, mk = new Uint8Array(cols*rows);
+      const jrs = [1, 2, 4, 7];
+      for(let k=0;k<jrs.length;k++){
+        const url = 'https://gibs.earthdata.nasa.gov/wms/epsg3857/all/wms.cgi?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&LAYERS=VIIRS_SNPP_Thermal_Anomalies_375m_All&STYLES=&CRS=EPSG:3857&BBOX='+sw.x+','+sw.y+','+ne.x+','+ne.y+'&WIDTH='+cols+'&HEIGHT='+rows+'&FORMAT=image/png&TRANSPARENT=TRUE&TIME='+dateJour(jrs[k]);
+        const img = await new Promise(function(res){ const g = new Image(); g.crossOrigin = 'anonymous'; g.onload = function(){ res(g); }; g.onerror = function(){ res(null); }; g.src = url; });
+        if(!img) continue;
+        const cv = document.createElement('canvas'); cv.width = cols; cv.height = rows; const cx = cv.getContext('2d'); if(!cx) continue;
+        cx.drawImage(img, 0, 0, cols, rows);
+        let dat; try{ dat = cx.getImageData(0, 0, cols, rows).data; }catch(e){ continue; }
+        for(let i=0;i<cols*rows;i++){ if(dat[i*4+3] > 60) mk[i] = 1; }
+      }
+      return { mk:mk, cols:cols, rows:rows, swP:sw, neP:ne };
+    }catch(e){ return null; }
+  }
+  function idxGrilleExt(g, la, lo){
+    const p = map.options.crs.project(L.latLng(la, lo));
+    const fx = (p.x-g.swP.x)/(g.neP.x-g.swP.x), fy = (g.neP.y-p.y)/(g.neP.y-g.swP.y);
+    if(fx < 0 || fx >= 1 || fy < 0 || fy >= 1) return -1;
+    return Math.floor(fy*g.rows)*g.cols + Math.floor(fx*g.cols);
+  }
+  function fuelExtAuPoint(la, lo){
+    const g = etatExt.fuelGrid; if(!g) return 0.7;
+    const i = idxGrilleExt(g, la, lo); return i < 0 ? 0.7 : g.fuel[i];
+  }
+  function bruleAuPoint(la, lo){
+    const g = etatExt.brule; if(!g) return false;
+    const i = idxGrilleExt(g, la, lo); return i >= 0 && g.mk[i] === 1;
+  }
+  function grappesFoyers(pts, dKm){
+    const gr = [];
+    (pts||[]).forEach(function(p){
+      let mieux = null, dm = dKm;
+      gr.forEach(function(g){ const d = map.distance(L.latLng(p.centre.lat, p.centre.lng), L.latLng(g.la, g.lo))/1000; if(d < dm){ dm = d; mieux = g; } });
+      if(mieux){ mieux.n++; mieux.la += (p.centre.lat - mieux.la)/mieux.n; mieux.lo += (p.centre.lng - mieux.lo)/mieux.n; if(dm > mieux.r) mieux.r = dm; }
+      else gr.push({ la:p.centre.lat, lo:p.centre.lng, n:1, r:0.3 });
+    });
+    return gr;
+  }
+  function dispersionVentDeg(cond, t){
+    let sx = 0, sy = 0, n = 0;
+    for(let k=0;k<=Math.max(1, Math.round(t));k++){ const d = cond.hdir[cond.i0+k]; if(d == null) continue; sx += Math.sin(d*Math.PI/180); sy += Math.cos(d*Math.PI/180); n++; }
+    if(n < 2) return 20;
+    const R = Math.sqrt(sx*sx+sy*sy)/n;
+    const sig = Math.sqrt(Math.max(0, -2*Math.log(Math.max(1e-6, R))))*180/Math.PI;
+    return Math.max(0, Math.min(60, sig));
+  }
+  function dessinerExtension(h){
+    if(!etatExt.groupe) return; etatExt.groupe.clearLayers();
+    if(h < 0) return;
+    const cond = etatExt.cond; if(!cond) return;
+    const t = Math.max(0, h), ph = etatExt.ph, pomp = facteurPompiers();
+    const slopeF = Math.min(1.8, etatExt.slopeF || 1);
+    const vm = ventMoyenExt(Math.max(1, t));
+    const dry = (etatExt.fwi != null) ? Math.max(0.5, Math.min(1.8, 0.5 + etatExt.fwi/38)) : Math.min(1.8, facteurSecheresse(cond.temp, cond.rh, vm.pre, cond.precip5));
+    const iH = cond.i0 + Math.round(t);
+    const dirH = (cond.hdir[iH] != null) ? (cond.hdir[iH]+180)%360 : vm.brg;
+    const spdH = (cond.hspd[iH] != null) ? cond.hspd[iH] : vm.spd;
+    const traceOn = !!(document.getElementById('feu-trace')||{}).checked;
+    const sig = dispersionVentDeg(cond, t);
+    const ang = Math.max(18, Math.min(50, 18 + 0.7*sig));    // ouverture du c\u00f4ne = variabilit\u00e9 du vent pr\u00e9vu
+    const pompC = Math.pow(pomp, 0.4);                        // l'incertitude d\u00e9cro\u00eet moins vite que la vitesse
+    grappesFoyers(etatExt.pts, 3).forEach(function(p){
+      const la = p.la, lo = p.lo;
+      const rosPre = 0.08*(1+vm.spd/15)*dry*slopeF;
+      const dEst = Math.min(15, rosPre*1.3*t);
+      const pMi = destPoint(la, lo, Math.max(0.3, dEst*0.5), vm.brg), pTt = destPoint(la, lo, Math.max(0.6, dEst), vm.brg);
+      const fu = (fuelExtAuPoint(la, lo) + fuelExtAuPoint(pMi[0], pMi[1]) + fuelExtAuPoint(pTt[0], pTt[1]))/3;
+      let fuelF = (fu <= 0.05) ? 0.15 : (0.35 + fu);
+      const freinB = dEst > 1.2 && (bruleAuPoint(pTt[0], pTt[1]) || bruleAuPoint(pMi[0], pMi[1])); if(freinB) fuelF *= 0.3;
+      let dStop = -1;
+      if(etatExt.coupe && dEst > 0.4){ for(let s=2; s<=12; s++){ const dk = dEst*s/12; const pk = destPoint(la, lo, dk, vm.brg); const gI = idxGrilleExt(etatExt.coupe, pk[0], pk[1]); if(gI >= 0 && etatExt.coupe.mk[gI] === 1){ dStop = dk; break; } } }
+      const rosLibre = Math.min(1.5, rosPre*fuelF);                        // vitesse potentielle SANS intervention
+      const rosLibreH = Math.min(1.5, 0.08*(1+spdH/15)*dry*slopeF*fuelF);
+      let ros = rosLibre*pomp;                                             // vitesse effective (trace)
+      let dTot = Math.min(15, ros*t);
+      if(dStop > 0.15 && dTot > dStop){ dTot = dStop + (dTot - dStop)*0.35; }  // coupure (route/eau) : frein fort, pas mur (sautes possibles)
+      const dTete = 0.3*dTot;
+      const plancher = 0.5 + 0.18*Math.sqrt(Math.max(0.5, t));             // incertitude minimale, cro\u00eet en \u221at
+      const Lo = Math.max(plancher, Math.min(10, rosLibreH*Math.min(t, 6)*pompC)); // zone atteignable ~6 h
+      const angG = Math.min(54, ang + Math.atan2(p.r || 0.3, Math.max(0.5, Lo))*22);
+      const tete = dTete > 0.02 ? destPoint(la, lo, dTete, vm.brg) : [la, lo];
+      if((document.getElementById('feu-compare')||{}).checked && pomp < 0.98){
+        let dTL = Math.min(15, rosLibre*t);
+        if(dStop > 0.15 && dTL > dStop){ dTL = dStop + (dTL - dStop)*0.35; }
+        const tL = dTL > 0.02 ? destPoint(la, lo, 0.3*dTL, vm.brg) : [la, lo];
+        const LoL = Math.max(plancher, Math.min(10, rosLibreH*Math.min(t, 6)));
+        L.polygon([[tL[0],tL[1]], destPoint(tL[0],tL[1],LoL,dirH-angG), destPoint(tL[0],tL[1],LoL*1.06,dirH), destPoint(tL[0],tL[1],LoL,dirH+angG)], { color:'#fb923c', weight:1.6, dashArray:'5 5', fillColor:'#fb923c', fillOpacity:0.05, pane:ph }).addTo(etatExt.groupe);
+      }
+      if(traceOn && dTot > 0.05){
+        const wA = Math.max(0.12 + (p.r||0)*0.5, dTot*0.15), wB = Math.max(0.25 + (p.r||0)*0.6, dTot*0.4);
+        const finT = destPoint(la, lo, dTot, vm.brg);
+        L.polygon([
+          destPoint(la, lo, wA, vm.brg-90), destPoint(finT[0], finT[1], wB, vm.brg-90),
+          destPoint(finT[0], finT[1], 0.15, vm.brg),
+          destPoint(finT[0], finT[1], wB, vm.brg+90), destPoint(la, lo, wA, vm.brg+90)
+        ], { color:'#6b7280', weight:1, fillColor:'#4b5563', fillOpacity:0.18, pane:ph }).addTo(etatExt.groupe);
+      }
+      [[1.0, 0.09, 0], [0.75, 0.20, 0], [0.45, 0.38, 1.8]].forEach(function(seg){
+        const Ls = Lo*seg[0];
+        L.polygon([[tete[0],tete[1]], destPoint(tete[0],tete[1],Ls,dirH-angG), destPoint(tete[0],tete[1],Ls*1.06,dirH), destPoint(tete[0],tete[1],Ls,dirH+angG)],
+          { color:'#dc2626', weight:seg[2], fillColor:'#f97316', fillOpacity:seg[1], pane:ph }).addTo(etatExt.groupe);
+      });
+      let enjSev = -1;
+      try{ if(typeof etatSeveso !== 'undefined' && etatSeveso.actif && etatSeveso.groupe && etatSeveso.groupe.eachLayer){ enjSev = 0; etatSeveso.groupe.eachLayer(function(mk2){ try{ const q = mk2.getLatLng && mk2.getLatLng(); if(q && map.distance(L.latLng(tete[0], tete[1]), q)/1000 <= Math.max(dTot, Lo)) enjSev++; }catch(e2){} }); } }catch(e2){}
+      const fiche = '<div style="font:12px/1.5 system-ui;min-width:215px"><b>🔥 Groupe de '+(p.n||1)+' foyer(s)</b><br>'
+        + 'Sécheresse : '+(etatExt.fwi != null ? 'FWI officiel '+Math.round(etatExt.fwi)+' (EFFIS)' : 'estimation locale ×'+dry.toFixed(2))+'<br>'
+        + 'Vent à +'+Math.round(t)+' h : '+Math.round(spdH)+' km/h vers le '+cardinal(dirH)+'<br>'
+        + 'Végétation (Corine) : ×'+fuelF.toFixed(2)+(freinB ? ' · <b>freiné : zones brûlées</b>' : '')+(dStop > 0.15 ? ' · <b>coupure (route/eau) à '+dStop.toFixed(1)+' km</b>' : '')+'<br>'
+        + 'Pente : ×'+slopeF.toFixed(2)+' · Intervention : '+libellePompiers()+'<br>'
+        + (enjSev > 0 ? 'Enjeux près de la zone illustrée : <b>'+enjSev+' site(s) Seveso</b> <small>(lecture pédagogique aléa × enjeux — au conditionnel, rien de prédictif)</small><br>' : (enjSev === 0 ? '' : '<small>Enjeux : activez ☢️ Sites Seveso pour croiser aléa × enjeux</small><br>'))
+        + 'Vitesse illustrée : '+ros.toFixed(2)+' km/h <small>(libre : '+rosLibre.toFixed(2)+')</small><br>'
+        + 'Avancée à +'+Math.round(t)+' h : ~'+dTot.toFixed(1)+' km'
+        + '<div style="margin-top:5px;padding-top:5px;border-top:1px solid #e7e5e4"><a href="#" onclick="ouvrirFeuxDeForet('+la.toFixed(3)+','+lo.toFixed(3)+');return false;" style="color:#b45309;text-decoration:underline;font-size:11px">🔗 Voir sur feuxdeforet.fr (département)</a> · <a href="#" onclick="ouvrirPSFDF();return false;" style="color:#b45309;text-decoration:underline;font-size:11px">PSFDF</a></div>'
+        + '<div style="color:#7f1d1d;font-size:10px;margin-top:3px">⚠️ Illustration non calibrée — pas une prévision</div></div>';
+      L.marker([tete[0],tete[1]], { icon: flecheIcon(dirH, '#1d4ed8', 42, 6), keyboard:false }).bindPopup(fiche).addTo(etatExt.groupe);
+    });
+  }
+  function appliquerHorloge(){
+    const h = horlogeFeu.h;
+    if(etatPanache.actif){ etatPanache.offset = Math.max(0, Math.round(h)); dessinerPanaches(); }
+    if(etatExt.actif){ const hE = Math.round(h*2)/2; if(etatExt.dernHE !== hE){ etatExt.dernHE = hE; dessinerExtension(h); } }
+    if(etatAnim.actif){ majCalquesAnim(h); }
+    if(typeof etatVent !== 'undefined' && etatVent.actif){ const hh = Math.round(h); if(etatVent.dernH !== hh){ etatVent.dernH = hh; dessinerVentH(h); } }
+    const sl = document.getElementById('feu-temps-slider'); if(sl) sl.value = h;
+    const lbl = document.getElementById('feu-temps-lbl'); if(lbl){ const dd = new Date(Date.now()+h*3600000); lbl.innerHTML = (h<-0.5 ? 'J-'+Math.ceil(-h/24)+' ('+dd.getHours()+'h) \u00b7 <span style=\"color:#94a3b8\">pass\u00e9 satellite</span>' : (h<0.5 ? 'maintenant' : '+'+Math.round(h)+' h ('+dd.getHours()+'h) \u00b7 <span style=\"color:#fdba74\">pr\u00e9vision</span>')); }
+  }
+  function horlogeLectureFeu(on){
+    const b = document.getElementById('feu-temps-play'); if(horlogeFeu.timer){ clearInterval(horlogeFeu.timer); horlogeFeu.timer = null; }
+    if(on){ if(etatExt.actif && etatExt.vueRef && Date.now()-etatExt.vueRef.t > 3600000){ afficherInfo('\u21bb Conditions m\u00e9t\u00e9o dat\u00e9es \u2014 recalcul de la prospective\u2026', 5000); recalculerFeu(); return; }
+    horlogeFeu.timer = setInterval(function(){ if(horlogeFeu.h < 0){ horlogeFeu.h = Math.min(0, horlogeFeu.h + 3); } else { horlogeFeu.h += 0.125; } if(etatSim.actif && horlogeFeu.h >= 0) pasSim(); const sM = document.getElementById('feu-temps-slider'), mxL = sM ? (parseFloat(sM.max)||48) : 48; if(horlogeFeu.h >= mxL){ horlogeFeu.h = mxL; appliquerHorloge(); horlogeLectureFeu(false); return; } appliquerHorloge(); }, 260); if(b) b.textContent = '⏸'; }
+    else if(b) b.textContent = '▶';
+  }
+  function demarrerHorlogeFeu(){ etatExt.dernHE = null; if(typeof etatVent !== 'undefined' && etatVent.actif && !etatVent.horaires){ try{ chargerVentHoraire(); }catch(e){} } horlogeFeu.h = etatAnim.actif ? -168 : 0; if(horlogeFeu.timer){ clearInterval(horlogeFeu.timer); horlogeFeu.timer = null; } majBarreTemps(); const pb = document.getElementById('feu-temps-play'); if(pb) pb.textContent = '▶'; appliquerHorloge(); }
+  (function initFeuTemps(){
+    const pb = document.getElementById('feu-temps-play'), sl = document.getElementById('feu-temps-slider'), fm = document.getElementById('feu-temps-ferme');
+    if(pb && pb.addEventListener) pb.addEventListener('click', function(){ horlogeLectureFeu(!horlogeFeu.timer); });
+    const po = document.getElementById('feu-pompiers'); if(po && po.addEventListener){ po.addEventListener('input', function(){ majPompiersLbl(); etatExt.dernHE = null; appliquerHorloge(); }); } majPompiersLbl();
+    const tr = document.getElementById('feu-trace'); if(tr && tr.addEventListener) tr.addEventListener('change', function(){ etatExt.dernHE = null; appliquerHorloge(); });
+    const cp2 = document.getElementById('feu-compare'); if(cp2 && cp2.addEventListener) cp2.addEventListener('change', function(){ etatExt.dernHE = null; appliquerHorloge(); });
+    const sc = document.getElementById('feu-simcase'); if(sc && sc.addEventListener) sc.addEventListener('change', function(){ const b = document.getElementById('btn-simfeu'); if(b){ const on = b.textContent.indexOf('\u2715') !== -1; if(sc.checked && !on) b.click(); if(!sc.checked && on) b.click(); } });
+    if(sl && sl.addEventListener) sl.addEventListener('input', function(e){ horlogeLectureFeu(false); const nv = parseFloat(e.target.value)||0; if(etatSim.actif && etatSim.etat){ const cible = Math.max(0, Math.round(nv*8)); if(cible < etatSim.gen){ const kh = Math.floor(cible/8), sn = (etatSim.snaps||[])[kh]; if(sn){ etatSim.etat = new Uint8Array(sn); etatSim.gen = kh*8; } } let guard = 0; while(etatSim.gen < cible && guard < 600){ pasSim(); guard++; } rendreSim(); } horlogeFeu.h = nv; appliquerHorloge(); });
+    const rc = document.getElementById('feu-recalc'); if(rc && rc.addEventListener) rc.addEventListener('click', function(){ recalculerFeu(); });
+    if(fm && fm.addEventListener) fm.addEventListener('click', function(){ horlogeLectureFeu(false); ['btn-prospfeu','btn-animfeu','btn-panache','btn-extension','btn-simfeu'].forEach(function(id){ const b = document.getElementById(id); if(b && b.textContent.indexOf('✕')!==-1) b.click(); }); });
+  })();
+  map.on('moveend', function(){
+    if(!etatExt.actif || !etatExt.vueRef) return;
+    clearTimeout(etatExt.tmoRecalc);
+    etatExt.tmoRecalc = setTimeout(function(){
+      if(!etatExt.actif || !etatExt.vueRef) return;
+      const ref = etatExt.vueRef, pR = map.latLngToContainerPoint(L.latLng(ref.lat, ref.lng)), pC = map.latLngToContainerPoint(map.getCenter());
+      const d = Math.hypot(pR.x-pC.x, pR.y-pC.y);
+      if(map.getZoom() !== ref.z || d > (map.getSize().x||900)*0.4){ afficherInfo('\u21bb Vue chang\u00e9e \u2014 recalcul de la prospective sur la nouvelle zone\u2026', 4500); recalculerFeu(); }
+    }, 1000);
+  });
+  // ---------- \ud83c\udfac Animation compl\u00e8te : J-7 (satellite) \u2192 +48 h (illustration) ----------
+  function majCalquesAnim(h){
+    const dcur = (h >= 0) ? 0 : Math.min(7, Math.ceil(-h/24));
+    etatAnim.layers.forEach(function(l, D){ if(!l || !l.setOpacity) return; l.setOpacity(D >= dcur ? 0.9 : 0); });
+  }
+  document.getElementById('btn-animfeu').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-animfeu');
+    if(etatAnim.actif){
+      etatAnim.actif = false;
+      etatAnim.layers.forEach(function(l){ if(l) map.removeLayer(l); }); etatAnim.layers = [];
+      basculerBouton(btn, false, '', '\ud83c\udf9e\ufe0f Historique (J-7 \u2192 aujourd\u2019hui)');
+      majBarreTemps();
+      return;
+    }
+    etatAnim.actif = true; basculerBouton(btn, true, '\ud83c\udf9e\ufe0f Historique \u2715', '', '#7c3aed');
+    assurerPanesRejeu();
+    etatAnim.layers = [];
+    for(let D=0; D<=7; D++){
+      const opts = { layers:'VIIRS_SNPP_Thermal_Anomalies_375m_All', format:'image/png', transparent:true, version:'1.3.0', pane:'rejeuJ'+D, opacity:0, time:dateJour(D), attribution:'NASA EOSDIS GIBS / FIRMS', keepBuffer:16, updateWhenIdle:false };
+      if(typeof L.CRS !== 'undefined' && L.CRS.EPSG4326) opts.crs = L.CRS.EPSG4326;
+      const l = L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg4326/all/wms.cgi?', opts);
+      if(l.addTo) l.addTo(map);
+      etatAnim.layers[D] = l;
+    }
+    demarrerHorlogeFeu();
+    if(typeof etatVent !== 'undefined' && etatVent.actif) chargerVentArchive();
+    afficherInfo('\ud83c\udf9e\ufe0f Historique \u2014 \u25b6 d\u00e9roule J-7 \u2192 aujourd\u2019hui (observations satellite, cumul\u00e9es jour apr\u00e8s jour)', 8000);
+  });
+  // ---------- 🔍 Vérification a posteriori ----------
+  const etatVerif = { actif:false, groupe:null };
+  function pointDansPoly(pt, poly){ let c = false; for(let i=0, j=poly.length-1; i<poly.length; j=i++){ const yi = poly[i][0], xi = poly[i][1], yj = poly[j][0], xj = poly[j][1]; if(((yi>pt[0]) !== (yj>pt[0])) && (pt[1] < (xj-xi)*(pt[0]-yi)/((yj-yi)||1e-12)+xi)) c = !c; } return c; }
+  async function condArchiveHier(ll, nJ){
+    const fin = new Date(), deb = new Date(Date.now() - ((nJ||1)+2)*86400000);
+    function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    const url = 'https://archive-api.open-meteo.com/v1/archive?latitude='+ll.lat.toFixed(3)+'&longitude='+ll.lng.toFixed(3)+'&start_date='+iso(deb)+'&end_date='+iso(fin)+'&hourly=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_direction_10m&timezone=Europe%2FParis';
+    const d = await fetchMeteoJson(url, 120), h = d.hourly || {};
+    const t0 = new Date(iso(deb)+'T00:00:00').getTime();
+    const i0 = Math.max(0, Math.floor((Date.now() - (nJ||1)*24*3600000 - t0)/3600000));
+    return { hdir:h.wind_direction_10m||[], hspd:h.wind_speed_10m||[], temp:(h.temperature_2m||[])[i0], rh:(h.relative_humidity_2m||[])[i0], i0:i0, precip:(h.precipitation||[])[i0]||0, wdir:(h.wind_direction_10m||[])[i0]||0, wspd:(h.wind_speed_10m||[])[i0]||0 };
+  }
+  document.getElementById('btn-veriffeu').addEventListener('click', async ()=>{
+    const btn = document.getElementById('btn-veriffeu');
+    if(etatVerif.actif){ etatVerif.actif = false; if(etatVerif.groupe) map.removeLayer(etatVerif.groupe); etatVerif.groupe = null; basculerBouton(btn, false, '', '🔍 Vérifier une prospective passée'); return; }
+    etatVerif.actif = true; basculerBouton(btn, true, '🔍 Vérification ✕', '', '#2563eb');
+    afficherInfo('🔍 Foyers et météo d’hier (archives)…', 0);
+    try{
+      const nJ = Math.max(1, Math.min(6, parseInt((document.getElementById('verif-jour')||{value:1}).value, 10)||1));
+      const pts = await foyersDuJour(nJ); if(!etatVerif.actif) return;
+      if(!pts.length){ etatVerif.actif = false; basculerBouton(btn, false, '', '🔍 Vérifier une prospective passée'); afficherInfo('🔍 Aucun foyer détecté à J-'+nJ+' dans la vue', 6000); return; }
+      let la = 0, lo = 0; pts.forEach(function(p){ la += p.centre.lat; lo += p.centre.lng; }); la /= pts.length; lo /= pts.length;
+      const cond = await condArchiveHier(L.latLng(la, lo), nJ); if(!etatVerif.actif) return;
+      etatVerif.groupe = L.layerGroup();
+      const pomp = facteurPompiers();
+      function vmT(t){ let sx = 0, sy = 0, sp = 0, n = 0; for(let k=0;k<t;k++){ const dd = cond.hdir[cond.i0+k], s = cond.hspd[cond.i0+k]; if(dd == null) continue; const b = (dd+180)%360; sx += Math.sin(b*Math.PI/180)*(s||0); sy += Math.cos(b*Math.PI/180)*(s||0); sp += (s||0); n++; } if(!n) return { brg:(cond.wdir+180)%360, spd:cond.wspd }; return { brg:(Math.atan2(sx, sy)*180/Math.PI+360)%360, spd:sp/n }; }
+      const hz = Math.min(48, nJ*24);
+      const vm = vmT(hz), dry = Math.min(1.8, facteurSecheresse(cond.temp, cond.rh, cond.precip, 0));
+      const cones = [];
+      grappesFoyers(pts, 3).forEach(function(g){
+        const ros = Math.min(1.5, 0.08*(1+vm.spd/15)*dry*1.05)*pomp;
+        const d24 = Math.min(15, ros*hz);
+        const angV = 30 + Math.min(20, (g.r||0.3)*6);
+        const poly = [[g.la, g.lo], destPoint(g.la, g.lo, d24, vm.brg-angV), destPoint(g.la, g.lo, d24*1.06, vm.brg), destPoint(g.la, g.lo, d24, vm.brg+angV)];
+        cones.push(poly);
+        etatVerif.groupe.addLayer(L.polygon(poly, { color:'#2563eb', weight:2, dashArray:'7 6', fillColor:'#3b82f6', fillOpacity:0.08 }));
+      });
+      const optsV = { layers:'VIIRS_SNPP_Thermal_Anomalies_375m_All', format:'image/png', transparent:true, version:'1.3.0', pane:'feuxDots', opacity:0.95, time:dateJour(0), attribution:'NASA GIBS' };
+      if(typeof L.CRS !== 'undefined' && L.CRS.EPSG4326) optsV.crs = L.CRS.EPSG4326;
+      etatVerif.groupe.addLayer(L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg4326/all/wms.cgi?', optsV));
+      let score = '';
+      try{
+        const ptsAuj = await foyersDuJour(0);
+        if(ptsAuj.length && cones.length){
+          let dedans = 0, dHors = 0, nH = 0;
+          ptsAuj.forEach(function(q){
+            const qq = [q.centre.lat, q.centre.lng];
+            if(cones.some(function(po){ return pointDansPoly(qq, po); })) dedans++;
+            else { let dm = 1e9; cones.forEach(function(po){ po.forEach(function(s){ const dd = map.distance(L.latLng(qq[0], qq[1]), L.latLng(s[0], s[1]))/1000; if(dd < dm) dm = dd; }); }); if(dm < 1e9){ dHors += dm; nH++; } }
+          });
+          const pc = Math.round(100*dedans/ptsAuj.length);
+          score = ' · 📊 SCORE : '+pc+' % des détections du jour dans le(s) cône(s) de J-'+nJ+(nH ? ' · hors-cône à ~'+(dHors/nH).toFixed(1)+' km en moyenne' : '');
+          try{
+            const cle = 'geo-verif-journal';
+            let jn = []; try{ jn = JSON.parse(localStorage.getItem(cle)||'[]'); }catch(e2){}
+            jn.push({ d:new Date().toISOString().slice(0,10), nJ:nJ, pc:pc });
+            if(jn.length > 60) jn = jn.slice(-60);
+            localStorage.setItem(cle, JSON.stringify(jn));
+            const tri = jn.map(function(x){ return x.pc; }).sort(function(a, b){ return a-b; });
+            score += ' · 📓 journal : '+jn.length+' vérif., médiane '+tri[Math.floor(tri.length/2)]+' %';
+          }catch(e2){}
+        }
+      }catch(e){}
+      etatVerif.groupe.addTo(map); cacherInfo();
+      afficherInfo('🔍 Cône BLEU pointillé = prospective calculée à J-'+nJ+' (+'+hz+' h, météo archivée, végétation moyenne) · points rouges = détections d’AUJOURD’HUI'+score, 16000);
+    }catch(e){ cacherInfo(); etatVerif.actif = false; basculerBouton(btn, false, '', '🔍 Vérifier une prospective passée'); afficherInfo('🔍 Indisponible ('+(e && e.message || e)+') — à tester en ligne', 7000); }
+  });
+  // ---------- 🗺️ Danger FWI officiel (EFFIS) ----------
+  const etatFwi = { actif:false, layer:null };
+  document.getElementById('btn-fwi').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-fwi');
+    if(etatFwi.actif){ etatFwi.actif = false; if(etatFwi.layer) map.removeLayer(etatFwi.layer); etatFwi.layer = null; basculerBouton(btn, false, '', '🗺️ Danger FWI (EFFIS)'); return; }
+    etatFwi.actif = true; basculerBouton(btn, true, '🗺️ FWI ✕', '', '#b91c1c');
+    etatFwi.layer = L.tileLayer.wms('https://maps.effis.emergency.copernicus.eu/effis?', { layers:'ecmwf007.fwi', format:'image/png', transparent:true, version:'1.1.1', opacity:0.55, time:dateJour(0), attribution:'EFFIS / Copernicus EMS' });
+    etatFwi.layer.addTo(map);
+    afficherInfo('🗺️ Indice FWI du jour (EFFIS / Copernicus) — la carte officielle du danger d’incendie · couleurs chaudes = danger élevé', 8000);
+  });
+  const etatProsp = { actif:false };
+  document.getElementById('btn-prospfeu').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-prospfeu');
+    const cible = !etatProsp.actif;
+    etatProsp.actif = cible;
+    if(cible){ const b = document.getElementById('btn-extension'); if(b && b.textContent.indexOf('\u2715') === -1) b.click(); }
+    else { ['btn-extension','btn-simfeu','btn-panache'].forEach(function(id){ const b = document.getElementById(id); if(b && b.textContent.indexOf('\u2715') !== -1) b.click(); }); }
+    if(cible) basculerBouton(btn, true, '\ud83d\udd2e Prospective \u2715', '', '#0e7490');
+    else { basculerBouton(btn, false, '', '\ud83d\udd2e Prospective (\u2192 +48 h)'); majBarreTemps(); }
+  });
+  // --- 2) Simulation cellulaire : v\u00e9g\u00e9tation (CLC) + vent + s\u00e9cheresse ---
+  const etatSim = { actif:false, cols:0, rows:0, bnds:null, swP:null, neP:null, fuel:null, alt:null, etat:null, gen:0, timer:null, overlay:null, cv:null, wind:null, dry:1, cellHa:1, cellM:1, windSpd:0, hdir:null, hspd:null, i0:0 };
+  function fuelClasse(r, g, b, a){
+    if(a < 40) return 0.2;
+    if(b > r+15 && b > g+5) return 0;                          // eau \u2192 barri\u00e8re
+    if(r > 150 && r >= g && b < r-10 && g < r-10) return 0;    // urbain/artificiel \u2192 barri\u00e8re
+    if(g > r && g > b) return (g < 190) ? 0.95 : 0.72;         // vert : for\u00eat (fort) / lande-prairie
+    if(r > 180 && g > 150 && b < 150) return 0.4;              // jaune : agricole
+    return 0.15;                                               // gris/blanc : sol nu
+  }
+  function fuelDepuisCLC(bnds, cols, rows){
+    return new Promise(function(res){
+      if(!map.options || !map.options.crs || typeof document.createElement !== 'function'){ res(null); return; }
+      const sw = map.options.crs.project(bnds.getSouthWest()), ne = map.options.crs.project(bnds.getNorthEast());
+      const bbox = sw.x+','+sw.y+','+ne.x+','+ne.y;
+      const url = WMS_GEOPF+'?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&LAYERS=LANDCOVER.CLC18&STYLES=&CRS=EPSG:3857&BBOX='+bbox+'&WIDTH='+cols+'&HEIGHT='+rows+'&FORMAT=image/png';
+      const img = new Image(); img.crossOrigin = 'anonymous';
+      img.onload = function(){ try{ const cv = document.createElement('canvas'); cv.width = cols; cv.height = rows; const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0, cols, rows); const d = cx.getImageData(0,0,cols,rows).data; const fuel = new Float32Array(cols*rows); for(let i=0;i<cols*rows;i++){ fuel[i] = fuelClasse(d[i*4], d[i*4+1], d[i*4+2], d[i*4+3]); } res(fuel); }catch(e){ res(null); } };
+      img.onerror = function(){ res(null); };
+      img.src = url;
+    });
+  }
+  function indexCellProj(lat, lng){
+    const p = map.options.crs.project(L.latLng(lat, lng)), sw = etatSim.swP, ne = etatSim.neP;
+    const fx = (p.x-sw.x)/(ne.x-sw.x), fy = (ne.y-p.y)/(ne.y-sw.y);
+    if(fx<0||fx>=1||fy<0||fy>=1) return -1;
+    return Math.floor(fy*etatSim.rows)*etatSim.cols + Math.floor(fx*etatSim.cols);
+  }
+  function rendreSim(){
+    const cols = etatSim.cols, rows = etatSim.rows, etat = etatSim.etat, cv = etatSim.cv; if(!cv) return;
+    const cx = cv.getContext('2d'); if(!cx) return; const im = cx.createImageData(cols, rows), px = im.data;
+    for(let i=0;i<cols*rows;i++){ const s = etat[i]; if(s===1){ px[i*4]=239; px[i*4+1]=68; px[i*4+2]=68; px[i*4+3]=235; } else if(s===2){ px[i*4]=40; px[i*4+1]=30; px[i*4+2]=25; px[i*4+3]=170; } else { px[i*4+3]=0; } }
+    cx.putImageData(im, 0, 0);
+    if(etatSim.overlay && etatSim.overlay.setUrl){ try{ etatSim.overlay.setUrl(cv.toDataURL()); }catch(e){} }
+    majEtatSim();
+  }
+  function majEtatSim(){ /* le temps est affich\u00e9 par la barre unique Temps du feu */ }
+  function pasSim(){
+    if(etatSim.hdir && etatSim.hdir.length){ const hh = etatSim.i0 + Math.floor(etatSim.gen/8); const dir = etatSim.hdir[hh], spd = etatSim.hspd[hh]; if(dir != null){ const brg = (dir+180)%360; etatSim.wind = { e:Math.sin(brg*Math.PI/180), n:Math.cos(brg*Math.PI/180) }; if(spd!=null) etatSim.windSpd = spd; } }
+    const cols = etatSim.cols, rows = etatSim.rows, fuel = etatSim.fuel, etat = etatSim.etat, we = etatSim.wind.e, wn = etatSim.wind.n, dry = etatSim.dry;
+    let nActifs = 0; for(let ii=0;ii<etat.length;ii++) if(etat[ii]===1) nActifs++;
+    const wspd = etatSim.windSpd || 15;
+    const nb = new Uint8Array(etat); let actifs = 0;
+    for(let y=0;y<rows;y++){ for(let x=0;x<cols;x++){ const i = y*cols+x; if(etat[i]!==1) continue; actifs++; nb[i] = 2;
+      for(let dy=-1;dy<=1;dy++){ for(let dx=-1;dx<=1;dx++){ if(!dx && !dy) continue; const nx = x+dx, ny = y+dy; if(nx<0||ny<0||nx>=cols||ny>=rows) continue; const j = ny*cols+nx; if(etat[j]!==0 || nb[j]!==0) continue; const f = fuel[j]; if(f<=0) continue;
+        const dirE = dx, dirN = -dy, norm = Math.hypot(dirE, dirN) || 1, align = (dirE*we + dirN*wn)/norm;
+        const windFactor = 0.35 + (0.9 + wspd/40)*Math.max(0, align) - 0.25*Math.max(0, -align);
+        let sf = 1; if(etatSim.alt){ const dh = etatSim.alt[j]-etatSim.alt[i], sl = dh/etatSim.cellM; sf = sl>0 ? (1 + Math.min(2.5, 5*sl*sl)) : Math.max(0.4, 1+sl); }
+        const rosKmH = Math.min(1.2, 0.08*(1+wspd/15)*dry*facteurPompiers()*(1 + Math.min(0.25, nActifs/800)));
+        let p = (rosKmH*1000/(etatSim.cellM*8)) * f * sf * windFactor; if(p < 0) p = 0; if(p > 0.6) p = 0.6;
+        if(Math.random() < p) nb[j] = 1;
+      }}
+    }}
+    etatSim.etat = nb; etatSim.gen++; if(etatSim.gen % 8 === 0){ if(!etatSim.snaps) etatSim.snaps = []; etatSim.snaps[etatSim.gen/8] = nb.slice(); } rendreSim();
+    if(actifs === 0) simLecture(false);
+  }
+  function simLecture(){ if(etatSim.timer){ clearInterval(etatSim.timer); etatSim.timer = null; } }
+  function arreterSim(){ if(etatSim.timer){ clearInterval(etatSim.timer); etatSim.timer = null; } if(etatSim.overlay){ map.removeLayer(etatSim.overlay); etatSim.overlay = null; } etatSim.etat = null; etatSim.fuel = null; etatSim.snaps = null; }
+  async function altPoint(lat, lng){
+    try{
+      if(!map.project || typeof document.createElement !== 'function') return null;
+      const z = 12, pp = map.project(L.latLng(lat, lng), z), tx = Math.floor(pp.x/256), ty = Math.floor(pp.y/256);
+      const img = await new Promise(function(res){ const g = new Image(); g.crossOrigin = 'anonymous'; g.onload = function(){ res(g); }; g.onerror = function(){ res(null); }; g.src = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/'+z+'/'+tx+'/'+ty+'.png'; });
+      if(!img) return null;
+      const cv = document.createElement('canvas'); cv.width = 256; cv.height = 256; const cx = cv.getContext('2d'); if(!cx) return null;
+      cx.drawImage(img, 0, 0);
+      let dat; try{ dat = cx.getImageData(0,0,256,256).data; }catch(e){ return null; }
+      let px = Math.round(pp.x-tx*256), py = Math.round(pp.y-ty*256); if(px<0)px=0; if(py<0)py=0; if(px>255)px=255; if(py>255)py=255;
+      const k = (py*256+px)*4; return (dat[k]*256 + dat[k+1] + dat[k+2]/256) - 32768;
+    }catch(e){ return null; }
+  }
+  async function altitudeGrille(bnds, cols, rows){
+    try{
+      if(!map.project || typeof document.createElement !== 'function') return null;
+      const z = Math.max(9, Math.min(13, (map.getZoom()|0) + 1));
+      const pNW = map.project(bnds.getNorthWest(), z), pSE = map.project(bnds.getSouthEast(), z);
+      const tx0 = Math.floor(pNW.x/256), ty0 = Math.floor(pNW.y/256), tx1 = Math.floor(pSE.x/256), ty1 = Math.floor(pSE.y/256);
+      const nx = tx1-tx0+1, ny = ty1-ty0+1;
+      if(nx < 1 || ny < 1 || nx*ny > 30) return null;
+      const comp = document.createElement('canvas'); comp.width = nx*256; comp.height = ny*256;
+      const cx = comp.getContext('2d'); if(!cx) return null;
+      const jobs = [];
+      for(let j=0;j<ny;j++){ for(let i=0;i<nx;i++){ (function(i, j){ jobs.push(new Promise(function(res){ const img = new Image(); img.crossOrigin = 'anonymous'; img.onload = function(){ try{ cx.drawImage(img, i*256, j*256); }catch(e){} res(); }; img.onerror = function(){ res(); }; img.src = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/'+z+'/'+(tx0+i)+'/'+(ty0+j)+'.png'; })); })(i, j); } }
+      await Promise.all(jobs);
+      let dat; try{ dat = cx.getImageData(0,0,comp.width,comp.height).data; }catch(e){ return null; }
+      const originX = tx0*256, originY = ty0*256, crs = map.options.crs;
+      const swP = crs.project(bnds.getSouthWest()), neP = crs.project(bnds.getNorthEast());
+      const alt = new Float32Array(cols*rows);
+      for(let r=0;r<rows;r++){ for(let c=0;c<cols;c++){
+        const mercX = swP.x + (c+0.5)/cols*(neP.x-swP.x), mercY = neP.y - (r+0.5)/rows*(neP.y-swP.y);
+        const ll = crs.unproject(L.point(mercX, mercY)), pp = map.project(ll, z);
+        let px = Math.round(pp.x-originX), py = Math.round(pp.y-originY);
+        if(px<0) px=0; if(py<0) py=0; if(px>=comp.width) px=comp.width-1; if(py>=comp.height) py=comp.height-1;
+        const k = (py*comp.width+px)*4;
+        alt[r*cols+c] = (dat[k]*256 + dat[k+1] + dat[k+2]/256) - 32768;
+      }}
+      return alt;
+    }catch(e){ return null; }
+  }
+  async function lancerSim(){
+    afficherInfo('\ud83d\udd25 Extraction des foyers + v\u00e9g\u00e9tation\u2026', 0);
+    const pts = await foyersDuJour(); if(!etatSim.actif) return false;
+    if(!pts.length){ afficherInfo('\ud83d\udd25 Aucun foyer aujourd\u2019hui dans la vue \u2014 recentrez sur la zone', 7000); return false; }
+    const bnds = map.getBounds(), cols = 120, rows = Math.max(60, Math.round(cols*((map.getSize().y||600)/(map.getSize().x||900))));
+    etatSim.swP = map.options.crs.project(bnds.getSouthWest()); etatSim.neP = map.options.crs.project(bnds.getNorthEast());
+    etatSim.cols = cols; etatSim.rows = rows; etatSim.bnds = bnds;
+    const fuel = await fuelDepuisCLC(bnds, cols, rows); if(!etatSim.actif) return false;
+    if(!fuel){ afficherInfo('\ud83d\udd25 Couche v\u00e9g\u00e9tation (Corine) indisponible \u2014 \u00e0 tester en ligne', 7000); return false; }
+    let la=0, lo=0; pts.forEach(function(p){ la+=p.centre.lat; lo+=p.centre.lng; }); la/=pts.length; lo/=pts.length;
+    const cond = await conditionsFeu(L.latLng(la, lo)); if(!etatSim.actif) return false;
+    const brg = ((cond.wdir||0)+180)%360;
+    etatSim.wind = { e:Math.sin(brg*Math.PI/180), n:Math.cos(brg*Math.PI/180) };
+    etatSim.windSpd = cond.wspd||0; etatSim.hdir = cond.hdir; etatSim.hspd = cond.hspd; etatSim.i0 = cond.i0;
+    etatSim.dry = facteurSecheresse(cond.temp, cond.rh, cond.precip, cond.precip5);
+    const wKm = bnds.getSouthWest().distanceTo(L.latLng(bnds.getSouthWest().lat, bnds.getNorthEast().lng))/1000;
+    const hKm = bnds.getSouthWest().distanceTo(L.latLng(bnds.getNorthEast().lat, bnds.getSouthWest().lng))/1000;
+    etatSim.cellHa = Math.max(0.01, (wKm*hKm*100)/(cols*rows)); etatSim.cellM = Math.max(1, Math.sqrt(etatSim.cellHa*10000));
+    etatSim.alt = await altitudeGrille(bnds, cols, rows); if(!etatSim.actif) return false;
+    const etat = new Uint8Array(cols*rows); etatSim.fuel = fuel; etatSim.etat = etat; etatSim.gen = 0;
+    pts.forEach(function(p){ const idx = indexCellProj(p.centre.lat, p.centre.lng); if(idx>=0){ const x = idx%cols, y = (idx/cols)|0; for(let dy=-1;dy<=1;dy++){ for(let dx=-1;dx<=1;dx++){ const nx = x+dx, ny = y+dy; if(nx>=0&&ny>=0&&nx<cols&&ny<rows && fuel[ny*cols+nx]>0) etat[ny*cols+nx] = 1; } } } });
+    etatSim.snaps = [etat.slice()];
+    etatSim.cv = document.createElement('canvas'); etatSim.cv.width = cols; etatSim.cv.height = rows;
+    etatSim.overlay = L.imageOverlay(etatSim.cv.toDataURL(), bnds, { opacity:0.82, interactive:false }); etatSim.overlay.addTo(map);
+    rendreSim(); cacherInfo();
+    afficherInfo('\ud83d\udd25 Simulation \u2014 v\u00e9g\u00e9tation (Corine) + vent vers le '+cardinal(brg)+' + s\u00e9cheresse \u00d7'+etatSim.dry.toFixed(2)+(etatSim.alt?' + pente':'')+' \u00b7 \u25b6 pour lancer', 9000);
+    return true;
+  }
+  document.getElementById('btn-simfeu').addEventListener('click', async ()=>{
+    const btn = document.getElementById('btn-simfeu');
+    if(etatSim.actif){ etatSim.actif = false; arreterSim(); basculerBouton(btn, false, '', '\ud83d\udd25 Simulation de propagation'); majAvertFeu(); majBarreTemps(); return; }
+    etatSim.actif = true; basculerBouton(btn, true, '\ud83d\udd25 Simulation \u2715', '', '#dc2626'); majAvertFeu();
+    try{ const ok = await lancerSim(); if(!etatSim.actif) return; if(!ok){ etatSim.actif = false; basculerBouton(btn, false, '', '\ud83d\udd25 Simulation de propagation'); majAvertFeu(); return; } demarrerHorlogeFeu(); }
+    catch(e){ etatSim.actif = false; arreterSim(); basculerBouton(btn, false, '', '\ud83d\udd25 Simulation de propagation'); majAvertFeu(); afficherInfo('\ud83d\udd25 Indisponible ('+(e&&e.message?e.message:e)+') \u2014 \u00e0 tester en ligne', 7000); }
+  });
+  (function initFeuMethode(){
+    const mb = document.getElementById('feu-methode-btn'), mp = document.getElementById('feu-methode'), mf = document.getElementById('feu-methode-ferme');
+    if(mb && mb.addEventListener) mb.addEventListener('click', function(){ if(mp) mp.style.display = (mp.style.display === 'block') ? 'none' : 'block'; });
+    if(mf && mf.addEventListener) mf.addEventListener('click', function(){ if(mp) mp.style.display = 'none'; });
+  })();
+  // ---------- \u00c9volution du vent sur 48 h (m\u00e9t\u00e9ogramme) ----------
+  const etatVent48 = { actif:false };
+  function flecheVentMini(angle, coul){
+    return '<svg width="24" height="24" viewBox="0 0 100 100" style="transform:rotate('+angle.toFixed(0)+'deg)"><line x1="50" y1="80" x2="50" y2="28" stroke="'+coul+'" stroke-width="9" stroke-linecap="round"/><path d="M50 12 L34 38 L50 30 L66 38 Z" fill="'+coul+'"/></svg>';
+  }
+  async function chargerVent48(){
+    const c = map.getCenter();
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude='+c.lat.toFixed(3)+'&longitude='+c.lng.toFixed(3)+'&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m&forecast_days=3&timezone=Europe%2FParis';
+    const d = await fetchMeteoJson(url, 30), h = d.hourly || {};
+    const dirs = h.wind_direction_10m || [], spds = h.wind_speed_10m || [], gus = h.wind_gusts_10m || [], i0 = new Date().getHours();
+    const corps = document.getElementById('vent48-corps'); if(!corps) return;
+    let out = '';
+    for(let t=0;t<=48;t+=3){
+      const idx = i0+t, dir = dirs[idx]; if(dir==null) continue;
+      const spd = spds[idx]||0, g = gus[idx]||0, bande = ventInfo(spd), angle = (dir+180)%360, hh = new Date(Date.now()+t*3600000).getHours();
+      out += '<div title="rafales '+Math.round(g)+' km/h" style="text-align:center;min-width:33px">'
+        + '<div style="font-size:10px;color:#cbd5e1">'+(t===0?'maint.':'+'+t+'h')+'</div>'
+        + flecheVentMini(angle, bande[1])
+        + '<div style="font-size:11px;font-weight:600">'+Math.round(spd)+'</div>'
+        + '<div style="font-size:9px;color:#9ca3af">'+hh+'h</div></div>';
+    }
+    corps.innerHTML = out || '<div style="color:#f87171">Vent indisponible ici</div>';
+  }
+  document.getElementById('btn-vent48').addEventListener('click', async ()=>{
+    const btn = document.getElementById('btn-vent48'), p = document.getElementById('vent48');
+    if(etatVent48.actif){ etatVent48.actif = false; if(p) p.style.display = 'none'; basculerBouton(btn, false, '', '💨 \u00c9volution du vent (48 h)'); return; }
+    etatVent48.actif = true; basculerBouton(btn, true, '💨 Vent 48 h \u2715', '', '#0e7490');
+    afficherInfo('💨 Pr\u00e9vision du vent sur 48 h\u2026', 0);
+    try{ await chargerVent48(); if(!etatVent48.actif) return; if(p) p.style.display = 'block'; cacherInfo(); afficherInfo('💨 Vent pr\u00e9vu \u2014 une fl\u00e8che toutes les 3 h, chiffre = km/h (survol = rafales)', 7000); }
+    catch(e){ cacherInfo(); etatVent48.actif = false; basculerBouton(btn, false, '', '💨 \u00c9volution du vent (48 h)'); afficherInfo('💨 Vent indisponible \u2014 \u00e0 tester en ligne', 6000); }
+  });
+  (function(){ const f = document.getElementById('vent48-ferme'); if(f && f.addEventListener) f.addEventListener('click', function(){ const b = document.getElementById('btn-vent48'); if(b) b.click(); }); })();
+  (function(){ const fb = document.getElementById('btn-vent-feu'); if(fb && fb.addEventListener) fb.addEventListener('click', function(){ const mb = document.getElementById('btn-vent'); if(mb) mb.click(); if(typeof etatVent !== 'undefined' && etatVent.actif) basculerBouton(fb, true, '💨 Vent \u2715', '', '#e6550d'); else basculerBouton(fb, false, '', '💨 Vent (direction + force)'); }); })();
+  // ---------- \U0001F4AC Explication & partage ----------
+  function villeProcheCentre(){
+    const c = map.getCenter(); let mn = 1e9, nom = '';
+    for(let i=0;i<VILLES_METEO.length;i++){ const v = VILLES_METEO[i], d = (v[1]-c.lat)*(v[1]-c.lat)+(v[2]-c.lng)*(v[2]-c.lng); if(d < mn){ mn = d; nom = v[0]; } }
+    return nom;
+  }
+  function resumeVue(){
+    const r = { ville: villeProcheCentre(), foyers: 0, couches: [], h: null };
+    try{ r.foyers = (etatExt.pts || (typeof etatPanache !== 'undefined' && etatPanache.points) || []).length; }catch(e){}
+    [['btn-feux-actifs','feux d\u00e9tect\u00e9s'],['btn-zones-feux','zones de feux'],['btn-extension','prospective'],['btn-animfeu','historique 7 j'],['btn-cumul-brule','surfaces br\u00fbl\u00e9es'],['btn-vent','vent']].forEach(function(x){
+      const b = document.getElementById(x[0]); if(b && b.textContent.indexOf('\u2715') !== -1) r.couches.push(x[1]);
+    });
+    try{ if(feuTempsActif() && horlogeFeu.h > 0.5) r.h = Math.round(horlogeFeu.h); }catch(e){}
+    return r;
+  }
+  function texteTweet(){
+    const r = resumeVue();
+    let t = '\ud83d\udd25 Feux pr\u00e8s de '+r.ville+' : ';
+    t += r.foyers > 0 ? r.foyers+' foyer(s) d\u00e9tect\u00e9(s) (satellite NASA)' : 'suivi satellite NASA';
+    if(r.h) t += ' \u00b7 prospective +'+r.h+' h illustr\u00e9e';
+    t += '. Illustration p\u00e9dagogique, PAS une pr\u00e9vision.';
+    if(t.length > 200) t = '\ud83d\udd25 Feux pr\u00e8s de '+r.ville+' \u00b7 suivi satellite NASA. Illustration, PAS une pr\u00e9vision.';
+    return t.slice(0, 200);
+  }
+  function copierTexte(txt){
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){ afficherInfo('\U0001F4CB Copi\u00e9 dans le presse-papier', 4000); }, function(){ afficherInfo('\U0001F4CB Copie impossible \u2014 s\u00e9lectionnez le texte \u00e0 la main', 5000); }); }
+    else afficherInfo('\U0001F4CB Copie impossible \u2014 s\u00e9lectionnez le texte \u00e0 la main', 5000);
+  }
+  document.getElementById('btn-tweet-vue').addEventListener('click', ()=>{
+    const txt = texteTweet(), z = document.getElementById('tweet-zone'), c = document.getElementById('tweet-compte');
+    if(z){ z.style.display = 'block'; z.value = txt; }
+    if(c){ c.style.display = 'block'; c.textContent = txt.length+'/200 caract\u00e8res'; }
+    copierTexte(txt);
+  });
+  function explicDetaillee(){
+    const r = resumeVue();
+    return '<b>Ce que montre cette carte (pr\u00e8s de '+r.ville+')</b><br>'
+      + '\u2022 <b>Carr\u00e9s rouges</b> : d\u00e9tections thermiques du satellite NASA (VIIRS), points chauds observ\u00e9s \u2014 pas des feux confirm\u00e9s un par un.<br>'
+      + '\u2022 <b>Halo jaune/orange</b> : emprise r\u00e9cente des zones de feux.<br>'
+      + '\u2022 <b>Flammes</b> : foyers regroup\u00e9s d\u00e9tect\u00e9s aujourd\u2019hui'+(r.foyers ? ' ('+r.foyers+' dans la vue)' : '')+'.<br>'
+      + '\u2022 <b>C\u00f4nes orange</b> (prospective) : illustration du sens et de l\u2019allure possibles de la propagation \u2014 calcul\u00e9e avec le vent pr\u00e9vu heure par heure, la s\u00e9cheresse, la pente, la v\u00e9g\u00e9tation (Corine Land Cover), les zones d\u00e9j\u00e0 br\u00fbl\u00e9es et un niveau d\u2019intervention r\u00e9glable. Le c\u00f4ne s\u2019estompe : plus c\u2019est p\u00e2le, plus c\u2019est incertain. La trace grise (option) montre le chemin d\u00e9j\u00e0 parcouru par l\u2019illustration.<br>'
+      + '\u2022 <b>Fl\u00e8ches</b> : bleu = sens de propagation illustr\u00e9 \u00b7 couleurs = vent pr\u00e9vu (tourne avec l\u2019horloge).<br><br>'
+      + '<b style="color:#7f1d1d">\u26a0\ufe0f Pr\u00e9caution</b> \u2014 Ces c\u00f4nes ne sont <b>pas une pr\u00e9vision</b> : param\u00e8tres non calibr\u00e9s, aucune validation sur feux r\u00e9els. Ne jamais s\u2019en servir pour une d\u00e9cision de terrain. Sources officielles : pr\u00e9fectures, SDIS, M\u00e9t\u00e9o-France. En cas d\u2019urgence : <b>112</b> (ou 18).';
+  }
+  function explicMax(){
+    return explicDetaillee() + '<br><br>'
+      + '<b>Donn\u00e9es utilis\u00e9es</b><br>\u2022 Foyers & zones br\u00fbl\u00e9es : NASA VIIRS via GIBS/FIRMS (d\u00e9tections J-7 \u2192 aujourd\u2019hui)<br>\u2022 M\u00e9t\u00e9o & vent pr\u00e9vu 48 h : Open-Meteo<br>\u2022 V\u00e9g\u00e9tation : Corine Land Cover (Copernicus / IGN)<br>\u2022 Relief : tuiles d\u2019altitude Terrarium (AWS)<br><br>'
+      + '<b>Passages satellites (heure solaire locale, ~identique toute l’année en France)</b><br>• <b>Terra</b> (MODIS) : ~10h30 (+ ~22h30 la nuit)<br>• <b>Aqua</b> (MODIS) et <b>Suomi NPP / NOAA-20 / NOAA-21</b> (VIIRS) : groupés entre ~13h et ~14h30 (+ ~1h-2h30 la nuit)<br>→ en pratique, l’essentiel des mises à jour tombe le matin (10h30) et en tout début d’après-midi (13h-14h30) ; peu de nouveauté entre 15h et le lendemain matin, sauf passages nocturnes moins exploités ici.<br><br>'
+      + '<b>🗺️ Vue d’ensemble France — calcul des hectares</b><br>Sans clé : comptage de pixels sur l’image satellite (approximatif, corrigé à la baisse). Avec une <b>clé FIRMS gratuite</b> (obtenue en 2 minutes par email, sans engagement) : mesure réelle à partir de la taille effective de chaque pixel satellite détecté — bien plus fiable. La clé ne sert qu’à cette fonctionnalité, reste sur cet ordinateur (localStorage), jamais transmise ailleurs.<br><br>'
+      + '<b>Autres sources de points chauds possibles</b><br>• <b>MODIS</b> (Terra+Aqua, ~1 km, déjà utilisable en 2ᵉ source dans Surfaces brûlées) : plus ancien historique, moins précis que VIIRS (375 m).<br>• <b>EFFIS</b> (Copernicus) : agrège MODIS+VIIRS+dépêches presse à l’échelle européenne, avec périmètres de surfaces brûlées officiels (service actuellement instable côté EFFIS).<br>• <b>Satellite géostationnaire</b> (Meteosat Third Generation, EUMETSAT) : contrairement aux satellites polaires, il regarde l’Europe en continu (mise à jour ~10 min) mais résolution plus grossière et clé d’accès nécessaire — piste d’amélioration non intégrée ici.<br>• <b>Sentinel-3</b> (Copernicus, SLSTR) : 2 passages/jour supplémentaires, orbite indépendante — piste non intégrée.<br><br>'
+      + '<b>M\u00e9thode (prospective)</b><br>Vitesse du front = base ~0,08 km/h \u00d7 vent pr\u00e9vu \u00d7 s\u00e9cheresse (T\u00b0, humidit\u00e9, pluie du moment et des 5 derniers jours) \u00d7 pente \u00d7 v\u00e9g\u00e9tation lue le long du trajet \u00d7 intervention (molette \U0001F692). Zones d\u00e9j\u00e0 br\u00fbl\u00e9es : frein fort (combustible consomm\u00e9). Plafonds : 1,2 km/h et 15 km \u00e0 +48 h. Calcul en kilom\u00e8tres r\u00e9els \u2014 ind\u00e9pendant du zoom.<br><br>'
+      + '<b>Ce qui n\u2019est PAS pris en compte</b><br>Les sautes de feu (braises projet\u00e9es loin devant), l\u2019humidit\u00e9 r\u00e9elle mesur\u00e9e du combustible, le couplage feu-atmosph\u00e8re (un grand feu cr\u00e9e son propre vent), et le d\u00e9tail r\u00e9el des man\u0153uvres des secours.<br><br>'
+      + '<b style="color:#7f1d1d">\u26a0\ufe0f Messages de pr\u00e9caution \u2014 \u00e0 toujours joindre au partage</b><br>\u2022 Illustration p\u00e9dagogique : montre <i>comment</i> vent, v\u00e9g\u00e9tation et s\u00e9cheresse influencent un feu \u2014 pas <i>o\u00f9</i> il ira.<br>\u2022 Distances et dur\u00e9es non calibr\u00e9es, non valid\u00e9es.<br>\u2022 Les secours utilisent des outils op\u00e9rationnels valid\u00e9s (ForeFire / Firecaster, M\u00e9t\u00e9o-France) \u2014 pas cette carte.<br>\u2022 Suivez uniquement les consignes des pr\u00e9fectures et des SDIS.<br>\u2022 Urgence : <b>112</b> \u00b7 pompiers <b>18</b> \u00b7 sourds/malentendants <b>114</b>.';
+  }
+  function ouvrirExplic(mode){
+    const pop = document.getElementById('explic-pop'), corps = document.getElementById('explic-pop-corps'), titre = document.getElementById('explic-pop-titre');
+    if(!pop || !corps) return;
+    if(mode === 'max'){ titre.textContent = '\U0001F4DA Explication compl\u00e8te & pr\u00e9cautions'; corps.innerHTML = explicMax(); }
+    else { titre.textContent = '\U0001FA9F Explication d\u00e9taill\u00e9e'; corps.innerHTML = '<div style="background:#faf9f5;border:1px solid #e7e5e4;border-radius:8px;padding:7px 9px;margin-bottom:9px;font-family:ui-monospace,monospace;font-size:11px">'+texteTweet().replace(/</g,'&lt;')+'</div>' + explicDetaillee(); }
+    pop.style.display = 'flex';
+  }
+  async function chargerH2C(){ if(window.html2canvas) return; await new Promise(function(res, rej){ const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+  document.getElementById('btn-export-png').addEventListener('click', async ()=>{
+    afficherInfo('📸 Capture de la vue…', 0);
+    try{
+      await chargerH2C();
+      const cible = document.getElementById('map') || document.body;
+      const cv = await window.html2canvas(cible, { useCORS:true, logging:false, scale:1 });
+      const out = document.createElement('canvas'); out.width = cv.width; out.height = cv.height;
+      const cx = out.getContext('2d'); cx.drawImage(cv, 0, 0);
+      const bh = Math.max(34, Math.round(cv.width*0.03));
+      cx.fillStyle = 'rgba(127,29,29,.95)'; cx.fillRect(0, 0, cv.width, bh);
+      cx.fillStyle = '#fff'; cx.font = '600 '+Math.round(bh*0.42)+'px system-ui'; cx.textBaseline = 'middle';
+      cx.fillText('⚠ Illustration, pas une prévision · NASA · Open-Meteo · EFFIS/Copernicus · '+new Date().toLocaleString('fr-FR'), 12, bh/2);
+      const a = document.createElement('a'); a.download = 'multimaps-feux.png'; a.href = out.toDataURL('image/png'); a.click();
+      cacherInfo(); afficherInfo('📸 Image téléchargée — bandeau de précaution incrusté', 6000);
+    }catch(e){ cacherInfo(); afficherInfo('📸 Capture impossible avec ce fond (restriction d’images) — passez sur le fond OSM et réessayez', 8000); }
+  });
+  document.getElementById('btn-lien-vue').addEventListener('click', ()=>{
+    const c = map.getCenter(), actifs = [];
+    ['btn-feux-actifs','btn-zones-feux','btn-extension','btn-vent-feu','btn-animfeu','btn-prospfeu','btn-fwi','btn-cumul-brule','btn-risque-feu','btn-veriffeu'].forEach(function(id){ const b = document.getElementById(id); if(b && b.textContent.indexOf('\u2715') !== -1) actifs.push(id); });
+    let h = 0; try{ if(feuTempsActif()) h = Math.round(horlogeFeu.h); }catch(e){}
+    const hash = '#vue='+c.lat.toFixed(3)+','+c.lng.toFixed(3)+','+map.getZoom()+','+h+','+actifs.join('.');
+    const url = (typeof location !== 'undefined' && location.origin && location.origin !== 'null' ? location.origin+location.pathname : URL_CARTE)+hash;
+    copierTexte(url);
+    const z = document.getElementById('tweet-zone'); if(z){ z.style.display = 'block'; z.value = url; }
+    const ct = document.getElementById('tweet-compte'); if(ct){ ct.style.display = 'block'; ct.textContent = 'lien de vue copi\u00e9'; }
+  });
+  function appliquerVueHash(){
+    try{
+      const m = ((typeof location !== 'undefined' && location.hash) || '').match(/vue=([\-0-9.]+),([\-0-9.]+),([0-9]+),([\-0-9.]+),([A-Za-z0-9.\-]*)/);
+      if(!m) return;
+      map.setView([parseFloat(m[1]), parseFloat(m[2])], parseInt(m[3], 10));
+      (m[5]||'').split('.').forEach(function(id){ if(!id) return; const b = document.getElementById(id); if(b && b.textContent.indexOf('\u2715') === -1) b.click(); });
+      const hC = parseFloat(m[4]);
+      if(isFinite(hC) && hC !== 0){ setTimeout(function(){ try{ horlogeFeu.h = hC; appliquerHorloge(); }catch(e){} }, 4000); }
+      afficherInfo('\U0001F517 Vue partag\u00e9e restaur\u00e9e \u2014 les couches se chargent\u2026', 6000);
+    }catch(e){}
+  }
+  document.getElementById('btn-projection').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-projection');
+    const on = document.body.classList ? (document.body.classList.toggle('projection'), document.body.classList.contains('projection')) : false;
+    if(on) basculerBouton(btn, true, '\U0001F4FD\uFE0F Projection \u2715', '', '#4338ca');
+    else basculerBouton(btn, false, '', '\U0001F4FD\uFE0F Mode projection (classe)');
+    afficherInfo(on ? '\U0001F4FD\uFE0F Mode projection \u2014 fen\u00eatres secondaires masqu\u00e9es, textes agrandis' : '\U0001F4FD\uFE0F Affichage normal r\u00e9tabli', 5000);
+  });
+  setTimeout(appliquerVueHash, 900);
+  document.getElementById('btn-explic-plus').addEventListener('click', ()=>{ ouvrirExplic('plus'); });
+  document.getElementById('btn-explic-max').addEventListener('click', ()=>{ ouvrirExplic('max'); });
+  (function initExplicPop(){
+    const pop = document.getElementById('explic-pop'), tete = document.getElementById('explic-pop-tete');
+    const fm = document.getElementById('explic-pop-ferme'), cp = document.getElementById('explic-pop-copie');
+    if(fm && fm.addEventListener) fm.addEventListener('click', function(){ pop.style.display = 'none'; });
+    if(cp && cp.addEventListener) cp.addEventListener('click', function(){ const c = document.getElementById('explic-pop-corps'); if(c) copierTexte(c.innerText); });
+    if(tete && tete.addEventListener){
+      let drag = null;
+      tete.addEventListener('pointerdown', function(ev){ if(ev.target && ev.target.tagName === 'BUTTON') return; const rc = pop.getBoundingClientRect(); drag = { dx: ev.clientX-rc.left, dy: ev.clientY-rc.top }; pop.style.transform = 'none'; try{ tete.setPointerCapture(ev.pointerId); }catch(e){} });
+      tete.addEventListener('pointermove', function(ev){ if(!drag) return; pop.style.left = Math.max(0, ev.clientX-drag.dx)+'px'; pop.style.top = Math.max(0, ev.clientY-drag.dy)+'px'; });
+      tete.addEventListener('pointerup', function(){ drag = null; });
+    }
+  })();
   const VILLES_METEO = [["Paris",48.857,2.352],["Marseille",43.296,5.370],["Lyon",45.764,4.836],
    ["Toulouse",43.605,1.444],["Nice",43.700,7.265],["Nantes",47.218,-1.554],["Montpellier",43.611,3.877],
    ["Strasbourg",48.573,7.752],["Bordeaux",44.838,-0.579],["Lille",50.633,3.066],["Rennes",48.117,-1.677],
@@ -7215,9 +8128,7 @@
       url += cr.heure
         ? '&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m&start_hour='+cr.heure+'&end_hour='+cr.heure
         : '&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m';
-      const r = await fetch(url);
-      if(!r.ok) throw new Error('Open-Meteo vent');
-      const d = await r.json();
+      const d = await fetchMeteoJson(url, 20);
       (Array.isArray(d) ? d : [d]).forEach(x=>{
         if(cr.heure && x && x.hourly && x.hourly.time){
           let k = x.hourly.time.indexOf(cr.heure);
@@ -7254,6 +8165,7 @@
       for(let lon=bb.getWest(); lon<=bb.getEast(); lon+=pas)
         if(typeof enFrance !== 'function' || enFrance(lat, lon)) points.push([lat, lon]);
     if(!points.length){ afficherInfo('\ud83d\udca8 D\u00e9placez la carte sur la France pour voir le vent', 4500); return; }
+    etatVent.points = points; etatVent.horaires = null; etatVent.chgH = false;
     const valeurs = await ventPour(points);
     if(!etatVent.actif) return;
     if(!etatVent.groupe) etatVent.groupe = L.layerGroup();
@@ -7288,8 +8200,64 @@
     basculerBouton(btn, true, '\ud83d\udca8 Vent \u2715', '', '#e6550d');
     afficherInfo('\ud83d\udca8 Relev\u00e9 du vent\u2026', 0);
     try{ await chargerVent(); }
-    catch(e){ cacherInfo(); etatVent.actif = false; basculerBouton(btn, false, '', '\ud83d\udca8 Vent : direction et force'); afficherInfo('\ud83d\udca8 Open-Meteo ne r\u00e9pond pas \u2014 r\u00e9essayez dans un instant', 6000); }
+    catch(e){ cacherInfo(); etatVent.actif = false; basculerBouton(btn, false, '', '\ud83d\udca8 Vent : direction et force'); const fb2 = document.getElementById('btn-vent-feu'); if(fb2) basculerBouton(fb2, false, '', '\ud83d\udca8 Vent (direction + force)'); afficherInfo('\ud83d\udca8 Open-Meteo ne r\u00e9pond pas \u2014 r\u00e9essayez dans un instant', 6000); }
   });
+  async function chargerVentHoraire(){
+    if(etatVent.chgH || !etatVent.points || !etatVent.points.length) return;
+    etatVent.chgH = true;
+    try{
+      let pts = etatVent.points;
+      if(pts.length > 72){ const k = Math.ceil(pts.length/72); pts = pts.filter(function(_, i){ return i % k === 0; }); }
+      const hor = [];
+      for(let i=0; i<pts.length; i += 100){
+        const lot = pts.slice(i, i+100);
+        const url = 'https://api.open-meteo.com/v1/forecast?latitude='+lot.map(p=>p[0].toFixed(3)).join(',')+'&longitude='+lot.map(p=>p[1].toFixed(3)).join(',')+'&hourly=wind_speed_10m,wind_direction_10m&forecast_days=3&timezone=Europe%2FParis';
+        const d = await fetchMeteoJson(url, 30);
+        (Array.isArray(d) ? d : [d]).forEach(x=>{ hor.push({ dirs:(x.hourly && x.hourly.wind_direction_10m)||[], spds:(x.hourly && x.hourly.wind_speed_10m)||[] }); });
+      }
+      if(hor.length === pts.length){ etatVent.horaires = hor; etatVent.pointsH = pts; etatVent.i0h = new Date().getHours(); }
+    }catch(e){}
+    etatVent.chgH = false;
+  }
+  async function chargerVentArchive(){
+    if(etatVent.archive || etatVent.chgA) return; etatVent.chgA = true;
+    try{
+      const c = map.getCenter(), fin = new Date(), deb = new Date(Date.now() - 8*86400000);
+      function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+      const url = 'https://archive-api.open-meteo.com/v1/archive?latitude='+c.lat.toFixed(3)+'&longitude='+c.lng.toFixed(3)+'&start_date='+iso(deb)+'&end_date='+iso(fin)+'&hourly=wind_speed_10m,wind_direction_10m&timezone=Europe%2FParis';
+      const d = await fetchMeteoJson(url, 120);
+      const h = d.hourly || {};
+      etatVent.archive = { dirs:h.wind_direction_10m||[], spds:h.wind_speed_10m||[], t0:new Date(iso(deb)+'T00:00:00').getTime() };
+    }catch(e){}
+    etatVent.chgA = false;
+  }
+  function dessinerVentH(h){
+    if(!etatVent.actif || !etatVent.groupe) return;
+    if(h < -0.5){
+      if(!etatVent.archive){ chargerVentArchive().then(function(){ if(etatVent.archive && feuTempsActif()) dessinerVentH(horlogeFeu.h); }); return; }
+      const a = etatVent.archive, idxA = Math.floor((Date.now()+h*3600000 - a.t0)/3600000);
+      const v = a.spds[idxA], dir = a.dirs[idxA];
+      etatVent.groupe.clearLayers();
+      if(v == null || dir == null) return;
+      const bd = ventInfo(v);
+      ((etatVent.pointsH || etatVent.points)||[]).forEach(function(p){
+        L.marker(L.latLng(p[0], p[1]), { keyboard:false, icon: flecheVent(dir+180, bd, v) })
+          .bindTooltip('<b>'+Math.round(v)+' km/h</b> \u2014 '+bd[2]+'<br><small>vent observ\u00e9 (archive, uniforme sur la vue)</small>', {direction:'top'}).addTo(etatVent.groupe);
+      });
+      return;
+    }
+    if(!etatVent.horaires){ chargerVentHoraire().then(function(){ if(etatVent.horaires && feuTempsActif()) dessinerVentH(horlogeFeu.h); }); return; }
+    const idx = etatVent.i0h + Math.max(0, Math.round(h));
+    etatVent.groupe.clearLayers();
+    ((etatVent.pointsH || etatVent.points)||[]).forEach(function(p, i){
+      const m = etatVent.horaires[i]; if(!m) return;
+      const v = m.spds[idx], dir = m.dirs[idx]; if(v == null || dir == null) return;
+      const bd = ventInfo(v);
+      L.marker(L.latLng(p[0], p[1]), { keyboard:false, icon: flecheVent(dir+180, bd, v) })
+        .bindTooltip('<b>'+Math.round(v)+' km/h</b> \u2014 '+bd[2]+'<br><small>'+(h<0.5 ? 'maintenant' : '+'+Math.round(h)+' h')+'</small>', {direction:'top'})
+        .addTo(etatVent.groupe);
+    });
+  }
   map.on('moveend', ()=>{ if(etatVent.actif){ clearTimeout(etatVent.tempo); etatVent.tempo = setTimeout(chargerVent, 500); } });
 
   function urlMultiMeteo(){
@@ -9620,8 +10588,8 @@
   });
 
   // ================= Fenêtres flottantes (widgets) =================
-  const WIDGETS = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-sites','wg-equip','wg-seveso','wg-reperes','wg-geol','wg-population','wg-seances','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-3d','wg-limites','wg-foret','wg-pilote'];
-  const WIDGETS_PILOTABLES = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-sites','wg-equip','wg-seveso','wg-reperes','wg-geol','wg-population','wg-seances','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-3d','wg-limites','wg-foret'];
+  const WIDGETS = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-sites','wg-equip','wg-seveso','wg-reperes','wg-geol','wg-population','wg-seances','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-3d','wg-limites','wg-foret','wg-explic','wg-pilote'];
+  const WIDGETS_PILOTABLES = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-sites','wg-equip','wg-seveso','wg-reperes','wg-geol','wg-population','wg-seances','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-3d','wg-limites','wg-foret','wg-explic'];
   const WIDGETS_CASES = []; // remplacées par la fenêtre 🧭 pilote
   let posWidgets = {};
   try{ posWidgets = JSON.parse(localStorage.getItem('geo-widgets3')||'{}'); }catch(e){}
@@ -9686,6 +10654,8 @@
   }
   const petitEcran = window.innerWidth < 760;
   initWidget('wg-outils',  { left:'12px', top:'72px', replie:petitEcran });
+  initWidget('wg-explic',  { left:'12px', top:Math.max(120, Math.round(window.innerHeight*0.30))+'px', replie:false });
+  (function(){ const w = document.getElementById('wg-explic'); if(w && !posWidgets['wg-explic']){ w.classList.remove('replie'); w.classList.remove('cache'); w.style.zIndex = 940; const bR = w.querySelector('[data-action="replier"]'); if(bR) bR.textContent = '\u25be'; } })();
   initWidget('wg-ville',    { left:Math.max(8, window.innerWidth-262)+'px', top:'12px' });
   initWidget('wg-educ',     { left:Math.max(8, window.innerWidth-262)+'px', top:'52px', replie:true, cache:true });
   initWidget('wg-insee',    { left:Math.max(8, window.innerWidth-262)+'px', top:'92px', replie:true, cache:true });
@@ -9922,7 +10892,24 @@
       }
     }
     if(etatFeuxActifs.actif){
-      blocs.push('<div class="leg-sous">\ud83d\udd25 Feux des 15 derniers jours <small>(couleur = \u00e2ge)</small></div>'
+      if(etatFranceFeux.actif){
+        function rFR(ha){ return Math.max(6, Math.min(72, 6 + 3*Math.pow(ha, 0.32))); }
+        const r1=rFR(50), r2=rFR(1000), r3=rFR(20000), svgW=Math.max(70, r3*2+8), cx=svgW/2, base=r3+4;
+        const echelle = '<svg width="'+svgW+'" height="'+(base+r3+4)+'" style="display:block;margin:2px auto">'
+          + '<circle cx="'+cx+'" cy="'+base+'" r="'+r3+'" fill="none" stroke="#8a8577" stroke-width="1"/>'
+          + '<circle cx="'+cx+'" cy="'+(base+r3-r2)+'" r="'+r2+'" fill="none" stroke="#8a8577" stroke-width="1"/>'
+          + '<circle cx="'+cx+'" cy="'+(base+r3-r1)+'" r="'+r1+'" fill="none" stroke="#8a8577" stroke-width="1"/>'
+          + '</svg>';
+        blocs.push('<div class="leg-sous">🗺️ Vue d’ensemble France ('+(etatFranceFeux.nJours!=null?etatFranceFeux.nJours:7)+' j) <small>(estimation)</small></div>'
+          + '<div style="font-size:10px;color:#8a8577;text-align:center">Ampleur estimée (ha) — échelle des bulles</div>'
+          + echelle
+          + '<div style="font-size:9px;color:#8a8577;display:flex;justify-content:space-between;padding:0 4px">' + '<span>50</span><span>1 000</span><span>20 000 ha</span></div>'
+          + ligneLegende('#dc2626', 'Détecté aujourd’hui', 'rond', '')
+          + ligneLegende('#f97316', 'Détecté hier', 'rond', '')
+          + ligneLegende('#eab308', 'Détecté il y a 2 à 40 j', 'rond', 'Comptage de pixels NASA — voir explication au clic sur une bulle'));
+      }
+
+      blocs.push('<div class="leg-sous">\ud83d\udd25 Feux : '+libJour(parseInt((document.getElementById('jour-min')||{value:0}).value, 10)||0)+' \u2192 '+libJour(parseInt((document.getElementById('jour-max')||{value:15}).value, 10)||15)+' <small>(couleur = \u00e2ge)</small></div>'
         + ligneLegende('rgb(230,25,25)', 'Aujourd\u2019hui', 'carre', '')
         + ligneLegende('rgb(245,120,0)', 'Hier', 'carre', '')
         + ligneLegende('rgb(255,200,0)', '2 \u00e0 4 jours', 'carre', '')
@@ -9935,8 +10922,8 @@
     }
     if(etatFumees.actif){
       blocs.push('<div class="leg-sous">\ud83c\udf2b Fum\u00e9es & \u00e9volution <small>(sens du vent)</small></div>'
-        + ligneLegende('#f97316', 'C\u00f4ne d\u2019\u00e9volution du feu', 'carre', 'Propagation probable, longueur selon la force du vent')
-        + ligneLegende('#9ca3af', 'Panache de fum\u00e9e', 'carre', 'D\u00e9rive sous le vent \u2014 visibilit\u00e9 et air en aval'));
+        + ligneLegende('#f97316', 'C\u00f4ne d\u2019\u00e9volution du FEU', 'carre', 'Zone PROCHE o\u00f9 les flammes progressent (court, large)')
+        + ligneLegende('#cbd5e1', 'Panache de FUM\u00c9E', 'carre', 'D\u00e9rive LOIN sous le vent (long, tiret\u00e9)'));
     }
     if(etatRisqueFeu.actif){
       blocs.push('<div class="leg-sous">\ud83d\udd36 Risque d\u2019incendie <small>(indice FWI, hachur\u00e9)</small></div>'
@@ -9953,6 +10940,23 @@
         + ligneLegende('#60a5fa', 'Vent +24 h', 'carre', '')
         + ligneLegende('#93c5fd', 'Vent +48 h <small>(pousse le feu vers l\u2019aval)</small>', 'carre', ''));
     }
+    if(etatPanache.actif){
+      blocs.push('<div class="leg-sous">🔥 Panache anim\u00e9 <small>(foyers du jour)</small></div>'
+        + ligneLegende('#dc2626', 'Foyer <small>(flamme cercl\u00e9e, taille = \u00e9tendue)</small>', 'carre', '')
+        + ligneLegende('#9ca3af', 'Panache de fum\u00e9e', 'carre', 'Sens du vent pr\u00e9vu \u00b7 curseur d\u2019\u00e9volution')
+        + ligneLegende('#1d4ed8', 'Vent', 'carre', ''));
+    }
+    if(etatExt.actif){
+      blocs.push('<div class="leg-sous">\u27a4 Propagation <small>(illustration)</small></div>'
+        + ligneLegende('#1d4ed8', 'Sens de propagation', 'carre', 'Fl\u00e8che = direction pouss\u00e9e par le vent pr\u00e9vu')
+        + ligneLegende('#f97316', 'Extension imminente', 'carre', 'C\u00f4ne proche')
+        + ligneLegende('#f97316', 'C\u00f4ne : plus c\u2019est p\u00e2le, plus c\u2019est incertain', 'carre', 'S\u2019estompe avec la distance \u00b7 trace grise en option (barre de temps)'));
+    }
+    if(etatSim.actif){
+      blocs.push('<div class="leg-sous">🔥 Simulation de propagation <small>(illustration)</small></div>'
+        + ligneLegende('#ef4444', 'Front actif (en feu)', 'carre', '')
+        + ligneLegende('#28201e', 'D\u00e9j\u00e0 br\u00fbl\u00e9', 'carre', 'V\u00e9g\u00e9tation (Corine) + vent + s\u00e9cheresse + pluie'));
+    }
     if(etatAir.actif){
       blocs.push('<div class="leg-sous">\ud83e\udec1 Qualit\u00e9 de l\u2019air <small>(indice europ\u00e9en \u00b7 Open-Meteo)</small></div>'
         + AQI_BANDES.map((b, i)=>ligneLegende(b[1], b[2]+' <small>(indice '+(i ? AQI_BANDES[i-1][0] : 0)+(b[0]>200 ? ' et plus' : ' \u2013 '+b[0])+')</small>', 'carre', '')).join(''));
@@ -9963,7 +10967,7 @@
     }
     if(etatPop.actif){
       const anP = (document.getElementById('pop-annee')||{value:'2020'}).value;
-      blocs.push('<div class="leg-sous">\U0001f465 Densit\u00e9 de population <small>('+anP+', hab/km\u00b2)</small></div>'
+      blocs.push('<div class="leg-sous">👥 Densit\u00e9 de population <small>('+anP+', hab/km\u00b2)</small></div>'
         + ligneLegende('#ffffcc', 'Tr\u00e8s faible', 'carre', '')
         + ligneLegende('#fed976', 'Faible', 'carre', '')
         + ligneLegende('#fd8d3c', 'Moyenne', 'carre', '')
@@ -9971,7 +10975,7 @@
         + ligneLegende('#800026', 'Tr\u00e8s forte', 'carre', 'Jeu mondial GPW \u00b7 NASA SEDAC \u00b7 \u00e9chelle indicative'));
     }
     if(etatAltitude.actif){
-      blocs.push('<div class="leg-sous">\U0001f3d4 Altitude <small>(\u00e9chelle adapt\u00e9e au zoom)</small></div>'
+      blocs.push('<div class="leg-sous">🏔 Altitude <small>(\u00e9chelle adapt\u00e9e au zoom)</small></div>'
         + ligneLegende('rgb(60,150,60)', 'Plaines / vall\u00e9es', 'carre', '')
         + ligneLegende('rgb(235,225,130)', 'Collines', 'carre', '')
         + ligneLegende('rgb(215,165,95)', 'Moyennes montagnes', 'carre', '')
@@ -9979,12 +10983,12 @@
         + ligneLegende('rgb(245,245,245)', 'Sommets', 'carre', 'Donn\u00e9es AWS Terrain \u2014 l\u2019\u00e9chelle se resserre en zoomant pour d\u00e9tailler le relief local'));
     }
     if(etatGeol.massifs.actif){
-      blocs.push('<div class="leg-sous">\U0001f3d4 Grands massifs</div>'
+      blocs.push('<div class="leg-sous">🏔 Grands massifs</div>'
         + ligneLegende('#92400e', 'Vieux socle hercynien', 'carre', '-360 \u00e0 -300 Ma, tr\u00e8s \u00e9rod\u00e9')
         + ligneLegende('#0e7490', 'Cha\u00eene r\u00e9cente (alpine)', 'carre', '-65 Ma \u00e0 aujourd\u2019hui'));
     }
     if(etatGeol.carte.actif || etatGeol.m1.actif){
-      blocs.push('<div class="leg-sous">\U0001faa8 G\u00e9ologie (BRGM)</div><div style="font-size:11px;color:#6b6656;line-height:1.35">Les couleurs indiquent les <b>types de roches</b> du sous-sol (et les failles). L\u00e9gende compl\u00e8te : <a href="https://data.geopf.fr/annexes/ressources/documentation/Legende2026.pdf" target="_blank" rel="noopener" style="color:#7c3aed">notice BRGM</a>.</div>');
+      blocs.push('<div class="leg-sous">🪨 G\u00e9ologie (BRGM)</div><div style="font-size:11px;color:#6b6656;line-height:1.35">Les couleurs indiquent les <b>types de roches</b> du sous-sol (et les failles). L\u00e9gende compl\u00e8te : <a href="https://data.geopf.fr/annexes/ressources/documentation/Legende2026.pdf" target="_blank" rel="noopener" style="color:#7c3aed">notice BRGM</a>.</div>');
     }
     if(etatSeveso.actif){
       const fs = sevesoFiltres();
