@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v4.0 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v4.1 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v4.0</title>
+<title>MultiMaps — géographie (collège & lycée) — v4.1</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -691,6 +691,7 @@
         <option value="2022">2022 (été record)</option>
       </select>
       <button class="calque-ajout donnee" id="btn-foret" title="Carte forestière BD Forêt® V2 de l'IGN : 32 types de peuplements photo-interprétés (feuillus, conifères, mixtes, peupleraies…) sur toute la métropole. En mode contrôle, cliquez sur une forêt pour connaître son type de peuplement et son essence dominante.">🌲 Carte forestière (IGN)</button>
+    <button class="calque-ajout donnee" id="btn-resineux" title="Échantillonne la vue actuelle (grille de points) via BD Forêt® IGN et calcule le taux de résineux (conifères) parmi les forêts détectées. Utilisé aussi pour affiner la vitesse de propagation du feu (les résineux brûlent plus vite que les feuillus).">🌲🔥 Taux de résineux (vue)</button>
       <button class="calque-ajout donnee" id="btn-foret-pub" title="Forêts publiques gérées par l'ONF : forêts domaniales (État) et forêts des collectivités (communales, départementales…). En mode contrôle, cliquez sur une forêt pour son nom. Repère : la forêt couvre ≈ 17,5 millions d'hectares en métropole (près d'un tiers du territoire) — ¾ privée, ¼ publique gérée par l'ONF.">🌳 Forêts publiques (ONF)</button>
       <button class="calque-ajout donnee" id="btn-foret-verte" title="La forêt entière en une seule teinte vert pomme : la carte forestière IGN + les forêts publiques ONF (recolorées) + les bois OpenStreetMap de la vue, fusionnés sans distinction de type ni de propriété. Partie OSM : zoom 10 minimum, rechargée au déplacement.">🌳 Forêt (fusion, vert pomme)</button>
       <button class="calque-ajout donnee" id="btn-foret-climat" title="Les massifs forestiers français les plus menacés par le changement climatique, d'après les constats documentés de l'ONF et de l'INRAE : dépérissements (Chantilly, hêtraies), crise des scolytes sur les épicéas du Grand Est, incendies (Landes 2022, Fontainebleau 2026, Maures), stress hydrique des chênaies. Sélection indicative de 16 massifs.">🥀 Forêts menacées par le climat</button>
@@ -1186,7 +1187,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v4.0</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v4.1</small></span>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
   <div class="widget-corps">
@@ -1247,7 +1248,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v4.0</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v4.1</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -1340,17 +1341,21 @@
   <span style="font-size:12px;color:#fca5a5">⏱ Temps du feu</span>
   <button id="feu-temps-play" title="Lecture / pause" style="border:1px solid #6b6656;background:#2b2822;color:#fff;border-radius:8px;cursor:pointer;padding:2px 11px;font-size:15px">▶</button>
   <button id="feu-recalc" title="Recalculer sur la vue actuelle : foyers, végétation, zones brûlées et météo rechargés (l’horloge repart de maintenant)" style="border:1px solid #6b6656;background:#2b2822;color:#fff;border-radius:8px;cursor:pointer;padding:2px 10px;font-size:14px">↻</button>
-  <label title="Afficher aussi la zone grise parcourue par le front (estimation)" style="display:flex;align-items:center;gap:3px;font-size:11px;color:#cbd5e1;cursor:pointer"><input type="checkbox" id="feu-trace" checked style="accent-color:#6b7280"> trace</label>
-  <label title="Mode avancé : simulation cellule par cellule sur la végétation réelle, recalée sur les mêmes vitesses que les cônes" style="display:flex;align-items:center;gap:3px;font-size:11px;color:#cbd5e1;cursor:pointer"><input type="checkbox" id="feu-simcase" style="accent-color:#ef4444"> simulation</label>
-  <label title="Superpose le cône SANS intervention (contour pointillé clair) à celui de votre réglage 🚒 : l’écart visualise l’effet des secours" style="display:flex;align-items:center;gap:3px;font-size:11px;color:#cbd5e1;cursor:pointer"><input type="checkbox" id="feu-compare" style="accent-color:#fb923c"> comparer 🚒</label>
-  <span title="Intervention des secours : à gauche = intervention maximum (freine fortement), à droite = zéro intervention (feu libre)" style="display:flex;align-items:center;gap:4px;font-size:11px;color:#cbd5e1">🚒<input type="range" id="feu-pompiers" min="0" max="100" value="45" step="5" style="width:80px;accent-color:#ef4444"><span id="feu-pompiers-lbl" style="min-width:56px"></span></span>
+  <button id="feu-avance-btn" title="Réglages avancés : intervention des secours, trace, comparaison, simulation" style="border:1px solid #6b6656;background:#2b2822;color:#fff;border-radius:8px;cursor:pointer;padding:2px 10px;font-size:14px">⚙️</button>
+  </span>
   <input type="range" id="feu-temps-slider" min="0" max="48" value="0" step="1" title="Déroulé commun : maintenant → +48 h (panache, extension et simulation ensemble)" style="width:min(230px,44vw);accent-color:#f97316">
   <span id="feu-temps-lbl" style="min-width:150px;text-align:right;font-variant-numeric:tabular-nums"></span>
   <button id="feu-temps-ferme" title="Fermer les vues du feu" style="border:1px solid #6b6656;background:none;color:#cbd5e1;border-radius:8px;cursor:pointer;padding:2px 9px">✕</button>
 </div>
+<div id="feu-avance" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:64px;z-index:1254;background:rgba(20,18,14,.93);color:#fff;border-radius:12px;box-shadow:0 6px 26px rgba(0,0,0,.45);padding:6px 12px;font:13px system-ui;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;max-width:96vw">
+  <label title="Afficher aussi la zone grise parcourue par le front (estimation)" style="display:flex;align-items:center;gap:3px;font-size:11px;color:#cbd5e1;cursor:pointer"><input type="checkbox" id="feu-trace" checked style="accent-color:#6b7280"> trace</label>
+  <label title="Mode avancé : simulation cellule par cellule sur la végétation réelle, recalée sur les mêmes vitesses que les cônes" style="display:flex;align-items:center;gap:3px;font-size:11px;color:#cbd5e1;cursor:pointer"><input type="checkbox" id="feu-simcase" style="accent-color:#ef4444"> simulation</label>
+  <label title="Superpose le cône SANS intervention (contour pointillé clair) à celui de votre réglage 🚒 : l’écart visualise l’effet des secours" style="display:flex;align-items:center;gap:3px;font-size:11px;color:#cbd5e1;cursor:pointer"><input type="checkbox" id="feu-compare" style="accent-color:#fb923c"> comparer 🚒</label>
+  <span title="Intervention des secours : à gauche = intervention maximum (freine fortement), à droite = zéro intervention (feu libre)" style="display:flex;align-items:center;gap:4px;font-size:11px;color:#cbd5e1">🚒<input type="range" id="feu-pompiers" min="0" max="100" value="45" step="5" style="width:80px;accent-color:#ef4444"><span id="feu-pompiers-lbl" style="min-width:56px"></span>
+</div>
 <div id="feu-badge" style="display:none;position:fixed;top:56px;right:12px;z-index:1290;background:#7f1d1d;color:#fff;padding:6px 12px;border-radius:9px;font:600 12px/1.4 system-ui;max-width:300px;box-shadow:0 4px 16px rgba(0,0,0,.4)"></div>
 <div id="feu-avert" style="display:none;position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:1300;background:#7f1d1d;color:#fff;padding:6px 13px;border-radius:8px;font:12px/1.4 system-ui;max-width:94vw;text-align:center;box-shadow:0 3px 14px rgba(0,0,0,.45)">⚠️ <b>Illustration, pas une prévision.</b> Montre comment le vent, la végétation et la sécheresse influencent un feu — les distances et durées ne sont ni calibrées ni validées. Ne pas utiliser pour une décision de terrain : les secours utilisent ForeFire / Météo-France. <button id="feu-methode-btn" style="margin-left:6px;background:#fecaca;color:#7f1d1d;border:none;border-radius:6px;padding:1px 8px;cursor:pointer;font-size:11px;font-weight:600;white-space:nowrap">ℹ️ Comment c’est calculé ?</button></div>
-<div id="feu-methode" style="display:none;position:fixed;top:66px;left:50%;transform:translateX(-50%);z-index:1300;background:#fff;color:#1c1917;padding:13px 16px;border-radius:10px;font:12px/1.5 system-ui;max-width:min(580px,94vw);max-height:72vh;overflow-y:auto;box-shadow:0 8px 30px rgba(0,0,0,.4);border:1px solid #e7e5e4;text-align:left"><div style="font-weight:700;font-size:13px;margin-bottom:6px">Comment ces estimations sont calculées</div><div style="font-weight:600;color:#b91c1c;margin:9px 0 2px">🔥 Propagation (cônes)</div><div>Depuis chaque foyer détecté aujourd’hui par satellite, on trace un cône orienté dans le sens où le vent pousse. La vitesse du front = une base (~0,08 km/h) × force du vent prévu × sécheresse × pente × végétation (Corine Land Cover : forêt rapide, cultures lentes, eau/urbain quasi-stop) × intervention des secours (molette 🚒). Les zones déjà brûlées (détections satellite J-1 à J-7) freinent fortement le front (combustible consommé), et la végétation est lue le long du trajet, pas seulement au départ. Le cône représente la zone atteignable dans les ~6 prochaines heures : sa longueur suit la vitesse potentielle du feu, son ouverture suit la variabilité du vent prévu (statistique circulaire), et il ne descend jamais sous une incertitude minimale qui croît avec l’horizon (√t) — car même un feu combattu garde un aléa (reprises, sautes de feu). L’intervention des secours réduit fortement la distance parcourue (trace), mais beaucoup moins l’incertitude (cône). La trace grise (option) montre le chemin déjà parcouru. Les foyers proches (≤ 3 km) sont regroupés en une seule emprise. Les grands axes routiers et cours d’eau (Géoplateforme) freinent fortement le front (coupures).</div><div style="font-weight:600;color:#b91c1c;margin:9px 0 2px">🔥 Simulation cellulaire</div><div>La zone est découpée en une grille. Pour chaque cellule, on lit la végétation réelle (Corine Land Cover) : forêt et broussailles = combustible élevé, cultures = moyen, eau et zones urbaines = barrière. Le feu part des foyers du jour ; à chaque étape, une cellule en feu peut enflammer ses voisines avec une probabilité = base × combustible de la voisine × sécheresse × alignement au vent (renforcé sous le vent, réduit au vent).</div><div style="font-weight:600;margin:9px 0 2px">Le facteur « sécheresse »</div><div>En priorité, l’indice officiel <b>FWI</b> (Fire Weather Index) du jour est lu auprès d’EFFIS / Copernicus au niveau des foyers. S’il est inaccessible, une estimation locale prend le relais : température, humidité de l’air, pluie du moment et des 5 derniers jours.</div><div style="font-weight:600;margin:9px 0 2px">Données utilisées</div><div>Foyers : NASA VIIRS (satellite) · Vent, température, humidité : Open-Meteo · Végétation : Corine Land Cover (Copernicus / IGN).</div><div style="font-weight:600;color:#7f1d1d;margin:9px 0 2px">Ce qui n’est PAS pris en compte</div><div>La pente, l’humidité réelle du combustible, les sautes de feu (braises projetées loin devant), les changements de vent au fil de la journée, l’action des secours, et le fait qu’un grand feu crée son propre vent. Surtout, les paramètres ne sont pas calibrés sur des feux réels : les distances et durées n’ont donc aucune valeur prédictive.</div><div style="text-align:right;margin-top:10px"><button id="feu-methode-ferme" style="background:#1c1917;color:#fff;border:none;border-radius:7px;padding:4px 14px;cursor:pointer;font-size:12px">Fermer</button></div></div>
+<div id="feu-methode" style="display:none;position:fixed;top:66px;left:50%;transform:translateX(-50%);z-index:1300;background:#fff;color:#1c1917;padding:13px 16px;border-radius:10px;font:12px/1.5 system-ui;max-width:min(580px,94vw);max-height:72vh;overflow-y:auto;box-shadow:0 8px 30px rgba(0,0,0,.4);border:1px solid #e7e5e4;text-align:left"><div style="font-weight:700;font-size:13px;margin-bottom:6px">Comment ces estimations sont calculées</div><div style="font-weight:600;color:#b91c1c;margin:9px 0 2px">🔥 Propagation (cônes) — modèle Rothermel (1972)</div><div>La vitesse du front suit désormais la formule de Rothermel utilisée en recherche et en opérationnel (R = R₀·(1+φᵤ+φₛ), USDA Forest Service RP-INT-115) : une vitesse de base R₀ calculée à partir de paramètres physiques du combustible (charge, profondeur, ratio surface/volume, taux de compactage), multipliée par un coefficient de vent φᵤ et un coefficient de pente φₛ, tous deux calculés exactement selon les formules publiées (Andrews, Cruz & Rothermel 2013 pour le vent). L’humidité du combustible mort est estimée à partir de la température et de l’humidité de l’air via la formule d’équilibre de Simard (1968), puis amortit la vitesse selon une forme cubique (indice Fosberg 1978). Quatre catégories de combustible (non combustible, agricole, lande/maquis, forêt) sont déduites de Corine Land Cover, avec des paramètres <b>représentatifs</b> de chaque catégorie (pas un modèle Scott & Burgan précis, faute de cadastre combustible français public) — c’est la principale approximation restante. Exception : la forêt bénéficie d’une vraie donnée locale — le taux de résineux (conifères vs feuillus) est échantillonné via BD Forêt® IGN à chaque foyer, et le modèle mélange deux jeux de paramètres Rothermel réels (aiguilles fines/lit aéré pour les conifères, plus rapides ; litière plus dense pour les feuillus) selon cette proportion. Le vent 10 m est ramené au vent mi-flamme via un facteur d’ajustement standard (×0,4). Par-dessus cette physique, deux effets non couverts par Rothermel restent modélisés séparément, comme dans les systèmes opérationnels (ex. FARSITE) : les zones déjà brûlées et les coupures (routes, cours d’eau) freinent le front en aval de la formule ; l’intervention des secours (molette 🚒) est un multiplicateur extérieur au modèle physique, pas une donnée Rothermel. Le cône représente la zone atteignable dans les ~6 prochaines heures : sa longueur suit la vitesse potentielle du feu, son ouverture suit la variabilité du vent prévu, et il ne descend jamais sous une incertitude minimale qui croît avec l’horizon (√t). La trace grise (option) montre le chemin déjà parcouru. Les foyers proches (≤ 3 km) sont regroupés en une seule emprise.</div><div style="font-weight:600;color:#b91c1c;margin:9px 0 2px">🔥 Simulation cellulaire</div><div>La zone est découpée en une grille. Pour chaque cellule, on lit la végétation réelle (Corine Land Cover) : forêt et broussailles = combustible élevé, cultures = moyen, eau et zones urbaines = barrière. Le feu part des foyers du jour ; à chaque étape, une cellule en feu peut enflammer ses voisines avec une probabilité = base × combustible de la voisine × sécheresse × alignement au vent (renforcé sous le vent, réduit au vent).</div><div style="font-weight:600;margin:9px 0 2px">Le facteur « sécheresse »</div><div>En priorité, l’indice officiel <b>FWI</b> (Fire Weather Index) du jour est lu auprès d’EFFIS / Copernicus au niveau des foyers. S’il est inaccessible, une estimation locale prend le relais : température, humidité de l’air, pluie du moment et des 5 derniers jours.</div><div style="font-weight:600;margin:9px 0 2px">Données utilisées</div><div>Foyers : NASA VIIRS (satellite) · Vent, température, humidité : Open-Meteo · Végétation : Corine Land Cover (Copernicus / IGN).</div><div style="font-weight:600;color:#7f1d1d;margin:9px 0 2px">Ce qui n’est PAS pris en compte</div><div>La pente, l’humidité réelle du combustible, les sautes de feu (braises projetées loin devant), les changements de vent au fil de la journée, l’action des secours, et le fait qu’un grand feu crée son propre vent. Surtout, les paramètres ne sont pas calibrés sur des feux réels : les distances et durées n’ont donc aucune valeur prédictive.</div><div style="text-align:right;margin-top:10px"><button id="feu-methode-ferme" style="background:#1c1917;color:#fff;border:none;border-radius:7px;padding:4px 14px;cursor:pointer;font-size:12px">Fermer</button></div></div>
 <div id="radar-ctrl" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:1250;background:rgba(20,18,14,.92);color:#fff;border-radius:12px;box-shadow:0 6px 26px rgba(0,0,0,.45);padding:7px 12px;font:13px system-ui;align-items:center;gap:10px">
   <button id="radar-play" title="Lecture / pause" style="border:1px solid #6b6656;background:#2b2822;color:#fff;border-radius:8px;cursor:pointer;padding:2px 11px;font-size:15px">⏸</button>
   <input type="range" id="radar-slider" min="0" max="0" value="0" title="Glissez dans le temps : passé → maintenant → prévu (extrapolation)" style="width:230px;accent-color:#38bdf8">
@@ -1477,7 +1482,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v4.0';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v4.1';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -2330,6 +2335,39 @@
   };
   const georisquesActif = false; // module retiré de cette édition
   let requeteForetEnCours = false;
+  async function resineuxAuPoint(lat, lon){
+    try{
+      const dd = 0.0012;
+      const sw = map.options.crs.project(L.latLng(lat-dd, lon-dd)), ne = map.options.crs.project(L.latLng(lat+dd, lon+dd));
+      const bbox = sw.x+','+sw.y+','+ne.x+','+ne.y;
+      const url = WMS_GEOPF+'?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&LAYERS=LANDCOVER.FORESTINVENTORY.V2&QUERY_LAYERS=LANDCOVER.FORESTINVENTORY.V2&STYLES=&CRS=EPSG:3857&BBOX='+bbox+'&WIDTH=3&HEIGHT=3&I=1&J=1&INFO_FORMAT=application/json&FEATURE_COUNT=1';
+      const r = await fetch(url); if(!r.ok) return null;
+      const d = await r.json();
+      const f = d && d.features && d.features[0]; if(!f) return null;
+      const p = f.properties || {}, txt = (((p.tfv_g11||'')+' '+(p.tfv||''))+'').toLowerCase();
+      if(txt.indexOf('conif') !== -1) return 1;
+      if(txt.indexOf('mixte') !== -1) return 0.5;
+      if(txt.indexOf('feuillu') !== -1) return 0;
+      return null;
+    }catch(e){ return null; }
+  }
+  document.getElementById('btn-resineux').addEventListener('click', async ()=>{
+    const btn = document.getElementById('btn-resineux');
+    afficherInfo('🌲🔥 Échantillonnage BD Forêt (IGN) sur la vue…', 0);
+    try{
+      const b = map.getBounds();
+      const grille = [];
+      for(let iy=0; iy<6; iy++){ for(let ix=0; ix<6; ix++){
+        grille.push({ lat: b.getSouth() + (b.getNorth()-b.getSouth())*((iy+0.5)/6), lon: b.getWest() + (b.getEast()-b.getWest())*((ix+0.5)/6) });
+      }}
+      const res = await Promise.all(grille.map(function(pt){ return resineuxAuPoint(pt.lat, pt.lon); }));
+      const forets = res.filter(function(v){ return v !== null; });
+      cacherInfo();
+      if(!forets.length){ afficherInfo('🌲 Aucune forêt classifiée détectée dans la vue actuelle', 6000); return; }
+      const moy = forets.reduce(function(a,b2){ return a+b2; }, 0) / forets.length;
+      afficherInfo('🌲🔥 Taux de résineux (parmi les '+forets.length+' point(s) en forêt sur '+grille.length+' échantillonnés) : <b>'+Math.round(moy*100)+' %</b> — le reste feuillu/mixte', 10000);
+    }catch(e){ cacherInfo(); afficherInfo('🌲 Indisponible — à tester en ligne (BD Forêt IGN)', 6000); }
+  });
   async function infoForet(latlng, pointConteneur){
     const actifs = Object.keys(COUCHES_FORET).filter(id=>etatForet[id].actif);
     if((actifs.length===0 && !georisquesActif) || requeteForetEnCours || !pointConteneur) return;
@@ -6816,9 +6854,22 @@
     pts.sort(function(a,b){ return b.km2 - a.km2; });
     return pts;
   }
+  async function foyersDuJourFirms(bnds, nJour){
+    const cle = (document.getElementById('firms-key')||{value:''}).value.trim();
+    if(!cle) return null;
+    const coords = bnds.getWest().toFixed(3)+','+bnds.getSouth().toFixed(3)+','+bnds.getEast().toFixed(3)+','+bnds.getNorth().toFixed(3);
+    const dateStr = (nJour||0) > 0 ? isoJour(new Date(Date.now() - nJour*86400000)) : null;
+    let lot;
+    try{ lot = await fetchFirmsCSV(cle, coords, 1, dateStr); }catch(e){ lot = null; }
+    if(lot === null) return null;
+    if(!lot.length) return [];
+    const gr = grouperPointsFirms(lot.map(function(p){ return { lat:p.lat, lon:p.lon, km2:p.km2, statut:0 }; }), 1.5);
+    return gr.map(function(g){ return { centre: L.latLng(g.la, g.lo), km2: g.km2 }; }).sort(function(a, b){ return b.km2 - a.km2; }).slice(0, 220);
+  }
   async function foyersDuJour(nJour){
     if(!map.getBounds || !map.options || !map.options.crs || typeof document.createElement !== 'function') throw new Error('environnement');
     const bnds = map.getBounds().pad(0.1);
+    try{ const viaFirms = await foyersDuJourFirms(bnds, nJour||0); if(viaFirms !== null) return viaFirms; }catch(e){}
     const sw = map.options.crs.project(bnds.getSouthWest());
     const ne = map.options.crs.project(bnds.getNorthEast());
     const largKm = bnds.getSouthWest().distanceTo(L.latLng(bnds.getSouthWest().lat, bnds.getNorthEast().lng))/1000;
@@ -7170,11 +7221,80 @@
   async function conditionsFeu(ll){
     const url = 'https://api.open-meteo.com/v1/forecast?latitude='+ll.lat.toFixed(3)+'&longitude='+ll.lng.toFixed(3)
       + '&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_direction_10m'
-      + '&hourly=wind_speed_10m,wind_direction_10m,precipitation&daily=precipitation_sum&past_days=4&forecast_days=2&timezone=Europe%2FParis';
+      + '&hourly=wind_speed_10m,wind_direction_10m,precipitation,temperature_2m,relative_humidity_2m&daily=precipitation_sum&past_days=4&forecast_days=2&timezone=Europe%2FParis';
     try{ const d = await fetchMeteoJson(url, 30); const c = d.current || {}, h = d.hourly || {};
       let p5 = 0; const dp = (d.daily && d.daily.precipitation_sum) || []; for(let k=0;k<dp.length;k++){ if(dp[k]!=null) p5 += dp[k]; }
-      return { temp:(c.temperature_2m!=null?c.temperature_2m:25), rh:(c.relative_humidity_2m!=null?c.relative_humidity_2m:40), wspd:(c.wind_speed_10m||15), wdir:(c.wind_direction_10m||0), precip:(c.precipitation||0), precip5:p5, hdir:(h.wind_direction_10m||[]), hspd:(h.wind_speed_10m||[]), hpre:(h.precipitation||[]), i0:(4*24 + new Date().getHours()) };
-    }catch(e){ return { temp:25, rh:40, wspd:15, wdir:0, precip:0, precip5:0, hdir:[], hspd:[], hpre:[], i0:(4*24 + new Date().getHours()) }; }
+      return { temp:(c.temperature_2m!=null?c.temperature_2m:25), rh:(c.relative_humidity_2m!=null?c.relative_humidity_2m:40), wspd:(c.wind_speed_10m||15), wdir:(c.wind_direction_10m||0), precip:(c.precipitation||0), precip5:p5, hdir:(h.wind_direction_10m||[]), hspd:(h.wind_speed_10m||[]), hpre:(h.precipitation||[]), htemp:(h.temperature_2m||[]), hrh:(h.relative_humidity_2m||[]), i0:(4*24 + new Date().getHours()) };
+    }catch(e){ return { temp:25, rh:40, wspd:15, wdir:0, precip:0, precip5:0, hdir:[], hspd:[], hpre:[], htemp:[], hrh:[], i0:(4*24 + new Date().getHours()) }; }
+  }
+  // ---------- Modèle physique Rothermel (1972), Int. J. Wildland Fire / USFS RP-INT-115 ----------
+  // Constantes standard du modèle (identiques pour tous les combustibles, valeurs classiques Rothermel)
+  const ROTH = { pp:32, h:8000, st:0.0555, se:0.010 };  // densité particule (lb/ft3), pouvoir calorifique (Btu/lb), teneur minérale totale/efficace
+  // Catégories de combustible REPRÉSENTATIVES (valeurs typiques de la catégorie, pas un modèle Scott & Burgan précis)
+  const FUEL_CATS = [
+    { nom:'non combustible', sigma:1, w0:0, fd:0.1, Mx:100 },
+    { nom:'agricole / prairie légère', sigma:2000, w0:0.20, fd:0.5, Mx:15 },
+    { nom:'lande / maquis', sigma:1200, w0:3.0, fd:4.0, Mx:20 },
+    { nom:'forêt (litière)', sigma:1500, w0:1.0, fd:1.5, Mx:25 },
+    { nom:'forêt de conifères (aiguilles)', sigma:2200, w0:0.6, fd:1.5, Mx:22 }
+  ];
+  function resineuxProche(la, lo){
+    const grp = etatExt.resineuxGrp || []; let mieux = null, dm = 4;
+    grp.forEach(function(g){ if(g.frac == null) return; const d = map.distance(L.latLng(la, lo), L.latLng(g.la, g.lo))/1000; if(d < dm){ dm = d; mieux = g.frac; } });
+    return mieux == null ? 0.5 : mieux;
+  }
+  function rothermelKmHForet(fracResineux, ventKmH, tanPente, rhPct, tempC){
+    const vF = rothermelKmH(3, ventKmH, tanPente, rhPct, tempC), vC = rothermelKmH(4, ventKmH, tanPente, rhPct, tempC);
+    return vF + (vC - vF) * Math.max(0, Math.min(1, fracResineux));
+  }
+  function fuelCategorieDe(fu){
+    if(fu >= 0.85) return 3; if(fu >= 0.55) return 2; if(fu >= 0.10) return 1; return 0;
+  }
+  function rothermelBeta(cat){
+    const ODBD = cat.w0 / cat.fd, beta = ODBD / ROTH.pp, betaOp = 3.348 * Math.pow(cat.sigma, -0.8189);
+    return { beta:beta, betaOp:betaOp, ODBD:ODBD };
+  }
+  function rothermelR0(catIdx, MfPct){
+    const cat = FUEL_CATS[catIdx]; if(!cat || cat.w0 <= 0) return 0;
+    const Mx = cat.Mx/100, Mf = Math.min(MfPct, cat.Mx*0.999)/100;
+    const bo = rothermelBeta(cat), betaRel = bo.beta/bo.betaOp;
+    const WN = cat.w0 / (1+ROTH.st);
+    const A = 133 / Math.pow(cat.sigma, 0.7913);
+    const Tmax = Math.pow(cat.sigma,1.5) / (495+0.0594*Math.pow(cat.sigma,1.5));
+    const Gam = Tmax * Math.pow(betaRel, A) * Math.exp(A*(1-betaRel));
+    const rm = Math.max(0, Math.min(1, Mf/Mx));
+    const etaM = 1 - 2*rm + 1.5*rm*rm - 0.5*rm*rm*rm;         // amortissement humidité (forme Fosberg 1978, généralisée à Mx du combustible)
+    const etaS = 0.174 * Math.pow(ROTH.se, -0.19);
+    const IR = Gam * WN * ROTH.h * etaM * etaS;
+    const xi = Math.pow(192+0.2595*cat.sigma, -1) * Math.exp((0.792+0.681*Math.sqrt(cat.sigma))*(bo.beta+0.1));
+    const eps = Math.exp(-138/cat.sigma);
+    const Qig = 250 + 1116*Mf;
+    const R0_ft_min = (IR*xi) / (bo.ODBD*eps*Qig);
+    return Math.max(0, R0_ft_min * 0.3048);   // m/min
+  }
+  function rothermelPhiWS(catIdx, ventKmH, tanPente){
+    const cat = FUEL_CATS[catIdx]; if(!cat || cat.w0 <= 0) return { phiW:0, phiS:0 };
+    const bo = rothermelBeta(cat), sigma = cat.sigma;
+    const B = 0.02526*Math.pow(sigma,0.54), C = 7.47*Math.exp(-0.133*Math.pow(sigma,0.55)), E = 0.715*Math.exp(-3.59e-4*sigma);
+    const WAF = 0.4;  // facteur d'ajustement vent 10 m -> mi-flamme (valeur usuelle terrain dégagé)
+    const ventMidflame = Math.max(0, Math.min(60, ventKmH)) * WAF;
+    const U_ft_min = ventMidflame * 54.68;
+    const phiW = C * Math.pow(U_ft_min, B) * Math.pow(bo.beta/bo.betaOp, -E);
+    const phiS = 5.275 * Math.pow(bo.beta, -0.3) * tanPente*tanPente;
+    return { phiW: Math.min(80, phiW), phiS: Math.min(25, phiS) };
+  }
+  function emcSimard(rhPct, tempC){
+    const H = Math.max(0, Math.min(100, rhPct)), T = tempC*9/5+32, m =
+      (H < 10) ? (0.03229 + 0.281073*H - 0.000578*H*T) :
+      (H <= 50) ? (2.22749 + 0.160107*H - 0.014784*T) :
+      (21.0606 + 0.005565*H*H - 0.00035*H*T - 0.483199*H);
+    return Math.max(1.5, Math.min(35, m));
+  }
+  function rothermelKmH(catIdx, ventKmH, tanPente, rhPct, tempC){
+    const Mf = emcSimard(rhPct, tempC);
+    const R0 = rothermelR0(catIdx, Mf);
+    const w = rothermelPhiWS(catIdx, ventKmH, tanPente);
+    return R0 * (1 + w.phiW + w.phiS) * 0.06;   // m/min -> km/h
   }
   function facteurSecheresse(T, RH, precip, precip5){ let f = 0.6 + ((T==null?20:T)-15)/40 + ((60-(RH==null?50:RH))/120); if(precip > 0) f -= Math.min(0.45, precip*0.3); if(precip5 != null) f -= Math.min(0.5, precip5*0.02); if(f<0.35) f=0.35; if(f>2) f=2; return f; }
 
@@ -7197,10 +7317,16 @@
       if(!pts.length){ etatExt.actif = false; basculerBouton(btn, false, '', '\u27a4 Propagation'); majAvertFeu(); afficherInfo('\ud83d\udd25 Aucun foyer aujourd\u2019hui dans la vue \u2014 recentrez sur la zone', 7000); return; }
       let la=0, lo=0; pts.forEach(function(p){ la+=p.centre.lat; lo+=p.centre.lng; }); la/=pts.length; lo/=pts.length;
       const cond = await conditionsFeu(L.latLng(la, lo)); if(!etatExt.actif) return;
-      let slopeF = 1;
-      try{ const dwb = ((cond.wdir||0)+180)%360, dpt = destPoint(la, lo, 3, dwb), a0 = await altPoint(la, lo), a1 = await altPoint(dpt[0], dpt[1]); if(a0!=null && a1!=null){ const sl = (a1-a0)/3000; slopeF = sl>0 ? (1 + Math.min(1.8, 8*sl*sl)) : Math.max(0.5, 1+sl*1.5); } }catch(e){}
+      let tanPente = 0;
+      try{ const dwb = ((cond.wdir||0)+180)%360, dpt = destPoint(la, lo, 3, dwb), a0 = await altPoint(la, lo), a1 = await altPoint(dpt[0], dpt[1]); if(a0!=null && a1!=null){ tanPente = (a1-a0)/3000; } }catch(e){}
       if(!etatExt.actif) return;
-      etatExt.pts = pts.slice(0, 60); etatExt.cond = cond; etatExt.slopeF = slopeF;
+      etatExt.pts = pts.slice(0, 60); etatExt.cond = cond; etatExt.tanPente = tanPente;
+      try{
+        const groupesInit = grappesFoyers(etatExt.pts, 3);
+        const echant = await Promise.all(groupesInit.map(function(g){ return resineuxAuPoint(g.la, g.lo); }));
+        etatExt.resineuxGrp = groupesInit.map(function(g, k){ return { la:g.la, lo:g.lo, frac: echant[k] }; });
+      }catch(e){ etatExt.resineuxGrp = []; }
+      if(!etatExt.actif) return;
       try{ etatExt.fwi = await fwiEffis(L.latLng(la, lo)); }catch(e){ etatExt.fwi = null; }
       if(!etatExt.actif) return;
       try{
@@ -7328,37 +7454,37 @@
     if(h < 0) return;
     const cond = etatExt.cond; if(!cond) return;
     const t = Math.max(0, h), ph = etatExt.ph, pomp = facteurPompiers();
-    const slopeF = Math.min(1.8, etatExt.slopeF || 1);
+    const tanPente = etatExt.tanPente || 0;
     const vm = ventMoyenExt(Math.max(1, t));
-    const dry = (etatExt.fwi != null) ? Math.max(0.5, Math.min(1.8, 0.5 + etatExt.fwi/38)) : Math.min(1.8, facteurSecheresse(cond.temp, cond.rh, vm.pre, cond.precip5));
     const iH = cond.i0 + Math.round(t);
     const dirH = (cond.hdir[iH] != null) ? (cond.hdir[iH]+180)%360 : vm.brg;
     const spdH = (cond.hspd[iH] != null) ? cond.hspd[iH] : vm.spd;
+    const tempH = (cond.htemp[iH] != null) ? cond.htemp[iH] : cond.temp;
+    const rhH = (cond.hrh[iH] != null) ? cond.hrh[iH] : cond.rh;
+    const rafH = (cond.hraf && cond.hraf[iH] != null) ? cond.hraf[iH] : spdH;
+    const facteurRafale = 1 + Math.max(0, Math.min(0.5, (rafH - spdH)/45));
     const traceOn = !!(document.getElementById('feu-trace')||{}).checked;
     const sig = dispersionVentDeg(cond, t);
-    const ang = Math.max(18, Math.min(50, 18 + 0.7*sig));    // ouverture du c\u00f4ne = variabilit\u00e9 du vent pr\u00e9vu
-    const pompC = Math.pow(pomp, 0.4);                        // l'incertitude d\u00e9cro\u00eet moins vite que la vitesse
+    const ang = Math.max(18, Math.min(50, 18 + 0.7*sig));
+    const pompC = Math.pow(pomp, 0.4);
     grappesFoyers(etatExt.pts, 3).forEach(function(p){
       const la = p.la, lo = p.lo;
-      const rosPre = 0.08*(1+vm.spd/15)*dry*slopeF;
-      const dEst = Math.min(15, rosPre*1.3*t);
+      const rosPre = rothermelKmH(3, vm.spd, tanPente, cond.rh, cond.temp);   // pré-échantillon (forêt) pour estimer la portée du trajet
+      const dEst = Math.min(15, Math.max(0.15, rosPre)*1.3*t);
       const pMi = destPoint(la, lo, Math.max(0.3, dEst*0.5), vm.brg), pTt = destPoint(la, lo, Math.max(0.6, dEst), vm.brg);
       const fu = (fuelExtAuPoint(la, lo) + fuelExtAuPoint(pMi[0], pMi[1]) + fuelExtAuPoint(pTt[0], pTt[1]))/3;
-      let fuelF = (fu <= 0.05) ? 0.15 : (0.35 + fu);
-      const freinB = dEst > 1.2 && (bruleAuPoint(pTt[0], pTt[1]) || bruleAuPoint(pMi[0], pMi[1])); if(freinB) fuelF *= 0.3;
+      const catIdx = fuelCategorieDe(fu);
+      const fracRes = (catIdx === 3) ? resineuxProche(la, lo) : 0;
+      const freinB = dEst > 1.2 && (bruleAuPoint(pTt[0], pTt[1]) || bruleAuPoint(pMi[0], pMi[1]));
       let dStop = -1;
       if(etatExt.coupe && dEst > 0.4){ for(let s=2; s<=12; s++){ const dk = dEst*s/12; const pk = destPoint(la, lo, dk, vm.brg); const gI = idxGrilleExt(etatExt.coupe, pk[0], pk[1]); if(gI >= 0 && etatExt.coupe.mk[gI] === 1){ dStop = dk; break; } } }
-      const rosLibre = Math.min(1.5, rosPre*fuelF);                        // vitesse potentielle SANS intervention
-      const rosLibreH = Math.min(1.5, 0.08*(1+spdH/15)*dry*slopeF*fuelF);
-      let ros = rosLibre*pomp;                                             // vitesse effective (trace)
-      let dTot = Math.min(15, ros*t);
-      if(dStop > 0.15 && dTot > dStop){ dTot = dStop + (dTot - dStop)*0.35; }  // coupure (route/eau) : frein fort, pas mur (sautes possibles)
-      const dTete = 0.3*dTot;
-      const plancher = 0.5 + 0.18*Math.sqrt(Math.max(0.5, t));             // incertitude minimale, cro\u00eet en \u221at
-      const Lo = Math.max(plancher, Math.min(10, rosLibreH*Math.min(t, 6)*pompC)); // zone atteignable ~6 h
-      const angG = Math.min(54, ang + Math.atan2(p.r || 0.3, Math.max(0.5, Lo))*22);
-      const tete = dTete > 0.02 ? destPoint(la, lo, dTete, vm.brg) : [la, lo];
-      if((document.getElementById('feu-compare')||{}).checked && pomp < 0.98){
+      const freinCombustible = freinB ? 0.3 : 1;
+      const vitLibre = (catIdx === 3) ? rothermelKmHForet(fracRes, vm.spd, tanPente, cond.rh, cond.temp) : rothermelKmH(catIdx, vm.spd, tanPente, cond.rh, cond.temp);
+      const vitLibreH = (catIdx === 3) ? rothermelKmHForet(fracRes, spdH, tanPente, rhH, tempH) : rothermelKmH(catIdx, spdH, tanPente, rhH, tempH);
+      const rosLibre = Math.min(6, vitLibre * freinCombustible);
+      const rosLibreH = Math.min(6, vitLibreH * freinCombustible * facteurRafale);
+      let ros = rosLibre*pomp;
+if((document.getElementById('feu-compare')||{}).checked && pomp < 0.98){
         let dTL = Math.min(15, rosLibre*t);
         if(dStop > 0.15 && dTL > dStop){ dTL = dStop + (dTL - dStop)*0.35; }
         const tL = dTL > 0.02 ? destPoint(la, lo, 0.3*dTL, vm.brg) : [la, lo];
@@ -7382,10 +7508,10 @@
       let enjSev = -1;
       try{ if(typeof etatSeveso !== 'undefined' && etatSeveso.actif && etatSeveso.groupe && etatSeveso.groupe.eachLayer){ enjSev = 0; etatSeveso.groupe.eachLayer(function(mk2){ try{ const q = mk2.getLatLng && mk2.getLatLng(); if(q && map.distance(L.latLng(tete[0], tete[1]), q)/1000 <= Math.max(dTot, Lo)) enjSev++; }catch(e2){} }); } }catch(e2){}
       const fiche = '<div style="font:12px/1.5 system-ui;min-width:215px"><b>🔥 Groupe de '+(p.n||1)+' foyer(s)</b><br>'
-        + 'Sécheresse : '+(etatExt.fwi != null ? 'FWI officiel '+Math.round(etatExt.fwi)+' (EFFIS)' : 'estimation locale ×'+dry.toFixed(2))+'<br>'
+        + 'Sécheresse : '+(etatExt.fwi != null ? 'FWI officiel '+Math.round(etatExt.fwi)+' (EFFIS)' : 'humidité d’équilibre '+emcSimard(rhH, tempH).toFixed(1)+' % (Simard)')+'<br>'
         + 'Vent à +'+Math.round(t)+' h : '+Math.round(spdH)+' km/h vers le '+cardinal(dirH)+'<br>'
-        + 'Végétation (Corine) : ×'+fuelF.toFixed(2)+(freinB ? ' · <b>freiné : zones brûlées</b>' : '')+(dStop > 0.15 ? ' · <b>coupure (route/eau) à '+dStop.toFixed(1)+' km</b>' : '')+'<br>'
-        + 'Pente : ×'+slopeF.toFixed(2)+' · Intervention : '+libellePompiers()+'<br>'
+        + 'Végétation (Corine) : '+FUEL_CATS[catIdx].nom+(freinB ? ' · <b>freiné : zones brûlées</b>' : '')+(dStop > 0.15 ? ' · <b>coupure (route/eau) à '+dStop.toFixed(1)+' km</b>' : '')+'<br>'
+        + 'Pente : '+Math.round(Math.atan(tanPente)*57.3)+'° · Intervention : '+libellePompiers()+'<br>'
         + (enjSev > 0 ? 'Enjeux près de la zone illustrée : <b>'+enjSev+' site(s) Seveso</b> <small>(lecture pédagogique aléa × enjeux — au conditionnel, rien de prédictif)</small><br>' : (enjSev === 0 ? '' : '<small>Enjeux : activez ☢️ Sites Seveso pour croiser aléa × enjeux</small><br>'))
         + 'Vitesse illustrée : '+ros.toFixed(2)+' km/h <small>(libre : '+rosLibre.toFixed(2)+')</small><br>'
         + 'Avancée à +'+Math.round(t)+' h : ~'+dTot.toFixed(1)+' km'
@@ -7419,6 +7545,15 @@
     const sc = document.getElementById('feu-simcase'); if(sc && sc.addEventListener) sc.addEventListener('change', function(){ const b = document.getElementById('btn-simfeu'); if(b){ const on = b.textContent.indexOf('\u2715') !== -1; if(sc.checked && !on) b.click(); if(!sc.checked && on) b.click(); } });
     if(sl && sl.addEventListener) sl.addEventListener('input', function(e){ horlogeLectureFeu(false); const nv = parseFloat(e.target.value)||0; if(etatSim.actif && etatSim.etat){ const cible = Math.max(0, Math.round(nv*8)); if(cible < etatSim.gen){ const kh = Math.floor(cible/8), sn = (etatSim.snaps||[])[kh]; if(sn){ etatSim.etat = new Uint8Array(sn); etatSim.gen = kh*8; } } let guard = 0; while(etatSim.gen < cible && guard < 600){ pasSim(); guard++; } rendreSim(); } horlogeFeu.h = nv; appliquerHorloge(); });
     const rc = document.getElementById('feu-recalc'); if(rc && rc.addEventListener) rc.addEventListener('click', function(){ recalculerFeu(); });
+    const ab = document.getElementById('feu-avance-btn'), ap = document.getElementById('feu-avance');
+    if(ab && ap){
+      let ouvert = false; try{ ouvert = localStorage.getItem('geo-feu-avance-ouvert') === '1'; }catch(e){}
+      ap.style.display = ouvert ? 'flex' : 'none';
+      if(ab.addEventListener) ab.addEventListener('click', function(){
+        ouvert = ap.style.display === 'none'; ap.style.display = ouvert ? 'flex' : 'none';
+        try{ localStorage.setItem('geo-feu-avance-ouvert', ouvert ? '1' : '0'); }catch(e){}
+      });
+    }
     if(fm && fm.addEventListener) fm.addEventListener('click', function(){ horlogeLectureFeu(false); ['btn-prospfeu','btn-animfeu','btn-panache','btn-extension','btn-simfeu'].forEach(function(id){ const b = document.getElementById(id); if(b && b.textContent.indexOf('✕')!==-1) b.click(); }); });
   })();
   map.on('moveend', function(){
@@ -7584,7 +7719,7 @@
   }
   function majEtatSim(){ /* le temps est affich\u00e9 par la barre unique Temps du feu */ }
   function pasSim(){
-    if(etatSim.hdir && etatSim.hdir.length){ const hh = etatSim.i0 + Math.floor(etatSim.gen/8); const dir = etatSim.hdir[hh], spd = etatSim.hspd[hh]; if(dir != null){ const brg = (dir+180)%360; etatSim.wind = { e:Math.sin(brg*Math.PI/180), n:Math.cos(brg*Math.PI/180) }; if(spd!=null) etatSim.windSpd = spd; } }
+    if(etatSim.hdir && etatSim.hdir.length){ const hh = etatSim.i0 + Math.floor(etatSim.gen/8); const dir = etatSim.hdir[hh], spd = etatSim.hspd[hh]; if(dir != null){ const brg = (dir+180)%360; etatSim.wind = { e:Math.sin(brg*Math.PI/180), n:Math.cos(brg*Math.PI/180) }; if(spd!=null) etatSim.windSpd = spd; } if(etatSim.htemp && etatSim.htemp[hh] != null && etatSim.hrh && etatSim.hrh[hh] != null){ etatSim.dry = Math.min(1.8, Math.max(0.35, facteurSecheresse(etatSim.htemp[hh], etatSim.hrh[hh], 0, etatSim.precip5))); etatSim.htempCour = etatSim.htemp[hh]; etatSim.hrhCour = etatSim.hrh[hh]; } etatSim.rafale = (etatSim.hraf && etatSim.hraf[hh] != null && spd != null) ? (1 + Math.max(0, Math.min(0.5, (etatSim.hraf[hh]-spd)/45))) : 1; }
     const cols = etatSim.cols, rows = etatSim.rows, fuel = etatSim.fuel, etat = etatSim.etat, we = etatSim.wind.e, wn = etatSim.wind.n, dry = etatSim.dry;
     let nActifs = 0; for(let ii=0;ii<etat.length;ii++) if(etat[ii]===1) nActifs++;
     const wspd = etatSim.windSpd || 15;
@@ -7592,10 +7727,12 @@
     for(let y=0;y<rows;y++){ for(let x=0;x<cols;x++){ const i = y*cols+x; if(etat[i]!==1) continue; actifs++; nb[i] = 2;
       for(let dy=-1;dy<=1;dy++){ for(let dx=-1;dx<=1;dx++){ if(!dx && !dy) continue; const nx = x+dx, ny = y+dy; if(nx<0||ny<0||nx>=cols||ny>=rows) continue; const j = ny*cols+nx; if(etat[j]!==0 || nb[j]!==0) continue; const f = fuel[j]; if(f<=0) continue;
         const dirE = dx, dirN = -dy, norm = Math.hypot(dirE, dirN) || 1, align = (dirE*we + dirN*wn)/norm;
-        const windFactor = 0.35 + (0.9 + wspd/40)*Math.max(0, align) - 0.25*Math.max(0, -align);
-        let sf = 1; if(etatSim.alt){ const dh = etatSim.alt[j]-etatSim.alt[i], sl = dh/etatSim.cellM; sf = sl>0 ? (1 + Math.min(2.5, 5*sl*sl)) : Math.max(0.4, 1+sl); }
-        const rosKmH = Math.min(1.2, 0.08*(1+wspd/15)*dry*facteurPompiers()*(1 + Math.min(0.25, nActifs/800)));
-        let p = (rosKmH*1000/(etatSim.cellM*8)) * f * sf * windFactor; if(p < 0) p = 0; if(p > 0.6) p = 0.6;
+        const ventDirige = wspd * Math.max(0, align);   // composante du vent dans l'axe cellule->voisin (Rothermel prend un vent orienté, pas un facteur ad hoc)
+        const tanPenteC = etatSim.alt ? ((etatSim.alt[j]-etatSim.alt[i]) / etatSim.cellM) : 0;
+        const catIdx = fuelCategorieDe(f);
+        const rosDir = rothermelKmH(catIdx, ventDirige, Math.max(0, tanPenteC), etatSim.hrhCour, etatSim.htempCour) * facteurPompiers() * (1 + Math.min(0.2, nActifs/900)) * (etatSim.rafale||1);
+        const contreVent = align < 0 ? Math.max(0.15, 1 + align*0.4) : 1;   // repli modéré contre le vent (Rothermel ne modélise pas le recul, approximation app)
+        let p = (Math.min(6, rosDir)*1000/(etatSim.cellM*8)) * f * contreVent; if(p < 0) p = 0; if(p > 0.6) p = 0.6;
         if(Math.random() < p) nb[j] = 1;
       }}
     }}
@@ -7660,6 +7797,7 @@
     etatSim.wind = { e:Math.sin(brg*Math.PI/180), n:Math.cos(brg*Math.PI/180) };
     etatSim.windSpd = cond.wspd||0; etatSim.hdir = cond.hdir; etatSim.hspd = cond.hspd; etatSim.i0 = cond.i0;
     etatSim.dry = facteurSecheresse(cond.temp, cond.rh, cond.precip, cond.precip5);
+    etatSim.htemp = cond.htemp; etatSim.hrh = cond.hrh; etatSim.precip5 = cond.precip5; etatSim.hraf = cond.hraf; etatSim.rafale = 1; etatSim.htempCour = cond.temp; etatSim.hrhCour = cond.rh;
     const wKm = bnds.getSouthWest().distanceTo(L.latLng(bnds.getSouthWest().lat, bnds.getNorthEast().lng))/1000;
     const hKm = bnds.getSouthWest().distanceTo(L.latLng(bnds.getNorthEast().lat, bnds.getSouthWest().lng))/1000;
     etatSim.cellHa = Math.max(0.01, (wKm*hKm*100)/(cols*rows)); etatSim.cellM = Math.max(1, Math.sqrt(etatSim.cellHa*10000));
