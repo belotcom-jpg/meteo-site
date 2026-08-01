@@ -46,7 +46,7 @@
   .widget{
     position:fixed;z-index:1000;background:var(--papier);
     border:1px solid var(--trait);border-radius:14px;box-shadow:var(--ombre);
-    display:flex;flex-direction:column;max-height:82vh;
+    display:flex;flex-direction:column;max-height:82vh;overflow:hidden;
   }
   .widget-tete{
     display:flex;align-items:center;gap:8px;padding:7px 10px;
@@ -58,7 +58,7 @@
   .widget-titre{flex:1;font-size:12px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
   .widget-btn{border:none;background:none;cursor:pointer;font-size:12px;color:#8a8577;width:20px;padding:0}
   .widget-btn:hover{color:var(--encre)}
-  .widget-corps{overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+  .widget-corps{overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;flex:1 1 auto;min-height:0}
   .widget.replie .widget-corps{display:none}
   .widget.cache{display:none}
   .widget-pilote{border-width:2px;border-color:var(--encre)}
@@ -1024,6 +1024,8 @@
       <option value="2">J-2</option><option value="3">J-3</option><option value="4">J-4</option><option value="5">J-5</option><option value="6">J-6</option>
     </select>
     <button class="calque-ajout donnee" id="btn-fwi" title="Carte OFFICIELLE du danger d’incendie : indice FWI du jour calculé par EFFIS / Copernicus — celle que consultent les services d’incendie européens.">🗺️ Danger FWI (EFFIS)</button>
+    <button class="calque-ajout donnee" id="btn-msgfrp" title="Détections de feux par le satellite géostationnaire MSG (LSA SAF, FRP-PIXEL) — mis à jour toutes les 15 minutes, bien plus fréquent que VIIRS/MODIS (3-4 passages/jour). Moins précis spatialement. Cliquez un point (mode contrôle) pour la puissance radiative, la confiance et l’heure exactes.">🛰️ Détections MSG (15 min)</button>
+    <div id="msgfrp-lbl" style="display:none;font-size:10px;color:#8a8577;padding:1px 2px 3px"></div>
     <button class="calque-ajout donnee" id="btn-france-feux" title="VUE D'ENSEMBLE : bulles proportionnelles à l’ampleur estimée des groupes de détections satellite sur toute la France, colorées selon la récence. Précision réelle si une clé FIRMS gratuite est renseignée ; sinon estimation grossière par comptage de pixels. Ce n’est PAS le statut officiel (voir feuxdeforet.fr / PSFDF).">🗺️ Vue d’ensemble France</button>
     <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#57534e;margin:3px 0 1px">
       <span>Fenêtre :</span>
@@ -2337,10 +2339,10 @@
   let requeteForetEnCours = false;
   async function resineuxAuPoint(lat, lon){
     try{
-      const dd = 0.0012;
+      const dd = 0.01;
       const sw = map.options.crs.project(L.latLng(lat-dd, lon-dd)), ne = map.options.crs.project(L.latLng(lat+dd, lon+dd));
       const bbox = sw.x+','+sw.y+','+ne.x+','+ne.y;
-      const url = WMS_GEOPF+'?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&LAYERS=LANDCOVER.FORESTINVENTORY.V2&QUERY_LAYERS=LANDCOVER.FORESTINVENTORY.V2&STYLES=&CRS=EPSG:3857&BBOX='+bbox+'&WIDTH=3&HEIGHT=3&I=1&J=1&INFO_FORMAT=application/json&FEATURE_COUNT=1';
+      const url = WMS_GEOPF+'?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&LAYERS=LANDCOVER.FORESTINVENTORY.V2&QUERY_LAYERS=LANDCOVER.FORESTINVENTORY.V2&STYLES=&CRS=EPSG:3857&BBOX='+bbox+'&WIDTH=101&HEIGHT=101&I=50&J=50&INFO_FORMAT=application/json&FEATURE_COUNT=1';
       const r = await fetch(url); if(!r.ok) return null;
       const d = await r.json();
       const f = d && d.features && d.features[0]; if(!f) return null;
@@ -2368,6 +2370,33 @@
       afficherInfo('🌲🔥 Taux de résineux (parmi les '+forets.length+' point(s) en forêt sur '+grille.length+' échantillonnés) : <b>'+Math.round(moy*100)+' %</b> — le reste feuillu/mixte', 10000);
     }catch(e){ cacherInfo(); afficherInfo('🌲 Indisponible — à tester en ligne (BD Forêt IGN)', 6000); }
   });
+  const WMS_LSASAF = 'https://adaguc.lsasvcs.ipma.pt//adagucserver';
+  const etatMsgFrp = { actif:false, layer:null };
+  document.getElementById('btn-msgfrp').addEventListener('click', ()=>{
+    const btn = document.getElementById('btn-msgfrp');
+    if(etatMsgFrp.actif){ etatMsgFrp.actif = false; if(etatMsgFrp.layer) map.removeLayer(etatMsgFrp.layer); etatMsgFrp.layer = null; if(etatMsgFrp.minuteur){ clearInterval(etatMsgFrp.minuteur); etatMsgFrp.minuteur = null; } const lbl0 = document.getElementById('msgfrp-lbl'); if(lbl0) lbl0.style.display = 'none'; basculerBouton(btn, false, '', '🛰️ Détections MSG (15 min)'); return; }
+    etatMsgFrp.actif = true; basculerBouton(btn, true, '🛰️ MSG ✕', '', '#dc2626');
+    etatMsgFrp.layer = L.tileLayer.wms(WMS_LSASAF+'?', { layers:'FRP', styles:'pointdata/point', format:'image/png', transparent:true, version:'1.3.0', opacity:0.9, attribution:'LSA SAF / EUMETSAT (CC BY 4.0)' });
+    etatMsgFrp.layer.on('tileerror', function(){ afficherInfo('🛰️ Service LSA SAF indisponible pour le moment', 6000); });
+    etatMsgFrp.layer.addTo(map);
+    afficherInfo('🛰️ Détections satellite MSG — rafraîchies toutes les 15 min · cliquez un point (mode contrôle) pour le détail', 8000);
+    majPassageMsg(); if(etatMsgFrp.minuteur) clearInterval(etatMsgFrp.minuteur); etatMsgFrp.minuteur = setInterval(majPassageMsg, 60000);
+  });
+  async function majPassageMsg(){
+    const lbl = document.getElementById('msgfrp-lbl'); if(!lbl) return;
+    if(!etatMsgFrp.actif){ lbl.style.display = 'none'; return; }
+    lbl.style.display = 'block';
+    try{
+      const r = await fetch(WMS_LSASAF+'?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities&DATASET=MSG-FRP');
+      const txt = await r.text();
+      const m = txt.match(/default="([^"]+)"/);
+      if(!m){ lbl.textContent = ''; return; }
+      const dPasse = new Date(m[1]), dSuiv = new Date(dPasse.getTime() + 15*60000);
+      const ecoule = Math.round((Date.now() - dPasse.getTime())/60000);
+      const hh = function(d){ return String(d.getHours()).padStart(2,'0')+'h'+String(d.getMinutes()).padStart(2,'0'); };
+      lbl.textContent = '🛠 dernier : '+hh(dPasse)+' ('+(ecoule>=0?'il y a '+ecoule+' min':'à venir')+') · prochain : ~'+hh(dSuiv);
+    }catch(e){ lbl.textContent = ''; }
+  }
   async function infoForet(latlng, pointConteneur){
     const actifs = Object.keys(COUCHES_FORET).filter(id=>etatForet[id].actif);
     if((actifs.length===0 && !georisquesActif) || requeteForetEnCours || !pointConteneur) return;
@@ -2408,6 +2437,29 @@
           if(lignes.length) blocs.push('<div style="margin-top:6px"><b style="color:'+conf.teinte+'">'
             +conf.libelle+'</b><br>'+lignes.join('<br>')+'</div>');
         }catch(e){ /* couche suivante */ }
+      }
+      if(etatMsgFrp.actif){
+        try{
+          const url2 = WMS_LSASAF+'?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo'
+            +'&LAYERS=FRP&QUERY_LAYERS=FRP&STYLES=&CRS=EPSG:3857&BBOX='+bbox
+            +'&WIDTH='+size.x+'&HEIGHT='+size.y+'&I='+i+'&J='+j
+            +'&INFO_FORMAT=application/json&FEATURE_COUNT=3';
+          const r2 = await fetch(url2);
+          const d2 = await r2.json();
+          const feats2 = (d2 && d2.features) || [];
+          if(feats2.length){
+            const lignes2 = [];
+            feats2.slice(0,2).forEach(f=>{
+              const props = f.properties || {};
+              Object.keys(props).forEach(k=>{
+                const v = props[k];
+                if(v===null || v==='' || typeof v==='object') return;
+                lignes2.push('<b>'+echap(k.replace(/_/g,' '))+'</b> : '+echap(v));
+              });
+            });
+            if(lignes2.length) blocs.push('<div style="margin-top:6px"><b style="color:#dc2626">🛰️ Détection MSG (satellite)</b><br>'+lignes2.join('<br>')+'</div>');
+          }
+        }catch(e){ /* silencieux */ }
       }
       if(etatForet.relief.actif){
         try{
@@ -7383,7 +7435,11 @@
     return { brg:(Math.atan2(sx, sy)*180/Math.PI+360)%360, spd:sp/n, pre:pr };
   }
   async function chargerCoupures(bnds){
-    try{
+    // DÉSACTIVÉ : les noms de couches HYDROGRAPHY.HYDROGRAPHY et TRANSPORTNETWORKS.ROADS n'ont jamais été
+    // vérifiés auprès d'IGN (erreur 400 confirmée côté utilisateur) — mieux vaut ne rien tenter que d'appeler
+    // une URL cassée à chaque activation de la Propagation. À réactiver une fois les vrais noms vérifiés.
+    return null;
+    /* try{
       if(typeof document.createElement !== 'function') return null;
       const sw = map.options.crs.project(bnds.getSouthWest()), ne = map.options.crs.project(bnds.getNorthEast());
       const cols = 96, rows = 64, mk = new Uint8Array(cols*rows), couches = ['HYDROGRAPHY.HYDROGRAPHY','TRANSPORTNETWORKS.ROADS'];
@@ -7397,7 +7453,7 @@
         for(let i=0;i<cols*rows;i++){ if(dat[i*4+3] > 50) mk[i] = 1; }
       }
       return { mk:mk, cols:cols, rows:rows, swP:sw, neP:ne };
-    }catch(e){ return null; }
+    }catch(e){ return null; } */
   }
   async function chargerMasqueBrule(bnds){
     try{
@@ -7905,7 +7961,7 @@ if((document.getElementById('feu-compare')||{}).checked && pomp < 0.98){
       + '<b>Donn\u00e9es utilis\u00e9es</b><br>\u2022 Foyers & zones br\u00fbl\u00e9es : NASA VIIRS via GIBS/FIRMS (d\u00e9tections J-7 \u2192 aujourd\u2019hui)<br>\u2022 M\u00e9t\u00e9o & vent pr\u00e9vu 48 h : Open-Meteo<br>\u2022 V\u00e9g\u00e9tation : Corine Land Cover (Copernicus / IGN)<br>\u2022 Relief : tuiles d\u2019altitude Terrarium (AWS)<br><br>'
       + '<b>Passages satellites (heure solaire locale, ~identique toute l’année en France)</b><br>• <b>Terra</b> (MODIS) : ~10h30 (+ ~22h30 la nuit)<br>• <b>Aqua</b> (MODIS) et <b>Suomi NPP / NOAA-20 / NOAA-21</b> (VIIRS) : groupés entre ~13h et ~14h30 (+ ~1h-2h30 la nuit)<br>→ en pratique, l’essentiel des mises à jour tombe le matin (10h30) et en tout début d’après-midi (13h-14h30) ; peu de nouveauté entre 15h et le lendemain matin, sauf passages nocturnes moins exploités ici.<br><br>'
       + '<b>🗺️ Vue d’ensemble France — calcul des hectares</b><br>Sans clé : comptage de pixels sur l’image satellite (approximatif, corrigé à la baisse). Avec une <b>clé FIRMS gratuite</b> (obtenue en 2 minutes par email, sans engagement) : mesure réelle à partir de la taille effective de chaque pixel satellite détecté — bien plus fiable. La clé ne sert qu’à cette fonctionnalité, reste sur cet ordinateur (localStorage), jamais transmise ailleurs.<br><br>'
-      + '<b>Autres sources de points chauds possibles</b><br>• <b>MODIS</b> (Terra+Aqua, ~1 km, déjà utilisable en 2ᵉ source dans Surfaces brûlées) : plus ancien historique, moins précis que VIIRS (375 m).<br>• <b>EFFIS</b> (Copernicus) : agrège MODIS+VIIRS+dépêches presse à l’échelle européenne, avec périmètres de surfaces brûlées officiels (service actuellement instable côté EFFIS).<br>• <b>Satellite géostationnaire</b> (Meteosat Third Generation, EUMETSAT) : contrairement aux satellites polaires, il regarde l’Europe en continu (mise à jour ~10 min) mais résolution plus grossière et clé d’accès nécessaire — piste d’amélioration non intégrée ici.<br>• <b>Sentinel-3</b> (Copernicus, SLSTR) : 2 passages/jour supplémentaires, orbite indépendante — piste non intégrée.<br><br>'
+      + '<b>Autres sources de points chauds possibles</b><br>• <b>MODIS</b> (Terra+Aqua, ~1 km, déjà utilisable en 2ᵉ source dans Surfaces brûlées) : plus ancien historique, moins précis que VIIRS (375 m).<br>• <b>EFFIS</b> (Copernicus) : agrège MODIS+VIIRS+dépêches presse à l’échelle européenne, avec périmètres de surfaces brûlées officiels (service actuellement instable côté EFFIS).<br>• <b>Satellite géostationnaire MSG</b> (LSA SAF, FRP-PIXEL) : ✅ intégré (bouton 🛰️ ci-dessus) — il regarde l’Europe en continu et se met à jour toutes les 15 min, contre 3-4 passages/jour pour VIIRS/MODIS. Résolution plus grossière (quelques km), aucune clé requise, licence ouverte (CC BY 4.0).<br>• <b>Sentinel-3</b> (Copernicus, SLSTR) : 2 passages/jour supplémentaires, orbite indépendante — piste non intégrée.<br><br>'
       + '<b>M\u00e9thode (prospective)</b><br>Vitesse du front = base ~0,08 km/h \u00d7 vent pr\u00e9vu \u00d7 s\u00e9cheresse (T\u00b0, humidit\u00e9, pluie du moment et des 5 derniers jours) \u00d7 pente \u00d7 v\u00e9g\u00e9tation lue le long du trajet \u00d7 intervention (molette \U0001F692). Zones d\u00e9j\u00e0 br\u00fbl\u00e9es : frein fort (combustible consomm\u00e9). Plafonds : 1,2 km/h et 15 km \u00e0 +48 h. Calcul en kilom\u00e8tres r\u00e9els \u2014 ind\u00e9pendant du zoom.<br><br>'
       + '<b>Ce qui n\u2019est PAS pris en compte</b><br>Les sautes de feu (braises projet\u00e9es loin devant), l\u2019humidit\u00e9 r\u00e9elle mesur\u00e9e du combustible, le couplage feu-atmosph\u00e8re (un grand feu cr\u00e9e son propre vent), et le d\u00e9tail r\u00e9el des man\u0153uvres des secours.<br><br>'
       + '<b style="color:#7f1d1d">\u26a0\ufe0f Messages de pr\u00e9caution \u2014 \u00e0 toujours joindre au partage</b><br>\u2022 Illustration p\u00e9dagogique : montre <i>comment</i> vent, v\u00e9g\u00e9tation et s\u00e9cheresse influencent un feu \u2014 pas <i>o\u00f9</i> il ira.<br>\u2022 Distances et dur\u00e9es non calibr\u00e9es, non valid\u00e9es.<br>\u2022 Les secours utilisent des outils op\u00e9rationnels valid\u00e9s (ForeFire / Firecaster, M\u00e9t\u00e9o-France) \u2014 pas cette carte.<br>\u2022 Suivez uniquement les consignes des pr\u00e9fectures et des SDIS.<br>\u2022 Urgence : <b>112</b> \u00b7 pompiers <b>18</b> \u00b7 sourds/malentendants <b>114</b>.';
