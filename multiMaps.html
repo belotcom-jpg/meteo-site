@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v4.1 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v4.2 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v4.1</title>
+<title>MultiMaps — géographie (collège & lycée) — v4.2</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -992,6 +992,18 @@
     <button class="calque-ajout donnee" id="btn-population" title="Densité de population (habitants/km²) d\'après le jeu mondial GPW de la NASA (SEDAC), comme luminocity WorldPopDen. Comparez les années pour l\'évolution.">👥 Afficher la densité</button>
   </div>
 </div>
+<div class="widget" id="wg-diag" style="width:264px">
+  <div class="widget-tete">
+    <span class="widget-titre">🩺 Diagnostic des services</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer">✕</button>
+  </div>
+  <div class="widget-corps">
+    <div style="font-size:10px;color:#8a8577;margin-bottom:4px">Chaque service est testé à l’usage. Si l’un échoue, l’appli continue avec ce qu’elle a — les calculs restent possibles, simplement moins précis.</div>
+    <div id="diag-liste" style="font-size:11px;line-height:1.6"></div>
+    <button class="calque-ajout donnee" id="btn-diag-test" title="Teste tous les services externes maintenant et met à jour la liste.">🔄 Tester tous les services</button>
+  </div>
+</div>
 <div class="widget" id="wg-feux" style="width:256px">
   <div class="widget-tete">
     <span class="widget-titre">🔥 Feux en cours</span>
@@ -1189,7 +1201,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v4.1</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v4.2</small></span>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
   <div class="widget-corps">
@@ -1250,7 +1262,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v4.1</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v4.2</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -1385,6 +1397,22 @@
 
 <script>
 (function(){
+  // ================= Santé des services externes =================
+  const SANTE = {};
+  function noterService(nom, ok, detail){
+    SANTE[nom] = { ok:ok, detail:detail||'', t:Date.now() };
+    if(typeof majDiagnostic === 'function') majDiagnostic();
+  }
+  async function appelSurveille(nom, promesse, defaut){
+    try{
+      const r = await promesse;
+      noterService(nom, true, '');
+      return r;
+    }catch(e){
+      noterService(nom, false, (e && e.message) ? String(e.message).slice(0,90) : 'erreur');
+      return defaut;
+    }
+  }
   // ================= Carte =================
   const map = L.map('map', {
     center:[46.6, 2.4], zoom:6, minZoom:5, maxZoom:19,
@@ -1484,7 +1512,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v4.1';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v4.2';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -2352,11 +2380,12 @@
       const d = await r.json();
       const f = d && d.features && d.features[0]; if(!f) return null;
       const p = f.properties || {}, txt = (((p.tfv_g11||'')+' '+(p.tfv||''))+'').toLowerCase();
+      noterService('Forêt (BD Forêt IGN)', true);
       if(txt.indexOf('conif') !== -1) return 1;
       if(txt.indexOf('mixte') !== -1) return 0.5;
       if(txt.indexOf('feuillu') !== -1) return 0;
       return null;
-    }catch(e){ return null; }
+    }catch(e){ noterService('Forêt (BD Forêt IGN)', false, e && e.message); return null; }
   }
   document.getElementById('btn-resineux').addEventListener('click', async ()=>{
     const btn = document.getElementById('btn-resineux');
@@ -6933,8 +6962,9 @@
     const W = Math.max(200, Math.min(1000, Math.round(largKm/0.4)));
     const H = Math.max(160, Math.round(W * (ne.y - sw.y) / Math.max(1, (ne.x - sw.x))));
     const mask = await decoderMasqueJour(sw, ne, W, H, nJour);
-    if(!mask) throw new Error('image du jour indisponible');
+    if(!mask){ noterService('Détections satellite (NASA GIBS)', false, 'image du jour non lisible (CORS ou service)'); throw new Error('image du jour indisponible'); }
     const pts = composantesConnexes(mask, sw, ne, W, H);
+    noterService('Détections satellite (NASA GIBS)', true, pts.length+' foyer(s) détecté(s)');
     return pts.slice(0, 220);
   }
   // ---------- 🗺️ Vue d'ensemble France (estimation à partir des détections satellite) ----------
@@ -7279,10 +7309,10 @@
     const url = 'https://api.open-meteo.com/v1/forecast?latitude='+ll.lat.toFixed(3)+'&longitude='+ll.lng.toFixed(3)
       + '&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_direction_10m'
       + '&hourly=wind_speed_10m,wind_direction_10m,precipitation,temperature_2m,relative_humidity_2m&daily=precipitation_sum&past_days=4&forecast_days=2&timezone=Europe%2FParis';
-    try{ const d = await fetchMeteoJson(url, 30); const c = d.current || {}, h = d.hourly || {};
+    try{ const d = await fetchMeteoJson(url, 30); const c = d.current || {}, h = d.hourly || {}; noterService('Météo (Open-Meteo)', true);
       let p5 = 0; const dp = (d.daily && d.daily.precipitation_sum) || []; for(let k=0;k<dp.length;k++){ if(dp[k]!=null) p5 += dp[k]; }
       return { temp:(c.temperature_2m!=null?c.temperature_2m:25), rh:(c.relative_humidity_2m!=null?c.relative_humidity_2m:40), wspd:(c.wind_speed_10m||15), wdir:(c.wind_direction_10m||0), precip:(c.precipitation||0), precip5:p5, hdir:(h.wind_direction_10m||[]), hspd:(h.wind_speed_10m||[]), hpre:(h.precipitation||[]), htemp:(h.temperature_2m||[]), hrh:(h.relative_humidity_2m||[]), i0:(4*24 + new Date().getHours()) };
-    }catch(e){ return { temp:25, rh:40, wspd:15, wdir:0, precip:0, precip5:0, hdir:[], hspd:[], hpre:[], htemp:[], hrh:[], i0:(4*24 + new Date().getHours()) }; }
+    }catch(e){ noterService('Météo (Open-Meteo)', false, e && e.message); return { temp:25, rh:40, wspd:15, wdir:0, precip:0, precip5:0, hdir:[], hspd:[], hpre:[], htemp:[], hrh:[], i0:(4*24 + new Date().getHours()) }; }
   }
   // ---------- Modèle physique Rothermel (1972), Int. J. Wildland Fire / USFS RP-INT-115 ----------
   // Constantes standard du modèle (identiques pour tous les combustibles, valeurs classiques Rothermel)
@@ -7404,6 +7434,8 @@
       if(!etatExt.actif) return;
       etatExt.groupe = L.layerGroup(); etatExt.groupe.addTo(map);
       cacherInfo(); majAvertFeu(); demarrerHorlogeFeu();
+      const koP = servicesEnPanne();
+      if(koP.length) afficherInfo('⚠️ Calcul lancé SANS : '+koP.join(', ')+' — résultat moins précis (voir widget 🩺 Diagnostic)', 9000);
       afficherInfo('🔥 Extension — glissez le temps (0 → 48 h) : cône orange (imminent) → gris (à terme), orienté par le vent prévu, la pente et la sécheresse (▶ anime)', 9000);
     }catch(e){ cacherInfo(); etatExt.actif = false; basculerBouton(btn, false, '', '\u27a4 Propagation'); majAvertFeu(); afficherInfo('\ud83d\udd25 Indisponible \u2014 \u00e0 tester en ligne (image du jour + Open-Meteo)', 7000); }
   });
@@ -7423,9 +7455,10 @@
       const j = await r.json();
       const f = j && j.features && j.features[0] && j.features[0].properties;
       if(!f) return null;
-      for(const k in f){ const v = parseFloat(f[k]); if(isFinite(v) && v >= 0 && v <= 200) return v; }
+      for(const k in f){ const v = parseFloat(f[k]); if(isFinite(v) && v >= 0 && v <= 200){ noterService('Danger FWI (EFFIS)', true); return v; } }
+      noterService('Danger FWI (EFFIS)', false, 'réponse sans valeur exploitable');
       return null;
-    }catch(e){ return null; }
+    }catch(e){ noterService('Danger FWI (EFFIS)', false, e && e.message); return null; }
   }
   function recalculerFeu(){
     ['btn-panache','btn-simfeu','btn-extension'].forEach(function(id){ const b = document.getElementById(id); if(b && b.textContent.indexOf('\u2715') !== -1){ b.click(); b.click(); } });
@@ -7544,8 +7577,15 @@
       const vitLibreH = (catIdx === 3) ? rothermelKmHForet(fracRes, spdH, tanPente, rhH, tempH) : rothermelKmH(catIdx, spdH, tanPente, rhH, tempH);
       const rosLibre = Math.min(6, vitLibre * freinCombustible);
       const rosLibreH = Math.min(6, vitLibreH * freinCombustible * facteurRafale);
-      let ros = rosLibre*pomp;
-if((document.getElementById('feu-compare')||{}).checked && pomp < 0.98){
+      let ros = rosLibre*pomp;                                             // vitesse effective (trace)
+      let dTot = Math.min(15, ros*t);
+      if(dStop > 0.15 && dTot > dStop){ dTot = dStop + (dTot - dStop)*0.35; }  // coupure (route/eau) : frein fort, pas mur (sautes possibles)
+      const dTete = 0.3*dTot;
+      const plancher = 0.5 + 0.18*Math.sqrt(Math.max(0.5, t));             // incertitude minimale, croît en √t
+      const Lo = Math.max(plancher, Math.min(10, rosLibreH*Math.min(t, 6)*pompC)); // zone atteignable ~6 h
+      const angG = Math.min(54, ang + Math.atan2(p.r || 0.3, Math.max(0.5, Lo))*22);
+      const tete = dTete > 0.02 ? destPoint(la, lo, dTete, vm.brg) : [la, lo];
+      if((document.getElementById('feu-compare')||{}).checked && pomp < 0.98){
         let dTL = Math.min(15, rosLibre*t);
         if(dStop > 0.15 && dTL > dStop){ dTL = dStop + (dTL - dStop)*0.35; }
         const tL = dTL > 0.02 ? destPoint(la, lo, 0.3*dTL, vm.brg) : [la, lo];
@@ -7759,7 +7799,7 @@ if((document.getElementById('feu-compare')||{}).checked && pomp < 0.98){
       const bbox = sw.x+','+sw.y+','+ne.x+','+ne.y;
       const url = WMS_GEOPF+'?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&LAYERS=LANDCOVER.CLC18&STYLES=&CRS=EPSG:3857&BBOX='+bbox+'&WIDTH='+cols+'&HEIGHT='+rows+'&FORMAT=image/png';
       const img = new Image(); img.crossOrigin = 'anonymous';
-      img.onload = function(){ try{ const cv = document.createElement('canvas'); cv.width = cols; cv.height = rows; const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0, cols, rows); const d = cx.getImageData(0,0,cols,rows).data; const fuel = new Float32Array(cols*rows); for(let i=0;i<cols*rows;i++){ fuel[i] = fuelClasse(d[i*4], d[i*4+1], d[i*4+2], d[i*4+3]); } res(fuel); }catch(e){ res(null); } };
+      img.onload = function(){ try{ const cv = document.createElement('canvas'); cv.width = cols; cv.height = rows; const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0, cols, rows); const d = cx.getImageData(0,0,cols,rows).data; const fuel = new Float32Array(cols*rows); for(let i=0;i<cols*rows;i++){ fuel[i] = fuelClasse(d[i*4], d[i*4+1], d[i*4+2], d[i*4+3]); } noterService('Végétation (Corine Land Cover)', true); res(fuel); }catch(e){ noterService('Végétation (Corine Land Cover)', false, e && e.message); res(null); } };
       img.onerror = function(){ res(null); };
       img.src = url;
     });
@@ -7812,8 +7852,8 @@ if((document.getElementById('feu-compare')||{}).checked && pomp < 0.98){
       cx.drawImage(img, 0, 0);
       let dat; try{ dat = cx.getImageData(0,0,256,256).data; }catch(e){ return null; }
       let px = Math.round(pp.x-tx*256), py = Math.round(pp.y-ty*256); if(px<0)px=0; if(py<0)py=0; if(px>255)px=255; if(py>255)py=255;
-      const k = (py*256+px)*4; return (dat[k]*256 + dat[k+1] + dat[k+2]/256) - 32768;
-    }catch(e){ return null; }
+      const k = (py*256+px)*4; noterService('Altitude (AWS Terrarium)', true); return (dat[k]*256 + dat[k+1] + dat[k+2]/256) - 32768;
+    }catch(e){ noterService('Altitude (AWS Terrarium)', false, e && e.message); return null; }
   }
   async function altitudeGrille(bnds, cols, rows){
     try{
@@ -8037,6 +8077,37 @@ if((document.getElementById('feu-compare')||{}).checked && pomp < 0.98){
       tete.addEventListener('pointermove', function(ev){ if(!drag) return; pop.style.left = Math.max(0, ev.clientX-drag.dx)+'px'; pop.style.top = Math.max(0, ev.clientY-drag.dy)+'px'; });
       tete.addEventListener('pointerup', function(){ drag = null; });
     }
+  })();
+  function majDiagnostic(){
+    const el = document.getElementById('diag-liste'); if(!el) return;
+    const noms = Object.keys(SANTE);
+    if(!noms.length){ el.innerHTML = '<i style="color:#8a8577">Aucun service encore sollicité. Activez une couche ou lancez le test ci-dessous.</i>'; return; }
+    el.innerHTML = noms.sort().map(function(n){
+      const s = SANTE[n];
+      const pastille = s.ok ? '<span style="color:#15803d">●</span>' : '<span style="color:#dc2626">●</span>';
+      const det = s.detail ? ' <span style="color:#8a8577;font-size:10px">('+s.detail+')</span>' : '';
+      return pastille+' '+n+det;
+    }).join('<br>');
+  }
+  function servicesEnPanne(){
+    return Object.keys(SANTE).filter(function(n){ return !SANTE[n].ok; });
+  }
+  (function initDiag(){
+    const b = document.getElementById('btn-diag-test');
+    if(b && b.addEventListener) b.addEventListener('click', async function(){
+      afficherInfo('🩺 Test de tous les services externes…', 0);
+      const c = map.getCenter();
+      try{ await conditionsFeu(c); }catch(e){}
+      try{ await altPoint(c.lat, c.lng); }catch(e){}
+      try{ await fwiEffis(c); }catch(e){}
+      try{ await resineuxAuPoint(c.lat, c.lng); }catch(e){}
+      try{ await foyersDuJour(0); }catch(e){}
+      try{ await fuelDepuisCLC(map.getBounds(), 32, 24); }catch(e){}
+      cacherInfo(); majDiagnostic();
+      const ko = servicesEnPanne();
+      afficherInfo(ko.length ? '🩺 '+ko.length+' service(s) en panne : '+ko.join(', ')+' — l’appli continue avec le reste' : '🩺 Tous les services testés répondent correctement', 9000);
+    });
+    majDiagnostic();
   })();
   const VILLES_METEO = [["Paris",48.857,2.352],["Marseille",43.296,5.370],["Lyon",45.764,4.836],
    ["Toulouse",43.605,1.444],["Nice",43.700,7.265],["Nantes",47.218,-1.554],["Montpellier",43.611,3.877],
@@ -10787,8 +10858,8 @@ if((document.getElementById('feu-compare')||{}).checked && pomp < 0.98){
   });
 
   // ================= Fenêtres flottantes (widgets) =================
-  const WIDGETS = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-sites','wg-equip','wg-seveso','wg-reperes','wg-geol','wg-population','wg-seances','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-3d','wg-limites','wg-foret','wg-explic','wg-pilote'];
-  const WIDGETS_PILOTABLES = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-sites','wg-equip','wg-seveso','wg-reperes','wg-geol','wg-population','wg-seances','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-3d','wg-limites','wg-foret','wg-explic'];
+  const WIDGETS = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-sites','wg-equip','wg-seveso','wg-reperes','wg-geol','wg-population','wg-seances','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-3d','wg-limites','wg-foret','wg-explic','wg-diag','wg-pilote'];
+  const WIDGETS_PILOTABLES = ['wg-outils','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-acces','wg-fonds','wg-sites','wg-equip','wg-seveso','wg-reperes','wg-geol','wg-population','wg-seances','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-3d','wg-limites','wg-foret','wg-explic','wg-diag'];
   const WIDGETS_CASES = []; // remplacées par la fenêtre 🧭 pilote
   let posWidgets = {};
   try{ posWidgets = JSON.parse(localStorage.getItem('geo-widgets3')||'{}'); }catch(e){}
@@ -10876,6 +10947,7 @@ if((document.getElementById('feu-compare')||{}).checked && pomp < 0.98){
   initWidget('wg-climat',    { left:'12px', top:'110px', replie:true, cache:true });
   initWidget('wg-montagnes', { left:'12px', top:'150px', replie:true, cache:true });
   initWidget('wg-seances',  { left:'12px', top:'100px', replie:true, cache:true });
+  initWidget('wg-diag',     { left:'12px', top:'170px', replie:true, cache:true });
   initWidget('wg-feux',     { left:'12px', top:'140px', replie:true, cache:true });
   initWidget('wg-meteo',    { left:'12px', top:'180px', replie:true, cache:true });
   initWidget('wg-parcs',    { left:'12px', top:'220px', replie:true, cache:true });
@@ -11444,4 +11516,3 @@ if((document.getElementById('feu-compare')||{}).checked && pomp < 0.98){
 </script>
 </body>
 </html>
-
