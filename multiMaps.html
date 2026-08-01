@@ -2347,7 +2347,7 @@
       const bbox = sw.x+','+sw.y+','+ne.x+','+ne.y;
       const pc = map.latLngToContainerPoint(L.latLng(lat, lon));
       const i = Math.max(0, Math.min(size.x-1, Math.round(pc.x))), j = Math.max(0, Math.min(size.y-1, Math.round(pc.y)));
-      const url = WMS_GEOPF+'?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&LAYERS=LANDCOVER.FORESTINVENTORY.V2&QUERY_LAYERS=LANDCOVER.FORESTINVENTORY.V2&STYLES=&CRS=EPSG:3857&BBOX='+bbox+'&WIDTH='+size.x+'&HEIGHT='+size.y+'&I='+i+'&J='+j+'&INFO_FORMAT=application/json&FEATURE_COUNT=1';
+      const url = WMS_GEOPF+'?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&LAYERS=LANDCOVER.FORESTINVENTORY.V2&QUERY_LAYERS=LANDCOVER.FORESTINVENTORY.V2&STYLES=&CRS=EPSG:3857&BBOX='+bbox+'&WIDTH='+size.x+'&HEIGHT='+size.y+'&I='+i+'&J='+j+'&FORMAT=image/png&INFO_FORMAT=application/json&FEATURE_COUNT=1';
       const r = await fetch(url); if(!r.ok) return null;
       const d = await r.json();
       const f = d && d.features && d.features[0]; if(!f) return null;
@@ -2423,7 +2423,7 @@
             +'&LAYERS='+conf.layerWms+'&QUERY_LAYERS='+conf.layerWms
             +'&STYLES=&CRS=EPSG:3857&BBOX='+bbox
             +'&WIDTH='+size.x+'&HEIGHT='+size.y+'&I='+i+'&J='+j
-            +'&INFO_FORMAT=application/json&FEATURE_COUNT=3';
+            +'&FORMAT=image/png&INFO_FORMAT=application/json&FEATURE_COUNT=3';
           const r = await fetch(url);
           const d = await r.json();
           const feats = (d && d.features) || [];
@@ -2448,7 +2448,7 @@
           const url2 = WMS_LSASAF+'?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo'
             +'&LAYERS=FRP&QUERY_LAYERS=FRP&STYLES=&CRS=EPSG:3857&BBOX='+bbox
             +'&WIDTH='+size.x+'&HEIGHT='+size.y+'&I='+i+'&J='+j
-            +'&INFO_FORMAT=application/json&FEATURE_COUNT=3';
+            +'&FORMAT=image/png&INFO_FORMAT=application/json&FEATURE_COUNT=3';
           const r2 = await fetch(url2);
           const d2 = await r2.json();
           const feats2 = (d2 && d2.features) || [];
@@ -7418,7 +7418,7 @@
   async function fwiEffis(ll){
     try{
       const dd = 0.35, bbox = (ll.lng-dd)+','+(ll.lat-dd)+','+(ll.lng+dd)+','+(ll.lat+dd);
-      const url = 'https://maps.effis.emergency.copernicus.eu/effis?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=ecmwf007.fwi&QUERY_LAYERS=ecmwf007.fwi&SRS=EPSG:4326&BBOX='+bbox+'&WIDTH=101&HEIGHT=101&X=50&Y=50&INFO_FORMAT=application/json&TIME='+dateJour(0);
+      const url = 'https://maps.effis.emergency.copernicus.eu/effis?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=ecmwf007.fwi&QUERY_LAYERS=ecmwf007.fwi&SRS=EPSG:4326&BBOX='+bbox+'&WIDTH=101&HEIGHT=101&X=50&Y=50&FORMAT=image/png&INFO_FORMAT=application/json&TIME='+dateJour(0);
       const r = await fetch(url); if(!r.ok) return null;
       const j = await r.json();
       const f = j && j.features && j.features[0] && j.features[0].properties;
