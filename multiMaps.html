@@ -2339,10 +2339,15 @@
   let requeteForetEnCours = false;
   async function resineuxAuPoint(lat, lon){
     try{
-      const dd = 0.01;
-      const sw = map.options.crs.project(L.latLng(lat-dd, lon-dd)), ne = map.options.crs.project(L.latLng(lat+dd, lon+dd));
+      // réutilise la VRAIE vue actuelle de la carte (comme infoForet, qui fonctionne) plutôt
+      // qu'une zone inventée : le service IGN semble rejeter les BBOX arbitraires (erreur 400).
+      const b = map.getBounds(); if(!b.contains(L.latLng(lat, lon))) return null;
+      const size = map.getSize();
+      const sw = map.options.crs.project(b.getSouthWest()), ne = map.options.crs.project(b.getNorthEast());
       const bbox = sw.x+','+sw.y+','+ne.x+','+ne.y;
-      const url = WMS_GEOPF+'?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&LAYERS=LANDCOVER.FORESTINVENTORY.V2&QUERY_LAYERS=LANDCOVER.FORESTINVENTORY.V2&STYLES=&CRS=EPSG:3857&BBOX='+bbox+'&WIDTH=101&HEIGHT=101&I=50&J=50&INFO_FORMAT=application/json&FEATURE_COUNT=1';
+      const pc = map.latLngToContainerPoint(L.latLng(lat, lon));
+      const i = Math.max(0, Math.min(size.x-1, Math.round(pc.x))), j = Math.max(0, Math.min(size.y-1, Math.round(pc.y)));
+      const url = WMS_GEOPF+'?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&LAYERS=LANDCOVER.FORESTINVENTORY.V2&QUERY_LAYERS=LANDCOVER.FORESTINVENTORY.V2&STYLES=&CRS=EPSG:3857&BBOX='+bbox+'&WIDTH='+size.x+'&HEIGHT='+size.y+'&I='+i+'&J='+j+'&INFO_FORMAT=application/json&FEATURE_COUNT=1';
       const r = await fetch(url); if(!r.ok) return null;
       const d = await r.json();
       const f = d && d.features && d.features[0]; if(!f) return null;
