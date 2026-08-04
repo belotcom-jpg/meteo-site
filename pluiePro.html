@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>MultiMeteo v3.5</title>
+<title>MultiMeteo v3.6</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -4087,7 +4087,16 @@ function toggleViewModeMenu(e){
 }
 function closeViewModeMenu(){const m=document.getElementById('viewModeMenu');if(m)m.classList.remove('open');}
 document.addEventListener('click',function(e){const w=document.getElementById('viewModeWrap'),m=document.getElementById('viewModeMenu');if(w&&!w.contains(e.target)&&(!m||!m.contains(e.target)))closeViewModeMenu();});
-function setViewMode(v){var bare=location.href.split('#')[0].split('?')[0];location.href=bare+'?simple='+v;}
+function setViewMode(v){
+  var bare=location.href.split('#')[0].split('?')[0];
+  /* Conserver la ville courante dans l'URL de rechargement (sinon Paris par défaut au reload) */
+  var ville='';
+  try{
+    var inp=document.getElementById('cityInput');
+    ville=(inp&&inp.value.trim())?inp.value.trim():((typeof cityName!=='undefined'&&cityName)?cityName:'');
+  }catch(_){}
+  location.href=bare+'?simple='+v+(ville?'&ville='+encodeURIComponent(ville):'');
+}
 function togglePhoneView(){
   var on=document.documentElement.classList.contains('simple')&&document.documentElement.classList.contains('phone-col');
   setViewMode(on?'no':'ok');
@@ -4610,7 +4619,7 @@ async function fetchNowcast(lat,lon){
     function(){
       const ctrl=new AbortController();
       setTimeout(function(){ctrl.abort();},6000);
-      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/3.5'}});
+      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/3.6'}});
     },
     function(){
       const ctrl=new AbortController();
@@ -5124,6 +5133,8 @@ async function _loadWithCoords(lat,lon,displayName){
     updateBtnState();
     
         processData(omMain,omM15,rainMx,probMx);
+        /* Vue Détail (?simple=detail) : rappeler openHoraire après initRadar (coords à jour) car le setInterval initial ne tourne qu'une fois */
+        try{const _qh=document.getElementById('qdHost');if(_qh&&_qh.style.display==='flex')openHoraire();}catch(_){}
     fetchDailyTemps(lat,lon);
     fetchNowcast(lat,lon);fetchMinutely15(lat,lon);
     fetchJm1Data(lat,lon);fetchJmNData(lat,lon,7);
@@ -5257,8 +5268,37 @@ async function fetchVigilance(lat,lon,deptName,countryCode){
     } else {renderVigilanceBadges(null,deptName,slug,diag);}
   }catch(e){renderVigilanceBadges(null,deptName,slug,'FATAL');}
 }
+function _onCityChange(){
+  /* réinitialise les panneaux LIÉS À LA VILLE (pas les indicateurs nationaux) */
+  try{
+    /* Caches de vue en mémoire dépendant de la ville → vidés pour forcer un vrai rechargement */
+    _qdData=null;              /* vue Détail horaire : vider le cache pour forcer un re-fetch */
+    _owmMinutely=null;         /* pluie fine */
+    _nowcastByMin={};          /* nowcast MET Norway */
+    _m15ByMin={};              /* Open-Meteo minutely15 */
+    _cachedData=null;          /* cache principal éventuel */
+    /* Vue ?simple=detail : openHoraire n'est déclenché qu'au 1er chargement (setInterval auto-supprimé)
+       → on doit le rappeler explicitement à chaque changement de ville */
+    try{
+      const qdHost=document.getElementById('qdHost');
+      if(qdHost&&qdHost.style.display==='flex'&&typeof openHoraire==='function'){
+        setTimeout(()=>{try{openHoraire();}catch(e){}},50);
+      }
+    }catch(_){}
+    /* Vérif modèles : vider l'état affiché + fermer si ouvert (sera rechargé à la réouverture, cache keyé coords) */
+    window._vfLast=null;
+    const vp=document.getElementById('verifPanel');
+    if(vp&&vp.classList.contains('open')){vp.classList.remove('open');}
+    /* J+28 (vue d'ensemble) : données déjà vidées ; fermer le panneau et le tiroir détail s'ils sont ouverts */
+    const ep=document.getElementById('ext30Panel');
+    if(ep&&ep.classList.contains('open')){ep.classList.remove('open');}
+    const dp=document.getElementById('divDetailPanel');
+    if(dp){dp.classList.remove('open');dp.style.transform='';dp.style.pointerEvents='';}
+  }catch(e){}
+}
 async function load(){
   /* Nouvelle ville → invalider le cache J-1/J-7 */_cachedJm1=null;_cachedJm7=null;_ext30Loaded=false;window._ext30Days=[];
+  _onCityChange();
   const city=document.getElementById('cityInput').value.trim();if(!city)return;
   /* Test du badge sans changer l'URL : taper "vigtest rouge" ou "vigtest orange" dans le champ ville */
   if(/^\s*vigtest/i.test(city)){var _tc=/jaune/i.test(city)?2:/vert/i.test(city)?1:/orange/i.test(city)?3:4;var _tn=({1:'vert (masqué)',2:'jaune (masqué)',3:'orange (fixe)',4:'rouge (doit clignoter)'})[_tc];try{renderVigilanceBadges([{id:6,color:_tc},{id:3,color:_tc}],'Essonne','essonne','TEST '+_tn);}catch(e){}return;}
@@ -5345,13 +5385,15 @@ async function load(){
         /* _viewMode jm1/jm7 conservé — pas de reset */
         document.getElementById('viewBtns').style.display='flex';
         updateBtnState();
+        initBar();initRadar(lat,lon);   /* DOIT précéder processData : fixe _cityLat/_cityLon avant qu'openHoraire les lise */
         processData(omMain,omM15,rainMx,probMx);
+        /* Vue Détail (?simple=detail) : rappeler openHoraire après initRadar (coords à jour) car le setInterval initial ne tourne qu'une fois */
+        try{const _qh=document.getElementById('qdHost');if(_qh&&_qh.style.display==='flex')openHoraire();}catch(_){}
         clearInterval(_autoRefreshTimer);zoomMin=0;zoomMax=1;
         fetchNowcast(lat,lon);fetchMinutely15(lat,lon);
         fetchJm1Data(lat,lon);fetchJmNData(lat,lon,7);
         try{fetchVigilance(lat,lon,best.admin2,best.country_code);}catch(e){}
         if(_viewMode==='jm1'||_viewMode==='jm7'){const _m=_viewMode;_viewMode='j1';setView(_m);}
-        initBar();initRadar(lat,lon);
         const rc=document.getElementById('radarCard');
         if(rc)rc.style.display='block';
         setUpdateStamp('cache',_lastCacheTs);
