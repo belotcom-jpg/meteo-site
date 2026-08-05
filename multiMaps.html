@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v4.14 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v4.16.1 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v4.14</title>
+<title>MultiMaps — géographie (collège & lycée) — v4.16.1</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -64,6 +64,24 @@
   .widget-pilote{border-width:2px;border-color:var(--encre)}
   .pilote-sep{border-top:1.5px solid var(--trait);margin:5px 2px}
   .pilote-grille{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+  /* couches actives : puces desactivables */
+  .pilote-actives{ border-bottom:1.5px solid var(--trait); padding-bottom:9px; margin-bottom:1px }
+  .actives-tete{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:7px }
+  #actives-compte{ font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#8a8577 }
+  #btn-actives-off{
+    border:none; background:none; padding:0; cursor:pointer; font-family:inherit;
+    font-size:10.5px; color:#8a8577; text-decoration:underline; white-space:nowrap;
+  }
+  #btn-actives-off:hover{ color:var(--rouge) }
+  .actives-liste{ display:flex; flex-wrap:wrap; gap:5px }
+  .active-puce{
+    display:inline-flex; align-items:center; gap:7px; max-width:100%;
+    border:1px solid var(--encre); background:var(--encre); color:#fff;
+    border-radius:999px; padding:4px 9px; font-size:11px; font-weight:600;
+    font-family:inherit; cursor:pointer; line-height:1.35; text-align:left;
+  }
+  .active-puce:hover{ background:var(--rouge); border-color:var(--rouge) }
+  .active-x{ font-size:11px; opacity:.8; flex:none }
   .pilote-btn{
     border:1px solid var(--trait);border-radius:9px;background:#fff;color:#8a8577;
     padding:6px 4px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;
@@ -449,6 +467,74 @@
   #wg-options .widget-corps{ overflow-y:auto; max-height:calc(88vh - 44px) }
   .opt-corps{ max-height:none }
   .opt-corps input[type="text"], .opt-corps select{ width:100%; box-sizing:border-box }
+
+  /* ================= INTERFACE C : rail latéral + panneaux ancrés =================
+     Ne s'applique QUE si <body> porte la classe interface-c. L'interface O reste intacte. */
+  body.interface-c{ --rail:212px; --panneau:330px }
+  body.interface-c #wg-pilote, body.interface-c #wg-pilote.cache{
+    display:flex !important; visibility:visible !important; opacity:1 !important;
+    position:fixed !important; left:0 !important; top:0 !important; bottom:0 !important; right:auto !important;
+    width:var(--rail) !important; height:100% !important; max-height:none !important; z-index:1500;
+    flex-direction:column; background:var(--papier); border:none;
+    border-right:1px solid var(--trait); border-radius:0; box-shadow:2px 0 12px rgba(0,0,0,.07);
+    transition:transform .18s ease;
+  }
+  body.interface-c #wg-pilote .widget-tete{ border-radius:0; cursor:default }
+  /* en mode C, replier le corps du rail n'a pas de sens : une seule commande, le chevron */
+  body.interface-c #wg-pilote [data-action="replier"]{ display:none }
+  body.interface-c #wg-pilote.replie .widget-corps{ display:flex !important }
+  body.interface-c #wg-pilote .widget-corps{ overflow-y:auto !important; max-height:none !important }
+  body.interface-c.rail-ferme #wg-pilote{ transform:translateX(-100%) !important; box-shadow:none }
+  /* les panneaux se logent tous dans une colonne à droite du rail : plus de fenêtres éparpillées */
+  body.interface-c .widget:not(#wg-pilote):not(#wg-legende){
+    left:var(--rail) !important; top:0 !important; bottom:0 !important; right:auto !important;
+    width:var(--panneau) !important; max-width:calc(100vw - var(--rail));
+    height:100% !important; max-height:none !important; border-radius:0;
+    border-top:none; border-bottom:none; border-left:none; border-right:1px solid var(--trait);
+    box-shadow:6px 0 18px rgba(0,0,0,.08);
+  }
+  body.interface-c .widget:not(#wg-pilote):not(#wg-legende) .widget-tete{ border-radius:0; cursor:default }
+  body.interface-c .widget:not(#wg-pilote):not(#wg-legende).replie{ height:auto !important; bottom:auto !important }
+  body.interface-c.rail-ferme .widget:not(#wg-pilote):not(#wg-legende){ display:none !important }
+  /* la légende reste un encart compact en bas à droite */
+  body.interface-c #wg-legende{
+    left:auto !important; right:12px !important; top:auto !important;
+    bottom:12px !important; width:236px !important; max-height:56vh !important;
+  }
+  body.interface-c #map{ left:var(--rail); transition:left .18s ease }
+  body.interface-c.rail-ferme #map{ left:0 }
+  /* bouton de repli du rail */
+  #rail-toggle{
+    display:none; position:fixed; left:var(--rail); top:14px; z-index:1600; transform:translateX(-50%);
+    width:28px; height:28px; border-radius:50%; border:1px solid var(--encre); background:var(--encre);
+    cursor:pointer; font-size:15px; font-weight:700; line-height:1; color:#fff; box-shadow:0 2px 6px rgba(0,0,0,.28);
+    align-items:center; justify-content:center; padding:0;
+  }
+  body.interface-c #rail-toggle{ display:flex }
+  #btn-rail-replier{ display:none }
+  body.interface-c #btn-rail-replier{ display:inline-block; font-size:15px; font-weight:700 }
+  body.interface-c.rail-ferme #rail-toggle{ left:6px; transform:none }
+  body.interface-c #rail-toggle:hover{ background:var(--rouge); border-color:var(--rouge) }
+  /* rail de l'interface C : une seule colonne, libellés alignés à gauche */
+  body.interface-c #wg-pilote .pilote-grille{ grid-template-columns:1fr; gap:6px }
+  body.interface-c #wg-pilote .pilote-btn{
+    text-align:left; padding:9px 11px; font-size:12px; border-radius:10px; font-weight:600;
+  }
+  body.interface-c #wg-pilote .pilote-btn small{ font-weight:400 }
+  body.interface-c #wg-pilote .pilote-paquet{ border:none; background:none; margin:0 }
+  body.interface-c #wg-pilote .pilote-paquet>summary{
+    padding:9px 10px; border-radius:8px; font-size:12px; font-weight:700;
+    border-left:3px solid transparent;
+  }
+  body.interface-c #wg-pilote .pilote-paquet[open]>summary{
+    background:#f3f0e6; border-left-color:var(--encre);
+  }
+  body.interface-c #wg-pilote .pilote-paquet .pilote-grille{ padding:6px 0 8px 12px }
+  @media (max-width:760px){
+    body.interface-c{ --rail:0px }
+    body.interface-c #wg-pilote{ width:212px !important }
+    body.interface-c #map{ left:0 }
+  }
 </style>
 </head>
 <body>
@@ -1094,6 +1180,12 @@
     <button class="widget-btn" data-action="fermer" title="Fermer">✕</button>
   </div>
   <div class="widget-corps">
+    <span class="etiquette">Interface</span>
+    <div style="display:flex;gap:5px;margin-bottom:6px">
+      <button class="calque-ajout donnee" id="btn-iface-o" style="flex:1;font-size:11px" title="Interface O : fenêtres flottantes libres, déplaçables où vous voulez.">🪟 Fenêtres libres (O)</button>
+      <button class="calque-ajout donnee" id="btn-iface-c" style="flex:1;font-size:11px" title="Interface C : barre latérale fixe et panneaux ancrés en colonne. Plus sobre, rien ne se chevauche.">📐 Barre latérale (C)</button>
+    </div>
+    <div class="sep"></div>
     <div style="font-size:10px;color:#8a8577;margin-bottom:3px">Chaque réglage ouvre sa propre fenêtre.</div>
     <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-acces">👁 Couleurs & lisibilité</button>
     <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-explic">💬 Explication & partage</button>
@@ -1489,65 +1581,77 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v4.14</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v4.16.1</small></span>
+    <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
   <div class="widget-corps">
-    <div class="pilote-grille" style="grid-template-columns:1fr 1fr">
+    <div class="pilote-grille">
+      <button class="pilote-btn" data-cible="wg-options" title="Réglages d’affichage, couleurs, lisibilité, choix de l’interface et partage">⚙️ Options</button>
+    </div>
+    <div class="pilote-actives" id="pilote-actives" hidden>
+      <div class="actives-tete">
+        <span id="actives-compte">0 couche active</span>
+        <button type="button" id="btn-actives-off" title="Éteint toutes les couches affichées. Les fenêtres restent ouvertes. Annulable avec ↶.">tout éteindre</button>
+      </div>
+      <div class="actives-liste" id="actives-liste"></div>
+    </div>
+    <div class="pilote-grille pilote-paire" style="grid-template-columns:1fr 1fr">
       <button class="pilote-btn" id="btn-histo-annuler" title="Annule la dernière couche allumée ou éteinte. Fonctionne aussi après un « tout désactiver » ou une séance rejouée.">↶ Annuler</button>
-      <button class="pilote-btn" id="btn-refaire" title="Rétablit ce qui vient d'être annulé.">↷ Reprendre</button>
+      <button class="pilote-btn" id="btn-refaire" title="Rétablit ce qui vient d’être annulé.">↷ Reprendre</button>
+    </div>
+    <div class="pilote-grille">
       <button class="pilote-btn" id="btn-tout-off" title="Remet la carte au propre : éteint toutes les couches actives ET referme les fenêtres (sauf celle-ci). Annulable avec ↶ pour les couches.">🧹 Tout nettoyer <small>(couches + fenêtres)</small></button>
-      <button class="pilote-btn" data-cible="wg-options" title="Réglages d’affichage, couleurs, lisibilité et partage">⚙️ Options</button>
     </div>
     <div class="pilote-sep"></div>
     <div class="pilote-grille">
-      <button class="pilote-btn" data-cible="wg-actions">🧰 Actions</button>
       <button class="pilote-btn" data-cible="wg-recherche">🔎 Recherche</button>
       <button class="pilote-btn" data-cible="wg-outils">✏️ Annotations</button>
       <button class="pilote-btn" data-cible="wg-legende">🧭 Légende</button>
+      <button class="pilote-btn" data-cible="wg-actions">🧰 Actions</button>
       <button class="pilote-btn" data-cible="wg-fonds">🗺 Fonds</button>
       <button class="pilote-btn" data-cible="wg-limites">🗾 Limites</button>
     </div>
     <div class="pilote-sep"></div>
     <div class="pilote-grille">
-      <details class="pilote-paquet"><summary>👥 Société & population</summary>
+      <details class="pilote-paquet"><summary>👥 Société</summary>
         <div class="pilote-grille">
-        <button class="pilote-btn" data-cible="wg-ville">🏙 Ville</button>
+        <button class="pilote-btn" data-cible="wg-ville">🏙 Ville &amp; quartiers</button>
         <button class="pilote-btn" data-cible="wg-educ">🎓 Éducation</button>
-        <button class="pilote-btn" data-cible="wg-insee">💰 INSEE</button>
+        <button class="pilote-btn" data-cible="wg-insee">💰 INSEE — tops 50</button>
         <button class="pilote-btn" data-cible="wg-origines">🌍 Origines</button>
         <button class="pilote-btn" data-cible="wg-population">👥 Population</button>
         <button class="pilote-btn" data-cible="wg-logement">🏘 Logement</button>
         </div>
       </details>
-      <details class="pilote-paquet"><summary>⭐ Sites & équipements</summary>
+      <details class="pilote-paquet"><summary>⭐ Sites</summary>
         <div class="pilote-grille">
-        <button class="pilote-btn" data-cible="wg-sites">⭐ Sites</button>
+        <button class="pilote-btn" data-cible="wg-sites">⭐ Sites &amp; monuments</button>
         <button class="pilote-btn" data-cible="wg-equip">🚉 Équipements</button>
         </div>
       </details>
-      <details class="pilote-paquet"><summary>🌲 Nature & relief</summary>
+      <details class="pilote-paquet"><summary>🌲 Nature</summary>
         <div class="pilote-grille">
-        <button class="pilote-btn" data-cible="wg-pays">🏞️ Pays</button>
-        <button class="pilote-btn" data-cible="wg-montagnes">⛰ Montagnes</button>
-        <button class="pilote-btn" data-cible="wg-mer">🌊 Mer</button>
-        <button class="pilote-btn" data-cible="wg-rivieres">💧 Rivières</button>
+        <button class="pilote-btn" data-cible="wg-montagnes">⛰ Montagnes &amp; relief</button>
+        <button class="pilote-btn" data-cible="wg-mer">🌊 Mer &amp; littoral</button>
+        <button class="pilote-btn" data-cible="wg-rivieres">💧 Rivières &amp; bassins</button>
         <button class="pilote-btn" data-cible="wg-foret">🌲 Forêts</button>
-        <button class="pilote-btn" data-cible="wg-animaux">🐾 Animaux</button>
-        <button class="pilote-btn" data-cible="wg-parcs">🌲 Parcs</button>
+        <button class="pilote-btn" data-cible="wg-parcs">🌳 Parcs naturels</button>
+        <button class="pilote-btn" data-cible="wg-animaux">🐾 Animaux sauvages</button>
+        <button class="pilote-btn" data-cible="wg-pays">🏞️ Pays &amp; régions</button>
         </div>
       </details>
-      <details class="pilote-paquet"><summary>🌡 Météo & feux</summary>
+      <details class="pilote-paquet"><summary>🌡 Climat</summary>
         <div class="pilote-grille">
         <button class="pilote-btn" data-cible="wg-meteo">🌡 Météo</button>
-        <button class="pilote-btn" data-cible="wg-feux">🔥 Feux</button>
-        <button class="pilote-btn" data-cible="wg-climat">🌡 Climat</button>
+        <button class="pilote-btn" data-cible="wg-feux">🔥 Feux de forêt</button>
+        <button class="pilote-btn" data-cible="wg-climat">🌤 Climat &amp; littoral</button>
         </div>
       </details>
-      <details class="pilote-paquet"><summary>🚴 Sport & itinéraires</summary>
+      <details class="pilote-paquet"><summary>🚴 Sport</summary>
         <div class="pilote-grille">
-        <button class="pilote-btn" data-cible="wg-velo">🚲 Vélo</button>
-        <button class="pilote-btn" data-cible="wg-rando">🥾 Rando</button>
+        <button class="pilote-btn" data-cible="wg-velo">🚲 Pistes cyclables</button>
+        <button class="pilote-btn" data-cible="wg-rando">🥾 Sentiers de randonnée</button>
         </div>
       </details>
       <details class="pilote-paquet"><summary>🗿 Autres</summary>
@@ -1575,7 +1679,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v4.14</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v4.16.1</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -1741,7 +1845,7 @@
     esritopo: { nom:'Topo (Esri)', url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', att:'&copy; Esri', max:19 },
     esrirue:  { nom:'Rues (Esri)', url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', att:'&copy; Esri', max:19 },
     relief:   { nom:'Relief ombr\u00e9 (Esri)', url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', att:'&copy; Esri', max:13 },
-    marin:    { nom:'\U0001F30A Fond marin (EMODnet)', url:'https://ows.emodnet-bathymetry.eu/wms?', wms:'mean_atlas_land', att:'EMODnet Bathymetry' },
+    marin:    { nom:'🌊 Fond marin (EMODnet)', url:'https://ows.emodnet-bathymetry.eu/wms?', wms:'mean_atlas_land', att:'EMODnet Bathymetry' },
     ocean:    { nom:'Oc\u00e9ans (Esri)', url:'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', att:'&copy; Esri', max:13 },
     natgeo:   { nom:'National Geographic (Esri)', url:'https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', att:'&copy; Esri / NatGeo', max:16 },
     grisclair:{ nom:'Gris clair (Esri)', url:'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', att:'&copy; Esri', max:16 },
@@ -1819,7 +1923,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v4.14';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v4.16.1';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -8284,7 +8388,7 @@
   });
   (function(){ const f = document.getElementById('vent48-ferme'); if(f && f.addEventListener) f.addEventListener('click', function(){ const b = document.getElementById('btn-vent48'); if(b) b.click(); }); })();
   (function(){ const fb = document.getElementById('btn-vent-feu'); if(fb && fb.addEventListener) fb.addEventListener('click', function(){ const mb = document.getElementById('btn-vent'); if(mb) mb.click(); if(typeof etatVent !== 'undefined' && etatVent.actif) basculerBouton(fb, true, '💨 Vent \u2715', '', '#e6550d'); else basculerBouton(fb, false, '', '💨 Vent (direction + force)'); }); })();
-  // ---------- \U0001F4AC Explication & partage ----------
+  // ---------- 💬 Explication & partage ----------
   function villeProcheCentre(){
     const c = map.getCenter(); let mn = 1e9, nom = '';
     for(let i=0;i<VILLES_METEO.length;i++){ const v = VILLES_METEO[i], d = (v[1]-c.lat)*(v[1]-c.lat)+(v[2]-c.lng)*(v[2]-c.lng); if(d < mn){ mn = d; nom = v[0]; } }
@@ -8309,8 +8413,8 @@
     return t.slice(0, 200);
   }
   function copierTexte(txt){
-    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){ afficherInfo('\U0001F4CB Copi\u00e9 dans le presse-papier', 4000); }, function(){ afficherInfo('\U0001F4CB Copie impossible \u2014 s\u00e9lectionnez le texte \u00e0 la main', 5000); }); }
-    else afficherInfo('\U0001F4CB Copie impossible \u2014 s\u00e9lectionnez le texte \u00e0 la main', 5000);
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){ afficherInfo('📋 Copi\u00e9 dans le presse-papier', 4000); }, function(){ afficherInfo('📋 Copie impossible \u2014 s\u00e9lectionnez le texte \u00e0 la main', 5000); }); }
+    else afficherInfo('📋 Copie impossible \u2014 s\u00e9lectionnez le texte \u00e0 la main', 5000);
   }
   document.getElementById('btn-tweet-vue').addEventListener('click', ()=>{
     const txt = texteTweet(), z = document.getElementById('tweet-zone'), c = document.getElementById('tweet-compte');
@@ -8334,15 +8438,15 @@
       + '<b>Passages satellites (heure solaire locale, ~identique toute l’année en France)</b><br>• <b>Terra</b> (MODIS) : ~10h30 (+ ~22h30 la nuit)<br>• <b>Aqua</b> (MODIS) et <b>Suomi NPP / NOAA-20 / NOAA-21</b> (VIIRS) : groupés entre ~13h et ~14h30 (+ ~1h-2h30 la nuit)<br>→ en pratique, l’essentiel des mises à jour tombe le matin (10h30) et en tout début d’après-midi (13h-14h30) ; peu de nouveauté entre 15h et le lendemain matin, sauf passages nocturnes moins exploités ici.<br><br>'
       + '<b>🗺️ Vue d’ensemble France — calcul des hectares</b><br>Sans clé : comptage de pixels sur l’image satellite (approximatif, corrigé à la baisse). Avec une <b>clé FIRMS gratuite</b> (obtenue en 2 minutes par email, sans engagement) : mesure réelle à partir de la taille effective de chaque pixel satellite détecté — bien plus fiable. La clé ne sert qu’à cette fonctionnalité, reste sur cet ordinateur (localStorage), jamais transmise ailleurs.<br><br>'
       + '<b>Autres sources de points chauds possibles</b><br>• <b>MODIS</b> (Terra+Aqua, ~1 km, déjà utilisable en 2ᵉ source dans Surfaces brûlées) : plus ancien historique, moins précis que VIIRS (375 m).<br>• <b>EFFIS</b> (Copernicus) : agrège MODIS+VIIRS+dépêches presse à l’échelle européenne, avec périmètres de surfaces brûlées officiels (service actuellement instable côté EFFIS).<br>• <b>Satellite géostationnaire MSG</b> (LSA SAF, FRP-PIXEL) : ✅ intégré (bouton 🛰️ ci-dessus) — il regarde l’Europe en continu et se met à jour toutes les 15 min, contre 3-4 passages/jour pour VIIRS/MODIS. Résolution plus grossière (quelques km), aucune clé requise, licence ouverte (CC BY 4.0).<br>• <b>Sentinel-3</b> (Copernicus, SLSTR) : 2 passages/jour supplémentaires, orbite indépendante — piste non intégrée.<br><br>'
-      + '<b>M\u00e9thode (prospective)</b><br>Vitesse du front = base ~0,08 km/h \u00d7 vent pr\u00e9vu \u00d7 s\u00e9cheresse (T\u00b0, humidit\u00e9, pluie du moment et des 5 derniers jours) \u00d7 pente \u00d7 v\u00e9g\u00e9tation lue le long du trajet \u00d7 intervention (molette \U0001F692). Zones d\u00e9j\u00e0 br\u00fbl\u00e9es : frein fort (combustible consomm\u00e9). Plafonds : 1,2 km/h et 15 km \u00e0 +48 h. Calcul en kilom\u00e8tres r\u00e9els \u2014 ind\u00e9pendant du zoom.<br><br>'
+      + '<b>M\u00e9thode (prospective)</b><br>Vitesse du front = base ~0,08 km/h \u00d7 vent pr\u00e9vu \u00d7 s\u00e9cheresse (T\u00b0, humidit\u00e9, pluie du moment et des 5 derniers jours) \u00d7 pente \u00d7 v\u00e9g\u00e9tation lue le long du trajet \u00d7 intervention (molette 🚒). Zones d\u00e9j\u00e0 br\u00fbl\u00e9es : frein fort (combustible consomm\u00e9). Plafonds : 1,2 km/h et 15 km \u00e0 +48 h. Calcul en kilom\u00e8tres r\u00e9els \u2014 ind\u00e9pendant du zoom.<br><br>'
       + '<b>Ce qui n\u2019est PAS pris en compte</b><br>Les sautes de feu (braises projet\u00e9es loin devant), l\u2019humidit\u00e9 r\u00e9elle mesur\u00e9e du combustible, le couplage feu-atmosph\u00e8re (un grand feu cr\u00e9e son propre vent), et le d\u00e9tail r\u00e9el des man\u0153uvres des secours.<br><br>'
       + '<b style="color:#7f1d1d">\u26a0\ufe0f Messages de pr\u00e9caution \u2014 \u00e0 toujours joindre au partage</b><br>\u2022 Illustration p\u00e9dagogique : montre <i>comment</i> vent, v\u00e9g\u00e9tation et s\u00e9cheresse influencent un feu \u2014 pas <i>o\u00f9</i> il ira.<br>\u2022 Distances et dur\u00e9es non calibr\u00e9es, non valid\u00e9es.<br>\u2022 Les secours utilisent des outils op\u00e9rationnels valid\u00e9s (ForeFire / Firecaster, M\u00e9t\u00e9o-France) \u2014 pas cette carte.<br>\u2022 Suivez uniquement les consignes des pr\u00e9fectures et des SDIS.<br>\u2022 Urgence : <b>112</b> \u00b7 pompiers <b>18</b> \u00b7 sourds/malentendants <b>114</b>.';
   }
   function ouvrirExplic(mode){
     const pop = document.getElementById('explic-pop'), corps = document.getElementById('explic-pop-corps'), titre = document.getElementById('explic-pop-titre');
     if(!pop || !corps) return;
-    if(mode === 'max'){ titre.textContent = '\U0001F4DA Explication compl\u00e8te & pr\u00e9cautions'; corps.innerHTML = explicMax(); }
-    else { titre.textContent = '\U0001FA9F Explication d\u00e9taill\u00e9e'; corps.innerHTML = '<div style="background:#faf9f5;border:1px solid #e7e5e4;border-radius:8px;padding:7px 9px;margin-bottom:9px;font-family:ui-monospace,monospace;font-size:11px">'+texteTweet().replace(/</g,'&lt;')+'</div>' + explicDetaillee(); }
+    if(mode === 'max'){ titre.textContent = '📚 Explication compl\u00e8te & pr\u00e9cautions'; corps.innerHTML = explicMax(); }
+    else { titre.textContent = '🪟 Explication d\u00e9taill\u00e9e'; corps.innerHTML = '<div style="background:#faf9f5;border:1px solid #e7e5e4;border-radius:8px;padding:7px 9px;margin-bottom:9px;font-family:ui-monospace,monospace;font-size:11px">'+texteTweet().replace(/</g,'&lt;')+'</div>' + explicDetaillee(); }
     pop.style.display = 'flex';
   }
   async function chargerH2C(){ if(window.html2canvas) return; await new Promise(function(res, rej){ const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
@@ -8380,15 +8484,15 @@
       (m[5]||'').split('.').forEach(function(id){ if(!id) return; const b = document.getElementById(id); if(b && b.textContent.indexOf('\u2715') === -1) b.click(); });
       const hC = parseFloat(m[4]);
       if(isFinite(hC) && hC !== 0){ setTimeout(function(){ try{ horlogeFeu.h = hC; appliquerHorloge(); }catch(e){} }, 4000); }
-      afficherInfo('\U0001F517 Vue partag\u00e9e restaur\u00e9e \u2014 les couches se chargent\u2026', 6000);
+      afficherInfo('🔗 Vue partag\u00e9e restaur\u00e9e \u2014 les couches se chargent\u2026', 6000);
     }catch(e){}
   }
   document.getElementById('btn-projection').addEventListener('click', ()=>{
     const btn = document.getElementById('btn-projection');
     const on = document.body.classList ? (document.body.classList.toggle('projection'), document.body.classList.contains('projection')) : false;
-    if(on) basculerBouton(btn, true, '\U0001F4FD\uFE0F Projection \u2715', '', '#4338ca');
-    else basculerBouton(btn, false, '', '\U0001F4FD\uFE0F Mode projection (classe)');
-    afficherInfo(on ? '\U0001F4FD\uFE0F Mode projection \u2014 fen\u00eatres secondaires masqu\u00e9es, textes agrandis' : '\U0001F4FD\uFE0F Affichage normal r\u00e9tabli', 5000);
+    if(on) basculerBouton(btn, true, '📽\uFE0F Projection \u2715', '', '#4338ca');
+    else basculerBouton(btn, false, '', '📽\uFE0F Mode projection (classe)');
+    afficherInfo(on ? '📽\uFE0F Mode projection \u2014 fen\u00eatres secondaires masqu\u00e9es, textes agrandis' : '📽\uFE0F Affichage normal r\u00e9tabli', 5000);
   });
   setTimeout(appliquerVueHash, 900);
   document.getElementById('btn-explic-plus').addEventListener('click', ()=>{ ouvrirExplic('plus'); });
@@ -8599,24 +8703,24 @@
       basculerBouton(btn, true, libOn, '', teinte);
       const c = fabriquer();
       let signale = false;
-      c.on('tileerror', function(){ if(!signale){ signale = true; noterService('S\u00e9ismes (BRGM)', false, 'couche indisponible'); afficherInfo('\U0001F30B Couche BRGM indisponible \u2014 \u00e0 tester en ligne', 6000); } });
+      c.on('tileerror', function(){ if(!signale){ signale = true; noterService('S\u00e9ismes (BRGM)', false, 'couche indisponible'); afficherInfo('🌋 Couche BRGM indisponible \u2014 \u00e0 tester en ligne', 6000); } });
       c.on('load', function(){ if(!signale) noterService('S\u00e9ismes (BRGM)', true); });
       c.addTo(map); etatSis[cle] = c; majLegende();
     });
   }
-  basculeSis('btn-sis-zonage', 'zonage', '\U0001F7E0 Zonage \u2715', '\U0001F7E0 Zonage r\u00e9glementaire (5 zones)', '#ea580c',
+  basculeSis('btn-sis-zonage', 'zonage', '🟠 Zonage \u2715', '🟠 Zonage r\u00e9glementaire (5 zones)', '#ea580c',
     function(){ return coucheBRGMrisque('SIS_INTENSITE', 0.6); });
-  basculeSis('btn-sis-intensite', 'intensite', '\U0001F4CA Intensit\u00e9 \u2715', '\U0001F4CA Intensit\u00e9 ressentie par commune', '#b45309',
+  basculeSis('btn-sis-intensite', 'intensite', '📊 Intensit\u00e9 \u2715', '📊 Intensit\u00e9 ressentie par commune', '#b45309',
     function(){ return coucheBRGMrisque('SIS_INTENSITE', 0.7); });
-  basculeSis('btn-sis-histo', 'histo', '\U0001F4DC Historiques \u2715', '\U0001F4DC S\u00e9ismes historiques (m\u00e9tropole)', '#7c2d12',
+  basculeSis('btn-sis-histo', 'histo', '📜 Historiques \u2715', '📜 S\u00e9ismes historiques (m\u00e9tropole)', '#7c2d12',
     function(){ return coucheBRGMrisque('SIS_METROPOLE', 0.85); });
-  basculeSis('btn-sis-om', 'om', '\U0001F334 Outre-mer \u2715', '\U0001F334 S\u00e9ismes historiques (outre-mer)', '#0d9488',
+  basculeSis('btn-sis-om', 'om', '🌴 Outre-mer \u2715', '🌴 S\u00e9ismes historiques (outre-mer)', '#0d9488',
     function(){ return coucheBRGMrisque('SIS_OUTREMER', 0.85); });
 
   // failles actives et indices neotectoniques (base Neopal, BRGM)
   basculeSis('btn-sis-failles', 'failles', '\u3030\ufe0f Failles \u2715', '\u3030\ufe0f Failles actives (N\u00e9opal)', '#7c3aed',
     function(){ return coucheBRGMrisque('NEOPAL_FAILLE', 0.9); });
-  basculeSis('btn-sis-neotecto', 'neotecto', '\U0001F4CD Indices \u2715', '\U0001F4CD Indices n\u00e9otectoniques', '#c026d3',
+  basculeSis('btn-sis-neotecto', 'neotecto', '📍 Indices \u2715', '📍 Indices n\u00e9otectoniques', '#c026d3',
     function(){ return coucheBRGMrisque('NEOPAL_VALIDE', 0.9); });
 
   // Limite de plaques Afrique / Eurasie : trace SCHEMATIQUE (Mediterranee occidentale -> Sicile)
@@ -8627,8 +8731,8 @@
   ];
   document.getElementById('btn-sis-plaques').addEventListener('click', ()=>{
     const btn = document.getElementById('btn-sis-plaques');
-    if(etatSis.plaques){ map.removeLayer(etatSis.plaques); etatSis.plaques = null; basculerBouton(btn, false, '', '\U0001F30D Limite de plaques (sch\u00e9ma)'); majLegende(); return; }
-    basculerBouton(btn, true, '\U0001F30D Plaques \u2715', '', '#b91c1c');
+    if(etatSis.plaques){ map.removeLayer(etatSis.plaques); etatSis.plaques = null; basculerBouton(btn, false, '', '🌍 Limite de plaques (sch\u00e9ma)'); majLegende(); return; }
+    basculerBouton(btn, true, '🌍 Plaques \u2715', '', '#b91c1c');
     const g = L.layerGroup();
     L.polyline(LIMITE_PLAQUES, { color:'#b91c1c', weight:5, opacity:0.85, dashArray:'14 8' })
       .bindTooltip('Fronti\u00e8re Afrique / Eurasie \u2014 trac\u00e9 sch\u00e9matique', {sticky:true}).addTo(g);
@@ -8640,17 +8744,17 @@
         .bindTooltip('L\u2019Afrique remonte vers l\u2019Europe d\u2019environ 5 mm par an', {direction:'top'}).addTo(g);
     });
     g.addTo(map); etatSis.plaques = g; majLegende();
-    afficherInfo('\U0001F30D Fronti\u00e8re Afrique / Eurasie \u2014 trac\u00e9 sch\u00e9matique. Cette collision soul\u00e8ve les Alpes et les Pyr\u00e9n\u00e9es et explique la sismicit\u00e9 fran\u00e7aise', 10000);
+    afficherInfo('🌍 Fronti\u00e8re Afrique / Eurasie \u2014 trac\u00e9 sch\u00e9matique. Cette collision soul\u00e8ve les Alpes et les Pyr\u00e9n\u00e9es et explique la sismicit\u00e9 fran\u00e7aise', 10000);
   });
 
   document.getElementById('btn-sis-pourquoi').addEventListener('click', ()=>{
     const p = document.getElementById('feu-methode');
-    const t = '<div style="font-weight:700;font-size:13px;margin-bottom:6px">\U0001F30B Pourquoi la terre tremble-t-elle en France ?</div>'
+    const t = '<div style="font-weight:700;font-size:13px;margin-bottom:6px">🌋 Pourquoi la terre tremble-t-elle en France ?</div>'
       + '<div><b>La cause profonde : une collision de plaques.</b> La plaque africaine remonte vers l\u2019Eurasie d\u2019environ <b>5 mm par an</b>. Ce rapprochement, trop lent pour \u00eatre per\u00e7u, comprime tout le sud de l\u2019Europe depuis des dizaines de millions d\u2019ann\u00e9es : il a soulev\u00e9 les <b>Pyr\u00e9n\u00e9es</b> puis les <b>Alpes</b>, et il continue aujourd\u2019hui.</div>'
       + '<div style="margin-top:7px"><b>Pourquoi \u00e7a tremble encore.</b> La France n\u2019est pas sur une fronti\u00e8re de plaques (contrairement au Japon ou \u00e0 la Turquie) : elle est \u00e0 l\u2019int\u00e9rieur de la plaque eurasienne. Mais les contraintes de la collision s\u2019y transmettent et se lib\u00e8rent le long de <b>failles h\u00e9rit\u00e9es</b>, parfois tr\u00e8s anciennes, qui rejouent. D\u2019o\u00f9 une sismicit\u00e9 <b>mod\u00e9r\u00e9e mais r\u00e9elle</b> : environ <b>500 petits s\u00e9ismes par an</b>, et sur mille ans d\u2019histoire, en moyenne un s\u00e9isme fortement destructeur par si\u00e8cle.</div>'
       + '<div style="margin-top:7px"><b>O\u00f9 exactement ?</b> Les zones les plus actives sont les <b>Alpes</b> et leur avant-pays, les <b>Pyr\u00e9n\u00e9es</b>, le <b>foss\u00e9 rh\u00e9nan</b> (Alsace), l\u2019<b>Armorique</b> et la <b>Provence</b>. Aux <b>Antilles</b>, la situation est tout autre : elles se trouvent sur une v\u00e9ritable zone de subduction, ce qui explique un classement en zone de sismicit\u00e9 forte.</div>'
       + '<div style="margin-top:7px"><b>Quelques s\u00e9ismes marquants.</b> Bâle 1356 (le plus destructeur d\u2019Europe du Nord-Ouest), Lambesc 1909 (46 morts en Provence), Arette 1967 (Pyr\u00e9n\u00e9es), Le Teil 2019 (Ard\u00e8che, magnitude 4,9, plusieurs centaines de b\u00e2timents endommag\u00e9s), La Laigne 2023 (Charente-Maritime).</div>'
-      + '<div style="margin-top:7px;color:#57534e;font-size:11px">\U0001F4A1 <b>Magnitude</b> = \u00e9nergie lib\u00e9r\u00e9e par le s\u00e9isme (une valeur unique). <b>Intensit\u00e9</b> = effets ressentis en un lieu donn\u00e9, qui d\u00e9pendent de la distance \u00e0 l\u2019\u00e9picentre, de la profondeur et de la nature du sol. Un m\u00eame s\u00e9isme a donc une magnitude, mais des intensit\u00e9s diff\u00e9rentes selon les communes.</div>'
+      + '<div style="margin-top:7px;color:#57534e;font-size:11px">💡 <b>Magnitude</b> = \u00e9nergie lib\u00e9r\u00e9e par le s\u00e9isme (une valeur unique). <b>Intensit\u00e9</b> = effets ressentis en un lieu donn\u00e9, qui d\u00e9pendent de la distance \u00e0 l\u2019\u00e9picentre, de la profondeur et de la nature du sol. Un m\u00eame s\u00e9isme a donc une magnitude, mais des intensit\u00e9s diff\u00e9rentes selon les communes.</div>'
       + '<div style="text-align:right;margin-top:10px"><button onclick="document.getElementById(\'feu-methode\').style.display=\'none\'" style="background:#1c1917;color:#fff;border:none;border-radius:7px;padding:4px 14px;cursor:pointer;font-size:12px">Fermer</button></div>';
     if(p){ p.innerHTML = t; p.style.display = 'block'; }
   });
@@ -8671,12 +8775,12 @@
       c.addTo(map); etatRisq[cle] = c; majLegende();
     });
   }
-  basculeRisque('btn-rn-argiles', 'argiles', '\U0001F3DA\uFE0F Argiles \u2715', '\U0001F3DA\uFE0F Argiles (fissures des maisons)', '#b45309', 'ALEARG', 0.62);
+  basculeRisque('btn-rn-argiles', 'argiles', '🏚\uFE0F Argiles \u2715', '🏚\uFE0F Argiles (fissures des maisons)', '#b45309', 'ALEARG', 0.62);
   basculeRisque('btn-rn-mvt', 'mvt', '\u26F0 Mouvements \u2715', '\u26F0 Mouvements de terrain', '#78350f', 'MVT_LOCALISE', 0.9);
-  basculeRisque('btn-rn-cavites', 'cavites', '\U0001F573\uFE0F Cavit\u00e9s \u2715', '\U0001F573\uFE0F Cavit\u00e9s souterraines', '#57534e', 'CAVITE_COMMUNE', 0.7);
-  basculeRisque('btn-rn-nappe', 'nappe', '\U0001F4A7 Nappe \u2715', '\U0001F4A7 Remont\u00e9es de nappe', '#0284c7', 'REM_NAPPE_SEDIM', 0.62);
+  basculeRisque('btn-rn-cavites', 'cavites', '🕳\uFE0F Cavit\u00e9s \u2715', '🕳\uFE0F Cavit\u00e9s souterraines', '#57534e', 'CAVITE_COMMUNE', 0.7);
+  basculeRisque('btn-rn-nappe', 'nappe', '💧 Nappe \u2715', '💧 Remont\u00e9es de nappe', '#0284c7', 'REM_NAPPE_SEDIM', 0.62);
 
-  basculeRisque('btn-ri-basias', 'basias', '\U0001F3DA\uFE0F BASIAS \u2715', '\U0001F3DA\uFE0F Anciens sites industriels (BASIAS)', '#78716c', 'BASIAS_LOCALISE', 0.9);
+  basculeRisque('btn-ri-basias', 'basias', '🏚\uFE0F BASIAS \u2715', '🏚\uFE0F Anciens sites industriels (BASIAS)', '#78716c', 'BASIAS_LOCALISE', 0.9);
   // ---------- 🌊 Mer & littoral ----------
   const etatMerLit = { seamark:null, bathy:null };
   document.getElementById('btn-mer-nav').addEventListener('click', function(){
@@ -8689,17 +8793,17 @@
       if(sm && sm.textContent.indexOf('\u2715') !== -1) sm.click();
       if(ba && ba.textContent.indexOf('\u2715') !== -1) ba.click();
       if(co0 && co0.textContent.indexOf('\u2715') !== -1) co0.click();
-      basculerBouton(btn, false, '', '\U0001F5FA\uFE0F Vue carte marine (tout-en-un)');
-      afficherInfo('\U0001F5FA\uFE0F Vue carte marine d\u00e9sactiv\u00e9e', 3500);
+      basculerBouton(btn, false, '', '🗺\uFE0F Vue carte marine (tout-en-un)');
+      afficherInfo('🗺\uFE0F Vue carte marine d\u00e9sactiv\u00e9e', 3500);
       return;
     }
-    basculerBouton(btn, true, '\U0001F5FA\uFE0F Vue marine \u2715', '', '#0369a1');
+    basculerBouton(btn, true, '🗺\uFE0F Vue marine \u2715', '', '#0369a1');
     etatMerLit.fondAvant = (typeof fondActuelId !== 'undefined' && fondActuelId) ? fondActuelId : 'osm';
     appliquerFond('marin');            // fond bathymétrique EMODnet, plus proche d'une carte marine
     const co = document.getElementById('btn-mer-contours');
     if(co && co.textContent.indexOf('\u2715') === -1) co.click();
     if(sm && sm.textContent.indexOf('\u2715') === -1) sm.click();
-    afficherInfo('\U0001F5FA\uFE0F Vue carte marine \u2014 fond oc\u00e9anique + profondeurs + balisage. Zoomez sur un port ou un chenal.', 9000);
+    afficherInfo('🗺\uFE0F Vue carte marine \u2014 fond oc\u00e9anique + profondeurs + balisage. Zoomez sur un port ou un chenal.', 9000);
   });
   document.getElementById('btn-mer-seamark').addEventListener('click', function(){
     const btn = document.getElementById('btn-mer-seamark');
@@ -8721,14 +8825,14 @@
       const c = L.tileLayer.wms(WMS_SHOM, { layers:layer, format:'image/png', transparent:true,
         version:'1.3.0', opacity:0.9, attribution:'\u00a9 SHOM' });
       let signale = false;
-      c.on('tileerror', function(){ if(!signale){ signale = true; noterService('Espaces maritimes (SHOM)', false, 'couche indisponible'); afficherInfo('\U0001F30A Couche SHOM indisponible \u2014 \u00e0 tester en ligne', 6000); } });
+      c.on('tileerror', function(){ if(!signale){ signale = true; noterService('Espaces maritimes (SHOM)', false, 'couche indisponible'); afficherInfo('🌊 Couche SHOM indisponible \u2014 \u00e0 tester en ligne', 6000); } });
       c.on('load', function(){ if(!signale) noterService('Espaces maritimes (SHOM)', true); });
       c.addTo(map); etatMerLit[cle] = c; majLegende();
     });
   }
-  basculeShom('btn-mer-plateau', 'plateau', '\U0001F4D0 Plateau \u2715', '\U0001F4D0 Limite du plateau continental', '#1d4ed8', 'LIMIT_EXT_PLATEAU_CONTINENTAL_FR_PYR_3857_WMSR');
-  basculeShom('btn-mer-zones', 'zones', '\U0001F5FA\uFE0F Zones \u2715', '\U0001F5FA\uFE0F Zones maritimes (ZEE, mer territoriale)', '#7c3aed', 'DAM_CLASS_ZONES_MAR_WMSR');
-  basculeShom('btn-mer-salure', 'salure', '\U0001F304 Salure \u2715', '\U0001F304 Limite de salure des eaux', '#0d9488', 'LIMITES_SALURE_EAUX_WMSR');
+  basculeShom('btn-mer-plateau', 'plateau', '📐 Plateau \u2715', '📐 Limite du plateau continental', '#1d4ed8', 'LIMIT_EXT_PLATEAU_CONTINENTAL_FR_PYR_3857_WMSR');
+  basculeShom('btn-mer-zones', 'zones', '🗺\uFE0F Zones \u2715', '🗺\uFE0F Zones maritimes (ZEE, mer territoriale)', '#7c3aed', 'DAM_CLASS_ZONES_MAR_WMSR');
+  basculeShom('btn-mer-salure', 'salure', '🌄 Salure \u2715', '🌄 Limite de salure des eaux', '#0d9488', 'LIMITES_SALURE_EAUX_WMSR');
   (function(){
     const b = document.getElementById('btn-mer-shom');
     if(b && b.addEventListener) b.addEventListener('click', function(){
@@ -8752,17 +8856,66 @@
   });
   document.getElementById('btn-mer-bathy').addEventListener('click', function(){
     const btn = document.getElementById('btn-mer-bathy');
-    if(etatMerLit.bathy){ map.removeLayer(etatMerLit.bathy); etatMerLit.bathy = null; basculerBouton(btn, false, '', '\U0001F30D Bathym\u00e9trie (EMODnet)'); majLegende(); return; }
-    basculerBouton(btn, true, '\U0001F30D Bathym\u00e9trie \u2715', '', '#1d4ed8');
+    if(etatMerLit.bathy){ map.removeLayer(etatMerLit.bathy); etatMerLit.bathy = null; basculerBouton(btn, false, '', '🌍 Bathym\u00e9trie (EMODnet)'); majLegende(); return; }
+    basculerBouton(btn, true, '🌍 Bathym\u00e9trie \u2715', '', '#1d4ed8');
     const c = L.tileLayer.wms('https://ows.emodnet-bathymetry.eu/wms?',
       { layers:'mean_atlas_land', format:'image/png', transparent:true, version:'1.3.0', opacity:0.75,
         attribution:'EMODnet Bathymetry' });
     let signale = false;
-    c.on('tileerror', function(){ if(!signale){ signale = true; noterService('Bathym\u00e9trie (EMODnet)', false, 'couche indisponible'); afficherInfo('\U0001F30D Bathym\u00e9trie indisponible \u2014 \u00e0 tester en ligne', 6000); } });
+    c.on('tileerror', function(){ if(!signale){ signale = true; noterService('Bathym\u00e9trie (EMODnet)', false, 'couche indisponible'); afficherInfo('🌍 Bathym\u00e9trie indisponible \u2014 \u00e0 tester en ligne', 6000); } });
     c.on('load', function(){ if(!signale) noterService('Bathym\u00e9trie (EMODnet)', true); });
     c.addTo(map); etatMerLit.bathy = c; majLegende();
-    afficherInfo('\U0001F30D Bathym\u00e9trie EMODnet \u2014 plus la teinte est fonc\u00e9e, plus la mer est profonde', 8000);
+    afficherInfo('🌍 Bathym\u00e9trie EMODnet \u2014 plus la teinte est fonc\u00e9e, plus la mer est profonde', 8000);
   });
+  // ---------- Choix de l'interface (O : fenêtres libres · C : rail latéral) ----------
+  function appliquerInterface(mode, silencieux){
+    const c = (mode === 'c');
+    document.body.classList.toggle('interface-c', c);
+    const bo = document.getElementById('btn-iface-o'), bc = document.getElementById('btn-iface-c');
+    if(bo) bo.classList.toggle('donnee-active', !c);
+    if(bc) bc.classList.toggle('donnee-active', c);
+    try{ localStorage.setItem('geo-interface', c ? 'c' : 'o'); }catch(e){}
+    if(c){
+      // en mode rail, la fenêtre principale doit être visible et dépliée
+      const p = document.getElementById('wg-pilote');
+      if(p){ p.classList.remove('cache'); p.classList.remove('replie'); }
+      // bascule manuelle O -> C : les panneaux empiles se reduisent au premier ouvert
+      // (jamais au chargement : plusieurs const de la fin du script ne sont pas encore initialisees)
+      if(!silencieux){
+        const ouverts = panneauxAncres().filter(function(w){ return !w.classList.contains('cache'); });
+        if(ouverts.length > 1){
+          panneauUnique(ouverts[0].id);
+          if(typeof majPilote === 'function') majPilote();
+          if(typeof sauverWidgets === 'function') sauverWidgets();
+        }
+      }
+    }
+    if(map && map.invalidateSize) setTimeout(function(){ map.invalidateSize(); }, 220);
+    if(!silencieux){
+      afficherInfo(c
+        ? '📐 Interface C \u2014 barre lat\u00e9rale fixe, panneaux ancr\u00e9s en colonne : rien ne se chevauche'
+        : '🪟 Interface O \u2014 fen\u00eatres flottantes, d\u00e9pla\u00e7ables librement', 7000);
+    }
+  }
+  (function initInterface(){
+    const bo = document.getElementById('btn-iface-o'), bc = document.getElementById('btn-iface-c');
+    if(bo && bo.addEventListener) bo.addEventListener('click', function(){ appliquerInterface('o'); });
+    if(bc && bc.addEventListener) bc.addEventListener('click', function(){ appliquerInterface('c'); });
+    const rt = document.getElementById('rail-toggle');
+    function basculerRail(){
+      const ferme = document.body.classList.toggle('rail-ferme');
+      if(rt) rt.textContent = ferme ? '\u203a' : '\u2039';
+      const bh = document.getElementById('btn-rail-replier');
+      if(bh){ bh.textContent = ferme ? '\u203a' : '\u2039'; bh.title = ferme ? 'D\u00e9plier la barre lat\u00e9rale' : 'Replier la barre lat\u00e9rale'; }
+      if(map && map.invalidateSize) setTimeout(function(){ map.invalidateSize(); }, 220);
+    }
+    if(rt && rt.addEventListener) rt.addEventListener('click', basculerRail);
+    const bh = document.getElementById('btn-rail-replier');
+    if(bh && bh.addEventListener) bh.addEventListener('click', function(ev){ ev.stopPropagation(); basculerRail(); });
+    let choix = 'o';
+    try{ choix = localStorage.getItem('geo-interface') || 'o'; }catch(e){}
+    appliquerInterface(choix, true);
+  })();
   // ---------- Moyennes climatiques : soleil, vents ----------
   const etatClim = { soleil:null, vent:null, noms:null };
   // [ville, lat, lon, heures/an] \u2014 normales 1991-2020 (M\u00e9t\u00e9o-France), arrondies
@@ -8868,23 +9021,23 @@
   });
   document.getElementById('btn-clim-vent').addEventListener('click', function(){
     const b = document.getElementById('btn-clim-vent');
-    if(etatClim.vent){ map.removeLayer(etatClim.vent); etatClim.vent = null; basculerBouton(b, false, '', '\U0001F4A8 Vents moyens (force et direction)'); majLegende(); return; }
-    basculerBouton(b, true, '\U0001F4A8 Vents moyens \u2715', '', '#0369a1');
+    if(etatClim.vent){ map.removeLayer(etatClim.vent); etatClim.vent = null; basculerBouton(b, false, '', '💨 Vents moyens (force et direction)'); majLegende(); return; }
+    basculerBouton(b, true, '💨 Vents moyens \u2715', '', '#0369a1');
     const g = L.layerGroup();
     VENTS_MOY.forEach(function(v){
       const c = couleurVent(v[3]);
       L.circleMarker([v[1], v[2]], { radius:Math.max(6, Math.min(20, v[3]*0.7)), color:'#fff', weight:1.5, fillColor:c, fillOpacity:0.85 })
-        .bindPopup('<div style="font:12px/1.6 system-ui;min-width:190px"><b>\U0001F4A8 '+v[0]+'</b><br>Vent moyen : <b>'+v[3]+' km/h</b><br>Direction dominante : <b>'+v[4]+'</b><br><small style="color:#8a8577">Ordre de grandeur des moyennes de r\u00e9f\u00e9rence</small></div>')
+        .bindPopup('<div style="font:12px/1.6 system-ui;min-width:190px"><b>💨 '+v[0]+'</b><br>Vent moyen : <b>'+v[3]+' km/h</b><br>Direction dominante : <b>'+v[4]+'</b><br><small style="color:#8a8577">Ordre de grandeur des moyennes de r\u00e9f\u00e9rence</small></div>')
         .bindTooltip(v[0]+' \u2014 '+v[3]+' km/h', {direction:'top'})
         .addTo(g);
     });
     g.addTo(map); etatClim.vent = g; majLegende();
-    afficherInfo('\U0001F4A8 Vents moyens \u2014 taille du cercle \u221d vitesse. Les couloirs rhodanien et languedocien ressortent nettement.', 9000);
+    afficherInfo('💨 Vents moyens \u2014 taille du cercle \u221d vitesse. Les couloirs rhodanien et languedocien ressortent nettement.', 9000);
   });
   document.getElementById('btn-clim-ventsnoms').addEventListener('click', function(){
     const b = document.getElementById('btn-clim-ventsnoms');
-    if(etatClim.noms){ map.removeLayer(etatClim.noms); etatClim.noms = null; basculerBouton(b, false, '', '\U0001F32C\uFE0F Noms des vents r\u00e9gionaux'); majLegende(); return; }
-    basculerBouton(b, true, '\U0001F32C\uFE0F Vents nomm\u00e9s \u2715', '', '#1d4ed8');
+    if(etatClim.noms){ map.removeLayer(etatClim.noms); etatClim.noms = null; basculerBouton(b, false, '', '🌬\uFE0F Noms des vents r\u00e9gionaux'); majLegende(); return; }
+    basculerBouton(b, true, '🌬\uFE0F Vents nomm\u00e9s \u2715', '', '#1d4ed8');
     const g = L.layerGroup();
     VENTS_NOMS.forEach(function(v){
       const az = v[3], vers = (az+180)%360;
@@ -8898,12 +9051,12 @@
       L.marker([v[1], v[2]], { icon: L.divIcon({ className:'vent-nom',
         html:'<div style="white-space:nowrap;background:'+v[4]+';color:#fff;font:700 12px system-ui;padding:3px 8px;border-radius:7px;border:1.5px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,.35)">'+v[0]+'</div>',
         iconSize:[1,1], iconAnchor:[0,9] }), keyboard:false })
-        .bindPopup('<div style="font:12px/1.6 system-ui;min-width:225px"><b style="color:'+v[4]+';font-size:13px">\U0001F32C\uFE0F '+v[0]+'</b><br><i style="color:#8a8577">'+v[5]+'</i><br>'+v[6]
+        .bindPopup('<div style="font:12px/1.6 system-ui;min-width:225px"><b style="color:'+v[4]+';font-size:13px">🌬\uFE0F '+v[0]+'</b><br><i style="color:#8a8577">'+v[5]+'</i><br>'+v[6]
           + '<div style="color:#57534e;font-size:10px;margin-top:5px">La fl\u00e8che indique le sens dans lequel il souffle. Un vent porte toujours le nom de la direction d\u2019o\u00f9 il <b>vient</b>.</div></div>')
         .addTo(g);
     });
     g.addTo(map); etatClim.noms = g; majLegende();
-    afficherInfo('\U0001F32C\uFE0F '+VENTS_NOMS.length+' vents r\u00e9gionaux \u2014 cliquez un nom pour son origine et ses effets sur les paysages', 10000);
+    afficherInfo('🌬\uFE0F '+VENTS_NOMS.length+' vents r\u00e9gionaux \u2014 cliquez un nom pour son origine et ses effets sur les paysages', 10000);
   });
   // ---------- 🏞️ Pays et régions naturelles ----------
   const etatPaysNat = { alpes:null, france:null, jeu:null, tour:0, score:0, cible:null };
@@ -9330,14 +9483,14 @@
         L.marker(c, { icon: L.divIcon({ className:'pays-etq',
           html:'<div style="white-space:nowrap;font:700 12px system-ui;color:'+p[1]+';text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff,0 0 3px #fff">'+p[0]+'</div>',
           iconSize:[1,1], iconAnchor:[0,0] }), keyboard:false })
-          .bindPopup('<div style="font:12px/1.6 system-ui;min-width:215px"><b style="color:'+p[1]+';font-size:13px">\U0001F3DE\uFE0F '+p[0]+'</b><br><i style="color:#8a8577">'+p[3]+'</i><br>'+p[4]+'</div>')
+          .bindPopup('<div style="font:12px/1.6 system-ui;min-width:215px"><b style="color:'+p[1]+';font-size:13px">🏞\uFE0F '+p[0]+'</b><br><i style="color:#8a8577">'+p[3]+'</i><br>'+p[4]+'</div>')
           .addTo(g);
         return;
       }
       L.polygon(p[2], { color:p[1], weight:2, fillColor:p[1], fillOpacity:0.18 })
         .bindTooltip(p[0], { direction:'center', permanent:false })
         .bindPopup('<div style="font:12px/1.6 system-ui;min-width:215px">'
-          + '<b style="color:'+p[1]+';font-size:13px">\U0001F3DE\uFE0F '+p[0]+'</b><br>'
+          + '<b style="color:'+p[1]+';font-size:13px">🏞\uFE0F '+p[0]+'</b><br>'
           + '<i style="color:#8a8577">'+p[3]+'</i><br>' + p[4]
           + '<div style="color:#8a8577;font-size:10px;margin-top:5px">Contour sch\u00e9matique \u2014 les pays n\u2019ont pas de limites officielles.</div></div>')
         .addTo(g);
@@ -9365,13 +9518,13 @@
           etatPaysNat[o[0]] = couchePays(o[2]).addTo(map);
         }
       });
-      afficherInfo(paysEtiqSeule() ? '\U0001F3F7\uFE0F \u00c9tiquettes seules \u2014 la carte reste lisible dessous' : '\U0001F3DE\uFE0F Contours affich\u00e9s', 4000);
+      afficherInfo(paysEtiqSeule() ? '🏷\uFE0F \u00c9tiquettes seules \u2014 la carte reste lisible dessous' : '🏞\uFE0F Contours affich\u00e9s', 4000);
     });
   })();
   basculePays('btn-pays-alpes', 'alpes', PAYS_ALPES, '\u26F0 Pays des Alpes \u2715', '\u26F0 Pays des Alpes', '#0d9488',
     '\u26F0 '+PAYS_ALPES.length+' pays alpins \u2014 cliquez pour l\u2019histoire et la g\u00e9ographie de chacun. Superposez la g\u00e9ologie : les limites suivent souvent les roches.');
-  basculePays('btn-pays-france', 'france', PAYS_FRANCE, '\U0001F5FA\uFE0F Pays de France \u2715', '\U0001F5FA\uFE0F Grands pays de France', '#eab308',
-    '\U0001F5FA\uFE0F '+PAYS_FRANCE.length+' grands pays \u2014 Beauce, Sologne, Camargue, Causses\u2026 chacun n\u00e9 d\u2019un sol et d\u2019une histoire.');
+  basculePays('btn-pays-france', 'france', PAYS_FRANCE, '🗺\uFE0F Pays de France \u2715', '🗺\uFE0F Grands pays de France', '#eab308',
+    '🗺\uFE0F '+PAYS_FRANCE.length+' grands pays \u2014 Beauce, Sologne, Camargue, Causses\u2026 chacun n\u00e9 d\u2019un sol et d\u2019une histoire.');
 
   function centrePoly(poly){
     let la = 0, lo = 0;
@@ -9383,7 +9536,7 @@
     etatPaysNat.cible = tous[Math.floor(Math.random()*tous.length)];
     const p = document.getElementById('feu-methode');
     if(p){
-      p.innerHTML = '<div style="font-weight:700;font-size:13px;margin-bottom:6px">\U0001F3AF Retrouve le pays \u2014 question '+(etatPaysNat.tour+1)+'/8</div>'
+      p.innerHTML = '<div style="font-weight:700;font-size:13px;margin-bottom:6px">🎯 Retrouve le pays \u2014 question '+(etatPaysNat.tour+1)+'/8</div>'
         + '<div style="font-size:15px;margin:8px 0">O\u00f9 se trouve <b style="color:'+etatPaysNat.cible[1]+'">'+etatPaysNat.cible[0]+'</b> ?</div>'
         + '<div style="font-size:11px;color:#57534e">Indice : <i>'+etatPaysNat.cible[3]+'</i></div>'
         + '<div style="font-size:11px;color:#8a8577;margin-top:8px">Cliquez sur la carte \u00e0 l\u2019endroit que vous pensez \u00eatre le bon.</div>'
@@ -9394,9 +9547,9 @@
   document.getElementById('btn-pays-jeu').addEventListener('click', function(){
     etatPaysNat.jeu = true; etatPaysNat.tour = 0; etatPaysNat.score = 0;
     if(etatPaysNat.alpes){ map.removeLayer(etatPaysNat.alpes); etatPaysNat.alpes = null; basculerBouton(document.getElementById('btn-pays-alpes'), false, '', '\u26F0 Pays des Alpes'); }
-    if(etatPaysNat.france){ map.removeLayer(etatPaysNat.france); etatPaysNat.france = null; basculerBouton(document.getElementById('btn-pays-france'), false, '', '\U0001F5FA\uFE0F Grands pays de France'); }
+    if(etatPaysNat.france){ map.removeLayer(etatPaysNat.france); etatPaysNat.france = null; basculerBouton(document.getElementById('btn-pays-france'), false, '', '🗺\uFE0F Grands pays de France'); }
     questionPays();
-    afficherInfo('\U0001F3AF Jeu lanc\u00e9 \u2014 cliquez sur la carte pour situer le pays demand\u00e9', 7000);
+    afficherInfo('🎯 Jeu lanc\u00e9 \u2014 cliquez sur la carte pour situer le pays demand\u00e9', 7000);
   });
   map.on('click', function(ev){
     if(!etatPaysNat.jeu || !etatPaysNat.cible) return;
@@ -9417,7 +9570,7 @@
       if(etatPaysNat.tour >= 8){
         etatPaysNat.jeu = false;
         const p = document.getElementById('feu-methode');
-        if(p) p.innerHTML = '<div style="font-weight:700;font-size:14px">\U0001F3AF Partie termin\u00e9e</div>'
+        if(p) p.innerHTML = '<div style="font-weight:700;font-size:14px">🎯 Partie termin\u00e9e</div>'
           + '<div style="font-size:22px;margin:10px 0;text-align:center"><b>'+etatPaysNat.score+'</b> / 8</div>'
           + '<div style="font-size:12px;color:#57534e">'+(etatPaysNat.score >= 7 ? 'Excellent : vous connaissez vos pays !' : (etatPaysNat.score >= 4 ? 'Bien \u2014 affichez les couches pour r\u00e9viser les autres.' : 'Affichez les pays sur la carte et explorez-les : chaque fiche raconte son relief et son histoire.'))+'</div>'
           + '<div style="text-align:right;margin-top:10px"><button onclick="document.getElementById(\'feu-methode\').style.display=\'none\'" style="background:#1c1917;color:#fff;border:none;border-radius:7px;padding:4px 14px;cursor:pointer;font-size:12px">Fermer</button></div>';
@@ -9427,7 +9580,7 @@
   });
   document.getElementById('btn-pays-info').addEventListener('click', function(){
     const p = document.getElementById('feu-methode');
-    const t = '<div style="font-weight:700;font-size:13px;margin-bottom:6px">\U0001F3DE\uFE0F Qu\u2019est-ce qu\u2019un \u00ab pays \u00bb ?</div>'
+    const t = '<div style="font-weight:700;font-size:13px;margin-bottom:6px">🏞\uFE0F Qu\u2019est-ce qu\u2019un \u00ab pays \u00bb ?</div>'
       + '<div>Le mot vient du latin <i>pagus</i>, qui d\u00e9signait une petite circonscription rurale. Un <b>pays</b> \u2014 on dit aussi <b>r\u00e9gion naturelle</b> \u2014 est une \u00e9tendue que ses habitants per\u00e7oivent comme un tout : m\u00eame relief, m\u00eame sol, m\u00eame fa\u00e7on de cultiver, souvent m\u00eame parler.</div>'
       + '<div style="margin-top:7px"><b>Ces limites viennent du sous-sol.</b> Le <b>Tri\u00e8ves</b> correspond \u00e0 des marnes noires imperm\u00e9ables ; le <b>D\u00e9voluy</b> \u00e0 un bloc calcaire ferm\u00e9 o\u00f9 l\u2019eau dispara\u00eet ; la <b>Sologne</b> \u00e0 des sables argileux qui retiennent l\u2019eau en \u00e9tangs ; la <b>Beauce</b> \u00e0 des limons profonds sur craie, sans une rivi\u00e8re. Affichez la couche <b>g\u00e9ologie</b> par-dessus : la co\u00efncidence est frappante.</div>'
       + '<div style="margin-top:7px"><b>Ils pr\u00e9c\u00e8dent les d\u00e9partements.</b> Cr\u00e9\u00e9s en 1790 pour rompre avec les provinces, les d\u00e9partements ont d\u00e9coup\u00e9 en travers de ces pays. C\u2019est pourquoi un pays chevauche souvent deux d\u00e9partements \u2014 et pourquoi les habitants disent volontiers \u00ab je suis du Tri\u00e8ves \u00bb plut\u00f4t que \u00ab de l\u2019Is\u00e8re \u00bb.</div>'
@@ -9535,18 +9688,18 @@
     coucheOrage('cape', 'cape', this, '\u26A1 CAPE \u2715', '\u26A1 \u00c9nergie orageuse (CAPE)', '#b91c1c', couleurCape, 'J/kg', libCape);
   });
   document.getElementById('btn-orage-li').addEventListener('click', function(){
-    coucheOrage('li', 'lifted_index', this, '\U0001F32A\uFE0F Instabilit\u00e9 \u2715', '\U0001F32A\uFE0F Instabilit\u00e9 (indice de soul\u00e8vement)', '#ea580c', couleurLI, '',
+    coucheOrage('li', 'lifted_index', this, '🌪\uFE0F Instabilit\u00e9 \u2715', '🌪\uFE0F Instabilit\u00e9 (indice de soul\u00e8vement)', '#ea580c', couleurLI, '',
       function(v){ return v == null ? '' : (v > 2 ? 'stable' : (v > -2 ? 'l\u00e9g\u00e8rement instable' : (v > -6 ? 'instable' : 'tr\u00e8s instable'))); });
   });
   document.getElementById('btn-orage-grele').addEventListener('click', function(){
-    coucheOrage('grele', 'freezing_level_height', this, '\U0001F9CA Gr\u00eale \u2715', '\U0001F9CA Indicateur de gr\u00eale', '#0891b2',
+    coucheOrage('grele', 'freezing_level_height', this, '🧊 Gr\u00eale \u2715', '🧊 Indicateur de gr\u00eale', '#0891b2',
       function(v){ if(v == null) return '#d6d3d1'; if(v > 4000) return '#bbf7d0'; if(v > 3200) return '#fde047'; if(v > 2600) return '#f97316'; return '#1d4ed8'; },
       'm',
       function(v){ return v == null ? '' : (v > 4000 ? 'isotherme 0 \u00b0C haut : gr\u00eale peu probable (elle fond en tombant)' : (v > 3200 ? 'gr\u00eale possible si orage fort' : 'isotherme 0 \u00b0C bas : gr\u00eale plus probable en cas d\u2019orage')); });
   });
   document.getElementById('btn-orage-48h').addEventListener('click', async function(){
     const c = map.getCenter();
-    afficherInfo('\U0001F4C8 R\u00e9cup\u00e9ration de la pr\u00e9vision d\u2019orage\u2026', 0);
+    afficherInfo('📈 R\u00e9cup\u00e9ration de la pr\u00e9vision d\u2019orage\u2026', 0);
     try{
       const url = 'https://api.open-meteo.com/v1/forecast?latitude='+c.lat.toFixed(3)+'&longitude='+c.lng.toFixed(3)
         + '&hourly=cape,precipitation_probability,weather_code&forecast_days=3&timezone=Europe%2FParis';
@@ -9567,7 +9720,7 @@
       }
       const p = document.getElementById('feu-methode');
       if(p){
-        p.innerHTML = '<div style="font-weight:700;font-size:13px;margin-bottom:6px">\U0001F4C8 Risque d\u2019orage \u2014 48 heures \u00e0 venir</div>'
+        p.innerHTML = '<div style="font-weight:700;font-size:13px;margin-bottom:6px">📈 Risque d\u2019orage \u2014 48 heures \u00e0 venir</div>'
           + '<div style="font-size:11px;color:#57534e;margin-bottom:5px">Au centre de la vue ('+c.lat.toFixed(2)+', '+c.lng.toFixed(2)+'). Hauteur des barres = \u00e9nergie disponible (CAPE). Barres <b style="color:#7f1d1d">bordeaux</b> = orage explicitement pr\u00e9vu par le mod\u00e8le.</div>'
           + '<div style="display:flex;align-items:flex-end;gap:1px;height:64px;border-bottom:1px solid #d6d0c2;padding-bottom:2px">'+barres+'</div>'
           + '<div style="display:flex;justify-content:space-between;font-size:10px;color:#8a8577;margin-top:3px"><span>maintenant</span><span>+24 h</span><span>+48 h</span></div>'
@@ -9577,11 +9730,11 @@
         p.style.display = 'block';
       }
       cacherInfo();
-    }catch(e){ cacherInfo(); afficherInfo('\U0001F4C8 Pr\u00e9vision indisponible \u2014 \u00e0 tester en ligne', 6000); }
+    }catch(e){ cacherInfo(); afficherInfo('📈 Pr\u00e9vision indisponible \u2014 \u00e0 tester en ligne', 6000); }
   });
   document.getElementById('btn-orage-vigilance').addEventListener('click', function(){
     window.open('https://vigilance.meteofrance.fr/fr', '_blank');
-    afficherInfo('\U0001F7E0 Vigilance M\u00e9t\u00e9o-France ouverte \u2014 c\u2019est la r\u00e9f\u00e9rence officielle pour toute d\u00e9cision', 7000);
+    afficherInfo('🟠 Vigilance M\u00e9t\u00e9o-France ouverte \u2014 c\u2019est la r\u00e9f\u00e9rence officielle pour toute d\u00e9cision', 7000);
   });
   document.getElementById('btn-orage-info').addEventListener('click', function(){
     const p = document.getElementById('feu-methode');
@@ -9599,16 +9752,16 @@
   const etatAstro = { lumiere:null, reserves:null, obs:null, iss:null, meteo:null, minuteurIss:null };
   document.getElementById('btn-astro-lumiere').addEventListener('click', function(){
     const b = document.getElementById('btn-astro-lumiere');
-    if(etatAstro.lumiere){ map.removeLayer(etatAstro.lumiere); etatAstro.lumiere = null; basculerBouton(b, false, '', '\U0001F303 Pollution lumineuse (NASA)'); majLegende(); return; }
-    basculerBouton(b, true, '\U0001F303 Lumi\u00e8res \u2715', '', '#f59e0b');
+    if(etatAstro.lumiere){ map.removeLayer(etatAstro.lumiere); etatAstro.lumiere = null; basculerBouton(b, false, '', '🌃 Pollution lumineuse (NASA)'); majLegende(); return; }
+    basculerBouton(b, true, '🌃 Lumi\u00e8res \u2715', '', '#f59e0b');
     const c = L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi?',
       { layers:'VIIRS_Black_Marble', format:'image/png', transparent:true, version:'1.3.0', opacity:0.85,
         attribution:'NASA Black Marble (VIIRS)' });
     let signale = false;
-    c.on('tileerror', function(){ if(!signale){ signale = true; noterService('Pollution lumineuse (NASA)', false, 'couche indisponible'); afficherInfo('\U0001F303 Couche NASA indisponible \u2014 \u00e0 tester en ligne', 6000); } });
+    c.on('tileerror', function(){ if(!signale){ signale = true; noterService('Pollution lumineuse (NASA)', false, 'couche indisponible'); afficherInfo('🌃 Couche NASA indisponible \u2014 \u00e0 tester en ligne', 6000); } });
     c.on('load', function(){ if(!signale) noterService('Pollution lumineuse (NASA)', true); });
     c.addTo(map); etatAstro.lumiere = c; majLegende();
-    afficherInfo('\U0001F303 La Terre vue de nuit \u2014 comparez le Massif central (sombre) et la vall\u00e9e du Rh\u00f4ne ou le littoral (satur\u00e9s)', 10000);
+    afficherInfo('🌃 La Terre vue de nuit \u2014 comparez le Massif central (sombre) et la vall\u00e9e du Rh\u00f4ne ou le littoral (satur\u00e9s)', 10000);
   });
 
   const RESERVES_CIEL = [
@@ -9659,13 +9812,13 @@
   });
   document.getElementById('btn-astro-obs').addEventListener('click', function(){
     const b = document.getElementById('btn-astro-obs');
-    if(etatAstro.obs){ map.removeLayer(etatAstro.obs); etatAstro.obs = null; basculerBouton(b, false, '', '\U0001F52D Observatoires & plan\u00e9tariums'); majLegende(); return; }
-    basculerBouton(b, true, '\U0001F52D Observatoires \u2715', '', '#7c3aed');
-    etatAstro.obs = couchePoints(OBSERVATOIRES, '#7c3aed', '\U0001F52D',
+    if(etatAstro.obs){ map.removeLayer(etatAstro.obs); etatAstro.obs = null; basculerBouton(b, false, '', '🔭 Observatoires & plan\u00e9tariums'); majLegende(); return; }
+    basculerBouton(b, true, '🔭 Observatoires \u2715', '', '#7c3aed');
+    etatAstro.obs = couchePoints(OBSERVATOIRES, '#7c3aed', '🔭',
       function(o){ return o[0]; },
-      function(o){ return '<div style="font:12px/1.6 system-ui;min-width:210px"><b>\U0001F52D '+o[0]+'</b><br>'+o[3]+'</div>'; }).addTo(map);
+      function(o){ return '<div style="font:12px/1.6 system-ui;min-width:210px"><b>🔭 '+o[0]+'</b><br>'+o[3]+'</div>'; }).addTo(map);
     majLegende();
-    afficherInfo('\U0001F52D Observatoires et plan\u00e9tariums \u2014 plusieurs se visitent, dont le Pic du Midi et Haute-Provence', 9000);
+    afficherInfo('🔭 Observatoires et plan\u00e9tariums \u2014 plusieurs se visitent, dont le Pic du Midi et Haute-Provence', 9000);
   });
   document.getElementById('btn-astro-meteorites').addEventListener('click', function(){
     const b = document.getElementById('btn-astro-meteorites');
@@ -9688,10 +9841,10 @@
       if(etatAstro.issMarq){ etatAstro.issMarq.setLatLng(pos); }
       else {
         etatAstro.issMarq = L.marker(pos, { icon: L.divIcon({ className:'iss-pt',
-          html:'<div style="font-size:26px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))">\U0001F6F0\uFE0F</div>',
+          html:'<div style="font-size:26px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))">🛰\uFE0F</div>',
           iconSize:[26,26], iconAnchor:[13,13] }), keyboard:false }).addTo(etatAstro.iss);
       }
-      etatAstro.issMarq.bindPopup('<div style="font:12px/1.6 system-ui;min-width:190px"><b>\U0001F6F0\uFE0F Station spatiale internationale</b><br>'
+      etatAstro.issMarq.bindPopup('<div style="font:12px/1.6 system-ui;min-width:190px"><b>🛰\uFE0F Station spatiale internationale</b><br>'
         + 'Position : '+(+d.latitude).toFixed(2)+', '+(+d.longitude).toFixed(2)+'<br>'
         + 'Altitude : <b>'+Math.round(d.altitude)+' km</b><br>'
         + 'Vitesse : <b>'+Math.round(d.velocity).toLocaleString('fr-FR')+' km/h</b><br>'
@@ -9704,14 +9857,14 @@
     if(etatAstro.iss){
       map.removeLayer(etatAstro.iss); etatAstro.iss = null; etatAstro.issMarq = null;
       if(etatAstro.minuteurIss){ clearInterval(etatAstro.minuteurIss); etatAstro.minuteurIss = null; }
-      basculerBouton(b, false, '', '\U0001F6F0\uFE0F Station spatiale (temps r\u00e9el)'); majLegende(); return;
+      basculerBouton(b, false, '', '🛰\uFE0F Station spatiale (temps r\u00e9el)'); majLegende(); return;
     }
-    basculerBouton(b, true, '\U0001F6F0\uFE0F ISS \u2715', '', '#0891b2');
+    basculerBouton(b, true, '🛰\uFE0F ISS \u2715', '', '#0891b2');
     etatAstro.iss = L.layerGroup().addTo(map);
     majISS();
     etatAstro.minuteurIss = setInterval(majISS, 5000);
     majLegende();
-    afficherInfo('\U0001F6F0\uFE0F Station spatiale \u2014 position rafra\u00eechie toutes les 5 secondes \u00b7 elle file \u00e0 environ 28 000 km/h', 9000);
+    afficherInfo('🛰\uFE0F Station spatiale \u2014 position rafra\u00eechie toutes les 5 secondes \u00b7 elle file \u00e0 environ 28 000 km/h', 9000);
   });
   // ---------- 🌑 Éclipses de Soleil ----------
   const etatEcl = { b2026:null, villes:null, b2027:null };
@@ -9742,24 +9895,24 @@
   ];
   document.getElementById('btn-ecl-2026').addEventListener('click', function(){
     const b = document.getElementById('btn-ecl-2026');
-    if(etatEcl.b2026){ map.removeLayer(etatEcl.b2026); etatEcl.b2026 = null; basculerBouton(b, false, '', '\U0001F311 12 ao\u00fbt 2026 \u2014 bande de totalit\u00e9'); majLegende(); return; }
-    basculerBouton(b, true, '\U0001F311 2026 \u2715', '', '#1e293b');
+    if(etatEcl.b2026){ map.removeLayer(etatEcl.b2026); etatEcl.b2026 = null; basculerBouton(b, false, '', '🌑 12 ao\u00fbt 2026 \u2014 bande de totalit\u00e9'); majLegende(); return; }
+    basculerBouton(b, true, '🌑 2026 \u2715', '', '#1e293b');
     etatEcl.b2026 = bandeEclipse(CENTRE_2026, 145, '#1e293b', '12 ao\u00fbt 2026').addTo(map);
     majLegende();
-    afficherInfo('\U0001F311 12 ao\u00fbt 2026 \u2014 totalit\u00e9 uniquement en Espagne (jusqu\u2019\u00e0 1 min 50 s). La France est juste \u00e0 c\u00f4t\u00e9 : partielle, mais spectaculaire au sud-ouest.', 11000);
+    afficherInfo('🌑 12 ao\u00fbt 2026 \u2014 totalit\u00e9 uniquement en Espagne (jusqu\u2019\u00e0 1 min 50 s). La France est juste \u00e0 c\u00f4t\u00e9 : partielle, mais spectaculaire au sud-ouest.', 11000);
   });
   document.getElementById('btn-ecl-2027').addEventListener('click', function(){
     const b = document.getElementById('btn-ecl-2027');
-    if(etatEcl.b2027){ map.removeLayer(etatEcl.b2027); etatEcl.b2027 = null; basculerBouton(b, false, '', '\U0001F312 2 ao\u00fbt 2027 \u2014 bande de totalit\u00e9'); majLegende(); return; }
-    basculerBouton(b, true, '\U0001F312 2027 \u2715', '', '#7c2d12');
+    if(etatEcl.b2027){ map.removeLayer(etatEcl.b2027); etatEcl.b2027 = null; basculerBouton(b, false, '', '🌒 2 ao\u00fbt 2027 \u2014 bande de totalit\u00e9'); majLegende(); return; }
+    basculerBouton(b, true, '🌒 2027 \u2715', '', '#7c2d12');
     etatEcl.b2027 = bandeEclipse(CENTRE_2027, 130, '#7c2d12', '2 ao\u00fbt 2027').addTo(map);
     majLegende();
-    afficherInfo('\U0001F312 2 ao\u00fbt 2027 \u2014 jusqu\u2019\u00e0 6 min 23 s de totalit\u00e9 : la plus longue \u00e9clipse terrestre avant 2114. Sud de l\u2019Espagne, Maghreb, \u00c9gypte.', 11000);
+    afficherInfo('🌒 2 ao\u00fbt 2027 \u2014 jusqu\u2019\u00e0 6 min 23 s de totalit\u00e9 : la plus longue \u00e9clipse terrestre avant 2114. Sud de l\u2019Espagne, Maghreb, \u00c9gypte.', 11000);
   });
   document.getElementById('btn-ecl-2026-villes').addEventListener('click', function(){
     const b = document.getElementById('btn-ecl-2026-villes');
-    if(etatEcl.villes){ map.removeLayer(etatEcl.villes); etatEcl.villes = null; basculerBouton(b, false, '', '\U0001F4CD 12 ao\u00fbt 2026 \u2014 villes de France'); majLegende(); return; }
-    basculerBouton(b, true, '\U0001F4CD Villes \u2715', '', '#b45309');
+    if(etatEcl.villes){ map.removeLayer(etatEcl.villes); etatEcl.villes = null; basculerBouton(b, false, '', '📍 12 ao\u00fbt 2026 \u2014 villes de France'); majLegende(); return; }
+    basculerBouton(b, true, '📍 Villes \u2715', '', '#b45309');
     const g = L.layerGroup();
     VILLES_ECL_2026.forEach(function(v){
       const pct = parseFloat(String(v[3]).replace('~','').replace(',','.'));
@@ -9767,20 +9920,20 @@
       L.marker([v[1], v[2]], { icon: L.divIcon({ className:'ecl-etq',
         html:'<div style="white-space:nowrap;background:'+coul+';color:#fff;font:600 11px system-ui;padding:2px 6px;border-radius:6px;border:1px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)">'+v[0]+' '+v[3]+'</div>',
         iconSize:[1,1], iconAnchor:[0,8] }), keyboard:false })
-        .bindPopup('<div style="font:12px/1.6 system-ui;min-width:170px"><b>'+v[0]+'</b><br>Soleil masqu\u00e9 : <b>'+v[3]+'</b><br>Maximum vers <b>'+v[4]+'</b> (heure locale)<br><small style="color:#8a8577">Valeurs arrondies \u00b7 sources IMCCE / NASA relay\u00e9es par le CNRS</small><div style="color:#7f1d1d;font-size:10px;margin-top:4px">\U0001F576\uFE0F Lunettes ISO 12312-2 obligatoires \u2014 m\u00eame \u00e0 99 %</div></div>')
+        .bindPopup('<div style="font:12px/1.6 system-ui;min-width:170px"><b>'+v[0]+'</b><br>Soleil masqu\u00e9 : <b>'+v[3]+'</b><br>Maximum vers <b>'+v[4]+'</b> (heure locale)<br><small style="color:#8a8577">Valeurs arrondies \u00b7 sources IMCCE / NASA relay\u00e9es par le CNRS</small><div style="color:#7f1d1d;font-size:10px;margin-top:4px">🕶\uFE0F Lunettes ISO 12312-2 obligatoires \u2014 m\u00eame \u00e0 99 %</div></div>')
         .addTo(g);
     });
     g.addTo(map); etatEcl.villes = g; majLegende();
-    afficherInfo('\U0001F4CD Part du Soleil masqu\u00e9e le 12 ao\u00fbt 2026 \u00b7 maximum entre 20h18 et 20h27 selon les villes \u00b7 horizon ouest d\u00e9gag\u00e9 indispensable', 11000);
+    afficherInfo('📍 Part du Soleil masqu\u00e9e le 12 ao\u00fbt 2026 \u00b7 maximum entre 20h18 et 20h27 selon les villes \u00b7 horizon ouest d\u00e9gag\u00e9 indispensable', 11000);
   });
   document.getElementById('btn-ecl-info').addEventListener('click', function(){
     const p = document.getElementById('feu-methode');
-    const t = '<div style="font-weight:700;font-size:13px;margin-bottom:6px">\U0001F311 Comprendre une \u00e9clipse de Soleil</div>'
+    const t = '<div style="font-weight:700;font-size:13px;margin-bottom:6px">🌑 Comprendre une \u00e9clipse de Soleil</div>'
       + '<div><b>Deux mesures \u00e0 ne pas confondre.</b> La <b>magnitude</b> est la fraction du <i>diam\u00e8tre</i> solaire cach\u00e9e ; l\u2019<b>obscuration</b> est la fraction de <i>surface</i> cach\u00e9e. Une magnitude de 0,90 ne masque qu\u2019environ 83 % de la surface. C\u2019est pourquoi les chiffres varient d\u2019un site \u00e0 l\u2019autre \u2014 v\u00e9rifiez toujours de quelle grandeur on parle.</div>'
       + '<div style="margin-top:7px"><b>Pourquoi 99 % ne vaut pas la totalit\u00e9.</b> Le dernier 1 % reste \u00e9blouissant : la couronne solaire n\u2019appara\u00eet pas, les \u00e9toiles non plus, et il demeure dangereux de regarder sans filtre. La diff\u00e9rence n\u2019est pas graduelle mais <b>qualitative</b> : d\u2019un c\u00f4t\u00e9 un jour bizarrement gris, de l\u2019autre la nuit en plein jour.</div>'
       + '<div style="margin-top:7px"><b>12 ao\u00fbt 2026.</b> Totalit\u00e9 au Groenland, en Islande et dans le nord de l\u2019Espagne (Asturies \u2192 Bal\u00e9ares), jusqu\u2019\u00e0 1 min 50 s. En France : partielle, de ~90 % au nord-est \u00e0 ~99,5 % au Pays basque, en <b>fin de soir\u00e9e</b> (maximum vers 20h20, Soleil bas) \u2014 horizon ouest d\u00e9gag\u00e9 indispensable. L\u2019Espagne continentale n\u2019avait plus connu de totalit\u00e9 depuis 1905.</div>'
       + '<div style="margin-top:7px"><b>2 ao\u00fbt 2027.</b> Jusqu\u2019\u00e0 <b>6 min 23 s</b> pr\u00e8s de Louxor : un record qui ne sera pas battu avant 2114. Sud de l\u2019Espagne, Gibraltar, Maghreb, \u00c9gypte.</div>'
-      + '<div style="margin-top:7px;color:#7f1d1d"><b>\U0001F576\uFE0F S\u00e9curit\u00e9.</b> Lunettes certifi\u00e9es <b>ISO 12312-2</b>, sans rayure, port\u00e9es avant de lever les yeux. Les l\u00e9sions de la r\u00e9tine sont <b>indolores et d\u00e9finitives</b>. Aucun instrument optique sans filtre plac\u00e9 <i>devant</i> l\u2019objectif. En classe : privil\u00e9giez la <b>projection par st\u00e9nop\u00e9</b>, sans regard direct.</div>'
+      + '<div style="margin-top:7px;color:#7f1d1d"><b>🕶\uFE0F S\u00e9curit\u00e9.</b> Lunettes certifi\u00e9es <b>ISO 12312-2</b>, sans rayure, port\u00e9es avant de lever les yeux. Les l\u00e9sions de la r\u00e9tine sont <b>indolores et d\u00e9finitives</b>. Aucun instrument optique sans filtre plac\u00e9 <i>devant</i> l\u2019objectif. En classe : privil\u00e9giez la <b>projection par st\u00e9nop\u00e9</b>, sans regard direct.</div>'
       + '<div style="text-align:right;margin-top:10px"><button onclick="document.getElementById(\'feu-methode\').style.display=\'none\'" style="background:#1c1917;color:#fff;border:none;border-radius:7px;padding:4px 14px;cursor:pointer;font-size:12px">Fermer</button></div>';
     if(p){ p.innerHTML = t; p.style.display = 'block'; }
   });
@@ -9798,9 +9951,9 @@
   }
   document.getElementById('btn-sis-recents').addEventListener('click', async ()=>{
     const btn = document.getElementById('btn-sis-recents');
-    if(etatSis.recents){ map.removeLayer(etatSis.recents); etatSis.recents = null; basculerBouton(btn, false, '', '\U0001F534 S\u00e9ismes r\u00e9cents (EMSC)'); majLegende(); return; }
-    basculerBouton(btn, true, '\U0001F534 R\u00e9cents \u2715', '', '#dc2626');
-    afficherInfo('\U0001F30B Interrogation du centre sismologique europ\u00e9en\u2026', 0);
+    if(etatSis.recents){ map.removeLayer(etatSis.recents); etatSis.recents = null; basculerBouton(btn, false, '', '🔴 S\u00e9ismes r\u00e9cents (EMSC)'); majLegende(); return; }
+    basculerBouton(btn, true, '🔴 R\u00e9cents \u2715', '', '#dc2626');
+    afficherInfo('🌋 Interrogation du centre sismologique europ\u00e9en\u2026', 0);
     try{
       const b = map.getBounds();
       const jours = parseInt((document.getElementById('sis-periode')||{value:'90'}).value, 10) || 90;
@@ -9815,8 +9968,8 @@
       const feats = (d && d.features) || [];
       noterService('S\u00e9ismes r\u00e9cents (EMSC)', true, feats.length+' s\u00e9isme(s)');
       if(!feats.length){
-        cacherInfo(); basculerBouton(btn, false, '', '\U0001F534 S\u00e9ismes r\u00e9cents (EMSC)');
-        afficherInfo('\U0001F30B Aucun s\u00e9isme enregistr\u00e9 dans cette vue sur la p\u00e9riode \u2014 \u00e9largissez la vue ou la p\u00e9riode', 8000);
+        cacherInfo(); basculerBouton(btn, false, '', '🔴 S\u00e9ismes r\u00e9cents (EMSC)');
+        afficherInfo('🌋 Aucun s\u00e9isme enregistr\u00e9 dans cette vue sur la p\u00e9riode \u2014 \u00e9largissez la vue ou la p\u00e9riode', 8000);
         return;
       }
       const g = L.layerGroup();
@@ -9828,7 +9981,7 @@
         const quand = p.time ? String(p.time).replace('T',' \u00e0 ').slice(0,16) : '?';
         L.circleMarker([c[1], c[0]], { radius:rayonMagnitude(mag), color:'#fff', weight:1.5, fillColor:coul, fillOpacity:0.85 })
           .bindPopup('<div style="font:12px/1.55 system-ui;min-width:190px">'
-            + '<b style="color:'+coul+'">\U0001F30B Magnitude '+(isFinite(mag)?mag.toFixed(1):'?')+'</b><br>'
+            + '<b style="color:'+coul+'">🌋 Magnitude '+(isFinite(mag)?mag.toFixed(1):'?')+'</b><br>'
             + (p.flynn_region ? String(p.flynn_region)+'<br>' : '')
             + 'Date : <b>'+quand+'</b> (UTC)<br>'
             + (isFinite(prof) ? 'Profondeur : '+prof.toFixed(0)+' km<br>' : '')
@@ -9838,10 +9991,10 @@
       });
       g.addTo(map); etatSis.recents = g;
       cacherInfo(); majLegende();
-      afficherInfo('\U0001F30B '+feats.length+' s\u00e9isme(s) sur '+jours+' jours \u2014 taille et couleur selon la magnitude \u00b7 cliquez un point pour le d\u00e9tail', 9000);
+      afficherInfo('🌋 '+feats.length+' s\u00e9isme(s) sur '+jours+' jours \u2014 taille et couleur selon la magnitude \u00b7 cliquez un point pour le d\u00e9tail', 9000);
     }catch(e){
-      cacherInfo(); basculerBouton(btn, false, '', '\U0001F534 S\u00e9ismes r\u00e9cents (EMSC)');
-      afficherInfo('\U0001F30B EMSC indisponible ('+((e && e.message) || '')+') \u2014 \u00e0 tester en ligne', 7000);
+      cacherInfo(); basculerBouton(btn, false, '', '🔴 S\u00e9ismes r\u00e9cents (EMSC)');
+      afficherInfo('🌋 EMSC indisponible ('+((e && e.message) || '')+') \u2014 \u00e0 tester en ligne', 7000);
     }
   });
   const VILLES_METEO = [["Paris",48.857,2.352],["Marseille",43.296,5.370],["Lyon",45.764,4.836],
@@ -12709,12 +12862,76 @@
       if(cible) b.classList.toggle('visible', !cible.classList.contains('cache'));
     });
   }
+  // Interface C : un seul panneau ouvert a la fois (la legende reste un encart independant)
+  // ---------- Couches actives : puces desactivables dans le rail ----------
+  // Source unique de verite : etatCouchesActives(), deja utilisee par annuler / reprendre.
+  function majCouchesActives(){
+    const boite = document.getElementById('pilote-actives');
+    const liste = document.getElementById('actives-liste');
+    const compte = document.getElementById('actives-compte');
+    if(!boite || !liste || !compte) return;
+    const ids = (typeof etatCouchesActives === 'function') ? etatCouchesActives() : [];
+    boite.hidden = ids.length === 0;
+    compte.textContent = ids.length + (ids.length > 1 ? ' couches actives' : ' couche active');
+    liste.textContent = '';
+    ids.forEach(function(id){
+      const src = document.getElementById(id);
+      if(!src) return;
+      const nom = (src.textContent || '').replace('\u2715', '').replace(/\s+/g, ' ').trim();
+      const puce = document.createElement('button');
+      puce.type = 'button';
+      puce.className = 'active-puce';
+      puce.title = '\u00c9teindre : ' + nom;
+      puce.appendChild(document.createTextNode(nom));
+      const x = document.createElement('span');
+      x.className = 'active-x';
+      x.textContent = '\u2715';
+      puce.appendChild(x);
+      puce.addEventListener('click', function(){
+        src.click();                       // on repasse par le bouton d'origine : l'historique suit
+        setTimeout(majCouchesActives, 60);
+      });
+      liste.appendChild(puce);
+    });
+  }
+  (function cablerCouchesActives(){
+    const tout = document.getElementById('btn-actives-off');
+    if(tout) tout.addEventListener('click', function(){
+      const ids = (typeof etatCouchesActives === 'function') ? etatCouchesActives() : [];
+      if(!ids.length) return;
+      ids.forEach(function(id){ const b = document.getElementById(id); if(b) b.click(); });
+      setTimeout(function(){
+        majCouchesActives();
+        if(typeof afficherInfo === 'function'){
+          afficherInfo('\u26d4 ' + ids.length + ' couche(s) \u00e9teinte(s) \u2014 \u21b6 Annuler r\u00e9tablit tout', 5000);
+        }
+      }, 80);
+    });
+    // filet : certaines couches ne passent pas par majBadges
+    document.addEventListener('click', function(ev){
+      const b = ev.target && ev.target.closest ? ev.target.closest('.calque-ajout') : null;
+      if(b) setTimeout(majCouchesActives, 80);
+    });
+  })();
+  function panneauxAncres(){
+    return Array.prototype.slice.call(document.querySelectorAll('.widget')).filter(function(w){
+      return w.id !== 'wg-pilote' && w.id !== 'wg-legende';
+    });
+  }
+  function panneauUnique(garde){
+    if(!document.body.classList.contains('interface-c')) return;   // interface O : rien ne change
+    if(garde === 'wg-legende') return;
+    panneauxAncres().forEach(function(w){
+      if(w.id !== garde) w.classList.add('cache');
+    });
+  }
   document.querySelectorAll('.pilote-btn').forEach(b=>{
     b.addEventListener('click', ()=>{
       const cible = document.getElementById(b.dataset.cible);
       if(!cible) return;
       const cachee = cible.classList.toggle('cache');
       if(!cachee) cible.classList.remove('replie');
+      if(!cachee) panneauUnique(b.dataset.cible);
       majPilote();
       sauverWidgets();
     });
@@ -12930,7 +13147,7 @@
     (function(){
       const actives = Object.keys(etatEspeces).filter(function(k){ return etatEspeces[k].actif; });
       if(!actives.length) return;
-      let s = '<div class="leg-sous">\U0001F43E Animaux sauvages <small>(observations GBIF)</small></div>';
+      let s = '<div class="leg-sous">🐾 Animaux sauvages <small>(observations GBIF)</small></div>';
       actives.forEach(function(k){
         const b = document.getElementById('btn-esp-'+k);
         if(!b) return;
@@ -12942,7 +13159,7 @@
     })();
     (function(){
       if(etatSis.recents){
-        blocs.push('<div class="leg-sous">\U0001F30B S\u00e9ismes r\u00e9cents <small>(EMSC)</small></div>'
+        blocs.push('<div class="leg-sous">🌋 S\u00e9ismes r\u00e9cents <small>(EMSC)</small></div>'
           + ligneLegende('#fde047', 'Magnitude < 2', 'rond', 'Taille du point \u221d magnitude')
           + ligneLegende('#fb923c', 'Magnitude 2 \u00e0 3', 'rond', '')
           + ligneLegende('#ea580c', 'Magnitude 3 \u00e0 4', 'rond', 'Ressenti \u00e0 partir de 4')
@@ -12958,7 +13175,7 @@
           + (etatClim.noms ? ligneLegende('#1d4ed8', 'Vents r\u00e9gionaux nomm\u00e9s', 'carre', 'La fl\u00e8che montre le sens du souffle') : ''));
       }
       if(etatPaysNat.alpes || etatPaysNat.france){
-        blocs.push('<div class="leg-sous">\U0001F3DE\uFE0F Pays et r\u00e9gions naturelles</div>'
+        blocs.push('<div class="leg-sous">🏞\uFE0F Pays et r\u00e9gions naturelles</div>'
           + ligneLegende('#0d9488', 'Chaque couleur = un pays', 'carre', 'Cliquez pour son relief, son sol et son histoire')
           + ligneLegende('#8a8577', '<small>Contours sch\u00e9matiques : pas de limites officielles</small>', 'carre', ''));
       }
@@ -12970,7 +13187,7 @@
           + ligneLegende('#b91c1c', 'Fort potentiel', 'carre', 'Maille large : indicatif \u00b7 vigilance M\u00e9t\u00e9o-France pour d\u00e9cider'));
       }
       if(etatAstro.lumiere || etatAstro.reserves || etatAstro.obs || etatAstro.iss || etatAstro.meteo){
-        blocs.push('<div class="leg-sous">\U0001F52D Astronomie</div>'
+        blocs.push('<div class="leg-sous">🔭 Astronomie</div>'
           + (etatAstro.lumiere ? ligneLegende('#f59e0b', 'Pollution lumineuse', 'carre', 'Terre vue de nuit \u00b7 NASA Black Marble') : '')
           + (etatAstro.reserves ? ligneLegende('#1e293b', 'R\u00e9serves de ciel \u00e9toil\u00e9', 'rond', 'Zones prot\u00e9g\u00e9es de la lumi\u00e8re artificielle') : '')
           + (etatAstro.obs ? ligneLegende('#7c3aed', 'Observatoires & plan\u00e9tariums', 'rond', '') : '')
@@ -12978,14 +13195,14 @@
           + (etatAstro.iss ? ligneLegende('#0891b2', 'Station spatiale', 'rond', 'Position temps r\u00e9el \u00b7 ~28 000 km/h') : ''));
       }
       if(etatEcl.b2026 || etatEcl.b2027 || etatEcl.villes){
-        blocs.push('<div class="leg-sous">\U0001F311 \u00c9clipses de Soleil</div>'
+        blocs.push('<div class="leg-sous">🌑 \u00c9clipses de Soleil</div>'
           + (etatEcl.b2026 ? ligneLegende('#1e293b', '12 ao\u00fbt 2026 \u2014 totalit\u00e9', 'carre', 'Espagne \u00b7 jusqu\u2019\u00e0 1 min 50 s \u00b7 trac\u00e9 sch\u00e9matique') : '')
           + (etatEcl.b2027 ? ligneLegende('#7c2d12', '2 ao\u00fbt 2027 \u2014 totalit\u00e9', 'carre', 'Maghreb, \u00c9gypte \u00b7 jusqu\u2019\u00e0 6 min 23 s') : '')
           + (etatEcl.villes ? ligneLegende('#b45309', 'Villes de France (12/08/2026)', 'rond', 'Part du Soleil masqu\u00e9e \u00b7 maximum vers 20h20') : '')
-          + ligneLegende('#7f1d1d', '<small>\U0001F576\uFE0F Lunettes ISO 12312-2 obligatoires</small>', 'carre', ''));
+          + ligneLegende('#7f1d1d', '<small>🕶\uFE0F Lunettes ISO 12312-2 obligatoires</small>', 'carre', ''));
       }
       if(etatMerLit.seamark || etatMerLit.bathy || etatMerLit.contours || etatMerLit.plateau || etatMerLit.zones || etatMerLit.salure){
-        blocs.push('<div class="leg-sous">\U0001F30A Mer & littoral</div>'
+        blocs.push('<div class="leg-sous">🌊 Mer & littoral</div>'
           + (etatMerLit.bathy ? ligneLegende('#1d4ed8', 'Bathym\u00e9trie', 'carre', 'Teinte fonc\u00e9e = grande profondeur \u00b7 EMODnet') : '')
           + (etatMerLit.contours ? ligneLegende('#0891b2', 'Isobathes', 'carre', 'Courbes de m\u00eame profondeur \u00b7 EMODnet') : '')
           + (etatMerLit.plateau ? ligneLegende('#1d4ed8', 'Plateau continental', 'carre', 'Limite juridique \u00b7 SHOM') : '')
@@ -12995,7 +13212,7 @@
           + ligneLegende('#7f1d1d', '<small><b>Ne jamais naviguer avec cette carte</b> \u2014 cartes SHOM officielles obligatoires</small>', 'carre', ''));
       }
       if(etatRisq.basias){
-        blocs.push('<div class="leg-sous">\U0001F3ED Risques industriels</div>'
+        blocs.push('<div class="leg-sous">🏭 Risques industriels</div>'
           + ligneLegende('#78716c', 'Anciens sites industriels', 'rond', 'Inventaire BASIAS \u2014 activit\u00e9 pass\u00e9e, pas un diagnostic de pollution'));
       }
       if(etatRisq.argiles || etatRisq.mvt || etatRisq.cavites || etatRisq.nappe){
@@ -13006,13 +13223,13 @@
           + (etatRisq.nappe ? ligneLegende('#0284c7', 'Remont\u00e9es de nappe', 'carre', 'Inondation par le sous-sol, sans d\u00e9bordement de rivi\u00e8re') : ''));
       }
       if(etatSis.failles || etatSis.neotecto || etatSis.plaques){
-        blocs.push('<div class="leg-sous">\U0001F30D Tectonique</div>'
+        blocs.push('<div class="leg-sous">🌍 Tectonique</div>'
           + (etatSis.plaques ? ligneLegende('#b91c1c', 'Limite Afrique / Eurasie', 'carre', 'Trac\u00e9 sch\u00e9matique \u00b7 rapprochement ~5 mm/an') : '')
           + (etatSis.failles ? ligneLegende('#7c3aed', 'Failles actives', 'carre', 'Ayant rejou\u00e9 depuis moins de 2 millions d\u2019ann\u00e9es (N\u00e9opal, BRGM)') : '')
           + (etatSis.neotecto ? ligneLegende('#c026d3', 'Indices n\u00e9otectoniques', 'rond', 'Traces g\u00e9ologiques de d\u00e9formation r\u00e9cente, valid\u00e9es') : ''));
       }
       if(etatSis.zonage || etatSis.intensite || etatSis.histo || etatSis.om){
-        blocs.push('<div class="leg-sous">\U0001F30B Sismicit\u00e9 historique <small>(BRGM / SisFrance)</small></div>'
+        blocs.push('<div class="leg-sous">🌋 Sismicit\u00e9 historique <small>(BRGM / SisFrance)</small></div>'
           + ligneLegende('#b45309', 'Intensit\u00e9 ressentie par commune', 'carre', 'Plus la teinte est soutenue, plus les effets ont \u00e9t\u00e9 forts')
           + ligneLegende('#7c2d12', '\u00c9picentres historiques', 'rond', 'S\u00e9ismes ressentis depuis l\u2019an 463 \u00b7 BRGM, EDF, IRSN'));
       }
@@ -13327,6 +13544,7 @@
       badge.textContent = n;
       badge.hidden = n===0;
     });
+    majCouchesActives();
     majLegende();
   }
   // Filet de sécurité : tout clic dans le panneau rafraîchit les compteurs
@@ -13354,5 +13572,6 @@
   });
 })();
 </script>
+<button id="rail-toggle" title="Replier ou déplier la barre latérale">‹</button>
 </body>
 </html>
