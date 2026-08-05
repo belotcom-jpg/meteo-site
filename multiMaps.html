@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v4.12 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v4.14 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v4.12</title>
+<title>MultiMaps — géographie (collège & lycée) — v4.14</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -629,6 +629,12 @@
     <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
   </div>
   <div class="widget-corps">
+    <div class="sep"></div>
+    <span class="etiquette">Moyennes climatiques</span>
+    <button class="calque-ajout donnee" id="btn-clim-soleil" title="Durée d’ensoleillement moyenne annuelle par ville (normales 1991-2020). Le contraste nord-sud est l’un des plus marqués d’Europe.">☀️ Heures d’ensoleillement par an</button>
+    <button class="calque-ajout donnee" id="btn-clim-vent" title="Vitesse moyenne annuelle du vent et direction dominante par station. Les couloirs venteux (Rhône, Languedoc, littoraux) ressortent nettement.">💨 Vents moyens (force et direction)</button>
+    <button class="calque-ajout donnee" id="btn-clim-ventsnoms" title="Les vents régionaux français : mistral, tramontane, autan, marin, galerne… avec leur origine, leur direction et leurs effets.">🌬️ Noms des vents régionaux</button>
+
       <button class="calque-ajout donnee" id="btn-submersion" title="Colorie en bleu les terres situées sous le niveau choisi au curseur — une visualisation de l'élévation du niveau de la mer sur les littoraux (polders, deltas, estuaires). Calculé des altitudes SRTM. ATTENTION : altitude brute, pas un modèle de submersion (digues et dynamique marine ignorées).">🌊 Élévation du niveau de la mer</button>
       <div class="hypso-ligne">
         <input type="range" id="curseur-mer" min="0" max="12" step="1" value="0" aria-label="Niveau de la mer (échelle exponentielle)">
@@ -805,6 +811,23 @@
     <div style="font-size:9.5px;color:#57534e;margin-top:5px;line-height:1.45">💡 Pour la faune marine, élargissez la vue au large : les observations viennent surtout des campagnes scientifiques et des ferries. Comparez la <b>Méditerranée</b> (sanctuaire Pelagos) et le <b>golfe de Gascogne</b>.</div>
     <div style="font-size:9.5px;color:#8a8577;margin-top:4px;line-height:1.4">⚠️ Ce sont des <b>observations ponctuelles</b> de naturalistes et de muséums, pas une carte de répartition. L’absence de point ne prouve pas l’absence de l’espèce : elle reflète aussi où les gens observent. Source : GBIF.</div>
 
+  </div>
+</div>
+<div class="widget" id="wg-pays" style="width:258px">
+  <div class="widget-tete">
+    <span class="widget-titre">🏞️ Pays & régions naturelles</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer">✕</button>
+  </div>
+  <div class="widget-corps">
+    <div style="font-size:10px;color:#8a8577;margin-bottom:4px">Les « pays » (du latin <i>pagus</i>) sont les régions naturelles traditionnelles : Oisans, Trièves, Dévoluy, Beauce, Sologne… Bien antérieures aux départements, elles épousent le relief et les sols.</div>
+    <label style="display:flex;align-items:center;gap:5px;font-size:11px;margin-bottom:4px;cursor:pointer" title="N’affiche que le nom de chaque pays, sans le contour coloré : la carte reste lisible sous les étiquettes."><input type="checkbox" id="pays-etiq" style="accent-color:#166534">🏷️ Étiquettes seulement (sans contours)</label>
+    <button class="calque-ajout donnee" id="btn-pays-alpes" title="Pays des Alpes et de leurs marges : Oisans, Trièves, Matheysine, Dévoluy, Champsaur, Queyras, Vercors, Chartreuse… Cliquez un pays pour son histoire et sa géographie.">⛰ Pays des Alpes</button>
+    <button class="calque-ajout donnee" id="btn-pays-france" title="Grands pays de France : Beauce, Brie, Sologne, Camargue, Causses, Landes, Morvan, Bresse, Dombes…">🗺️ Grands pays de France</button>
+    <div class="sep"></div>
+    <button class="calque-ajout donnee" id="btn-pays-jeu" title="Jeu : un pays est nommé, retrouvez-le sur la carte en cliquant au bon endroit. 8 questions.">🎯 Jeu : retrouve le pays</button>
+    <button class="calque-ajout donnee" id="btn-pays-info" title="Comprendre : pourquoi ces limites, quel rapport avec la géologie et l’histoire.">ℹ️ Qu’est-ce qu’un « pays » ?</button>
+    <div style="font-size:9.5px;color:#8a8577;margin-top:5px;line-height:1.45">⚠️ Contours <b>schématiques</b> : les pays n’ont pas de limites administratives officielles, elles sont floues et discutées. Le tracé sert à situer, pas à délimiter.</div>
   </div>
 </div>
 <div class="widget" id="wg-montagnes" style="width:252px">
@@ -1466,7 +1489,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v4.12</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v4.14</small></span>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
   <div class="widget-corps">
@@ -1505,6 +1528,7 @@
       </details>
       <details class="pilote-paquet"><summary>🌲 Nature & relief</summary>
         <div class="pilote-grille">
+        <button class="pilote-btn" data-cible="wg-pays">🏞️ Pays</button>
         <button class="pilote-btn" data-cible="wg-montagnes">⛰ Montagnes</button>
         <button class="pilote-btn" data-cible="wg-mer">🌊 Mer</button>
         <button class="pilote-btn" data-cible="wg-rivieres">💧 Rivières</button>
@@ -1551,7 +1575,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v4.12</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v4.14</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -1795,7 +1819,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v4.12';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v4.14';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -8739,6 +8763,679 @@
     c.addTo(map); etatMerLit.bathy = c; majLegende();
     afficherInfo('\U0001F30D Bathym\u00e9trie EMODnet \u2014 plus la teinte est fonc\u00e9e, plus la mer est profonde', 8000);
   });
+  // ---------- Moyennes climatiques : soleil, vents ----------
+  const etatClim = { soleil:null, vent:null, noms:null };
+  // [ville, lat, lon, heures/an] \u2014 normales 1991-2020 (M\u00e9t\u00e9o-France), arrondies
+  const SOLEIL = [
+    ['Toulon',43.12,5.93,2900],['Marseille',43.30,5.37,2860],['Ajaccio',41.93,8.74,2730],['Nice',43.70,7.27,2720],
+    ['Montpellier',43.61,3.88,2670],['Avignon',43.95,4.81,2600],['Perpignan',42.70,2.90,2530],['Bastia',42.70,9.45,2560],
+    ['N\u00eemes',43.84,4.36,2600],['Biarritz',43.48,-1.56,1900],['Bordeaux',44.84,-0.58,2035],['Toulouse',43.60,1.44,2100],
+    ['La Rochelle',46.16,-1.15,2200],['Lyon',45.76,4.84,2000],['Grenoble',45.19,5.72,2000],['Saint-\u00c9tienne',45.44,4.39,2000],
+    ['Clermont-Ferrand',45.78,3.08,1950],['Limoges',45.83,1.26,1900],['Poitiers',46.58,0.34,1900],['Dijon',47.32,5.04,1900],
+    ['Besan\u00e7on',47.24,6.02,1800],['Tours',47.39,0.69,1800],['Nantes',47.22,-1.55,1800],['Orl\u00e9ans',47.90,1.90,1750],
+    ['Nancy',48.69,6.18,1700],['Reims',49.26,4.03,1700],['Rennes',48.11,-1.68,1700],['Caen',49.18,-0.37,1700],
+    ['Strasbourg',48.58,7.75,1695],['Paris',48.86,2.35,1660],['Rouen',49.44,1.10,1620],['Lille',50.63,3.06,1600],
+    ['Amiens',49.89,2.30,1600],['Brest',48.39,-4.49,1530],['Cherbourg',49.64,-1.62,1600]
+  ];
+  // [station, lat, lon, vitesse moyenne km/h, direction dominante]
+  const VENTS_MOY = [
+    ['Marignane',43.44,5.22,22,'nord-ouest (mistral)'],['Orange',44.14,4.81,20,'nord (mistral)'],
+    ['Montpellier',43.61,3.88,18,'nord-ouest (tramontane)'],['Perpignan',42.70,2.90,21,'nord-ouest (tramontane)'],
+    ['Nice',43.70,7.27,12,'sud-est (marin)'],['Ajaccio',41.93,8.74,14,'ouest (libeccio)'],
+    ['Brest',48.39,-4.49,19,'ouest / sud-ouest'],['Ouessant',48.46,-5.10,25,'ouest'],
+    ['La Rochelle',46.16,-1.15,17,'ouest'],['Bordeaux',44.84,-0.58,14,'ouest'],
+    ['Biarritz',43.48,-1.56,15,'ouest / sud'],['Toulouse',43.60,1.44,15,'ouest et sud-est (autan)'],
+    ['Nantes',47.22,-1.55,15,'ouest / sud-ouest'],['Rennes',48.11,-1.68,14,'ouest'],
+    ['Caen',49.18,-0.37,16,'sud-ouest'],['Dunkerque',51.04,2.38,20,'sud-ouest'],
+    ['Lille',50.63,3.06,15,'sud-ouest'],['Paris',48.86,2.35,13,'sud-ouest'],
+    ['Strasbourg',48.58,7.75,11,'sud-ouest / nord-est'],['Dijon',47.32,5.04,13,'nord / sud-ouest'],
+    ['Lyon',45.76,4.84,13,'nord (bise) / sud'],['Clermont-Ferrand',45.78,3.08,13,'sud (vent du Midi)'],
+    ['Grenoble',45.19,5.72,9,'vent de vall\u00e9e (nord-sud)'],['Mont Aigoual',44.12,3.58,40,'nord-ouest \u2014 record de rafales'],
+    ['Mont Ventoux',44.17,5.28,35,'nord-ouest (mistral)']
+  ];
+  // [nom, lat, lon, azimut d'o\u00f9 il vient, couleur, r\u00e9gion, description]
+  const VENTS_NOMS = [
+    ['Mistral',43.90,4.80,340,'#1d4ed8','Vall\u00e9e du Rh\u00f4ne, Provence',
+     'Vent de nord \u00e0 nord-ouest, <b>froid, sec et violent</b>. N\u00e9 de l\u2019air froid continental acc\u00e9l\u00e9r\u00e9 dans le couloir rhodanien (effet Venturi). Souffle souvent 3, 6 ou 9 jours d\u2019affil\u00e9e ; rafales au-del\u00e0 de 100 km/h. Il balaie les nuages : c\u2019est lui qui fait la lumi\u00e8re de Provence \u2014 et qui a fa\u00e7onn\u00e9 les cypr\u00e8s coup-vent et les mas orient\u00e9s dos au nord.'],
+    ['Tramontane',43.10,2.80,315,'#0284c7','Languedoc, Roussillon',
+     'Cousine du mistral, entre Massif central et Pyr\u00e9n\u00e9es. <b>Nord-ouest, froide et s\u00e8che.</b> Le seuil de Naurouze la canalise. Elle assainit les vignes et alimente les grands parcs \u00e9oliens de l\u2019Aude. Son nom vient de <i>tramontana</i> : \u00ab d\u2019au-del\u00e0 des monts \u00bb.'],
+    ['Cers',43.20,2.90,300,'#0369a1','Narbonnais, Aude',
+     'Nom local de la tramontane dans l\u2019Aude. Vent d\u2019ouest-nord-ouest violent, oppos\u00e9 au marin.'],
+    ['Autan',43.60,1.70,135,'#dc2626','Toulousain, Lauragais, Albigeois',
+     'Vent de <b>sud-est, chaud et sec</b> apr\u00e8s avoir franchi la Montagne Noire (effet de fœhn). R\u00e9put\u00e9 rendre nerveux : \u00ab l\u2019autan blanc \u00bb annonce le beau temps, \u00ab l\u2019autan noir \u00bb la pluie. On dit qu\u2019il souffle un nombre impair de jours.'],
+    ['Marin',43.40,3.60,135,'#0d9488','Golfe du Lion',
+     'Vent de <b>sud-est, doux et tr\u00e8s humide</b>, charg\u00e9 d\u2019eau par la M\u00e9diterran\u00e9e. Il apporte les pluies m\u00e9diterran\u00e9ennes et, but\u00e9 sur les C\u00e9vennes, provoque les \u00e9pisodes c\u00e9venols. C\u2019est l\u2019exact contraire de la tramontane.'],
+    ['Grec',42.90,3.20,45,'#7c3aed','Roussillon, Languedoc',
+     'Vent de nord-est humide venant du golfe de G\u00eanes ; apporte pluies et houle sur les c\u00f4tes catalanes.'],
+    ['Labech',42.80,3.10,225,'#c026d3','Roussillon',
+     'Vent de sud-ouest, chaud, annonciateur de d\u00e9gradation. Nom voisin du <i>libeccio</i> corse.'],
+    ['Libeccio',41.95,8.60,225,'#b45309','Corse occidentale',
+     'Vent de <b>sud-ouest</b> dominant sur la c\u00f4te ouest de la Corse : houle forte et embruns. Il a mod\u00e9l\u00e9 les tafoni, ces roches creus\u00e9es en alv\u00e9oles.'],
+    ['Gr\u00e9gale',42.75,9.55,45,'#78350f','Corse orientale',
+     'Vent de nord-est froid et humide sur la fa\u00e7ade orientale de l\u2019\u00eele.'],
+    ['Galerne',47.60,-2.90,290,'#0891b2','Bretagne sud, Vend\u00e9e',
+     'Vent d\u2019ouest-nord-ouest arrivant brusquement apr\u00e8s une chaleur orageuse : <b>grain soudain</b>, chute de temp\u00e9rature, mer qui se l\u00e8ve. Redout\u00e9 des marins.'],
+    ['Noro\u00eet',48.60,-4.00,315,'#0284c7','Fa\u00e7ade atlantique',
+     'Contraction de \u00ab nord-ouest \u00bb : vent frais et instable d\u2019arri\u00e8re de perturbation, ciel de tra\u00eene et averses.'],
+    ['Suro\u00eet',47.40,-3.50,225,'#16a34a','Fa\u00e7ade atlantique',
+     'Contraction de \u00ab sud-ouest \u00bb : vent doux et humide de secteur oc\u00e9anique, annonce la pluie. C\u2019est le vent dominant de la France.'],
+    ['Ponant',46.20,-1.40,270,'#65a30d','Littoral atlantique',
+     'Vent d\u2019ouest, du c\u00f4t\u00e9 o\u00f9 le soleil se couche (<i>ponere</i> : se coucher). Oppos\u00e9 au levant.'],
+    ['Bise',47.10,6.30,45,'#1e293b','Jura, Franche-Comt\u00e9, Alpes du Nord',
+     'Vent de <b>nord-est, sec et glacial</b> en hiver, sous anticyclone. La \u00ab bise noire \u00bb apporte le gel ; elle accentue fortement le ressenti de froid.'],
+    ['Fœhn',45.40,6.60,180,'#ea580c','Alpes, Pyr\u00e9n\u00e9es',
+     'Vent de sud qui <b>s\u2019ass\u00e8che et se r\u00e9chauffe en redescendant</b> un versant : la pluie tombe au vent, l\u2019air chaud d\u00e9vale sous le vent. Peut faire monter la temp\u00e9rature de 10 \u00b0C en quelques heures et faire fondre la neige tr\u00e8s vite.'],
+    ['Lombarde',45.20,6.90,90,'#7f1d1d','Alpes fran\u00e7aises',
+     'Vent d\u2019est venu de la plaine du P\u00f4 : neige abondante sur les versants italiens, ciel d\u00e9gag\u00e9 c\u00f4t\u00e9 fran\u00e7ais.'],
+    ['Vent du Midi',45.60,3.30,180,'#f97316','Massif central, Auvergne',
+     'Flux de sud humide sur les versants ouest, sec et chaud sous le vent : le r\u00e9chauffement peut \u00eatre spectaculaire en Limagne.'],
+    ['Traverse',45.30,3.90,225,'#a16207','Velay, Forez, Auvergne',
+     'Vent de sud-ouest qui \u00ab traverse \u00bb le Massif central : humide au vent, il apporte pluie ou neige lourde.'],
+    ['\u00c9cir',44.65,3.00,0,'#334155','Aubrac, Margeride',
+     'Vent de nord glacial soulevant la neige en tourbillons : la \u00ab poudrerie \u00bb du plateau, qui efface les rep\u00e8res et bloque les routes.'],
+    ['Sirocco',43.20,5.60,160,'#b45309','M\u00e9diterran\u00e9e',
+     'Vent chaud venu du Sahara, charg\u00e9 de <b>poussi\u00e8res</b>. Il d\u00e9pose parfois du sable rouge jusque sur les Alpes, o\u00f9 il colore la neige.']
+  ];
+  function couleurSoleil(h){
+    if(h >= 2600) return '#dc2626';
+    if(h >= 2200) return '#f97316';
+    if(h >= 1900) return '#f59e0b';
+    if(h >= 1700) return '#facc15';
+    return '#a3a3a3';
+  }
+  function couleurVent(v){
+    if(v >= 25) return '#7f1d1d';
+    if(v >= 19) return '#dc2626';
+    if(v >= 15) return '#f97316';
+    if(v >= 12) return '#facc15';
+    return '#a3e635';
+  }
+  document.getElementById('btn-clim-soleil').addEventListener('click', function(){
+    const b = document.getElementById('btn-clim-soleil');
+    if(etatClim.soleil){ map.removeLayer(etatClim.soleil); etatClim.soleil = null; basculerBouton(b, false, '', '\u2600\uFE0F Heures d\u2019ensoleillement par an'); majLegende(); return; }
+    basculerBouton(b, true, '\u2600\uFE0F Soleil \u2715', '', '#f59e0b');
+    const g = L.layerGroup();
+    SOLEIL.forEach(function(v){
+      const c = couleurSoleil(v[3]);
+      L.marker([v[1], v[2]], { icon: L.divIcon({ className:'clim-etq',
+        html:'<div style="white-space:nowrap;background:'+c+';color:#fff;font:600 11px system-ui;padding:2px 6px;border-radius:6px;border:1px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3)">'+v[0]+' '+v[3]+' h</div>',
+        iconSize:[1,1], iconAnchor:[0,8] }), keyboard:false })
+        .bindPopup('<div style="font:12px/1.6 system-ui;min-width:180px"><b>\u2600\uFE0F '+v[0]+'</b><br>Ensoleillement moyen : <b>'+v[3]+' heures par an</b><br><small style="color:#8a8577">Normales 1991-2020 \u00b7 valeurs arrondies</small><div style="color:#57534e;font-size:10px;margin-top:4px">L\u2019\u00e9cart entre Brest et Toulon d\u00e9passe 1 300 heures : pr\u00e8s de deux mois de soleil en plus.</div></div>')
+        .addTo(g);
+    });
+    g.addTo(map); etatClim.soleil = g; majLegende();
+    afficherInfo('\u2600\uFE0F Ensoleillement moyen annuel \u2014 le gradient nord-sud est l\u2019un des plus forts d\u2019Europe', 9000);
+  });
+  document.getElementById('btn-clim-vent').addEventListener('click', function(){
+    const b = document.getElementById('btn-clim-vent');
+    if(etatClim.vent){ map.removeLayer(etatClim.vent); etatClim.vent = null; basculerBouton(b, false, '', '\U0001F4A8 Vents moyens (force et direction)'); majLegende(); return; }
+    basculerBouton(b, true, '\U0001F4A8 Vents moyens \u2715', '', '#0369a1');
+    const g = L.layerGroup();
+    VENTS_MOY.forEach(function(v){
+      const c = couleurVent(v[3]);
+      L.circleMarker([v[1], v[2]], { radius:Math.max(6, Math.min(20, v[3]*0.7)), color:'#fff', weight:1.5, fillColor:c, fillOpacity:0.85 })
+        .bindPopup('<div style="font:12px/1.6 system-ui;min-width:190px"><b>\U0001F4A8 '+v[0]+'</b><br>Vent moyen : <b>'+v[3]+' km/h</b><br>Direction dominante : <b>'+v[4]+'</b><br><small style="color:#8a8577">Ordre de grandeur des moyennes de r\u00e9f\u00e9rence</small></div>')
+        .bindTooltip(v[0]+' \u2014 '+v[3]+' km/h', {direction:'top'})
+        .addTo(g);
+    });
+    g.addTo(map); etatClim.vent = g; majLegende();
+    afficherInfo('\U0001F4A8 Vents moyens \u2014 taille du cercle \u221d vitesse. Les couloirs rhodanien et languedocien ressortent nettement.', 9000);
+  });
+  document.getElementById('btn-clim-ventsnoms').addEventListener('click', function(){
+    const b = document.getElementById('btn-clim-ventsnoms');
+    if(etatClim.noms){ map.removeLayer(etatClim.noms); etatClim.noms = null; basculerBouton(b, false, '', '\U0001F32C\uFE0F Noms des vents r\u00e9gionaux'); majLegende(); return; }
+    basculerBouton(b, true, '\U0001F32C\uFE0F Vents nomm\u00e9s \u2715', '', '#1d4ed8');
+    const g = L.layerGroup();
+    VENTS_NOMS.forEach(function(v){
+      const az = v[3], vers = (az+180)%360;
+      const d = 0.55;
+      const dep = [v[1] + d*Math.cos(az*Math.PI/180), v[2] + d*Math.sin(az*Math.PI/180)];
+      const arr = [v[1] + d*Math.cos(vers*Math.PI/180)*0.6, v[2] + d*Math.sin(vers*Math.PI/180)*0.6];
+      const ang = Math.atan2(arr[1]-dep[1], arr[0]-dep[0]), t = 0.16, o = 0.42;
+      L.polyline([dep, arr], { color:v[4], weight:3.5, opacity:0.9 }).addTo(g);
+      L.polygon([arr, [arr[0]-t*Math.cos(ang-o), arr[1]-t*Math.sin(ang-o)], [arr[0]-t*Math.cos(ang+o), arr[1]-t*Math.sin(ang+o)]],
+        { color:v[4], weight:1, fillColor:v[4], fillOpacity:1 }).addTo(g);
+      L.marker([v[1], v[2]], { icon: L.divIcon({ className:'vent-nom',
+        html:'<div style="white-space:nowrap;background:'+v[4]+';color:#fff;font:700 12px system-ui;padding:3px 8px;border-radius:7px;border:1.5px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,.35)">'+v[0]+'</div>',
+        iconSize:[1,1], iconAnchor:[0,9] }), keyboard:false })
+        .bindPopup('<div style="font:12px/1.6 system-ui;min-width:225px"><b style="color:'+v[4]+';font-size:13px">\U0001F32C\uFE0F '+v[0]+'</b><br><i style="color:#8a8577">'+v[5]+'</i><br>'+v[6]
+          + '<div style="color:#57534e;font-size:10px;margin-top:5px">La fl\u00e8che indique le sens dans lequel il souffle. Un vent porte toujours le nom de la direction d\u2019o\u00f9 il <b>vient</b>.</div></div>')
+        .addTo(g);
+    });
+    g.addTo(map); etatClim.noms = g; majLegende();
+    afficherInfo('\U0001F32C\uFE0F '+VENTS_NOMS.length+' vents r\u00e9gionaux \u2014 cliquez un nom pour son origine et ses effets sur les paysages', 10000);
+  });
+  // ---------- 🏞️ Pays et régions naturelles ----------
+  const etatPaysNat = { alpes:null, france:null, jeu:null, tour:0, score:0, cible:null };
+  // [nom, couleur, polygone simplifié, sous-titre, notice]
+  const PAYS_ALPES = [
+    ['Oisans','#0d9488',[[45.13,5.74],[45.12,5.92],[45.14,6.08],[45.11,6.24],[45.06,6.38],[44.97,6.40],[44.92,6.28],[44.90,6.10],[44.93,5.92],[44.97,5.78],[45.05,5.72]],'Vall\u00e9e de la Romanche',
+     'Ancien mandement dauphinois. Verrous glaciaires et hautes cimes (Meije, \u00c9crins). Le Bourg-d\u2019Oisans occupe le fond d\u2019un ancien lac.'],
+    ['Tri\u00e8ves','#7c3aed',[[44.92,5.55],[44.90,5.85],[44.72,5.85],[44.70,5.58]],'Entre Vercors et D\u00e9voluy',
+     'Plateau de <b>terres noires</b> (marnes) tr\u00e8s \u00e9rodables, encadr\u00e9 par le Mont Aiguille. Pays d\u2019\u00e9levage isol\u00e9, longtemps enclav\u00e9.'],
+    ['Matheysine','#b45309',[[45.03,5.72],[45.02,5.82],[44.99,5.92],[44.94,5.95],[44.89,5.92],[44.86,5.84],[44.87,5.74],[44.92,5.68],[44.98,5.68]],'Plateau de La Mure',
+     'Plateau perch\u00e9 \u00e0 900 m avec ses lacs (Laffrey, Pierre-Ch\u00e2tel). Pays minier : l\u2019anthracite y fut exploit\u00e9 jusqu\u2019en 1997.'],
+    ['Valbonnais','#16a34a',[[45.00,5.85],[44.98,6.10],[44.85,6.10],[44.86,5.88]],'Vall\u00e9e de la Bonne',
+     'Vall\u00e9e affluente du Drac, porte sud du parc des \u00c9crins. Habitat group\u00e9 en versant adret.'],
+    ['Beaumont','#a16207',[[44.90,5.75],[44.88,5.95],[44.78,5.95],[44.79,5.76]],'Sud de la Matheysine',
+     'Petit pays de collines marneuses au-dessus du Drac, entre Matheysine et Tri\u00e8ves.'],
+    ['D\u00e9voluy','#0284c7',[[44.78,5.85],[44.76,6.05],[44.60,6.05],[44.62,5.86]],'Cirque calcaire isol\u00e9',
+     'Massif calcaire ferm\u00e9, cern\u00e9 de falaises, au relief karstique : l\u2019eau dispara\u00eet dans le sol. Longtemps l\u2019un des pays les plus isol\u00e9s de France.'],
+    ['Champsaur','#ea580c',[[44.79,6.06],[44.77,6.16],[44.73,6.26],[44.67,6.30],[44.61,6.27],[44.59,6.18],[44.61,6.08],[44.67,6.03],[44.74,6.03]],'Haute vall\u00e9e du Drac',
+     'Large vall\u00e9e glaciaire ensoleill\u00e9e, mosa\u00efque de prairies et de haies. \u00ab Le pays des mille hameaux \u00bb.'],
+    ['Valgaudemar','#c026d3',[[44.88,6.10],[44.86,6.35],[44.76,6.35],[44.78,6.12]],'Vall\u00e9e de la S\u00e9veraisse',
+     'Vall\u00e9e encaiss\u00e9e des \u00c9crins, surnomm\u00e9e \u00ab l\u2019Himalaya fran\u00e7ais \u00bb pour ses parois et cascades.'],
+    ['Queyras','#dc2626',[[44.88,6.76],[44.87,6.88],[44.83,6.99],[44.75,7.05],[44.67,7.03],[44.63,6.94],[44.64,6.84],[44.70,6.76],[44.79,6.73]],'Le plus haut pays d\u2019Europe',
+     'Vall\u00e9e habit\u00e9e la plus haute d\u2019Europe (Saint-V\u00e9ran, 2 042 m). Air sec, maisons de bois \u00e0 fustes, autonomie ancienne (\u00ab escartons \u00bb).'],
+    ['Brian\u00e7onnais','#7f1d1d',[[45.05,6.45],[45.02,6.80],[44.82,6.80],[44.85,6.46]],'Autour de Brian\u00e7on',
+     'Brian\u00e7on est la plus haute ville de France (1 326 m). Carrefour alpin fortifi\u00e9 par Vauban, class\u00e9 \u00e0 l\u2019UNESCO.'],
+    ['Embrunais','#0891b2',[[44.68,6.30],[44.66,6.60],[44.50,6.60],[44.52,6.32]],'Autour d\u2019Embrun',
+     'Bassin de la haute Durance, aujourd\u2019hui domin\u00e9 par le lac de Serre-Pon\u00e7on (mis en eau en 1960).'],
+    ['Gapen\u00e7ais','#65a30d',[[44.62,5.95],[44.60,6.25],[44.45,6.25],[44.47,5.96]],'Autour de Gap',
+     'Bassin de transition entre Alpes du Nord et du Sud : le climat y devient m\u00e9diterran\u00e9en, la lavande appara\u00eet.'],
+    ['Vercors','#166534',[[45.22,5.36],[45.20,5.52],[45.15,5.66],[45.06,5.74],[44.96,5.74],[44.89,5.66],[44.86,5.52],[44.89,5.40],[44.98,5.32],[45.10,5.31]],'Forteresse calcaire',
+     'Plateau calcaire aux gorges spectaculaires (Bourne, Vernaison). Haut lieu de la R\u00e9sistance en 1944.'],
+    ['Chartreuse','#15803d',[[45.56,5.70],[45.54,5.84],[45.48,5.95],[45.40,5.98],[45.32,5.94],[45.28,5.84],[45.30,5.74],[45.38,5.66],[45.48,5.65]],'Entre Grenoble et Chamb\u00e9ry',
+     'Massif calcaire bois\u00e9 abritant le monast\u00e8re de la Grande Chartreuse, fond\u00e9 en 1084.'],
+    ['Belledonne','#334155',[[45.42,5.92],[45.40,6.04],[45.34,6.16],[45.25,6.24],[45.16,6.22],[45.11,6.12],[45.13,6.00],[45.21,5.92],[45.32,5.88]],'Cha\u00eene de cristallin',
+     'Cha\u00eene de roches anciennes (gneiss, granite) : pas de calcaire, donc pas de grottes, mais des lacs d\u2019altitude.'],
+    ['Gr\u00e9sivaudan','#0369a1',[[45.35,5.72],[45.33,6.00],[45.12,6.00],[45.14,5.74]],'Sillon alpin',
+     'Large vall\u00e9e glaciaire entre Chartreuse et Belledonne. Ancien fond de lac, sols fertiles : la \u00ab vall\u00e9e du silicium \u00bb fran\u00e7aise.'],
+    ['Royans','#84cc16',[[45.10,5.20],[45.08,5.45],[44.95,5.45],[44.97,5.22]],'Pi\u00e9mont du Vercors',
+     'Pays de vergers (noix de Grenoble) au d\u00e9bouch\u00e9 des gorges du Vercors.'],
+    ['Diois','#a3a3a3',[[44.82,5.15],[44.80,5.55],[44.60,5.55],[44.62,5.17]],'Vall\u00e9e de la Dr\u00f4me',
+     'Transition m\u00e9diterran\u00e9enne : vignes de Clairette, lavande, pins. Relief de plis calcaires.'],
+    ['Maurienne','#78350f',[[45.35,6.30],[45.32,6.95],[45.10,6.95],[45.15,6.32]],'Vall\u00e9e de l\u2019Arc',
+     'La plus longue vall\u00e9e intra-alpine de France. Voie de passage historique vers l\u2019Italie (col du Mont-Cenis).'],
+    ['Tarentaise','#92400e',[[45.72,6.35],[45.70,6.85],[45.45,6.85],[45.48,6.38]],'Vall\u00e9e de l\u2019Is\u00e8re',
+     'Berceau du beaufort et des grandes stations (Courchevel, Val d\u2019Is\u00e8re). Alpages d\u2019altitude.'],
+    ['Beaufortain','#b91c1c',[[45.78,6.45],[45.76,6.75],[45.60,6.75],[45.62,6.47]],'Pays du beaufort',
+     'Massif d\u2019alpages et de coop\u00e9ratives laiti\u00e8res. Le beaufort est produit ici depuis le Moyen \u00c2ge.'],
+    ['Bauges','#1e293b',[[45.78,5.95],[45.76,6.25],[45.55,6.25],[45.57,5.97]],'Entre Annecy et Chamb\u00e9ry',
+     'Massif calcaire pastoral, parc naturel r\u00e9gional et g\u00e9oparc mondial UNESCO.']
+  ];
+  const PAYS_FRANCE = [
+    ['Hurepoix','#a3e635',[[48.78,1.89],[48.74,2.40],[48.46,2.34],[48.42,1.92],[48.60,1.80]],'Sud de Paris',
+     'Plateaux boisés et vallées de l\u2019Yvette et de l\u2019Orge.'],
+    ['Mantois','#84cc16',[[49.08,1.52],[49.05,2.00],[48.79,1.94],[48.76,1.55],[48.92,1.44]],'Boucles de la Seine',
+     'Plateau céréalier entaillé par les méandres de la Seine.'],
+    ['Plaine de France','#eab308',[[49.19,2.28],[49.16,2.76],[48.90,2.70],[48.87,2.31],[49.03,2.20]],'Nord de Paris',
+     'Limons très fertiles, aujourd\u2019hui grignotés par l\u2019urbanisation et Roissy.'],
+    ['Gâtinais','#f59e0b',[[48.37,2.30],[48.33,2.90],[47.97,2.83],[47.93,2.34],[48.15,2.20]],'Entre Beauce et Loing',
+     'Plateau de sables et calcaires, miel du Gâtinais et safran.'],
+    ['Orléanais','#facc15',[[48.12,1.68],[48.08,2.33],[47.72,2.25],[47.68,1.72],[47.90,1.57]],'Autour d\u2019Orléans',
+     'Val de Loire fertile, roseraies et pépinières.'],
+    ['Blésois','#a16207',[[47.76,1.14],[47.72,1.65],[47.44,1.59],[47.40,1.17],[47.58,1.05]],'Autour de Blois',
+     'Coteaux de la Loire, châteaux et vignoble de Cheverny.'],
+    ['Vermandois','#65a30d',[[50.03,3.09],[49.99,3.60],[49.71,3.54],[49.67,3.12],[49.85,3.00]],'Autour de Saint-Quentin',
+     'Plateau crayeux, canal de Saint-Quentin et industrie textile ancienne.'],
+    ['Laonnois','#16a34a',[[49.71,3.40],[49.68,3.88],[49.42,3.82],[49.39,3.43],[49.55,3.32]],'Montagne de Laon',
+     'Butte-témoin isolée portant sa cathédrale, dominant la plaine.'],
+    ['Cambrésis','#22c55e',[[50.31,3.14],[50.28,3.65],[50.02,3.59],[49.99,3.17],[50.15,3.05]],'Autour de Cambrai',
+     'Openfield betteravier et grandes fermes à cour carrée.'],
+    ['Beauvaisis','#84cc16',[[49.60,1.84],[49.56,2.35],[49.28,2.29],[49.24,1.87],[49.42,1.75]],'Autour de Beauvais',
+     'Plateau picard et vallée du Thérain ; cathédrale au ch\u0153ur le plus haut du monde.'],
+    ['Vimeu','#0891b2',[[50.19,1.48],[50.16,1.89],[49.94,1.84],[49.91,1.51],[50.05,1.41]],'Sud de la baie de Somme',
+     'Plateau littoral, berceau de la serrurerie et de la robinetterie.'],
+    ['Marquenterre','#0d9488',[[50.42,1.50],[50.39,1.87],[50.17,1.83],[50.14,1.52],[50.28,1.43]],'Baie de Somme',
+     'Cordon de dunes et marais gagnés sur la mer ; réserve ornithologique majeure.'],
+    ['Roumois','#65a30d',[[49.46,0.67],[49.43,1.11],[49.21,1.06],[49.18,0.69],[49.32,0.59]],'Entre Seine et Risle',
+     'Plateau limoneux de grande culture au-dessus des boucles de la Seine.'],
+    ['Lieuvin','#16a34a',[[49.32,0.27],[49.29,0.71],[49.07,0.66],[49.04,0.29],[49.18,0.19]],'Entre Risle et Touques',
+     'Plateau herbager, transition vers le pays d\u2019Auge.'],
+    ['Campagne de Caen','#eab308',[[49.24,-0.56],[49.21,-0.05],[48.99,-0.11],[48.96,-0.53],[49.10,-0.65]],'Plaine ouverte',
+     'Openfield sur calcaire, contraste net avec le bocage voisin ; pierre de Caen.'],
+    ['Domfrontais','#15803d',[[48.74,-0.82],[48.71,-0.41],[48.49,-0.46],[48.46,-0.79],[48.60,-0.89]],'Bocage normand sud',
+     'Poiré de Domfront, bocage dense sur roches anciennes.'],
+    ['Vexin normand','#a3e635',[[49.44,1.25],[49.41,1.73],[49.19,1.67],[49.16,1.28],[49.30,1.17]],'Rive droite de la Seine',
+     'Plateau crayeux, châteaux forts de la frontière franco-normande.'],
+    ['Goëlo','#0369a1',[[48.76,-3.12],[48.73,-2.71],[48.51,-2.76],[48.48,-3.09],[48.62,-3.19]],'Côte du Trégor',
+     'Falaises de Plouha, les plus hautes de Bretagne.'],
+    ['Penthièvre','#0891b2',[[48.61,-2.70],[48.58,-2.22],[48.32,-2.28],[48.29,-2.67],[48.45,-2.78]],'Autour de Lamballe',
+     'Bocage et littoral du cap Fréhel ; ancien comté.'],
+    ['Pays bigouden','#7c3aed',[[48.00,-4.45],[47.98,-4.08],[47.78,-4.12],[47.76,-4.43],[47.88,-4.52]],'Pointe du Finistère',
+     'Coiffes hautes, ports sardiniers et marais de Penmarc\u2019h.'],
+    ['Porhoët','#65a30d',[[48.21,-2.65],[48.18,-2.17],[47.92,-2.23],[47.89,-2.62],[48.05,-2.73]],'Centre-Bretagne',
+     'Forêt de Brocéliande (Paimpont) et vallée de l\u2019Oust.'],
+    ['Pays malouin','#0284c7',[[48.72,-2.13],[48.69,-1.69],[48.47,-1.74],[48.44,-2.11],[48.58,-2.21]],'Autour de Saint-Malo',
+     'Cité corsaire, marnage parmi les plus forts d\u2019Europe.'],
+    ['Mauges','#16a34a',[[47.33,-1.06],[47.29,-0.55],[47.01,-0.61],[46.97,-1.03],[47.15,-1.15]],'Anjou bocager',
+     'Bocage d\u2019élevage, foyer majeur de la guerre de Vendée.'],
+    ['Gâtine','#84cc16',[[46.83,-0.65],[46.79,-0.17],[46.51,-0.23],[46.47,-0.62],[46.65,-0.73]],'Deux-Sèvres',
+     'Collines bocagères sur socle ancien ; élevage bovin.'],
+    ['Saumurois','#c026d3',[[47.39,-0.33],[47.36,0.11],[47.14,0.06],[47.11,-0.31],[47.25,-0.41]],'Vignoble et tuffeau',
+     'Caves troglodytiques, champignonnières et école de cavalerie.'],
+    ['Perthois','#0284c7',[[48.79,4.58],[48.76,4.99],[48.54,4.94],[48.51,4.61],[48.65,4.51]],'Marne humide',
+     'Plaine argileuse et lac du Der, plus grand lac artificiel de France.'],
+    ['Bassigny','#a16207',[[48.28,5.34],[48.24,5.85],[47.96,5.79],[47.92,5.37],[48.10,5.25]],'Sources de la Marne',
+     'Plateaux calcaires boisés du sud de la Haute-Marne.'],
+    ['Saintois','#65a30d',[[48.61,5.92],[48.58,6.36],[48.32,6.31],[48.29,5.94],[48.45,5.84]],'Collines lorraines',
+     'Côtes de Moselle et colline inspirée de Sion-Vaudémont.'],
+    ['Pays Haut','#78716c',[[49.51,5.64],[49.48,6.15],[49.22,6.09],[49.19,5.67],[49.35,5.55]],'Bassin ferrifère',
+     'Ancien fer lorrain : mines et hauts fourneaux, aujourd\u2019hui reconvertis.'],
+    ['Pays de Bitche','#166534',[[49.16,7.22],[49.13,7.70],[48.91,7.64],[48.88,7.25],[49.02,7.14]],'Vosges du Nord',
+     'Grès rose, forêts et châteaux ruinés ; citadelle de Vauban.'],
+    ['Kochersberg','#eab308',[[48.80,7.40],[48.78,7.77],[48.58,7.73],[48.56,7.42],[48.68,7.33]],'Grenier de l\u2019Alsace',
+     'Collines de l\u0153ss très fertiles, villages à colombages.'],
+    ['Alsace bossue','#84cc16',[[49.02,6.97],[49.00,7.41],[48.80,7.36],[48.78,6.99],[48.90,6.89]],'Nord-ouest alsacien',
+     'Plateau lorrain rattaché à l\u2019Alsace, prairies et vergers.'],
+    ['Vallée de la Loue','#0d9488',[[47.14,5.85],[47.12,6.33],[46.92,6.27],[46.90,5.88],[47.02,5.77]],'Jura',
+     'Reculée et source vauclusienne peintes par Courbet.'],
+    ['Haut-Doubs','#0891b2',[[47.08,6.14],[47.04,6.65],[46.76,6.59],[46.72,6.17],[46.90,6.05]],'Frontière suisse',
+     'Plateaux d\u2019estives, comté et horlogerie ; hivers rigoureux.'],
+    ['Revermont','#65a30d',[[46.73,5.30],[46.69,5.67],[46.41,5.63],[46.37,5.32],[46.55,5.23]],'Rebord du Jura',
+     'Vignoble jurassien (vin jaune) sur le premier plateau.'],
+    ['Sénonais','#a3e635',[[48.36,3.10],[48.33,3.58],[48.07,3.52],[48.04,3.13],[48.20,3.02]],'Nord de l\u2019Yonne',
+     'Plaine céréalière et vallée de l\u2019Yonne ; cathédrale de Sens.'],
+    ['Tonnerrois','#c026d3',[[47.99,3.82],[47.96,4.26],[47.74,4.21],[47.71,3.84],[47.85,3.74]],'Basse Bourgogne',
+     'Coteaux calcaires, vignoble et fosse Dionne.'],
+    ['Brionnais','#f59e0b',[[46.44,3.98],[46.41,4.39],[46.19,4.34],[46.16,4.01],[46.30,3.91]],'Sud du Charolais',
+     'Berceau de l\u2019élevage charolais et art roman remarquable.'],
+    ['Beaujolais','#c026d3',[[46.30,4.43],[46.26,4.84],[45.94,4.79],[45.90,4.46],[46.10,4.36]],'Vignoble et pierres dorées',
+     'Coteaux granitiques au nord, calcaires dorés au sud.'],
+    ['Bugey','#0d9488',[[46.05,5.35],[46.01,5.83],[45.69,5.77],[45.65,5.38],[45.85,5.27]],'Jura méridional',
+     'Plis calcaires, vignoble et gorges de l\u2019Ain.'],
+    ['Lyonnais','#a16207',[[45.90,4.37],[45.86,4.81],[45.58,4.76],[45.54,4.39],[45.72,4.29]],'Monts et coteaux',
+     'Monts du Lyonnais : élevage, vergers et fromages de chèvre.'],
+    ['Pilat','#166534',[[45.56,4.43],[45.53,4.84],[45.31,4.79],[45.28,4.46],[45.42,4.36]],'Balcon sur le Rhône',
+     'Massif granitique et parc naturel entre Rhône et Loire.'],
+    ['Bièvre','#84cc16',[[45.47,4.99],[45.45,5.50],[45.25,5.44],[45.23,5.02],[45.35,4.90]],'Vallée sèche',
+     'Ancien lit glaciaire sans rivière : plaine de graviers, noyers et maïs.'],
+    ['Chambaran','#15803d',[[45.39,4.98],[45.36,5.39],[45.14,5.34],[45.11,5.01],[45.25,4.91]],'Plateau forestier',
+     'Molasses et forêts entre Bièvre et Isère.'],
+    ['Genevois','#0284c7',[[46.21,5.87],[46.18,6.31],[45.92,6.26],[45.89,5.89],[46.05,5.79]],'Autour d\u2019Annemasse',
+     'Bassin transfrontalier sous influence de Genève ; Salève.'],
+    ['Chablais','#0891b2',[[46.48,6.39],[46.44,6.90],[46.16,6.84],[46.12,6.42],[46.30,6.30]],'Rive sud du Léman',
+     'Alpages, Évian et Thonon ; géoparc mondial UNESCO.'],
+    ['Faucigny','#7c3aed',[[46.18,6.35],[46.15,6.83],[45.89,6.77],[45.86,6.38],[46.02,6.27]],'Vallée de l\u2019Arve',
+     'Décolletage et haute montagne ; porte du Mont-Blanc.'],
+    ['Albanais','#65a30d',[[46.01,5.80],[45.98,6.17],[45.76,6.13],[45.73,5.82],[45.87,5.73]],'Entre Annecy et Aix',
+     'Collines molassiques d\u2019élevage et de cultures.'],
+    ['Bourbonnais','#eab308',[[46.73,2.92],[46.67,3.60],[46.23,3.52],[46.17,2.96],[46.45,2.80]],'Ancien duché',
+     'Bocage charolais, forêt de Tronçais et villes d\u2019eaux (Vichy).'],
+    ['Montagne bourbonnaise','#166534',[[46.19,3.60],[46.16,3.97],[45.94,3.93],[45.91,3.62],[46.05,3.53]],'Sud de l\u2019Allier',
+     'Hauteurs boisées granitiques dominant la Limagne.'],
+    ['Planèze','#78716c',[[45.17,2.88],[45.15,3.29],[44.95,3.24],[44.93,2.91],[45.05,2.81]],'Plateau du Cantal',
+     'Coulées basaltiques formant un plateau d\u2019estives à 1 000 m.'],
+    ['Cézallier','#a8a29e',[[45.46,2.80],[45.43,3.17],[45.21,3.13],[45.18,2.82],[45.32,2.73]],'Entre Sancy et Cantal',
+     'Vaste plateau volcanique d\u2019estives, tourbières et burons.'],
+    ['Artense','#0d9488',[[45.57,2.50],[45.55,2.87],[45.35,2.83],[45.33,2.52],[45.45,2.43]],'Plateau glaciaire',
+     'Roches moutonnées, lacs et tourbières héritées des glaciers.'],
+    ['Châtaigneraie','#166534',[[45.01,2.17],[44.98,2.61],[44.72,2.56],[44.69,2.19],[44.85,2.09]],'Sud du Cantal',
+     'Pays de châtaigniers et de vergers sur socle cristallin.'],
+    ['Marche','#65a30d',[[46.35,1.53],[46.31,2.07],[45.99,2.01],[45.95,1.56],[46.15,1.43]],'Ancienne province',
+     'Bocage humide entre Berry et Limousin ; frontière historique langue d\u2019oïl / d\u2019oc.'],
+    ['Xaintrie','#15803d',[[45.29,2.00],[45.26,2.37],[45.04,2.33],[45.01,2.02],[45.15,1.93]],'Corrèze du sud',
+     'Plateau entaillé par les gorges de la Dordogne et de la Maronne.'],
+    ['Monédières','#166534',[[45.52,1.62],[45.50,1.93],[45.34,1.89],[45.32,1.64],[45.42,1.57]],'Corrèze',
+     'Petit massif de bruyères et de myrtilles chanté par Brassens.'],
+    ['Médoc','#7f1d1d',[[45.50,-1.00],[45.44,-0.63],[44.96,-0.67],[44.90,-0.98],[45.20,-1.07]],'Grands crus',
+     'Graves déposées par la Garonne : Margaux, Pauillac, Saint-Estèphe.'],
+    ['Entre-deux-Mers','#c026d3',[[44.93,-0.41],[44.89,0.10],[44.61,0.04],[44.57,-0.38],[44.75,-0.50]],'Entre Garonne et Dordogne',
+     'Plateau vallonné de vignes et de bastides.'],
+    ['Libournais','#b91c1c',[[45.09,-0.32],[45.06,0.09],[44.84,0.04],[44.81,-0.29],[44.95,-0.39]],'Saint-Émilion',
+     'Coteaux et plateaux calcaires ; vignoble inscrit à l\u2019UNESCO.'],
+    ['Double','#166534',[[45.24,-0.03],[45.21,0.41],[44.99,0.36],[44.96,-0.01],[45.10,-0.11]],'Périgord blanc',
+     'Forêt de pins et étangs sur argiles, longtemps insalubre.'],
+    ['Marensin','#16a34a',[[44.06,-1.40],[44.03,-1.03],[43.77,-1.07],[43.74,-1.38],[43.90,-1.47]],'Landes littorales',
+     'Pinède, lacs d\u2019arrière-dune et courants côtiers.'],
+    ['Bazadais','#84cc16',[[44.56,-0.43],[44.53,0.01],[44.31,-0.04],[44.28,-0.41],[44.42,-0.51]],'Sud-Gironde',
+     'Bocage et race bovine bazadaise ; bastides.'],
+    ['Lomagne','#eab308',[[44.06,0.59],[44.03,1.10],[43.77,1.04],[43.74,0.62],[43.90,0.50]],'Gers et Tarn-et-Garonne',
+     'Collines de l\u2019ail blanc et du melon, coteaux molassiques.'],
+    ['Astarac','#f59e0b',[[43.61,0.27],[43.58,0.71],[43.32,0.66],[43.29,0.29],[43.45,0.19]],'Gers méridional',
+     'Coteaux en éventail descendant des Pyrénées.'],
+    ['Albigeois','#dc2626',[[44.13,1.94],[44.09,2.45],[43.81,2.39],[43.77,1.97],[43.95,1.85]],'Autour d\u2019Albi',
+     'Brique rouge, cathédrale Sainte-Cécile, mémoire cathare.'],
+    ['Montagne Noire','#166534',[[43.56,2.08],[43.53,2.62],[43.31,2.56],[43.28,2.11],[43.42,1.98]],'Sud du Massif central',
+     'Versant humide au nord, méditerranéen au sud ; rigole du canal du Midi.'],
+    ['Gaillacois','#c026d3',[[44.02,1.68],[44.00,2.09],[43.80,2.04],[43.78,1.71],[43.90,1.61]],'Vignoble ancien',
+     'L\u2019un des plus vieux vignobles de France, remontant aux Romains.'],
+    ['Ségala','#a16207',[[44.31,2.05],[44.28,2.53],[44.02,2.47],[43.99,2.08],[44.15,1.97]],'Terres de seigle',
+     'Plateau acide autrefois pauvre, transformé par le chaulage.'],
+    ['Labourd','#dc2626',[[43.51,-1.62],[43.48,-1.21],[43.22,-1.26],[43.19,-1.59],[43.35,-1.69]],'Pays basque côtier',
+     'Maisons rouges et blanches, Rhune, Biarritz et Saint-Jean-de-Luz.'],
+    ['Basse-Navarre','#b91c1c',[[43.34,-1.32],[43.31,-0.91],[43.09,-0.96],[43.06,-1.29],[43.20,-1.39]],'Pays basque intérieur',
+     'Vallées de la Nive, Saint-Jean-Pied-de-Port sur le chemin de Compostelle.'],
+    ['Soule','#7f1d1d',[[43.29,-0.99],[43.26,-0.65],[43.04,-0.69],[43.01,-0.97],[43.15,-1.05]],'Pays basque oriental',
+     'La plus petite province basque : forêt d\u2019Iraty et gorges de Kakuetta.'],
+    ['Couserans','#0d9488',[[43.08,0.95],[43.05,1.43],[42.79,1.37],[42.76,0.98],[42.92,0.87]],'Ariège occidentale',
+     'Dix-huit vallées convergentes autour de Saint-Girons ; pastoralisme.'],
+    ['Pays de Foix','#0891b2',[[43.06,1.42],[43.03,1.86],[42.77,1.81],[42.74,1.44],[42.90,1.34]],'Ariège centrale',
+     'Château comtal, grottes ornées (Niaux) et forges catalanes.'],
+    ['Conflent','#f59e0b',[[42.74,2.17],[42.71,2.61],[42.49,2.56],[42.46,2.19],[42.60,2.09]],'Vallée de la Têt',
+     'Vergers en terrasses, train jaune et Villefranche-de-Conflent.'],
+    ['Vallespir','#166534',[[42.54,2.48],[42.52,2.89],[42.32,2.84],[42.30,2.51],[42.42,2.41]],'Vallée du Tech',
+     'La plus méridionale de France ; cerises précoces et thermalisme.'],
+    ['Aure et Louron','#0284c7',[[43.01,0.20],[42.98,0.57],[42.72,0.53],[42.69,0.22],[42.85,0.13]],'Hautes-Pyrénées',
+     'Vallées glaciaires jumelles, granges foraines et stations de ski.'],
+    ['Lavedan','#0369a1',[[43.11,-0.25],[43.08,0.12],[42.82,0.08],[42.79,-0.23],[42.95,-0.32]],'Autour d\u2019Argelès',
+     'Sept vallées convergeant vers Lourdes ; cirques glaciaires.'],
+    ['Comtat Venaissin','#eab308',[[44.18,4.85],[44.15,5.33],[43.89,5.27],[43.86,4.88],[44.02,4.77]],'Ancien État pontifical',
+     'Plaine irriguée et maraîchère, propriété des papes jusqu\u2019en 1791.'],
+    ['Uzège','#a8a29e',[[44.16,4.23],[44.13,4.64],[43.91,4.59],[43.88,4.26],[44.02,4.16]],'Autour d\u2019Uzès',
+     'Garrigue, truffes et pont du Gard tout proche.'],
+    ['Costières','#f59e0b',[[43.87,4.22],[43.85,4.66],[43.65,4.61],[43.63,4.24],[43.75,4.14]],'Terrasses du Rhône',
+     'Galets roulés portant vignes et vergers, au-dessus de la Camargue.'],
+    ['Crau','#a3a3a3',[[43.70,4.72],[43.68,5.16],[43.48,5.11],[43.46,4.74],[43.58,4.64]],'Steppe de galets',
+     'Ancien delta caillouteux de la Durance : foin de Crau et pastoralisme.'],
+    ['Sainte-Baume','#166534',[[43.47,5.62],[43.45,6.06],[43.25,6.01],[43.23,5.64],[43.35,5.54]],'Massif sacré',
+     'Forêt relique de hêtres en plein midi, grotte de Marie-Madeleine.'],
+    ['Provence verte','#15803d',[[43.61,5.85],[43.58,6.33],[43.32,6.27],[43.29,5.88],[43.45,5.77]],'Var intérieur',
+     'Vignobles, oliviers et villages perchés autour de Brignoles.'],
+    ['Estérel','#dc2626',[[43.58,6.71],[43.56,7.05],[43.40,7.01],[43.38,6.73],[43.48,6.65]],'Roches rouges',
+     'Massif de rhyolite plongeant dans la mer ; incendies fréquents.'],
+    ['Pays niçois','#c026d3',[[44.03,7.07],[43.99,7.51],[43.71,7.46],[43.67,7.09],[43.85,6.99]],'Comté de Nice',
+     'Rattaché à la France en 1860 ; vallées du Var et de la Vésubie.'],
+    ['Tricastin','#b45309',[[44.49,4.58],[44.46,4.99],[44.24,4.94],[44.21,4.61],[44.35,4.51]],'Drôme provençale',
+     'Truffe noire, lavande et nucléaire ; porte du Midi.'],
+    ['Niolu','#78716c',[[42.44,8.81],[42.42,9.15],[42.22,9.11],[42.20,8.83],[42.32,8.75]],'Cœur montagnard',
+     'Vallée haute du Golo, bergeries et forêt de Valdu-Niellu.'],
+    ['Nebbio','#f59e0b',[[42.74,9.11],[42.72,9.45],[42.52,9.41],[42.50,9.13],[42.62,9.05]],'Autour de Saint-Florent',
+     'Vignoble de Patrimonio et désert des Agriates.'],
+    ['Sartenais','#a16207',[[41.81,8.73],[41.78,9.14],[41.52,9.09],[41.49,8.76],[41.65,8.66]],'Corse-du-Sud',
+     'Menhirs de Filitosa, maquis dense et traditions pastorales.'],
+    ['Flandre','#0284c7',[[51.00,2.38],[50.96,3.03],[50.60,2.95],[50.56,2.42],[50.78,2.27]],'Plaine du Nord',
+     'Plaine humide drain\u00e9e par les watergangs, monts isol\u00e9s et beffrois.'],
+    ['Artois','#0369a1',[[50.64,2.16],[50.60,2.87],[50.24,2.79],[50.20,2.20],[50.42,2.03]],'Collines et bassin minier',
+     'Cr\u00eate crayeuse entre Flandre et Picardie ; le bassin minier est class\u00e9 \u00e0 l\u2019UNESCO.'],
+    ['Avesnois','#0d9488',[[50.33,3.73],[50.29,4.27],[50.01,4.21],[49.97,3.76],[50.15,3.63]],'Bocage du Nord',
+     '\u00celot bocager et fromager (maroilles) au sein des plaines c\u00e9r\u00e9ali\u00e8res.'],
+    ['Thi\u00e9rache','#16a34a',[[50.10,3.65],[50.06,4.25],[49.78,4.18],[49.74,3.69],[49.92,3.55]],'Bocage et \u00e9glises fortifi\u00e9es',
+     'Pays humide d\u2019\u00e9levage, h\u00e9riss\u00e9 d\u2019\u00e9glises fortifi\u00e9es contre les invasions.'],
+    ['Ponthieu','#65a30d',[[50.33,1.68],[50.29,2.22],[50.01,2.16],[49.97,1.71],[50.15,1.58]],'Autour d\u2019Abbeville',
+     'Plateau crayeux ouvert sur la baie de Somme.'],
+    ['Santerre','#a3e635',[[49.98,2.54],[49.95,3.05],[49.69,2.99],[49.66,2.57],[49.82,2.45]],'Plateau c\u00e9r\u00e9alier',
+     'Openfield de la Somme, ravag\u00e9 puis reconstruit apr\u00e8s 1918.'],
+    ['Soissonnais','#84cc16',[[49.53,3.13],[49.49,3.67],[49.21,3.61],[49.17,3.16],[49.35,3.03]],'Vall\u00e9e de l\u2019Aisne',
+     'Plateau entaill\u00e9 de vall\u00e9es, pierre de taille et betterave.'],
+    ['Valois','#eab308',[[49.36,2.70],[49.33,3.18],[49.07,3.12],[49.04,2.73],[49.20,2.62]],'Au nord de Paris',
+     'Ancien duch\u00e9 royal, for\u00eats de Retz et d\u2019Ermenonville.'],
+    ['Boulonnais','#0891b2',[[50.90,1.55],[50.86,2.03],[50.58,1.97],[50.54,1.58],[50.72,1.47]],'Bocage littoral',
+     'Boutonni\u00e8re g\u00e9ologique bocag\u00e8re ouverte sur les caps Gris-Nez et Blanc-Nez.'],
+    ['Pays de Caux','#f59e0b',[[49.94,0.46],[49.90,1.17],[49.54,1.09],[49.50,0.50],[49.72,0.33]],'Plateau des falaises',
+     'Plateau limoneux se terminant en falaises de craie ; clos-masures ceintur\u00e9s d\u2019arbres.'],
+    ['Pays de Bray','#16a34a',[[49.78,1.44],[49.75,1.95],[49.49,1.89],[49.46,1.47],[49.62,1.35]],'Boutonni\u00e8re herbag\u00e8re',
+     'D\u00e9pression argileuse ouverte dans la craie : herbages, beurre et fromage (Neufch\u00e2tel).'],
+    ['Pays d\u2019Auge','#65a30d',[[49.37,-0.09],[49.33,0.50],[48.97,0.43],[48.93,-0.06],[49.15,-0.20]],'Pommiers et haras',
+     'Bocage vallonn\u00e9 : camembert, cidre, calvados et \u00e9levage de chevaux.'],
+    ['Cotentin','#0d9488',[[49.77,-1.67],[49.70,-1.13],[49.14,-1.19],[49.07,-1.64],[49.42,-1.77]],'P\u00e9ninsule normande',
+     'Presqu\u2019\u00eele battue par les vents, marais du Cotentin et bocage dense.'],
+    ['Bessin','#0284c7',[[49.41,-0.96],[49.38,-0.45],[49.12,-0.51],[49.09,-0.93],[49.25,-1.05]],'Autour de Bayeux',
+     'Plaine herbag\u00e8re ouverte sur les plages du D\u00e9barquement.'],
+    ['Avranchin','#7c3aed',[[48.90,-1.50],[48.86,-1.02],[48.58,-1.08],[48.54,-1.47],[48.72,-1.58]],'Baie du Mont-Saint-Michel',
+     'Bocage descendant vers la plus grande mar\u00e9e d\u2019Europe continentale.'],
+    ['L\u00e9on','#0369a1',[[48.75,-4.49],[48.71,-3.78],[48.39,-3.86],[48.35,-4.45],[48.55,-4.62]],'Nord-Finist\u00e8re',
+     'Ceinture dor\u00e9e mara\u00eech\u00e8re : artichauts, choux-fleurs, oignons de Roscoff.'],
+    ['Tr\u00e9gor','#0891b2',[[48.86,-3.60],[48.82,-3.00],[48.54,-3.07],[48.50,-3.56],[48.68,-3.70]],'C\u00f4te de granit rose',
+     'Littoral d\u00e9coup\u00e9 et vall\u00e9es encaiss\u00e9es, entre L\u00e9on et Go\u00eblo.'],
+    ['Cornouaille','#16a34a',[[48.26,-4.37],[48.20,-3.60],[47.76,-3.69],[47.70,-4.32],[47.98,-4.50]],'Sud-Finist\u00e8re',
+     'Ancien \u00e9v\u00each\u00e9 ; ports de p\u00eache, faïence de Quimper, festivals bretons.'],
+    ['Vannetais','#65a30d',[[47.94,-3.04],[47.90,-2.33],[47.54,-2.41],[47.50,-3.00],[47.72,-3.17]],'Golfe du Morbihan',
+     'Autour du golfe et de ses \u00eeles ; alignements m\u00e9galithiques de Carnac.'],
+    ['Monts d\u2019Arr\u00e9e','#78716c',[[48.52,-4.11],[48.49,-3.60],[48.27,-3.66],[48.24,-4.08],[48.38,-4.20]],'Toit de la Bretagne',
+     'Cr\u00eates de gr\u00e8s et de schiste, landes et tourbi\u00e8res ; 385 m au Roc\u2019h Ruz.'],
+    ['Anjou','#a3e635',[[47.70,-0.86],[47.64,-0.10],[47.20,-0.19],[47.14,-0.82],[47.42,-1.00]],'Douceur angevine',
+     'Ardoise, tuffeau et vignoble ; jardin de la France selon Rabelais.'],
+    ['Touraine','#facc15',[[47.55,0.41],[47.50,1.12],[47.10,1.04],[47.05,0.45],[47.30,0.28]],'Ch\u00e2teaux de la Loire',
+     'Vall\u00e9es du tuffeau : Chenonceau, Amboise, Villandry. Habitat troglodytique.'],
+    ['Maine','#84cc16',[[48.43,-0.11],[48.37,0.65],[47.93,0.56],[47.87,-0.07],[48.15,-0.25]],'Entre Normandie et Loire',
+     'Bocage d\u2019\u00e9levage, rillettes du Mans et pierre de Sabl\u00e9.'],
+    ['Berry','#eab308',[[47.27,1.65],[47.21,2.50],[46.69,2.40],[46.63,1.70],[46.95,1.50]],'Terres de George Sand',
+     'Champagne berrichonne c\u00e9r\u00e9ali\u00e8re et Boischaut bocager.'],
+    ['Bocage vend\u00e9en','#16a34a',[[47.03,-1.32],[46.97,-0.67],[46.53,-0.75],[46.47,-1.28],[46.75,-1.43]],'Collines et haies',
+     'Bocage dense, th\u00e9\u00e2tre des guerres de Vend\u00e9e (1793-1796).'],
+    ['Marais poitevin','#0d9488',[[46.48,-1.14],[46.45,-0.43],[46.19,-0.51],[46.16,-1.10],[46.32,-1.27]],'Venise verte',
+     'Marais dess\u00e9ch\u00e9 et mouill\u00e9, canaux bord\u00e9s de fr\u00eanes t\u00eatards, barques plates.'],
+    ['Aunis','#0891b2',[[46.31,-1.05],[46.28,-0.57],[46.02,-0.63],[45.99,-1.02],[46.15,-1.13]],'Autour de La Rochelle',
+     'Plaine c\u00e9r\u00e9ali\u00e8re littorale, ancienne place forte protestante.'],
+    ['Saintonge','#22c55e',[[46.00,-0.84],[45.95,-0.13],[45.55,-0.21],[45.50,-0.80],[45.75,-0.97]],'Charentes',
+     'Vignoble de cognac, art roman saintongeais, estuaire de la Gironde.'],
+    ['Champagne crayeuse','#e5e5e5',[[49.35,3.96],[49.28,4.78],[48.72,4.68],[48.65,4.01],[49.00,3.82]],'Craie et vignes',
+     'Sol blanc filtrant, autrefois \u00ab pouilleuse \u00bb, aujourd\u2019hui grande culture et champagne.'],
+    ['Champagne humide','#0284c7',[[48.70,4.31],[48.65,5.02],[48.25,4.94],[48.20,4.35],[48.45,4.18]],'\u00c9tangs et for\u00eats',
+     'Argiles imperm\u00e9ables : grands lacs-r\u00e9servoirs r\u00e9gulant la Seine et la Marne.'],
+    ['Barrois','#a16207',[[48.94,5.00],[48.90,5.60],[48.54,5.53],[48.50,5.04],[48.72,4.90]],'Plateaux calcaires',
+     'Vall\u00e9es encaiss\u00e9es de l\u2019Ornain et de la Saulx, vignoble de Bar.'],
+    ['Wo\u00ebvre','#65a30d',[[49.33,5.54],[49.27,6.05],[48.83,5.99],[48.77,5.57],[49.05,5.45]],'Plaine humide lorraine',
+     'Plaine argileuse d\u2019\u00e9tangs au pied des c\u00f4tes de Meuse.'],
+    ['Vosges','#166534',[[48.65,6.61],[48.56,7.32],[47.84,7.24],[47.75,6.65],[48.20,6.48]],'Ballons et for\u00eats',
+     'Massif ancien gr\u00e9seux au nord, granitique au sud ; ballons arrondis et hautes chaumes.'],
+    ['Sundgau','#a3e635',[[47.76,7.04],[47.72,7.55],[47.44,7.49],[47.40,7.07],[47.58,6.95]],'Sud de l\u2019Alsace',
+     'Collines d\u2019\u00e9tangs et de carpes frites, entre Rhin et Jura.'],
+    ['Ried','#0891b2',[[48.60,7.46],[48.54,7.80],[48.06,7.76],[48.00,7.48],[48.30,7.40]],'Plaine du Rhin',
+     'Bandes inondables du Rhin et de l\u2019Ill : for\u00eats alluviales et prairies humides.'],
+    ['Auxois','#84cc16',[[47.62,4.23],[47.58,4.77],[47.26,4.71],[47.22,4.26],[47.42,4.13]],'Bocage bourguignon',
+     'Plateau marneux d\u2019\u00e9levage charolais ; Alesia et Semur-en-Auxois.'],
+    ['Ch\u00e2tillonnais','#a16207',[[48.02,4.41],[47.98,5.00],[47.66,4.93],[47.62,4.44],[47.82,4.30]],'Plateaux forestiers',
+     'Calcaire et for\u00eats ; sources de la Seine, tr\u00e9sor de Vix.'],
+    ['M\u00e2connais','#c026d3',[[46.60,4.55],[46.56,5.03],[46.24,4.97],[46.20,4.58],[46.40,4.47]],'Vignoble et roches',
+     'C\u00f4tes calcaires du chardonnay, roches de Solutr\u00e9 et Vergisson.'],
+    ['Charolais','#f59e0b',[[46.77,4.03],[46.73,4.57],[46.37,4.51],[46.33,4.06],[46.55,3.93]],'Berceau du b\u0153uf',
+     'Bocage d\u2019\u00e9levage de la race charolaise, cr\u00e9\u00e9e ici au XVIII\u1d49 si\u00e8cle.'],
+    ['Nivernais','#65a30d',[[47.33,3.17],[47.27,3.85],[46.83,3.77],[46.77,3.21],[47.05,3.05]],'Entre Loire et Morvan',
+     'Bocage, for\u00eats et Loire sauvage ; \u00e9levage et fa\u00efence de Nevers.'],
+    ['Haut-Jura','#0d9488',[[46.83,5.75],[46.77,6.35],[46.33,6.28],[46.27,5.79],[46.55,5.65]],'Plis et combes',
+     'Reliefs plissés, tourbi\u00e8res, comt\u00e9 et horlogerie.'],
+    ['Limagne','#eab308',[[46.17,3.08],[46.11,3.50],[45.59,3.45],[45.53,3.10],[45.85,3.00]],'Plaine noire d\u2019Auvergne',
+     'Foss\u00e9 d\u2019effondrement aux terres volcaniques tr\u00e8s fertiles.'],
+    ['Cha\u00eene des Puys','#dc2626',[[46.00,2.88],[45.96,3.12],[45.60,3.09],[45.56,2.90],[45.78,2.84]],'Volcans align\u00e9s',
+     '80 volcans en file, inscrits \u00e0 l\u2019UNESCO ; le puy de D\u00f4me culmine \u00e0 1 465 m.'],
+    ['Livradois','#166534',[[45.80,3.45],[45.75,3.93],[45.35,3.87],[45.30,3.48],[45.55,3.37]],'For\u00eats et scieries',
+     'Montagne bois\u00e9e granitique entre Limagne et Forez.'],
+    ['Forez','#15803d',[[45.90,3.78],[45.85,4.20],[45.45,4.15],[45.40,3.80],[45.65,3.70]],'Monts et plaine',
+     'Plaine humide de la Loire encadr\u00e9e de monts granitiques.'],
+    ['Velay','#7c2d12',[[45.30,3.65],[45.25,4.25],[44.85,4.18],[44.80,3.69],[45.05,3.55]],'Sucs volcaniques',
+     'Plateau basaltique h\u00e9riss\u00e9 de sucs ; lentille verte et d\u00e9part vers Compostelle.'],
+    ['Cantal','#b91c1c',[[45.38,2.53],[45.32,3.07],[44.88,3.01],[44.82,2.56],[45.10,2.43]],'Plus grand volcan d\u2019Europe',
+     'Strato-volcan \u00e9ros\u00e9 en vall\u00e9es rayonnantes ; burons et fromages d\u2019estive.'],
+    ['Aubrac','#78716c',[[44.85,2.78],[44.81,3.32],[44.49,3.26],[44.45,2.81],[44.65,2.68]],'Plateau d\u2019estives',
+     'Haut plateau basaltique de p\u00e2turages, ligne de partage des eaux, aligot.'],
+    ['Margeride','#a16207',[[45.10,3.20],[45.05,3.68],[44.65,3.62],[44.60,3.23],[44.85,3.12]],'Montagne granitique',
+     'Landes et for\u00eats de pins ; pays de la B\u00eate du G\u00e9vaudan.'],
+    ['Rouergue','#f97316',[[44.65,2.27],[44.59,2.95],[44.11,2.87],[44.05,2.31],[44.35,2.15]],'Aveyron',
+     'Causses, vall\u00e9es et s\u00e9gala ; Roquefort et viaduc de Millau.'],
+    ['Combrailles','#65a30d',[[46.24,2.55],[46.20,3.03],[45.84,2.97],[45.80,2.58],[46.02,2.47]],'Nord-ouest auvergnat',
+     'Plateau granitique bocager, gorges de la Sioule.'],
+    ['P\u00e9rigord','#a16207',[[45.45,0.53],[45.38,1.30],[44.82,1.21],[44.75,0.58],[45.10,0.40]],'Quatre couleurs',
+     'Noir (ch\u00eanes truffiers), blanc (calcaire), vert (for\u00eats), pourpre (vignes de Bergerac).'],
+    ['Quercy','#eab308',[[44.85,1.26],[44.79,1.97],[44.31,1.89],[44.25,1.30],[44.55,1.13]],'Causses et Lot',
+     'Causses calcaires perc\u00e9s de gouffres ; Cahors, Saint-Cirq-Lapopie.'],
+    ['Agenais','#84cc16',[[44.45,0.41],[44.41,1.00],[44.09,0.93],[44.05,0.44],[44.25,0.30]],'Vall\u00e9e de la Garonne',
+     'Vergers et primeurs : pruneau d\u2019Agen, tomate de Marmande.'],
+    ['Armagnac','#c026d3',[[44.10,-0.07],[44.05,0.58],[43.65,0.50],[43.60,-0.03],[43.85,-0.18]],'Gascogne',
+     'Coteaux de vignes et de ma\u00efs ; eau-de-vie la plus ancienne de France.'],
+    ['Lauragais','#f59e0b',[[43.62,1.56],[43.58,2.27],[43.26,2.19],[43.22,1.60],[43.42,1.43]],'Pays de cocagne',
+     'Plaine c\u00e9r\u00e9ali\u00e8re du seuil de Naurouze ; le pastel y fit fortune au XVI\u1d49 si\u00e8cle.'],
+    ['B\u00e9arn','#0d9488',[[43.50,-0.84],[43.45,-0.13],[43.05,-0.21],[43.00,-0.80],[43.25,-0.97]],'Pyr\u00e9n\u00e9es occidentales',
+     'Vall\u00e9es d\u2019Aspe et d\u2019Ossau, pastoralisme et vignoble de Juran\u00e7on.'],
+    ['Bigorre','#0891b2',[[43.27,-0.06],[43.23,0.45],[42.87,0.39],[42.83,-0.03],[43.05,-0.15]],'Autour de Tarbes',
+     'Pic du Midi, cirque de Gavarnie et Lourdes.'],
+    ['Comminges','#16a34a',[[43.22,0.50],[43.18,0.98],[42.82,0.92],[42.78,0.53],[43.00,0.42]],'Haute-Garonne pyr\u00e9n\u00e9enne',
+     'Vall\u00e9es et cath\u00e9drale de Saint-Bertrand-de-Comminges.'],
+    ['Chalosse','#65a30d',[[43.86,-0.97],[43.82,-0.43],[43.54,-0.49],[43.50,-0.94],[43.68,-1.07]],'Sud des Landes',
+     'Collines fertiles \u00e9chapp\u00e9es \u00e0 la for\u00eat de pins ; canards et foie gras.'],
+    ['C\u00e9vennes','#166534',[[44.50,3.50],[44.44,4.10],[43.96,4.03],[43.90,3.54],[44.20,3.40]],'Serres et valats',
+     'Cr\u00eates schisteuses et vall\u00e9es \u00e9troites ; ch\u00e2taigniers, camisards, s\u00e9riciculture.'],
+    ['Larzac','#a8a29e',[[44.13,3.04],[44.09,3.55],[43.81,3.49],[43.77,3.07],[43.95,2.95]],'Causse du Larzac',
+     'Plateau calcaire d\u2019\u00e9levage ovin, caves de Roquefort, luttes paysannes des ann\u00e9es 1970.'],
+    ['Corbi\u00e8res','#b45309',[[43.24,2.37],[43.20,3.05],[42.84,2.97],[42.80,2.41],[43.02,2.25]],'Vignes et ch\u00e2teaux cathares',
+     'Reliefs arides, garrigue et forteresses perch\u00e9es (Qu\u00e9ribus, Peyrepertuse).'],
+    ['Minervois','#c026d3',[[43.48,2.53],[43.45,3.07],[43.19,3.01],[43.16,2.56],[43.32,2.43]],'Vignoble languedocien',
+     'Terrasses caillouteuses entre Montagne Noire et Aude.'],
+    ['Roussillon','#dc2626',[[42.93,2.58],[42.88,3.23],[42.48,3.15],[42.43,2.62],[42.68,2.47]],'Catalogne fran\u00e7aise',
+     'Plaine irrigu\u00e9e de vergers, langue catalane, Canigou embl\u00e9matique.'],
+    ['Cerdagne','#0284c7',[[42.62,1.80],[42.59,2.28],[42.37,2.22],[42.34,1.83],[42.48,1.72]],'Haut plateau pyr\u00e9n\u00e9en',
+     'Bassin \u00e0 1 200 m, le plus ensoleill\u00e9 de France ; four solaire d\u2019Odeillo.'],
+    ['Alpilles','#a8a29e',[[43.88,4.67],[43.86,5.10],[43.70,5.05],[43.68,4.70],[43.78,4.60]],'Petite cha\u00eene calcaire',
+     'Cr\u00eates blanches, oliviers et Baux-de-Provence ; paysages peints par Van Gogh.'],
+    ['Luberon','#7c3aed',[[43.97,5.16],[43.94,5.75],[43.72,5.68],[43.69,5.19],[43.83,5.05]],'Montagne provençale',
+     'Massif bois\u00e9 entre Durance et Calavon, villages perch\u00e9s et ocres.'],
+    ['Ventoux','#78716c',[[44.29,5.10],[44.26,5.58],[44.04,5.52],[44.01,5.13],[44.15,5.02]],'Le g\u00e9ant de Provence',
+     'Sommet chauve \u00e0 1 910 m, mistral violent, \u00e9tages de v\u00e9g\u00e9tation superpos\u00e9s.'],
+    ['Baronnies','#65a30d',[[44.50,5.13],[44.46,5.67],[44.18,5.61],[44.14,5.16],[44.32,5.03]],'Pr\u00e9alpes du sud',
+     'Montagnes s\u00e8ches, lavande, tilleul et abricots.'],
+    ['Maures','#166534',[[43.44,6.10],[43.41,6.70],[43.15,6.63],[43.12,6.14],[43.28,6.00]],'Massif cristallin',
+     'Ch\u00e2taigniers et ch\u00eanes-li\u00e8ge sur roches anciennes, tr\u00e8s expos\u00e9 aux incendies.'],
+    ['Ubaye','#0891b2',[[44.58,6.41],[44.55,7.00],[44.29,6.93],[44.26,6.44],[44.42,6.30]],'Haute vall\u00e9e alpine',
+     'Vall\u00e9e isol\u00e9e de Barcelonnette, ancienne \u00e9migration vers le Mexique.'],
+    ['Verdon','#0d9488',[[43.96,6.08],[43.92,6.73],[43.64,6.65],[43.60,6.12],[43.78,5.97]],'Grand Canyon',
+     'Gorges les plus profondes d\u2019Europe, entaill\u00e9es dans le calcaire.'],
+    ['Balagne','#f59e0b',[[42.69,8.65],[42.66,9.13],[42.44,9.07],[42.41,8.68],[42.55,8.57]],'Jardin de la Corse',
+     'Collines d\u2019oliviers et villages perch\u00e9s au-dessus de Calvi et l\u2019\u00cele-Rousse.'],
+    ['Castagniccia','#166534',[[42.58,9.21],[42.55,9.55],[42.29,9.51],[42.26,9.23],[42.42,9.15]],'Pays des ch\u00e2taigniers',
+     'Montagne dens\u00e9ment peupl\u00e9e autrefois gr\u00e2ce \u00e0 la ch\u00e2taigne, \u00ab arbre \u00e0 pain \u00bb.'],
+    ['Cap Corse','#0369a1',[[43.10,9.31],[43.06,9.48],[42.70,9.46],[42.66,9.32],[42.88,9.28]],'Doigt de l\u2019\u00eele',
+     'Presqu\u2019\u00eele de tours g\u00e9noises, marines et vignobles.'],
+    ['Alta Rocca','#7c2d12',[[41.94,8.92],[41.91,9.35],[41.65,9.30],[41.62,8.95],[41.78,8.85]],'Corse-du-Sud int\u00e9rieure',
+     'Villages de granite, for\u00eats de pins laricio, sites pr\u00e9historiques.'],
+    ['Beauce','#eab308',[[48.54,1.32],[48.52,1.62],[48.46,1.92],[48.34,2.14],[48.16,2.18],[48.00,2.08],[47.94,1.82],[47.98,1.54],[48.10,1.36],[48.32,1.28]],'Grenier \u00e0 bl\u00e9',
+     'Plateau limoneux quasi sans relief ni rivi\u00e8re : l\u2019eau s\u2019infiltre dans la craie. Openfield c\u00e9r\u00e9alier embl\u00e9matique.'],
+    ['Brie','#a3e635',[[48.90,2.60],[48.85,3.45],[48.45,3.45],[48.50,2.62]],'\u00c0 l\u2019est de Paris',
+     'Plateau de limons fertiles, ponctu\u00e9 de fermes isol\u00e9es. Donne son nom au fromage.'],
+    ['Sologne','#78350f',[[47.74,1.58],[47.72,1.86],[47.66,2.16],[47.55,2.38],[47.42,2.42],[47.32,2.28],[47.30,2.02],[47.36,1.76],[47.50,1.60],[47.64,1.55]],'Pays d\u2019\u00e9tangs',
+     'Sables et argiles imperm\u00e9ables : 3 000 \u00e9tangs, for\u00eats et landes. Longtemps insalubre, assain\u00ee sous Napol\u00e9on III.'],
+    ['Camargue','#ec4899',[[43.70,4.18],[43.68,4.38],[43.62,4.58],[43.52,4.74],[43.40,4.80],[43.34,4.68],[43.36,4.48],[43.44,4.28],[43.56,4.18]],'Delta du Rh\u00f4ne',
+     'Plaine deltaïque de sel et d\u2019eau, entre les deux bras du Rh\u00f4ne. Rizi\u00e8res, salins, chevaux, flamants roses.'],
+    ['Causses','#a8a29e',[[44.60,2.90],[44.55,3.60],[44.05,3.60],[44.10,2.95]],'Plateaux calcaires',
+     'Karst aride entaill\u00e9 de gorges (Tarn, Jonte). Pastoralisme ovin, avens et grottes. Inscrit \u00e0 l\u2019UNESCO avec les C\u00e9vennes.'],
+    ['Landes de Gascogne','#166534',[[44.60,-1.30],[44.55,-0.20],[43.80,-0.20],[43.85,-1.35]],'La plus grande for\u00eat',
+     'Marais insalubre transform\u00e9 en for\u00eat de pins par la loi de 1857 : un million d\u2019hectares plant\u00e9s de main d\u2019homme.'],
+    ['Morvan','#15803d',[[47.44,3.78],[47.42,3.98],[47.36,4.18],[47.24,4.28],[47.08,4.26],[46.96,4.14],[46.94,3.94],[47.02,3.80],[47.20,3.74],[47.36,3.74]],'\u00cele granitique',
+     'Massif ancien de granite surgi au milieu des plateaux calcaires bourguignons. Bocage, for\u00eats, \u00e9levage charolais.'],
+    ['Bresse','#f59e0b',[[46.90,4.95],[46.85,5.45],[46.20,5.45],[46.25,5.00]],'Volailles et \u00e9tangs',
+     'Plaine argileuse humide entre Sa\u00f4ne et Jura. Sa volaille est le premier animal \u00e0 avoir obtenu une AOC (1957).'],
+    ['Dombes','#0891b2',[[46.15,4.75],[46.10,5.25],[45.80,5.25],[45.85,4.78]],'Mille \u00e9tangs',
+     'Plateau argileux imperm\u00e9able couvert d\u2019\u00e9tangs cr\u00e9\u00e9s au Moyen \u00c2ge, altern\u00e9s entre pisciculture et culture.'],
+    ['Perche','#65a30d',[[48.70,0.30],[48.65,1.05],[48.20,1.05],[48.25,0.35]],'Bocage et chevaux',
+     'Collines bocag\u00e8res entre Normandie et Beauce. Berceau du cheval percheron.'],
+    ['Brenne','#0d9488',[[46.85,0.90],[46.82,1.40],[46.55,1.40],[46.58,0.95]],'Parc aux mille \u00e9tangs',
+     'Zone humide majeure d\u2019Europe : plus de 3 000 \u00e9tangs cr\u00e9\u00e9s par les moines. Paradis des oiseaux.'],
+    ['Argonne','#525252',[[49.55,4.70],[49.50,5.20],[48.95,5.20],[49.00,4.75]],'For\u00eat de tranch\u00e9es',
+     'Cr\u00eate bois\u00e9e et humide, barri\u00e8re naturelle est-ouest. Th\u00e9\u00e2tre de combats acharn\u00e9s en 1914-1918.'],
+    ['Bocage normand','#16a34a',[[49.10,-1.30],[49.05,-0.40],[48.55,-0.40],[48.60,-1.35]],'Haies et pommiers',
+     'Maillage dense de haies sur talus, \u00e9levage laitier, cidre et calvados. Terrain difficile lors de la bataille de Normandie.'],
+    ['Puisaye','#a16207',[[47.75,2.90],[47.72,3.35],[47.45,3.35],[47.48,2.95]],'Pays de l\u2019argile',
+     'Bocage humide et forestier, terre de potiers (gr\u00e8s de Saint-Amand) et pays de Colette.'],
+    ['Vexin','#facc15',[[49.30,1.55],[49.25,2.15],[49.00,2.15],[49.05,1.60]],'Plateau normand-fran\u00e7ais',
+     'Plateau calcaire couvert de limons, coup\u00e9 par la Seine et l\u2019Epte, fronti\u00e8re historique entre Normandie et domaine royal.']
+  ];
+  function paysEtiqSeule(){ return !!(document.getElementById('pays-etiq')||{}).checked; }
+  function couchePays(liste){
+    const g = L.layerGroup();
+    const etiqSeule = paysEtiqSeule();
+    liste.forEach(function(p){
+      if(etiqSeule){
+        const c = centrePoly(p[2]);
+        L.marker(c, { icon: L.divIcon({ className:'pays-etq',
+          html:'<div style="white-space:nowrap;font:700 12px system-ui;color:'+p[1]+';text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff,0 0 3px #fff">'+p[0]+'</div>',
+          iconSize:[1,1], iconAnchor:[0,0] }), keyboard:false })
+          .bindPopup('<div style="font:12px/1.6 system-ui;min-width:215px"><b style="color:'+p[1]+';font-size:13px">\U0001F3DE\uFE0F '+p[0]+'</b><br><i style="color:#8a8577">'+p[3]+'</i><br>'+p[4]+'</div>')
+          .addTo(g);
+        return;
+      }
+      L.polygon(p[2], { color:p[1], weight:2, fillColor:p[1], fillOpacity:0.18 })
+        .bindTooltip(p[0], { direction:'center', permanent:false })
+        .bindPopup('<div style="font:12px/1.6 system-ui;min-width:215px">'
+          + '<b style="color:'+p[1]+';font-size:13px">\U0001F3DE\uFE0F '+p[0]+'</b><br>'
+          + '<i style="color:#8a8577">'+p[3]+'</i><br>' + p[4]
+          + '<div style="color:#8a8577;font-size:10px;margin-top:5px">Contour sch\u00e9matique \u2014 les pays n\u2019ont pas de limites officielles.</div></div>')
+        .addTo(g);
+    });
+    return g;
+  }
+  function basculePays(btnId, cle, liste, libOn, libOff, teinte, msg){
+    const b = document.getElementById(btnId);
+    if(!b) return;
+    b.addEventListener('click', function(){
+      if(etatPaysNat[cle]){ map.removeLayer(etatPaysNat[cle]); etatPaysNat[cle] = null; basculerBouton(b, false, '', libOff); majLegende(); return; }
+      basculerBouton(b, true, libOn, '', teinte);
+      etatPaysNat[cle] = couchePays(liste).addTo(map);
+      majLegende();
+      afficherInfo(msg, 9000);
+    });
+  }
+  (function(){
+    const c = document.getElementById('pays-etiq');
+    if(c && c.addEventListener) c.addEventListener('change', function(){
+      // redessine les couches actives dans le nouveau mode
+      [['alpes','btn-pays-alpes',PAYS_ALPES],['france','btn-pays-france',PAYS_FRANCE]].forEach(function(o){
+        if(etatPaysNat[o[0]]){
+          map.removeLayer(etatPaysNat[o[0]]);
+          etatPaysNat[o[0]] = couchePays(o[2]).addTo(map);
+        }
+      });
+      afficherInfo(paysEtiqSeule() ? '\U0001F3F7\uFE0F \u00c9tiquettes seules \u2014 la carte reste lisible dessous' : '\U0001F3DE\uFE0F Contours affich\u00e9s', 4000);
+    });
+  })();
+  basculePays('btn-pays-alpes', 'alpes', PAYS_ALPES, '\u26F0 Pays des Alpes \u2715', '\u26F0 Pays des Alpes', '#0d9488',
+    '\u26F0 '+PAYS_ALPES.length+' pays alpins \u2014 cliquez pour l\u2019histoire et la g\u00e9ographie de chacun. Superposez la g\u00e9ologie : les limites suivent souvent les roches.');
+  basculePays('btn-pays-france', 'france', PAYS_FRANCE, '\U0001F5FA\uFE0F Pays de France \u2715', '\U0001F5FA\uFE0F Grands pays de France', '#eab308',
+    '\U0001F5FA\uFE0F '+PAYS_FRANCE.length+' grands pays \u2014 Beauce, Sologne, Camargue, Causses\u2026 chacun n\u00e9 d\u2019un sol et d\u2019une histoire.');
+
+  function centrePoly(poly){
+    let la = 0, lo = 0;
+    poly.forEach(function(p){ la += p[0]; lo += p[1]; });
+    return [la/poly.length, lo/poly.length];
+  }
+  function questionPays(){
+    const tous = PAYS_ALPES.concat(PAYS_FRANCE);
+    etatPaysNat.cible = tous[Math.floor(Math.random()*tous.length)];
+    const p = document.getElementById('feu-methode');
+    if(p){
+      p.innerHTML = '<div style="font-weight:700;font-size:13px;margin-bottom:6px">\U0001F3AF Retrouve le pays \u2014 question '+(etatPaysNat.tour+1)+'/8</div>'
+        + '<div style="font-size:15px;margin:8px 0">O\u00f9 se trouve <b style="color:'+etatPaysNat.cible[1]+'">'+etatPaysNat.cible[0]+'</b> ?</div>'
+        + '<div style="font-size:11px;color:#57534e">Indice : <i>'+etatPaysNat.cible[3]+'</i></div>'
+        + '<div style="font-size:11px;color:#8a8577;margin-top:8px">Cliquez sur la carte \u00e0 l\u2019endroit que vous pensez \u00eatre le bon.</div>'
+        + '<div style="font-size:12px;margin-top:8px">Score : <b>'+etatPaysNat.score+'</b> / '+etatPaysNat.tour+'</div>';
+      p.style.display = 'block';
+    }
+  }
+  document.getElementById('btn-pays-jeu').addEventListener('click', function(){
+    etatPaysNat.jeu = true; etatPaysNat.tour = 0; etatPaysNat.score = 0;
+    if(etatPaysNat.alpes){ map.removeLayer(etatPaysNat.alpes); etatPaysNat.alpes = null; basculerBouton(document.getElementById('btn-pays-alpes'), false, '', '\u26F0 Pays des Alpes'); }
+    if(etatPaysNat.france){ map.removeLayer(etatPaysNat.france); etatPaysNat.france = null; basculerBouton(document.getElementById('btn-pays-france'), false, '', '\U0001F5FA\uFE0F Grands pays de France'); }
+    questionPays();
+    afficherInfo('\U0001F3AF Jeu lanc\u00e9 \u2014 cliquez sur la carte pour situer le pays demand\u00e9', 7000);
+  });
+  map.on('click', function(ev){
+    if(!etatPaysNat.jeu || !etatPaysNat.cible) return;
+    const c = centrePoly(etatPaysNat.cible[2]);
+    const d = map.distance(ev.latlng, L.latLng(c[0], c[1]))/1000;
+    const bon = d <= 45;
+    if(bon) etatPaysNat.score++;
+    if(etatPaysNat.marque) map.removeLayer(etatPaysNat.marque);
+    etatPaysNat.marque = L.layerGroup([
+      L.polygon(etatPaysNat.cible[2], { color:etatPaysNat.cible[1], weight:2.5, fillColor:etatPaysNat.cible[1], fillOpacity:0.3 }),
+      L.marker(c, { icon: L.divIcon({ className:'jeu-pays',
+        html:'<div style="white-space:nowrap;background:'+(bon?'#166534':'#b91c1c')+';color:#fff;font:600 12px system-ui;padding:3px 8px;border-radius:7px;border:1px solid #fff">'+(bon?'\u2713 ':'\u2717 ')+etatPaysNat.cible[0]+'</div>',
+        iconSize:[1,1], iconAnchor:[0,10] }), keyboard:false })
+    ]).addTo(map);
+    etatPaysNat.tour++;
+    setTimeout(function(){
+      if(etatPaysNat.marque){ map.removeLayer(etatPaysNat.marque); etatPaysNat.marque = null; }
+      if(etatPaysNat.tour >= 8){
+        etatPaysNat.jeu = false;
+        const p = document.getElementById('feu-methode');
+        if(p) p.innerHTML = '<div style="font-weight:700;font-size:14px">\U0001F3AF Partie termin\u00e9e</div>'
+          + '<div style="font-size:22px;margin:10px 0;text-align:center"><b>'+etatPaysNat.score+'</b> / 8</div>'
+          + '<div style="font-size:12px;color:#57534e">'+(etatPaysNat.score >= 7 ? 'Excellent : vous connaissez vos pays !' : (etatPaysNat.score >= 4 ? 'Bien \u2014 affichez les couches pour r\u00e9viser les autres.' : 'Affichez les pays sur la carte et explorez-les : chaque fiche raconte son relief et son histoire.'))+'</div>'
+          + '<div style="text-align:right;margin-top:10px"><button onclick="document.getElementById(\'feu-methode\').style.display=\'none\'" style="background:#1c1917;color:#fff;border:none;border-radius:7px;padding:4px 14px;cursor:pointer;font-size:12px">Fermer</button></div>';
+      } else questionPays();
+    }, 2200);
+    afficherInfo(bon ? ('\u2713 Bien vu \u2014 '+etatPaysNat.cible[0]+' (\u00e0 '+Math.round(d)+' km)') : ('\u2717 C\u2019\u00e9tait l\u00e0 \u2014 '+etatPaysNat.cible[0]+', \u00e0 '+Math.round(d)+' km de votre clic'), 2500);
+  });
+  document.getElementById('btn-pays-info').addEventListener('click', function(){
+    const p = document.getElementById('feu-methode');
+    const t = '<div style="font-weight:700;font-size:13px;margin-bottom:6px">\U0001F3DE\uFE0F Qu\u2019est-ce qu\u2019un \u00ab pays \u00bb ?</div>'
+      + '<div>Le mot vient du latin <i>pagus</i>, qui d\u00e9signait une petite circonscription rurale. Un <b>pays</b> \u2014 on dit aussi <b>r\u00e9gion naturelle</b> \u2014 est une \u00e9tendue que ses habitants per\u00e7oivent comme un tout : m\u00eame relief, m\u00eame sol, m\u00eame fa\u00e7on de cultiver, souvent m\u00eame parler.</div>'
+      + '<div style="margin-top:7px"><b>Ces limites viennent du sous-sol.</b> Le <b>Tri\u00e8ves</b> correspond \u00e0 des marnes noires imperm\u00e9ables ; le <b>D\u00e9voluy</b> \u00e0 un bloc calcaire ferm\u00e9 o\u00f9 l\u2019eau dispara\u00eet ; la <b>Sologne</b> \u00e0 des sables argileux qui retiennent l\u2019eau en \u00e9tangs ; la <b>Beauce</b> \u00e0 des limons profonds sur craie, sans une rivi\u00e8re. Affichez la couche <b>g\u00e9ologie</b> par-dessus : la co\u00efncidence est frappante.</div>'
+      + '<div style="margin-top:7px"><b>Ils pr\u00e9c\u00e8dent les d\u00e9partements.</b> Cr\u00e9\u00e9s en 1790 pour rompre avec les provinces, les d\u00e9partements ont d\u00e9coup\u00e9 en travers de ces pays. C\u2019est pourquoi un pays chevauche souvent deux d\u00e9partements \u2014 et pourquoi les habitants disent volontiers \u00ab je suis du Tri\u00e8ves \u00bb plut\u00f4t que \u00ab de l\u2019Is\u00e8re \u00bb.</div>'
+      + '<div style="margin-top:7px"><b>Pas de limites officielles.</b> Aucun texte ne les d\u00e9finit : leurs contours sont flous, discut\u00e9s, parfois emboît\u00e9s. Le d\u00e9coupage le plus proche est celui des <b>petites r\u00e9gions agricoles</b> \u00e9tabli par l\u2019INSEE en 1946. Les trac\u00e9s de cette carte sont donc <b>indicatifs</b>.</div>'
+      + '<div style="margin-top:7px;color:#57534e"><b>Pistes de s\u00e9ance.</b> Superposer pays et g\u00e9ologie ; comparer pays et limites d\u00e9partementales ; chercher l\u2019origine des noms (Matheysine vient de La Mure, Gr\u00e9sivaudan de Gr\u00e9sy) ; faire situer les pays avec le jeu.</div>'
+      + '<div style="text-align:right;margin-top:10px"><button onclick="document.getElementById(\'feu-methode\').style.display=\'none\'" style="background:#1c1917;color:#fff;border:none;border-radius:7px;padding:4px 14px;cursor:pointer;font-size:12px">Fermer</button></div>';
+    if(p){ p.innerHTML = t; p.style.display = 'block'; }
+  });
   // ---------- ⚙️ Menu Options : ouvre chaque fenêtre de réglage ----------
   document.querySelectorAll('.opt-ouvre').forEach(function(b){
     b.addEventListener('click', function(){
@@ -11896,8 +12593,8 @@
   });
 
   // ================= Fenêtres flottantes (widgets) =================
-  const WIDGETS = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-equip','wg-geol','wg-sismique','wg-risques','wg-population','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-mer','wg-astro','wg-animaux','wg-limites','wg-foret','wg-pilote'];
-  const WIDGETS_PILOTABLES = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-equip','wg-geol','wg-sismique','wg-risques','wg-population','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-mer','wg-astro','wg-animaux','wg-limites','wg-foret'];
+  const WIDGETS = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-equip','wg-geol','wg-sismique','wg-risques','wg-population','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-limites','wg-foret','wg-pilote'];
+  const WIDGETS_PILOTABLES = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-equip','wg-geol','wg-sismique','wg-risques','wg-population','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-limites','wg-foret'];
   const WIDGETS_CASES = []; // remplacées par la fenêtre 🧭 pilote
   let posWidgets = {};
   try{ posWidgets = JSON.parse(localStorage.getItem('geo-widgets3')||'{}'); }catch(e){}
@@ -11984,6 +12681,7 @@
   initWidget('wg-climat',    { left:'12px', top:'110px', replie:true, cache:true });
   initWidget('wg-montagnes', { left:'12px', top:'150px', replie:true, cache:true });
   initWidget('wg-rivieres',  { left:'12px', top:'190px', replie:true, cache:true });
+  initWidget('wg-pays',      { left:'12px', top:'520px', replie:true, cache:true });
   initWidget('wg-mer',       { left:'12px', top:'440px', replie:true, cache:true });
   initWidget('wg-astro',   { left:'12px', top:'480px', replie:true, cache:true });
   initWidget('wg-animaux',   { left:'12px', top:'230px', replie:true, cache:true });
@@ -12250,6 +12948,19 @@
           + ligneLegende('#ea580c', 'Magnitude 3 \u00e0 4', 'rond', 'Ressenti \u00e0 partir de 4')
           + ligneLegende('#dc2626', 'Magnitude 4 \u00e0 5', 'rond', '')
           + ligneLegende('#7f1d1d', 'Magnitude 5 et plus', 'rond', 'Peut causer des d\u00e9g\u00e2ts'));
+      }
+      if(etatClim.soleil || etatClim.vent || etatClim.noms){
+        blocs.push('<div class="leg-sous">\u2600\uFE0F Moyennes climatiques</div>'
+          + (etatClim.soleil ? ligneLegende('#dc2626', 'Plus de 2 600 h de soleil', 'rond', 'Provence, Corse, Roussillon') : '')
+          + (etatClim.soleil ? ligneLegende('#f59e0b', '1 900 \u00e0 2 600 h', 'rond', 'Sud-Ouest, vall\u00e9e du Rh\u00f4ne') : '')
+          + (etatClim.soleil ? ligneLegende('#a3a3a3', 'Moins de 1 700 h', 'rond', 'Bretagne, Nord, Normandie') : '')
+          + (etatClim.vent ? ligneLegende('#7f1d1d', 'Vent moyen fort (25 km/h et plus)', 'rond', 'Taille du cercle \u221d vitesse') : '')
+          + (etatClim.noms ? ligneLegende('#1d4ed8', 'Vents r\u00e9gionaux nomm\u00e9s', 'carre', 'La fl\u00e8che montre le sens du souffle') : ''));
+      }
+      if(etatPaysNat.alpes || etatPaysNat.france){
+        blocs.push('<div class="leg-sous">\U0001F3DE\uFE0F Pays et r\u00e9gions naturelles</div>'
+          + ligneLegende('#0d9488', 'Chaque couleur = un pays', 'carre', 'Cliquez pour son relief, son sol et son histoire')
+          + ligneLegende('#8a8577', '<small>Contours sch\u00e9matiques : pas de limites officielles</small>', 'carre', ''));
       }
       if(etatOrage.cape || etatOrage.li || etatOrage.grele){
         blocs.push('<div class="leg-sous">\u26A1 Risque d\u2019orage <small>(mod\u00e8le Open-Meteo)</small></div>'
