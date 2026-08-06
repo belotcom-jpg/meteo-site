@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>MultiMeteo v4.0</title>
+<title>MultiMeteo v4.1.1</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -60,8 +60,11 @@ body{background:#000;color:#fff;font-family:'Courier New',monospace;padding:3px;
   #viewMenu .vm-sep{font-size:9px;color:#555;text-align:center;padding:7px 0 4px;letter-spacing:0.5px}
 
   #exploreWrap{position:relative;flex-shrink:0;display:flex}
-  #exploreBtn,#helpBtn,#optBtn{background:#161616;border:1px solid #333;border-radius:10px;color:#ccc;font-size:17px;cursor:pointer;padding:0 11px;line-height:1;transition:background .15s}
-  #exploreBtn:hover,#helpBtn:hover,#optBtn:hover{background:#222}
+  #exploreBtn,#helpBtn,#optBtn,#scaleBtn{background:#161616;border:1px solid #333;border-radius:10px;color:#ccc;font-size:17px;cursor:pointer;padding:0 11px;line-height:1;transition:background .15s}
+  #exploreBtn:hover,#helpBtn:hover,#optBtn:hover,#scaleBtn:hover{background:#222}
+  /* glyphe non-émoji : rendu net et centré, contrairement à 📐 dont le gabarit déborde */
+  #scaleBtn{font-family:'Courier New',monospace;font-weight:900;font-size:15px;letter-spacing:-1px;display:flex;align-items:center;justify-content:center;min-width:38px}
+  #scaleBtn.on{color:#ffd400;border-color:#5a4a00}
   #optBtn{color:#e0b84c}
   #exploreBtn.searching{animation:spin 1s linear infinite}
   #exploreMenu{display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:9998;background:#0d0d0d;border:1px solid #333;border-radius:10px;padding:6px;min-width:215px;box-shadow:0 8px 24px rgba(0,0,0,0.6)}
@@ -136,6 +139,14 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
 #searchBtn{background:#00ffff;color:#000;border:none;padding:0 14px;border-radius:10px;font-weight:900;cursor:pointer;flex-shrink:0;font-family:'Courier New',monospace;font-size:clamp(11px,3vw,14px);min-height:40px;min-width:46px;-webkit-appearance:none;transition:background .15s}
 #searchBtn:active{background:#fff}
 #searchBtn:disabled{background:#333;color:#666}
+  #scaleWrap{position:relative;flex-shrink:0;display:flex}
+  #scaleMenu{display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:9998;background:#0d0d0d;border:1px solid #333;border-radius:10px;padding:6px;min-width:215px;box-shadow:0 8px 24px rgba(0,0,0,0.6)}
+  #scaleMenu.open{display:block}
+  #scaleMenu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;color:#ddd;font-family:'Courier New',monospace;font-size:13px;font-weight:900;text-align:left;padding:9px 10px;border-radius:7px;cursor:pointer}
+  #scaleMenu button:hover{background:#1e2a3a}
+  #scaleMenu button.on{background:#2a2410;color:#ffd400}
+  #scaleMenu button span{flex:1;font-weight:400;font-size:10px;color:#888}
+  #scaleMenu button.on span{color:#ffd400}
 #perfCard{background:#0a0f0a;border:1px solid #1e2e1e;border-radius:6px;padding:4px 9px;font-size:11px;color:#9fd0a0;font-family:'Courier New',monospace;line-height:1.5}
 #sourcesBar{display:none;background:#080808;border:1px solid #1e1e1e;border-radius:6px;padding:3px 8px;flex-wrap:wrap;gap:4px;align-items:center}
 .src-lbl{font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:2px;color:#444;flex-shrink:0}
@@ -337,6 +348,8 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   .vf-c4 .vf-l1{display:block;font-size:12px}
   .vf-c4 .vf-l2{display:block;font-size:10.5px;opacity:.92}
   .vf-c4 i{font-style:normal;color:#444;font-size:9px;margin:0 1px}
+  #calIOBox{margin:6px 0;padding:6px 0;border-top:1px solid #1c2530}
+  #calIO{width:100%;margin-top:5px;background:#080808;color:#9fd0a0;border:1px solid #234;border-radius:5px;font-family:'Courier New',monospace;font-size:10px;padding:5px;resize:vertical}
   .cal-bar{margin:5px 0;padding:5px 0;border-top:1px solid #1c2530;border-bottom:1px solid #1c2530}
   .cal-tog,.cal-auto{border-color:#333;color:#8a8a8a}
   .cal-tog.on{border-color:#52e88f;color:#52e88f;background:rgba(82,232,143,0.08)}
@@ -441,32 +454,34 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   .dvx-val small{font-size:12px;color:#b8b8b8;font-weight:600;margin-left:3px;letter-spacing:0}
   #divDetailPanel{position:fixed;top:0;right:0;bottom:0;width:min(400px,88vw);transform:translateX(102%);transition:transform .22s ease;z-index:10050;pointer-events:none}
   #divDetailPanel.open{transform:translateX(0);pointer-events:auto}
-  #divDetailCard{height:100%;background:#0c0c0c;border-left:1px solid #2a2a2a;overflow-y:auto;padding:12px 15px 20px;box-shadow:-14px 0 40px rgba(0,0,0,0.55);display:flex;flex-direction:column}
-  #divDetailPanel .scen-head{position:sticky;top:0;background:#0c0c0c;padding-bottom:8px;margin-bottom:2px;border-bottom:1px solid #1c2530;z-index:2}
+  #divDetailCard{height:100%;background:#0c0c0c;border-left:1px solid #2a2a2a;overflow-y:auto;padding:10px 13px 14px;box-shadow:-14px 0 40px rgba(0,0,0,0.55);display:flex;flex-direction:column;
+    scrollbar-width:none;-ms-overflow-style:none}          /* pas d'ascenseur visible */
+  #divDetailCard::-webkit-scrollbar{width:0;height:0;display:none}
+  #divDetailPanel .scen-head{position:sticky;top:0;background:#0c0c0c;padding-bottom:5px;margin-bottom:1px;border-bottom:1px solid #1c2530;z-index:2}
   #divDetailTitle{font-size:15px;font-weight:800;color:#e8e8e8;text-transform:capitalize}
-  .dvd-src{font-size:11.5px;color:#8aa;margin:2px 0 12px;padding-bottom:8px;border-bottom:1px solid #1c2530}
+  .dvd-src{font-size:11px;color:#8aa;margin:1px 0 7px;padding-bottom:5px;border-bottom:1px solid #1c2530}
   .dvx-clic{cursor:pointer}
   .dvx-more{color:#5a7a9a;font-weight:900;margin-left:5px;font-size:15px}
   .dvx-clic:active{background:#141c26}
-  .dvm-grp{margin:2px 0 7px}
-  .dvm-hd{font-size:12px;color:#9fb3c8;font-weight:700;margin:0 0 3px;border-bottom:1px solid #1c2530;padding-bottom:2px}
+  .dvm-grp{margin:1px 0 5px}
+  .dvm-hd{font-size:11.5px;color:#9fb3c8;font-weight:700;margin:0 0 2px;border-bottom:1px solid #1c2530;padding-bottom:1.5px}
   .dvm-hd small{color:#7a8a99;font-weight:400;font-size:10.5px}
-  .dvm-row{display:grid;grid-template-columns:104px 1fr 54px auto;align-items:center;gap:7px;padding:2px 0}
+  .dvm-row{display:grid;grid-template-columns:96px 1fr 50px auto;align-items:center;gap:6px;padding:1px 0}
   .dvm-med{position:absolute;top:-2px;bottom:-2px;width:0;border-left:1.5px dashed #cfa;opacity:.5}
   .dvm-dev{font-size:10.5px;font-weight:700;min-width:34px;text-align:right;font-variant-numeric:tabular-nums}
   .dvm-dev0{color:#667}
-  .ind-day-main{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:8px 0 12px}
-  .ind-day-main>span:first-child{font-size:32px;font-weight:800;letter-spacing:-1px}
+  .ind-day-main{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:4px 0 7px}
+  .ind-day-main>span:first-child{font-size:26px;font-weight:800;letter-spacing:-1px}
   .ind-day-an{font-size:13px;font-weight:700}
-  .ind-day-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #151515;font-family:'Courier New',monospace}
+  .ind-day-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:2.5px 0;border-bottom:1px solid #151515;font-family:'Courier New',monospace}
   .ind-day-k{font-size:12.5px;color:#aaa}
   .ind-day-v{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
-  .ep-row{display:grid;grid-template-columns:24px 74px 1fr auto;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid #151515;font-family:'Courier New',monospace}
+  .ep-row{display:grid;grid-template-columns:20px 68px 1fr auto;align-items:center;gap:5px;padding:1.5px 0;border-bottom:1px solid #151515;font-family:'Courier New',monospace}
   .ep-n{font-size:12px;font-weight:700}
   .ep-d{font-size:12px;color:#bbb}
   .ep-tag{font-size:11px}
   .ep-v{font-size:13.5px;font-weight:800;font-variant-numeric:tabular-nums}
-  .dvd-hint{font-size:10.5px;color:#7a8a99;margin:6px 0 4px;line-height:1.5}
+  .dvd-hint{font-size:10px;color:#7a8a99;margin:4px 0 3px;line-height:1.4}
   .dvm-nm{font-size:11.5px;color:#cfe0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .dvm-track{position:relative;height:5px;background:#141c26;border-radius:3px}
   .dvm-track i{position:absolute;top:50%;width:8px;height:8px;margin-top:-4px;margin-left:-4px;border-radius:50%;box-shadow:0 0 0 1px #0d0d0d}
@@ -603,6 +618,15 @@ document.addEventListener('DOMContentLoaded',function(){try{var vt=document.getE
            onkeypress="if(event.key==='Enter'){this.blur();load()}"
            autocomplete="off" autocorrect="off" spellcheck="false">
     <button id="clearBtn" onclick="clearSearch()" title="Effacer">✕</button>
+    <div id="scaleWrap">
+      <button id="scaleBtn" onclick="toggleScaleMenu(event)" aria-label="Échelle du graphe" title="Échelle verticale du graphe de pluie">⇕</button>
+      <div id="scaleMenu">
+        <div class="em-sep">— Échelle verticale —</div>
+        <button id="btnYSqrt" onclick="toggleYSqrt()">√ <span>Échelle linéaire</span></button>
+        <button id="btnYRef" onclick="toggleYRef()">⤒ <span>Max sur pessimiste</span></button>
+        <div class="em-sep" style="font-size:9px;color:#667;text-transform:none;letter-spacing:0">L'échelle racine rend visibles les pluies faibles sans écraser les pics.</div>
+      </div>
+    </div>
     <div id="exploreWrap">
       <button id="exploreBtn" onclick="toggleExploreMenu(event)" aria-label="Explorer : position, aléatoire, villes extrêmes" title="Explorer : position, aléatoire, villes extrêmes">🎲</button>
       <div id="exploreMenu">
@@ -621,7 +645,7 @@ document.addEventListener('DOMContentLoaded',function(){try{var vt=document.getE
     <div id="viewModeWrap">
       <button id="simpleBtn" onclick="toggleViewModeMenu(event)" title="Choisir la vue">🖥▾</button>
       <div id="viewModeMenu">
-        <button onclick="setViewMode('full')">📈 <span>Météo J+14</span></button>
+        <button onclick="setViewMode('full')">📈 <span>Météo J+12</span></button>
         <button onclick="setViewMode('no')">🌧 <span>Pluie dans l'heure</span></button>
         <button onclick="setViewMode('detail')">🕒 <span>Détail horaire</span></button>
       </div>
@@ -641,6 +665,7 @@ document.addEventListener('DOMContentLoaded',function(){try{var vt=document.getE
   <div id="favBar"></div>
   <div id="perfCard" style="display:none"></div>
   <div id="sourcesBar"></div>
+
   <div id="viewBtns">
     <div id="viewWrap">
       <button id="viewMenuBtn" onclick="toggleViewMenu(event)" title="Choisir l'échéance">📅 <span id="viewMenuLabel">J+1</span> ▾</button>
@@ -650,8 +675,8 @@ document.addEventListener('DOMContentLoaded',function(){try{var vt=document.getE
         <button id="btnJ0"  onclick="setView('j0');closeViewMenu()">J <span>aujourd'hui</span></button>
         <button id="btnJ1"  onclick="setView('j1');closeViewMenu()">J+1 <span>demain</span></button>
         <button id="btnJ5"  onclick="setView('j5');closeViewMenu()">J+5 <span>dans 5 jours</span></button>
-        <button id="btnJ8"  onclick="setView('j8');closeViewMenu()">J+8 <span>dans 8 jours</span></button>
-        <button id="btnJ14" onclick="setView('j14');closeViewMenu()">J+14 <span>dans 14 jours</span></button>
+        <button id="btnJ8"  onclick="setView('j8');closeViewMenu()">J+7 <span>dans 7 jours</span></button>
+        <button id="btnJ14" onclick="setView('j14');closeViewMenu()">J+12 <span>dans 12 jours</span></button>
       </div>
     </div>
     <div id="layersWrap">
@@ -1220,6 +1245,92 @@ function setMode(mode){
   });
   applyComplexity();
 }
+/* ── Échelle verticale du graphe de pluie : deux réglages indépendants ──
+   · racine carrée : rend lisibles les faibles intensités sans écraser les pics d'orage
+     (2 mm/j étalés sur 24 h = 0,09 mm/h, soit ~1 % de la hauteur en échelle linéaire)
+   · référence du maximum : courbe bleue (scénario pessimiste) ou courbe jaune P80 */
+let _ySqrt=(function(){try{return localStorage.getItem('pp_ysqrt')==='1';}catch(e){return false;}})();
+let _yRef=(function(){try{return localStorage.getItem('pp_yref')||'max';}catch(e){return 'max';}})();
+let _sqrtOK=false;
+(function _registerSqrtScale(){
+  try{
+    if(typeof Chart==='undefined'||!Chart.registry)return;
+    const Lin=Chart.registry.getScale('linear');
+    if(!Lin)return;
+    class SqrtRain extends Lin{
+      getPixelForValue(v){return super.getPixelForValue(Math.sqrt(Math.max(0,(v==null||!isFinite(v))?0:v)));}
+      getValueForPixel(p){const v=super.getValueForPixel(p);return v*v;}
+    }
+    SqrtRain.id='sqrtrain';
+    SqrtRain.defaults=Lin.defaults;
+    Chart.register(SqrtRain);
+    _sqrtOK=true;
+  }catch(e){_sqrtOK=false;}
+})();
+function _applyYScale(){
+  try{
+    if(!myChart||!myChart.options||!myChart.options.scales||!myChart.options.scales.y)return;
+    const ds=myChart.data.datasets,nSrc=SOURCES.length;
+    const idxMax=nSrc+1,idxP80=nSrc+2;
+    const p80=(ds[idxP80]&&ds[idxP80].data)||[];
+    const mx=(ds[idxMax]&&ds[idxMax].data)||[];
+    const src=(_yRef==='p80')?p80:p80.concat(mx);
+    const vals=src.filter(v=>v!=null&&isFinite(v)&&v>=0);
+    let reel=Math.max(vals.length?Math.max.apply(null,vals):1,0.5)*1.15;
+    /* Arrondi à un palier lisible : sans ça l'axe affiche « 4,49964465 » */
+    const pas=reel<=1?0.2:(reel<=3?0.5:(reel<=10?1:(reel<=30?2:5)));
+    reel=Math.ceil(reel/pas)*pas;
+    reel=Math.round(reel*100)/100;
+    const y=myChart.options.scales.y;
+    y.min=0;
+    y.suggestedMax=undefined;
+    /* Un chiffre après la virgule au maximum, jamais de décimale inutile */
+    const fmt=function(r){
+      if(!isFinite(r))return '';
+      const a=Math.round(r*10)/10;
+      return (Math.abs(a-Math.round(a))<0.05)?String(Math.round(a)):a.toFixed(1);
+    };
+    y.ticks=y.ticks||{};
+    if(_ySqrt&&_sqrtOK){
+      y.type='sqrtrain';
+      y.max=Math.sqrt(reel);                       /* l'axe travaille en racine */
+      y.ticks.callback=function(v){return fmt(v*v);};
+    }else{
+      y.type='linear';
+      y.max=reel;
+      y.ticks.callback=function(v){return fmt(v);};
+    }
+  }catch(e){}
+}
+function toggleYSqrt(){
+  _ySqrt=!_ySqrt;
+  try{localStorage.setItem('pp_ysqrt',_ySqrt?'1':'0');}catch(e){}
+  _ySclUpd();
+  if(myChart){_applyYScale();lastW=0;myChart.update();}
+}
+function toggleYRef(){
+  _yRef=(_yRef==='max')?'p80':'max';
+  try{localStorage.setItem('pp_yref',_yRef);}catch(e){}
+  _ySclUpd();
+  if(myChart){_applyYScale();lastW=0;myChart.update();}
+}
+function _ySclUpd(){
+  const a=document.getElementById('btnYSqrt'),b=document.getElementById('btnYRef');
+  if(a){
+    a.classList.toggle('on',_ySqrt);
+    a.innerHTML='√ <span>'+(_ySqrt?'Échelle racine (active)':'Échelle linéaire')+'</span>';
+    a.title=_sqrtOK?'Rend visibles les pluies faibles sans écraser les pics d\u2019orage'
+                   :'Échelle racine indisponible avec cette version de Chart.js';
+  }
+  if(b){
+    b.classList.toggle('on',_yRef==='p80');
+    b.innerHTML='⤒ <span>'+(_yRef==='p80'?'Max sur P80 (synthèse)':'Max sur pessimiste')+'</span>';
+    b.title='Hauteur de l\u2019axe calée sur la courbe bleue (pessimiste) ou sur la courbe jaune P80';
+  }
+  /* pastille sur le bouton du menu si un réglage non standard est actif */
+  const btn=document.getElementById('scaleBtn');
+  if(btn)btn.classList.toggle('on',_ySqrt||_yRef==='p80');
+}
 function applyComplexity(){
   if(!myChart)return;
   const ds=myChart.data.datasets;
@@ -1289,6 +1400,7 @@ function applyComplexity(){
     myChart.options.scales.y.suggestedMax=undefined;
     if(myChart.options.scales.yProb)myChart.options.scales.yProb.display=true;
   }
+  _applyYScale();   /* dernier mot sur l'échelle verticale (racine + référence du max) */
   /* Toujours forcer P80 jaune visible, robuste aux décalages d'index */
   if(ds[idxP80]){
     ds[idxP80].borderColor=ds[idxP80].data?.some(v=>v!=null&&v>1.5)?'#ffcc00':'#ffe600';
@@ -1316,7 +1428,10 @@ let _windRanking=[],_windRankIdx=0;
 /* Menu Explorer */
 function toggleExploreMenu(e){if(e)e.stopPropagation();const m=document.getElementById('exploreMenu');if(m)m.classList.toggle('open');}
 function closeExploreMenu(){const m=document.getElementById('exploreMenu');if(m)m.classList.remove('open');}
+function toggleScaleMenu(e){if(e)e.stopPropagation();closeExploreMenu();const m=document.getElementById('scaleMenu');if(m)m.classList.toggle('open');}
+function closeScaleMenu(){const m=document.getElementById('scaleMenu');if(m)m.classList.remove('open');}
 document.addEventListener('click',function(e){const w=document.getElementById('exploreWrap');if(w&&!w.contains(e.target))closeExploreMenu();});
+document.addEventListener('click',function(e){const w=document.getElementById('scaleWrap');if(w&&!w.contains(e.target))closeScaleMenu();});
 
 
 /* ── Extension Tendance J+15 → J+28 (ensemble GEFS) ── */
@@ -1531,11 +1646,14 @@ function purgeAllCaches(btn){
   let n=0;
   try{
     const rm=[];
-    for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('pp_')===0&&k!=='pp_favs'&&k!=='pp_wcal_v1')rm.push(k);}
+    /* On préserve les favoris ET les trois calibrages : ce sont des RÉGLAGES, pas des caches.
+       Les effacer obligerait à relancer une vérif complète pour les retrouver. */
+    const GARDE=['pp_favs','pp_wcal_v1','pp_qcal_v1','pp_bcal_v1','pp_ensmode','pp_spread_v1'];
+    for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('pp_')===0&&GARDE.indexOf(k)<0)rm.push(k);}
     rm.forEach(k=>{localStorage.removeItem(k);n++;});
   }catch(e){}
   /* réinitialiser les caches mémoire connus pour forcer un vrai rechargement */
-  try{_wCal=undefined;}catch(e){}
+  /* NE PAS réinitialiser _wCal/_qCal/_bCal : les réglages restent actifs */
   try{if(typeof _ext30Loaded!=='undefined')_ext30Loaded=false;}catch(e){}
   try{window._vfLast=null;}catch(e){}
   if(btn){btn.textContent='✓ '+n+' cache(s) vidé(s) — rouvrez les vues';btn.disabled=true;setTimeout(()=>{btn.textContent='🗑 Vider tous les caches (pp_*)';btn.disabled=false;},2600);}
@@ -3021,7 +3139,7 @@ function _calRefresh(){
     _cachedJm1=null;_cachedJm7=null;
     if(_cachedData){const{omMain,omM15,rainMx,probMx}=_cachedData;lastW=0;processData(omMain,omM15,rainMx,probMx);}
   }catch(e){}
-  try{window._vfLast=null;openVerif();}catch(e){}
+  try{window._vfLast=null;openVerif(true);}catch(e){}   /* l'utilisateur vient de basculer un réglage */
 }
 function vfTog(k){_calSet(k,!_calOn(k));_calRefresh();}
 /* Réglage automatique : tout activer, ou tout désactiver si déjà complet */
@@ -3031,62 +3149,58 @@ function vfAuto(){
   _calRefresh();
 }
 /* Rendu d'une bascule */
+/* Jours restants avant expiration d'un calibrage (30 j après son activation) */
+function _calReste(k){
+  try{
+    const o=JSON.parse(localStorage.getItem(_CAL_DEF[k].key)||'null');
+    if(!o||!o.t)return null;
+    const j=Math.ceil((30*86400e3-(Date.now()-o.t))/86400e3);
+    return j>0?{j,src:o.src||''}:null;
+  }catch(e){return null;}
+}
+/* ── Sauvegarde des réglages ──
+   Le stockage navigateur dépend de l'ORIGINE (https://… ou file://) : les calibrages ne
+   suivent pas forcément d'une machine, d'un navigateur ou d'un fichier local à l'autre.
+   Cet export produit un court texte à conserver et à recoller n'importe où. */
+const _CAL_KEYS=['pp_wcal_v1','pp_qcal_v1','pp_bcal_v1','pp_ensmode','pp_favs','pp_spread_v1'];
+function calExport(){
+  const o={v:1,d:new Date().toISOString().slice(0,10)};
+  _CAL_KEYS.forEach(k=>{try{const x=localStorage.getItem(k);if(x)o[k]=x;}catch(e){}});
+  const txt=btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+  const el=document.getElementById('calIO');
+  if(el){el.value=txt;el.style.display='block';el.select();}
+  const st=document.getElementById('calIOmsg');
+  const n=Object.keys(o).length-2;
+  if(st)st.textContent=n>0?('✓ '+n+' réglage(s) exporté(s) — copiez ce texte (Ctrl+C) et conservez-le.')
+                          :'Aucun réglage à exporter pour le moment.';
+}
+function calImport(){
+  const el=document.getElementById('calIO'),st=document.getElementById('calIOmsg');
+  if(!el)return;
+  const txt=(el.value||'').trim();
+  if(!txt){if(st)st.textContent='Collez d\u2019abord le texte de sauvegarde dans le champ.';return;}
+  let o=null;
+  try{o=JSON.parse(decodeURIComponent(escape(atob(txt))));}catch(e){o=null;}
+  if(!o||typeof o!=='object'){if(st)st.textContent='✕ Texte illisible — vérifiez le copier-coller.';return;}
+  let n=0;
+  _CAL_KEYS.forEach(k=>{if(o[k]){try{localStorage.setItem(k,o[k]);n++;}catch(e){}}});
+  try{_wCal=undefined;_qCal=undefined;_bCal=undefined;}catch(e){}
+  if(st)st.textContent=n?('✓ '+n+' réglage(s) restauré(s) — rechargement…'):'Aucun réglage reconnu dans ce texte.';
+  if(n)setTimeout(()=>{try{location.reload();}catch(e){}},900);
+}
 function _calBtn(k){
   const on=_calOn(k),dispo=!!_CAL_DEF[k].src(window._vfLast);
+  const r=on?_calReste(k):null;
+  const info=r?(' <small style="color:'+(r.j<=5?'#ff7040':'#5a7a9a')+'">'+r.j+' j'+(r.src?' · '+r.src:'')+'</small>'):'';
   return '<button class="vf-act cal-tog'+(on?' on':'')+'"'+(dispo||on?'':' disabled')
-    +' onclick="vfTog(\''+k+'\')">'+(on?'✔ ':'')+_CAL_DEF[k].lbl+' : <b>'+(on?'ON':'OFF')+'</b></button>';
+    +(r?' title="Actif encore '+r.j+' jour(s) — appris sur '+r.src+'. Au-delà, retour au réglage brut."':'')
+    +' onclick="vfTog(\''+k+'\')">'+(on?'✔ ':'')+_CAL_DEF[k].lbl+' : <b>'+(on?'ON':'OFF')+'</b>'+info+'</button>';
 }
-function vfApplyB(){
-  const d=window._vfLast;
-  if(!d||!d.bSug||!Object.keys(d.bSug).length)return;
-  try{localStorage.setItem('pp_bcal_v1',JSON.stringify({t:Date.now(),b:d.bSug,src:d.city+' · '+d.window+' j'}));}catch(e){}
-  _bCal=undefined;_vfCachePurge();window._vfLast=null;openVerif();
-}
-function vfClearB(){
-  try{localStorage.removeItem('pp_bcal_v1');}catch(e){}
-  _bCal=undefined;_vfCachePurge();window._vfLast=null;openVerif();
-}
-function vfApplyQ(){
-  const d=window._vfLast;
-  if(!d||!d.qCal||!Object.keys(d.qCal).length)return;
-  const q={};Object.keys(d.qCal).forEach(L=>{q[L]=d.qCal[L].suggest;});
-  try{localStorage.setItem('pp_qcal_v1',JSON.stringify({t:Date.now(),q,src:d.city+' · '+d.window+' j'}));}catch(e){}
-  _qCal=undefined;
-  _onQuantileChange();
-}
-function vfClearQ(){
-  try{localStorage.removeItem('pp_qcal_v1');}catch(e){}
-  _qCal=undefined;
-  _onQuantileChange();
-}
-/* Le quantile change → les courbes de pluie doivent être recalculées */
-function _onQuantileChange(){
-  try{
-    _cachedJm1=null;_cachedJm7=null;
-    if(_cachedData){const{omMain,omM15,rainMx,probMx}=_cachedData;lastW=0;processData(omMain,omM15,rainMx,probMx);}
-  }catch(e){}
-  try{window._vfLast=null;openVerif();}catch(e){}
-}
-function vfApplyW(){
-  const d=window._vfLast;
-  if(!d||!d.wSug){return;}
-  try{localStorage.setItem('pp_wcal_v1',JSON.stringify({t:Date.now(),f:d.wSug,src:d.city+' · '+d.window+' j'}));}catch(e){}
-  _wCal=undefined;
-  _vfCachePurge();
-  window._vfLast=null;
-  openVerif();          /* re-vérification : la ligne « poids actifs » reflète les NOUVEAUX poids */
-}
-function vfClearW(){
-  try{localStorage.removeItem('pp_wcal_v1');}catch(e){}
-  _wCal=undefined;
-  _vfCachePurge();
-  window._vfLast=null;
-  openVerif();
-}
+/* ↻ = relance explicite (ignore le cache) */
 function vfRefresh(){
   try{localStorage.removeItem(_vfCacheKey());}catch(e){}
   window._vfLast=null;
-  openVerif();
+  openVerif(true);   /* geste explicite de l'utilisateur */
 }
 function vfScope(s){
   _vfScope=s;
@@ -3095,7 +3209,7 @@ function vfScope(s){
   if(bf)bf.classList.toggle('on',s==='fr');
   if(bm)bm.classList.toggle('on',s==='multi');
   window._vfLast=null;
-  openVerif();
+  openVerif();   /* cache seul : si cette portée n'a jamais été calculée, un bouton s'affiche */
 }
 function vfWindow(w){
   _vfWindow=w;
@@ -3105,18 +3219,40 @@ function vfWindow(w){
   window._vfLast=null;
   openVerif();
 }
-async function openVerif(){
+async function openVerif(force){
   const p=document.getElementById('verifPanel');if(p)p.classList.add('open');
   const st=document.getElementById('vfStatus');
   if(typeof _cityLat==='undefined'||_cityLat==null){if(st){st.style.display='block';st.textContent='Cherchez une ville d’abord.';}return;}
-  if(st){st.style.display='block';st.textContent='⏳ Vérification sur 35 jours…';}
+  /* Cache par défaut : ce module est le plus coûteux de l'appli (jusqu'à 23 modèles
+     × 7 échéances × N points). Rien n'est téléchargé sans demande explicite. */
+  if(!force){
+    const cache=_vfCacheLoad();
+    if(!cache){
+      const portee=(_vfScope==='fr')?'30 stations de France':((_vfScope==='multi')?'8 villes contrastées':'la ville courante');
+      if(st){
+        st.style.display='block';
+        st.innerHTML='<div style="line-height:1.6">📭 <b>Aucune analyse en cache</b> pour cette combinaison'
+          +' <small style="color:#8aa">('+portee+' · '+_vfWindow+' jours)</small>.<br>'
+          +'<small style="color:#8aa">L\u2019analyse rejoue les prévisions passées de chaque modèle — c\u2019est le module le plus lourd de l\u2019appli.</small><br>'
+          +'<button class="vf-act" style="margin-top:7px" onclick="openVerif(true)">▶ Lancer l\u2019analyse</button></div>';
+      }
+      const tb=document.getElementById('vfTable');if(tb)tb.innerHTML='';
+      const inf=document.getElementById('vfInfo');if(inf)inf.innerHTML='';
+      return;
+    }
+    window._vfLast=cache;
+    if(st)st.style.display='none';
+    _vfRender(cache);
+    return;
+  }
+  if(st){st.style.display='block';st.textContent='⏳ Vérification sur '+_vfWindow+' jours…';}
   try{
     const d=await _vfFetch();
     window._vfLast=d;
     if(st)st.style.display='none';
     _vfRender(d);
   }catch(e){
-    if(st){st.style.display='block';st.textContent='✕ '+e.message;}
+    if(st){st.style.display='block';st.innerHTML='✕ '+e.message+' <button class="vf-act" onclick="openVerif(true)">↻ Réessayer</button>';}
   }
 }
 
@@ -3480,7 +3616,7 @@ async function openHydro(span){
   if(nt)nt.innerHTML="Bilan hydrique climatique : pluie − évapotranspiration (ETP FAO) cumulées sur 30 jours glissants, moyenne des 30 stations (mm). <b style='color:#ff5040'>Rouge = plus sec</b> que la référence 2016-2025 (archive ERA5, lissée ±3 j, cache 7 j) · <b style='color:#7fa0ff'>bleu = plus humide</b> · extrapolation : plateau indicatif.";
 }
 
-async function openIndic(mode){
+async function openIndic(mode,force){
   if(mode)_indMode=mode;
   else if(['2m','y40','y40c','y12c','yr'].indexOf(_indMode)<0)_indMode='y12c';   /* retour depuis 💧 → Cône+12 */
   const p=document.getElementById('indicPanel');if(p)p.classList.add('open');
@@ -3491,10 +3627,27 @@ async function openIndic(mode){
   if(_nt)_nt.innerHTML="Moyenne de 30 stations réparties ((Tmin+Tmax)/2) — liste approchée de l'indicateur Météo-France (écart possible ±0,3°). Historique 2 mois &amp; prévision = médiane pondérée des 23 modèles (calcul de l’appli) · extrapolation J+16→J+28 · seuils MF : pic 25,3° / vague 23,4° · cache 3 h.";
   Object.keys(_mm).forEach(id=>{const b=document.getElementById(id);if(b)b.classList.toggle('on',_mm[id]===_indMode);});
   const st=document.getElementById('indicStatus');
+  const anneeMode=(_indMode==='yr'||_indMode==='y40'||_indMode==='y40c'||_indMode==='y12c');
+  /* Cache par défaut : aucun téléchargement tant que l'utilisateur ne le demande pas.
+     Ce module coûte plusieurs centaines d'unités API (30 stations × 23 modèles). */
+  if(!force){
+    const cache=anneeMode?_indYrCacheLoad():_indCacheLoad();
+    if(!cache){
+      if(st){
+        st.style.display='block';
+        st.innerHTML='<div style="line-height:1.6">📭 <b>Aucune donnée en cache</b> pour ce mode.<br>'
+          +'<small style="color:#8aa">Le calcul interroge 30 stations × 23 modèles'
+          +(anneeMode?' + l\u2019archive ERA5':'')+' — plusieurs centaines d\u2019unités API et quelques secondes.</small><br>'
+          +'<button class="vf-act" style="margin-top:7px" onclick="openIndic(\''+_indMode+'\',true)">▶ Lancer le calcul</button></div>';
+      }
+      if(_indChart){try{_indChart.destroy();}catch(e){}_indChart=null;}
+      return;
+    }
+  }
   if(st){st.style.display='block';st.textContent=_indMode==='yr'?'⏳ Année complète (archive ERA5 + prévision)…':'⏳ 30 stations × 2 mois + prévision…';}
   let d;
-  try{d=(_indMode==='yr'||_indMode==='y40'||_indMode==='y40c'||_indMode==='y12c')?await _indFetchYear():await _indFetch();}
-  catch(e){if(st){st.textContent='✕ '+e.message;}return;}
+  try{d=anneeMode?await _indFetchYear():await _indFetch();}
+  catch(e){if(st){st.innerHTML='✕ '+e.message+' <button class="vf-act" onclick="openIndic(\''+_indMode+'\',true)">↻ Réessayer</button>';}return;}
   if(st)st.style.display='none';
   if(_indMode==='yr'){_indRenderYear(d,{ticks:'months'});return;}
   if(_indMode==='y40'||_indMode==='y40c'){
@@ -3812,6 +3965,7 @@ function toggleEnsembles(){
 }
 function _ensInitBtn(){try{_ensUpdBtn();}catch(e){}}
 document.addEventListener('DOMContentLoaded',_ensInitBtn);
+document.addEventListener('DOMContentLoaded',function(){try{_ySclUpd();}catch(e){}});
 function _ensUpdBtn(){
   const b=document.getElementById('indEnsBtn');
   if(!b)return;
@@ -4356,7 +4510,7 @@ async function openGraph(){
   hide();
   if(ttl){
     const _ad=(typeof _altDelta==='function')?_altDelta():0;
-    ttl.innerHTML='📈 '+((typeof cityName!=='undefined'&&cityName)?cityName+' — ':'')+'J → J+13'
+    ttl.innerHTML='📈 '+((typeof cityName!=='undefined'&&cityName)?cityName+' — ':'')+'J → J+12'
       +(_ad?' <small style="color:#c58a4a" title="point de grille du modèle à '+_cityAlt+' m, ville à '+_cityAltReal+' m">⛰ '+(_ad>0?'+':'')+_ad+'° (altitude)</small>':'');
   }
   try{
@@ -4367,7 +4521,7 @@ async function openGraph(){
     /* ── J → J+15 (prévision déterministe, synthèse multi-modèles de la vue principale) — au-delà, voir la vue J+28 ── */
     if(_tempByDay&&_tempByDay.length&&_rainByDay&&_rainByDay.length){
       const today=new Date();
-      const N15=Math.min(14,_tempByDay.length,_rainByDay.length);   /* J→J+13 : les 2 derniers jours (J+14, J+15) retirés */
+      const N15=Math.min(13,_tempByDay.length,_rainByDay.length);   /* J→J+12 : 13 points */
       for(let d=0;d<N15;d++){
         const dt=new Date(today);dt.setDate(today.getDate()+d);
         labels.push([dn[dt.getDay()],String(dt.getDate())]);
@@ -4385,7 +4539,7 @@ async function openGraph(){
       const d=await r.json();const dy=d&&d.daily;
       if(!dy||!dy.time)throw new Error('pas de données');
       dy.time.forEach((t,i)=>{
-        if(i>=14)return;   /* J→J+13 */
+        if(i>=13)return;   /* J→J+12 */
         const dt=new Date(t+'T12:00:00');
         labels.push([dn[dt.getDay()],String(dt.getDate())]);
         tmax.push(dy.temperature_2m_max[i]==null?null:Math.round(dy.temperature_2m_max[i]));
@@ -5498,7 +5652,7 @@ async function fetchNowcast(lat,lon){
     function(){
       const ctrl=new AbortController();
       setTimeout(function(){ctrl.abort();},6000);
-      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/4.0'}});
+      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/4.1.1'}});
     },
     function(){
       const ctrl=new AbortController();
@@ -5652,16 +5806,32 @@ function _modelCenter(key){
   return 'AUTRE:'+k;
 }
 /* Nombre de flux par centre dans la liste de synthèse (calculé une fois) */
-let _centerCount=null;
-function _centerShare(key){
-  if(!_centerCount){
-    _centerCount={};
-    try{
-      _SYN_MODELS.split(',').forEach(m=>{const c=_modelCenter(m);_centerCount[c]=(_centerCount[c]||0)+1;});
-    }catch(e){_centerCount={};}
+const _centerCountCache={};
+/* La part d'un flux dépend du CONTEXTE : dans la synthèse température, seuls les
+   modèles de _SYN_MODELS participent ; dans la pluie, ce sont les sources du graphe.
+   Un centre doit peser 1 dans chaque contexte, quel que soit son nombre de flux. */
+function _centerCountFor(liste){
+  const sig=liste.join('|');
+  if(!_centerCountCache[sig]){
+    const c={};
+    liste.forEach(m=>{const k=_modelCenter(m);c[k]=(c[k]||0)+1;});
+    _centerCountCache[sig]=c;
   }
-  const n=_centerCount[_modelCenter(key)]||1;
-  return 1/n;   /* 3 flux DWD → chacun compte 1/3 : le centre pèse 1, pas 3 */
+  return _centerCountCache[sig];
+}
+function _centerShare(key,liste){
+  let L=liste;
+  if(!L){
+    /* contexte déduit de la variable : pluie → sources du graphe, sinon synthèse T° */
+    try{
+      if(/^precipitation/.test(String(key))){
+        L=SOURCES.map(s=>s.omModel).filter(Boolean);
+      }
+    }catch(_){}
+    if(!L){try{L=_SYN_MODELS.split(',');}catch(e){return 1;}}
+  }
+  const n=_centerCountFor(L)[_modelCenter(key)]||1;
+  return 1/n;   /* 3 flux DWD dans ce contexte → chacun compte 1/3 : le centre pèse 1 */
 }
 function _modelWeight(key,day){
   let w=_modelWeightBase(key,day)*_centerShare(key);   /* décorrélation par centre */
@@ -6519,7 +6689,7 @@ function _updateURL(){
 
 
 /* Menu déroulant des échéances */
-const _viewLabels={jm7:'J-7',jm1:'J-1',j0:'Aujourd\'hui',j1:'J+1',j5:'J+5',j8:'J+8',j14:'J+14'};
+const _viewLabels={jm7:'J-7',jm1:'J-1',j0:'Aujourd\'hui',j1:'J+1',j5:'J+5',j8:'J+7',j14:'J+12'};
 
 /* Menu Couches */
 function toggleLayersMenu(e){if(e)e.stopPropagation();const m=document.getElementById('layersMenu');if(m)m.classList.toggle('open');}
@@ -6746,7 +6916,7 @@ function processData(omMain,omM15,rainMx,probMx){
   } else if(_viewMode==='j8'||_viewMode==='j14'){
     for(let hr=0;hr<24;hr++){const idx=24+hr;if(idx<N_HRS)push(hr+'h',1,idx);}
     for(let d=2;d<=4;d++)for(let hr=0;hr<24;hr+=3){const idx=d*24+hr;if(idx<N_HRS)push(hr+'h',d,idx);}
-    const maxD=_viewMode==='j14'?13:8;   /* Détail horaire : dernier jour (J+14) retiré des vues */
+    const maxD=_viewMode==='j14'?12:7;   /* bornes réelles : vue « J+12 » s'arrête à J+12, vue « J+7 » à J+7 */
     for(let d=5;d<=maxD;d++)for(let hr=0;hr<24;hr+=8){const idx=d*24+hr;if(idx<N_HRS)push(hr+'h',d,idx);}
     const _sentIdx=(maxD+1)*24;if(_sentIdx<N_HRS)push('0h',maxD+1,_sentIdx); /* borne droite : rend le dernier jour pleine largeur (sinon masqué par le garde-fou cellW<50) */
   }
@@ -8831,7 +9001,14 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
     </div>
     <div class="hl-sub">📊 Usage API Open-Meteo <small style="color:#7a8a99;font-weight:400">estimation locale · quotas gratuits</small></div>
     <div id="apiUseBox"></div>
-    <div id="cachePurgeBox"><button class="vf-act" onclick="purgeAllCaches(this)">🗑 Vider tous les caches (pp_*)</button> <small style="color:#7a8a99">force le rechargement des données — utile si l'affichage semble figé</small></div>
+    <div id="calIOBox">
+      <button class="vf-act" onclick="calExport()">💾 Exporter mes réglages</button>
+      <button class="vf-act" onclick="calImport()">📥 Importer</button>
+      <small style="color:#7a8a99">calibrages + favoris — pour les transporter sur un autre PC ou une autre version</small>
+      <textarea id="calIO" style="display:none" rows="3" placeholder="Collez ici votre texte de sauvegarde, puis « Importer »"></textarea>
+      <div id="calIOmsg" style="font-size:11px;color:#9fd0a0;margin-top:3px"></div>
+    </div>
+    <div id="cachePurgeBox"><button class="vf-act" onclick="purgeAllCaches(this)">🗑 Vider les caches de données</button> <small style="color:#7a8a99">force le rechargement — vos favoris et vos 3 calibrages sont conservés</small></div>
     <div class="hl-sub">🩺 Santé des données</div>
     <div id="healthBody"></div>
     <div class="hl-actions">
