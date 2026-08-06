@@ -330,6 +330,13 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   #verifCard{flex:1;display:flex;flex-direction:column;background:#0d0d0d;border:1px solid #2a2a2a;border-radius:12px;padding:10px;max-width:1100px;margin:0 auto;width:100%;min-height:0}
   #vfInfo{flex:none;font-family:'Courier New',monospace;font-size:12.5px;color:#ccc;margin:2px 0 8px;line-height:1.5}
   #vfScroll{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}
+  .vf-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+  .vf-grp{display:inline-flex;align-items:center;gap:3px;padding:2px 7px 2px 5px;border:1px solid #1e2a36;border-radius:9px;background:rgba(255,255,255,0.02)}
+  .vf-grp-l{font-size:9px;color:#5a7a9a;text-transform:uppercase;letter-spacing:.5px;margin-right:2px;font-weight:700}
+  .vf-c4{line-height:1.25;padding:3px 5px !important;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .vf-c4 .vf-l1{display:block;font-size:12px}
+  .vf-c4 .vf-l2{display:block;font-size:10.5px;opacity:.92}
+  .vf-c4 i{font-style:normal;color:#444;font-size:9px;margin:0 1px}
   .cal-bar{margin:5px 0;padding:5px 0;border-top:1px solid #1c2530;border-bottom:1px solid #1c2530}
   .cal-tog,.cal-auto{border-color:#333;color:#8a8a8a}
   .cal-tog.on{border-color:#52e88f;color:#52e88f;background:rgba(82,232,143,0.08)}
@@ -345,6 +352,12 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   .vf-t td{padding:5px 8px;text-align:center;font-size:13px;font-weight:700;border-bottom:1px solid #151515}
   .vf-t .vf-n{text-align:left;font-size:12px;color:#ddd;white-space:nowrap}
   .vf-t .vf-syn td{background:#0e1a1a;border-top:1px solid #1f4444;border-bottom:1px solid #1f4444}
+  /* synthèse RÉELLEMENT affichée par l'appli : liseré cyan marqué */
+  .vf-t .vf-now td{background:#0d2222;border-top:2px solid #7ff;border-bottom:2px solid #7ff;box-shadow:inset 0 0 22px rgba(119,255,255,0.10)}
+  .vf-t .vf-now td:first-child{border-left:3px solid #7ff}
+  .vf-now-tag{font-size:9px;color:#0a1a1a;background:#7ff;padding:1px 5px;border-radius:7px;font-weight:900;margin-left:5px;vertical-align:middle}
+  /* références triviales : volontairement en retrait */
+  .vf-t .vf-ref td{opacity:.62;font-style:italic}
   /* ── Indicateur thermique France ── */
   #indicPanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:10004;padding:8px}
   #indicPanel.open{display:flex}
@@ -871,6 +884,30 @@ function _rainQuantile(day){
     if(c[d]!=null&&isFinite(c[d]))return Math.max(0.55,Math.min(0.95,c[d]));
   }
   return 0.80;
+}
+/* Quantile pondéré : chaque source pèse selon _modelWeight (et donc selon les poids
+   vérifiés si actifs). Sans poids, retombe exactement sur le quantile simple. */
+function _weightedQuantile(pairs,q){
+  const v=pairs.filter(p=>p&&p.v!=null&&isFinite(p.v)&&p.v>=0&&p.w>0).sort((a,b)=>a.v-b.v);
+  if(!v.length)return 0;
+  /* Poids tous égaux → on délègue au quantile classique : garantit que rien ne bouge
+     quand les calibrages sont désactivés (stricte rétro-compatibilité). */
+  const w0=v[0].w;
+  if(v.every(p=>Math.abs(p.w-w0)<1e-9))return _quantile(v.map(p=>p.v),q);
+  const tot=v.reduce((s,p)=>s+p.w,0);
+  if(tot<=0)return 0;
+  /* Positions au MILIEU de chaque poids (méthode usuelle pour un quantile pondéré) */
+  const pos=[];let cum=0;
+  for(let i=0;i<v.length;i++){pos.push((cum+v[i].w/2)/tot);cum+=v[i].w;}
+  if(q<=pos[0])return v[0].v;
+  if(q>=pos[pos.length-1])return v[v.length-1].v;
+  for(let i=1;i<v.length;i++){
+    if(q<=pos[i]){
+      const t=(q-pos[i-1])/((pos[i]-pos[i-1])||1);
+      return v[i-1].v+(v[i].v-v[i-1].v)*Math.max(0,Math.min(1,t));
+    }
+  }
+  return v[v.length-1].v;
 }
 function _quantile(arr,q){
   const v=arr.filter(x=>x!=null&&isFinite(x)&&x>=0);
@@ -1797,7 +1834,7 @@ async function _tmapFetch(mode){
       for(const mo of mods){
         const k=base+'_'+mo;
         const a=dd&&dd[k];
-        if(a&&a[d]!=null&&isFinite(a[d]))pairs.push({v:a[d],w:_modelWeight(k,d)});
+        if(a&&a[d]!=null&&isFinite(a[d]))pairs.push({v:_debias(k,d,a[d]),w:_modelWeight(k,d)});   /* biais corrigés aussi */
       }
       return pairs.length?_weightedMedian(pairs):null;
     };
@@ -2042,23 +2079,41 @@ async function _indFetch(){
     /* A) historique 61 j + prévision 16 j — MÉDIANE PONDÉRÉE des 23 modèles de l’appli,
        station par station (2 paquets de 15 × 23 modèles, backoff 429) */
     const jA=new Array(_IND_ST.length);
-    for(let s=0;s<_IND_ST.length;s+=15){
-      const seg=_IND_ST.slice(s,s+15);
+    /* Un paquet de 15 stations × 23 modèles × 77 jours est trop lourd : le serveur peut
+       ne rien renvoyer (le navigateur signale alors une erreur CORS, code d'état null).
+       On charge par paquets de 8 et, en cas d'échec, on redécoupe en deux au lieu d'abandonner. */
+    const _indSeg=async(seg,prof)=>{
       const uA='https://api.open-meteo.com/v1/forecast?latitude='+seg.map(x=>x[1]).join(',')
         +'&longitude='+seg.map(x=>x[2]).join(',')
         +'&daily=temperature_2m_max,temperature_2m_min&models='+_SYN_MODELS
         +'&past_days=61&forecast_days=16&timezone=Europe%2FParis';
-      let ok=false;
-      for(let att=0;att<5&&!ok;att++){
-        const rA=await _fetchTO(uA,25000);
-        if(rA.status===429){await new Promise(res=>setTimeout(res,3000*(att+1)));continue;}
-        if(!rA.ok)throw new Error('HTTP '+rA.status);
-        let j=await rA.json();if(!Array.isArray(j))j=[j];
-        if(j.length!==seg.length)throw new Error('réponse incomplète');
-        j.forEach((o,k)=>{jA[s+k]=o;});ok=true;
+      for(let att=0;att<4;att++){
+        try{
+          const rA=await _fetchTO(uA,25000);
+          if(rA.status===429){await new Promise(res=>setTimeout(res,3000*(att+1)));continue;}
+          if(!rA.ok){if(rA.status>=500){await new Promise(res=>setTimeout(res,1500*(att+1)));continue;}throw new Error('HTTP '+rA.status);}
+          let j=await rA.json();if(!Array.isArray(j))j=[j];
+          if(j.length!==seg.length)throw new Error('réponse incomplète');
+          return j;
+        }catch(e){
+          /* panne réseau / requête refusée sans réponse : on retente, puis on allège */
+          if(att<3){await new Promise(res=>setTimeout(res,1500*(att+1)));continue;}
+          if(seg.length>1&&prof<3){
+            const mid=Math.ceil(seg.length/2);
+            const a=await _indSeg(seg.slice(0,mid),prof+1);
+            const b=await _indSeg(seg.slice(mid),prof+1);
+            return a.concat(b);
+          }
+          throw e;
+        }
       }
-      if(!ok)throw new Error('quota API (429) — réessayez dans quelques minutes');
-      if(s+15<_IND_ST.length)await new Promise(res=>setTimeout(res,1200));
+      throw new Error('échec après plusieurs tentatives');
+    };
+    for(let s=0;s<_IND_ST.length;s+=8){
+      const seg=_IND_ST.slice(s,s+8);
+      const j=await _indSeg(seg,0);
+      j.forEach((o,k)=>{jA[s+k]=o;});
+      if(s+8<_IND_ST.length)await new Promise(res=>setTimeout(res,900));
     }
     const time=jA[0].daily.time;
     const _mods=_SYN_MODELS.split(',');
@@ -2080,8 +2135,8 @@ async function _indFetch(){
     const envHiA=time.map((_,di)=>{const vs=perModel.map(m=>m.arr[di]).filter(v=>v!=null);return vs.length>=3?Math.round(Math.max.apply(null,vs)*10)/10:null;});
     /* Ensembles réels (si activé) : remplace min-max déterministe par p10-p90 des membres */
     let ensEnv=null;
-    if(_useEns){
-      try{ensEnv=await _ensEnvelope(_IND_ST,16);}catch(e){ensEnv=null;}
+    if(_ensWanted()){
+      try{ensEnv=await _ensEnvelope(16);}catch(e){ensEnv=null;}
     }
     /* détail par modèle et par jour (pour le panneau latéral) : [ {name,val}, ... ] */
     const envModelsA=time.map((_,di)=>{const l=[];perModel.forEach(m=>{const v=m.arr[di];if(v!=null&&isFinite(v))l.push({name:m.name,val:Math.round(v*10)/10});});return l.length?l:null;});
@@ -2146,8 +2201,10 @@ async function _indFetch(){
     }
     const _nulls=n=>Array.from({length:n},()=>null);
     const d={time:time.concat(xDates),vals:vals.concat(xVals),i0,iX:time.length,xSrc,
-      envLo:(ensEnv?time.map((_,i)=>{const e=ensEnv[time[i]];return e?e.lo:envLoA[i];}):envLoA).concat(xLo||_nulls(xDates.length)),
-      envHi:(ensEnv?time.map((_,i)=>{const e=ensEnv[time[i]];return e?e.hi:envHiA[i];}):envHiA).concat(xHi||_nulls(xDates.length)),
+      envLo:envLoA.concat(xLo||_nulls(xDates.length)),
+      envHi:envHiA.concat(xHi||_nulls(xDates.length)),
+      ensLo:(ensEnv?time.map((_,i)=>{const e=ensEnv[time[i]];return e?e.lo:null;}):null),
+      ensHi:(ensEnv?time.map((_,i)=>{const e=ensEnv[time[i]];return e?e.hi:null;}):null),
       ensOn:!!ensEnv,
       envModels:envModelsA.concat(xMem||_nulls(xDates.length)),
       valsCI:valsCI.concat(_nulls(xDates.length))};
@@ -2217,11 +2274,11 @@ async function _indFetchYear(){
       }
     }catch(e){}
     /* axe année complète */
-    const time=[],vals=[],envLo=[],envHi=[],envModels=[],valsCI=[];
+    const time=[],vals=[],envLo=[],envHi=[],envModels=[],valsCI=[],ensLo=[],ensHi=[];
     const jan1=new Date(Y,0,1,12);
     const nD=(new Date(Y,11,31)-new Date(Y,0,1))/86400e3+1;
-    const baseMap={},envLoM={},envHiM={},envModM={},ciM={};
-    base.time.forEach((dk,i)=>{baseMap[dk]=base.vals[i];if(base.envLo)envLoM[dk]=base.envLo[i];if(base.envHi)envHiM[dk]=base.envHi[i];if(base.envModels)envModM[dk]=base.envModels[i];if(base.valsCI)ciM[dk]=base.valsCI[i];});
+    const baseMap={},envLoM={},envHiM={},envModM={},ciM={},ensLoM={},ensHiM={};
+    base.time.forEach((dk,i)=>{baseMap[dk]=base.vals[i];if(base.envLo)envLoM[dk]=base.envLo[i];if(base.envHi)envHiM[dk]=base.envHi[i];if(base.envModels)envModM[dk]=base.envModels[i];if(base.valsCI)ciM[dk]=base.valsCI[i];if(base.ensLo)ensLoM[dk]=base.ensLo[i];if(base.ensHi)ensHiM[dk]=base.ensHi[i];});
     const todayKey=fmt(now);
     let i0=-1,iX=-1;
     const xStartKey=base.time[base.iX];
@@ -2238,12 +2295,14 @@ async function _indFetchYear(){
       envHi.push(envHiM[dk]!=null?envHiM[dk]:null);
       envModels.push(envModM[dk]!=null?envModM[dk]:null);
       valsCI.push(ciM[dk]!=null?ciM[dk]:null);
+      ensLo.push(ensLoM[dk]!=null?ensLoM[dk]:null);
+      ensHi.push(ensHiM[dk]!=null?ensHiM[dk]:null);
       if(dk===todayKey)i0=k;
       if(dk===xStartKey)iX=k;
     }
     if(i0<0)i0=Math.min(nD-1,Math.floor((now-jan1)/86400e3));
     if(iX<0)iX=Math.min(nD-1,i0+16);
-    const d={time,vals,i0,iX,xSrc:base.xSrc,envLo,envHi,envModels,valsCI};
+    const d={time,vals,i0,iX,xSrc:base.xSrc,envLo,envHi,envModels,valsCI,ensLo,ensHi,ensOn:!!base.ensOn};
     _indYrCacheSave(d);
     return d;
   })();
@@ -2262,7 +2321,7 @@ let _vfWindow=35;                          /* 35 ou 92 jours */
 let _vfScope='city';                       /* 'city' = ville courante (23 modèles) · 'fr' = 30 stations (8 modèles longs) */
 let _vfLeadCap=7;                          /* rabaissé à 5 si l'API refuse previous_day6/7 (HTTP 400) */
 function _vfLeads(){const b=(_vfScope==='fr')?[1,2,3,5]:((_vfScope==='multi')?[1,2,3,5,7]:[1,2,3,4,5,6,7]);return b.filter(L=>L<=_vfLeadCap);}
-let _vfLoading=null,_vfMetric='tmax';
+let _vfLoading=null;
 function _vfDayAgg(hourly,varBase,lead){ /* {date:{tmax,tmin,rain}} depuis les tableaux horaires previous_dayL */
   const t=hourly.time,out={};
   const arr=hourly[varBase+'_previous_day'+lead];
@@ -2396,14 +2455,23 @@ async function _vfFetch(){
         const dates=new Set();
         MODELS.forEach(mo=>{const p=preds[mo]&&preds[mo][li]&&preds[mo][li][L];if(p)Object.keys(p).forEach(dk=>dates.add(dk));});
         dates.forEach(dk=>{
-          const pT=[],pN=[],pR=[];
+          const pT=[],pN=[],pR=[],pT0=[],pN0=[],pR0=[];
           MODELS.forEach(mo=>{
             const p=preds[mo]&&preds[mo][li]&&preds[mo][li][L]&&preds[mo][li][L][dk];
             if(!p)return;
+            /* (a) SYNTH = EXACTEMENT ce que l'appli affiche : les 3 calibrages actifs */
             const wT=_modelWeight('temperature_2m_max_'+mo,L);
-            if(p.tmax!=null)pT.push({v:p.tmax,w:wT});
-            if(p.tmin!=null)pN.push({v:p.tmin,w:wT});
-            if(p.rain!=null)pR.push({v:p.rain,w:wT});
+            const wR=_modelWeight('precipitation_'+mo,L);
+            if(p.tmax!=null)pT.push({v:_debias('temperature_2m_max_'+mo,L,p.tmax),w:wT});
+            if(p.tmin!=null)pN.push({v:_debias('temperature_2m_min_'+mo,L,p.tmin),w:wT});
+            if(p.rain!=null)pR.push({v:_debias('precipitation_'+mo,L,p.rain),w:wR});
+            /* (b) SYNTHRAW = référence BRUTE : poids de base seuls, aucun biais,
+                   quantile 0,80 fixe. Mesure le gain TOTAL des calibrages. */
+            const w0T=_modelWeightBase('temperature_2m_max_'+mo,L)*_centerShare('temperature_2m_max_'+mo);
+            const w0R=_modelWeightBase('precipitation_'+mo,L)*_centerShare('precipitation_'+mo);
+            if(p.tmax!=null)pT0.push({v:p.tmax,w:w0T});
+            if(p.tmin!=null)pN0.push({v:p.tmin,w:w0T});
+            if(p.rain!=null)pR0.push({v:p.rain,w:w0R});
           });
           preds['SYNTH']=preds['SYNTH']||{};
           preds['SYNTH'][li]=preds['SYNTH'][li]||{};
@@ -2411,7 +2479,14 @@ async function _vfFetch(){
           preds['SYNTH'][li][L][dk]={tmax:pT.length>=3?_weightedMedian(pT):null,
             tmin:pN.length>=3?_weightedMedian(pN):null,
             rain:pR.length>=3?Math.round(_weightedMedian(pR)*10)/10:null,
-            rainP80:pR.length>=4?Math.round(_dvPct(pR.map(x=>x.v),80)*10)/10:null};
+            rainP80:pR.length>=4?Math.round(_weightedQuantile(pR,_rainQuantile(L))*10)/10:null};
+          preds['SYNTHRAW']=preds['SYNTHRAW']||{};
+          preds['SYNTHRAW'][li]=preds['SYNTHRAW'][li]||{};
+          preds['SYNTHRAW'][li][L]=preds['SYNTHRAW'][li][L]||{};
+          preds['SYNTHRAW'][li][L][dk]={tmax:pT0.length>=3?_weightedMedian(pT0):null,
+            tmin:pN0.length>=3?_weightedMedian(pN0):null,
+            rain:pR0.length>=3?Math.round(_weightedMedian(pR0)*10)/10:null,
+            rainP80:pR0.length>=4?Math.round(_weightedQuantile(pR0,0.80)*10)/10:null};
         });
       }
     }
@@ -2438,7 +2513,7 @@ async function _vfFetch(){
     }
     /* 4) scores : paires (localisation × jour) POOLÉES */
     const rows=[];
-    const names=MODELS.filter(mo=>preds[mo]).concat(['SYNTH','PERSIST','CLIMATO']);
+    const names=MODELS.filter(mo=>preds[mo]).concat(['SYNTH','SYNTHRAW','PERSIST','CLIMATO']);
     for(const mo of names){
       const row={model:mo,scores:{}};
       for(const L of LEADS){
@@ -2635,10 +2710,12 @@ async function _vfFetch(){
                 const p=preds[mo]&&preds[mo][li]&&preds[mo][li][L]&&preds[mo][li][L][dk];
                 if(!p)return;
                 const fk=(Ftr[mo]&&Ftr[mo][bOf(L)])||1;
-                const wT=_modelWeightBase('temperature_2m_max_'+mo,L)*fk;
-                if(p.tmax!=null)pT.push({v:p.tmax,w:wT});
-                if(p.tmin!=null)pN.push({v:p.tmin,w:wT});
-                if(p.rain!=null)pR.push({v:p.rain,w:wT});
+                /* seuls les POIDS changent ici ; biais actif conservé pour que la
+                   comparaison avec « SYNTHÈSE (actuelle) » n'isole qu'une seule variable */
+                const wT=_modelWeightBase('temperature_2m_max_'+mo,L)*_centerShare('temperature_2m_max_'+mo)*fk;
+                if(p.tmax!=null)pT.push({v:_debias('temperature_2m_max_'+mo,L,p.tmax),w:wT});
+                if(p.tmin!=null)pN.push({v:_debias('temperature_2m_min_'+mo,L,p.tmin),w:wT});
+                if(p.rain!=null)pR.push({v:_debias('precipitation_'+mo,L,p.rain),w:wT});
               });
               if(pT.length>=3){
                 const o=truth[li][dk];
@@ -2731,50 +2808,65 @@ function _vfGlobalIndex(rows,LEADS){
   rows.forEach(r=>{r.gi=r._gw?Math.round(100*r._gs/r._gw):null;delete r._gs;delete r._gw;});
 }
 function closeVerif(){const p=document.getElementById('verifPanel');if(p)p.classList.remove('open');}
-function _vfCell(s,metric){
-  if(!s||!s[metric]===undefined)return '<td>·</td>';
-  if(metric==='hit'){
-    const v=s.hit;
-    if(v==null)return '<td>·</td>';
-    const c=v>=0.85?'#52e88f':v>=0.75?'#ffd800':'#ff7040';
-    return '<td style="color:'+c+'">'+Math.round(v*100)+'%</td>';
-  }
-  const m=s[metric];
-  if(!m)return '<td>·</td>';
-  const lim=metric==='rain'?[1.2,2.5]:[1.2,2.2];
-  const c=m.mae<=lim[0]?'#52e88f':m.mae<=lim[1]?'#ffd800':'#ff7040';
-  let tt='biais '+(m.bias>=0?'+':'')+m.bias.toFixed(1)+' · n='+m.n;
-  if(s&&s.cond&&s.cond.wet&&s.cond.dry)tt+=' | jours pluvieux MAE '+s.cond.wet.mae.toFixed(1)+' (n='+s.cond.wet.n+') vs secs '+s.cond.dry.mae.toFixed(1)+' (n='+s.cond.dry.n+')';
-  if(metric==='rain'&&s&&s.th){
-    ['1','5','10'].forEach(k=>{const t=s.th[k];if(t)tt+=' | ≥'+k+'mm : détectés '+Math.round(t.pod*100)+'% · fausses alertes '+Math.round(t.far*100)+'% (n='+t.nEv+')';});
-  }
-  return '<td style="color:'+c+'" title="'+tt+'">'+m.mae.toFixed(1)+'</td>';
+/* Cellule complète : les 4 métriques d'un coup, plus de sélecteur à basculer.
+   Ligne 1 : T°max / T°min (MAE en °C)  ·  Ligne 2 : pluie (mm) et accord pluie/sec (%) */
+/* Noms lisibles des lignes spéciales du classement (un seul endroit de vérité) */
+const _VF_SPECIAL={
+  SYNTH:    {court:'★ SYNTHÈSE (calibrée)',       long:'★ SYNTHÈSE — calibrages actifs', col:'#7ff',
+             aide:'Ce que l\u2019appli affiche en ce moment : médiane pondérée avec les trois calibrages dans leur état actuel.'},
+  SYNTHRAW: {court:'★ SYNTHÈSE brute',            long:'★ SYNTHÈSE sans aucun calibrage <small>(référence)</small>', col:'#9fb3c8',
+             aide:'Poids de base seuls, aucun biais corrigé, quantile P80 fixe. L\u2019écart avec la ligne calibrée mesure le gain TOTAL de vos réglages.'},
+  SYNTHCAL: {court:'★ SYNTH. + poids vérifiés',  long:'★ SYNTHÈSE + poids vérifiés <small>(simulation)</small>', col:'#ffd800',
+             aide:'Ce que donnerait la synthèse si on pondérait les modèles selon leurs performances mesurées. Évaluée en validation croisée : apprise sur une moitié des jours, testée sur l\u2019autre.'},
+  SYNTHDEB: {court:'★ SYNTH. + biais corrigés',  long:'★ SYNTHÈSE + biais corrigés <small>(simulation)</small>', col:'#7fe0a0',
+             aide:'Ce que donnerait la synthèse si on retranchait à chaque modèle son décalage systématique. Également en validation croisée.'},
+  PERSIST:  {court:'⏸ Persistance',              long:'⏸ Persistance <small>(= la veille)</small>', col:'#c58a4a',
+             aide:'Référence triviale : « demain sera comme aujourd\u2019hui ». Un modèle qui ne la bat pas n\u2019apporte rien.'},
+  CLIMATO:  {court:'📅 Climatologie',             long:'📅 Climatologie <small>(= la normale)</small>', col:'#c58a4a',
+             aide:'Référence triviale : la normale saisonnière. Même remarque.'}
+};
+function _vfName(model,long){
+  const s=_VF_SPECIAL[model];
+  if(!s)return prettyModelName(model);
+  return long?('<b style="color:'+s.col+'" title="'+s.aide.replace(/"/g,'')+'">'+s.long+'</b>'):s.court;
+}
+function _vfCellAll(s){
+  if(!s)return '<td>·</td>';
+  const col=(v,lim)=>v==null?'#555':(v<=lim[0]?'#52e88f':v<=lim[1]?'#ffd800':'#ff7040');
+  const num=(m,lim)=>m?'<b style="color:'+col(m.mae,lim)+'">'+m.mae.toFixed(1)+'</b>':'<span style="color:#444">·</span>';
+  const hit=s.hit==null?'<span style="color:#444">·</span>'
+    :'<b style="color:'+(s.hit>=0.85?'#52e88f':s.hit>=0.75?'#ffd800':'#ff7040')+'">'+Math.round(s.hit*100)+'%</b>';
+  /* infobulle : biais, conditionnel pluvieux/sec, scores par seuil */
+  let tt=[];
+  ['tmax','tmin','rain'].forEach(k=>{const m=s[k];if(m)tt.push(k+' biais '+(m.bias>=0?'+':'')+m.bias.toFixed(1)+' (n='+m.n+')');});
+  if(s.cond&&s.cond.wet&&s.cond.dry)tt.push('T°max jours pluvieux '+s.cond.wet.mae.toFixed(1)+' vs secs '+s.cond.dry.mae.toFixed(1));
+  if(s.th)['1','5','10'].forEach(k=>{const t=s.th[k];if(t)tt.push('≥'+k+'mm : détectés '+Math.round(t.pod*100)+'% · fausses alertes '+Math.round(t.far*100)+'%');});
+  return '<td class="vf-c4" title="'+tt.join(' | ').replace(/"/g,'')+'">'
+    +'<span class="vf-l1">'+num(s.tmax,[1.2,2.2])+'<i>/</i>'+num(s.tmin,[1.2,2.2])+'</span>'
+    +'<span class="vf-l2">'+num(s.rain,[1.2,2.5])+'<i>mm</i> '+hit+'</span></td>';
 }
 let _vfCharts={bar:null,line:null};
 const _VF_PAL=['#7ff','#ff9d3c','#52e88f','#ffd800','#ff7040','#c792ea','#7fa0ff','#f07178'];
 function _vfRender(d){
   const host=document.getElementById('vfTable');
   if(!host)return;
-  const metric=_vfMetric;
   const rows=[...d.rows].sort((a,b)=>(b.gi||-1)-(a.gi||-1));   /* CLASSEMENT par indice global */
   /* — tableau — */
   const LEADS=d.leads||[1,2,3,5];
-  let html='<table class="vf-t"><tr><th>#</th><th>Modèle</th><th>Indice</th><th title="écart moyen entre deux runs successifs pour la même date : petit = prévision stable">Stab.</th>'+LEADS.map(L=>'<th>J-'+L+'</th>').join('')+'</tr>';
+  let html='<table class="vf-t"><tr><th>#</th><th>Modèle</th><th>Indice</th><th title="écart moyen entre deux runs successifs pour la même date : petit = prévision stable">Stab.</th>'+LEADS.map(L=>'<th>J-'+L+'<br><small style="color:#667;font-weight:400">Tx/Tn · mm ✓</small></th>').join('')+'</tr>';
   rows.forEach((r,k)=>{
     const med=k===0?'🥇':k===1?'🥈':k===2?'🥉':String(k+1);
-    const nm=r.model==='SYNTH'?'<b style="color:#7ff">★ SYNTHÈSE (poids actifs)</b>'
-      :(r.model==='SYNTHCAL'?'<b style="color:#ffd800">★ SYNTHÈSE (poids vérifiés · VC)</b>'
-      :(r.model==='SYNTHDEB'?'<b style="color:#7fe0a0">★ SYNTHÈSE débiaisée · VC</b>'
-      :(r.model==='PERSIST'?'<span style="color:#c58a4a">⏸ Persistance <small>(= la veille)</small></span>'
-      :(r.model==='CLIMATO'?'<span style="color:#c58a4a">📅 Climatologie <small>(= la normale)</small></span>'
-      :prettyModelName(r.model)))));
+    const nm=_vfName(r.model,true)+(r.model==='SYNTH'?' <span class="vf-now-tag">← affichée</span>':'');
     const gic=r.gi==null?'#666':(r.gi>=75?'#52e88f':r.gi>=55?'#ffd800':'#ff7040');
     /* stabilité : écart moyen d'un run au suivant pour la même date cible (petit = constant) */
     const st=(d.stab&&d.stab[r.model])?d.stab[r.model]:null;
     const stv=st&&st.tmax!=null?st.tmax:null;
     const stc=stv==null?'#666':(stv<=0.8?'#52e88f':stv<=1.5?'#ffd800':'#ff7040');
     const stTxt=stv==null?'·':stv.toFixed(1)+'°';
-    html+='<tr'+((r.model==='SYNTH'||r.model==='SYNTHCAL')?' class="vf-syn"':'')+'><td>'+med+'</td><td class="vf-n">'+nm+'</td><td style="color:'+gic+';font-weight:900">'+(r.gi!=null?r.gi:'·')+'</td><td style="color:'+stc+'" title="écart moyen entre deux runs successifs">'+stTxt+'</td>'+LEADS.map(L=>_vfCell(r.scores[L],metric)).join('')+'</tr>';
+    const cls=(r.model==='SYNTH')?' class="vf-syn vf-now"'
+      :((r.model==='SYNTHCAL'||r.model==='SYNTHDEB'||r.model==='SYNTHRAW')?' class="vf-syn"'
+      :((r.model==='PERSIST'||r.model==='CLIMATO')?' class="vf-ref"':''));
+    html+='<tr'+cls+'><td>'+med+'</td><td class="vf-n">'+nm+'</td><td style="color:'+gic+';font-weight:900">'+(r.gi!=null?r.gi:'·')+'</td><td style="color:'+stc+'" title="écart moyen entre deux runs successifs">'+stTxt+'</td>'+LEADS.map(L=>_vfCellAll(r.scores[L])).join('')+'</tr>';
   });
   html+='</table>';
   host.innerHTML=html;
@@ -2785,7 +2877,7 @@ function _vfRender(d){
     const rr=rows.filter(r=>r.gi!=null);
     bc.parentElement.style.height=Math.max(140,rr.length*16+40)+'px';
     _vfCharts.bar=new Chart(bc.getContext('2d'),{type:'bar',
-      data:{labels:rr.map(r=>r.model==='SYNTH'?'★ SYNTHÈSE':(r.model==='SYNTHCAL'?'★ SYNTH. vérifiée':(r.model==='SYNTHDEB'?'★ SYNTH. débiaisée':(r.model==='PERSIST'?'⏸ Persistance':(r.model==='CLIMATO'?'📅 Climatologie':prettyModelName(r.model)))))),
+      data:{labels:rr.map(r=>_vfName(r.model,false)),
         datasets:[{data:rr.map(r=>r.gi),backgroundColor:rr.map(r=>r.model==='SYNTH'?'#00e0e0':(r.model==='SYNTHCAL'?'#ffd800':(r.gi>=75?'#3da85f':r.gi>=55?'#c0a000':'#c05030'))),borderWidth:0,barThickness:9}]},
       options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,animation:false,
         plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' indice '+c.parsed.x+'/100'}}},
@@ -2800,16 +2892,17 @@ function _vfRender(d){
     const calR=rows.find(r=>r.model==='SYNTHCAL');
     const synR=rows.find(r=>r.model==='SYNTH');
     const sel=(synR?[synR]:[]).concat(calR?[calR]:[]).concat(top);
-    const val=(r,L)=>{const s=r.scores[L];if(!s)return null;if(metric==='hit')return s.hit!=null?Math.round((1-s.hit)*100):null;return s[metric]?Math.round(s[metric].mae*100)/100:null;};
+    /* le graphe par échéance suit la T°max (métrique de référence) */
+    const val=(r,L)=>{const s=r.scores[L];if(!s||!s.tmax)return null;return Math.round(s.tmax.mae*100)/100;};
     _vfCharts.line=new Chart(lc.getContext('2d'),{type:'line',
       data:{labels:LEADS.map(L=>'J-'+L),
-        datasets:sel.map((r,k)=>({label:r.model==='SYNTH'?'★ SYNTHÈSE':(r.model==='SYNTHCAL'?'★ SYNTH. vérifiée':prettyModelName(r.model)),
+        datasets:sel.map((r,k)=>({label:_vfName(r.model,false),
           data:LEADS.map(L=>val(r,L)),
           borderColor:r.model==='SYNTHCAL'?'#ffd800':_VF_PAL[k%_VF_PAL.length],borderWidth:(r.model==='SYNTH'||r.model==='SYNTHCAL')?3:1.6,borderDash:r.model==='SYNTHCAL'?[6,4]:undefined,
           pointRadius:3,tension:0.2,spanGaps:true}))},
       options:{responsive:true,maintainAspectRatio:false,animation:false,
         plugins:{legend:{labels:{color:'#ccc',font:{family:'Courier New',size:10},boxWidth:14}},
-          tooltip:{callbacks:{label:c=>' '+c.dataset.label+' : '+c.parsed.y+(metric==='hit'?' % err.':(metric==='rain'?' mm':'°'))}}},
+          tooltip:{callbacks:{label:c=>' '+c.dataset.label+' : '+c.parsed.y+'° (MAE T°max)'}}},
         scales:{x:{ticks:{color:'#aaa',font:{family:'Courier New',size:11}},grid:{color:'#181818'}},
                 y:{beginAtZero:true,ticks:{color:'#ccc',font:{family:'Courier New',size:10}},grid:{color:'#181818'}}}}});
   }
@@ -2822,12 +2915,24 @@ function _vfRender(d){
     {
       const n=['w','q','b'].filter(_calOn).length;
       const tout=(n===3);
+      /* Gain TOTAL des calibrages : écart d'indice entre la synthèse calibrée et la brute */
+      let gainTxt='';
+      try{
+        const a=d.rows.find(r=>r.model==='SYNTH'),b=d.rows.find(r=>r.model==='SYNTHRAW');
+        if(a&&b&&a.gi!=null&&b.gi!=null){
+          const dg=a.gi-b.gi;
+          const c=dg>=2?'#52e88f':(dg<=-2?'#ff7040':'#9fb3c8');
+          gainTxt=' <b style="color:'+c+'">gain total '+(dg>=0?'+':'')+dg+' pts</b> vs synthèse brute'
+            +(dg<=0?' <span style="color:#ff7040">— vos réglages n\u2019apportent rien ici</span>':'');
+        }
+      }catch(e){}
       msg+='<div class="cal-bar">'
         +'<button class="vf-act cal-auto'+(tout?' on':'')+'" onclick="vfAuto()">🤖 Réglage automatique : <b>'+(tout?'ON':'OFF')+'</b></button>'
+        +gainTxt
         +' <small style="color:#8aa">active les trois calibrages mesurés ci-dessous'
         +(n>0&&!tout?(' — <b style="color:#ffd800">'+n+'/3 actif'+(n>1?'s':'')+'</b>'):'')+'</small></div>';
     }
-    if(best)msg+='<br>🥇 <b>'+(best.model==='SYNTH'?'★ SYNTHÈSE':prettyModelName(best.model))+'</b> ('+best.gi+'/100).';
+    if(best)msg+='<br>🥇 '+_vfName(best.model,true)+' ('+best.gi+'/100).';
     /* ── Biais vérifiés ── */
     if(d.bSug&&Object.keys(d.bSug).length){
       const ex=Object.keys(d.bSug).slice(0,3).map(mo=>{
@@ -2877,7 +2982,7 @@ function _vfRender(d){
     info.innerHTML=msg;
   }
 }
-function vfMetric(m){_vfMetric=m;['tmax','tmin','rain','hit'].forEach(k=>{const b=document.getElementById('vfM_'+k);if(b)b.classList.toggle('on',k===m);});const c=window._vfLast;if(c)_vfRender(c);}
+/* Sélecteur de métrique retiré : les 4 valeurs sont affichées ensemble dans chaque cellule. */
 function _vfCachePurge(){
   try{
     ['pp_tmap_syn_v3','pp_indic_v5','pp_indicyr_v2'].forEach(k=>localStorage.removeItem(k));
@@ -3067,11 +3172,28 @@ function _indRenderYear(d,opts){
       {label:(opts.normLabel||'Normale 1991-2020'),data:norm,borderColor:'#9a9a9a',borderDash:[5,4],borderWidth:1.5,pointRadius:0,tension:0.3,spanGaps:true}
   ];
   if(opts.cone&&d.envHi&&d.envLo){
-    const hi=d.envHi.map((v,i)=>i>=d.i0?v:null);
-    const lo=d.envLo.map((v,i)=>i>=d.i0?v:null);
-    /* cône BLEU */
-    dsets.push({label:(d.ensOn?'Cône p10-p90 (ensembles réels)':'Cône min-max (modèles/membres)'),data:hi,borderColor:'rgba(90,150,255,0.6)',borderWidth:1,borderDash:[3,3],pointRadius:0,tension:0.2,spanGaps:true,fill:'+1',backgroundColor:'rgba(90,150,255,0.15)'});
-    dsets.push({label:'',data:lo,borderColor:'rgba(90,150,255,0.6)',borderWidth:1,borderDash:[3,3],pointRadius:0,tension:0.2,spanGaps:true});
+    const showDet=(typeof _ensMode==='undefined')||_ensMode===0||_ensMode===2;
+    const showEns=!!(d.ensLo&&d.ensHi&&(typeof _ensMode!=='undefined')&&_ensMode>=1);
+    /* cône BLEU : désaccord entre centres (modèles déterministes) */
+    if(showDet){
+      const hi=d.envHi.map((v,i)=>i>=d.i0?v:null);
+      const lo=d.envLo.map((v,i)=>i>=d.i0?v:null);
+      dsets.push({label:'Cône modèles (désaccord entre centres)',data:hi,borderColor:'rgba(70,140,255,0.85)',borderWidth:1.6,borderDash:[2,3],pointRadius:0,tension:0.2,spanGaps:true,fill:'+1',backgroundColor:'rgba(40,90,190,0.30)'});
+      dsets.push({label:'',data:lo,borderColor:'rgba(70,140,255,0.85)',borderWidth:1.6,borderDash:[2,3],pointRadius:0,tension:0.2,spanGaps:true});
+    }
+    /* cône VIOLET : dispersion des membres = imprévisibilité de l'atmosphère */
+    if(showEns){
+      const eh=d.ensHi.map((v,i)=>i>=d.i0?v:null);
+      const el=d.ensLo.map((v,i)=>i>=d.i0?v:null);
+      /* trait vif et épais, remplissage très léger : le violet doit se LIRE par-dessus le bleu */
+      dsets.push({label:'Cône ensembles p10-p90 (imprévisibilité)',data:eh,borderColor:'#e879ff',borderWidth:2.6,borderDash:[9,4],pointRadius:0,tension:0.2,spanGaps:true,fill:'+1',backgroundColor:'rgba(232,121,255,0.10)',order:0});
+      dsets.push({label:'',data:el,borderColor:'#e879ff',borderWidth:2.6,borderDash:[9,4],pointRadius:0,tension:0.2,spanGaps:true,order:0});
+    }
+    /* ensembles demandés mais indisponibles → le dire plutôt que rester muet */
+    if(typeof _ensWanted==='function'&&_ensWanted()&&!showEns){
+      try{const st=document.getElementById('indicStatus');
+        if(st){st.style.display='block';st.textContent='⚠ Ensembles indisponibles — cône des modèles affiché à la place.';}}catch(e){}
+    }
     /* prévision JAUNE (en mode cône uniquement) */
     const pv=dsets.find(x=>x.label==='Prévision');
     if(pv){pv.borderColor='#ffd400';if(pv.segment&&pv.segment.borderDash){const _od=pv.segment.borderDash;pv.segment=Object.assign({},pv.segment);}}
@@ -3379,7 +3501,7 @@ async function openIndic(mode){
     const a=Math.max(0,d.i0-40);
     let end=d.vals.length;while(end>0&&d.vals[end-1]==null)end--;
     const sub={time:d.time.slice(a,end),vals:d.vals.slice(a,end),i0:d.i0-a,iX:Math.max(0,d.iX-a),xSrc:d.xSrc,
-      envLo:d.envLo?d.envLo.slice(a,end):null,envHi:d.envHi?d.envHi.slice(a,end):null,envModels:d.envModels?d.envModels.slice(a,end):null,valsCI:d.valsCI?d.valsCI.slice(a,end):null};
+      envLo:d.envLo?d.envLo.slice(a,end):null,envHi:d.envHi?d.envHi.slice(a,end):null,envModels:d.envModels?d.envModels.slice(a,end):null,valsCI:d.valsCI?d.valsCI.slice(a,end):null,ensLo:d.ensLo?d.ensLo.slice(a,end):null,ensHi:d.ensHi?d.ensHi.slice(a,end):null,ensOn:d.ensOn};
     _indRenderYear(sub,{doy0:a,ticks:'days',label:'sur 40 jours',cone:_indMode==='y40c'});
     return;
   }
@@ -3388,7 +3510,7 @@ async function openIndic(mode){
     const a=Math.max(0,d.i0-40);
     let end=Math.min(d.vals.length,d.i0+13);   /* i0 inclus → J+12 inclus */
     const sub={time:d.time.slice(a,end),vals:d.vals.slice(a,end),i0:d.i0-a,iX:Math.max(0,d.iX-a),xSrc:d.xSrc,
-      envLo:d.envLo?d.envLo.slice(a,end):null,envHi:d.envHi?d.envHi.slice(a,end):null,envModels:d.envModels?d.envModels.slice(a,end):null,valsCI:d.valsCI?d.valsCI.slice(a,end):null};
+      envLo:d.envLo?d.envLo.slice(a,end):null,envHi:d.envHi?d.envHi.slice(a,end):null,envModels:d.envModels?d.envModels.slice(a,end):null,valsCI:d.valsCI?d.valsCI.slice(a,end):null,ensLo:d.ensLo?d.ensLo.slice(a,end):null,ensHi:d.ensHi?d.ensHi.slice(a,end):null,ensOn:d.ensOn};
     _indRenderYear(sub,{doy0:a,ticks:'days',label:'sur 12 jours',cone:true});
     return;
   }
@@ -3567,24 +3689,54 @@ function _buildDivSeries(){
       }
       const detR2=(_rainModelsByDay&&_rainModelsByDay[d])||null;
       const detRnM=(detR2&&detR2.models)?detR2.models.slice():[];
-      const mk=(list,plo,phi,isR)=>{
+      const mk=(list,plo,phi,isR,varBase)=>{
         if(!list.length)return null;
-        const v=list.map(m=>m.val);
+        /* Les trois calibrages s'appliquent ici aussi : biais retranché par modèle,
+           puis médiane PONDÉRÉE (au lieu d'une médiane simple traitant tout à égalité). */
+        const base=varBase||'temperature_2m_max';
+        const corr=list.map(m=>{
+          const om=_dvModelKey(m.name);
+          const v0=om?_debias(base+'_'+om,d,m.val):m.val;
+          return {name:m.name,val:(v0!=null&&isFinite(v0))?v0:m.val,w:om?_modelWeight(base+'_'+om,d):1};
+        });
+        const v=corr.map(m=>m.val);
         let lo=Math.min.apply(null,v),hi=Math.max.apply(null,v);
         if(plo.length)lo=Math.min(lo,Math.min.apply(null,plo));
         if(phi.length)hi=Math.max(hi,Math.max.apply(null,phi));
-        const med=_dvMed(v);
+        const med=_weightedMedian(corr.map(m=>({v:m.val,w:m.w})));
+        list=corr.map(m=>({name:m.name,val:Math.round(m.val*10)/10}));
         if(isR)return {models:list,med:Math.round(med*10)/10,lo:Math.round(Math.max(0,lo)*10)/10,hi:Math.round(hi*10)/10,n:list.length};
         return {models:list,med,lo,hi,n:list.length};
       };
-      tmax=mk(L.maxList,L.pMaxLo,L.pMaxHi,false);
-      tmin=mk(L.minList,L.pMinLo,L.pMinHi,false);
-      rain=mk(detRnM.concat(ensRain),pRnLo,pRnHi,true);
+      tmax=mk(L.maxList,L.pMaxLo,L.pMaxHi,false,'temperature_2m_max');
+      tmin=mk(L.minList,L.pMinLo,L.pMinHi,false,'temperature_2m_min');
+      rain=mk(detRnM.concat(ensRain),pRnLo,pRnHi,true,'precipitation');
     }
     if(tmax||tmin||rain)rows.push({day:d,date,src,tmax,tmin,rain});
   }
   const sc=(key,isRain)=>{let lo=Infinity,hi=-Infinity;rows.forEach(r=>{const c=r[key];if(c){if(_hlFin(c.lo))lo=Math.min(lo,c.lo);if(_hlFin(c.hi))hi=Math.max(hi,c.hi);}});if(isRain){lo=0;if(!isFinite(hi)||hi<=0)hi=1;}else{if(!isFinite(lo)||!isFinite(hi)||hi<=lo){lo=0;hi=1;}const pad=Math.max(1,(hi-lo)*0.06);lo-=pad;hi+=pad;}return{lo,hi};};
   return {rows, sMax:sc('tmax',false), sMin:sc('tmin',false), sRain:sc('rain',true)};
+}
+/* Les modèles de la vue J+28 portent un nom d'affichage : on remonte à l'identifiant
+   Open-Meteo pour pouvoir leur appliquer poids et biais. */
+function _dvModelKey(nom){
+  if(!nom)return null;
+  const n=String(nom).toLowerCase();
+  if(/icon.?eu/.test(n))return 'icon_eu';
+  if(/icon/.test(n))return 'icon_seamless';
+  if(/aifs/.test(n))return 'ecmwf_aifs025_single';
+  if(/ifs|ecmwf/.test(n))return 'ecmwf_ifs025';
+  if(/arpege/.test(n))return 'meteofrance_arpege_europe';
+  if(/arome|mf|météo-?france|meteo-?france/.test(n))return 'meteofrance_seamless';
+  if(/gfs/.test(n))return 'gfs_seamless';
+  if(/gem/.test(n))return 'gem_seamless';
+  if(/knmi/.test(n))return 'knmi_seamless';
+  if(/ukmo/.test(n))return 'ukmo_seamless';
+  if(/jma/.test(n))return 'jma_seamless';
+  if(/dmi/.test(n))return 'dmi_seamless';
+  if(/cma|grapes/.test(n))return 'cma_grapes_global';
+  if(/met.?no/.test(n))return 'metno_seamless';
+  return null;   /* membre d'ensemble ou source inconnue → poids neutre, pas de correction */
 }
 function _divLvl(amp){return amp>=6?'err':amp>=3?'warn':'ok';}
 function _divLvlRain(amp){return amp>=10?'err':amp>=3?'warn':'ok';}
@@ -3646,43 +3798,85 @@ function _indHeatEpisodes(){
    centres, pas une distribution de probabilité. L'API ensembles fournit 30-50 membres par
    modèle → vrai intervalle p10-p90. Coûteux, donc désactivé par défaut.
    Clé pp_ens_v1 (cache 6 h). Échec réseau → repli silencieux sur le cône déterministe. */
-let _useEns=(function(){try{return localStorage.getItem('pp_useens')==='1';}catch(e){return false;}})();
+/* 0 = cône modèles (désaccord entre centres) · 1 = cône ensembles (imprévisibilité)
+   2 = les deux superposés (c'est l'ÉCART entre les deux qui est informatif) */
+let _ensMode=(function(){try{return parseInt(localStorage.getItem('pp_ensmode')||'0',10)||0;}catch(e){return 0;}})();
+const _ENS_LBL=['Cône modèles','Cône ensembles','Les deux'];
+function _ensWanted(){return _ensMode>=1;}
 function toggleEnsembles(){
-  _useEns=!_useEns;
-  try{localStorage.setItem('pp_useens',_useEns?'1':'0');}catch(e){}
+  _ensMode=(_ensMode+1)%3;
+  try{localStorage.setItem('pp_ensmode',String(_ensMode));}catch(e){}
   try{localStorage.removeItem('pp_indic_v5');localStorage.removeItem('pp_indicyr_v2');}catch(e){}
-  const b=document.getElementById('indEnsBtn');if(b)b.classList.toggle('on',_useEns);
+  _ensUpdBtn();
   if(typeof openIndic==='function')openIndic(_indMode);
 }
-async function _ensEnvelope(stations,days){
-  /* p10/p90 par jour sur l'ensemble des membres, toutes stations confondues */
-  const CH=10;const byDay={};
-  for(let s=0;s<stations.length;s+=CH){
-    const seg=stations.slice(s,s+CH);
-    const u='https://ensemble-api.open-meteo.com/v1/ensemble?latitude='+seg.map(x=>x[1]).join(',')
-      +'&longitude='+seg.map(x=>x[2]).join(',')
-      +'&daily=temperature_2m_max,temperature_2m_min&models=icon_seamless&forecast_days='+days+'&timezone=auto';
-    let arr=null;
-    try{const r=await _fetchTO(u,20000);if(!r.ok)return null;arr=await r.json();}catch(e){return null;}
-    const list=Array.isArray(arr)?arr:[arr];
-    list.forEach(o=>{
-      const dd=o&&o.daily;if(!dd||!dd.time)return;
-      const mk=Object.keys(dd).filter(k=>/^temperature_2m_max/.test(k));
-      const mn=Object.keys(dd).filter(k=>/^temperature_2m_min/.test(k));
-      dd.time.forEach((dk,di)=>{
-        byDay[dk]=byDay[dk]||[];
-        const n=Math.min(mk.length,mn.length);
-        for(let m=0;m<n;m++){
-          const a=dd[mk[m]]&&dd[mk[m]][di],b=dd[mn[m]]&&dd[mn[m]][di];
-          if(a!=null&&b!=null&&isFinite(a)&&isFinite(b))byDay[dk].push((a+b)/2);
-        }
+function _ensInitBtn(){try{_ensUpdBtn();}catch(e){}}
+document.addEventListener('DOMContentLoaded',_ensInitBtn);
+function _ensUpdBtn(){
+  const b=document.getElementById('indEnsBtn');
+  if(!b)return;
+  b.classList.toggle('on',_ensMode>0);
+  b.textContent='👥 '+_ENS_LBL[_ensMode];
+}
+/* Parse une réponse d'ensemble : renvoie, par jour, la liste des (max+min)/2 de chaque membre.
+   Convention Open-Meteo (identique à celle déjà exploitée pour le module Scénarios) :
+   hourly.temperature_2m = membre de contrôle, puis temperature_2m_member01, _member02, … */
+function _ensParseStation(hourly){
+  if(!hourly||!hourly.time)return null;
+  const keys=Object.keys(hourly).filter(k=>k==='temperature_2m'||/^temperature_2m_member\d+$/.test(k));
+  if(!keys.length)return null;
+  const nH=hourly.time.length, nD=Math.floor(nH/24);
+  const out=[];
+  for(let d=0;d<nD;d++){
+    const dayKey=String(hourly.time[d*24]).slice(0,10);
+    const vals=[];
+    keys.forEach(k=>{
+      const a=hourly[k];if(!a)return;
+      let mx=-Infinity,mn=Infinity,ok=false;
+      for(let hh=d*24;hh<Math.min(d*24+24,nH);hh++){
+        const v=a[hh];if(v!=null&&isFinite(v)){if(v>mx)mx=v;if(v<mn)mn=v;ok=true;}
+      }
+      if(ok)vals.push((mx+mn)/2);
+    });
+    out.push({dayKey,vals});
+  }
+  return out;
+}
+/* Enveloppe p10-p90 des membres, moyennée sur un sous-ensemble de stations.
+   Un point par appel (comme le module Scénarios, qui fonctionne) : le multi-point
+   n'est pas garanti sur l'API ensembles. 10 stations réparties suffisent à mesurer
+   la DISPERSION nationale sans multiplier le coût par 30. */
+async function _ensEnvelope(days){
+  const st=_IND_ST.filter((_,i)=>i%3===0).slice(0,10);   /* 10 stations réparties */
+  const res=await Promise.all(st.map(async s=>{
+    try{
+      const u='https://ensemble-api.open-meteo.com/v1/ensemble?latitude='+s[1]+'&longitude='+s[2]
+        +'&hourly=temperature_2m&models=icon_seamless&forecast_days='+days+'&timezone=auto';
+      const r=await _fetchTO(u,20000);
+      if(!r.ok)return null;
+      const j=await r.json();
+      return _ensParseStation(j&&j.hourly);
+    }catch(e){return null;}
+  }));
+  const ok=res.filter(Boolean);
+  if(!ok.length)return null;
+  /* Moyenne nationale PAR MEMBRE : le membre k est un même scénario atmosphérique
+     partout, on peut donc moyenner les stations membre par membre. */
+  const byDay={};
+  ok.forEach(station=>{
+    station.forEach(d=>{
+      byDay[d.dayKey]=byDay[d.dayKey]||[];
+      d.vals.forEach((v,mi)=>{
+        byDay[d.dayKey][mi]=byDay[d.dayKey][mi]||[];
+        byDay[d.dayKey][mi].push(v);
       });
     });
-  }
+  });
   const out={};
   Object.keys(byDay).forEach(dk=>{
-    const v=byDay[dk].sort((a,b)=>a-b);
-    if(v.length<10)return;
+    const perMember=byDay[dk].map(a=>a.reduce((x,y)=>x+y,0)/a.length).filter(v=>isFinite(v));
+    if(perMember.length<5)return;
+    const v=perMember.sort((a,b)=>a-b);
     const q=p=>v[Math.min(v.length-1,Math.max(0,Math.round(p*(v.length-1))))];
     out[dk]={lo:Math.round(q(0.10)*10)/10,hi:Math.round(q(0.90)*10)/10,n:v.length};
   });
@@ -6239,7 +6433,23 @@ function buildProbMx(omMain,metno,tIdx){
   }else mx['metno']=null;
   return mx;
 }
-const synthR=(i,mx)=>p80(SOURCES.map(s=>mx[s.key]?.[i]),Math.floor(i/24));   /* quantile calibré selon l'échéance */
+/* Synthèse pluie : les TROIS calibrages s'appliquent désormais
+   — biais retranché par modèle, poids vérifiés, quantile calibré par échéance. */
+const synthR=(i,mx)=>{
+  const day=Math.floor(i/24);
+  const pairs=[];
+  SOURCES.forEach(s=>{
+    const v0=mx[s.key]?.[i];
+    if(v0==null||!isFinite(v0))return;
+    const om=s.omModel;
+    if(om){
+      pairs.push({v:_debias('precipitation_'+om,day,v0),w:_modelWeight('precipitation_'+om,day)});
+    }else{
+      pairs.push({v:v0,w:1});   /* source hors Open-Meteo (nowcast MET Norway) : poids neutre */
+    }
+  });
+  return pairs.length?_weightedQuantile(pairs,_rainQuantile(day)):0;
+};
 const synthP=(i,mx)=>Math.min(100,maxOf(SOURCES.map(s=>mx[s.key]?.[i])));
 const maxR=(i,mx)=>maxOf(SOURCES.map(s=>mx[s.key]?.[i]));
 
@@ -8523,16 +8733,18 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
   <div id="verifCard">
     <div class="tm-head">
       <div class="tm-ttl" style="color:#7ff">🔬 Vérif modèles — prévisions passées vs observé</div>
-      <div class="ind-modes">
-        <button id="vfM_tmax" class="on" onclick="vfMetric('tmax')">T°max</button>
-        <button id="vfM_tmin" onclick="vfMetric('tmin')">T°min</button>
-        <button id="vfM_rain" onclick="vfMetric('rain')">Pluie</button>
-        <button id="vfM_hit" onclick="vfMetric('hit')">Jours ✓</button>
-        <button id="vfW35" class="on" onclick="vfWindow(35)">35 j</button>
-        <button id="vfW92" onclick="vfWindow(92)">92 j</button>
-        <button id="vfSc_city" class="on" onclick="vfScope('city')">Ville</button>
-        <button id="vfSc_multi" onclick="vfScope('multi')">8 villes</button>
-        <button id="vfSc_fr" onclick="vfScope('fr')">France 30 st.</button>
+      <div class="ind-modes vf-bar">
+        <span class="vf-grp" title="Profondeur d'historique testée : 92 j donne un verdict plus solide mais coûte 3× plus">
+          <span class="vf-grp-l">Fenêtre</span>
+          <button id="vfW35" class="on" onclick="vfWindow(35)">35 j</button>
+          <button id="vfW92" onclick="vfWindow(92)">92 j</button>
+        </span>
+        <span class="vf-grp" title="Sur quoi porte le test — changer de portée change les RÉSULTATS, pas seulement l'affichage">
+          <span class="vf-grp-l">Portée</span>
+          <button id="vfSc_city" class="on" onclick="vfScope('city')">Ville</button>
+          <button id="vfSc_multi" onclick="vfScope('multi')">8 villes</button>
+          <button id="vfSc_fr" onclick="vfScope('fr')">France 30 st.</button>
+        </span>
         <button onclick="vfRefresh()" title="Relancer l'analyse (ignore le cache)">↻</button>
       </div>
       <button onclick="closeVerif()" aria-label="Fermer" class="hl-x">✕</button>
@@ -8543,7 +8755,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
       <div id="vfTable"></div>
       <div class="vf-cw" style="height:240px;margin-top:10px"><canvas id="vfLine"></canvas></div>
     </div>
-    <div class="tm-note">Ce que chaque modèle prévoyait (Previous Runs API) vs l'observé. <b>Ville</b> : 23 modèles, J-1→J-7, ville courante (cache 6 h). <b>8 villes</b> : mêmes modèles, J-1/2/3/5/7, paires poolées sur 8 villes contrastées (Brest, Lille, Strasbourg, Paris, Lyon, Bordeaux, Marseille, Chamrousse) — échantillon ×8 et différences régionales visibles (cache 12 h). <b>France 30 st.</b> : 8 modèles longs, J-1/2/3/5, paires station×jour poolées sur les 30 stations de l'indicateur (~6 Mo, cache 12 h). MAE = erreur moyenne absolue (petit = bon) ; survol = biais. ★ SYNTHÈSE = notre médiane pondérée rejouée · « Jours ✓ » = accord pluie/sec (0,5 mm) · tableau défilable ↔.</div>
+    <div class="tm-note">Ce que chaque modèle prévoyait (Previous Runs API) vs l'observé. <b>Ville</b> : 23 modèles, J-1→J-7, ville courante (cache 6 h). <b>8 villes</b> : mêmes modèles, J-1/2/3/5/7, paires poolées sur 8 villes contrastées (Brest, Lille, Strasbourg, Paris, Lyon, Bordeaux, Marseille, Chamrousse) — échantillon ×8 et différences régionales visibles (cache 12 h). <b>France 30 st.</b> : 8 modèles longs, J-1/2/3/5, paires station×jour poolées sur les 30 stations de l'indicateur (~6 Mo, cache 12 h). MAE = erreur moyenne absolue (petit = bon) ; survol = biais. <b>Les quatre lignes ★</b> : <b style="color:#9fb3c8">SYNTHÈSE brute</b> = référence sans aucun calibrage · <b style="color:#7ff">SYNTHÈSE calibrée</b> = ce que l'appli affiche en ce moment (l'écart entre les deux = le gain de vos réglages) · <b style="color:#ffd800">+ poids vérifiés</b> et <b style="color:#7fe0a0">+ biais corrigés</b> = simulations de ce que donneraient ces réglages, évaluées en validation croisée (apprises sur une moitié des jours, testées sur l'autre) — comparez-les à la ligne actuelle avant d'activer une bascule. ★ SYNTHÈSE = notre médiane pondérée rejouée · « Jours ✓ » = accord pluie/sec (0,5 mm) · tableau défilable ↔.</div>
     <div id="vfStatus" style="display:none"></div>
   </div>
 </div>
