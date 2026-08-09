@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v4.16 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v4.18 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v4.16</title>
+<title>MultiMaps — géographie (collège & lycée) — v4.18</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -75,13 +75,23 @@
   #btn-actives-off:hover{ color:var(--rouge) }
   .actives-liste{ display:flex; flex-wrap:wrap; gap:5px }
   .active-puce{
-    display:inline-flex; align-items:center; gap:7px; max-width:100%;
-    border:1px solid var(--encre); background:var(--encre); color:#fff;
-    border-radius:999px; padding:4px 9px; font-size:11px; font-weight:600;
-    font-family:inherit; cursor:pointer; line-height:1.35; text-align:left;
+    display:inline-flex; align-items:stretch; max-width:100%;
+    border:1px solid var(--encre); background:var(--encre);
+    border-radius:999px; overflow:hidden;
   }
-  .active-puce:hover{ background:var(--rouge); border-color:var(--rouge) }
-  .active-x{ font-size:11px; opacity:.8; flex:none }
+  .active-nom, .active-x{
+    border:none; background:none; font-family:inherit; cursor:pointer; color:#fff;
+    font-size:11px; line-height:1.35; text-align:left;
+  }
+  .active-nom{ font-weight:600; padding:4px 5px 4px 10px }
+  .active-x{ padding:4px 9px 4px 5px; opacity:.7; flex:none }
+  .active-nom:hover{ text-decoration:line-through }
+  .active-x:hover{ opacity:1; background:var(--rouge) }
+  /* en veille : éteinte, mais l'étiquette reste pour un rallumage en un clic */
+  .active-puce.en-veille{ background:transparent; border-style:dashed; border-color:#b9b3a4 }
+  .active-puce.en-veille .active-nom{ color:#8a8577; font-weight:500; font-style:italic }
+  .active-puce.en-veille .active-nom:hover{ text-decoration:none; color:var(--encre) }
+  .active-puce.en-veille .active-x{ color:#8a8577 }
   .pilote-btn{
     border:1px solid var(--trait);border-radius:9px;background:#fff;color:#8a8577;
     padding:6px 4px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;
@@ -683,15 +693,7 @@
     <label class="velo-filtre"><input type="checkbox" id="chk-rando-chemins" checked>
       <span class="velo-trait" style="height:2px;background:repeating-linear-gradient(90deg,#6b7280 0 5px,transparent 5px 9px)"></span> Petits chemins <small>(sentiers &amp; pistes non balisés)</small></label>
     <p class="sous" id="rando-bilan" style="margin:4px 0 0">Source : OpenStreetMap</p>
-    <div style="border-top:1px solid var(--trait);margin:6px 0 4px;padding-top:4px;font-weight:600">🧩 Occupation des sols</div>
-    <select id="clc-annee" class="feux-annee" style="width:100%" title="Le millésime CORINE Land Cover. 2018 est vérifié ; les millésimes anciens suivent la même convention de nommage mais n'ont pas pu être testés — si l'un ne s'affiche pas, un message vous le dit et vous en choisissez un autre.">
-      <option value="CLC18" selected>Occupation des sols 2018 (vérifié)</option>
-      <option value="CLC12">Millésime 2012 (à tester)</option>
-      <option value="CLC06">Millésime 2006 (à tester)</option>
-      <option value="CLC00">Millésime 2000 (à tester)</option>
-      <option value="CLC90">Millésime 1990 (à tester)</option>
-    </select>
-    <button class="calque-ajout donnee" id="btn-clc" title="CORINE Land Cover : l'inventaire européen de l'occupation des terres en 44 postes — tissu urbain, cultures, prairies, forêts, milieux naturels, zones humides, eau. Le socle des chapitres « paysages » et « artificialisation ». Astuce : combinez deux millésimes avec le rideau comparatif pour voir la ville grignoter les champs.">🧩 Occupation des sols (CLC)</button>
+
   </div>
 </div>
 
@@ -706,6 +708,24 @@
     <div style="margin-top:6px;border-top:1px solid var(--trait);padding-top:6px">
       <label style="font-size:11px;color:#8a8577;display:flex;justify-content:space-between;margin-bottom:2px"><span>Opacité du fond</span><span id="fond-opacite-val">100%</span></label>
       <input type="range" id="fond-opacite" min="0" max="100" value="100" title="Rend le fond de carte plus ou moins transparent (0 % = invisible, 100 % = plein)" style="width:100%;accent-color:var(--encre)">
+    </div>
+    <div style="margin-top:6px;border-top:1px solid var(--trait);padding-top:6px">
+      <div style="font-weight:600;margin-bottom:3px">🖼 Charger une image de fond</div>
+      <button class="calque-ajout donnee" id="btn-img-fond" title="Affiche une image de votre ordinateur par-dessus la carte : carte murale scannée, plan ancien, croquis, extrait de manuel. L’image reste dans votre navigateur, elle n’est envoyée nulle part. Un cadrage approché est posé au chargement, puis le calage en deux points la met en place.">🖼 Choisir une image…</button>
+      <input type="file" id="img-fond-fichier" accept="image/*" style="display:none">
+      <div id="img-fond-reglages" style="display:none">
+        <select id="img-fond-cadrage" class="feux-annee" style="width:100%;margin-top:3px" title="Le cadrage de départ. Les cartes murales scolaires françaises partagent presque toutes le même cadrage : commencez par là, puis affinez au calage.">
+          <option value="colin" selected>Cadrage carte murale (Armand Colin)</option>
+          <option value="france">France métropolitaine serrée</option>
+          <option value="europe">Europe de l’Ouest</option>
+          <option value="vue">Ajuster à la vue actuelle</option>
+        </select>
+        <label style="font-size:11px;color:#8a8577;display:flex;justify-content:space-between;margin:5px 0 2px"><span>Opacité de l’image</span><span id="img-fond-opacite-val">75%</span></label>
+        <input type="range" id="img-fond-opacite" min="0" max="100" value="75" style="width:100%;accent-color:var(--encre)" title="À 50 % environ, le tracé ancien et le tracé actuel se lisent ensemble : c’est là que la comparaison parle le mieux.">
+        <label class="velo-filtre" style="margin-top:2px"><input type="checkbox" id="img-fond-dessus"> Au-dessus des couches <small>(sinon en fond)</small></label>
+        <button class="calque-ajout" id="btn-img-caler" title="Deux repères suffisent. Pour chacun : cliquez le lieu tel qu’il est dessiné sur l’image, puis cliquez ce même lieu à sa vraie place sur la carte. Prenez deux points bien écartés — Brest et Nice, Lille et Perpignan.">📍 Caler en deux points</button>
+        <p class="sous" id="img-fond-etat" style="margin:4px 0 0">Cadrage approché — calez-le pour la précision.</p>
+      </div>
     </div>
   </div>
 </div>
@@ -1121,6 +1141,26 @@
     </div>
 </div>
 
+<div class="widget" id="wg-sols" style="width:252px">
+  <div class="widget-tete">
+    <span class="widget-titre">🧩 Occupation des sols</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
+  </div>
+  <div class="widget-corps">
+    <p class="sous" style="margin:0 0 5px">CORINE Land Cover : l’inventaire européen des terres en 44 postes, du tissu urbain aux zones humides.</p>
+    <select id="clc-annee" class="feux-annee" style="width:100%" title="Le millésime CORINE Land Cover. 2018 est vérifié ; les millésimes anciens suivent la même convention de nommage mais n'ont pas pu être testés — si l'un ne s'affiche pas, un message vous le dit et vous en choisissez un autre.">
+      <option value="CLC18" selected>Occupation des sols 2018 (vérifié)</option>
+      <option value="CLC12">Millésime 2012 (à tester)</option>
+      <option value="CLC06">Millésime 2006 (à tester)</option>
+      <option value="CLC00">Millésime 2000 (à tester)</option>
+      <option value="CLC90">Millésime 1990 (à tester)</option>
+    </select>
+    <button class="calque-ajout donnee" id="btn-clc" title="CORINE Land Cover : l'inventaire européen de l'occupation des terres en 44 postes — tissu urbain, cultures, prairies, forêts, milieux naturels, zones humides, eau. Le socle des chapitres « paysages » et « artificialisation ». Astuce : combinez deux millésimes avec le rideau comparatif pour voir la ville grignoter les champs.">🧩 Occupation des sols (CLC)</button>
+    <p class="sous" style="margin:5px 0 0">Astuce : deux millésimes dans le rideau comparatif montrent la ville grignoter les champs.</p>
+  </div>
+</div>
+
 <div class="widget" id="wg-sites" style="width:246px">
   <div class="widget-tete">
     <span class="widget-titre">⭐ Sites touristiques</span>
@@ -1327,6 +1367,7 @@
     <select id="fond-rideau" class="feux-annee" style="width:100%;margin-top:2px" title="Le fond révélé à gauche de la barre. Idéal : photo aérienne à gauche, carte à droite.">
       <option value="ortho" selected>À gauche : photo aérienne (IGN)</option>
       <option value="osm">À gauche : carte OpenStreetMap</option>
+      <option value="image">À gauche : votre image chargée</option>
     </select>
   </div>
   </div>
@@ -1583,7 +1624,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v4.16</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v4.18</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -1594,7 +1635,7 @@
     <div class="pilote-actives" id="pilote-actives" hidden>
       <div class="actives-tete">
         <span id="actives-compte">0 couche active</span>
-        <button type="button" id="btn-actives-off" title="Éteint toutes les couches affichées. Les fenêtres restent ouvertes. Annulable avec ↶.">tout éteindre</button>
+        <button type="button" id="btn-actives-off" title="Éteint toutes les couches et vide la liste, veilleuses comprises. Les fenêtres restent ouvertes. Annulable avec ↶.">tout éteindre</button>
       </div>
       <div class="actives-liste" id="actives-liste"></div>
     </div>
@@ -1626,9 +1667,10 @@
         <button class="pilote-btn" data-cible="wg-logement">🏘 Logement</button>
         </div>
       </details>
-      <details class="pilote-paquet"><summary>⭐ Sites</summary>
+      <details class="pilote-paquet"><summary>📍 Lieux</summary>
         <div class="pilote-grille">
-        <button class="pilote-btn" data-cible="wg-sites">⭐ Sites &amp; monuments</button>
+        <button class="pilote-btn" data-cible="wg-sites">⭐ Sites touristiques</button>
+        <button class="pilote-btn" data-cible="wg-sols">🧩 Occupation des sols</button>
         <button class="pilote-btn" data-cible="wg-equip">🚉 Équipements</button>
         </div>
       </details>
@@ -1681,7 +1723,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v4.16</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v4.18</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -1815,6 +1857,12 @@
 </div>
 
 <script>
+  // Couches mises en veille : eteintes pour de bon, mais leur etiquette reste dans le rail.
+  // Il n'existe pas de registre bouton -> couche Leaflet, donc pas de masquage sans extinction.
+  const VEILLE = [];
+  // Image de fond geolocalisee (carte scolaire scannee, plan ancien, croquis).
+  // L'image ne quitte jamais le navigateur : lecture locale en data-URL, aucun envoi.
+  const IMGF = { couche:null, url:'', nom:'', cle:'', bornes:null, opacite:0.75, dessus:false, calage:null };
 (function(){
   // ================= Santé des services externes =================
   const SANTE = {};
@@ -1925,7 +1973,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v4.16';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v4.18';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -3148,13 +3196,16 @@
   });
 
   // File d'attente Overpass : une requête à la fois, 700 ms d'espacement.
-  // 3 serveurs publics en bascule automatique (celui qui répond est mémorisé) + délai de garde 20 s :
-  // indispensable quand overpass-api.de sature ou est filtré par le réseau (établissements scolaires).
+  // Serveurs publics en bascule automatique (celui qui répond est mémorisé) + délai de garde 20 s :
+  // indispensable quand un serveur sature ou est filtré par le réseau (établissements scolaires).
+  // Depuis avril 2026, overpass-api.de renvoie des 406 (Not Acceptable) à des requêtes valides
+  // émises depuis un navigateur : filtrage anti-moissonnage. Les miroirs n'appliquent pas ces
+  // défenses. Il reste en dernier recours au cas où le filtrage serait levé.
   const OVERPASS_SERVEURS = [
     'https://overpass.kumi.systems/api/interpreter',      // g\u00e9n\u00e9ralement le plus rapide
-    'https://overpass-api.de/api/interpreter',            // serveur principal, souvent satur\u00e9
+    'https://overpass.private.coffee/api/interpreter',    // miroir communautaire, fiable en 2026
     'https://overpass.osm.ch/api/interpreter',            // Suisse
-    'https://overpass.private.coffee/api/interpreter'     // miroir communautaire
+    'https://overpass-api.de/api/interpreter'             // serveur principal : 406 fr\u00e9quents
   ];
   let overpassIndice = 0;
   let overpassChaine = Promise.resolve();
@@ -3168,7 +3219,12 @@
       const url = OVERPASS_SERVEURS[indice % OVERPASS_SERVEURS.length];
       const ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
       const garde = ctl ? setTimeout(()=>ctl.abort(), 20000) : null;
-      return fetch(url, { method:'POST', body:'data='+encodeURIComponent(corps), signal: ctl ? ctl.signal : undefined })
+      return fetch(url, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/x-www-form-urlencoded', 'Accept':'application/json, application/xml;q=0.9, */*;q=0.8' },
+        body:'data='+encodeURIComponent(corps),
+        signal: ctl ? ctl.signal : undefined
+      })
         .then(r=>{
           if(garde) clearTimeout(garde);
           if(!r.ok) throw new Error('overpass '+r.status);
@@ -6491,6 +6547,8 @@
   const RIDEAU = { actif:false, couche:null, pct:50 };
   function fondRideau(){
     const choix = (document.getElementById('fond-rideau')||{value:'ortho'}).value || 'ortho';
+    if(choix === 'image' && IMGF.url && IMGF.bornes)
+      return L.imageOverlay(IMGF.url, IMGF.bornes, { pane:'rideau', opacity:1, interactive:false });
     if(choix === 'osm')
       return L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { pane:'rideau', maxZoom:19, attribution:'&copy; OpenStreetMap' });
     return L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0'
@@ -6546,6 +6604,161 @@
       if(e.touches && e.touches[0]) bouger(e.touches[0].clientX);
     });
   })();
+
+  // ---------- 🖼 Image de fond géolocalisée (cartes murales scannées) ----------
+  // Le géoréférencement automatique d'un scan supposerait d'apparier son trait de côte
+  // au trait de côte réel : hors de portée ici, et peu fiable sur un dessin scolaire.
+  // D'où le calage à deux points, qui donne translation + échelle sur chaque axe.
+  const CADRAGES_IMG = {
+    // cadrage type des cartes murales scolaires françaises : la France centrée,
+    // les pays voisins en bordure, marges de planche comprises
+    colin:  [[40.0, -7.6], [52.6, 12.4]],
+    france: [[41.3, -5.2], [51.1,  9.6]],
+    europe: [[36.0,-11.0], [56.0, 20.0]],
+  };
+  function bornesCadrage(nom){
+    if(nom === 'vue' && map && map.getBounds){
+      const b = map.getBounds();
+      return [[b.getSouth(), b.getWest()], [b.getNorth(), b.getEast()]];
+    }
+    return CADRAGES_IMG[nom] || CADRAGES_IMG.colin;
+  }
+  function paneImage(){
+    const nom = IMGF.dessus ? 'imgsus' : 'imgfond';
+    if(map.getPane && !map.getPane(nom)){
+      const el = map.createPane(nom);
+      if(el && el.style) el.style.zIndex = IMGF.dessus ? 450 : 240;   // 240 : au-dessus des tuiles ; 450 : au-dessus des tracés, sous les marqueurs
+    }
+    return nom;
+  }
+  function poserImage(){
+    if(!IMGF.url || !IMGF.bornes) return;
+    if(IMGF.couche){ map.removeLayer(IMGF.couche); IMGF.couche = null; }
+    IMGF.couche = L.imageOverlay(IMGF.url, IMGF.bornes, {
+      opacity: IMGF.opacite, pane: paneImage(), interactive: false, alt: IMGF.nom
+    }).addTo(map);
+    majEtatImage();
+    try{ majBadges(); }catch(e){}
+  }
+  function majEtatImage(){
+    const p = document.getElementById('img-fond-etat');
+    if(!p) return;
+    if(!IMGF.couche){ p.textContent = ''; return; }
+    p.textContent = IMGF.calage
+      ? '\u2713 Cal\u00e9e sur deux rep\u00e8res \u2014 r\u00e9glage m\u00e9moris\u00e9 pour ce fichier.'
+      : 'Cadrage approch\u00e9 \u2014 calez-le pour la pr\u00e9cision.';
+  }
+  function retirerImage(){
+    if(IMGF.couche){ map.removeLayer(IMGF.couche); IMGF.couche = null; }
+    IMGF.url = ''; IMGF.nom = ''; IMGF.cle = ''; IMGF.bornes = null; IMGF.calage = null;
+    const r = document.getElementById('img-fond-reglages');
+    if(r) r.style.display = 'none';
+    basculerBouton(document.getElementById('btn-img-fond'), false, '', '🖼 Choisir une image\u2026');
+    majEtatImage();
+    try{ majBadges(); }catch(e){}
+  }
+
+  // mémorisation : seulement le calage, jamais l'image (un scan dépasse le quota localStorage)
+  function cleCalage(f){ return 'geo-img-calage:' + f.name + ':' + f.size; }
+  function lireCalage(cle){
+    try{ const v = localStorage.getItem(cle); return v ? JSON.parse(v) : null; }catch(e){ return null; }
+  }
+  function ecrireCalage(cle, bornes){
+    try{ localStorage.setItem(cle, JSON.stringify(bornes)); }catch(e){}
+  }
+
+  document.getElementById('btn-img-fond').addEventListener('click', ()=>{
+    if(IMGF.couche){ retirerImage(); return; }
+    document.getElementById('img-fond-fichier').click();
+  });
+  document.getElementById('img-fond-fichier').addEventListener('change', (ev)=>{
+    const f = ev.target.files && ev.target.files[0];
+    if(!f) return;
+    const lect = new FileReader();
+    lect.onload = ()=>{
+      IMGF.url = lect.result;
+      IMGF.nom = f.name;
+      IMGF.cle = cleCalage(f);
+      const memo = lireCalage(IMGF.cle);
+      IMGF.calage = !!memo;
+      IMGF.bornes = memo || bornesCadrage((document.getElementById('img-fond-cadrage')||{value:'colin'}).value);
+      poserImage();
+      document.getElementById('img-fond-reglages').style.display = 'block';
+      const court = f.name.length > 22 ? f.name.slice(0, 20) + '\u2026' : f.name;
+      basculerBouton(document.getElementById('btn-img-fond'), true, '🖼 ' + court + ' \u2715', '', '#6d28d9');
+      afficherInfo(memo
+        ? '🖼 ' + court + ' \u2014 replac\u00e9e o\u00f9 vous l\u2019aviez cal\u00e9e'
+        : '🖼 ' + court + ' \u2014 cadrage approch\u00e9. 📍 Caler en deux points pour l\u2019ajuster.', 7000);
+    };
+    lect.onerror = ()=> afficherInfo('\u26a0\ufe0f Image illisible \u2014 essayez un JPEG ou un PNG', 5000);
+    lect.readAsDataURL(f);
+    ev.target.value = '';                       // recharger le même fichier reste possible
+  });
+  document.getElementById('img-fond-cadrage').addEventListener('change', (ev)=>{
+    if(!IMGF.url) return;
+    IMGF.bornes = bornesCadrage(ev.target.value);
+    IMGF.calage = null;
+    poserImage();
+  });
+  document.getElementById('img-fond-opacite').addEventListener('input', (ev)=>{
+    IMGF.opacite = (+ev.target.value) / 100;
+    document.getElementById('img-fond-opacite-val').textContent = ev.target.value + '%';
+    if(IMGF.couche) IMGF.couche.setOpacity(IMGF.opacite);
+  });
+  document.getElementById('img-fond-dessus').addEventListener('change', (ev)=>{
+    IMGF.dessus = !!ev.target.checked;
+    if(IMGF.couche) poserImage();
+  });
+
+  // --- calage à deux repères ---
+  let calageEnCours = null;
+  function fractionImage(ll){
+    const S = IMGF.bornes[0][0], W = IMGF.bornes[0][1], N = IMGF.bornes[1][0], E = IMGF.bornes[1][1];
+    return [ (ll.lng - W) / (E - W), (N - ll.lat) / (N - S) ];
+  }
+  function clicCalage(e){
+    if(!calageEnCours) return;
+    if(calageEnCours.attente){
+      calageEnCours.paires.push([calageEnCours.attente, e.latlng]);
+      calageEnCours.attente = null;
+      if(calageEnCours.paires.length >= 2){ terminerCalage(); return; }
+      afficherInfo('📍 Rep\u00e8re 2/2 : cliquez un second lieu SUR l\u2019image, bien \u00e9loign\u00e9 du premier', 12000);
+    }else{
+      calageEnCours.attente = e.latlng;
+      afficherInfo('\u2026 puis cliquez ce m\u00eame lieu \u00e0 sa vraie place sur la carte', 12000);
+    }
+  }
+  function terminerCalage(){
+    map.off('click', clicCalage);
+    const paires = calageEnCours.paires;
+    calageEnCours = null;
+    const a = fractionImage(paires[0][0]), b = fractionImage(paires[1][0]);
+    const t1 = paires[0][1], t2 = paires[1][1];
+    const du = b[0] - a[0], dv = b[1] - a[1];
+    if(Math.abs(du) < 0.04 || Math.abs(dv) < 0.04){
+      afficherInfo('\u26a0\ufe0f Rep\u00e8res trop rapproch\u00e9s \u2014 reprenez avec deux points bien \u00e9cart\u00e9s (Brest et Nice)', 7000);
+      return;
+    }
+    const larg = (t2.lng - t1.lng) / du;
+    const haut = (t1.lat - t2.lat) / dv;
+    if(!(larg > 0) || !(haut > 0)){
+      afficherInfo('\u26a0\ufe0f Calage impossible \u2014 les deux rep\u00e8res semblent invers\u00e9s. Reprenez.', 7000);
+      return;
+    }
+    const W = t1.lng - a[0] * larg, N = t1.lat + a[1] * haut;
+    IMGF.bornes = [[N - haut, W], [N, W + larg]];
+    IMGF.calage = true;
+    poserImage();
+    if(IMGF.cle) ecrireCalage(IMGF.cle, IMGF.bornes);
+    afficherInfo('\u2713 Image cal\u00e9e \u2014 le r\u00e9glage est m\u00e9moris\u00e9 pour ce fichier', 6000);
+  }
+  document.getElementById('btn-img-caler').addEventListener('click', ()=>{
+    if(!IMGF.couche){ afficherInfo('Chargez d\u2019abord une image', 4000); return; }
+    if(calageEnCours){ map.off('click', clicCalage); calageEnCours = null; afficherInfo('Calage abandonn\u00e9', 3000); return; }
+    calageEnCours = { paires:[], attente:null };
+    map.on('click', clicCalage);
+    afficherInfo('📍 Rep\u00e8re 1/2 : cliquez un lieu reconnaissable SUR l\u2019image (Brest, une capitale\u2026)', 12000);
+  });
 
   const SOURCES_FEUX = {
     'gibs-viirs': { type:'gibs', couche:'VIIRS_SNPP_Thermal_Anomalies_375m_All', nom:'NASA GIBS \u2014 VIIRS 375 m' },
@@ -12748,8 +12961,8 @@
   });
 
   // ================= Fenêtres flottantes (widgets) =================
-  const WIDGETS = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-equip','wg-geol','wg-sismique','wg-risques','wg-population','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-limites','wg-foret','wg-pilote'];
-  const WIDGETS_PILOTABLES = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-equip','wg-geol','wg-sismique','wg-risques','wg-population','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-limites','wg-foret'];
+  const WIDGETS = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-population','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-limites','wg-foret','wg-pilote'];
+  const WIDGETS_PILOTABLES = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-population','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-limites','wg-foret'];
   const WIDGETS_CASES = []; // remplacées par la fenêtre 🧭 pilote
   let posWidgets = {};
   try{ posWidgets = JSON.parse(localStorage.getItem('geo-widgets3')||'{}'); }catch(e){}
@@ -12828,6 +13041,7 @@
                                top:Math.max(60, window.innerHeight-320)+'px', replie:true });
   initWidget('wg-fonds',     { left:Math.max(8, window.innerWidth-226)+'px', top:'54px', replie:true });
   initWidget('wg-sites',     { left:'12px', top:'270px', replie:true, cache:true });
+  initWidget('wg-sols',      { left:'12px', top:'320px', replie:true, cache:true });
   initWidget('wg-equip',     { left:'12px', top:'70px', replie:true, cache:true });
   initWidget('wg-geol',      { left:'12px', top:'230px', replie:true, cache:true });
   initWidget('wg-sismique', { left:'12px', top:'320px', replie:true, cache:true });
@@ -12872,27 +13086,61 @@
     const liste = document.getElementById('actives-liste');
     const compte = document.getElementById('actives-compte');
     if(!boite || !liste || !compte) return;
-    const ids = (typeof etatCouchesActives === 'function') ? etatCouchesActives() : [];
-    boite.hidden = ids.length === 0;
-    compte.textContent = ids.length + (ids.length > 1 ? ' couches actives' : ' couche active');
+    const actives = (typeof etatCouchesActives === 'function') ? etatCouchesActives() : [];
+    // une couche rallumee depuis son propre panneau sort de la veille
+    for(let i = VEILLE.length - 1; i >= 0; i--){
+      if(actives.indexOf(VEILLE[i].id) !== -1) VEILLE.splice(i, 1);
+    }
+    const entrees = actives.map(function(id){ return { id:id, veille:false }; })
+      .concat(VEILLE.map(function(v){ return { id:v.id, nom:v.nom, veille:true }; }));
+
+    boite.hidden = entrees.length === 0;
+    compte.textContent = actives.length + (actives.length > 1 ? ' couches actives' : ' couche active')
+      + (VEILLE.length ? ' \u00b7 ' + VEILLE.length + ' en veille' : '');
     liste.textContent = '';
-    ids.forEach(function(id){
-      const src = document.getElementById(id);
+
+    entrees.forEach(function(e){
+      const src = document.getElementById(e.id);
       if(!src) return;
-      const nom = (src.textContent || '').replace('\u2715', '').replace(/\s+/g, ' ').trim();
-      const puce = document.createElement('button');
-      puce.type = 'button';
-      puce.className = 'active-puce';
-      puce.title = '\u00c9teindre : ' + nom;
-      puce.appendChild(document.createTextNode(nom));
-      const x = document.createElement('span');
-      x.className = 'active-x';
-      x.textContent = '\u2715';
-      puce.appendChild(x);
-      puce.addEventListener('click', function(){
-        src.click();                       // on repasse par le bouton d'origine : l'historique suit
+      const nom = e.veille ? e.nom
+        : (src.textContent || '').replace('\u2715', '').replace(/\s+/g, ' ').trim();
+
+      const puce = document.createElement('span');
+      puce.className = 'active-puce' + (e.veille ? ' en-veille' : '');
+
+      const corps = document.createElement('button');
+      corps.type = 'button';
+      corps.className = 'active-nom';
+      corps.textContent = nom;
+      corps.title = e.veille
+        ? 'Remettre en route : ' + nom
+        : 'Mettre en veille (la couche s\u2019efface, son \u00e9tiquette reste ici) : ' + nom;
+      corps.addEventListener('click', function(){
+        if(e.veille){
+          VEILLE.splice(VEILLE.findIndex(function(v){ return v.id === e.id; }), 1);
+          src.click();                       // rallumage : la couche recharge ses donnees
+        }else{
+          VEILLE.push({ id:e.id, nom:nom });
+          src.click();                       // extinction reelle, l'etiquette reste
+        }
         setTimeout(majCouchesActives, 60);
       });
+
+      const x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'active-x';
+      x.textContent = '\u2715';
+      x.title = 'Retirer de la liste : ' + nom;
+      x.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        const k = VEILLE.findIndex(function(v){ return v.id === e.id; });
+        if(k !== -1) VEILLE.splice(k, 1);
+        if(!e.veille) src.click();           // encore allumee : on l'eteint avant de la retirer
+        setTimeout(majCouchesActives, 60);
+      });
+
+      puce.appendChild(corps);
+      puce.appendChild(x);
       liste.appendChild(puce);
     });
   }
@@ -12900,7 +13148,9 @@
     const tout = document.getElementById('btn-actives-off');
     if(tout) tout.addEventListener('click', function(){
       const ids = (typeof etatCouchesActives === 'function') ? etatCouchesActives() : [];
-      if(!ids.length) return;
+      const enVeille = VEILLE.length;
+      if(!ids.length && !enVeille) return;
+      VEILLE.length = 0;                     // « tout eteindre » vide aussi la veille
       ids.forEach(function(id){ const b = document.getElementById(id); if(b) b.click(); });
       setTimeout(function(){
         majCouchesActives();
