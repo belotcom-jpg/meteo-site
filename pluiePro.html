@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>MultiMeteo v4.1.1</title>
+<title>MultiMeteo v4.1.6</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -368,6 +368,7 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   /* synthèse RÉELLEMENT affichée par l'appli : liseré cyan marqué */
   .vf-t .vf-now td{background:#0d2222;border-top:2px solid #7ff;border-bottom:2px solid #7ff;box-shadow:inset 0 0 22px rgba(119,255,255,0.10)}
   .vf-t .vf-now td:first-child{border-left:3px solid #7ff}
+  .vf-play{color:#7ff;font-size:11px;margin-right:3px;text-shadow:0 0 6px rgba(119,255,255,.6)}
   .vf-now-tag{font-size:9px;color:#0a1a1a;background:#7ff;padding:1px 5px;border-radius:7px;font-weight:900;margin-left:5px;vertical-align:middle}
   /* références triviales : volontairement en retrait */
   .vf-t .vf-ref td{opacity:.62;font-style:italic}
@@ -710,7 +711,7 @@ document.addEventListener('DOMContentLoaded',function(){try{var vt=document.getE
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
       <div id="legendBar" class="legend" style="flex-direction:row;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
-        <div class="leg" id="legP80"><div class="leg-dot" style="background:#ffe600;box-shadow:0 0 6px rgba(255,230,0,.5)"></div><div class="p80-info"><span class="leg-txt" style="color:#ffe600;cursor:help;border-bottom:1px dotted rgba(255,230,0,.4)">P80 ⓘ</span><div class="p80-tooltip">P80 = 80ᵉ percentile sur tous les modèles actifs.<br>Traduction : 80% des modèles prévoient moins de cette valeur — estimation pessimiste-réaliste, ni la médiane ni le pire cas.</div></div></div><span id="versionTag" title="Version de MultiMeteo" style="font-size:9px;font-weight:700;color:#666;font-family:'Courier New',monospace;letter-spacing:.3px;align-self:center;white-space:nowrap"></span>
+        <div class="leg" id="legP80"><div class="leg-dot" style="background:#ffe600;box-shadow:0 0 6px rgba(255,230,0,.5)"></div><div class="p80-info"><span class="leg-txt" style="color:#ffe600;cursor:help;border-bottom:1px dotted rgba(255,230,0,.4)">P80 ⓘ</span><div class="p80-tooltip">P80 = 80ᵉ percentile sur tous les modèles actifs.<br>Traduction : 80% des modèles prévoient moins de cette valeur — estimation pessimiste-réaliste, ni la médiane ni le pire cas.</div></div></div><span id="versionTag" title="Version du fichier ouvert — vérifiez-la si un correctif récent semble absent" style="font-size:11px;font-weight:900;color:#7ec97e;background:rgba(126,201,126,0.12);border:1px solid rgba(126,201,126,0.35);border-radius:5px;padding:1px 6px;font-family:'Courier New',monospace;letter-spacing:.3px;align-self:center;white-space:nowrap;cursor:help"></span>
         <div class="leg" id="legMax"><div class="leg-dot" style="background:#4488ff;height:2px"></div><span class="leg-txt" style="color:#4488ff">MAX</span></div>
         <div class="leg" id="legProb"><div class="leg-dot dashed" style="opacity:.4;background:repeating-linear-gradient(90deg,#fff 0,#fff 6px,transparent 6px,transparent 10px)"></div><span class="leg-txt" style="color:#fff;opacity:.4">PROBA</span></div>
         <div class="leg" id="legCloud"><div class="leg-dot" style="background:repeating-linear-gradient(90deg,#ff3333 0,#ff3333 4px,transparent 4px,transparent 10px,#ff3333 10px,#ff3333 14px,transparent 14px,transparent 18px);height:2px"></div><span class="leg-txt" style="color:#ff3333">☁</span></div>
@@ -2456,9 +2457,12 @@ function _vfDayAgg(hourly,varBase,lead){ /* {date:{tmax,tmin,rain}} depuis les t
   Object.keys(out).forEach(dk=>{if(out[dk].n<20)delete out[dk];});   /* jours incomplets exclus */
   return out;
 }
+/* Minimum de paires pour qu'un score ait un sens. Abaissé à 5 sur la fenêtre 7 j,
+   qui n'est qu'un aperçu rapide — les scores y sont signalés comme fragiles. */
+function _vfMinN(){return (typeof _vfWindow!=='undefined'&&_vfWindow<=7)?5:10;}
 function _vfMae(pairs){ /* [{p,o}] → {mae,bias,n} */
   const v=pairs.filter(x=>x.p!=null&&x.o!=null&&isFinite(x.p)&&isFinite(x.o));
-  if(v.length<10)return null;
+  if(v.length<_vfMinN())return null;
   let s=0,b=0;
   v.forEach(x=>{s+=Math.abs(x.p-x.o);b+=(x.p-x.o);});
   return {mae:s/v.length,bias:b/v.length,n:v.length};
@@ -2484,8 +2488,19 @@ function _vfRainHit(pairs){ /* accord jour de pluie (seuil 0,5 mm) */
   return ok/v.length;
 }
 function _vfCacheKey(){return 'pp_verif_v3_'+_vfScope+'_'+_vfWindow+((_vfScope==='fr'||_vfScope==='multi')?'':('_'+(Math.round(_cityLat*20)/20)+'_'+(Math.round(_cityLon*20)/20)));}
+/* Lecture du cache d'analyse — extraite pour être utilisable aussi par openVerif
+   (mode « cache seul », v4.0.6 : la fonction était appelée sans exister → panneau cassé) */
+function _vfCacheLoad(){
+  try{
+    const o=JSON.parse(localStorage.getItem(_vfCacheKey())||'null');
+    const ttl=((_vfScope==='fr'||_vfScope==='multi')?12:6)*3600e3;
+    if(o&&o.t&&(Date.now()-o.t)<ttl&&o.d)return o.d;
+  }catch(e){}
+  return null;
+}
 async function _vfFetch(){
-  try{const o=JSON.parse(localStorage.getItem(_vfCacheKey())||'null');if(o&&o.t&&(Date.now()-o.t)<((_vfScope==='fr'||_vfScope==='multi')?12:6)*3600e3&&o.d)return o.d;}catch(e){}
+  const _c=_vfCacheLoad();
+  if(_c)return _c;
   if(_vfLoading)return _vfLoading;
   const lat0=_cityLat,lon0=_cityLon;
   _vfLoading=(async()=>{
@@ -2526,7 +2541,7 @@ async function _vfFetch(){
       for(let s=0;s<LOCS.length&&!dead;s+=CH){
         const seg=LOCS.slice(s,s+CH);
         if(st){st.style.display='block';st.textContent='⏳ '+prettyModelName(mo)+' ('+(mi+1)+'/'+MODELS.length+')'+(fr?(' · stations '+(s+1)+'-'+(s+seg.length)):'')+'…';}
-        let ok=false;
+        let ok=false,hors=false;
         for(let att=0;att<4&&!ok;att++){
           const u='https://previous-runs-api.open-meteo.com/v1/forecast?latitude='+seg.map(l=>l.lat).join(',')+'&longitude='+seg.map(l=>l.lon).join(',')
             +'&hourly='+hv.join(',')+'&models='+mo+'&past_days='+_vfWindow+'&forecast_days=1&timezone=Europe%2FParis';
@@ -2537,6 +2552,11 @@ async function _vfFetch(){
               /* l'API refuse previous_day6/7 → repli J-1/2/3/5, mémorisé pour la session */
               _vfLeadCap=5;LEADS=LEADS.filter(L=>L<=5);hv=mkHv();
               att--;continue;
+            }
+            if(r.status===400){
+              /* 400 après le repli d'échéance = ce modèle ne couvre PAS ce point
+                 (ex. ICON-CH sur Brest). Inutile de réessayer 4 fois : on passe. */
+              hors=true;break;
             }
             if(!r.ok)throw new Error('HTTP '+r.status);
             let j=await r.json();if(!Array.isArray(j))j=[j];
@@ -2561,6 +2581,8 @@ async function _vfFetch(){
             else await new Promise(res=>setTimeout(res,1500*(att+1)));
           }
         }
+        /* modèle hors domaine sur ce point : on continue avec les autres points/modèles */
+        if(hors)continue;
         if(s+CH<LOCS.length)await new Promise(res=>setTimeout(res,fr?800:400));
       }
       if(dead)preds[mo]=null;
@@ -2578,15 +2600,24 @@ async function _vfFetch(){
             const p=preds[mo]&&preds[mo][li]&&preds[mo][li][L]&&preds[mo][li][L][dk];
             if(!p)return;
             /* (a) SYNTH = EXACTEMENT ce que l'appli affiche : les 3 calibrages actifs */
-            const wT=_modelWeight('temperature_2m_max_'+mo,L);
-            const wR=_modelWeight('precipitation_'+mo,L);
+            /* même contexte que les autres lignes ; seuls les FACTEURS vérifiés diffèrent */
+            const _fw=function(k){
+              let w=_modelWeightBase(k,L)*_centerShare(k,MODELS);
+              const f=_wCalGet();
+              if(f){const ff=f[mo]&&f[mo][L<=2?'b1':(L<=5?'b2':'b3')];if(ff)w*=ff;}
+              return w;
+            };
+            const wT=_fw('temperature_2m_max_'+mo);
+            const wR=_fw('precipitation_'+mo);
             if(p.tmax!=null)pT.push({v:_debias('temperature_2m_max_'+mo,L,p.tmax),w:wT});
             if(p.tmin!=null)pN.push({v:_debias('temperature_2m_min_'+mo,L,p.tmin),w:wT});
             if(p.rain!=null)pR.push({v:_debias('precipitation_'+mo,L,p.rain),w:wR});
             /* (b) SYNTHRAW = référence BRUTE : poids de base seuls, aucun biais,
                    quantile 0,80 fixe. Mesure le gain TOTAL des calibrages. */
-            const w0T=_modelWeightBase('temperature_2m_max_'+mo,L)*_centerShare('temperature_2m_max_'+mo);
-            const w0R=_modelWeightBase('precipitation_'+mo,L)*_centerShare('precipitation_'+mo);
+            /* contexte = la liste de modèles RÉELLEMENT testée (MODELS), pas celle de l'appli :
+               sinon la brute et les simulations diffèrent pour une raison étrangère aux calibrages */
+            const w0T=_modelWeightBase('temperature_2m_max_'+mo,L)*_centerShare('temperature_2m_max_'+mo,MODELS);
+            const w0R=_modelWeightBase('precipitation_'+mo,L)*_centerShare('precipitation_'+mo,MODELS);
             if(p.tmax!=null)pT0.push({v:p.tmax,w:w0T});
             if(p.tmin!=null)pN0.push({v:p.tmin,w:w0T});
             if(p.rain!=null)pR0.push({v:p.rain,w:w0R});
@@ -2830,10 +2861,12 @@ async function _vfFetch(){
                 const fk=(Ftr[mo]&&Ftr[mo][bOf(L)])||1;
                 /* seuls les POIDS changent ici ; biais actif conservé pour que la
                    comparaison avec « SYNTHÈSE (actuelle) » n'isole qu'une seule variable */
-                const wT=_modelWeightBase('temperature_2m_max_'+mo,L)*_centerShare('temperature_2m_max_'+mo)*fk;
-                if(p.tmax!=null)pT.push({v:_debias('temperature_2m_max_'+mo,L,p.tmax),w:wT});
-                if(p.tmin!=null)pN.push({v:_debias('temperature_2m_min_'+mo,L,p.tmin),w:wT});
-                if(p.rain!=null)pR.push({v:_debias('precipitation_'+mo,L,p.rain),w:wT});
+                /* brute + poids vérifiés UNIQUEMENT : l'écart avec la ligne brute
+                   est le gain propre des poids, quel que soit l'état des bascules */
+                const wT=_modelWeightBase('temperature_2m_max_'+mo,L)*_centerShare('temperature_2m_max_'+mo,MODELS)*fk;
+                if(p.tmax!=null)pT.push({v:p.tmax,w:wT});
+                if(p.tmin!=null)pN.push({v:p.tmin,w:wT});
+                if(p.rain!=null)pR.push({v:p.rain,w:wT});
               });
               if(pT.length>=3){
                 const o=truth[li][dk];
@@ -2864,7 +2897,8 @@ async function _vfFetch(){
                 const p=preds[mo]&&preds[mo][li]&&preds[mo][li][L]&&preds[mo][li][L][dk];
                 if(!p)return;
                 const bb=(Btr[mo]&&Btr[mo][bOf(L)])||{};
-                const wT=_modelWeight('temperature_2m_max_'+mo,L);
+                /* brute + biais corrigés UNIQUEMENT (poids de base) */
+                const wT=_modelWeightBase('temperature_2m_max_'+mo,L)*_centerShare('temperature_2m_max_'+mo,MODELS);
                 if(p.tmax!=null)pT.push({v:p.tmax-(bb.tmax||0),w:wT});
                 if(p.tmin!=null)pN.push({v:p.tmin-(bb.tmin||0),w:wT});
                 if(p.rain!=null)pR.push({v:Math.max(0,p.rain-(bb.rain||0)),w:wT});
@@ -2930,14 +2964,14 @@ function closeVerif(){const p=document.getElementById('verifPanel');if(p)p.class
    Ligne 1 : T°max / T°min (MAE en °C)  ·  Ligne 2 : pluie (mm) et accord pluie/sec (%) */
 /* Noms lisibles des lignes spéciales du classement (un seul endroit de vérité) */
 const _VF_SPECIAL={
-  SYNTH:    {court:'★ SYNTHÈSE (calibrée)',       long:'★ SYNTHÈSE — calibrages actifs', col:'#7ff',
+  SYNTH:    {court:'► ★ SYNTHÈSE (calibrée)',     long:'<span class="vf-play">►</span> ★ SYNTHÈSE — calibrages actifs', col:'#7ff',
              aide:'Ce que l\u2019appli affiche en ce moment : médiane pondérée avec les trois calibrages dans leur état actuel.'},
   SYNTHRAW: {court:'★ SYNTHÈSE brute',            long:'★ SYNTHÈSE sans aucun calibrage <small>(référence)</small>', col:'#9fb3c8',
              aide:'Poids de base seuls, aucun biais corrigé, quantile P80 fixe. L\u2019écart avec la ligne calibrée mesure le gain TOTAL de vos réglages.'},
-  SYNTHCAL: {court:'★ SYNTH. + poids vérifiés',  long:'★ SYNTHÈSE + poids vérifiés <small>(simulation)</small>', col:'#ffd800',
-             aide:'Ce que donnerait la synthèse si on pondérait les modèles selon leurs performances mesurées. Évaluée en validation croisée : apprise sur une moitié des jours, testée sur l\u2019autre.'},
-  SYNTHDEB: {court:'★ SYNTH. + biais corrigés',  long:'★ SYNTHÈSE + biais corrigés <small>(simulation)</small>', col:'#7fe0a0',
-             aide:'Ce que donnerait la synthèse si on retranchait à chaque modèle son décalage systématique. Également en validation croisée.'},
+  SYNTHCAL: {court:'★ brute + poids',            long:'★ brute <b>+ poids vérifiés</b> <small>(simulation)</small>', col:'#ffd800',
+             aide:'Synthèse brute + UNIQUEMENT les poids vérifiés, en validation croisée (appris sur une moitié des jours, testés sur l\u2019autre). L\u2019écart avec la ligne brute est le gain propre des poids.'},
+  SYNTHDEB: {court:'★ brute + biais',            long:'★ brute <b>+ biais corrigés</b> <small>(simulation)</small>', col:'#7fe0a0',
+             aide:'Synthèse brute + UNIQUEMENT la correction de biais, en validation croisée. L\u2019écart avec la ligne brute est le gain propre du débiaisage.'},
   PERSIST:  {court:'⏸ Persistance',              long:'⏸ Persistance <small>(= la veille)</small>', col:'#c58a4a',
              aide:'Référence triviale : « demain sera comme aujourd\u2019hui ». Un modèle qui ne la bat pas n\u2019apporte rien.'},
   CLIMATO:  {court:'📅 Climatologie',             long:'📅 Climatologie <small>(= la normale)</small>', col:'#c58a4a',
@@ -3040,13 +3074,26 @@ function _vfRender(d){
         if(a&&b&&a.gi!=null&&b.gi!=null){
           const dg=a.gi-b.gi;
           const c=dg>=2?'#52e88f':(dg<=-2?'#ff7040':'#9fb3c8');
-          gainTxt=' <b style="color:'+c+'">gain total '+(dg>=0?'+':'')+dg+' pts</b> vs synthèse brute'
-            +(dg<=0?' <span style="color:#ff7040">— vos réglages n\u2019apportent rien ici</span>':'');
+          /* L'indice global note la MÉDIANE de pluie, les températures et l'accord pluie/sec.
+             Le quantile calibré agit sur la courbe P80 affichée, qui n'entre PAS dans l'indice :
+             si seul le quantile est actif, un gain nul est normal et ne signifie pas « inutile ». */
+          const wOn=_calOn('w'),bOn=_calOn('b'),qOn=_calOn('q');
+          const dansIndice=wOn||bOn;
+          gainTxt=' <b style="color:'+c+'">gain total '+(dg>=0?'+':'')+dg+' pts</b> vs synthèse brute';
+          if(!wOn&&!bOn&&!qOn){
+            gainTxt+=' <span style="color:#8aa">— aucun calibrage actif, c\u2019est attendu</span>';
+          }else if(!dansIndice){
+            gainTxt+=' <span style="color:#8aa">— normal : seul le <b>quantile</b> est actif, et il agit sur la courbe P80,'
+              +' que l\u2019indice ne note pas (l\u2019indice évalue la médiane). Sa qualité se lit sur la ligne'
+              +' <b>Calibrage du quantile</b> ci-dessous.</span>';
+          }else if(dg<=0){
+            gainTxt+=' <span style="color:#ff7040">— les réglages actifs n\u2019améliorent pas l\u2019indice</span>';
+          }
         }
       }catch(e){}
       msg+='<div class="cal-bar">'
-        +'<button class="vf-act cal-auto'+(tout?' on':'')+'" onclick="vfAuto()">🤖 Réglage automatique : <b>'+(tout?'ON':'OFF')+'</b></button>'
-        +gainTxt
+        +'<button class="vf-act cal-auto'+(n>0?' on':'')+'" onclick="vfAuto()" title="Analyse les gains mesurés en validation croisée et n\'active que les calibrages qui apportent vraiment quelque chose">🤖 Régler automatiquement</button>'
+        +gainTxt+'</div>'+_autoExpl()+'<div style="display:none">'
         +' <small style="color:#8aa">active les trois calibrages mesurés ci-dessous'
         +(n>0&&!tout?(' — <b style="color:#ffd800">'+n+'/3 actif'+(n>1?'s':'')+'</b>'):'')+'</small></div>';
     }
@@ -3142,11 +3189,75 @@ function _calRefresh(){
   try{window._vfLast=null;openVerif(true);}catch(e){}   /* l'utilisateur vient de basculer un réglage */
 }
 function vfTog(k){_calSet(k,!_calOn(k));_calRefresh();}
-/* Réglage automatique : tout activer, ou tout désactiver si déjà complet */
+/* ── Réglage automatique RAISONNÉ ──
+   N'active un calibrage que si les preuves le justifient, et explique chaque refus.
+   · poids  : la ligne « brute + poids » doit battre la brute d'au moins MARGE points
+   · biais  : idem pour « brute + biais »
+   · quantile : le taux de dépassement doit s'écarter nettement de la cible de 20 %
+   Les deux premières comparaisons sont en validation croisée : un gain positif signifie
+   que le réglage tient sur des jours qui n'ont pas servi à l'apprendre. */
+const _AUTO_MARGE=1.5;     /* points d'indice — sous ce seuil, on considère que c'est du bruit */
+const _AUTO_NMIN=30;       /* paires minimales pour trancher sur le quantile */
+function vfAutoDecide(){
+  const d=window._vfLast;
+  if(!d||!d.rows)return null;
+  const gi=m=>{const r=d.rows.find(x=>x.model===m);return (r&&r.gi!=null)?r.gi:null;};
+  const brut=gi('SYNTHRAW');
+  const out={};
+  /* poids */
+  const gw=gi('SYNTHCAL');
+  out.w=(brut==null||gw==null)
+    ? {on:false,txt:'indécidable — comparaison indisponible'}
+    : (gw-brut>=_AUTO_MARGE
+        ? {on:true, txt:'gain +'+(gw-brut).toFixed(1)+' pt en validation croisée'}
+        : {on:false,txt:'gain '+(gw-brut>=0?'+':'')+(gw-brut).toFixed(1)+' pt — sous le seuil de '+_AUTO_MARGE+', probablement du bruit'});
+  /* biais */
+  const gb=gi('SYNTHDEB');
+  out.b=(brut==null||gb==null)
+    ? {on:false,txt:'indécidable — comparaison indisponible'}
+    : (gb-brut>=_AUTO_MARGE
+        ? {on:true, txt:'gain +'+(gb-brut).toFixed(1)+' pt en validation croisée'}
+        : {on:false,txt:'gain '+(gb-brut>=0?'+':'')+(gb-brut).toFixed(1)+' pt — sous le seuil de '+_AUTO_MARGE+', probablement du bruit'});
+  /* quantile pluie : écart à la cible de 20 % de dépassement */
+  let ec=null,nq=0;
+  if(d.qCal){
+    const ks=Object.keys(d.qCal);
+    if(ks.length){
+      ec=ks.reduce((s,L)=>s+Math.abs(d.qCal[L].exceed-20),0)/ks.length;
+      nq=ks.reduce((s,L)=>Math.max(s,d.qCal[L].n||0),0);
+    }
+  }
+  out.q=(ec==null)
+    ? {on:false,txt:'indécidable — calibrage non mesuré'}
+    : (nq<_AUTO_NMIN
+        ? {on:false,txt:'échantillon trop court (n='+nq+' < '+_AUTO_NMIN+')'}
+        : (ec>=8
+            ? {on:true, txt:'écart moyen de '+ec.toFixed(0)+' pts à la cible de 20 % — recalibrage justifié'}
+            : {on:false,txt:'écart de seulement '+ec.toFixed(0)+' pts à la cible — le P80 est déjà bien calibré'}));
+  return out;
+}
 function vfAuto(){
-  const tout=['w','q','b'].every(_calOn);
-  ['w','q','b'].forEach(k=>_calSet(k,!tout));
+  const dec=vfAutoDecide();
+  if(!dec){
+    const st=document.getElementById('vfStatus');
+    if(st){st.style.display='block';st.textContent='Lancez d\u2019abord une analyse pour que le réglage automatique ait des preuves.';}
+    return;
+  }
+  ['w','q','b'].forEach(k=>_calSet(k,dec[k].on));
+  try{sessionStorage.setItem('pp_autoexpl',JSON.stringify({w:dec.w,q:dec.q,b:dec.b,t:Date.now()}));}catch(e){}
   _calRefresh();
+}
+/* Explication de la dernière décision automatique, réaffichée après le rechargement */
+function _autoExpl(){
+  try{
+    const o=JSON.parse(sessionStorage.getItem('pp_autoexpl')||'null');
+    if(!o||!o.t||(Date.now()-o.t)>120000)return '';
+    const lbl={w:'Poids vérifiés',q:'Quantile pluie',b:'Biais corrigés'};
+    const li=['w','q','b'].map(k=>'<div style="margin-left:14px">'
+      +(o[k].on?'<b style="color:#52e88f">✔ '+lbl[k]+' activé</b>':'<span style="color:#8aa">✕ '+lbl[k]+' laissé inactif</span>')
+      +' <small style="color:#7a8a99">— '+o[k].txt+'</small></div>').join('');
+    return '<div style="margin-top:4px;padding:5px 0;border-top:1px dashed #234">🤖 <b>Décision automatique</b> :'+li+'</div>';
+  }catch(e){return '';}
 }
 /* Rendu d'une bascule */
 /* Jours restants avant expiration d'un calibrage (30 j après son activation) */
@@ -3213,6 +3324,7 @@ function vfScope(s){
 }
 function vfWindow(w){
   _vfWindow=w;
+  const b7=document.getElementById('vfW7');if(b7)b7.classList.toggle('on',w===7);
   const b35=document.getElementById('vfW35'),b92=document.getElementById('vfW92');
   if(b35)b35.classList.toggle('on',w===35);
   if(b92)b92.classList.toggle('on',w===92);
@@ -5652,7 +5764,7 @@ async function fetchNowcast(lat,lon){
     function(){
       const ctrl=new AbortController();
       setTimeout(function(){ctrl.abort();},6000);
-      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/4.1.1'}});
+      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/4.1.6'}});
     },
     function(){
       const ctrl=new AbortController();
@@ -8906,6 +9018,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
       <div class="ind-modes vf-bar">
         <span class="vf-grp" title="Profondeur d'historique testée : 92 j donne un verdict plus solide mais coûte 3× plus">
           <span class="vf-grp-l">Fenêtre</span>
+          <button id="vfW7" onclick="vfWindow(7)" title="Aperçu rapide — peu de données, scores fragiles : préférez les portées « 8 villes » ou « France 30 st. »">7 j</button>
           <button id="vfW35" class="on" onclick="vfWindow(35)">35 j</button>
           <button id="vfW92" onclick="vfWindow(92)">92 j</button>
         </span>
