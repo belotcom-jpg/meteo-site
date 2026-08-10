@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v4.18 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v5.3 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v4.18</title>
+<title>MultiMaps — géographie (collège & lycée) — v5.3</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -65,6 +65,47 @@
   .pilote-sep{border-top:1.5px solid var(--trait);margin:5px 2px}
   .pilote-grille{display:grid;grid-template-columns:1fr 1fr;gap:5px}
   /* couches actives : puces desactivables */
+  /* ---------- Croquis : palette, figurés, texte ---------- */
+  .palette-grille{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:5px }
+  .palette-grille .couleur{
+    width:100%; height:20px; border-radius:5px; border:1px solid rgba(0,0,0,.22);
+    cursor:pointer; padding:0; background:currentColor;
+  }
+  .palette-grille .couleur.actif{ outline:2.5px solid var(--encre); outline-offset:1px }
+  .libelle, #croquis-texte{
+    width:100%; box-sizing:border-box; font-family:inherit; font-size:11.5px;
+    padding:5px 7px; border:1px solid var(--trait); border-radius:7px; background:#fff; color:var(--encre);
+  }
+  /* barre d'outils : une grille d'icônes, un seul outil actif */
+  .outils-barre{ display:grid; grid-template-columns:repeat(4,1fr); gap:4px }
+  .outils-barre .outil{ min-height:40px }
+  .outils-barre .outil{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+    padding:6px 2px; border:1px solid var(--trait); border-radius:8px; background:#fdfcf9;
+    color:var(--encre); cursor:pointer; font-family:inherit; min-width:0;
+  }
+  .outils-barre .outil:hover{ background:#fff }
+  .outils-barre .outil.actif{ background:var(--encre); border-color:var(--encre); color:#fff }
+  .outil-ic{ font-size:15px; line-height:1 }
+  .outil-nom{ font-size:8.5px; letter-spacing:.02em; overflow:hidden; text-overflow:ellipsis; max-width:100% }
+  .prop{ margin-top:8px }
+  .prop > .etiquette{ display:block; margin-bottom:4px }
+  .croquis-rangee{ display:flex; gap:4px; margin-bottom:4px }
+  .croquis-btn{
+    flex:1; min-width:0; padding:5px 2px; font-family:inherit; font-size:11.5px; line-height:1.1;
+    border:1px solid var(--trait); border-radius:7px; background:#fdfcf9; color:var(--encre);
+    cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .croquis-btn:hover{ background:#fff }
+  .croquis-btn.actif{ background:var(--encre); color:#fff; border-color:var(--encre) }
+  .croquis-curseur{
+    display:flex; justify-content:space-between; font-size:10.5px; color:#8a8577; margin:5px 0 1px;
+  }
+  .croquis-texte-marqueur{ pointer-events:auto }
+  .croquis-texte-marqueur span{
+    font-weight:700; white-space:nowrap; -webkit-text-stroke:3px #fff; paint-order:stroke fill;
+    text-shadow:0 1px 2px rgba(255,255,255,.9);
+  }
   .pilote-actives{ border-bottom:1.5px solid var(--trait); padding-bottom:9px; margin-bottom:1px }
   .actives-tete{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:7px }
   #actives-compte{ font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#8a8577 }
@@ -74,6 +115,60 @@
   }
   #btn-actives-off:hover{ color:var(--rouge) }
   .actives-liste{ display:flex; flex-wrap:wrap; gap:5px }
+  /* légendes interactives : pastille vivante, menu, modale */
+  .leg-aide{
+    font-size:10px; color:#8a8577; line-height:1.45; margin:0 0 7px;
+    padding-bottom:6px; border-bottom:1px dashed var(--trait);
+  }
+  .leg-vivante{
+    cursor:pointer; position:relative;
+    box-shadow:0 0 0 1.5px var(--papier), 0 0 0 3px rgba(31,42,55,.35);
+    transition:box-shadow .12s, transform .12s;
+  }
+  .leg-vivante::after{
+    content:''; position:absolute; right:-5px; bottom:-5px;
+    width:6px; height:6px; border-radius:50%; background:var(--encre);
+    border:1.5px solid var(--papier);
+  }
+  .leg-vivante:hover, .leg-vivante:focus{
+    box-shadow:0 0 0 1.5px var(--papier), 0 0 0 4px var(--encre); transform:scale(1.15);
+  }
+  .leg-halo{ filter:drop-shadow(0 0 4px #111827) drop-shadow(0 0 8px #fff) }
+  .leg-menu{
+    position:fixed; z-index:100000; background:var(--papier); border:1px solid var(--trait);
+    border-radius:10px; box-shadow:0 6px 22px rgba(0,0,0,.22); padding:4px; min-width:178px;
+  }
+  .leg-menu-item{
+    display:block; width:100%; text-align:left; border:none; background:none; cursor:pointer;
+    font-family:inherit; font-size:12px; padding:7px 9px; border-radius:7px; color:var(--encre);
+  }
+  .leg-menu-item:hover{ background:#f3f0e6 }
+  .leg-menu-item.inactif{ color:#a8a29e; cursor:not-allowed }
+  .leg-modale-fond{
+    position:fixed; inset:0; z-index:100001; background:rgba(17,24,39,.34);
+    display:flex; align-items:center; justify-content:center; padding:16px;
+  }
+  .leg-modale{
+    background:var(--papier); border:1px solid var(--trait); border-radius:14px;
+    box-shadow:0 10px 40px rgba(0,0,0,.3); width:min(560px,96vw); max-height:86vh;
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  .leg-modale-tete{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:9px 12px; border-bottom:1px solid var(--trait); font-weight:700; font-size:13px;
+  }
+  .leg-modale-corps{ padding:12px; overflow-y:auto }
+  .leg-table{ width:100%; border-collapse:collapse; font-size:11.5px }
+  .leg-table th{ text-align:left; border-bottom:1.5px solid var(--trait); padding:4px 6px; color:#8a8577 }
+  .leg-table td{ border-bottom:1px solid #f0ede4; padding:4px 6px }
+  .favoris-tete{ display:flex; align-items:baseline; justify-content:space-between; gap:6px; margin:0 0 6px }
+  .favoris-compte{ font-size:9.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#8a8577 }
+  .favoris-liens{ display:flex; gap:9px; flex:none }
+  .lien-mini{
+    border:none; background:none; padding:0; cursor:pointer; font-family:inherit;
+    font-size:10.5px; color:#8a8577; text-decoration:underline; white-space:nowrap;
+  }
+  .lien-mini:hover{ color:var(--rouge) }
   .active-puce{
     display:inline-flex; align-items:stretch; max-width:100%;
     border:1px solid var(--encre); background:var(--encre);
@@ -356,7 +451,18 @@
   .donnee-etiquette::before{display:none}
 
   /* ---------- Barre d'actions ---------- */
-  .actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+  /* grille reguliere : deux colonnes egales, libelles alignes a gauche */
+  .actions{display:grid;grid-template-columns:1fr 1fr;gap:5px;align-items:stretch}
+  .actions-titre{
+    font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    color:#8a8577;margin:8px 0 4px;
+  }
+  .actions-titre:first-child{margin-top:0}
+  .actions>button, .actions>.calque-ajout{
+    width:100%;margin:0;text-align:left;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;
+  }
+  .actions>.calque-ajout{font-size:11.5px;padding:7px 9px}
   .actions button{
     background:var(--papier);border:1px solid var(--trait);border-radius:10px;
     padding:8px 12px;font-size:12.5px;font-weight:600;color:var(--encre);
@@ -426,7 +532,7 @@
     .nav-grille .calque-ajout{font-size:10px}
     .titre{min-width:0;width:calc(100vw - 12px);top:6px}
     .titre h1{font-size:12px}
-    .actions button{padding:7px 9px;font-size:11.5px}
+    .actions button{padding:7px 9px;font-size:11.5px;line-height:1.25}
   }
   @media (prefers-reduced-motion:reduce){
     *{transition:none !important}
@@ -480,7 +586,7 @@
 
   /* ================= INTERFACE C : rail latéral + panneaux ancrés =================
      Ne s'applique QUE si <body> porte la classe interface-c. L'interface O reste intacte. */
-  body.interface-c{ --rail:212px; --panneau:330px }
+  body.interface-c{ --rail:212px; --panneau:330px; --legende:236px }
   body.interface-c #wg-pilote, body.interface-c #wg-pilote.cache{
     display:flex !important; visibility:visible !important; opacity:1 !important;
     position:fixed !important; left:0 !important; top:0 !important; bottom:0 !important; right:auto !important;
@@ -506,13 +612,39 @@
   body.interface-c .widget:not(#wg-pilote):not(#wg-legende) .widget-tete{ border-radius:0; cursor:default }
   body.interface-c .widget:not(#wg-pilote):not(#wg-legende).replie{ height:auto !important; bottom:auto !important }
   body.interface-c.rail-ferme .widget:not(#wg-pilote):not(#wg-legende){ display:none !important }
-  /* la légende reste un encart compact en bas à droite */
-  body.interface-c #wg-legende{
-    left:auto !important; right:12px !important; top:auto !important;
-    bottom:12px !important; width:236px !important; max-height:56vh !important;
+  /* la légende devient un volet à droite, symétrique du rail principal */
+  body.interface-c #wg-legende, body.interface-c #wg-legende.cache{
+    display:flex !important; visibility:visible !important; opacity:1 !important;
+    position:fixed !important; right:0 !important; left:auto !important;
+    top:0 !important; bottom:0 !important;
+    width:var(--legende) !important; height:100% !important; max-height:none !important;
+    flex-direction:column; background:var(--papier); border:none;
+    border-left:1px solid var(--trait); border-radius:0; z-index:1500;
+    box-shadow:-2px 0 12px rgba(0,0,0,.07); transition:transform .18s ease;
   }
-  body.interface-c #map{ left:var(--rail); transition:left .18s ease }
+  body.interface-c #wg-legende .widget-tete{ border-radius:0; cursor:default }
+  body.interface-c #wg-legende .widget-corps{ overflow-y:auto !important; max-height:none !important }
+  /* replier le corps ou fermer la fenêtre n'a plus de sens : une seule commande, le chevron */
+  body.interface-c #wg-legende [data-action="replier"],
+  body.interface-c #wg-legende [data-action="fermer"]{ display:none }
+  body.interface-c #wg-legende.replie .widget-corps{ display:flex !important }
+  body.interface-c.legende-fermee #wg-legende{ transform:translateX(100%) !important; box-shadow:none }
+  /* son bouton du rail devient inutile : le volet est toujours là */
+  body.interface-c .pilote-btn[data-cible="wg-legende"]{ display:none }
+  #btn-legende-replier{ display:none }
+  body.interface-c #btn-legende-replier{ display:inline-block; font-size:15px; font-weight:700 }
+  #legende-toggle{
+    display:none; position:fixed; right:var(--legende); top:14px; z-index:1600; transform:translateX(50%);
+    width:28px; height:28px; border-radius:50%; border:1px solid var(--encre); background:var(--encre);
+    cursor:pointer; font-size:15px; font-weight:700; line-height:1; color:#fff; box-shadow:0 2px 6px rgba(0,0,0,.28);
+    align-items:center; justify-content:center; padding:0;
+  }
+  body.interface-c #legende-toggle{ display:flex }
+  body.interface-c #legende-toggle:hover{ background:var(--rouge); border-color:var(--rouge) }
+  body.interface-c.legende-fermee #legende-toggle{ right:6px; transform:none }
+  body.interface-c #map{ left:var(--rail); right:var(--legende); transition:left .18s ease, right .18s ease }
   body.interface-c.rail-ferme #map{ left:0 }
+  body.interface-c.legende-fermee #map{ right:0 }
   /* bouton de repli du rail */
   #rail-toggle{
     display:none; position:fixed; left:var(--rail); top:14px; z-index:1600; transform:translateX(-50%);
@@ -541,7 +673,8 @@
   }
   body.interface-c #wg-pilote .pilote-paquet .pilote-grille{ padding:6px 0 8px 12px }
   @media (max-width:760px){
-    body.interface-c{ --rail:0px }
+    body.interface-c{ --rail:0px; --legende:0px }
+    body.interface-c #wg-legende{ width:min(86vw,236px) !important }
     body.interface-c #wg-pilote{ width:212px !important }
     body.interface-c #map{ left:0 }
   }
@@ -552,6 +685,7 @@
 <div id="map"></div>
 
 <button id="rail-toggle" title="Replier ou déplier la barre latérale">‹</button>
+<button id="legende-toggle" title="Replier ou déplier le volet de légende">›</button>
 
 <div class="widget" id="wg-recherche" style="width:272px">
   <div class="widget-tete">
@@ -567,74 +701,156 @@
   </div>
 </div>
 
-<div class="widget" id="wg-outils" style="left:12px;top:72px;width:196px">
+<div class="widget" id="wg-outils" style="left:12px;top:72px;width:218px">
   <div class="widget-tete">
-    <span class="widget-titre">✏️ Annotations &amp; repères</span>
+    <span class="widget-titre">✏️ Croquis</span>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
     <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable dans ⚙️ Options)">✕</button>
   </div>
-  <div class="widget-corps" role="toolbar" aria-label="Légende et outils">
-  <div class="groupe">
-    <span class="etiquette">Couleur du crayon</span>
-    <div class="ligne-couleur">
-      <button class="couleur c-vert actif" data-couleur="#2e9e44" aria-label="Vert" title="Vert (1)"></button>
+  <div class="widget-corps" role="toolbar" aria-label="Outils de croquis">
+    <div class="outils-barre">
+      <button class="outil" id="btn-select" title="Sélection — Cliquez un tracé pour le sélectionner : sa couleur, son épaisseur et son style se modifient alors dans le panneau ci-dessous, et la touche Suppr l’efface."><span class="outil-ic">⌖</span><span class="outil-nom">Sélection</span></button>
+      <button class="outil actif" id="btn-main" title="Main — Déplacez la carte. Cliquez un tracé pour lire ou écrire sa note."><span class="outil-ic">✋</span><span class="outil-nom">Main</span></button>
+      <button class="outil" id="btn-pinceau" title="Crayon — Dessin à main levée. Clic droit ou Ctrl pour déplacer la carte sans lever l’outil."><span class="outil-ic">✏️</span><span class="outil-nom">Crayon</span></button>
+      <button class="outil" id="btn-zone" title="Zone — Cliquez pour poser les sommets, double-clic ou Entrée pour fermer, Échap pour annuler."><span class="outil-ic">⬟</span><span class="outil-nom">Zone</span></button>
+      <button class="outil" id="btn-ligne" title="Ligne — Cliquez les sommets, double-clic ou Entrée pour terminer. La longueur s’affiche pendant le tracé."><span class="outil-ic">╱</span><span class="outil-nom">Ligne</span></button>
+      <button class="outil" id="btn-fleche" title="Flèche — Comme la ligne, avec une pointe : le figuré des flux."><span class="outil-ic">→</span><span class="outil-nom">Flèche</span></button>
+      <button class="outil" id="btn-rect" title="Rectangle — Cliquez deux coins opposés."><span class="outil-ic">▭</span><span class="outil-nom">Rect.</span></button>
+      <button class="outil" id="btn-cercle" title="Cercle — Cliquez le centre puis un point du bord. Rayon et aire s’affichent pendant le tracé."><span class="outil-ic">◯</span><span class="outil-nom">Cercle</span></button>
+      <button class="outil" id="btn-figure" title="Figuré — Cliquez sur la carte pour poser un figuré ponctuel. Sa taille peut porter une quantité."><span class="outil-ic">◆</span><span class="outil-nom">Figuré</span></button>
+      <button class="outil" id="btn-texte-carte" title="Texte — Cliquez sur la carte pour poser le texte saisi ci-dessous."><span class="outil-ic">T</span><span class="outil-nom">Texte</span></button>
+      <button class="outil" id="btn-reperes" title="Repère — Cliquez sur la carte pour poser l’icône choisie."><span class="outil-ic">📍</span><span class="outil-nom">Repère</span></button>
+      <button class="outil" id="btn-gomme" title="Gomme — Cliquez ou glissez sur un tracé pour l’effacer."><span class="outil-ic">🧽</span><span class="outil-nom">Gomme</span></button>
     </div>
-    <div class="ligne-couleur">
-      <button class="couleur c-jaune" data-couleur="#f2c020" aria-label="Jaune" title="Jaune (2)"></button>
+    <p class="sous" id="outil-aide" style="margin:5px 0 6px"></p>
+
+    <div class="prop" data-pour="select">
+      <span class="etiquette">Objet sélectionné</span>
+      <p class="sous" id="sel-resume" style="margin:0 0 5px">Cliquez un tracé sur la carte.</p>
+      <div class="croquis-rangee">
+        <button class="croquis-btn" id="sel-supprimer" title="Supprime l’objet sélectionné (touche Suppr).">🗑 Supprimer</button>
+        <button class="croquis-btn" id="sel-deselect" title="Ne plus rien sélectionner (touche Échap).">↶ Désélectionner</button>
+      </div>
     </div>
-    <div class="ligne-couleur">
-      <button class="couleur c-orange" data-couleur="#f07f13" aria-label="Orange" title="Orange (3)"></button>
+
+    <div class="prop" data-pour="select pinceau zone figure texte ligne fleche rect cercle">
+      <span class="etiquette">Couleur</span>
+      <div class="palette-grille">
+      <button class="couleur c-vert actif" data-couleur="#2e9e44" aria-label="Vert" title="Vert (1) — espaces protégés, forêt, agriculture"></button>
+      <button class="couleur c-jaune" data-couleur="#f2c020" aria-label="Jaune" title="Jaune (2) — plaines, campagnes, espaces agricoles"></button>
+      <button class="couleur c-orange" data-couleur="#f07f13" aria-label="Orange" title="Orange (3) — espaces urbanisés, périurbain"></button>
+      <button class="couleur c-rouge" data-couleur="#d92b2b" aria-label="Rouge" title="Rouge (4) — dynamiques fortes, métropoles, attractivité"></button>
+      <button class="couleur" data-couleur="#7c3aed" aria-label="Violet" title="Violet — industrie, tertiaire supérieur"></button>
+      <button class="couleur" data-couleur="#db2777" aria-label="Rose" title="Rose — tourisme, patrimoine"></button>
+      <button class="couleur" data-couleur="#1d4ed8" aria-label="Bleu" title="Bleu — flux, réseaux, cours d’eau"></button>
+      <button class="couleur" data-couleur="#38bdf8" aria-label="Bleu clair" title="Bleu clair — littoral, mers, façades maritimes"></button>
+      <button class="couleur" data-couleur="#0f766e" aria-label="Vert profond" title="Vert profond — espaces protégés, parcs"></button>
+      <button class="couleur" data-couleur="#92400e" aria-label="Brun" title="Brun — relief, montagne, sols"></button>
+      <button class="couleur" data-couleur="#57534e" aria-label="Gris foncé" title="Gris foncé — déclin, déprise, friches"></button>
+      <button class="couleur" data-couleur="#a8a29e" aria-label="Gris clair" title="Gris clair — arrière-plan, espaces peu peuplés"></button>
+      <button class="couleur" data-couleur="#111827" aria-label="Noir" title="Noir — limites, tracés structurants"></button>
+      <button class="couleur" data-couleur="#ffffff" aria-label="Blanc" title="Blanc — réserve, effet de contraste"></button>
+      </div>
+      <input type="text" class="libelle" id="libelle-couleur" data-couleur="#2e9e44" maxlength="46"
+             placeholder="Intitulé de cette couleur dans la légende…"
+             title="Ce que représente cette couleur. Le texte apparaît dans la fenêtre 🧭 Légende.">
     </div>
-    <div class="ligne-couleur">
-      <button class="couleur c-rouge" data-couleur="#d92b2b" aria-label="Rouge" title="Rouge (4)"></button>
+
+    <div class="prop" data-pour="select pinceau zone ligne fleche rect cercle">
+      <span class="etiquette">Épaisseur du trait</span>
+      <div class="croquis-rangee" id="croquis-unite">
+        <button class="croquis-btn actif" data-unite="px" title="Épaisseur constante à l’écran, quel que soit le zoom. C’est le réglage du croquis : un axe reste lisible à l’échelle de la France.">à l’écran</button>
+        <button class="croquis-btn" data-unite="m" title="Épaisseur en mètres au sol : le trait s’épaissit en zoomant. Utile pour figurer une emprise réelle — une voirie, une bande de recul.">au sol</button>
+      </div>
+      <div class="tailles">
+      <button class="taille t1" data-taille="4" data-px="2" title="4 m au sol — 2 px à l’écran"><span></span></button>
+      <button class="taille t2" data-taille="10" data-px="3" title="10 m au sol — 3 px à l’écran"><span></span></button>
+      <button class="taille t3 actif" data-taille="22" data-px="5" title="22 m au sol — 5 px à l’écran"><span></span></button>
+      <button class="taille t4" data-taille="50" data-px="8" title="50 m au sol — 8 px à l’écran"><span></span></button>
+      <button class="taille t5" data-taille="120" data-px="14" title="120 m au sol — 14 px à l’écran"><span></span></button>
+      <button class="taille t6" data-taille="300" data-px="22" title="300 m au sol — 22 px à l’écran"><span></span></button>
     </div>
-  </div>
-  <div class="sep"></div>
-  <div class="groupe">
-    <span class="etiquette">Outils</span>
-    <div class="outils-grille">
-      <button class="outil actif" id="btn-main" title="Contrôle : déplacer la carte, cliquer sur un trait pour lire/écrire une note (M)">✋<small>contrôle</small></button>
-      <button class="outil" id="btn-pinceau" title="Pinceau libre (P) — clic droit ou Ctrl pour déplacer">🖌<small>pinceau</small></button>
-      <button class="outil" id="btn-zone" title="Zone : cliquez pour poser les sommets, double-clic ou Entrée pour fermer (Z)">⬠<small>zone</small></button>
-      <button class="outil" id="btn-gomme" title="Gomme : cliquez ou glissez sur un trait pour l'effacer (G)">◻<small>gomme</small></button>
     </div>
-  </div>
-  <div class="sep"></div>
-  <div class="groupe">
-    <span class="etiquette">Taille du pinceau</span>
-    <div class="tailles">
-      <button class="taille t1" data-taille="4"   title="4 m — un trottoir"><span></span></button>
-      <button class="taille t2" data-taille="10"  title="10 m — une rue"><span></span></button>
-      <button class="taille t3 actif" data-taille="22" title="22 m — un boulevard"><span></span></button>
-      <button class="taille t4" data-taille="50"  title="50 m — un pâté de maisons"><span></span></button>
-      <button class="taille t5" data-taille="120" title="120 m — un quartier"><span></span></button>
-      <button class="taille t6" data-taille="300" title="300 m — une zone"><span></span></button>
+
+    <div class="prop" data-pour="ligne fleche rect cercle zone">
+      <label class="velo-filtre" title="Les sommets se collent à ceux des tracés déjà posés, à moins de 13 pixels. Utile pour qu’une zone épouse exactement la précédente."><input type="checkbox" id="croquis-magnet" checked> Magnétisme aux sommets</label>
+    </div>
+    <div class="prop" data-pour="select pinceau zone ligne fleche rect cercle">
+      <span class="etiquette">Style du trait</span>
+      <div class="croquis-rangee" id="croquis-trait">
+      <button class="croquis-btn actif" data-trait="plein" title="Trait plein">—</button>
+      <button class="croquis-btn" data-trait="tirete" title="Trait tireté — limite incertaine, projet">– –</button>
+      <button class="croquis-btn" data-trait="pointille" title="Trait pointillé — discontinuité, contact">· · ·</button>
+    </div>
+      <div class="croquis-rangee" id="croquis-fleche">
+      <button class="croquis-btn actif" data-fleche="aucune" title="Sans pointe">sans</button>
+      <button class="croquis-btn" data-fleche="simple" title="Flèche simple — un flux orienté">→</button>
+      <button class="croquis-btn" data-fleche="double" title="Flèche double — un échange réciproque">↔</button>
+    </div>
+    </div>
+
+    <div class="prop" data-pour="select zone rect cercle">
+      <span class="etiquette">Remplissage</span>
+      <div class="croquis-rangee" id="croquis-motif">
+      <button class="croquis-btn actif" data-motif="aplat" title="Aplat de couleur">aplat</button>
+      <button class="croquis-btn" data-motif="hachures" title="Hachures inclinées">╱╱</button>
+      <button class="croquis-btn" data-motif="croisees" title="Hachures croisées — cumul de deux phénomènes">╳</button>
+      <button class="croquis-btn" data-motif="points" title="Semis de points — densité, dispersion">⁙</button>
+    </div>
+      <label class="croquis-curseur"><span>Opacité</span><span id="croquis-opacite-val">35%</span></label>
+      <input type="range" id="croquis-opacite" min="0" max="100" value="35" style="width:100%;accent-color:var(--encre)"
+             title="À 0 %, la zone n’a plus qu’un contour : elle délimite sans masquer le fond.">
+    </div>
+
+    <div class="prop" data-pour="figure">
+      <span class="etiquette">Forme du figuré</span>
+      <div class="croquis-rangee" id="croquis-forme">
+      <button class="croquis-btn actif" data-forme="cercle" title="Cercle">●</button>
+      <button class="croquis-btn" data-forme="carre" title="Carré">■</button>
+      <button class="croquis-btn" data-forme="triangle" title="Triangle">▲</button>
+      <button class="croquis-btn" data-forme="etoile" title="Étoile — un pôle, une capitale">★</button>
+    </div>
+      <label class="croquis-curseur"><span>Taille</span><span id="croquis-taille-val">14 px</span></label>
+      <input type="range" id="croquis-taille" min="6" max="46" value="14" style="width:100%;accent-color:var(--encre)"
+             title="Un figuré proportionnel se lit par sa taille : posez-en plusieurs de tailles différentes pour comparer des quantités.">
+    </div>
+
+    <div class="prop" data-pour="texte">
+      <span class="etiquette">Texte à poser</span>
+      <input type="text" id="croquis-texte" maxlength="60" placeholder="Ex. : Bassin parisien"
+             title="Posé avec un liséré blanc, lisible sur n’importe quel fond de carte.">
+      <label class="croquis-curseur"><span>Taille</span><span id="croquis-txt-val">15 px</span></label>
+      <input type="range" id="croquis-txt-taille" min="10" max="34" value="15" style="width:100%;accent-color:var(--encre)">
+    </div>
+
+    <div class="prop" data-pour="reperes">
+      <span class="etiquette">Icône du repère</span>
+      <div id="reperes-palette" style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px"><button class="repere-ic choisi" data-ic="☢️">☢️</button><button class="repere-ic" data-ic="⚠️">⚠️</button><button class="repere-ic" data-ic="🔥">🔥</button><button class="repere-ic" data-ic="🏭">🏭</button><button class="repere-ic" data-ic="⛽">⛽</button><button class="repere-ic" data-ic="⚡">⚡</button><button class="repere-ic" data-ic="💧">💧</button><button class="repere-ic" data-ic="🚧">🚧</button><button class="repere-ic" data-ic="🏥">🏥</button><button class="repere-ic" data-ic="📍">📍</button><button class="repere-ic" data-ic="⭐">⭐</button><button class="repere-ic" data-ic="❌">❌</button></div>
+      <button class="pilote-btn" id="btn-reperes-clear" style="margin-top:5px;width:100%" title="Efface tous les repères posés">🗑 Tout effacer</button>
+    </div>
+
+    <div class="prop" data-pour="select main pinceau zone ligne fleche rect cercle figure texte reperes gomme">
+      <button class="croquis-btn" id="btn-croquis-tout" style="width:100%;border-color:#b91c1c;color:#b91c1c"
+              title="Efface l’intégralité du croquis : tracés de tous les calques, figurés, textes et repères. Une confirmation est demandée.">🗑 Tout effacer</button>
+    </div>
+    <div class="prop" data-pour="figure texte">
+      <button class="croquis-btn" id="btn-croquis-vider" style="width:100%"
+              title="Efface tous les figurés ponctuels et les textes. Les tracés au crayon et les zones ne sont pas touchés.">🗑 Effacer figurés et textes</button>
     </div>
   </div>
 </div>
-
-  <div class="sep"></div>
-  <div class="groupe">
-    <span class="etiquette">📍 Mes repères</span>
-    <div style="font-size:11px;color:#8a8577;margin-bottom:4px">Choisissez une icône, activez le placement, puis cliquez sur la carte. Repères déplaçables et sauvegardés sur cet ordinateur.</div>
-    <div id="reperes-palette" style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px"><button class="repere-ic choisi" data-ic="☢️">☢️</button><button class="repere-ic" data-ic="⚠️">⚠️</button><button class="repere-ic" data-ic="🔥">🔥</button><button class="repere-ic" data-ic="🏭">🏭</button><button class="repere-ic" data-ic="⛽">⛽</button><button class="repere-ic" data-ic="⚡">⚡</button><button class="repere-ic" data-ic="💧">💧</button><button class="repere-ic" data-ic="🚧">🚧</button><button class="repere-ic" data-ic="🏥">🏥</button><button class="repere-ic" data-ic="📍">📍</button><button class="repere-ic" data-ic="⭐">⭐</button><button class="repere-ic" data-ic="❌">❌</button></div>
-    <button class="calque-ajout donnee" id="btn-reperes" title="Activez pour poser l'icône choisie à chaque clic sur la carte. Cliquez un repère pour le retirer, glissez-le pour le déplacer.">✏️ Placer des repères</button>
-    <button class="pilote-btn" id="btn-reperes-clear" style="margin-top:5px;width:100%" title="Efface tous les repères posés">🗑 Tout effacer</button>
-  </div>
-  </div>
-</div>
-
 
 <div class="widget" id="wg-legende" style="width:220px">
   <div class="widget-tete">
     <span class="widget-titre">🧭 Légende</span>
+    <button class="widget-btn" id="btn-legende-replier" title="Replier le volet de légende">›</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
     <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable dans ⚙️ Options)">✕</button>
   </div>
   <div class="widget-corps" id="legende-corps"></div>
 </div>
 
-<div class="widget" id="wg-actions" style="width:216px">
+<div class="widget" id="wg-actions" style="width:242px">
   <div class="widget-tete">
     <span class="widget-titre">🧰 Actions</span>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
@@ -644,17 +860,40 @@
     <div class="actions">
       <button id="btn-annuler" title="Annuler le dernier trait (Ctrl+Z)">↩ Annuler</button>
       <button id="btn-effacer" title="Effacer toutes les annotations du calque actif">🗑 Effacer</button>
-      <button id="btn-image" title="Exporter la vue actuelle en image PNG">🖼 Image</button>
-      <button id="btn-fiche" title="Fiche A4 imprimable : la carte actuelle, sa légende complète et ses sources, mises en page pour le classeur ou la photocopieuse. S'ouvre dans un onglet prêt à imprimer (ou à enregistrer en PDF via l'imprimante).">🖨 Fiche A4</button>
-      <button id="btn-options" title="Options : seuil des tops 50, fenêtres">⚙️ Options</button>
-      <button id="btn-gpx" title="Importer une trace GPX : elle devient un trait sur le calque actif">📈 GPX</button>
-      <button id="btn-lien" title="Copie un lien qui rouvre exactement cette carte : position, zoom et couches actives. Collez-le dans Pronote ou l'ENT — la classe ouvre votre vue préparée.">🔗 Copier le lien de cette carte</button>
-      <button id="btn-quiz" title="Quiz : 5 questions sur les départements, à partir des données de l'atlas — cliquez le bon département sur la carte !">🎓 Quiz</button>
-      <button id="btn-fichiers" title="La liste des fichiers de données à télécharger pour débloquer les prochaines couches, avec leurs liens officiels">📥 Fichiers à télécharger</button>
-      <button id="btn-aide" title="Aide : mode d'emploi rapide ou guide détaillé de toutes les fonctions">❓ Aide</button>
-      <button id="btn-comparer" title="Deux cartes côte à côte, synchronisées : activez une couche différente de chaque côté (ex. densité vs pauvreté) et déplacez-vous — les deux vues bougent ensemble.">⚖ Comparer</button>
-      <input type="file" id="fichier-gpx" accept=".gpx" style="display:none">
     </div>
+
+    <div class="actions-titre">Importer</div>
+    <div class="actions">
+      <button class="calque-ajout donnee" id="btn-favoris" title="Affiche sur la carte les lieux d’un fichier exporté : Google Takeout (JSON ou CSV), Mes cartes Google (KML/KMZ), ou GPX. Tout se passe dans votre navigateur, aucun fichier n’est envoyé.">📌 Importer des lieux</button>
+      <button id="btn-gpx" title="Importer une trace GPX : elle devient un trait sur le calque actif">📈 Trace GPX</button>
+    </div>
+        <input type="file" id="favoris-fichier" accept=".json,.csv,.kml,.kmz,.gpx,.geojson" multiple style="display:none">
+        <div id="favoris-reglages" style="display:none">
+          <p class="sous" id="favoris-bilan" style="margin:4px 0"></p>
+          <label class="velo-filtre"><input type="checkbox" id="favoris-etiquettes"> Afficher les noms sur la carte</label>
+          <div class="actions" style="margin-top:4px">
+            <button class="calque-ajout" id="btn-favoris-cadrer" title="Recadre la carte sur l’ensemble des lieux importés.">🔍 Recadrer</button>
+            <button class="calque-ajout" id="btn-favoris-export" title="Enregistre les lieux au format GeoJSON, lisible par QGIS, uMap ou Google Earth.">💾 GeoJSON</button>
+          </div>
+          <div id="favoris-jeux" style="margin-top:5px;max-height:210px;overflow-y:auto"></div>
+        </div>
+
+    <div class="actions-titre">Exporter et partager</div>
+    <div class="actions">
+      <button id="btn-image" title="Exporter la vue actuelle en image PNG">🖼 Image PNG</button>
+      <button id="btn-fiche" title="Fiche A4 imprimable : la carte actuelle, sa légende complète et ses sources, mises en page pour le classeur ou la photocopieuse. S'ouvre dans un onglet prêt à imprimer (ou à enregistrer en PDF via l'imprimante).">🖨 Fiche A4</button>
+      <button id="btn-lien" title="Copie un lien qui rouvre exactement cette carte : position, zoom et couches actives. Collez-le dans Pronote ou l'ENT — la classe ouvre votre vue préparée.">🔗 Copier le lien</button>
+      <button id="btn-fichiers" title="La liste des fichiers de données à télécharger pour débloquer les prochaines couches, avec leurs liens officiels">📥 Fichiers</button>
+    </div>
+
+    <div class="actions-titre">Outils</div>
+    <div class="actions">
+      <button id="btn-comparer" title="Deux cartes côte à côte, synchronisées : activez une couche différente de chaque côté (ex. densité vs pauvreté) et déplacez-vous — les deux vues bougent ensemble.">⚖ Comparer</button>
+      <button id="btn-quiz" title="Quiz : 5 questions sur les départements, à partir des données de l'atlas — cliquez le bon département sur la carte !">🎓 Quiz</button>
+      <button id="btn-options" title="Options : seuil des tops 50, fenêtres">⚙️ Options</button>
+      <button id="btn-aide" title="Aide : mode d'emploi rapide ou guide détaillé de toutes les fonctions">❓ Aide</button>
+    </div>
+    <input type="file" id="fichier-gpx" accept=".gpx" style="display:none">
   </div>
 </div>
 
@@ -1181,11 +1420,31 @@
 
 <div class="widget" id="wg-risques" style="width:262px">
   <div class="widget-tete">
-    <span class="widget-titre">⚠️ Risques</span>
+    <span class="widget-titre">⚠️ Risques naturels</span>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
-    <button class="widget-btn" data-action="fermer" title="Fermer">✕</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
   </div>
   <div class="widget-corps">
+    <span class="etiquette">Sols et sous-sol</span>
+    <button class="calque-ajout donnee" id="btn-rn-argiles" title="Retrait-gonflement des argiles : les sols argileux se rétractent en sécheresse et gonflent à la pluie, fissurant les maisons. Premier poste d’indemnisation catastrophe naturelle en France. Source : BRGM.">🏚️ Argiles (fissures des maisons)</button>
+    <button class="calque-ajout donnee" id="btn-rn-mvt" title="Mouvements de terrain recensés depuis 1981 : glissements, éboulements, effondrements, coulées de boue, érosion de berges. Base BDMvt du BRGM.">⛰ Mouvements de terrain</button>
+    <button class="calque-ajout donnee" id="btn-rn-cavites" title="Cavités souterraines abandonnées recensées (carrières, marnières, cavités naturelles) : risque d’effondrement. Base BDCavité du BRGM.">🕳️ Cavités souterraines</button>
+    <div class="sep"></div>
+    <span class="etiquette">Eau</span>
+    <button class="calque-ajout donnee" id="btn-rn-nappe" title="Sensibilité aux remontées de nappe phréatique : inondations par le sous-sol, sans débordement de rivière. Domaine sédimentaire. Source : BRGM.">💧 Remontées de nappe</button>
+    <div style="font-size:9.5px;color:#8a8577;margin-top:5px;line-height:1.45">Les autres risques ont leur propre fenêtre : 🌋 <b>Séismes</b>, 🔥 <b>Feux</b>, et les <b>arrêtés de catastrophe naturelle</b> par commune dans 💰 INSEE.</div>
+    <div style="font-size:9.5px;color:#8a8577;margin-top:4px;line-height:1.45">⚠️ Ces cartes indiquent une <b>exposition potentielle</b>, pas une prédiction. Pour un terrain précis (achat, permis), seul le document officiel de la commune ou Géorisques fait foi.</div>
+  </div>
+</div>
+
+<div class="widget" id="wg-industriel" style="width:262px">
+  <div class="widget-tete">
+    <span class="widget-titre">🏭 Risques industriels</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
+  </div>
+  <div class="widget-corps">
+    
     <span class="etiquette">🏭 Industriels</span>
     <div style="font-size:11px;color:#8a8577;margin-bottom:4px">Sites industriels à risque majeur (directive Seveso). Filtres :</div>
     <div style="display:flex;gap:12px;font-size:12px;margin-bottom:5px">
@@ -1199,19 +1458,6 @@
     <div class="sep"></div>
     <div style="font-size:10px;color:#57534e;line-height:1.5">💡 <b>Trois niveaux à distinguer</b><br>• <b>ICPE</b> : toute installation classée pour l’environnement (usines, élevages, carrières…), environ 500 000 en France.<br>• <b>Seveso seuil bas / seuil haut</b> : les plus dangereuses, environ 1 300 sites, soumises à des plans de prévention (PPRT) après la catastrophe d’AZF en 2001.<br>• <b>BASIAS</b> : mémoire des <i>anciens</i> sites, utile pour l’urbanisme et la reconversion des friches.</div>
     <div style="font-size:9.5px;color:#8a8577;margin-top:5px;line-height:1.45">⚠️ Un site répertorié n’est pas un site dangereux ou pollué : ces bases recensent une <b>activité passée ou présente</b>, pas un diagnostic. Source officielle : Géorisques.</div>
-  </div>
-    <div class="sep"></div>
-    <span class="etiquette">🌍 Naturels</span>
-    <span class="etiquette">Sols et sous-sol</span>
-    <button class="calque-ajout donnee" id="btn-rn-argiles" title="Retrait-gonflement des argiles : les sols argileux se rétractent en sécheresse et gonflent à la pluie, fissurant les maisons. Premier poste d’indemnisation catastrophe naturelle en France. Source : BRGM.">🏚️ Argiles (fissures des maisons)</button>
-    <button class="calque-ajout donnee" id="btn-rn-mvt" title="Mouvements de terrain recensés depuis 1981 : glissements, éboulements, effondrements, coulées de boue, érosion de berges. Base BDMvt du BRGM.">⛰ Mouvements de terrain</button>
-    <button class="calque-ajout donnee" id="btn-rn-cavites" title="Cavités souterraines abandonnées recensées (carrières, marnières, cavités naturelles) : risque d’effondrement. Base BDCavité du BRGM.">🕳️ Cavités souterraines</button>
-    <div class="sep"></div>
-    <span class="etiquette">Eau</span>
-    <button class="calque-ajout donnee" id="btn-rn-nappe" title="Sensibilité aux remontées de nappe phréatique : inondations par le sous-sol, sans débordement de rivière. Domaine sédimentaire. Source : BRGM.">💧 Remontées de nappe</button>
-    <div style="font-size:9.5px;color:#8a8577;margin-top:5px;line-height:1.45">Les autres risques ont leur propre fenêtre : 🌋 <b>Séismes</b>, 🔥 <b>Feux</b>, ☢️ <b>Sites Seveso</b> (industriel), et les <b>arrêtés de catastrophe naturelle</b> par commune dans 💰 INSEE.</div>
-    <div style="font-size:9.5px;color:#8a8577;margin-top:4px;line-height:1.45">⚠️ Ces cartes indiquent une <b>exposition potentielle</b>, pas une prédiction. Pour un terrain précis (achat, permis), seul le document officiel de la commune ou Géorisques fait foi.</div>
-  </div>
   </div>
 </div>
 
@@ -1624,7 +1870,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v4.18</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.3</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -1688,8 +1934,15 @@
       <details class="pilote-paquet"><summary>🌡 Climat</summary>
         <div class="pilote-grille">
         <button class="pilote-btn" data-cible="wg-meteo">🌡 Météo</button>
-        <button class="pilote-btn" data-cible="wg-feux">🔥 Feux de forêt</button>
         <button class="pilote-btn" data-cible="wg-climat">🌤 Climat &amp; littoral</button>
+        </div>
+      </details>
+      <details class="pilote-paquet"><summary>⚠️ Risques</summary>
+        <div class="pilote-grille">
+        <button class="pilote-btn" data-cible="wg-risques">⚠️ Risques naturels</button>
+        <button class="pilote-btn" data-cible="wg-industriel">🏭 Risques industriels</button>
+        <button class="pilote-btn" data-cible="wg-sismique">🌋 Séismes</button>
+        <button class="pilote-btn" data-cible="wg-feux">🔥 Feux de forêt</button>
         </div>
       </details>
       <details class="pilote-paquet"><summary>🚴 Sport</summary>
@@ -1701,8 +1954,6 @@
       <details class="pilote-paquet"><summary>🗿 Autres</summary>
         <div class="pilote-grille">
         <button class="pilote-btn" data-cible="wg-histoire">🏛 Histoire</button>
-        <button class="pilote-btn" data-cible="wg-risques">⚠️ Risques</button>
-        <button class="pilote-btn" data-cible="wg-sismique">🌋 Séismes</button>
         <button class="pilote-btn" data-cible="wg-astro">🔭 Astronomie</button>
         <button class="pilote-btn" data-cible="wg-geol">🪨 Géologie</button>
         </div>
@@ -1723,7 +1974,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v4.18</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.3</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -1860,9 +2111,25 @@
   // Couches mises en veille : eteintes pour de bon, mais leur etiquette reste dans le rail.
   // Il n'existe pas de registre bouton -> couche Leaflet, donc pas de masquage sans extinction.
   const VEILLE = [];
+  // Objet du croquis actuellement selectionne. Declare ici, en tete de script :
+  // changerMode('main') s'execute tres tot et appelle deselectionner().
+  // Registre des legendes interactives et couleurs personnalisees. En tete de script :
+  // le catalogue des notices s'enregistre plus haut que la fenetre Legende.
+  const CAT_LEG = {};
+  let COULEURS_LEG = {};
+  try{ COULEURS_LEG = JSON.parse(localStorage.getItem('geo-couleurs-legende') || '{}'); }catch(e){ COULEURS_LEG = {}; }
+  let selection = null;
+  let styleAvantSelection = null;
+  // Meme raison : changerMode('main') s'execute des le debut du script et appelle
+  // nettoyerGeom() puis retirerPoignees(). Ces etats doivent donc exister avant.
+  const GEOM = { points: [], apercu: null, jalons: [], depart: null };
+  let poignees = [];
   // Image de fond geolocalisee (carte scolaire scannee, plan ancien, croquis).
   // L'image ne quitte jamais le navigateur : lecture locale en data-URL, aucun envoi.
   const IMGF = { couche:null, url:'', nom:'', cle:'', bornes:null, opacite:0.75, dessus:false, calage:null };
+  // Lieux importés (Google Takeout, Mes cartes KML, GPX). Google n'expose aucune API sur
+  // les favoris : le passage par un fichier exporté est le seul chemin possible.
+  const FAVS = { jeux:[], etiquettes:false, seq:0 };
 (function(){
   // ================= Santé des services externes =================
   const SANTE = {};
@@ -1952,6 +2219,7 @@
   // ================= État =================
   let couleur = '#2e9e44';
   let tailleMetres = 22;
+  let taillePx = 5;            // epaisseur a l'ecran, independante du zoom
   let mode = 'main'; // main | pinceau | rue | zone | commune | note | gomme
   let dessinActif = false;
   let traitEnCours = null;
@@ -1973,7 +2241,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v4.18';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.3';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -2020,7 +2288,8 @@
   function majEpaisseurs(){
     const mpp = metresParPixel();
     traits.forEach(t=>{
-      if(t.type==='ligne') t.layerObj.setStyle({ weight: Math.max(2, t.metres/mpp) });
+      if(t.px) return;   // epaisseur constante a l'ecran : rien a recalculer
+      if(t.type==='ligne') t.layerObj.setStyle({ weight: Math.max(2, t.metres/mpp), dashArray: tiretsPour(t.genre, Math.max(2, t.metres/mpp)) });
     });
   }
   map.on('zoomend', majEpaisseurs);
@@ -2031,13 +2300,27 @@
   }
 
   // ================= Création des traits =================
-  function styleLigne(coul, m){
-    return { color:coul, weight:epaisseurPixels(m), opacity:0.6,
-             lineCap:'round', lineJoin:'round', interactive:true };
+  // CROQUIS : l'etat courant des figures. Les traits gardent leur propre copie,
+  // pour qu'un changement de reglage ne repeigne pas ce qui est deja pose.
+  const CROQUIS = { unite:'px', trait:'plein', fleche:'aucune', motif:'aplat', opacite:0.35,
+                    forme:'cercle', taille:14, texte:'', texteTaille:15,
+                    poseFigure:false, poseTexte:false, objets:[], seq:0 };
+  function tiretsPour(genre, poids){
+    if(genre === 'tirete')    return Math.max(6, poids * 2.2) + ',' + Math.max(5, poids * 1.5);
+    if(genre === 'pointille') return Math.max(1, poids * 0.35) + ',' + Math.max(4, poids * 1.4);
+    return null;
   }
-  function styleSurface(coul){
-    return { color:coul, weight:2, opacity:0.8, fillColor:coul,
-             fillOpacity:0.3, interactive:true };
+  function styleLigne(coul, m, genre, px){
+    const poids = px ? px : epaisseurPixels(m);
+    const st = { color:coul, weight:poids, opacity:0.6,
+                 lineCap:'round', lineJoin:'round', interactive:true };
+    const d = tiretsPour(genre || CROQUIS.trait, poids);
+    if(d){ st.dashArray = d; st.lineCap = 'butt'; }
+    return st;
+  }
+  function styleSurface(coul, opa, px){
+    return { color:coul, weight:px || 2, opacity:0.8, fillColor:coul,
+             fillOpacity:(typeof opa === 'number') ? opa : CROQUIS.opacite, interactive:true };
   }
 
   function creerTrait(type, segments, coul, metres, note, calqueId){
@@ -2046,17 +2329,21 @@
       calque: calqueId || calqueActif,
       type, couleur: coul || couleur, metres:metres||tailleMetres,
       note: note || '',
+      genre: CROQUIS.trait, fleche: CROQUIS.fleche, motif: CROQUIS.motif, opa: CROQUIS.opacite,
+      px: (CROQUIS.unite === 'px') ? taillePx : null,
       segments
     };
     t.layerObj = (type==='ligne')
-      ? L.polyline(segments, styleLigne(t.couleur, t.metres))
-      : L.polygon(segments, styleSurface(t.couleur));
+      ? L.polyline(segments, styleLigne(t.couleur, t.metres, t.genre, t.px))
+      : L.polygon(segments, styleSurface(t.couleur, t.opa, t.px));
     t.layerObj.on('click', (e)=>{
+      if(mode==='select'){ L.DomEvent.stop(e); selectionner(t); return; }
       if(mode!=='main') return;
       L.DomEvent.stop(e);
       ouvrirNote(t, e.latlng);
     });
     if(calqueVisible(t.calque)) t.layerObj.addTo(map);
+    orneTrait(t);
     traits.push(t);
     return t;
   }
@@ -2107,9 +2394,17 @@
 
   // ================= Modes =================
   const boutonsOutils = {
+    select:document.getElementById('btn-select'),
     main:document.getElementById('btn-main'),
     pinceau:document.getElementById('btn-pinceau'),
     zone:document.getElementById('btn-zone'),
+    ligne:document.getElementById('btn-ligne'),
+    fleche:document.getElementById('btn-fleche'),
+    rect:document.getElementById('btn-rect'),
+    cercle:document.getElementById('btn-cercle'),
+    figure:document.getElementById('btn-figure'),
+    texte:document.getElementById('btn-texte-carte'),
+    reperes:document.getElementById('btn-reperes'),
     gomme:document.getElementById('btn-gomme')
   };
   const messagesMode = {
@@ -2117,6 +2412,14 @@
     pinceau:'Pinceau libre — clic gauche : dessiner · clic droit ou Ctrl : déplacer',
 
     zone:'Zone — cliquez pour poser les sommets, double-clic ou Entrée pour fermer, Échap pour annuler',
+    select:'Sélection — cliquez un tracé pour le modifier. Suppr l’efface, Échap désélectionne.',
+    ligne:'Ligne — cliquez les sommets, double-clic ou Entrée pour terminer.',
+    fleche:'Flèche — cliquez les sommets, double-clic ou Entrée pour terminer.',
+    rect:'Rectangle — cliquez deux coins opposés.',
+    cercle:'Cercle — cliquez le centre, puis un point du bord.',
+    figure:'Figuré — cliquez sur la carte pour le poser. Sa taille peut porter une quantité.',
+    texte:'Texte — écrivez le libellé ci-dessous, puis cliquez sur la carte.',
+    reperes:'Repère — choisissez une icône, puis cliquez sur la carte.',
 
     gomme:'Gomme — cliquez ou glissez sur un trait pour l\u2019effacer'
   };
@@ -2135,8 +2438,17 @@
       map.dragging.enable();
       if(mode==='zone') mapEl.classList.add('mode-cible');
     }
-    if(mode==='zone') map.doubleClickZoom.disable();
+    const geom = (mode==='ligne'||mode==='fleche'||mode==='rect'||mode==='cercle');
+    if(geom) mapEl.classList.add('mode-cible');
+    if(mode==='zone' || geom) map.doubleClickZoom.disable();
     else map.doubleClickZoom.enable();
+
+    // les outils de pose partagent le meme curseur et le meme clic sur la carte
+    const pose = (mode==='figure' || mode==='texte' || mode==='reperes');
+    if(mapEl) mapEl.style.cursor = pose ? 'crosshair' : '';
+    if(typeof nettoyerGeom === 'function') nettoyerGeom();
+    if(mode !== 'select' && typeof deselectionner === 'function') deselectionner();
+    if(typeof majPanneauOutil === 'function') majPanneauOutil();
 
     afficherInfo(messagesMode[mode], 3200);
   }
@@ -2151,6 +2463,7 @@
       document.querySelectorAll('.couleur').forEach(x=>x.classList.remove('actif'));
       b.classList.add('actif');
       couleur = b.dataset.couleur;
+      appliquerASelection('couleur', couleur);
       if(mode==='main' || mode==='gomme') changerMode('pinceau');
     });
   });
@@ -2165,6 +2478,9 @@
       document.querySelectorAll('.taille').forEach(x=>x.classList.remove('actif'));
       b.classList.add('actif');
       tailleMetres = parseFloat(b.dataset.taille);
+      taillePx = parseFloat(b.dataset.px || 0);
+      // en mode selection, l'epaisseur repeint l'objet retenu
+      appliquerASelection('metres', { m: tailleMetres, px: (CROQUIS.unite === 'px') ? taillePx : null });
     });
   });
 
@@ -2854,13 +3170,16 @@
       afficherInfo('🌲🔥 Taux de résineux (parmi les '+forets.length+' point(s) en forêt sur '+grille.length+' échantillonnés) : <b>'+Math.round(moy*100)+' %</b> — le reste feuillu/mixte', 10000);
     }catch(e){ cacherInfo(); afficherInfo('🌲 Indisponible — à tester en ligne (BD Forêt IGN)', 6000); }
   });
+  // ADAGUC exige DATASET=MSG-FRP sur CHAQUE requete : sans lui le serveur cherche la couche
+  // dans le catalogue par defaut et repond « Layer [FRP] not found ». Verifie le 09/08/2026
+  // dans les capacites du service : couche 'FRP', style 'pointdata/point', pas de temps 15 min.
   const WMS_LSASAF = 'https://adaguc.lsasvcs.ipma.pt//adagucserver';
   const etatMsgFrp = { actif:false, layer:null };
   document.getElementById('btn-msgfrp').addEventListener('click', ()=>{
     const btn = document.getElementById('btn-msgfrp');
     if(etatMsgFrp.actif){ etatMsgFrp.actif = false; if(etatMsgFrp.layer) map.removeLayer(etatMsgFrp.layer); etatMsgFrp.layer = null; if(etatMsgFrp.minuteur){ clearInterval(etatMsgFrp.minuteur); etatMsgFrp.minuteur = null; } const lbl0 = document.getElementById('msgfrp-lbl'); if(lbl0) lbl0.style.display = 'none'; basculerBouton(btn, false, '', '🛰️ Détections MSG (15 min)'); return; }
     etatMsgFrp.actif = true; basculerBouton(btn, true, '🛰️ MSG ✕', '', '#dc2626');
-    etatMsgFrp.layer = L.tileLayer.wms(WMS_LSASAF+'?', { layers:'FRP', styles:'pointdata/point', format:'image/png', transparent:true, version:'1.3.0', opacity:0.9, attribution:'LSA SAF / EUMETSAT (CC BY 4.0)' });
+    etatMsgFrp.layer = L.tileLayer.wms(WMS_LSASAF+'?', { DATASET:'MSG-FRP', layers:'FRP', styles:'pointdata/point', format:'image/png', transparent:true, version:'1.3.0', opacity:0.9, attribution:'LSA SAF / EUMETSAT (CC BY 4.0)' });
     etatMsgFrp.layer.on('tileerror', function(){ afficherInfo('🛰️ Service LSA SAF indisponible pour le moment', 6000); });
     etatMsgFrp.layer.addTo(map);
     afficherInfo('🛰️ Détections satellite MSG — rafraîchies toutes les 15 min · cliquez un point (mode contrôle) pour le détail', 8000);
@@ -2924,7 +3243,7 @@
       }
       if(etatMsgFrp.actif){
         try{
-          const url2 = WMS_LSASAF+'?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo'
+          const url2 = WMS_LSASAF+'?DATASET=MSG-FRP&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo'
             +'&LAYERS=FRP&QUERY_LAYERS=FRP&STYLES=&CRS=EPSG:3857&BBOX='+bbox
             +'&WIDTH='+size.x+'&HEIGHT='+size.y+'&I='+i+'&J='+j
             +'&FORMAT=image/png&INFO_FORMAT=application/json&FEATURE_COUNT=3';
@@ -3249,7 +3568,30 @@
   }
 
   // ---------- 🗾 Limites administratives (Admin Express COG Carto, WFS Géoplateforme) ----------
-  const WFS_GEOPF = 'https://data.geopf.fr/wfs/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&OUTPUTFORMAT=application/json&SRSNAME=CRS:84';
+  // La Geoplateforme expose son WFS sur deux chemins : /wfs et /wfs/ows. Le second a
+  // longtemps ete le seul documente, il renvoie desormais des 400 sur certaines requetes.
+  // On sonde au chargement (RESULTTYPE=hits, reponse minuscule) et on retient celui qui repond.
+  // 'let' et non 'const' : les appels construisent leur URL au moment du clic, donc
+  // tous les usages beneficient du basculement sans etre modifies.
+  const WFS_PARAM = '?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&OUTPUTFORMAT=application/json&SRSNAME=CRS:84';
+  const WFS_CHEMINS = ['https://data.geopf.fr/wfs', 'https://data.geopf.fr/wfs/ows'];
+  let WFS_GEOPF = WFS_CHEMINS[0] + WFS_PARAM;
+  (async function sonderWfs(){
+    for(const base of WFS_CHEMINS){
+      try{
+        const ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+        if(ctl) setTimeout(()=>ctl.abort(), 8000);
+        const r = await fetch(base + WFS_PARAM + '&TYPENAMES=ADMINEXPRESS-COG-CARTO.LATEST:region&COUNT=1&RESULTTYPE=hits',
+                              ctl ? {signal:ctl.signal} : {});
+        if(r.ok){
+          WFS_GEOPF = base + WFS_PARAM;
+          noterService('Limites IGN (WFS)', true, base);
+          return;
+        }
+      }catch(e){ /* on essaie le chemin suivant */ }
+    }
+    noterService('Limites IGN (WFS)', false, 'aucun des deux chemins ne repond');
+  })();
   // Noms officiels embarqués : les étiquettes ne dépendent plus des champs renvoyés par le serveur
   const NOMS_ADMIN = {"reg":{"01":"Guadeloupe","02":"Martinique","03":"Guyane","04":"La Réunion","06":"Mayotte","11":"Île-de-France","24":"Centre-Val de Loire","27":"Bourgogne-Franche-Comté","28":"Normandie","32":"Hauts-de-France","44":"Grand Est","52":"Pays de la Loire","53":"Bretagne","75":"Nouvelle-Aquitaine","76":"Occitanie","84":"Auvergne-Rhône-Alpes","93":"Provence-Alpes-Côte d'Azur","94":"Corse"},"dep":{"01":"Ain","02":"Aisne","03":"Allier","04":"Alpes-de-Haute-Provence","05":"Hautes-Alpes","06":"Alpes-Maritimes","07":"Ardèche","08":"Ardennes","09":"Ariège","10":"Aube","11":"Aude","12":"Aveyron","13":"Bouches-du-Rhône","14":"Calvados","15":"Cantal","16":"Charente","17":"Charente-Maritime","18":"Cher","19":"Corrèze","2A":"Corse-du-Sud","2B":"Haute-Corse","21":"Côte-d'Or","22":"Côtes-d'Armor","23":"Creuse","24":"Dordogne","25":"Doubs","26":"Drôme","27":"Eure","28":"Eure-et-Loir","29":"Finistère","30":"Gard","31":"Haute-Garonne","32":"Gers","33":"Gironde","34":"Hérault","35":"Ille-et-Vilaine","36":"Indre","37":"Indre-et-Loire","38":"Isère","39":"Jura","40":"Landes","41":"Loir-et-Cher","42":"Loire","43":"Haute-Loire","44":"Loire-Atlantique","45":"Loiret","46":"Lot","47":"Lot-et-Garonne","48":"Lozère","49":"Maine-et-Loire","50":"Manche","51":"Marne","52":"Haute-Marne","53":"Mayenne","54":"Meurthe-et-Moselle","55":"Meuse","56":"Morbihan","57":"Moselle","58":"Nièvre","59":"Nord","60":"Oise","61":"Orne","62":"Pas-de-Calais","63":"Puy-de-Dôme","64":"Pyrénées-Atlantiques","65":"Hautes-Pyrénées","66":"Pyrénées-Orientales","67":"Bas-Rhin","68":"Haut-Rhin","69":"Rhône","70":"Haute-Saône","71":"Saône-et-Loire","72":"Sarthe","73":"Savoie","74":"Haute-Savoie","75":"Paris","76":"Seine-Maritime","77":"Seine-et-Marne","78":"Yvelines","79":"Deux-Sèvres","80":"Somme","81":"Tarn","82":"Tarn-et-Garonne","83":"Var","84":"Vaucluse","85":"Vendée","86":"Vienne","87":"Haute-Vienne","88":"Vosges","89":"Yonne","90":"Territoire de Belfort","91":"Essonne","92":"Hauts-de-Seine","93":"Seine-Saint-Denis","94":"Val-de-Marne","95":"Val-d'Oise","971":"Guadeloupe","972":"Martinique","973":"Guyane","974":"La Réunion","976":"Mayotte"}};
   function codeAdmin(pr, type){
@@ -3421,7 +3763,21 @@
     try{
       const ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
       if(ctl) setTimeout(()=>ctl.abort(), 15000);
-      const r = await fetch(url, ctl ? {signal:ctl.signal} : {});
+      let r = await fetch(url, ctl ? {signal:ctl.signal} : {});
+      if(!r.ok){
+        // la sonde a pu conclure trop vite : on tente l'autre chemin avant d'abandonner
+        const autre = WFS_CHEMINS.find(b => WFS_GEOPF.indexOf(b + WFS_PARAM) !== 0);
+        if(autre){
+          const url2 = autre + WFS_PARAM + url.slice(url.indexOf('&TYPENAMES='));
+          const r2 = await fetch(url2);
+          if(r2.ok){ WFS_GEOPF = autre + WFS_PARAM; r = r2; noterService('Limites IGN (WFS)', true, 'repli ' + autre); }
+        }
+      }
+      if(!r.ok){
+        noterService('Limites IGN (WFS)', false, 'HTTP ' + r.status);
+        afficherInfo('\u26a0\ufe0f ' + conf.libelle + ' : le service IGN a refus\u00e9 la requ\u00eate (HTTP ' + r.status + '). Voir 🔧 Diagnostic.', 7000);
+        return;
+      }
       const d = await r.json();
       if(idReq !== etat.requete || !etat.actif) return;
       etat.groupe.clearLayers();
@@ -6605,6 +6961,441 @@
     });
   })();
 
+  // ---------- 📌 Mes lieux : import de favoris exportés ----------
+  // Google n'expose aucune API sur les lieux enregistrés. Le seul chemin est un fichier
+  // exporté : Takeout (GeoJSON ou CSV), Mes cartes (KML/KMZ), ou GPX d'un GPS.
+  const FAV_CLE = 'geo-favoris';
+
+  function echapFav(s){
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c];
+    });
+  }
+
+  // --- extraction de coordonnées depuis une URL Google Maps ---
+  function coordsDepuisUrl(url){
+    if(!url) return null;
+    const essais = [
+      /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/,        // forme interne, la plus fiable
+      /@(-?\d+\.\d+),(-?\d+\.\d+)/,            // centre de vue
+      /[?&](?:q|ll|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/
+    ];
+    for(const re of essais){
+      const m = url.match(re);
+      if(m){
+        const lat = +m[1], lng = +m[2];
+        if(Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return { lat:lat, lng:lng };
+      }
+    }
+    return null;
+  }
+
+  // --- lecteurs de formats ---
+  function lireGeoJSON(txt){
+    const d = JSON.parse(txt);
+    const feats = d.features || (d.type === 'Feature' ? [d] : []);
+    const out = [];
+    feats.forEach(function(f){
+      const p = f.properties || {};
+      const loc = p.Location || p.location || {};
+      let lat = null, lng = null;
+      if(f.geometry && f.geometry.type === 'Point' && f.geometry.coordinates){
+        lng = +f.geometry.coordinates[0]; lat = +f.geometry.coordinates[1];
+        // Takeout met longitude ET latitude a 0 quand la position est inconnue :
+        // sans ce garde, ces lieux atterrissent dans le golfe de Guinee.
+        if(lat === 0 && lng === 0){ lat = null; lng = null; }
+      }
+      const gc = loc['Geo Coordinates'] || loc.geoCoordinates;
+      if((lat === null || !isFinite(lat)) && gc){ lat = +gc.Latitude; lng = +gc.Longitude; }
+      const nom = p.Title || p.name || p.nom || loc['Business Name'] || loc.Name || loc.Address || 'Sans nom';
+      const url = p['Google Maps URL'] || p.url || '';
+      if(!isFinite(lat) || !isFinite(lng)){
+        const c = coordsDepuisUrl(url);
+        if(c){ lat = c.lat; lng = c.lng; }
+      }
+      out.push({ nom:nom, note:p.Comment || p.Note || p.description || '', adresse:loc.Address || '', url:url,
+                 lat:isFinite(lat) ? lat : null, lng:isFinite(lng) ? lng : null });
+    });
+    return out;
+  }
+
+  function csvEnLignes(txt){
+    const lignes = [];
+    let champ = '', ligne = [], guillemets = false;
+    for(let i = 0; i < txt.length; i++){
+      const c = txt[i];
+      if(guillemets){
+        if(c === '"' && txt[i+1] === '"'){ champ += '"'; i++; }
+        else if(c === '"') guillemets = false;
+        else champ += c;
+      }else if(c === '"') guillemets = true;
+      else if(c === ','){ ligne.push(champ); champ = ''; }
+      else if(c === '\n'){ ligne.push(champ); lignes.push(ligne); ligne = []; champ = ''; }
+      else if(c !== '\r') champ += c;
+    }
+    if(champ !== '' || ligne.length){ ligne.push(champ); lignes.push(ligne); }
+    return lignes.filter(function(l){ return l.some(function(x){ return x.trim() !== ''; }); });
+  }
+
+  function lireCsv(txt){
+    const lignes = csvEnLignes(txt);
+    if(!lignes.length) return [];
+    const entete = lignes[0].map(function(x){ return x.trim().toLowerCase(); });
+    const iNom = entete.findIndex(function(x){ return /^(title|titre|nom|name)$/.test(x); });
+    const iNote = entete.findIndex(function(x){ return /^(note|comment|commentaire|description)$/.test(x); });
+    const iUrl = entete.findIndex(function(x){ return /^(url|lien|link)$/.test(x); });
+    const iLat = entete.findIndex(function(x){ return /^(lat|latitude)$/.test(x); });
+    const iLng = entete.findIndex(function(x){ return /^(lon|lng|long|longitude)$/.test(x); });
+    return lignes.slice(1).map(function(l){
+      const url = iUrl >= 0 ? l[iUrl] : '';
+      let lat = iLat >= 0 ? parseFloat(l[iLat]) : NaN;
+      let lng = iLng >= 0 ? parseFloat(l[iLng]) : NaN;
+      if(!isFinite(lat) || !isFinite(lng)){
+        const c = coordsDepuisUrl(url);
+        if(c){ lat = c.lat; lng = c.lng; }
+      }
+      return { nom:(iNom >= 0 ? l[iNom] : l[0]) || 'Sans nom', note:iNote >= 0 ? l[iNote] : '',
+               adresse:'', url:url, lat:isFinite(lat) ? lat : null, lng:isFinite(lng) ? lng : null };
+    });
+  }
+
+  function lireKml(txt){
+    const doc = new DOMParser().parseFromString(txt, 'application/xml');
+    const out = [];
+    Array.prototype.forEach.call(doc.getElementsByTagName('Placemark'), function(pm){
+      const pt = pm.getElementsByTagName('coordinates')[0];
+      if(!pt) return;
+      const bribes = (pt.textContent || '').trim().split(/[\s,]+/);
+      const lng = parseFloat(bribes[0]), lat = parseFloat(bribes[1]);
+      if(!isFinite(lat) || !isFinite(lng)) return;
+      const n = pm.getElementsByTagName('name')[0], d = pm.getElementsByTagName('description')[0];
+      out.push({ nom:n ? n.textContent.trim() : 'Sans nom',
+                 note:d ? d.textContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '',
+                 adresse:'', url:'', lat:lat, lng:lng });
+    });
+    return out;
+  }
+
+  function lireGpx(txt){
+    const doc = new DOMParser().parseFromString(txt, 'application/xml');
+    const out = [];
+    Array.prototype.forEach.call(doc.getElementsByTagName('wpt'), function(w){
+      const lat = parseFloat(w.getAttribute('lat')), lng = parseFloat(w.getAttribute('lon'));
+      if(!isFinite(lat) || !isFinite(lng)) return;
+      const n = w.getElementsByTagName('name')[0], d = w.getElementsByTagName('desc')[0];
+      out.push({ nom:n ? n.textContent.trim() : 'Point', note:d ? d.textContent.trim() : '',
+                 adresse:'', url:'', lat:lat, lng:lng });
+    });
+    return out;
+  }
+
+  // --- géocodage de secours : Base Adresse Nationale, France uniquement ---
+  async function geocoderManquants(lieux){
+    const aFaire = lieux.filter(function(l){ return l.lat === null; });
+    if(!aFaire.length) return 0;
+    const plafond = Math.min(aFaire.length, 60);
+    let trouves = 0;
+    for(let i = 0; i < plafond; i++){
+      const l = aFaire[i];
+      const q = (l.adresse || l.nom || '').trim();
+      if(!q) continue;
+      try{
+        const r = await fetch('https://api-adresse.data.gouv.fr/search/?limit=1&q=' + encodeURIComponent(q));
+        const d = await r.json();
+        const f = d && d.features && d.features[0];
+        if(f && f.geometry){
+          l.lng = f.geometry.coordinates[0];
+          l.lat = f.geometry.coordinates[1];
+          l.approx = true;
+          trouves++;
+        }
+      }catch(e){ /* on continue */ }
+      if(i % 5 === 4) afficherInfo('📌 Recherche des coordonnées manquantes… ' + (i+1) + '/' + plafond, 3000);
+      await new Promise(function(res){ setTimeout(res, 110); });
+    }
+    return trouves;
+  }
+
+  // --- affichage : une couche par fichier importe ---
+  function couleurJeu(i){
+    const teintes = [['#6d28d9','#a78bfa'], ['#047857','#6ee7b7'], ['#b91c1c','#fca5a5'],
+                     ['#1d4ed8','#93c5fd'], ['#a16207','#fcd34d'], ['#be185d','#f9a8d4']];
+    return teintes[i % teintes.length];
+  }
+  // Un export peut contenir des centaines de lieux. Trois precautions contre la surcharge :
+  //  1. rendu sur une seule toile (canvas) au lieu d'un element SVG par point ;
+  //  2. bulle construite au moment de l'ouverture, pas pour les N points d'avance ;
+  //  3. etiquettes permanentes plafonnees : ce sont elles qui creent du DOM par point.
+  const FAV_PLAFOND_ETIQ = 200;
+  let renduFav = null;
+  function toileFav(){
+    if(!renduFav && L.canvas) renduFav = L.canvas({ padding:0.4 });
+    return renduFav || undefined;
+  }
+  function bulleLieu(l, nomJeu){
+    let html = '<b>' + echapFav(l.nom) + '</b>';
+    if(l.adresse) html += '<br><span style="color:#6b7280">' + echapFav(l.adresse) + '</span>';
+    if(l.note) html += '<br>' + echapFav(l.note);
+    if(l.approx) html += '<br><i style="color:#b45309">Position approchée, retrouvée par recherche d’adresse</i>';
+    if(l.url) html += '<br><a href="' + echapFav(l.url) + '" target="_blank" rel="noopener">Ouvrir dans Google Maps</a>';
+    return html + '<br><span style="color:#9ca3af;font-size:10px">' + echapFav(nomJeu) + '</span>';
+  }
+  function dessinerJeu(j){
+    if(j.couche){ map.removeLayer(j.couche); j.couche = null; }
+    const places = j.lieux.filter(function(l){ return l.lat !== null && l.lng !== null; });
+    if(!places.length || !j.actif) return;
+    const teinte = couleurJeu(j.rang);
+    const etiquettes = FAVS.etiquettes && placesVisibles().length <= FAV_PLAFOND_ETIQ;
+    j.couche = L.layerGroup();
+    places.forEach(function(l){
+      const m = L.circleMarker([l.lat, l.lng], {
+        renderer: toileFav(),
+        radius:6, weight:2, color:l.approx ? '#b45309' : teinte[0],
+        fillColor:l.approx ? '#fbbf24' : teinte[1], fillOpacity:0.9
+      });
+      m.bindPopup(function(){ return bulleLieu(l, j.nom); });
+      if(etiquettes) m.bindTooltip(l.nom, { permanent:true, direction:'right', offset:[6,0] });
+      j.couche.addLayer(m);
+    });
+    j.couche.addTo(map);
+  }
+  function dessinerFavoris(){ FAVS.jeux.forEach(dessinerJeu); }
+
+  function basculerJeu(j){
+    j.actif = !j.actif;
+    dessinerJeu(j);
+    majFavoris();
+  }
+  function supprimerJeu(j){
+    if(j.couche){ map.removeLayer(j.couche); j.couche = null; }
+    FAVS.jeux = FAVS.jeux.filter(function(x){ return x !== j; });
+    majFavoris();
+    sauverFavoris();
+  }
+  function placesVisibles(){
+    const out = [];
+    FAVS.jeux.forEach(function(j){
+      if(!j.actif) return;
+      j.lieux.forEach(function(l){ if(l.lat !== null) out.push(l); });
+    });
+    return out;
+  }
+  function sauverFavoris(){
+    try{
+      localStorage.setItem(FAV_CLE, JSON.stringify(FAVS.jeux.map(function(j){
+        return { nom:j.nom, actif:j.actif, rang:j.rang, lieux:j.lieux.slice(0, 600) };
+      })));
+    }catch(e){ /* quota depasse : on continue sans memoriser */ }
+  }
+
+  function majFavoris(){
+    const reglages = document.getElementById('favoris-reglages');
+    const bilan = document.getElementById('favoris-bilan');
+    const boite = document.getElementById('favoris-jeux');
+    if(!reglages) return;
+    reglages.style.display = FAVS.jeux.length ? 'block' : 'none';
+    const visibles = placesVisibles().length;
+    const total = FAVS.jeux.reduce(function(n, j){ return n + j.lieux.length; }, 0);
+    bilan.textContent = FAVS.jeux.length
+      ? FAVS.jeux.length + ' fichier' + (FAVS.jeux.length > 1 ? 's' : '') + ' \u00b7 '
+        + visibles + ' lieu' + (visibles > 1 ? 'x' : '') + ' affich\u00e9' + (visibles > 1 ? 's' : '')
+        + (total > visibles ? ' sur ' + total : '')
+      : '';
+    boite.textContent = '';
+
+    if(FAVS.jeux.length){
+      const actifs = FAVS.jeux.filter(function(j){ return j.actif; }).length;
+      const tete = document.createElement('div');
+      tete.className = 'favoris-tete';
+      const compte = document.createElement('span');
+      compte.className = 'favoris-compte';
+      compte.textContent = FAVS.jeux.length + ' fichier' + (FAVS.jeux.length > 1 ? 's' : '')
+        + (actifs < FAVS.jeux.length ? ' \u00b7 ' + actifs + ' affich\u00e9' + (actifs > 1 ? 's' : '') : '');
+      const liens = document.createElement('div');
+      liens.className = 'favoris-liens';
+
+      const bascule = document.createElement('button');
+      bascule.type = 'button';
+      bascule.className = 'lien-mini';
+      bascule.id = 'btn-favoris-bascule';
+      bascule.textContent = actifs ? 'tout d\u00e9sactiver' : 'tout activer';
+      bascule.title = actifs
+        ? '\u00c9teint toutes les couches de lieux. Les fichiers restent dans la liste, un clic les rallume.'
+        : 'Rallume toutes les couches de lieux.';
+      bascule.addEventListener('click', function(){
+        const allumer = actifs === 0;
+        FAVS.jeux.forEach(function(j){ j.actif = allumer; dessinerJeu(j); });
+        majFavoris();
+        sauverFavoris();
+      });
+
+      const vider = document.createElement('button');
+      vider.type = 'button';
+      vider.className = 'lien-mini';
+      vider.id = 'btn-favoris-vider';
+      vider.textContent = 'tout retirer';
+      vider.title = 'Retire tous les fichiers import\u00e9s. Les fichiers d\u2019origine ne sont pas touch\u00e9s, il faudra les recharger.';
+      vider.addEventListener('click', function(){
+        FAVS.jeux.forEach(function(j){ if(j.couche) map.removeLayer(j.couche); });
+        FAVS.jeux = [];
+        majFavoris();
+        sauverFavoris();
+        afficherInfo('📌 Liste des lieux import\u00e9s vid\u00e9e', 4000);
+      });
+
+      liens.appendChild(bascule);
+      liens.appendChild(vider);
+      tete.appendChild(compte);
+      tete.appendChild(liens);
+      boite.appendChild(tete);
+    }
+
+    FAVS.jeux.forEach(function(j){
+      const ligne = document.createElement('div');
+      ligne.style.cssText = 'display:flex;gap:4px;align-items:stretch;margin-bottom:4px';
+
+      // bouton de couche : c'est lui qui alimente les puces « couches actives »
+      const b = document.createElement('button');
+      b.className = 'calque-ajout donnee';
+      b.id = j.id;
+      b.style.cssText = 'flex:1;margin:0;text-align:left;font-size:11.5px;padding:7px 9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+      const localises = j.lieux.filter(function(l){ return l.lat !== null; }).length;
+      b.title = j.nom + ' \u2014 ' + localises + ' lieu(x) localis\u00e9(s)'
+        + (j.lieux.length > localises ? ', ' + (j.lieux.length - localises) + ' sans coordonn\u00e9es' : '')
+        + '. Cliquez pour afficher ou masquer cette couche.';
+      b.addEventListener('click', function(){ basculerJeu(j); });
+      ligne.appendChild(b);
+
+      const x = document.createElement('button');
+      x.className = 'calque-ajout';
+      x.style.cssText = 'flex:none;width:30px;margin:0;padding:7px 0;text-align:center';
+      x.textContent = '\u2715';
+      x.title = 'Retirer d\u00e9finitivement ' + j.nom;
+      x.addEventListener('click', function(){ supprimerJeu(j); });
+      ligne.appendChild(x);
+
+      boite.appendChild(ligne);
+      const teinte = couleurJeu(j.rang);
+      // Pas de \u2715 dans le libelle, volontairement : etatCouchesActives() s'en sert pour
+      // reperer les couches de donnees. Les fichiers importes se pilotent uniquement depuis
+      // cette liste, ils n'ont rien a faire dans les couches actives du rail.
+      if(j.actif) basculerBouton(b, true, '\u25cf ' + j.nom, '', teinte[0]);
+      else basculerBouton(b, false, '', '\u25cb ' + j.nom);
+    });
+
+    const btn = document.getElementById('btn-favoris');
+    if(btn) basculerBouton(btn, false, '', '📌 Importer des lieux');
+    try{ majBadges(); }catch(e){}
+  }
+
+  async function importerFichierFav(f){
+    const nomBas = f.name.toLowerCase();
+    let lieux = [];
+    try{
+      if(nomBas.endsWith('.kmz')){
+        if(typeof JSZip === 'undefined'){ afficherInfo('\u26a0\ufe0f Lecture KMZ indisponible', 5000); return 0; }
+        const zip = await JSZip.loadAsync(f);
+        const cle = Object.keys(zip.files).find(function(k){ return /\.kml$/i.test(k); });
+        if(!cle){ afficherInfo('\u26a0\ufe0f Aucun KML dans ' + f.name, 5000); return 0; }
+        lieux = lireKml(await zip.files[cle].async('string'));
+      }else{
+        const txt = await f.text();
+        if(nomBas.endsWith('.csv')) lieux = lireCsv(txt);
+        else if(nomBas.endsWith('.kml')) lieux = lireKml(txt);
+        else if(nomBas.endsWith('.gpx')) lieux = lireGpx(txt);
+        else lieux = lireGeoJSON(txt);
+      }
+    }catch(e){
+      afficherInfo('\u26a0\ufe0f ' + f.name + ' illisible \u2014 v\u00e9rifiez son origine', 7000);
+      noterService('Import lieux', false, f.name + ' : ' + String(e && e.message || e));
+      return 0;
+    }
+    if(!lieux.length){ afficherInfo('\u26a0\ufe0f Aucun lieu dans ' + f.name, 5000); return 0; }
+    const sans = lieux.filter(function(l){ return l.lat === null; }).length;
+    if(sans){
+      afficherInfo('📌 ' + f.name + ' : ' + sans + ' lieu(x) sans coordonn\u00e9es, recherche en cours\u2026', 6000);
+      await geocoderManquants(lieux);
+    }
+    FAVS.seq++;
+    FAVS.jeux.push({
+      id: 'fav-jeu-' + FAVS.seq,
+      nom: f.name.replace(/\.[^.]+$/, '').slice(0, 26),
+      rang: FAVS.jeux.length,
+      actif: true,
+      lieux: lieux,
+      couche: null
+    });
+    return lieux.filter(function(l){ return l.lat !== null; }).length;
+  }
+
+  async function importerPlusieurs(fichiers){
+    let total = 0;
+    for(const f of fichiers) total += await importerFichierFav(f);
+    dessinerFavoris();
+    majFavoris();
+    sauverFavoris();
+    const places = placesVisibles();
+    if(places.length){
+      map.fitBounds(L.latLngBounds(places.map(function(l){ return [l.lat, l.lng]; })).pad(0.15));
+    }
+    if(total) afficherInfo('📌 ' + fichiers.length + ' fichier(s) import\u00e9(s) \u00b7 ' + total + ' lieu(x) sur la carte', 7000);
+  }
+
+  document.getElementById('btn-favoris').addEventListener('click', function(){
+    document.getElementById('favoris-fichier').click();
+  });
+  document.getElementById('favoris-fichier').addEventListener('change', function(ev){
+    const fs = Array.prototype.slice.call(ev.target.files || []);
+    ev.target.value = '';
+    if(fs.length) importerPlusieurs(fs);
+  });
+  document.getElementById('favoris-etiquettes').addEventListener('change', function(ev){
+    FAVS.etiquettes = !!ev.target.checked;
+    const n = placesVisibles().length;
+    if(FAVS.etiquettes && n > FAV_PLAFOND_ETIQ){
+      afficherInfo('\u26a0\ufe0f ' + n + ' lieux affichés : les noms permanents sont désactivés au-delà de '
+        + FAV_PLAFOND_ETIQ + ', ils figeraient la page. Masquez des couches pour les retrouver.', 8000);
+    }
+    dessinerFavoris();
+  });
+  document.getElementById('btn-favoris-cadrer').addEventListener('click', function(){
+    const places = placesVisibles();
+    if(places.length) map.fitBounds(L.latLngBounds(places.map(function(l){ return [l.lat, l.lng]; })).pad(0.15));
+    else afficherInfo('Aucune couche de lieux affich\u00e9e', 4000);
+  });
+  document.getElementById('btn-favoris-export').addEventListener('click', function(){
+    const feats = [];
+    FAVS.jeux.forEach(function(j){
+      j.lieux.forEach(function(l){
+        if(l.lat === null) return;
+        feats.push({ type:'Feature', geometry:{ type:'Point', coordinates:[l.lng, l.lat] },
+          properties:{ nom:l.nom, note:l.note, adresse:l.adresse, url:l.url,
+                       source:j.nom, approximatif:!!l.approx } });
+      });
+    });
+    const b = new Blob([JSON.stringify({ type:'FeatureCollection', features:feats }, null, 1)], { type:'application/geo+json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = 'mes-lieux.geojson';
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+  });
+
+  // reprise de la session precedente
+  try{
+    const memo = localStorage.getItem(FAV_CLE);
+    if(memo){
+      const jeux = JSON.parse(memo) || [];
+      jeux.forEach(function(j, i){
+        FAVS.seq++;
+        FAVS.jeux.push({ id:'fav-jeu-' + FAVS.seq, nom:j.nom || ('Import ' + (i+1)),
+                         rang:typeof j.rang === 'number' ? j.rang : i,
+                         actif:j.actif !== false, lieux:j.lieux || [], couche:null });
+      });
+      if(FAVS.jeux.length){ dessinerFavoris(); majFavoris(); }
+    }
+  }catch(e){ /* memoire illisible, on repart a vide */ }
+
   // ---------- 🖼 Image de fond géolocalisée (cartes murales scannées) ----------
   // Le géoréférencement automatique d'un scan supposerait d'apparier son trait de côte
   // au trait de côte réel : hors de portée ici, et peu fiable sur un dessin scolaire.
@@ -7469,7 +8260,829 @@
   });
   map.on('moveend', ()=>{ if(etatSeveso.actif){ clearTimeout(etatSeveso.tempoS); etatSeveso.tempoS = setTimeout(chargerSeveso, 500); } });
   // ---------- Mes rep\u00e8res : ic\u00f4nes pos\u00e9es \u00e0 la main sur la carte ----------
-  const etatReperes = { placement:false, icone:'\u2622\ufe0f', marks:[] };
+  // ---------- Notices rédigées, couche par couche (première vague) ----------
+  declarerLegende('acv', {
+    nom: 'Villes Action Cœur de Ville',
+    couleur: '#0d9488',
+    groupe: function(){ return acvGroupe; },
+    colonnes: ['Ville', 'Latitude', 'Longitude'],
+    lignes: function(){
+      return couchesLegende('acv').map(function(c){
+        const ll = c.getLatLng ? c.getLatLng() : null;
+        const nom = (c._popup && c._popup.getContent && String(c._popup.getContent()).replace(/<[^>]*>/g, ' ').trim()) || '';
+        return [nom.split('\n')[0].slice(0, 60), ll ? ll.lat.toFixed(4) : '', ll ? ll.lng.toFixed(4) : ''];
+      }).filter(function(l){ return l[1]; });
+    },
+    notice: {
+      resume: 'Les villes retenues par le programme national Action Cœur de Ville, lancé en 2018 pour enrayer la dévitalisation des centres-villes de villes moyennes : commerces vacants, logements dégradés, perte d’habitants au profit des périphéries.',
+      methode: 'Liste officielle des communes conventionnées, publiée en données ouvertes par la Banque des Territoires (Caisse des Dépôts). Chaque ville est positionnée sur son chef-lieu. Le programme a été prolongé en 2023 sous le nom ACV 2, avec un élargissement des périmètres aux entrées de ville et aux friches.',
+      limites: 'La carte montre une politique publique, pas un diagnostic : une ville absente n’est pas une ville en bonne santé, elle peut n’avoir pas candidaté ou relever d’un autre dispositif (Petites Villes de Demain, pour les communes de moins de 20 000 habitants). Le point ne dit rien du montant engagé ni des résultats obtenus.',
+      classe: 'Croiser avec la couche des tops INSEE ou la densité : les villes ACV dessinent la France des villes moyennes, entre métropoles et espaces ruraux — une entrée directe dans le chapitre sur les inégalités territoriales.',
+      sources: [
+        { titre: 'Programme Action Cœur de Ville — site officiel', url: 'https://agence-cohesion-territoires.gouv.fr/action-coeur-de-ville-42', detail: 'ANCT' },
+        { titre: 'Banque des Territoires — données ouvertes', url: 'https://opendata.banquedesterritoires.fr/', detail: 'jeu de données source' }
+      ]
+    }
+  });
+
+  declarerLegende('qpv', {
+    nom: 'Quartiers prioritaires de la politique de la ville',
+    couleur: '#d92b2b',
+    groupe: function(){ return qpvLayer; },
+    colonnes: ['Quartier', 'Commune'],
+    lignes: function(){
+      const out = [];
+      couchesLegende('qpv').forEach(function(c){
+        const p = (c.feature && c.feature.properties) || {};
+        const nom = p.nom_qp || p.nom || p.lib_qp || p.NOM || '';
+        const com = p.commune || p.lib_com || p.nom_com || p.COMMUNE || '';
+        if(nom || com) out.push([nom, com]);
+      });
+      return out;
+    },
+    notice: {
+      resume: 'Les quartiers prioritaires de la politique de la ville, définis depuis 2015 sur un critère unique : la concentration de population à bas revenus. Environ 1 500 quartiers en France, où vivent près de 5,4 millions de personnes.',
+      methode: 'Le zonage repose sur le revenu fiscal médian des habitants, mesuré par carreaux de 200 mètres. Un quartier est retenu lorsqu’il compte au moins 1 000 habitants et que leur revenu médian est inférieur à 60 % du revenu médian de référence. Le périmètre a été redéfini en 2024 pour intégrer les évolutions démographiques.',
+      limites: 'C’est un zonage administratif fondé sur un seul indicateur. Il ne décrit ni le bâti, ni la réussite scolaire, ni l’emploi — et il ne dit rien de la vie du quartier. Un quartier peut sortir du zonage sans que la situation de ses habitants ait changé, simplement parce que le seuil de référence a bougé.',
+      classe: 'Superposer avec la couche des origines ou celle du logement : le croisement montre la dimension spatiale des inégalités urbaines. Attention à ne pas transformer le zonage en jugement sur les habitants.',
+      sources: [
+        { titre: 'ANCT — Système d’information de la politique de la ville', url: 'https://sig.ville.gouv.fr/', detail: 'périmètres officiels' },
+        { titre: 'INSEE — dossier Quartiers prioritaires', url: 'https://www.insee.fr/fr/statistiques?debut=0&theme=87', detail: 'statistiques associées' }
+      ]
+    }
+  });
+
+  declarerLegende('sis-recents', {
+    nom: 'Séismes récents (EMSC)',
+    couleur: '#dc2626',
+    groupe: function(){ return etatSis.recents; },
+    colonnes: ['Magnitude', 'Lieu', 'Date', 'Latitude', 'Longitude'],
+    lignes: function(){
+      return couchesLegende('sis-recents').map(function(c){
+        const ll = c.getLatLng ? c.getLatLng() : null;
+        const txt = (c._popup && c._popup.getContent) ? String(c._popup.getContent()).replace(/<[^>]*>/g, ' | ').replace(/\s+/g, ' ').trim() : '';
+        const mag = (txt.match(/M\s*([0-9.]+)/) || [])[1] || '';
+        return [mag, txt.slice(0, 80), '', ll ? ll.lat.toFixed(3) : '', ll ? ll.lng.toFixed(3) : ''];
+      }).filter(function(l){ return l[3]; });
+    },
+    notice: {
+      resume: 'Les séismes détectés ces derniers jours par le Centre sismologique euro-méditerranéen, en temps quasi réel. Le rayon du cercle croît avec la magnitude.',
+      methode: 'L’EMSC agrège les relevés de plus de 80 réseaux sismologiques nationaux. Une secousse est localisée par triangulation des temps d’arrivée des ondes P et S sur plusieurs stations. Les premières solutions, automatiques, sont révisées par un analyste dans les heures qui suivent : magnitude et profondeur peuvent donc bouger.',
+      limites: 'La densité de stations n’est pas uniforme : un séisme de magnitude 2 est détecté dans les Alpes et passe inaperçu au large. La carte reflète donc autant le réseau d’observation que l’activité réelle. La magnitude n’est pas l’intensité ressentie : un séisme profond de magnitude 5 peut être moins ressenti qu’un séisme superficiel de magnitude 4.',
+      classe: 'Sur quelques jours, les points dessinent les frontières de plaques : arc égéen, Italie, Maghreb. En France métropolitaine, ils se concentrent sur les Alpes, les Pyrénées et le fossé rhénan — de quoi introduire la sismicité intraplaque, plus rare mais réelle.',
+      sources: [
+        { titre: 'EMSC — European-Mediterranean Seismological Centre', url: 'https://www.emsc-csem.org/', detail: 'source des données' },
+        { titre: 'BRGM — Plan séisme et zonage réglementaire', url: 'https://www.planseisme.fr/', detail: 'contexte français' }
+      ]
+    }
+  });
+
+  declarerLegende('pts-chauds', {
+    nom: 'Points chauds détectés (FIRMS)',
+    couleur: '#f97316',
+    groupe: function(){ return etatPtsChauds.groupe; },
+    colonnes: ['Puissance (MW)', 'Latitude', 'Longitude'],
+    lignes: function(){
+      return couchesLegende('pts-chauds').map(function(c){
+        const ll = c.getLatLng ? c.getLatLng() : null;
+        const txt = (c._popup && c._popup.getContent) ? String(c._popup.getContent()).replace(/<[^>]*>/g, ' ') : '';
+        const frp = (txt.match(/([0-9.]+)\s*MW/) || [])[1] || '';
+        return [frp, ll ? ll.lat.toFixed(4) : '', ll ? ll.lng.toFixed(4) : ''];
+      }).filter(function(l){ return l[1]; });
+    },
+    notice: {
+      resume: 'Les anomalies thermiques repérées par satellite ces derniers jours : feux de végétation, mais aussi torchères industrielles et brûlages agricoles. La couleur traduit la puissance radiative, en mégawatts.',
+      methode: 'Les capteurs VIIRS des satellites Suomi-NPP et NOAA-20 mesurent le rayonnement infrarouge du sol à 375 mètres de résolution, quatre passages par jour. Un pixel nettement plus chaud que son voisinage est signalé comme point chaud. La NASA diffuse ces détections dans FIRMS, avec un délai de quelques heures.',
+      limites: 'Une détection n’est pas un incendie : une cheminée d’usine, un feu agricole autorisé ou un reflet peuvent la déclencher. À l’inverse, un feu sous couvert nuageux ou entre deux passages satellite est manqué. Le point marque le centre d’un pixel de 375 m, pas le foyer exact, et la puissance dépend de l’angle de visée.',
+      classe: 'En été, comparer la carte des détections avec celle de la sécheresse des sols et du taux de résineux : les élèves construisent eux-mêmes l’explication d’un aléa, au lieu de la recevoir.',
+      sources: [
+        { titre: 'NASA FIRMS — Fire Information for Resource Management System', url: 'https://firms.modaps.eosdis.nasa.gov/', detail: 'source des détections' },
+        { titre: 'Effis — Système européen d’information sur les feux de forêt', url: 'https://forest-fire.emergency.copernicus.eu/', detail: 'contexte européen' }
+      ]
+    }
+  });
+
+  declarerLegende('bassins', {
+    nom: 'Grands bassins versants',
+    couleur: '#1d4ed8',
+    groupe: function(){ return etatBassins.groupe; },
+    colonnes: ['Bassin'],
+    lignes: function(){
+      const out = [];
+      couchesLegende('bassins').forEach(function(c){
+        const t = (c.getTooltip && c.getTooltip()) ? String(c.getTooltip().getContent()).replace(/<[^>]*>/g, '').trim() : '';
+        if(t) out.push([t]);
+      });
+      return out;
+    },
+    notice: {
+      resume: 'Les grands bassins hydrographiques français : Seine-Normandie, Loire-Bretagne, Adour-Garonne, Rhône-Méditerranée, Artois-Picardie, Rhin-Meuse, plus la Corse. Chacun rassemble tous les territoires dont les eaux rejoignent le même exutoire.',
+      methode: 'Le découpage suit les lignes de partage des eaux, déduites du relief : une goutte tombée d’un côté d’une crête rejoint un fleuve, de l’autre côté un autre. Ces limites servent de cadre à la gestion de l’eau depuis la loi de 1964, qui a créé les agences de l’eau sur ce périmètre plutôt que sur les départements.',
+      limites: 'Le tracé affiché est simplifié : les limites réelles, établies par l’OFB à partir du référentiel BD Topage, épousent finement le relief et se discutent dans les zones plates où la ligne de partage est incertaine. Les eaux souterraines, elles, ignorent parfois ces frontières.',
+      classe: 'C’est l’exemple le plus net d’un découpage territorial qui ne suit ni les départements ni les régions : une entrée efficace sur la notion de maille pertinente selon le problème posé.',
+      sources: [
+        { titre: 'Office français de la biodiversité — SANDRE', url: 'https://www.sandre.eaufrance.fr/', detail: 'référentiel hydrographique' },
+        { titre: 'Les agences de l’eau', url: 'https://www.lesagencesdeleau.fr/', detail: 'gouvernance par bassin' }
+      ]
+    }
+  });
+
+  declarerLegende('provinces', {
+    nom: 'Provinces historiques (1789)',
+    couleur: '#92400e',
+    groupe: function(){ return etatProvinces.groupe; },
+    colonnes: ['Province'],
+    lignes: function(){
+      const out = [];
+      couchesLegende('provinces').forEach(function(c){
+        const t = (c.getTooltip && c.getTooltip()) ? String(c.getTooltip().getContent()).replace(/<[^>]*>/g, '').trim() : '';
+        if(t) out.push([t]);
+      });
+      return out;
+    },
+    notice: {
+      resume: 'Les provinces de la France d’Ancien Régime, telles qu’elles existaient à la veille de 1789 : Bretagne, Normandie, Bourgogne, Languedoc, Provence, Dauphiné et une trentaine d’autres.',
+      methode: 'Le tracé est reconstitué par agrégation de départements actuels, ce qui donne une approximation lisible plutôt qu’un relevé d’archives. Les provinces n’avaient d’ailleurs pas de frontière unique : gouvernements militaires, généralités fiscales, diocèses et parlements se recoupaient sans coïncider.',
+      limites: 'Aucune carte des provinces n’est exacte, parce que l’objet lui-même ne l’était pas. Les enclaves — comtat Venaissin pontifical, principauté de Dombes, Montbéliard — ne sont pas figurées. La comparaison avec les départements de 1790 est instructive mais ne doit pas laisser croire à une substitution terme à terme.',
+      classe: 'Superposer les régions actuelles : la Bretagne administrative n’inclut pas Nantes, l’Alsace a fusionné dans le Grand Est. Le décalage entre découpage vécu et découpage administratif se voit d’un coup d’œil, et fait discuter.',
+      sources: [
+        { titre: 'Archives nationales — cartes d’Ancien Régime', url: 'https://www.archives-nationales.culture.gouv.fr/', detail: 'fonds cartographiques' },
+        { titre: 'Cassini — territoires de la France de 1789 à aujourd’hui', url: 'http://cassini.ehess.fr/', detail: 'base EHESS des communes' }
+      ]
+    }
+  });
+
+  // --- espèces GBIF : une entrée par espèce, enregistrée à la volée ---
+  function declarerEspece(cle, libelle, coul){
+    const k = 'esp-' + cle;
+    if(!CAT_LEG[k]) declarerLegende(k, {
+      nom: libelle,
+      couleur: coul,
+      groupe: function(){ return (etatEspeces[cle] || {}).groupe; },
+      colonnes: ['Latitude', 'Longitude', 'Observation'],
+      lignes: function(){
+        return couchesLegende(k).map(function(c){
+          const ll = c.getLatLng ? c.getLatLng() : null;
+          const txt = (c._popup && c._popup.getContent)
+            ? String(c._popup.getContent()).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+          return [ll ? ll.lat.toFixed(4) : '', ll ? ll.lng.toFixed(4) : '', txt.slice(0, 90)];
+        }).filter(function(l){ return l[0]; });
+      },
+      notice: {
+        resume: 'Les observations de ' + libelle.replace(/^[^\wÀ-ÿ]+/, '') + ' enregistrées dans GBIF, l’infrastructure mondiale d’information sur la biodiversité. Chaque point est une observation datée et géolocalisée, pas une aire de répartition.',
+        methode: 'GBIF agrège les données de musées, d’herbiers, de programmes scientifiques et de sciences participatives — en France surtout l’INPN et les plateformes naturalistes. L’application interroge l’API en direct sur l’emprise visible et la période choisie, et affiche les occurrences ayant des coordonnées valides.',
+        limites: 'C’est une carte de l’observation, pas de la présence. Les points se concentrent là où des naturalistes se déplacent : bords de route, réserves, littoral fréquenté. Une zone vide peut être une zone non prospectée. Les déterminations d’espèce ne sont pas toutes validées, et une observation ancienne ne dit rien de la situation actuelle.',
+        classe: 'C’est un excellent support pour faire comprendre le biais d’échantillonnage : comparer la carte des observations avec celle de la densité de population montre souvent la même forme — ce qui en dit plus sur les observateurs que sur les animaux.',
+        sources: [
+          { titre: 'GBIF — Global Biodiversity Information Facility', url: 'https://www.gbif.org/', detail: 'portail et API' },
+          { titre: 'INPN — Inventaire national du patrimoine naturel', url: 'https://inpn.mnhn.fr/', detail: 'source française principale' }
+        ]
+      }
+    });
+    return k;
+  }
+
+  declarerLegende('sis-plaques', {
+    nom: 'Limite de plaques Afrique / Eurasie',
+    couleur: '#b91c1c',
+    groupe: function(){ return etatSis.plaques; },
+    colonnes: ['Segment', 'Sommets'],
+    lignes: function(){
+      return couchesLegende('sis-plaques').map(function(c, i){
+        let n = 0;
+        try{ n = (c.getLatLngs ? [].concat.apply([], c.getLatLngs()) : []).length; }catch(e){}
+        return ['Segment ' + (i + 1), n];
+      });
+    },
+    notice: {
+      resume: 'Le tracé schématique de la frontière entre la plaque africaine et la plaque eurasiatique, qui traverse la Méditerranée. C’est cette convergence qui explique la sismicité de l’Italie, du Maghreb et, plus discrètement, du sud de la France.',
+      methode: 'Tracé simplifié d’après les modèles de limites de plaques publiés par la communauté géophysique. Les deux plaques se rapprochent d’environ 5 millimètres par an, mesure obtenue par géodésie satellitaire (GPS permanent et interférométrie radar).',
+      limites: 'Une limite de plaques n’est pas une ligne : c’est une zone de déformation large de plusieurs centaines de kilomètres en Méditerranée occidentale, avec des microplaques intercalées. Le trait affiché est une commodité pédagogique, pas un objet géologique.',
+      classe: 'Superposer les séismes récents : ils ne se rangent pas sagement sur la ligne, ils s’en écartent de part et d’autre. C’est l’occasion de faire dire aux élèves pourquoi une frontière de plaques est une zone, pas un trait.',
+      sources: [
+        { titre: 'BRGM — Plan séisme', url: 'https://www.planseisme.fr/', detail: 'contexte sismotectonique français' },
+        { titre: 'EOST — École et observatoire des sciences de la Terre', url: 'https://eost.unistra.fr/', detail: 'réseau sismologique national' }
+      ]
+    }
+  });
+
+  declarerLegende('sis-failles', {
+    nom: 'Failles actives',
+    couleur: '#7c3aed',
+    groupe: function(){ return etatSis.failles; },
+    colonnes: ['Faille', 'Sommets'],
+    lignes: function(){
+      return couchesLegende('sis-failles').map(function(c, i){
+        const p = (c.feature && c.feature.properties) || {};
+        let n = 0;
+        try{ n = (c.getLatLngs ? [].concat.apply([], c.getLatLngs()) : []).length; }catch(e){}
+        return [p.nom || p.name || p.NOM || ('Faille ' + (i + 1)), n];
+      });
+    },
+    notice: {
+      resume: 'Les failles ayant rejoué depuis moins de deux millions d’années, c’est-à-dire susceptibles de produire un séisme à l’échelle des temps humains. En France : le fossé rhénan, la Provence, les Pyrénées, quelques accidents alpins.',
+      methode: 'Base Néopal, portée par le BRGM avec l’IRSN et le CEA. Chaque faille y est décrite à partir d’indices de terrain — décalage de dépôts récents, escarpements, tranchées de paléosismologie — et affectée d’un degré de fiabilité, car toutes ne sont pas également établies.',
+      limites: 'Une faille absente de la carte n’est pas une faille inexistante : beaucoup sont masquées par les sédiments ou l’urbanisation. À l’inverse, une faille cartographiée ne prédit pas un séisme prochain — les périodes de retour se comptent souvent en milliers d’années. Cette couche ne remplace en rien le zonage sismique réglementaire.',
+      classe: 'Confronter avec le zonage réglementaire : les deux ne coïncident pas, parce que le zonage traduit un risque moyenné à l’échelle communale alors que la faille est un objet ponctuel. Bonne entrée sur la différence entre aléa et réglementation.',
+      sources: [
+        { titre: 'Néopal — base des déformations récentes', url: 'https://www.neopal.net/', detail: 'BRGM, IRSN, CEA' },
+        { titre: 'BRGM — InfoTerre', url: 'https://infoterre.brgm.fr/', detail: 'cartes géologiques' }
+      ]
+    }
+  });
+
+  declarerLegende('sis-neotecto', {
+    nom: 'Indices néotectoniques',
+    couleur: '#c026d3',
+    groupe: function(){ return etatSis.neotecto; },
+    colonnes: ['Indice', 'Sommets'],
+    lignes: function(){
+      return couchesLegende('sis-neotecto').map(function(c, i){
+        const p = (c.feature && c.feature.properties) || {};
+        let n = 0;
+        try{ n = (c.getLatLngs ? [].concat.apply([], c.getLatLngs()) : []).length; }catch(e){}
+        return [p.nom || p.name || ('Indice ' + (i + 1)), n];
+      });
+    },
+    notice: {
+      resume: 'Les indices géologiques de déformation récente validés par les experts : terrasses alluviales basculées, dépôts quaternaires décalés, escarpements frais. Ce sont les traces visibles d’une tectonique encore en mouvement.',
+      methode: 'Chaque indice de la base Néopal est examiné par un comité, qui lui attribue un degré de confiance selon la qualité de la datation et la clarté de l’observation. Seuls les indices validés sont retenus ici.',
+      limites: 'Un indice néotectonique dit qu’un mouvement a eu lieu, pas qu’il se poursuit ni à quel rythme. Beaucoup restent débattus : un escarpement peut aussi résulter d’un glissement de terrain ou de l’érosion différentielle.',
+      classe: 'Utile pour montrer comment on établit un fait scientifique : ici, la trace au sol tient lieu de preuve, avec un degré de confiance explicite. Les élèves voient que la carte porte une incertitude assumée.',
+      sources: [
+        { titre: 'Néopal — indices néotectoniques', url: 'https://www.neopal.net/', detail: 'base validée' },
+        { titre: 'IRSN — aléa sismique', url: 'https://www.irsn.fr/', detail: 'évaluation du risque' }
+      ]
+    }
+  });
+
+  // ---------- Croquis étape 2 : outils géométriques, poignées, magnétisme ----------
+  // Tout passe par creerTrait() : ligne et flèche donnent un tracé de type 'ligne',
+  // rectangle et cercle un tracé de type 'surface'. Rien de nouveau à stocker, et
+  // l'annulation, les notes, les calques et l'export continuent de fonctionner.
+
+  function magnetisme(latlng){
+    if(!document.getElementById('croquis-magnet') || !document.getElementById('croquis-magnet').checked) return latlng;
+    const p = map.latLngToContainerPoint(latlng);
+    let meilleur = null, court = 13;
+    traits.forEach(function(t){
+      if(!calqueVisible(t.calque)) return;
+      (t.segments || []).forEach(function(s){
+        if(!s || s.length !== 2) return;
+        const q = map.latLngToContainerPoint(L.latLng(s[0], s[1]));
+        const d = q.distanceTo(p);
+        if(d < court){ court = d; meilleur = L.latLng(s[0], s[1]); }
+      });
+    });
+    return meilleur || latlng;
+  }
+
+  function nettoyerGeom(){
+    GEOM.points = [];
+    GEOM.depart = null;
+    if(GEOM.apercu){ map.removeLayer(GEOM.apercu); GEOM.apercu = null; }
+    GEOM.jalons.forEach(function(m){ map.removeLayer(m); });
+    GEOM.jalons = [];
+  }
+
+  function jalon(latlng){
+    return L.circleMarker(latlng, { radius:4, color:couleur, fillColor:'#fff',
+      fillOpacity:1, weight:2, interactive:false }).addTo(map);
+  }
+
+  function cercleEnPolygone(centre, rayonM){
+    const pts = [];
+    const R = 6378137;
+    const lat = centre.lat * Math.PI / 180;
+    for(let i = 0; i < 48; i++){
+      const a = i * 2 * Math.PI / 48;
+      const dLat = (rayonM * Math.cos(a)) / R * 180 / Math.PI;
+      const dLng = (rayonM * Math.sin(a)) / (R * Math.cos(lat)) * 180 / Math.PI;
+      pts.push([centre.lat + dLat, centre.lng + dLng]);
+    }
+    return pts;
+  }
+
+  function validerGeom(){
+    const pts = GEOM.points.map(function(ll){ return [ll.lat, ll.lng]; });
+    if(mode === 'ligne' || mode === 'fleche'){
+      if(pts.length < 2){ nettoyerGeom(); return; }
+      const memoire = CROQUIS.fleche;
+      if(mode === 'fleche' && CROQUIS.fleche === 'aucune') CROQUIS.fleche = 'simple';
+      creerTrait('ligne', pts, couleur, tailleMetres);
+      CROQUIS.fleche = memoire;
+    }else if(mode === 'rect'){
+      if(pts.length < 2){ nettoyerGeom(); return; }
+      const a = pts[0], b = pts[pts.length - 1];
+      creerTrait('surface', [[a[0], a[1]], [a[0], b[1]], [b[0], b[1]], [b[0], a[1]]], couleur, tailleMetres);
+    }else if(mode === 'cercle'){
+      if(pts.length < 2){ nettoyerGeom(); return; }
+      const c = L.latLng(pts[0][0], pts[0][1]), b = L.latLng(pts[1][0], pts[1][1]);
+      creerTrait('surface', cercleEnPolygone(c, map.distance(c, b)), couleur, tailleMetres);
+    }
+    nettoyerGeom();
+    if(typeof sauverEtat === 'function') sauverEtat();
+  }
+
+  function apercuGeom(survol){
+    const liste = GEOM.points.slice();
+    if(survol) liste.push(survol);
+    let trace = liste;
+    if(mode === 'rect' && liste.length >= 2){
+      const a = liste[0], b = liste[liste.length - 1];
+      trace = [a, L.latLng(a.lat, b.lng), b, L.latLng(b.lat, a.lng), a];
+    }else if(mode === 'cercle' && liste.length >= 2){
+      trace = cercleEnPolygone(liste[0], map.distance(liste[0], liste[1])).map(function(p){ return L.latLng(p[0], p[1]); });
+    }
+    if(!GEOM.apercu){
+      GEOM.apercu = L.polyline(trace, { color:couleur, weight:2, dashArray:'5,5', interactive:false }).addTo(map);
+    }else{
+      GEOM.apercu.setLatLngs(trace);
+    }
+    // mesure vivante pendant le tracé
+    if(liste.length >= 2){
+      const info = document.getElementById('outil-aide');
+      if(info){
+        if(mode === 'cercle'){
+          const r = map.distance(liste[0], liste[1]);
+          info.textContent = 'Rayon ' + (r < 1000 ? Math.round(r) + ' m' : Math.round(r / 100) / 10 + ' km')
+            + ' · aire ' + Math.round(Math.PI * r * r / 1e6) + ' km²';
+        }else if(mode === 'ligne' || mode === 'fleche'){
+          let d = 0;
+          for(let i = 1; i < liste.length; i++) d += map.distance(liste[i - 1], liste[i]);
+          info.textContent = 'Longueur ' + (d < 1000 ? Math.round(d) + ' m' : Math.round(d / 100) / 10 + ' km')
+            + ' — double-clic ou Entrée pour terminer';
+        }
+      }
+    }
+  }
+
+  function estOutilGeom(){ return mode === 'ligne' || mode === 'fleche' || mode === 'rect' || mode === 'cercle'; }
+
+  map.on('click', function(e){
+    if(!estOutilGeom() || !e || !e.latlng) return;
+    const ll = magnetisme(e.latlng);
+    GEOM.points.push(ll);
+    GEOM.jalons.push(jalon(ll));
+    apercuGeom(null);
+    if((mode === 'rect' || mode === 'cercle') && GEOM.points.length >= 2) validerGeom();
+  });
+  map.on('mousemove', function(e){ if(estOutilGeom() && GEOM.points.length) apercuGeom(e.latlng); });
+  map.on('dblclick', function(e){
+    if(!estOutilGeom()) return;
+    if(e && e.originalEvent) L.DomEvent.stop(e.originalEvent);
+    validerGeom();
+  });
+  document.addEventListener('keydown', function(ev){
+    if(!estOutilGeom()) return;
+    if(ev.target && /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) return;
+    if(ev.key === 'Enter'){ ev.preventDefault(); validerGeom(); }
+    if(ev.key === 'Escape'){ nettoyerGeom(); }
+  });
+
+  // ---------- poignées de sommets sur l'objet sélectionné ----------
+  function retirerPoignees(){
+    poignees.forEach(function(m){ map.removeLayer(m); });
+    poignees = [];
+  }
+  function poserPoignees(t){
+    retirerPoignees();
+    if(!t || !t.segments) return;
+    const plats = t.segments.filter(function(s){ return s && s.length === 2 && typeof s[0] === 'number'; });
+    if(!plats.length || plats.length > 120) return;   // au-delà, les poignées gêneraient plus qu'elles n'aident
+    plats.forEach(function(s, i){
+      const m = L.circleMarker([s[0], s[1]], { radius:5, color:'#111827', fillColor:'#fff',
+        fillOpacity:1, weight:2, pane:'markerPane', bubblingMouseEvents:false });
+      m.on('mousedown', function(){
+        map.dragging.disable();
+        const bouge = function(ev){
+          const ll = magnetisme(ev.latlng);
+          s[0] = ll.lat; s[1] = ll.lng;
+          m.setLatLng(ll);
+          try{ t.layerObj.setLatLngs(t.segments); }catch(e){}
+          majResumeSelection();
+        };
+        const fin = function(){
+          map.off('mousemove', bouge);
+          map.off('mouseup', fin);
+          map.dragging.enable();
+          if(typeof sauverEtat === 'function') sauverEtat();
+        };
+        map.on('mousemove', bouge);
+        map.on('mouseup', fin);
+      });
+      m.addTo(map);
+      poignees.push(m);
+    });
+  }
+
+  // ---------- Croquis : sélection d'objet et panneau contextuel ----------
+  // Principe emprunté aux logiciels de dessin : un tracé posé reste un objet.
+  // On le sélectionne, on le restyle, on le supprime — sans le redessiner.
+
+  function majPanneauOutil(){
+    const actif = (typeof mode !== 'undefined') ? mode : 'main';
+    Array.prototype.forEach.call(document.querySelectorAll('#wg-outils .prop'), function(bloc){
+      const pour = (bloc.dataset.pour || '').split(' ');
+      let visible = pour.indexOf(actif) !== -1;
+      // en sélection, on n'affiche que ce qui s'applique à l'objet retenu
+      if(actif === 'select' && visible && selection){
+        if(bloc.dataset.pour.indexOf('zone') !== -1 && bloc.dataset.pour.indexOf('pinceau') === -1)
+          visible = (selection.type === 'surface');
+      }
+      bloc.style.display = visible ? 'block' : 'none';
+    });
+    const aide = document.getElementById('outil-aide');
+    if(aide) aide.textContent = messagesMode[actif] || '';
+    majResumeSelection();
+  }
+
+  function majResumeSelection(){
+    const r = document.getElementById('sel-resume');
+    if(!r) return;
+    if(!selection){ r.textContent = 'Cliquez un tracé sur la carte.'; return; }
+    const genre = (selection.type === 'surface') ? 'Zone' : 'Trait';
+    const mesure = mesureObjet(selection);
+    r.textContent = genre + ' · ' + (etiquettes[selection.couleur] || selection.couleur)
+      + (mesure ? ' · ' + mesure : '');
+  }
+
+  // longueur en km, aire en km2 : une lecture de géographe, pas un ornement
+  function mesureObjet(t){
+    try{
+      const pts = t.segments || [];
+      if(t.type === 'surface'){
+        if(pts.length < 3) return '';
+        let a = 0;
+        const R = 6371;
+        const rad = Math.PI / 180;
+        const lat0 = pts.reduce(function(s, p){ return s + p[0]; }, 0) / pts.length;
+        const kx = R * rad * Math.cos(lat0 * rad), ky = R * rad;
+        for(let i = 0, n = pts.length; i < n; i++){
+          const p = pts[i], q = pts[(i + 1) % n];
+          a += (p[1] * kx) * (q[0] * ky) - (q[1] * kx) * (p[0] * ky);
+        }
+        const km2 = Math.abs(a) / 2;
+        return km2 < 1 ? Math.round(km2 * 100) / 100 + ' km²' : Math.round(km2) + ' km²';
+      }
+      let d = 0;
+      for(let i = 1; i < pts.length; i++){
+        d += map.distance(pts[i - 1], pts[i]);
+      }
+      if(!d) return '';
+      return d < 1000 ? Math.round(d) + ' m' : Math.round(d / 100) / 10 + ' km';
+    }catch(e){ return ''; }
+  }
+
+  function deselectionner(){
+    if(selection && selection.layerObj && styleAvantSelection){
+      try{ selection.layerObj.setStyle(styleAvantSelection); }catch(e){}
+    }
+    selection = null;
+    styleAvantSelection = null;
+    if(typeof retirerPoignees === 'function') retirerPoignees();
+    majResumeSelection();
+  }
+
+  function selectionner(t){
+    deselectionner();
+    selection = t;
+    try{
+      styleAvantSelection = { color:t.layerObj.options.color, weight:t.layerObj.options.weight,
+                              dashArray:t.layerObj.options.dashArray, opacity:t.layerObj.options.opacity };
+      t.layerObj.setStyle({ opacity:1, weight:Math.max(3, (t.layerObj.options.weight || 3) + 2) });
+      if(t.layerObj.bringToFront) t.layerObj.bringToFront();
+    }catch(e){}
+    // le panneau se cale sur l'objet retenu
+    const lib = document.getElementById('libelle-couleur');
+    if(lib){ lib.dataset.couleur = t.couleur; lib.value = etiquettes[t.couleur] || ''; }
+    Array.prototype.forEach.call(document.querySelectorAll('#wg-outils .couleur'), function(b){
+      b.classList.toggle('actif', b.dataset.couleur === t.couleur);
+    });
+    if(typeof poserPoignees === 'function') poserPoignees(t);
+    majPanneauOutil();
+  }
+
+  // applique au tracé sélectionné une propriété modifiée dans le panneau
+  function appliquerASelection(champ, valeur){
+    if(!selection) return false;
+    const t = selection;
+    if(champ === 'couleur') t.couleur = valeur;
+    if(champ === 'metres'){ t.metres = valeur.m; t.px = valeur.px; }
+    if(champ === 'genre')   t.genre = valeur;
+    if(champ === 'fleche')  t.fleche = valeur;
+    if(champ === 'motif')   t.motif = valeur;
+    if(champ === 'opa')     t.opa = valeur;
+    try{
+      if(t.type === 'surface') t.layerObj.setStyle(styleSurface(t.couleur, t.opa, t.px));
+      else t.layerObj.setStyle(styleLigne(t.couleur, t.metres, t.genre, t.px));
+      const chemin = t.layerObj._path;
+      if(chemin){
+        chemin.removeAttribute('marker-end');
+        chemin.removeAttribute('marker-start');
+        if(t.type === 'surface'){ chemin.setAttribute('fill', t.couleur); chemin.removeAttribute('fill-opacity'); }
+      }
+      orneTrait(t);
+      styleAvantSelection = { color:t.layerObj.options.color, weight:t.layerObj.options.weight,
+                              dashArray:t.layerObj.options.dashArray, opacity:t.layerObj.options.opacity };
+      t.layerObj.setStyle({ opacity:1, weight:Math.max(3, (t.layerObj.options.weight || 3) + 2) });
+    }catch(e){}
+    majResumeSelection();
+    if(typeof sauverEtat === 'function') sauverEtat();
+    return true;
+  }
+
+  function supprimerSelection(){
+    if(!selection) return;
+    const t = selection;
+    selection = null;
+    styleAvantSelection = null;
+    try{ map.removeLayer(t.layerObj); }catch(e){}
+    const i = traits.indexOf(t);
+    if(i >= 0) traits.splice(i, 1);
+    if(typeof sauverEtat === 'function') sauverEtat();
+    majResumeSelection();
+    afficherInfo('Objet supprimé', 2500);
+  }
+
+  (function cablerSelection(){
+    const sup = document.getElementById('sel-supprimer');
+    if(sup) sup.addEventListener('click', supprimerSelection);
+    const des = document.getElementById('sel-deselect');
+    if(des) des.addEventListener('click', function(){ deselectionner(); majPanneauOutil(); });
+    document.addEventListener('keydown', function(ev){
+      const dansUnChamp = ev.target && /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName);
+      if(dansUnChamp) return;
+      if((ev.key === 'Delete' || ev.key === 'Backspace') && selection){ ev.preventDefault(); supprimerSelection(); }
+      if(ev.key === 'Escape' && selection){ deselectionner(); majPanneauOutil(); }
+    });
+    map.on('click', function(){ if(mode === 'select' && selection){ deselectionner(); majPanneauOutil(); } });
+  })();
+
+  // ---------- Croquis : motifs de surface, pointes de flèche, figurés, texte ----------
+  // Motifs et pointes sont des <pattern>/<marker> SVG injectés dans le rendu vectoriel
+  // de Leaflet. Ils n'existent pas sur un rendu en toile : la carte est créée sans
+  // preferCanvas, donc en SVG, c'est le bon terrain.
+  function defsCroquis(){
+    const rendu = map.getRenderer ? map.getRenderer(map) : null;
+    const svg = rendu && rendu._container;
+    if(!svg || !svg.querySelector) return null;
+    let defs = svg.querySelector('defs.croquis-defs');
+    if(!defs){
+      defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      defs.setAttribute('class', 'croquis-defs');
+      svg.insertBefore(defs, svg.firstChild);
+    }
+    return defs;
+  }
+  function cleCouleur(c){ return String(c).replace(/[^a-z0-9]/gi, ''); }
+
+  function motifSurface(motif, couleurFig){
+    const defs = defsCroquis();
+    if(!defs || motif === 'aplat') return null;
+    const id = 'mot-' + motif + '-' + cleCouleur(couleurFig);
+    if(!defs.querySelector('#' + id)){
+      const ns = 'http://www.w3.org/2000/svg';
+      const p = document.createElementNS(ns, 'pattern');
+      p.setAttribute('id', id);
+      p.setAttribute('patternUnits', 'userSpaceOnUse');
+      p.setAttribute('width', '8');
+      p.setAttribute('height', '8');
+      if(motif === 'points'){
+        const c = document.createElementNS(ns, 'circle');
+        c.setAttribute('cx', '2'); c.setAttribute('cy', '2'); c.setAttribute('r', '1.5');
+        c.setAttribute('fill', couleurFig);
+        p.appendChild(c);
+      }else{
+        const trace = function(d){
+          const l = document.createElementNS(ns, 'path');
+          l.setAttribute('d', d);
+          l.setAttribute('stroke', couleurFig);
+          l.setAttribute('stroke-width', '1.8');
+          p.appendChild(l);
+        };
+        trace('M0,8 L8,0');
+        if(motif === 'croisees') trace('M0,0 L8,8');
+      }
+      defs.appendChild(p);
+    }
+    return 'url(#' + id + ')';
+  }
+
+  function pointeFleche(sens, couleurFig){
+    const defs = defsCroquis();
+    if(!defs || sens === 'aucune') return null;
+    const id = 'fl-' + cleCouleur(couleurFig);
+    if(!defs.querySelector('#' + id)){
+      const ns = 'http://www.w3.org/2000/svg';
+      const mk = document.createElementNS(ns, 'marker');
+      mk.setAttribute('id', id);
+      mk.setAttribute('viewBox', '0 0 10 10');
+      mk.setAttribute('refX', '8');
+      mk.setAttribute('refY', '5');
+      mk.setAttribute('markerWidth', '5');
+      mk.setAttribute('markerHeight', '5');
+      mk.setAttribute('orient', 'auto-start-reverse');
+      mk.setAttribute('markerUnits', 'strokeWidth');
+      const p = document.createElementNS(ns, 'path');
+      p.setAttribute('d', 'M0,1 L9,5 L0,9 z');
+      p.setAttribute('fill', couleurFig);
+      mk.appendChild(p);
+      defs.appendChild(mk);
+    }
+    return 'url(#' + id + ')';
+  }
+
+  // applique motif et pointes au chemin SVG d'un trait, une fois ajouté à la carte
+  function orneTrait(t){
+    if(!t || !t.layerObj) return;
+    const chemin = t.layerObj._path;
+    if(!chemin) return;
+    try{
+      if(t.type === 'surface'){
+        const url = motifSurface(t.motif, t.couleur);
+        if(url){
+          chemin.setAttribute('fill', url);
+          chemin.setAttribute('fill-opacity', String(Math.min(1, (t.opa || 0.35) + 0.45)));
+        }
+      }else{
+        const url = pointeFleche(t.fleche, t.couleur);
+        if(url){
+          chemin.setAttribute('marker-end', url);
+          if(t.fleche === 'double') chemin.setAttribute('marker-start', url);
+        }
+      }
+    }catch(e){ /* le trait reste lisible même si l'ornement échoue */ }
+  }
+
+  // --- figurés ponctuels et texte : marqueurs autonomes, mémorisés localement ---
+  function etoilePoints(cx, cy, R, r){
+    const pts = [];
+    for(let i = 0; i < 10; i++){
+      const rayon = (i % 2 === 0) ? R : r;
+      const a = -Math.PI / 2 + i * Math.PI / 5;
+      pts.push((cx + rayon * Math.cos(a)).toFixed(1) + ',' + (cy + rayon * Math.sin(a)).toFixed(1));
+    }
+    return pts.join(' ');
+  }
+  function formeSvg(forme, couleurFig, taille){
+    const t = Math.max(6, taille), d = t / 2;
+    let corps;
+    if(forme === 'carre')         corps = '<rect x="1" y="1" width="' + (t - 2) + '" height="' + (t - 2) + '"';
+    else if(forme === 'triangle') corps = '<polygon points="' + d + ',1 ' + (t - 1) + ',' + (t - 1) + ' 1,' + (t - 1) + '"';
+    else if(forme === 'etoile')   corps = '<polygon points="' + etoilePoints(d, d, d - 1, (d - 1) * 0.45) + '"';
+    else                          corps = '<circle cx="' + d + '" cy="' + d + '" r="' + (d - 1) + '"';
+    return '<svg width="' + t + '" height="' + t + '" viewBox="0 0 ' + t + ' ' + t + '">'
+      + corps + ' fill="' + couleurFig + '" stroke="#ffffff" stroke-width="1.5"/></svg>';
+  }
+
+  function objetCroquis(o){
+    let icone;
+    if(o.genre === 'texte'){
+      icone = L.divIcon({ className:'croquis-texte-marqueur',
+        html:'<span style="font-size:' + o.taille + 'px;color:' + o.couleur + '">' + echap(o.texte) + '</span>',
+        iconSize:null, iconAnchor:[0, o.taille / 2] });
+    }else{
+      icone = L.divIcon({ className:'croquis-figure-marqueur',
+        html:formeSvg(o.forme, o.couleur, o.taille),
+        iconSize:[o.taille, o.taille], iconAnchor:[o.taille / 2, o.taille / 2] });
+    }
+    const m = L.marker([o.lat, o.lng], { icon:icone, draggable:true, keyboard:false });
+    m.on('click', function(ev){
+      L.DomEvent.stop(ev);
+      map.removeLayer(m);
+      CROQUIS.objets = CROQUIS.objets.filter(function(x){ return x !== o; });
+      sauverCroquis();
+      afficherInfo('Figuré retiré', 2500);
+    });
+    m.on('dragend', function(){
+      const ll = m.getLatLng();
+      o.lat = ll.lat; o.lng = ll.lng;
+      sauverCroquis();
+    });
+    m.addTo(map);
+    o.marqueur = m;
+    return m;
+  }
+  function sauverCroquis(){
+    try{
+      localStorage.setItem('geo-croquis', JSON.stringify(CROQUIS.objets.map(function(o){
+        return { genre:o.genre, forme:o.forme, texte:o.texte, couleur:o.couleur,
+                 taille:o.taille, lat:o.lat, lng:o.lng };
+      })));
+    }catch(e){ /* quota dépassé : le croquis reste affiché, simplement non mémorisé */ }
+  }
+  function poserObjet(latlng){
+    const texte = (mode === 'texte');
+    if(texte && !CROQUIS.texte){ afficherInfo('Écrivez d’abord le texte à poser', 4000); return; }
+    const o = { genre: texte ? 'texte' : 'figure', forme: CROQUIS.forme,
+                texte: CROQUIS.texte, couleur: couleur,
+                taille: texte ? CROQUIS.texteTaille : CROQUIS.taille,
+                lat: latlng.lat, lng: latlng.lng };
+    CROQUIS.objets.push(o);
+    objetCroquis(o);
+    sauverCroquis();
+  }
+  function viderCroquis(){
+    CROQUIS.objets.forEach(function(o){ if(o.marqueur) map.removeLayer(o.marqueur); });
+    CROQUIS.objets = [];
+    sauverCroquis();
+  }
+
+  // --- câblage de l'interface ---
+  function rangeeCroquis(id, champ){
+    const boite = document.getElementById(id);
+    if(!boite) return;
+    boite.addEventListener('click', function(ev){
+      const b = ev.target && ev.target.closest ? ev.target.closest('.croquis-btn') : null;
+      if(!b) return;
+      Array.prototype.forEach.call(boite.querySelectorAll('.croquis-btn'), function(x){ x.classList.remove('actif'); });
+      b.classList.add('actif');
+      CROQUIS[champ] = b.dataset[champ];
+      // en mode selection, le reglage repeint l'objet retenu au lieu du prochain
+      const versTrait = { trait:'genre', fleche:'fleche', motif:'motif' };
+      if(versTrait[champ]) appliquerASelection(versTrait[champ], b.dataset[champ]);
+      if(champ === 'unite'){
+        appliquerASelection('metres', { m: tailleMetres, px: (b.dataset.unite === 'px') ? taillePx : null });
+      }
+    });
+  }
+  rangeeCroquis('croquis-unite', 'unite');
+  rangeeCroquis('croquis-trait', 'trait');
+  rangeeCroquis('croquis-fleche', 'fleche');
+  rangeeCroquis('croquis-motif', 'motif');
+  rangeeCroquis('croquis-forme', 'forme');
+
+  (function reglagesCroquis(){
+    function curseur(id, idVal, champ, suffixe, transforme){
+      const c = document.getElementById(id), v = document.getElementById(idVal);
+      if(!c) return;
+      c.addEventListener('input', function(){
+        CROQUIS[champ] = transforme ? transforme(+c.value) : +c.value;
+        if(v) v.textContent = c.value + suffixe;
+      });
+    }
+    curseur('croquis-opacite', 'croquis-opacite-val', 'opacite', '%', function(n){ return n / 100; });
+    const opa = document.getElementById('croquis-opacite');
+    if(opa) opa.addEventListener('input', function(){ appliquerASelection('opa', (+opa.value) / 100); });
+    curseur('croquis-taille', 'croquis-taille-val', 'taille', ' px');
+    curseur('croquis-txt-taille', 'croquis-txt-val', 'texteTaille', ' px');
+
+    const champ = document.getElementById('croquis-texte');
+    if(champ) champ.addEventListener('input', function(){ CROQUIS.texte = champ.value.trim(); });
+
+    // l'intitulé suit la couleur choisie et alimente la fenêtre Légende
+    const lib = document.getElementById('libelle-couleur');
+    if(lib){
+      lib.value = etiquettes['#2e9e44'] || '';
+      Array.prototype.forEach.call(document.querySelectorAll('.couleur'), function(b){
+        b.addEventListener('click', function(){
+          lib.dataset.couleur = b.dataset.couleur;
+          lib.value = etiquettes[b.dataset.couleur] || '';
+        });
+        b.style.color = b.dataset.couleur;
+      });
+    }
+
+    // les deux poses sont devenues des modes de la barre d'outils : plus d'interrupteur
+
+    const tout = document.getElementById('btn-croquis-tout');
+    if(tout) tout.addEventListener('click', function(){
+      const nbT = traits.length, nbO = CROQUIS.objets.length, nbR = etatReperes.marks.length;
+      const total = nbT + nbO + nbR;
+      if(!total){ afficherInfo('Le croquis est déjà vide', 3500); return; }
+      if(!confirm('Effacer tout le croquis ?\n\n'
+        + nbT + ' tracé(s), ' + nbO + ' figuré(s) ou texte(s), ' + nbR + ' repère(s).\n'
+        + 'Les couches de données de la carte ne sont pas touchées.')) return;
+      deselectionner();
+      traits.slice().forEach(function(t){ supprimerTrait(t); });
+      viderCroquis();
+      etatReperes.marks.slice().forEach(function(m){ map.removeLayer(m); });
+      etatReperes.marks.length = 0;
+      sauverReperes();
+      if(typeof sauverEtat === 'function') sauverEtat();
+      afficherInfo('Croquis effacé — ' + total + ' élément(s)', 5000);
+    });
+
+    const vider = document.getElementById('btn-croquis-vider');
+    if(vider) vider.addEventListener('click', function(){
+      const n = CROQUIS.objets.length;
+      viderCroquis();
+      afficherInfo(n ? n + ' figuré(s) et texte(s) effacé(s)' : 'Aucun figuré à effacer', 4000);
+    });
+
+    map.on('click', function(e){
+      if((mode === 'figure' || mode === 'texte') && e && e.latlng) poserObjet(e.latlng);
+    });
+
+    // reprise du croquis précédent
+    try{
+      const memo = JSON.parse(localStorage.getItem('geo-croquis') || '[]');
+      memo.forEach(function(o){ CROQUIS.objets.push(o); objetCroquis(o); });
+    }catch(e){ /* mémoire illisible, on repart à vide */ }
+  })();
+
+  const etatReperes = { icone:'\u2622\ufe0f', marks:[] };
   let repereSeq = 0;
   function iconeRepere(ic){ return L.divIcon({ className:'repere-marqueur', html:'<span style="font-size:22px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55))">'+ic+'</span>', iconSize:[26,26], iconAnchor:[13,13] }); }
   function sauverReperes(){ try{ localStorage.setItem('geo-reperes', JSON.stringify(etatReperes.marks.map(function(m){ const ll = m.getLatLng(); return { lat:ll.lat, lng:ll.lng, ic:m._ic }; }))); }catch(e){} }
@@ -7484,19 +9097,8 @@
     etatReperes.marks.push(m);
     return m;
   }
-  document.getElementById('btn-reperes').addEventListener('click', ()=>{
-    const btn = document.getElementById('btn-reperes');
-    etatReperes.placement = !etatReperes.placement;
-    if(etatReperes.placement){
-      basculerBouton(btn, true, '\u270f\ufe0f Placement actif \u2715', '', '#0f766e');
-      if(map.getContainer) map.getContainer().style.cursor = 'crosshair';
-      afficherInfo('\u270f\ufe0f Cliquez sur la carte pour poser \u00ab '+etatReperes.icone+' \u00bb \u2014 changez d\u2019ic\u00f4ne dans la palette', 5000);
-    } else {
-      basculerBouton(btn, false, '', '\u270f\ufe0f Placer des rep\u00e8res');
-      if(map.getContainer) map.getContainer().style.cursor = '';
-    }
-  });
-  map.on('click', function(e){ if(etatReperes.placement && e && e.latlng){ ajouterRepere(e.latlng.lat, e.latlng.lng, etatReperes.icone); sauverReperes(); } });
+  // le placement des reperes est desormais le mode 'reperes' de la barre d'outils
+  map.on('click', function(e){ if(mode === 'reperes' && e && e.latlng){ ajouterRepere(e.latlng.lat, e.latlng.lng, etatReperes.icone); sauverReperes(); } });
   Array.prototype.forEach.call(document.querySelectorAll('.repere-ic'), function(b){
     b.addEventListener('click', function(){
       etatReperes.icone = b.getAttribute('data-ic');
@@ -9127,6 +10729,19 @@
     if(rt && rt.addEventListener) rt.addEventListener('click', basculerRail);
     const bh = document.getElementById('btn-rail-replier');
     if(bh && bh.addEventListener) bh.addEventListener('click', function(ev){ ev.stopPropagation(); basculerRail(); });
+
+    // volet de legende, symetrique du rail : chevron vers la droite pour le replier
+    const lt = document.getElementById('legende-toggle');
+    function basculerLegende(){
+      const ferme = document.body.classList.toggle('legende-fermee');
+      if(lt) lt.textContent = ferme ? '\u2039' : '\u203a';
+      const bl = document.getElementById('btn-legende-replier');
+      if(bl){ bl.textContent = ferme ? '\u2039' : '\u203a'; bl.title = ferme ? 'D\u00e9plier le volet de l\u00e9gende' : 'Replier le volet de l\u00e9gende'; }
+      if(map && map.invalidateSize) setTimeout(function(){ map.invalidateSize(); }, 220);
+    }
+    if(lt && lt.addEventListener) lt.addEventListener('click', basculerLegende);
+    const bl = document.getElementById('btn-legende-replier');
+    if(bl && bl.addEventListener) bl.addEventListener('click', function(ev){ ev.stopPropagation(); basculerLegende(); });
     let choix = 'o';
     try{ choix = localStorage.getItem('geo-interface') || 'o'; }catch(e){}
     appliquerInterface(choix, true);
@@ -12961,8 +14576,8 @@
   });
 
   // ================= Fenêtres flottantes (widgets) =================
-  const WIDGETS = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-population','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-limites','wg-foret','wg-pilote'];
-  const WIDGETS_PILOTABLES = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-population','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-limites','wg-foret'];
+  const WIDGETS = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-industriel','wg-population','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-limites','wg-foret','wg-pilote'];
+  const WIDGETS_PILOTABLES = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-industriel','wg-population','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-limites','wg-foret'];
   const WIDGETS_CASES = []; // remplacées par la fenêtre 🧭 pilote
   let posWidgets = {};
   try{ posWidgets = JSON.parse(localStorage.getItem('geo-widgets3')||'{}'); }catch(e){}
@@ -13046,6 +14661,7 @@
   initWidget('wg-geol',      { left:'12px', top:'230px', replie:true, cache:true });
   initWidget('wg-sismique', { left:'12px', top:'320px', replie:true, cache:true });
   initWidget('wg-risques',  { left:'12px', top:'360px', replie:true, cache:true });
+  initWidget('wg-industriel',  { left:'12px', top:'360px', replie:true, cache:true });
   initWidget('wg-population', { left:'12px', top:'270px', replie:true, cache:true });
   initWidget('wg-climat',    { left:'12px', top:'110px', replie:true, cache:true });
   initWidget('wg-montagnes', { left:'12px', top:'150px', replie:true, cache:true });
@@ -13089,7 +14705,8 @@
     const actives = (typeof etatCouchesActives === 'function') ? etatCouchesActives() : [];
     // une couche rallumee depuis son propre panneau sort de la veille
     for(let i = VEILLE.length - 1; i >= 0; i--){
-      if(actives.indexOf(VEILLE[i].id) !== -1) VEILLE.splice(i, 1);
+      // rallumee depuis son panneau, ou bouton disparu (couche de lieux retiree)
+      if(actives.indexOf(VEILLE[i].id) !== -1 || !document.getElementById(VEILLE[i].id)) VEILLE.splice(i, 1);
     }
     const entrees = actives.map(function(id){ return { id:id, veille:false }; })
       .concat(VEILLE.map(function(v){ return { id:v.id, nom:v.nom, veille:true }; }));
@@ -13260,16 +14877,458 @@
   const legendeCorps = document.getElementById('legende-corps');
   const ECHELLE_IPS = [['#2e9e44','\u2265 120 (favorisé)'],['#f2c020','105 \u2013 120'],['#f07f13','90 \u2013 105'],['#d92b2b','< 90 (défavorisé)']];
   const ECHELLE_BREVET = [['#2e9e44','\u2265 95 % de réussite'],['#f2c020','88 \u2013 95 %'],['#f07f13','80 \u2013 88 %'],['#d92b2b','< 80 %']];
-  function ligneLegende(couleur, texte, forme, infobulle){
+  // ---------- Légendes interactives : survol, menu, couleur, liste, sources ----------
+  // Une ligne de légende ne savait pas ce qu'elle décrivait : elle n'était que du texte
+  // reconstruit à chaque changement. Ce registre fait le lien manquant entre une ligne
+  // et les objets Leaflet correspondants.
+  function declarerLegende(cle, d){ CAT_LEG[cle] = Object.assign({ cle:cle, type:'vecteur' }, d); }
+
+  // parcourt récursivement un groupe et rend la liste des couches feuilles
+  function couchesDe(racine){
+    const out = [];
+    if(!racine) return out;
+    const visiter = function(c){
+      if(!c) return;
+      if(typeof c.eachLayer === 'function' && c._layers){ c.eachLayer(visiter); return; }
+      out.push(c);
+    };
+    visiter(racine);
+    return out;
+  }
+
+  // --- lien automatique : les objets dessines avec la couleur de la ligne ---
+  function normCoul(c){
+    if(!c) return '';
+    let s = String(c).trim().toLowerCase();
+    if(/^#[0-9a-f]{3}$/.test(s)) s = '#' + s[1] + s[1] + s[2] + s[2] + s[3] + s[3];
+    return s;
+  }
+  function couchesParCouleur(coul){
+    const cible = normCoul(coul);
+    const out = [];
+    if(!cible) return out;
+    try{
+      map.eachLayer(function(c){
+        const o = c.options || {};
+        if(normCoul(o.color) === cible || normCoul(o.fillColor) === cible){ out.push(c); return; }
+        // marqueurs a icone : on regarde la couleur ecrite dans leur html
+        if(c._icon && c._icon.innerHTML && c._icon.innerHTML.toLowerCase().indexOf(cible) !== -1) out.push(c);
+      });
+    }catch(e){}
+    return out;
+  }
+  // notice generique, batie a partir de ce que la couche declare deja
+  function memoriserLegendeAuto(cle, couleur, nom, infobulle){
+    declarerLegende(cle, {
+      nom: nom || 'Couche',
+      couleur: couleur,
+      auto: true,
+      infobulle: infobulle || '',
+      colonnes: ['Objet', 'Latitude', 'Longitude'],
+      groupe: null,
+      lignes: function(){
+        return couchesLegende(cle).map(function(c){
+          let ll = null;
+          try{ ll = c.getLatLng ? c.getLatLng() : (c.getBounds ? c.getBounds().getCenter() : null); }catch(e){}
+          let txt = '';
+          try{
+            if(c.getTooltip && c.getTooltip()) txt = String(c.getTooltip().getContent());
+            else if(c._popup && c._popup.getContent) txt = String(c._popup.getContent());
+            else if(c.feature && c.feature.properties){
+              const p = c.feature.properties;
+              txt = p.nom || p.name || p.NOM || p.libelle || Object.values(p).slice(0, 1).join('');
+            }
+          }catch(e){}
+          txt = txt.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+          return [txt.slice(0, 90), ll ? ll.lat.toFixed(4) : '', ll ? ll.lng.toFixed(4) : ''];
+        }).filter(function(l){ return l[1] || l[0]; });
+      }
+    });
+  }
+  // sources : ce que les couches concernees declarent en attribution
+  function attributionsDe(cle){
+    const vus = {};
+    couchesLegende(cle).forEach(function(c){
+      const a = (c.options && c.options.attribution) || '';
+      if(a) vus[String(a).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()] = true;
+    });
+    try{
+      map.eachLayer(function(c){
+        if(c instanceof L.TileLayer && c.options && c.options.attribution && c.options.opacity !== 0){
+          vus[String(c.options.attribution).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()] = true;
+        }
+      });
+    }catch(e){}
+    return Object.keys(vus);
+  }
+
+  function couchesLegende(cle){
+    const d = CAT_LEG[cle];
+    if(!d) return [];
+    if(typeof d.groupe === 'function'){
+      try{
+        const g = couchesDe(d.groupe());
+        if(g.length) return g;
+      }catch(e){}
+    }
+    return couchesParCouleur(d.couleur);   // repli universel : la teinte fait le lien
+  }
+
+  // --- surbrillance au survol : on épaissit et on remonte, sans changer la couleur ---
+  let surbrillance = [];
+  function eteindreSurbrillance(){
+    surbrillance.forEach(function(x){
+      try{
+        if(x.avant) x.couche.setStyle(x.avant);
+        if(x.el) x.el.classList.remove('leg-halo');
+      }catch(e){}
+    });
+    surbrillance = [];
+  }
+  function allumerSurbrillance(cle){
+    eteindreSurbrillance();
+    const couches = couchesLegende(cle);
+    if(!couches.length) return;
+    couches.slice(0, 3000).forEach(function(c){
+      try{
+        if(typeof c.setStyle === 'function' && c.options && ('weight' in c.options || 'radius' in c.options)){
+          const avant = { weight:c.options.weight, opacity:c.options.opacity,
+                          fillOpacity:c.options.fillOpacity, radius:c.options.radius };
+          const st = { weight:(c.options.weight || 2) + 3, opacity:1 };
+          if(typeof c.options.radius === 'number') st.radius = c.options.radius + 3;
+          if(typeof c.options.fillOpacity === 'number') st.fillOpacity = Math.min(1, c.options.fillOpacity + 0.25);
+          c.setStyle(st);
+          if(c.bringToFront) c.bringToFront();
+          surbrillance.push({ couche:c, avant:avant });
+        }else if(c._icon){
+          c._icon.classList.add('leg-halo');
+          surbrillance.push({ couche:c, el:c._icon });
+        }
+      }catch(e){}
+    });
+  }
+
+  // --- recoloration ---
+  function recolorerLegende(cle, nouvelle){
+    const d = CAT_LEG[cle];
+    if(!d) return 0;
+    eteindreSurbrillance();
+    let n = 0;
+    couchesLegende(cle).forEach(function(c){
+      try{
+        if(typeof c.setStyle === 'function'){
+          const st = {};
+          if(c.options && c.options.color && c.options.color !== '#fff' && c.options.color !== '#ffffff') st.color = nouvelle;
+          if(c.options && c.options.fillColor) st.fillColor = nouvelle;
+          if(Object.keys(st).length){ c.setStyle(st); n++; }
+        }
+      }catch(e){}
+    });
+    d.couleur = nouvelle;
+    COULEURS_LEG[cle] = nouvelle;
+    try{ localStorage.setItem('geo-couleurs-legende', JSON.stringify(COULEURS_LEG)); }catch(e){}
+    majLegende();
+    return n;
+  }
+  function couleurLegende(cle, defaut){ return COULEURS_LEG[cle] || defaut; }
+
+  // --- export CSV ---
+  function versCsv(colonnes, lignes){
+    const ech = function(v){
+      const s = (v === null || v === undefined) ? '' : String(v);
+      return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    return '\ufeff' + colonnes.map(ech).join(';') + '\n'
+      + lignes.map(function(l){ return l.map(ech).join(';'); }).join('\n');
+  }
+  function telechargerCsv(nom, colonnes, lignes){
+    const b = new Blob([versCsv(colonnes, lignes)], { type:'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = nom;
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+  }
+
+  // --- fenêtre modale, commune aux trois actions ---
+  function fermerModaleLeg(){
+    const m = document.getElementById('leg-modale');
+    if(m) m.remove();
+  }
+  function ouvrirModaleLeg(titre, construire){
+    fermerModaleLeg();
+    const fond = document.createElement('div');
+    fond.id = 'leg-modale';
+    fond.className = 'leg-modale-fond';
+    const boite = document.createElement('div');
+    boite.className = 'leg-modale';
+    const tete = document.createElement('div');
+    tete.className = 'leg-modale-tete';
+    const t = document.createElement('span');
+    t.textContent = titre;
+    const x = document.createElement('button');
+    x.className = 'widget-btn';
+    x.textContent = '\u2715';
+    x.title = 'Fermer';
+    x.addEventListener('click', fermerModaleLeg);
+    tete.appendChild(t); tete.appendChild(x);
+    const corps = document.createElement('div');
+    corps.className = 'leg-modale-corps';
+    boite.appendChild(tete); boite.appendChild(corps);
+    fond.appendChild(boite);
+    fond.addEventListener('click', function(ev){ if(ev.target === fond) fermerModaleLeg(); });
+    document.body.appendChild(fond);
+    construire(corps);
+    return corps;
+  }
+
+  // --- a) couleur ---
+  function modaleCouleur(cle){
+    const d = CAT_LEG[cle];
+    ouvrirModaleLeg('Couleur \u2014 ' + d.nom, function(corps){
+      const p = document.createElement('p');
+      p.className = 'sous';
+      p.textContent = 'La couleur change dans la l\u00e9gende et sur la carte. Le choix est m\u00e9moris\u00e9 sur cet ordinateur.';
+      corps.appendChild(p);
+      const grille = document.createElement('div');
+      grille.className = 'palette-grille';
+      ['#d92b2b','#f07f13','#f2c020','#2e9e44','#0f766e','#1d4ed8','#38bdf8',
+       '#7c3aed','#db2777','#92400e','#57534e','#a8a29e','#111827','#0d9488'].forEach(function(c){
+        const b = document.createElement('button');
+        b.className = 'couleur';
+        b.style.color = c;
+        b.dataset.couleur = c;
+        b.title = c;
+        b.addEventListener('click', function(){
+          const n = recolorerLegende(cle, c);
+          afficherInfo(n ? n + ' objet(s) recolori\u00e9(s)' : 'Cette couche ne se recolorie pas', 4000);
+          fermerModaleLeg();
+        });
+        grille.appendChild(b);
+      });
+      corps.appendChild(grille);
+      const perso = document.createElement('input');
+      perso.type = 'color';
+      perso.value = d.couleur || '#d92b2b';
+      perso.style.cssText = 'width:100%;height:32px;margin-top:8px;cursor:pointer';
+      perso.addEventListener('change', function(){
+        recolorerLegende(cle, perso.value);
+        fermerModaleLeg();
+      });
+      corps.appendChild(perso);
+    });
+  }
+
+  // --- b) lister ---
+  function modaleListe(cle){
+    const d = CAT_LEG[cle];
+    ouvrirModaleLeg('Liste \u2014 ' + d.nom, function(corps){
+      let lignes = [];
+      try{ lignes = d.lignes ? d.lignes() : []; }catch(e){ lignes = []; }
+      if(!lignes.length){
+        const p = document.createElement('p');
+        p.className = 'sous';
+        p.textContent = 'Aucun objet \u00e0 lister : la couche n\u2019est pas affich\u00e9e, ou ses donn\u00e9es ne sont pas d\u00e9taillables.';
+        corps.appendChild(p);
+        return;
+      }
+      const info = document.createElement('p');
+      info.className = 'sous';
+      info.textContent = lignes.length + ' \u00e9l\u00e9ment(s).';
+      corps.appendChild(info);
+      const btn = document.createElement('button');
+      btn.className = 'croquis-btn';
+      btn.style.cssText = 'width:100%;margin-bottom:8px';
+      btn.textContent = '💾 Exporter en CSV';
+      btn.addEventListener('click', function(){
+        telechargerCsv(cle + '.csv', d.colonnes, lignes);
+      });
+      corps.appendChild(btn);
+      const tab = document.createElement('table');
+      tab.className = 'leg-table';
+      const thead = document.createElement('thead');
+      const trh = document.createElement('tr');
+      d.colonnes.forEach(function(c){ const th = document.createElement('th'); th.textContent = c; trh.appendChild(th); });
+      thead.appendChild(trh);
+      tab.appendChild(thead);
+      const tb = document.createElement('tbody');
+      lignes.slice(0, 500).forEach(function(l){
+        const tr = document.createElement('tr');
+        l.forEach(function(v){ const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });
+        tb.appendChild(tr);
+      });
+      tab.appendChild(tb);
+      corps.appendChild(tab);
+      if(lignes.length > 500){
+        const p = document.createElement('p');
+        p.className = 'sous';
+        p.textContent = 'Affichage limit\u00e9 aux 500 premiers \u2014 le CSV les contient tous.';
+        corps.appendChild(p);
+      }
+    });
+  }
+
+  // --- c) sources ---
+  // Notice de repli : aucune redaction disponible, on assemble ce que l'application
+  // sait deja de la couche, en disant clairement que la fiche est automatique.
+  function noticeAuto(cle, d){
+    const att = attributionsDe(cle);
+    const n = couchesLegende(cle).length;
+    return {
+      resume: d.infobulle
+        ? d.infobulle
+        : 'Ligne de l\u00e9gende \u00ab ' + d.nom + ' \u00bb. ' + (n ? n + ' objet(s) de cette teinte sont dessin\u00e9s sur la carte.' : 'Aucun objet vectoriel de cette teinte n\u2019est actuellement dessin\u00e9.'),
+      methode: 'Fiche assembl\u00e9e automatiquement : aucune notice n\u2019a encore \u00e9t\u00e9 r\u00e9dig\u00e9e pour cette couche. Elle reprend l\u2019infobulle de la l\u00e9gende et les attributions d\u00e9clar\u00e9es par les couches affich\u00e9es.',
+      limites: 'Faute de notice r\u00e9dig\u00e9e, ni le mill\u00e9sime, ni la maille, ni les limites d\u2019interpr\u00e9tation ne sont document\u00e9s ici. \u00c0 v\u00e9rifier \u00e0 la source avant tout usage en classe.',
+      sources: att.length
+        ? att.map(function(a){ return { titre: a, detail: 'attribution d\u00e9clar\u00e9e par la couche affich\u00e9e' }; })
+        : [{ titre: 'Voir la fen\u00eatre Diagnostic des services pour l\u2019origine des flux', detail: '' }]
+    };
+  }
+
+  function modaleSources(cle){
+    const d = CAT_LEG[cle];
+    const n = d.notice || noticeAuto(cle, d);
+    ouvrirModaleLeg('Sources \u2014 ' + d.nom, function(corps){
+      function bloc(titre, texte){
+        if(!texte) return;
+        const h4 = document.createElement('div');
+        h4.className = 'etiquette';
+        h4.textContent = titre;
+        const p = document.createElement('p');
+        p.style.cssText = 'margin:2px 0 8px;font-size:11.5px;line-height:1.5';
+        p.textContent = texte;
+        corps.appendChild(h4); corps.appendChild(p);
+      }
+      bloc('Ce que montre la couche', n.resume);
+      bloc('Comment la donn\u00e9e est produite', n.methode);
+      bloc('Ce qu\u2019elle ne dit pas', n.limites);
+      if(n.classe){ bloc('En classe', n.classe); }
+      if(n.sources && n.sources.length){
+        const h4 = document.createElement('div');
+        h4.className = 'etiquette';
+        h4.textContent = 'Sources';
+        corps.appendChild(h4);
+        const ul = document.createElement('ul');
+        ul.style.cssText = 'margin:2px 0 8px;padding-left:16px;font-size:11.5px;line-height:1.6';
+        n.sources.forEach(function(s){
+          const li = document.createElement('li');
+          if(s.url){
+            const a = document.createElement('a');
+            a.href = s.url; a.target = '_blank'; a.rel = 'noopener';
+            a.textContent = s.titre;
+            li.appendChild(a);
+          }else{
+            li.appendChild(document.createTextNode(s.titre));
+          }
+          if(s.detail){ li.appendChild(document.createTextNode(' \u2014 ' + s.detail)); }
+          ul.appendChild(li);
+        });
+        corps.appendChild(ul);
+      }
+      const btn = document.createElement('button');
+      btn.className = 'croquis-btn';
+      btn.style.cssText = 'width:100%;margin-top:4px';
+      btn.textContent = '💾 Exporter la notice en CSV';
+      btn.addEventListener('click', function(){
+        const l = [['Couche', d.nom], ['Ce que montre la couche', n.resume || ''],
+                   ['Production', n.methode || ''], ['Limites', n.limites || ''], ['En classe', n.classe || '']];
+        (n.sources || []).forEach(function(s){ l.push(['Source \u2014 ' + s.titre, s.url]); });
+        telechargerCsv('sources-' + cle + '.csv', ['Rubrique', 'Contenu'], l);
+      });
+      corps.appendChild(btn);
+    });
+  }
+
+  // --- menu au clic sur la pastille ---
+  function fermerMenuLeg(){
+    const m = document.getElementById('leg-menu');
+    if(m) m.remove();
+  }
+  function ouvrirMenuLeg(cle, pastille){
+    fermerMenuLeg();
+    if(!CAT_LEG[cle] && cle.indexOf('auto:') === 0){
+      // cle fabriquee a la volee : on la reconstruit depuis son propre libelle
+      const bribes = cle.slice(5).split('|');
+      memoriserLegendeAuto(cle, bribes[0], bribes[1] || 'Couche', '');
+    }
+    const d = CAT_LEG[cle];
+    if(!d) return;
+    const menu = document.createElement('div');
+    menu.id = 'leg-menu';
+    menu.className = 'leg-menu';
+    // on regarde ce qui existe vraiment sur la carte plutot que de se fier a un type
+    const trouves = couchesLegende(cle).length;
+    const sansObjet = (trouves === 0)
+      ? 'Aucun objet vectoriel de cette couleur sur la carte : c\u2019est sans doute une image fabriqu\u00e9e par un serveur (WMS), que le navigateur re\u00e7oit d\u00e9j\u00e0 dessin\u00e9e.'
+      : '';
+    const entrees = [
+      ['🎨 Couleur', modaleCouleur, sansObjet],
+      ['📋 Lister (' + trouves + ')', modaleListe, sansObjet],
+      ['📚 Sources', modaleSources, '']
+    ];
+    entrees.forEach(function(e){
+      const b = document.createElement('button');
+      b.className = 'leg-menu-item';
+      b.textContent = e[0];
+      if(e[2]){ b.disabled = true; b.title = e[2]; b.classList.add('inactif'); }
+      else b.addEventListener('click', function(){ fermerMenuLeg(); e[1](cle); });
+      menu.appendChild(b);
+    });
+    const r = pastille.getBoundingClientRect();
+    menu.style.left = Math.min(window.innerWidth - 190, r.left) + 'px';
+    menu.style.top = (r.bottom + 4) + 'px';
+    document.body.appendChild(menu);
+    setTimeout(function(){
+      document.addEventListener('click', function fermer(ev){
+        if(!menu.contains(ev.target)){ fermerMenuLeg(); document.removeEventListener('click', fermer); }
+      });
+    }, 0);
+  }
+
+  // --- délégation sur la fenêtre Légende ---
+  (function cablerLegendeInteractive(){
+    const leg = document.getElementById('wg-legende');
+    if(!leg) return;
+    leg.addEventListener('mouseover', function(ev){
+      const p = ev.target && ev.target.closest ? ev.target.closest('[data-leg]') : null;
+      if(p) allumerSurbrillance(p.dataset.leg);
+    });
+    leg.addEventListener('mouseout', function(ev){
+      const p = ev.target && ev.target.closest ? ev.target.closest('[data-leg]') : null;
+      if(p) eteindreSurbrillance();
+    });
+    leg.addEventListener('click', function(ev){
+      const p = ev.target && ev.target.closest ? ev.target.closest('[data-leg]') : null;
+      if(!p) return;
+      ev.stopPropagation();
+      ouvrirMenuLeg(p.dataset.leg, p);
+    });
+    document.addEventListener('keydown', function(ev){
+      if(ev.key === 'Escape'){ fermerMenuLeg(); fermerModaleLeg(); }
+    });
+  })();
+
+  function ligneLegende(couleur, texte, forme, infobulle, cle){
+    // Toute ligne devient interactive. Si aucune cle n'est declaree, on en fabrique une
+    // a partir de la couleur : c'est elle qui relie la ligne aux objets dessines sur la
+    // carte, puisque ce sont exactement les memes teintes.
+    const brut = String(texte).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    const k = cle || ('auto:' + String(couleur).toLowerCase() + '|' + brut.slice(0, 60));
+    const c = couleurLegende(k, couleur);
+    if(!CAT_LEG[k]) memoriserLegendeAuto(k, couleur, brut, infobulle);
+    else { CAT_LEG[k].nom = CAT_LEG[k].nom || brut; }
+    const marque = ' data-leg="'+echap(k)+'" tabindex="0"'
+      + ' title="Survolez pour rep\u00e9rer sur la carte \u00b7 cliquez pour la couleur, la liste et les sources"';
     return '<div class="leg-ligne"'+(infobulle ? ' title="'+echap(infobulle)+'"' : '')
-      +'><span class="leg-'+(forme||'rond')+'" style="background:'+couleur+'"></span><span>'+texte+'</span></div>';
+      +'><span class="leg-'+(forme||'rond')+' leg-vivante"'+marque+' style="background:'+c+'"></span><span>'+texte+'</span></div>';
   }
   function majLegende(){
     if(!legendeCorps) return;
     let h = '';
     const blocs = [];
-    if(qpvVisible) blocs.push(ligneLegende('#d92b2b','QPV officiels (ANCT)','carre'));
-    if(acvActif) blocs.push(ligneLegende('#0d9488','Villes Action C\u0153ur de Ville'));
+    if(qpvVisible) blocs.push(ligneLegende('#d92b2b','QPV officiels (ANCT)','carre','','qpv'));
+    if(acvActif) blocs.push(ligneLegende('#0d9488','Villes Action C\u0153ur de Ville','rond','','acv'));
     Object.keys(COUCHES_EDUC).forEach(id=>{
       if(!etatEduc[id].actif) return;
       const ech = (id==='brevet') ? ECHELLE_BREVET : ECHELLE_IPS;
@@ -13353,11 +15412,11 @@
     }
     if(etatProvinces.actif){
       blocs.push(ligneLegende('#7c3aed', '\u269c Provinces d\u2019Ancien R\u00e9gime', 'carre',
-        'Une couleur par province, d\u00e9partements actuels comme approximation \u2014 survolez la carte pour les noms et dates de rattachement'));
+        'Une couleur par province, d\u00e9partements actuels comme approximation \u2014 survolez la carte pour les noms et dates de rattachement', 'provinces'));
     }
     if(etatBassins.actif){
       blocs.push('<div class="leg-sous">💦 Bassins versants <small>(sch\u00e9matiques)</small></div>'
-        + ligneLegende('#7dd3fc','\u2192 la Manche','carre','')
+        + ligneLegende('#7dd3fc','\u2192 la Manche','carre','','bassins')
         + ligneLegende('#2563eb','\u2192 l\u2019Atlantique','carre','')
         + ligneLegende('#14b8a6','\u2192 la M\u00e9diterran\u00e9e','carre','')
         + ligneLegende('#8b5cf6','\u2192 la mer du Nord','carre','Lignes de partage simplifi\u00e9es (\u00b130 km) \u2014 sch\u00e9ma p\u00e9dagogique'));
@@ -13375,7 +15434,7 @@
     }
     if(etatPtsChauds.actif){
       blocs.push('<div class="leg-sous">🔴 Points chauds VIIRS <small>(puissance radiative)</small></div>'
-        + ligneLegende('#fde047', 'Faible — moins de 5 MW', 'rond', 'Taille du point ∝ puissance')
+        + ligneLegende('#fde047', 'Faible — moins de 5 MW', 'rond', 'Taille du point ∝ puissance', 'pts-chauds')
         + ligneLegende('#fb923c', 'Modéré — 5 à 20 MW', 'rond', '')
         + ligneLegende('#ea580c', 'Fort — 20 à 100 MW', 'rond', '')
         + ligneLegende('#b91c1c', 'Très fort — plus de 100 MW', 'rond', 'Cliquez un point pour le détail complet'));
@@ -13404,7 +15463,7 @@
         const b = document.getElementById('btn-esp-'+k);
         if(!b) return;
         const lib = (b.textContent || '').replace('\u2715','').trim();
-        s += ligneLegende(b.getAttribute('data-coul'), lib, 'rond', '');
+        s += ligneLegende(b.getAttribute('data-coul'), lib, 'rond', '', declarerEspece(k, lib, b.getAttribute('data-coul')));
       });
       s += ligneLegende('#8a8577', '<small>Points = observations ponctuelles, pas une aire de r\u00e9partition</small>', 'rond', '');
       blocs.push(s);
@@ -13412,7 +15471,7 @@
     (function(){
       if(etatSis.recents){
         blocs.push('<div class="leg-sous">🌋 S\u00e9ismes r\u00e9cents <small>(EMSC)</small></div>'
-          + ligneLegende('#fde047', 'Magnitude < 2', 'rond', 'Taille du point \u221d magnitude')
+          + ligneLegende('#fde047', 'Magnitude < 2', 'rond', 'Taille du point \u221d magnitude', 'sis-recents')
           + ligneLegende('#fb923c', 'Magnitude 2 \u00e0 3', 'rond', '')
           + ligneLegende('#ea580c', 'Magnitude 3 \u00e0 4', 'rond', 'Ressenti \u00e0 partir de 4')
           + ligneLegende('#dc2626', 'Magnitude 4 \u00e0 5', 'rond', '')
@@ -13476,9 +15535,9 @@
       }
       if(etatSis.failles || etatSis.neotecto || etatSis.plaques){
         blocs.push('<div class="leg-sous">🌍 Tectonique</div>'
-          + (etatSis.plaques ? ligneLegende('#b91c1c', 'Limite Afrique / Eurasie', 'carre', 'Trac\u00e9 sch\u00e9matique \u00b7 rapprochement ~5 mm/an') : '')
-          + (etatSis.failles ? ligneLegende('#7c3aed', 'Failles actives', 'carre', 'Ayant rejou\u00e9 depuis moins de 2 millions d\u2019ann\u00e9es (N\u00e9opal, BRGM)') : '')
-          + (etatSis.neotecto ? ligneLegende('#c026d3', 'Indices n\u00e9otectoniques', 'rond', 'Traces g\u00e9ologiques de d\u00e9formation r\u00e9cente, valid\u00e9es') : ''));
+          + (etatSis.plaques ? ligneLegende('#b91c1c', 'Limite Afrique / Eurasie', 'carre', 'Trac\u00e9 sch\u00e9matique \u00b7 rapprochement ~5 mm/an', 'sis-plaques') : '')
+          + (etatSis.failles ? ligneLegende('#7c3aed', 'Failles actives', 'carre', 'Ayant rejou\u00e9 depuis moins de 2 millions d\u2019ann\u00e9es (N\u00e9opal, BRGM)', 'sis-failles') : '')
+          + (etatSis.neotecto ? ligneLegende('#c026d3', 'Indices n\u00e9otectoniques', 'rond', 'Traces g\u00e9ologiques de d\u00e9formation r\u00e9cente, valid\u00e9es', 'sis-neotecto') : ''));
       }
       if(etatSis.zonage || etatSis.intensite || etatSis.histo || etatSis.om){
         blocs.push('<div class="leg-sous">🌋 Sismicit\u00e9 historique <small>(BRGM / SisFrance)</small></div>'
@@ -13760,6 +15819,9 @@
     }
     if(h === legendeHtmlPrec) return;
     legendeHtmlPrec = h;
+    if(/data-leg=/.test(h)){
+      h = '<div class="leg-aide">Les pastilles cerclées sont interactives : survolez pour repérer sur la carte, cliquez pour la couleur, la liste et les sources.</div>' + h;
+    }
     legendeCorps.innerHTML = h;
     // première couche activée → révéler le widget légende s'il était fermé ou replié
     if(blocs.length > nbBlocsPrec){
