@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v5.3 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v5.3.6 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v5.3</title>
+<title>MultiMaps — géographie (collège & lycée) — v5.3.6</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -904,6 +904,7 @@
     <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
   </div>
   <div class="widget-corps">
+    <button class="calque-ajout donnee" id="btn-waymarked-velo" title="Itinéraires cyclables balisés d’OpenStreetMap : EuroVelo, véloroutes nationales, boucles locales. Même service que pour la randonnée.">🚴 Itinéraires cyclables balisés</button>
     <button class="calque-ajout donnee" id="btn-velo" title="Aménagements cyclables relevés dans OpenStreetMap, classés en 3 niveaux de qualité. Zoomez au niveau d'une ville (12+), rechargement à chaque déplacement.">🚲 Afficher les aménagements</button>
     <label class="velo-filtre"><input type="checkbox" id="chk-velo-t1" checked>
       <span class="velo-trait" style="height:6px;background:#047857"></span> Pistes en site propre <small>(les vraies)</small></label>
@@ -922,6 +923,7 @@
     <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
   </div>
   <div class="widget-corps">
+    <button class="calque-ajout donnee" id="btn-waymarked" title="Superpose les itinéraires balisés recensés dans OpenStreetMap : GR, GRP, sentiers de pays, chemins de Saint-Jacques. Les couleurs distinguent les niveaux — international, national, régional, local. Service Waymarked Trails, mis à jour quotidiennement.">🥾 Itinéraires balisés (Waymarked Trails)</button>
     <button class="calque-ajout donnee" id="btn-rando" title="Sentiers balisés relevés dans OpenStreetMap, en 3 niveaux. Zoomez au niveau d'un massif ou d'un département (10+), rechargement à chaque déplacement (3 requêtes successives, ~3 s).">🥾 Afficher les sentiers</button>
     <label class="velo-filtre"><input type="checkbox" id="chk-rando-gr" checked>
       <span class="velo-trait" style="height:5px;background:#dc2626"></span> GR <small>(grande randonnée)</small></label>
@@ -971,18 +973,33 @@
 
 <div class="widget" id="wg-climat" style="width:252px">
   <div class="widget-tete">
-    <span class="widget-titre">🌡 Changement climatique</span>
+    <span class="widget-titre">🌡 Climat</span>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
     <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
   </div>
   <div class="widget-corps">
-    <div class="sep"></div>
     <span class="etiquette">Moyennes climatiques</span>
     <button class="calque-ajout donnee" id="btn-clim-soleil" title="Durée d’ensoleillement moyenne annuelle par ville (normales 1991-2020). Le contraste nord-sud est l’un des plus marqués d’Europe.">☀️ Heures d’ensoleillement par an</button>
+    <button class="calque-ajout donnee" id="btn-clim-soleil-surf" title="Colorie le territoire en interpolant entre les 35 stations, par pondération inverse de la distance. Les bandes de 100 heures reproduisent la lecture des cartes solaires imprimées. Entre deux stations la valeur est estimée, jamais mesurée.">🌈 Dégradé d’ensoleillement</button>
     <button class="calque-ajout donnee" id="btn-clim-vent" title="Vitesse moyenne annuelle du vent et direction dominante par station. Les couloirs venteux (Rhône, Languedoc, littoraux) ressortent nettement.">💨 Vents moyens (force et direction)</button>
+    <button class="calque-ajout donnee" id="btn-clim-vent-surf" title="Colorie le territoire en interpolant entre les 25 stations. Attention : ces vitesses sont mesurées à 10 mètres du sol en station météorologique, alors que les atlas éoliens publient des vitesses à 50 ou 100 mètres, nettement plus élevées. Les contrastes régionaux sont les mêmes, pas les valeurs.">🌀 Dégradé des vents</button>
     <button class="calque-ajout donnee" id="btn-clim-ventsnoms" title="Les vents régionaux français : mistral, tramontane, autan, marin, galerne… avec leur origine, leur direction et leurs effets.">🌬️ Noms des vents régionaux</button>
+      <div class="sep"></div>
+      <span class="etiquette">Transition et qualité de l’air</span>
+      <button class="calque-ajout donnee" id="btn-zfe" title="Les Zones à Faibles Émissions : les périmètres officiels où la circulation est restreinte selon la vignette Crit'Air (Base nationale des ZFE, transport.data.gouv.fr — zones actives et en projet). Chargées en direct depuis la base de l'État.">🚗 Zones à Faibles Émissions (ZFE)</button>
+      <button class="calque-ajout donnee" id="btn-energie" title="Éoliennes et centrales solaires relevées dans OpenStreetMap — la géographie de la transition énergétique. Zoomez (9+), rechargement au déplacement.">🌬 Éoliennes &amp; solaire (OSM)</button>
+      <p class="sous" id="energie-bilan" style="margin:2px 0 4px">Source : OpenStreetMap</p>
+  </div>
+</div>
 
-      <button class="calque-ajout donnee" id="btn-submersion" title="Colorie en bleu les terres situées sous le niveau choisi au curseur — une visualisation de l'élévation du niveau de la mer sur les littoraux (polders, deltas, estuaires). Calculé des altitudes SRTM. ATTENTION : altitude brute, pas un modèle de submersion (digues et dynamique marine ignorées).">🌊 Élévation du niveau de la mer</button>
+<div class="widget" id="wg-littoral" style="width:252px">
+  <div class="widget-tete">
+    <span class="widget-titre">🌊 Littoral & montée des eaux</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
+  </div>
+  <div class="widget-corps">
+    <button class="calque-ajout donnee" id="btn-submersion" title="Colorie en bleu les terres situées sous le niveau choisi au curseur — une visualisation de l'élévation du niveau de la mer sur les littoraux (polders, deltas, estuaires). Calculé des altitudes SRTM. ATTENTION : altitude brute, pas un modèle de submersion (digues et dynamique marine ignorées).">🌊 Élévation du niveau de la mer</button>
       <div class="hypso-ligne">
         <input type="range" id="curseur-mer" min="0" max="12" step="1" value="0" aria-label="Niveau de la mer (échelle exponentielle)">
         <span id="valeur-mer">+1 m</span>
@@ -993,19 +1010,8 @@
         <span id="horizon-littoral" style="min-width:96px">2028</span>
       </div>
       <button class="calque-ajout donnee" id="btn-logements-mer" title="Le nombre de logements menacés par la montée des eaux d'ici 2100, par département littoral, en trois classes (moins de 5 000 · de l'ordre de 15 000 · plus de 25 000) — classes reprises de l'étude Callendar relayée par France Info. Ordres de grandeur d'exposition, pas des décomptes officiels.">🏠 Logements menacés (montée des eaux)</button>
-      <select id="seismes-periode" class="feux-annee" style="width:100%" title="La profondeur d'archive interrogée auprès de l'institut américain USGS, qui recense les séismes du monde entier.">
-        <option value="30">Séismes : 30 derniers jours</option>
-        <option value="365" selected>Séismes : 1 an</option>
-        <option value="3650">Séismes : 10 ans</option>
-        <option value="18250">Séismes : 50 ans</option>
-      </select>
-      <button class="calque-ajout donnee" id="btn-seismes" title="Les séismes ressentis en France et alentour : taille du cercle selon la magnitude, couleur selon la profondeur du foyer. Les Pyrénées, les Alpes du Sud, l'Alsace et la Bretagne apparaissent nettement — la France tremble plus qu'on ne croit.">🌍 Séismes (USGS)</button>
-      <button class="calque-ajout donnee" id="btn-choro-catnat" title="Le nombre d'arrêtés de catastrophe naturelle reçus par chaque commune depuis 1982 (base GASPAR) : inondations et coulées de boue (56 %), sécheresse, mouvements de terrain, tempêtes… La géographie française du risque. Département dézoomé (moyenne par commune), commune au zoom 9+.">🌪 Catastrophes naturelles (1982-2026)</button>
-      <button class="calque-ajout donnee" id="btn-zfe" title="Les Zones à Faibles Émissions : les périmètres officiels où la circulation est restreinte selon la vignette Crit'Air (Base nationale des ZFE, transport.data.gouv.fr — zones actives et en projet). Chargées en direct depuis la base de l'État.">🚗 Zones à Faibles Émissions (ZFE)</button>
-      <button class="calque-ajout donnee" id="btn-energie" title="Éoliennes et centrales solaires relevées dans OpenStreetMap — la géographie de la transition énergétique. Zoomez (9+), rechargement au déplacement.">🌬 Éoliennes &amp; solaire (OSM)</button>
-      <p class="sous" id="energie-bilan" style="margin:2px 0 4px">Source : OpenStreetMap</p>
       <p class="nav-note">Visualisation pédagogique : la couche 🌊 montre les terres basses (altitude ≤ niveau choisi), sans modéliser digues ni marées.</p>
-    </div>
+  </div>
 </div>
 
 <div class="widget" id="wg-astro" style="width:262px">
@@ -1184,6 +1190,13 @@
     <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
   </div>
   <div class="widget-corps">
+    <button class="calque-ajout donnee" id="btn-ombre-relief" title="Calcule quels versants sont à l’ombre du relief à une date et une heure données. Adret et ubac, fonds de vallée que le soleil d’hiver n’atteint jamais. Le calcul porte sur la vue affichée et se refait à chaque déplacement.">🏔 Ombre portée du relief</button>
+    <div id="ombre-reglages" style="display:none">
+      <input type="date" id="ombre-date" value="2026-08-11" style="width:100%;box-sizing:border-box;font-family:inherit;font-size:11.5px;padding:4px 6px;border:1px solid var(--trait);border-radius:7px;margin-top:4px" title="Le 21 décembre et le 21 juin donnent les deux extrêmes de l’année.">
+      <label class="croquis-curseur"><span>Heure solaire</span><span id="ombre-heure-val">12 h 00</span></label>
+      <input type="range" id="ombre-heure" min="4" max="22" step="0.25" value="12" style="width:100%;accent-color:var(--encre)">
+      <p class="sous" id="ombre-info" style="margin:3px 0 0"></p>
+    </div>
     <button class="calque-ajout donnee" id="btn-glaciers" title="Les glaciers cartographiés dans OpenStreetMap, pour la zone affichée (zoom 8 minimum) : Mer de Glace, glaciers de la Vanoise, des Écrins… En bleu glacier — et le support parfait pour parler du recul glaciaire avec le widget Climat.">❄ Glaciers (OSM, vue)</button>
     <label class="velo-filtre"><input type="checkbox" id="chk-smassifs-osm"> 🗺 Contour réel des massifs <small>(OSM, zoom 8 min.)</small>
       <input type="color" id="coul-massifs-osm" value="#2563eb" title="Couleur de remplissage des contours réels" style="width:24px;height:18px;padding:0;border:1px solid var(--trait);border-radius:4px;cursor:pointer"></label>
@@ -1425,6 +1438,8 @@
     <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
   </div>
   <div class="widget-corps">
+    <button class="calque-ajout donnee" id="btn-choro-catnat" title="Le nombre d'arrêtés de catastrophe naturelle reçus par chaque commune depuis 1982 (base GASPAR) : inondations et coulées de boue (56 %), sécheresse, mouvements de terrain, tempêtes… La géographie française du risque. Département dézoomé (moyenne par commune), commune au zoom 9+.">🌪 Catastrophes naturelles (1982-2026)</button>
+
     <span class="etiquette">Sols et sous-sol</span>
     <button class="calque-ajout donnee" id="btn-rn-argiles" title="Retrait-gonflement des argiles : les sols argileux se rétractent en sécheresse et gonflent à la pluie, fissurant les maisons. Premier poste d’indemnisation catastrophe naturelle en France. Source : BRGM.">🏚️ Argiles (fissures des maisons)</button>
     <button class="calque-ajout donnee" id="btn-rn-mvt" title="Mouvements de terrain recensés depuis 1981 : glissements, éboulements, effondrements, coulées de boue, érosion de berges. Base BDMvt du BRGM.">⛰ Mouvements de terrain</button>
@@ -1638,6 +1653,14 @@
     <button class="widget-btn" data-action="fermer" title="Fermer">✕</button>
   </div>
   <div class="widget-corps">
+    <select id="seismes-periode" class="feux-annee" style="width:100%" title="La profondeur d'archive interrogée auprès de l'institut américain USGS, qui recense les séismes du monde entier.">
+        <option value="30">Séismes : 30 derniers jours</option>
+        <option value="365" selected>Séismes : 1 an</option>
+        <option value="3650">Séismes : 10 ans</option>
+        <option value="18250">Séismes : 50 ans</option>
+      </select>
+      <button class="calque-ajout donnee" id="btn-seismes" title="Les séismes ressentis en France et alentour : taille du cercle selon la magnitude, couleur selon la profondeur du foyer. Les Pyrénées, les Alpes du Sud, l'Alsace et la Bretagne apparaissent nettement — la France tremble plus qu'on ne croit.">🌍 Séismes (USGS)</button>
+
     <button class="calque-ajout donnee" id="btn-sis-zonage" title="Zonage sismique réglementaire : 5 zones officielles (de très faible à forte) qui déterminent les normes de construction parasismique depuis 2011. Source : Géorisques / BRGM.">🟠 Zonage réglementaire (5 zones)</button>
     <button class="calque-ajout donnee" id="btn-sis-intensite" title="Intensité maximale possiblement ressentie dans chaque commune, d’après l’ensemble des séismes historiques connus (base SisFrance). Source : BRGM.">📊 Intensité ressentie par commune</button>
     <button class="calque-ajout donnee" id="btn-sis-histo" title="Épicentres des séismes historiques ressentis en France métropolitaine depuis l’an 463 (base SisFrance : BRGM, EDF, IRSN). Cliquez un point en mode contrôle pour le détail.">📜 Séismes historiques (métropole)</button>
@@ -1774,6 +1797,15 @@
     </select>
     <button class="calque-ajout donnee" id="btn-temp" title="La carte des températures de l'instant : une grille d'un demi-degré couvrant la France, interrogée auprès d'Open-Meteo, coloriée du bleu (froid) au rouge (chaud) et découpée sur les contours du pays. Le complément « temps qu'il fait » de vos couches climatiques.">🌡 Carte des températures (maintenant)</button>
     <button class="calque-ajout donnee" id="btn-air" title="L'indice européen de qualité de l'air (particules fines PM2,5 et PM10, dioxyde d'azote, ozone), colorié du turquoise « très bon » au violet « extrêmement mauvais ». Même grille que les températures, découpée sur la France.">🫁 Qualité de l'air (indice européen)</button>
+    <select id="air-polluant" class="feux-annee" style="width:100%" title="Choisissez la substance représentée. L’indice européen est un composite : il retient le polluant le plus dégradé du moment. Les autres entrées montrent une substance précise, avec ses propres seuils.">
+      <option value="european_aqi" selected>Indice européen (composite)</option>
+      <option value="pm2_5">Particules fines PM2,5</option>
+      <option value="pm10">Particules PM10</option>
+      <option value="nitrogen_dioxide">Dioxyde d’azote (NO₂)</option>
+      <option value="ozone">Ozone (O₃)</option>
+      <option value="dust">Poussières désertiques (calima)</option>
+      <option value="aerosol_optical_depth">Épaisseur optique des aérosols</option>
+    </select>
     <button class="calque-ajout donnee" id="btn-vent" title="Le vent : une flèche par maille, orientée dans le sens où souffle le vent, colorée selon la force, avec la rafale au survol. Spectaculaire sur le couloir rhodanien un jour de mistral.">💨 Vent : direction et force</button>
     <button class="calque-ajout donnee" id="btn-vent48" title="Météogramme du vent au centre de la carte sur les 48 prochaines heures : une flèche toutes les 3 h (sens + force), pour anticiper les bascules de vent.">💨 Évolution du vent (48 h)</button>
     <button class="calque-ajout donnee" id="btn-radar" title="Radar de pluie animé (RainViewer) : précipitations observées ces dernières heures + prévision immédiate (nowcast), en boucle. Comme dans MultiMétéo.">🌧️ Radar de pluie (animé)</button>
@@ -1870,7 +1902,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.3</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.3.6</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -1934,7 +1966,8 @@
       <details class="pilote-paquet"><summary>🌡 Climat</summary>
         <div class="pilote-grille">
         <button class="pilote-btn" data-cible="wg-meteo">🌡 Météo</button>
-        <button class="pilote-btn" data-cible="wg-climat">🌤 Climat &amp; littoral</button>
+        <button class="pilote-btn" data-cible="wg-climat">🌡 Climat</button>
+        <button class="pilote-btn" data-cible="wg-littoral">🌊 Littoral &amp; montée des eaux</button>
         </div>
       </details>
       <details class="pilote-paquet"><summary>⚠️ Risques</summary>
@@ -1974,7 +2007,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.3</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.3.6</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -2241,7 +2274,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.3';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.3.6';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -10747,7 +10780,7 @@
     appliquerInterface(choix, true);
   })();
   // ---------- Moyennes climatiques : soleil, vents ----------
-  const etatClim = { soleil:null, vent:null, noms:null };
+  const etatClim = { soleil:null, soleilSurf:null, vent:null, ventSurf:null, noms:null };
   // [ville, lat, lon, heures/an] \u2014 normales 1991-2020 (M\u00e9t\u00e9o-France), arrondies
   const SOLEIL = [
     ['Toulon',43.12,5.93,2900],['Marseille',43.30,5.37,2860],['Ajaccio',41.93,8.74,2730],['Nice',43.70,7.27,2720],
@@ -10833,6 +10866,172 @@
     if(v >= 12) return '#facc15';
     return '#a3e635';
   }
+  // ---------- Dégradé d'ensoleillement : surface interpolée à partir des 35 stations ----------
+  // Les points isolés ne montrent pas le gradient nord-sud. On interpole entre eux par
+  // pondération inverse de la distance, on quantifie en paliers de 100 heures pour obtenir
+  // des bandes lisibles, et on découpe au contour du territoire pour ne pas colorer la mer.
+  const CONTOUR_FR = [[
+    [2.55,51.09],[1.63,50.95],[1.56,50.72],[0.68,49.87],[0.07,49.50],[-0.24,49.29],
+    [-1.24,49.35],[-1.61,49.68],[-1.94,49.72],[-1.83,49.10],[-1.60,48.75],[-2.03,48.65],
+    [-2.75,48.53],[-3.55,48.83],[-4.78,48.55],[-4.31,47.98],[-3.10,47.52],[-2.55,47.51],
+    [-2.20,47.28],[-1.76,47.15],[-1.98,46.80],[-1.15,46.32],[-1.25,45.72],[-1.06,45.55],
+    [-0.62,45.05],[-1.20,44.55],[-1.31,44.02],[-1.45,43.62],[-1.78,43.36],[-0.75,42.90],
+    [0.66,42.70],[1.44,42.60],[2.06,42.35],[3.04,42.47],[3.05,42.99],[3.87,43.55],
+    [4.85,43.35],[5.36,43.28],[5.92,43.09],[6.63,43.13],[7.44,43.72],[7.00,44.24],
+    [6.90,45.13],[7.03,45.92],[6.80,46.13],[6.14,46.14],[6.10,46.40],[6.80,47.10],
+    [7.20,47.50],[7.58,48.12],[8.23,48.97],[7.62,49.05],[6.35,49.47],[5.82,49.55],
+    [4.86,49.79],[4.87,50.16],[4.23,50.28],[3.66,50.34],[3.15,50.79]
+  ], [
+    [9.56,42.98],[9.35,43.02],[8.70,42.63],[8.55,42.38],[8.52,41.98],[8.58,41.83],[8.79,41.55],[9.05,41.33],
+    [9.28,41.37],[9.41,41.86],[9.56,42.16],[9.53,42.60]
+  ]];
+  const BORNES_SOLEIL = [[41.30, -5.30], [51.15, 9.75]];   // sud-ouest, nord-est
+
+  // Palette calquée sur les cartes solaires : jaune pâle au nord, rouge au sud.
+  const PALIERS_SOLEIL = [
+    [1650, '#fffbdd'], [1750, '#fef3a7'], [1850, '#fde871'], [1950, '#fcd94a'],
+    [2050, '#fbc02d'], [2150, '#f9a825'], [2250, '#f57f17'], [2350, '#ef6c1a'],
+    [2450, '#e65100'], [2550, '#dd3b12'], [2650, '#d32f2f'], [2750, '#c62828'],
+    [9999, '#b71c1c']
+  ];
+  function teinteSoleil(h){
+    for(let i = 0; i < PALIERS_SOLEIL.length; i++){
+      if(h < PALIERS_SOLEIL[i][0]) return PALIERS_SOLEIL[i][1];
+    }
+    return PALIERS_SOLEIL[PALIERS_SOLEIL.length - 1][1];
+  }
+
+  // Palette du vent, calquee sur les atlas eoliens : blanc casse a bleu nuit.
+  const PALIERS_VENT = [
+    [12, '#eef2ff'], [15, '#c7d2fe'], [18, '#a5b4fc'], [21, '#818cf8'],
+    [24, '#4f46e5'], [28, '#3730a3'], [32, '#312e81'], [9999, '#1e1b4b']
+  ];
+  function teinteVent(v){
+    for(let i = 0; i < PALIERS_VENT.length; i++){
+      if(v < PALIERS_VENT[i][0]) return PALIERS_VENT[i][1];
+    }
+    return PALIERS_VENT[PALIERS_VENT.length - 1][1];
+  }
+
+  function surfaceInterpolee(stations, teinte){
+    const S = BORNES_SOLEIL[0][0], W = BORNES_SOLEIL[0][1];
+    const N = BORNES_SOLEIL[1][0], E = BORNES_SOLEIL[1][1];
+    const larg = 300, haut = Math.round(larg * (N - S) / (E - W) * 1.45);
+    const toile = document.createElement('canvas');
+    toile.width = larg; toile.height = haut;
+    const ctx = toile.getContext('2d');
+    const img = ctx.createImageData(larg, haut);
+
+    // stations préparées une fois : la latitude corrige l'écrasement des longitudes
+    const st = stations.map(function(v){ return { lat:v[1], lng:v[2], h:v[3] }; });
+    const kx = Math.cos(46.5 * Math.PI / 180);
+    const teintes = {};
+    function rvb(hex){
+      if(!teintes[hex]) teintes[hex] = [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)];
+      return teintes[hex];
+    }
+
+    for(let y = 0; y < haut; y++){
+      const lat = N - (y + 0.5) / haut * (N - S);
+      for(let x = 0; x < larg; x++){
+        const lng = W + (x + 0.5) / larg * (E - W);
+        let num = 0, den = 0, exact = -1;
+        for(let i = 0; i < st.length; i++){
+          const dx = (lng - st[i].lng) * kx, dy = lat - st[i].lat;
+          const d2 = dx * dx + dy * dy;
+          if(d2 < 1e-6){ exact = st[i].h; break; }
+          const p = 1 / (d2 * d2);          // puissance 4 : l'influence décroît vite
+          num += st[i].h * p; den += p;
+        }
+        const val = (exact >= 0) ? exact : num / den;
+        // quantification en paliers : c'est ce qui donne les bandes du document imprimé
+        const c = rvb(teinte(val));
+        const k = (y * larg + x) * 4;
+        img.data[k] = c[0]; img.data[k+1] = c[1]; img.data[k+2] = c[2]; img.data[k+3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+
+    // découpe au contour : la mer et les pays voisins restent nus
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.beginPath();
+    CONTOUR_FR.forEach(function(anneau){
+      anneau.forEach(function(p, i){
+        const x = (p[0] - W) / (E - W) * larg, y = (N - p[1]) / (N - S) * haut;
+        if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+    });
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+    return toile.toDataURL('image/png');
+  }
+
+  document.getElementById('btn-clim-soleil-surf').addEventListener('click', function(){
+    const b = document.getElementById('btn-clim-soleil-surf');
+    if(etatClim.soleilSurf){
+      map.removeLayer(etatClim.soleilSurf);
+      etatClim.soleilSurf = null;
+      basculerBouton(b, false, '', '\u{1F308} D\u00e9grad\u00e9 d\u2019ensoleillement');
+      majLegende();
+      return;
+    }
+    basculerBouton(b, true, '\u{1F308} D\u00e9grad\u00e9 \u2715', '', '#ef6c1a');
+    afficherInfo('\u{1F308} Interpolation des 35 stations\u2026', 0);
+    setTimeout(function(){
+      try{
+        if(!map.getPane('soleilSurf')){
+          const p = map.createPane('soleilSurf');
+          if(p && p.style) p.style.zIndex = 320;   // au-dessus des tuiles, sous les tracés
+        }
+        etatClim.soleilSurf = L.imageOverlay(
+          surfaceInterpolee(SOLEIL, function(v){ return teinteSoleil(Math.round(v / 100) * 100); }), BORNES_SOLEIL, {
+          opacity: 0.72, pane: 'soleilSurf', interactive: false,
+          attribution: 'Interpolation MultiMaps d\u2019apr\u00e8s les normales 1991-2020'
+        }).addTo(map);
+        majLegende();
+        afficherInfo('\u{1F308} D\u00e9grad\u00e9 calcul\u00e9 \u2014 surface interpol\u00e9e, pas une mesure : '
+          + 'entre deux stations la valeur est estim\u00e9e, jamais observ\u00e9e.', 8000);
+      }catch(e){
+        basculerBouton(b, false, '', '\u{1F308} D\u00e9grad\u00e9 d\u2019ensoleillement');
+        afficherInfo('\u26a0\ufe0f Calcul du d\u00e9grad\u00e9 impossible', 5000);
+        noterService('D\u00e9grad\u00e9 soleil', false, String(e && e.message || e));
+      }
+    }, 30);
+  });
+
+  document.getElementById('btn-clim-vent-surf').addEventListener('click', function(){
+    const b = document.getElementById('btn-clim-vent-surf');
+    if(etatClim.ventSurf){
+      map.removeLayer(etatClim.ventSurf);
+      etatClim.ventSurf = null;
+      basculerBouton(b, false, '', '\u{1F300} D\u00e9grad\u00e9 des vents');
+      majLegende();
+      return;
+    }
+    basculerBouton(b, true, '\u{1F300} D\u00e9grad\u00e9 vents \u2715', '', '#4f46e5');
+    afficherInfo('\u{1F300} Interpolation des 25 stations\u2026', 0);
+    setTimeout(function(){
+      try{
+        if(!map.getPane('ventSurf')){
+          const p = map.createPane('ventSurf');
+          if(p && p.style) p.style.zIndex = 318;
+        }
+        etatClim.ventSurf = L.imageOverlay(surfaceInterpolee(VENTS_MOY, teinteVent), BORNES_SOLEIL, {
+          opacity: 0.7, pane: 'ventSurf', interactive: false,
+          attribution: 'Interpolation MultiMaps d\u2019apr\u00e8s les normales de vent'
+        }).addTo(map);
+        majLegende();
+        afficherInfo('\u{1F300} Couloirs venteux : vall\u00e9e du Rh\u00f4ne, Languedoc, littoral atlantique. '
+          + 'Vitesses \u00e0 10 m\u00e8tres, pas celles des atlas \u00e9oliens \u00e0 50 m\u00e8tres.', 8000);
+      }catch(e){
+        basculerBouton(b, false, '', '\u{1F300} D\u00e9grad\u00e9 des vents');
+        afficherInfo('\u26a0\ufe0f Calcul du d\u00e9grad\u00e9 impossible', 5000);
+        noterService('D\u00e9grad\u00e9 vent', false, String(e && e.message || e));
+      }
+    }, 30);
+  });
+
   document.getElementById('btn-clim-soleil').addEventListener('click', function(){
     const b = document.getElementById('btn-clim-soleil');
     if(etatClim.soleil){ map.removeLayer(etatClim.soleil); etatClim.soleil = null; basculerBouton(b, false, '', '\u2600\uFE0F Heures d\u2019ensoleillement par an'); majLegende(); return; }
@@ -12029,6 +12228,280 @@
       if(b.textContent.indexOf('\u2715') !== -1){ b.click(); b.click(); } // \u00e9teint puis rallume avec le nouveau cr\u00e9neau
     });
   });
+  // ---------- Ombre portée du relief ----------
+  // Adret et ubac, fonds de vallée que le soleil de décembre n'atteint pas. On lit les
+  // altitudes de la vue (tuiles terrarium), on calcule la position du Soleil pour la date
+  // et l'heure choisies, puis on remonte le rayon solaire depuis chaque point : s'il
+  // rencontre un relief plus haut avant de sortir de la grille, le point est à l'ombre.
+  const etatOmbre = { couche:null, calcul:false, actifDemande:false, attente:null };
+
+  // Position du Soleil : algorithme classique, précision de l'ordre de la minute d'arc,
+  // largement suffisante pour dire si un versant est éclairé.
+  function positionSoleil(date, lat, lng){
+    const rad = Math.PI / 180;
+    const j = date.getTime() / 86400000 + 2440587.5 - 2451545;
+    const M = (357.5291 + 0.98560028 * j) * rad;
+    const C = (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M)) * rad;
+    const P = 102.9372 * rad;
+    const L = M + C + P + Math.PI;
+    const e = 23.4397 * rad;
+    const decl = Math.asin(Math.sin(e) * Math.sin(L));
+    const ar = Math.atan2(Math.sin(L) * Math.cos(e), Math.cos(L));
+    const tsid = (280.16 + 360.9856235 * j) * rad + lng * rad;
+    const H = tsid - ar;
+    const phi = lat * rad;
+    const hauteur = Math.asin(Math.sin(phi) * Math.sin(decl) + Math.cos(phi) * Math.cos(decl) * Math.cos(H));
+    const azimut = Math.atan2(Math.sin(H), Math.cos(H) * Math.sin(phi) - Math.tan(decl) * Math.cos(phi));
+    return { hauteur: hauteur / rad, azimut: (azimut / rad + 180) % 360 };   // azimut 0 = nord
+  }
+
+  function dateOmbre(){
+    const j = document.getElementById('ombre-date');
+    const hh = document.getElementById('ombre-heure');
+    const d = j && j.value ? new Date(j.value + 'T12:00:00') : new Date();
+    const heure = hh ? parseFloat(hh.value) : 12;
+    d.setHours(Math.floor(heure), Math.round((heure % 1) * 60), 0, 0);
+    return d;
+  }
+
+  async function calculerOmbre(){
+    if(etatOmbre.calcul) return;
+    etatOmbre.calcul = true;
+    try{
+      const b = map.getBounds();
+      const cols = 260, lignes = 260;
+      const g = await altitudeGrille(b, cols, lignes);
+      // altitudeGrille rend un tableau PLAT de cols x lignes valeurs, indexe [y*cols + x].
+      if(!g || g.length !== cols * lignes){
+        afficherInfo('\u26a0\ufe0f Altitudes indisponibles ici \u2014 la lecture ne couvre qu\u2019une emprise limit\u00e9e. '
+          + 'Zoomez sur un massif ou une vall\u00e9e (niveau 9 \u00e0 13).', 7000);
+        return null;
+      }
+      const nl = lignes, nc = cols;
+      const centre = b.getCenter();
+      const sol = positionSoleil(dateOmbre(), centre.lat, centre.lng);
+      const info = document.getElementById('ombre-info');
+      if(sol.hauteur <= 0){
+        if(info) info.textContent = 'Le Soleil est sous l\u2019horizon \u00e0 cette heure : tout est \u00e0 l\u2019ombre.';
+        return { grille:null, nuit:true, sol:sol, bornes:b, nl:nl, nc:nc };
+      }
+      // pas de la grille en mètres
+      const dLat = (b.getNorth() - b.getSouth()) / nl;
+      const dLng = (b.getEast() - b.getWest()) / nc;
+      const mParDegLat = 111320;
+      const mParDegLng = 111320 * Math.cos(centre.lat * Math.PI / 180);
+      const pasY = dLat * mParDegLat, pasX = dLng * mParDegLng;
+
+      // direction vers le Soleil, en indices de grille (y croît vers le sud)
+      const az = sol.azimut * Math.PI / 180;
+      const vx = Math.sin(az), vy = -Math.cos(az);
+      const tanH = Math.tan(sol.hauteur * Math.PI / 180);
+
+      const ombre = new Uint8Array(nl * nc);
+      const portee = 90;                       // pas de remontée du rayon
+      for(let y = 0; y < nl; y++){
+        for(let x = 0; x < nc; x++){
+          const h0 = g[y * nc + x];
+          if(!isFinite(h0)) continue;
+          let masque = 0;
+          for(let k = 1; k <= portee; k++){
+            const xi = Math.round(x + vx * k), yi = Math.round(y + vy * k);
+            if(xi < 0 || yi < 0 || xi >= nc || yi >= nl) break;
+            const h = g[yi * nc + xi];
+            if(!isFinite(h)) continue;
+            const dist = Math.hypot(vx * k * pasX, vy * k * pasY);
+            if(h - h0 > dist * tanH){ masque = 1; break; }
+          }
+          ombre[y * nc + x] = masque;
+        }
+      }
+      return { grille:ombre, nuit:false, sol:sol, bornes:b, nl:nl, nc:nc, alt:g };
+    }finally{
+      etatOmbre.calcul = false;
+    }
+  }
+
+  function dessinerOmbre(res){
+    if(etatOmbre.couche){ map.removeLayer(etatOmbre.couche); etatOmbre.couche = null; }
+    if(!res) return;
+    const nl = res.nl, nc = res.nc;
+    const toile = document.createElement('canvas');
+    toile.width = nc; toile.height = nl;
+    const ctx = toile.getContext('2d');
+    const img = ctx.createImageData(nc, nl);
+    for(let i = 0; i < nl * nc; i++){
+      const k = i * 4;
+      const sombre = res.nuit ? 1 : res.grille[i];
+      img.data[k] = 16; img.data[k+1] = 24; img.data[k+2] = 48;
+      img.data[k+3] = sombre ? 150 : 0;
+    }
+    ctx.putImageData(img, 0, 0);
+    if(!map.getPane('ombreRelief')){
+      const p = map.createPane('ombreRelief');
+      if(p && p.style) p.style.zIndex = 330;
+    }
+    etatOmbre.couche = L.imageOverlay(toile.toDataURL('image/png'), res.bornes, {
+      pane:'ombreRelief', interactive:false,
+      attribution:'Ombre calcul\u00e9e d\u2019apr\u00e8s les altitudes SRTM'
+    }).addTo(map);
+
+    const info = document.getElementById('ombre-info');
+    if(info && !res.nuit){
+      let nb = 0;
+      for(let i = 0; i < res.grille.length; i++) nb += res.grille[i];
+      info.textContent = 'Soleil \u00e0 ' + Math.round(res.sol.hauteur) + '\u00b0 de hauteur, azimut '
+        + Math.round(res.sol.azimut) + '\u00b0 \u00b7 ' + Math.round(100 * nb / (res.nl * res.nc)) + ' % de la vue \u00e0 l\u2019ombre du relief.';
+    }
+  }
+
+  async function majOmbre(){
+    if(!etatOmbre.actifDemande) return;
+    afficherInfo('\u{1F3D4} Lecture des altitudes et calcul de l\u2019ombre\u2026', 0);
+    const res = await calculerOmbre();
+    dessinerOmbre(res);
+    cacherInfo();
+  }
+
+  document.getElementById('btn-ombre-relief').addEventListener('click', function(){
+    const b = document.getElementById('btn-ombre-relief');
+    const reg = document.getElementById('ombre-reglages');
+    if(etatOmbre.actifDemande){
+      etatOmbre.actifDemande = false;
+      if(etatOmbre.couche){ map.removeLayer(etatOmbre.couche); etatOmbre.couche = null; }
+      if(reg) reg.style.display = 'none';
+      basculerBouton(b, false, '', '\u{1F3D4} Ombre port\u00e9e du relief');
+      majLegende();
+      return;
+    }
+    etatOmbre.actifDemande = true;
+    if(reg) reg.style.display = 'block';
+    basculerBouton(b, true, '\u{1F3D4} Ombre du relief \u2715', '', '#334155');
+    majLegende();
+    majOmbre();
+  });
+  ['ombre-date', 'ombre-heure'].forEach(function(id){
+    const e = document.getElementById(id);
+    if(e) e.addEventListener('input', function(){
+      const v = document.getElementById('ombre-heure-val');
+      if(v){
+        const hh = parseFloat(document.getElementById('ombre-heure').value);
+        v.textContent = String(Math.floor(hh)).padStart(2, '0') + ' h '
+          + String(Math.round((hh % 1) * 60)).padStart(2, '0');
+      }
+      clearTimeout(etatOmbre.attente);
+      etatOmbre.attente = setTimeout(majOmbre, 260);
+    });
+  });
+  map.on('moveend zoomend', function(){
+    if(etatOmbre.actifDemande){
+      clearTimeout(etatOmbre.attente);
+      etatOmbre.attente = setTimeout(majOmbre, 320);
+    }
+  });
+
+  // ---------- Itineraires balises (Waymarked Trails) ----------
+  // Les relations d'itineraire d'OpenStreetMap, rendues en tuiles par waymarkedtrails.org.
+  // Le service distingue par la couleur les niveaux : international, national, regional, local.
+  const WAYMARKED = { rando:null, velo:null };
+  function couchWaymarked(genre){
+    return L.tileLayer('https://tile.waymarkedtrails.org/' + genre + '/{z}/{x}/{y}.png', {
+      maxZoom: 18, opacity: 0.85, pane: 'waymarked',
+      attribution: '&copy; <a href="https://waymarkedtrails.org" target="_blank" rel="noopener">waymarkedtrails.org</a> (CC-BY-SA) &middot; donn\u00e9es &copy; OpenStreetMap'
+    });
+  }
+  function basculeWaymarked(idBtn, cle, genre, libelle, teinte){
+    document.getElementById(idBtn).addEventListener('click', function(){
+      const b = document.getElementById(idBtn);
+      if(WAYMARKED[cle]){
+        map.removeLayer(WAYMARKED[cle]);
+        WAYMARKED[cle] = null;
+        basculerBouton(b, false, '', libelle);
+        majLegende();
+        return;
+      }
+      if(!map.getPane('waymarked')){
+        const p = map.createPane('waymarked');
+        if(p && p.style) p.style.zIndex = 345;
+      }
+      WAYMARKED[cle] = couchWaymarked(genre).addTo(map);
+      basculerBouton(b, true, libelle.replace(/\s*\(.*\)$/, '') + ' \u2715', '', teinte);
+      noterService('Waymarked Trails', true, genre);
+      majLegende();
+      afficherInfo(cle === 'rando'
+        ? '\u{1F97E} Itin\u00e9raires balis\u00e9s affich\u00e9s \u2014 zoomez pour distinguer les niveaux. Rouge : international et national ; bleu : r\u00e9gional ; vert : local.'
+        : '\u{1F6B4} V\u00e9loroutes affich\u00e9es \u2014 EuroVelo, itin\u00e9raires nationaux et boucles locales.', 7000);
+    });
+  }
+  basculeWaymarked('btn-waymarked', 'rando', 'hiking', '\u{1F97E} Itin\u00e9raires balis\u00e9s (Waymarked Trails)', '#b45309');
+  basculeWaymarked('btn-waymarked-velo', 'velo', 'cycling', '\u{1F6B4} Itin\u00e9raires cyclables balis\u00e9s', '#1d4ed8');
+
+  // ---------- Polluants au choix ----------
+  // L'API renvoyait deja PM2,5, PM10, NO2 et ozone : seules ces valeurs etaient jetees.
+  // Chaque polluant a son echelle propre. Pour les particules, deux jeux de seuils
+  // coexistent et ne disent pas la meme chose : l'indice europeen, reglementaire, et
+  // les valeurs guides de l'OMS 2021, sanitaires et bien plus strictes. L'ecart entre
+  // les deux est un point de discussion en soi.
+  const POLLUANTS = {
+    european_aqi: {
+      nom: 'Indice europ\u00e9en de qualit\u00e9 de l\u2019air', court: 'Indice europ\u00e9en', unite: '',
+      bandes: [[20,'#50f0e6','tr\u00e8s bon'],[40,'#50ccaa','bon'],[60,'#f0e641','moyen'],
+               [80,'#ff5050','mauvais'],[100,'#960032','tr\u00e8s mauvais'],[9999,'#7d2181','extr\u00eamement mauvais']],
+      note: 'Indice composite : il retient le polluant le plus d\u00e9grad\u00e9 du moment parmi les particules, le dioxyde d\u2019azote, l\u2019ozone et le dioxyde de soufre. Un bon indice ne signifie donc pas que tous les polluants sont bas.'
+    },
+    pm2_5: {
+      nom: 'Particules fines PM2,5', court: 'PM2,5', unite: '\u00b5g/m\u00b3',
+      bandes: [[5,'#50f0e6','sous la valeur guide OMS'],[10,'#50ccaa','5 \u00e0 10'],[15,'#f0e641','10 \u00e0 15'],
+               [25,'#ff5050','15 \u00e0 25'],[50,'#960032','25 \u00e0 50'],[9999,'#7d2181','plus de 50']],
+      note: 'Particules de moins de 2,5 microns : combustion du bois, moteurs diesel, industrie, agriculture. Assez petites pour atteindre les alv\u00e9oles pulmonaires et passer dans le sang. L\u2019OMS recommande depuis 2021 de ne pas d\u00e9passer 5 \u00b5g/m\u00b3 en moyenne annuelle \u2014 la norme europ\u00e9enne autorise 25 \u00b5g/m\u00b3, cinq fois plus.'
+    },
+    pm10: {
+      nom: 'Particules PM10', court: 'PM10', unite: '\u00b5g/m\u00b3',
+      bandes: [[15,'#50f0e6','sous la valeur guide OMS'],[25,'#50ccaa','15 \u00e0 25'],[35,'#f0e641','25 \u00e0 35'],
+               [50,'#ff5050','35 \u00e0 50'],[80,'#960032','50 \u00e0 80'],[9999,'#7d2181','plus de 80']],
+      note: 'Particules de moins de 10 microns : les pr\u00e9c\u00e9dentes, plus les poussi\u00e8res de chantier, l\u2019usure des freins et des pneus, les \u00e9pandages agricoles et les sables d\u00e9sertiques. Arr\u00eat\u00e9es plus haut dans les voies respiratoires. Seuil d\u2019information fran\u00e7ais : 50 \u00b5g/m\u00b3 sur 24 heures.'
+    },
+    nitrogen_dioxide: {
+      nom: 'Dioxyde d\u2019azote (NO\u2082)', court: 'NO\u2082', unite: '\u00b5g/m\u00b3',
+      bandes: [[10,'#50f0e6','sous la valeur guide OMS'],[25,'#50ccaa','10 \u00e0 25'],[40,'#f0e641','25 \u00e0 40'],
+               [100,'#ff5050','40 \u00e0 100'],[200,'#960032','100 \u00e0 200'],[9999,'#7d2181','plus de 200']],
+      note: 'Tra\u00e7eur du trafic routier : il se concentre le long des axes et dans les agglom\u00e9rations, avec un maximum aux heures de pointe. C\u2019est le polluant qui a valu \u00e0 la France plusieurs condamnations europ\u00e9ennes, et celui que visent les Zones \u00e0 Faibles \u00c9missions.'
+    },
+    ozone: {
+      nom: 'Ozone (O\u2083)', court: 'Ozone', unite: '\u00b5g/m\u00b3',
+      bandes: [[60,'#50f0e6','faible'],[100,'#50ccaa','60 \u00e0 100'],[120,'#f0e641','100 \u00e0 120'],
+               [180,'#ff5050','120 \u00e0 180'],[240,'#960032','180 \u00e0 240'],[9999,'#7d2181','plus de 240']],
+      note: 'Polluant secondaire : il n\u2019est pas \u00e9mis, il se forme sous l\u2019effet du soleil \u00e0 partir des oxydes d\u2019azote et des composés organiques. D\u2019o\u00f9 une g\u00e9ographie invers\u00e9e des autres polluants : maximal l\u2019apr\u00e8s-midi d\u2019\u00e9t\u00e9, et souvent plus \u00e9lev\u00e9 \u00e0 la campagne et en altitude qu\u2019au c\u0153ur des villes, o\u00f9 le trafic le d\u00e9truit.'
+    },
+    dust: {
+      nom: 'Poussi\u00e8res d\u00e9sertiques', court: 'Poussi\u00e8res', unite: '\u00b5g/m\u00b3',
+      bandes: [[1,'#f8fafc','trace'],[5,'#fde68a','1 \u00e0 5'],[15,'#fbbf24','5 \u00e0 15'],
+               [40,'#f59e0b','15 \u00e0 40'],[100,'#b45309','40 \u00e0 100'],[9999,'#78350f','plus de 100']],
+      note: 'Le sable du Sahara soulev\u00e9 par les vents de sud, transport\u00e9 sur des milliers de kilom\u00e8tres et d\u00e9pos\u00e9 jusque sur les Alpes, o\u00f9 il colore la neige en orange. Les Espagnols l\u2019appellent la calima. Ces \u00e9pisodes font grimper les PM10 sans qu\u2019aucune source locale n\u2019ait \u00e9mis quoi que ce soit \u2014 une belle d\u00e9monstration que l\u2019atmosph\u00e8re ignore les fronti\u00e8res.'
+    },
+    aerosol_optical_depth: {
+      nom: '\u00c9paisseur optique des a\u00e9rosols', court: 'A\u00e9rosols', unite: '',
+      bandes: [[0.1,'#f8fafc','air tr\u00e8s clair'],[0.2,'#e2e8f0','0,10 \u00e0 0,20'],[0.35,'#cbd5e1','0,20 \u00e0 0,35'],
+               [0.55,'#94a3b8','0,35 \u00e0 0,55'],[0.8,'#64748b','0,55 \u00e0 0,80'],[9999,'#334155','plus de 0,80']],
+      note: 'Mesure sans unit\u00e9 de ce que l\u2019atmosph\u00e8re retient de la lumi\u00e8re du Soleil, toutes particules confondues : poussi\u00e8res, fum\u00e9es d\u2019incendie, embruns, pollution. C\u2019est l\u2019indicateur qui r\u00e9pond \u00e0 la question \u00ab le ciel sera-t-il limpide ? \u00bb, celui qu\u2019utilisent les observateurs d\u2019\u00e9clipses.'
+    }
+  };
+  function polluantChoisi(){
+    const s = document.getElementById('air-polluant');
+    return (s && POLLUANTS[s.value]) ? s.value : 'european_aqi';
+  }
+  function bandePolluant(cle, v){
+    const p = POLLUANTS[cle];
+    if(!p || v === null || v === undefined || !isFinite(v)) return null;
+    for(let i = 0; i < p.bandes.length; i++) if(v < p.bandes[i][0]) return p.bandes[i];
+    return p.bandes[p.bandes.length - 1];
+  }
+  function valeurLisible(cle, v){
+    if(v === null || v === undefined || !isFinite(v)) return '\u2014';
+    const p = POLLUANTS[cle];
+    const arrondi = (cle === 'aerosol_optical_depth') ? Math.round(v * 100) / 100 : Math.round(v * 10) / 10;
+    return arrondi.toLocaleString('fr-FR') + (p.unite ? ' ' + p.unite : '');
+  }
+
   const AQI_BANDES = [[20,'#50f0e6','tr\u00e8s bon'],[40,'#50ccaa','bon'],[60,'#f0e641','moyen'],
     [80,'#ff5050','mauvais'],[100,'#960032','tr\u00e8s mauvais'],[9999,'#7d2181','extr\u00eamement mauvais']];
   function aqiInfo(v){
@@ -12042,7 +12515,7 @@
       const lot = points.slice(i, i+100);
       const url = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude='+lot.map(p=>p[0].toFixed(3)).join(',')
         +'&longitude='+lot.map(p=>p[1].toFixed(3)).join(',')
-        +'&current=european_aqi,pm2_5,pm10,nitrogen_dioxide,ozone&timezone=Europe%2FParis';
+        +'&current=european_aqi,pm2_5,pm10,nitrogen_dioxide,ozone,dust,aerosol_optical_depth&timezone=Europe%2FParis';
       const r = await fetch(url);
       if(!r.ok){ noterService('Qualité de l’air (Open-Meteo)', false, 'HTTP '+r.status); throw new Error('Open-Meteo air'); }
       noterService('Qualité de l’air (Open-Meteo)', true);
@@ -12051,7 +12524,7 @@
     }
     return out;
   }
-  const etatAir = { actif:false, groupe:null };
+  const etatAir = { actif:false, groupe:null, polluant:'european_aqi' };
   document.getElementById('btn-air').addEventListener('click', async ()=>{
     const btn = document.getElementById('btn-air');
     if(etatAir.actif){
@@ -12062,6 +12535,7 @@
       return;
     }
     etatAir.actif = true;
+    etatAir.polluant = polluantChoisi();
     basculerBouton(btn, true, '\ud83e\udec1 Qualit\u00e9 de l\u2019air \u2715', '', '#50ccaa');
     afficherInfo('\ud83e\udec1 Mesure de la qualit\u00e9 de l\u2019air sur la France\u2026', 0);
     try{
@@ -12077,23 +12551,29 @@
       cellules.forEach((c, i)=>{
         const v = valeurs[i];
         if(!v) return;
-        const b = aqiInfo(v.european_aqi);
+        const cle = etatAir.polluant || 'european_aqi';
+        const val = v[cle];
+        const b = bandePolluant(cle, val);
         if(!b) return;
-        if(v.european_aqi > pire) pire = v.european_aqi;
+        if(val > pire) pire = val;
         n++;
         L.polygon([[c[0], c[1]], [c[0], c[1]+pas], [c[0]+pas, c[1]+pas], [c[0]+pas, c[1]]], {
           stroke:false, fillColor:b[1], fillOpacity:0.55
-        }).bindTooltip('<b>Indice '+Math.round(v.european_aqi)+' \u2014 '+b[2]+'</b>'
-          +'<br>PM2,5 : '+(Math.round((v.pm2_5||0)*10)/10)+' \u00b5g/m\u00b3'
-          +'<br>PM10 : '+(Math.round((v.pm10||0)*10)/10)+' \u00b5g/m\u00b3'
-          +'<br>NO\u2082 : '+(Math.round((v.nitrogen_dioxide||0)*10)/10)+' \u00b7 O\u2083 : '+(Math.round((v.ozone||0)*10)/10)
-          +'<br><small>indice europ\u00e9en, relev\u00e9 du moment</small>', {sticky:true}).addTo(etatAir.groupe);
+        }).bindTooltip('<b>'+POLLUANTS[cle].court+' : '+valeurLisible(cle, val)+'</b> \u2014 '+b[2]
+          +'<br>Indice europ\u00e9en : '+(isFinite(v.european_aqi) ? Math.round(v.european_aqi) : '\u2014')
+          +'<br>PM2,5 : '+valeurLisible('pm2_5', v.pm2_5)+' \u00b7 PM10 : '+valeurLisible('pm10', v.pm10)
+          +'<br>NO\u2082 : '+valeurLisible('nitrogen_dioxide', v.nitrogen_dioxide)+' \u00b7 O\u2083 : '+valeurLisible('ozone', v.ozone)
+          +'<br>Poussi\u00e8res : '+valeurLisible('dust', v.dust)+' \u00b7 A\u00e9rosols : '+valeurLisible('aerosol_optical_depth', v.aerosol_optical_depth)
+          +'<br><small>relev\u00e9 du moment \u00b7 mod\u00e8le europ\u00e9en CAMS</small>', {sticky:true}).addTo(etatAir.groupe);
       });
       etatAir.pire = pire;
       etatAir.groupe.addTo(map);
       cacherInfo();
       majLegende();
-      afficherInfo('\ud83e\udec1 '+n+' mailles \u2014 indice le plus d\u00e9grad\u00e9 en France : '+Math.round(pire)+' ('+(aqiInfo(pire)||[0,0,''])[2]+')', 6500);
+      const pp = POLLUANTS[etatAir.polluant];
+      const bp = bandePolluant(etatAir.polluant, pire);
+      afficherInfo('\ud83e\udec1 '+n+' mailles \u2014 '+pp.court+', valeur la plus \u00e9lev\u00e9e en France : '
+        + valeurLisible(etatAir.polluant, pire) + (bp ? ' ('+bp[2]+')' : ''), 6500);
     }catch(e){
       cacherInfo();
       etatAir.actif = false;
@@ -12101,6 +12581,12 @@
       afficherInfo('\ud83e\udec1 Le service de qualit\u00e9 de l\u2019air ne r\u00e9pond pas \u2014 r\u00e9essayez dans un instant', 6000);
     }
   });
+  document.getElementById('air-polluant').addEventListener('change', function(){
+    const b = document.getElementById('btn-air');
+    if(b.textContent.indexOf('\u2715') !== -1){ b.click(); b.click(); }   // eteint puis rallume
+    majLegende();
+  });
+
   const VENT_BANDES = [[10,'#9ecae1','faible'],[25,'#41ab5d','mod\u00e9r\u00e9'],[40,'#fdae61','soutenu'],
     [60,'#e6550d','fort'],[80,'#a50f15','violent'],[999,'#67000d','temp\u00eatueux']];
   function ventInfo(v){
@@ -14576,8 +15062,8 @@
   });
 
   // ================= Fenêtres flottantes (widgets) =================
-  const WIDGETS = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-industriel','wg-population','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-limites','wg-foret','wg-pilote'];
-  const WIDGETS_PILOTABLES = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-industriel','wg-population','wg-climat','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-limites','wg-foret'];
+  const WIDGETS = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-industriel','wg-population','wg-climat','wg-littoral','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-limites','wg-foret','wg-pilote'];
+  const WIDGETS_PILOTABLES = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-recherche','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-industriel','wg-population','wg-climat','wg-littoral','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-limites','wg-foret'];
   const WIDGETS_CASES = []; // remplacées par la fenêtre 🧭 pilote
   let posWidgets = {};
   try{ posWidgets = JSON.parse(localStorage.getItem('geo-widgets3')||'{}'); }catch(e){}
@@ -14663,7 +15149,8 @@
   initWidget('wg-risques',  { left:'12px', top:'360px', replie:true, cache:true });
   initWidget('wg-industriel',  { left:'12px', top:'360px', replie:true, cache:true });
   initWidget('wg-population', { left:'12px', top:'270px', replie:true, cache:true });
-  initWidget('wg-climat',    { left:'12px', top:'110px', replie:true, cache:true });
+  initWidget('wg-climat','wg-littoral',    { left:'12px', top:'110px', replie:true, cache:true });
+  initWidget('wg-littoral','wg-littoral',    { left:'12px', top:'110px', replie:true, cache:true });
   initWidget('wg-montagnes', { left:'12px', top:'150px', replie:true, cache:true });
   initWidget('wg-rivieres',  { left:'12px', top:'190px', replie:true, cache:true });
   initWidget('wg-pays',      { left:'12px', top:'520px', replie:true, cache:true });
@@ -15009,6 +15496,9 @@
   }
 
   // --- recoloration ---
+  // Recolorer, c'est enregistrer une preference : la teinte d'origine est remplacee
+  // partout, y compris sur les objets qui seront dessines plus tard. Une couche dont
+  // rien n'est encore charge se recolorie donc quand meme, des qu'elle apparait.
   function recolorerLegende(cle, nouvelle){
     const d = CAT_LEG[cle];
     if(!d) return 0;
@@ -15016,10 +15506,10 @@
     let n = 0;
     couchesLegende(cle).forEach(function(c){
       try{
-        if(typeof c.setStyle === 'function'){
+        if(typeof c.setStyle === 'function' && c.options){
           const st = {};
-          if(c.options && c.options.color && c.options.color !== '#fff' && c.options.color !== '#ffffff') st.color = nouvelle;
-          if(c.options && c.options.fillColor) st.fillColor = nouvelle;
+          if(c.options.color && String(c.options.color).toLowerCase() !== '#ffffff') st.color = nouvelle;
+          if(c.options.fillColor) st.fillColor = nouvelle;
           if(Object.keys(st).length){ c.setStyle(st); n++; }
         }
       }catch(e){}
@@ -15109,7 +15599,7 @@
       corps.appendChild(grille);
       const perso = document.createElement('input');
       perso.type = 'color';
-      perso.value = d.couleur || '#d92b2b';
+      perso.value = /^#[0-9a-f]{6}$/i.test(d.couleur || '') ? d.couleur : '#d92b2b';
       perso.style.cssText = 'width:100%;height:32px;margin-top:8px;cursor:pointer';
       perso.addEventListener('change', function(){
         recolorerLegende(cle, perso.value);
@@ -15477,6 +15967,30 @@
           + ligneLegende('#dc2626', 'Magnitude 4 \u00e0 5', 'rond', '')
           + ligneLegende('#7f1d1d', 'Magnitude 5 et plus', 'rond', 'Peut causer des d\u00e9g\u00e2ts'));
       }
+      if(etatClim.ventSurf){
+        blocs.push('<div class="leg-sous">\u{1F300} Vent moyen interpol\u00e9 <small>(km/h \u00e0 10 m)</small></div>'
+          + PALIERS_VENT.slice().reverse().map(function(p, i, t){
+              const lib = (i === 0) ? 'plus de ' + t[1][0] + ' km/h'
+                        : (i === t.length - 1) ? 'moins de ' + t[i-1][0] + ' km/h'
+                        : t[i+1][0] + ' \u00e0 ' + p[0] + ' km/h';
+              return ligneLegende(p[1], lib, 'carre', 'Surface estim\u00e9e entre les stations');
+            }).join('')
+          + '<div style="font-size:9.5px;color:#8a8577;line-height:1.45;margin-top:3px">'
+          + 'Vitesses mesur\u00e9es \u00e0 <b>10 m\u00e8tres</b> en station. Les atlas \u00e9oliens publient des vitesses \u00e0 50 ou 100 m\u00e8tres, '
+          + 'bien sup\u00e9rieures : les contrastes r\u00e9gionaux se retrouvent, pas les valeurs.</div>');
+      }
+      if(etatClim.soleilSurf){
+        blocs.push('<div class="leg-sous">\u{1F308} Ensoleillement interpol\u00e9 <small>(heures par an)</small></div>'
+          + PALIERS_SOLEIL.slice().reverse().map(function(p, i, t){
+              const bas = (i === t.length - 1) ? 'moins de ' + t[i-1][0] : (i === 0 ? 'plus de ' + t[1][0] : '');
+              const lib = bas || (t[i+1][0] + ' \u00e0 ' + p[0]);
+              return ligneLegende(p[1], lib.replace(/(\d)(\d{3})/, '$1 $2'), 'carre',
+                'Surface estim\u00e9e entre les stations, pas une mesure');
+            }).join('')
+          + '<div style="font-size:9.5px;color:#8a8577;line-height:1.45;margin-top:3px">'
+          + 'Interpolation \u00e0 partir de 35 stations : entre elles, la valeur est <b>calcul\u00e9e</b>, jamais observ\u00e9e. '
+          + 'Le relief n\u2019est pas pris en compte \u2014 une vall\u00e9e encaiss\u00e9e re\u00e7oit ici la m\u00eame teinte que le sommet voisin.</div>');
+      }
       if(etatClim.soleil || etatClim.vent || etatClim.noms){
         blocs.push('<div class="leg-sous">\u2600\uFE0F Moyennes climatiques</div>'
           + (etatClim.soleil ? ligneLegende('#dc2626', 'Plus de 2 600 h de soleil', 'rond', 'Provence, Corse, Roussillon') : '')
@@ -15597,8 +16111,32 @@
         + ligneLegende('#28201e', 'D\u00e9j\u00e0 br\u00fbl\u00e9', 'carre', 'V\u00e9g\u00e9tation (Corine) + vent + s\u00e9cheresse + pluie'));
     }
     if(etatAir.actif){
-      blocs.push('<div class="leg-sous">\ud83e\udec1 Qualit\u00e9 de l\u2019air <small>(indice europ\u00e9en \u00b7 Open-Meteo)</small></div>'
-        + AQI_BANDES.map((b, i)=>ligneLegende(b[1], b[2]+' <small>(indice '+(i ? AQI_BANDES[i-1][0] : 0)+(b[0]>200 ? ' et plus' : ' \u2013 '+b[0])+')</small>', 'carre', '')).join(''));
+      if(etatOmbre.actifDemande){
+        blocs.push('<div class="leg-sous">\u{1F3D4} Ombre port\u00e9e du relief</div>'
+          + ligneLegende('#101830', 'Versant \u00e0 l\u2019ombre du relief', 'carre', 'Le Soleil est masqu\u00e9 par un relief situ\u00e9 dans sa direction')
+          + '<div style="font-size:9.5px;color:#8a8577;line-height:1.45;margin-top:3px">'
+          + 'Calcul\u00e9 sur la vue affich\u00e9e \u00e0 partir des altitudes SRTM (maille d\u2019environ 90 m). '
+          + 'Ne tient compte ni des nuages, ni des arbres, ni des b\u00e2timents, et le relief situ\u00e9 hors de la vue '
+          + 'n\u2019est pas pris en compte \u2014 une montagne juste au sud de l\u2019\u00e9cran ne projette pas son ombre.</div>');
+      }
+      if(WAYMARKED.rando || WAYMARKED.velo){
+        blocs.push('<div class="leg-sous">\u{1F97E} Itin\u00e9raires balis\u00e9s <small>(Waymarked Trails)</small></div>'
+          + ligneLegende('#d32f2f', 'International et national <small>(GR, EuroVelo)</small>', 'carre', '')
+          + ligneLegende('#1d4ed8', 'R\u00e9gional <small>(GRP, v\u00e9loroutes r\u00e9gionales)</small>', 'carre', '')
+          + ligneLegende('#2e9e44', 'Local <small>(sentiers de pays, boucles)</small>', 'carre', '')
+          + '<div style="font-size:9.5px;color:#8a8577;line-height:1.45;margin-top:3px">'
+          + 'Ces itin\u00e9raires sont des <b>relations</b> saisies dans OpenStreetMap par des contributeurs. '
+          + 'Un sentier absent n\u2019est pas un sentier inexistant : il n\u2019a pas encore \u00e9t\u00e9 cartographi\u00e9. '
+          + 'Le balisage sur le terrain fait foi.</div>');
+      }
+      const pAir = POLLUANTS[etatAir.polluant] || POLLUANTS.european_aqi;
+      blocs.push('<div class="leg-sous">\ud83e\udec1 '+pAir.nom+' <small>('+(pAir.unite || 'indice')+' \u00b7 mod\u00e8le CAMS)</small></div>'
+        + pAir.bandes.map(function(b, i, t){
+            const bas = i ? t[i-1][0] : 0;
+            const inter = (b[0] > 900) ? 'plus de ' + bas : bas + ' \u2013 ' + b[0];
+            return ligneLegende(b[1], b[2] + ' <small>(' + inter + (pAir.unite ? ' ' + pAir.unite : '') + ')</small>', 'carre', '');
+          }).join('')
+        + '<div style="font-size:9.5px;color:#8a8577;line-height:1.45;margin-top:3px">' + pAir.note + '</div>');
     }
     if(etatVent.actif){
       blocs.push('<div class="leg-sous">\ud83d\udca8 Vent \u00e0 10 m <small>(fl\u00e8che = sens du souffle'+(etatVent.maxi ? ' \u00b7 rafale max '+Math.round(etatVent.maxi)+' km/h' : '')+')</small></div>'
