@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>MultiMeteo v4.2</title>
+<title>MultiMeteo v4.3</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -2362,8 +2362,28 @@ function _indRuns(vals,norm,limit){
   return runs;
 }
 let _indMode='y12c';   /* mode par défaut à l'ouverture : Cône+12 (borne J+12) */
-function _indYrCacheLoad(){try{const o=JSON.parse(localStorage.getItem('pp_indicyr_v2')||'null');if(o&&o.t&&(Date.now()-o.t)<6*3600e3&&o.d&&o.k===(new Date()).toISOString().slice(0,10))return o.d;}catch(e){}return null;}
-function _indYrCacheSave(d){try{localStorage.setItem('pp_indicyr_v2',JSON.stringify({t:Date.now(),k:(new Date()).toISOString().slice(0,10),d}));}catch(e){}}
+/* Vue Année : 'civ' = année civile (1er janvier → 31 décembre) · 'roll' = 12 mois glissants.
+   Le glissant remonte réellement dans l'archive ERA5 : ce sont des données OBSERVÉES,
+   pas une extrapolation — et l'anomalie de référence porte alors toujours sur 12 mois. */
+let _yrSpan=(function(){try{return localStorage.getItem('pp_yrspan')||'civ';}catch(e){return 'civ';}})();
+function _indYrKey(){return 'pp_indicyr_v2'+(_yrSpan==='roll'?'_roll':'');}
+function _indYrCacheLoad(){try{const o=JSON.parse(localStorage.getItem(_indYrKey())||'null');if(o&&o.t&&(Date.now()-o.t)<6*3600e3&&o.d&&o.k===(new Date()).toISOString().slice(0,10))return o.d;}catch(e){}return null;}
+function _indYrCacheSave(d){try{localStorage.setItem(_indYrKey(),JSON.stringify({t:Date.now(),k:(new Date()).toISOString().slice(0,10),d}));}catch(e){}}
+function toggleYrSpan(){
+  _yrSpan=(_yrSpan==='civ')?'roll':'civ';
+  try{localStorage.setItem('pp_yrspan',_yrSpan);}catch(e){}
+  _yrSpanUpd();
+  if(typeof openIndic==='function')openIndic('yr');
+}
+function _yrSpanUpd(){
+  const b=document.getElementById('indYrSpanBtn');
+  if(!b)return;
+  b.classList.toggle('on',_yrSpan==='roll');
+  b.textContent=_yrSpan==='roll'?'↔ 12 mois glissants':'↔ Année civile';
+  b.title=_yrSpan==='roll'
+    ?'Affiche les 12 derniers mois : la cloche saisonnière est complète des deux côtés'
+    :'Affiche l\u2019année civile en cours (1er janvier → 31 décembre)';
+}
 let _indYrLoading=null;
 async function _indFetchYear(){
   const cached=_indYrCacheLoad();
@@ -2373,12 +2393,13 @@ async function _indFetchYear(){
     const base=await _indFetch();                      /* 61 j + prévision + extrapolation */
     const now=new Date();
     const Y=now.getFullYear();
-    /* archive ERA5 : 1er janvier → J-7 */
+    /* archive ERA5 : 1er janvier (mode civil) ou J-365 (mode glissant) → J-7 */
     const end=new Date(now.getTime()-7*86400e3);
     const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const debut=(_yrSpan==='roll')?fmt(new Date(now.getTime()-365*86400e3)):(Y+'-01-01');
     const lats=_IND_ST.map(s=>s[1]).join(','),lons=_IND_ST.map(s=>s[2]).join(',');
     const uA='https://archive-api.open-meteo.com/v1/archive?latitude='+lats+'&longitude='+lons
-      +'&start_date='+Y+'-01-01&end_date='+fmt(end)
+      +'&start_date='+debut+'&end_date='+fmt(end)
       +'&daily=temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis';
     let arch={};
     try{
@@ -2394,8 +2415,16 @@ async function _indFetchYear(){
     }catch(e){}
     /* axe année complète */
     const time=[],vals=[],envLo=[],envHi=[],envModels=[],valsCI=[],ensLo=[],ensHi=[];
-    const jan1=new Date(Y,0,1,12);
-    const nD=(new Date(Y,11,31)-new Date(Y,0,1))/86400e3+1;
+    /* civil : 1er janvier → 31 décembre · glissant : J-365 → J+~28 (fin de l'extrapolation) */
+    let jan1,nD;
+    if(_yrSpan==='roll'){
+      jan1=new Date(now.getTime()-365*86400e3);jan1.setHours(12,0,0,0);
+      const fin=base.time.length?new Date(base.time[base.time.length-1]+'T12:00'):new Date(now.getTime()+28*86400e3);
+      nD=Math.max(1,Math.round((fin-jan1)/86400e3)+1);
+    }else{
+      jan1=new Date(Y,0,1,12);
+      nD=(new Date(Y,11,31)-new Date(Y,0,1))/86400e3+1;
+    }
     const baseMap={},envLoM={},envHiM={},envModM={},ciM={},ensLoM={},ensHiM={};
     base.time.forEach((dk,i)=>{baseMap[dk]=base.vals[i];if(base.envLo)envLoM[dk]=base.envLo[i];if(base.envHi)envHiM[dk]=base.envHi[i];if(base.envModels)envModM[dk]=base.envModels[i];if(base.valsCI)ciM[dk]=base.valsCI[i];if(base.ensLo)ensLoM[dk]=base.ensLo[i];if(base.ensHi)ensHiM[dk]=base.ensHi[i];});
     const todayKey=fmt(now);
@@ -3369,6 +3398,58 @@ async function openVerif(force){
 }
 
 function closeIndic(){const p=document.getElementById('indicPanel');if(p)p.classList.remove('open');}
+/* ── Projection statistique jusqu'au 31 décembre (mode Année) ──
+   Après l'extrapolation CFS, la courbe s'arrête et l'année reste vide. On la prolonge
+   en reprenant la NORMALE harmonique (bonne forme saisonnière) décalée de l'anomalie
+   constatée. Deux hypothèses encadrantes :
+     · anomalie depuis le 1er janvier   → stable, mais lissée par l'hiver écoulé
+     · anomalie des 90 derniers jours   → représentative de la période en cours
+   Ce n'est PAS une prévision : aucune valeur prédictive au-delà de ~2 semaines. */
+function _indProjection(d){
+  try{
+    if(!d||!d.time||!d.vals)return null;
+    const N=d.time.length;
+    /* dernier point réellement renseigné (observé ou extrapolé) */
+    let last=-1;
+    for(let i=N-1;i>=0;i--){if(d.vals[i]!=null&&isFinite(d.vals[i])){last=i;break;}}
+    if(last<0||last>=N-2)return null;                 /* rien à prolonger */
+    const doyOf=i=>{const t=d.time[i];if(!t)return null;const dt=new Date(t+'T12:00');
+      if(isNaN(dt))return null;return Math.floor((dt-new Date(dt.getFullYear(),0,0))/86400e3);};
+    /* anomalies moyennes sur les deux fenêtres */
+    const anom=(depuis)=>{
+      let s=0,n=0;
+      for(let i=Math.max(0,depuis);i<=last;i++){
+        const v=d.vals[i];if(v==null||!isFinite(v))continue;
+        const doy=doyOf(i);if(doy==null)continue;
+        const nn=_IND_NORM(doy);
+        if(nn!=null&&isFinite(nn)){s+=v-nn;n++;}
+      }
+      return n>=10?s/n:null;
+    };
+    const aAn=anom(0);                                 /* depuis le 1er janvier */
+    const a90=anom(Math.max(0,last-89));               /* 90 derniers jours */
+    if(aAn==null&&a90==null)return null;
+    const lo=[],hi=[],mid=[],pass=[];
+    const c=[aAn,a90].filter(x=>x!=null&&isFinite(x));
+    for(let i=0;i<N;i++){
+      const doy=doyOf(i);
+      const nn=(doy!=null)?_IND_NORM(doy):null;
+      if(nn==null||!isFinite(nn)){lo.push(null);hi.push(null);mid.push(null);pass.push(null);continue;}
+      /* PASSÉ : la même cloche, décalée de l'anomalie RÉELLEMENT observée depuis le début
+         de la série. Sert de repère lissé face à un observé très irrégulier. */
+      if(i<=last&&aAn!=null)pass.push(Math.round((nn+aAn)*10)/10);
+      else pass.push(null);
+      /* FUTUR : bande entre les deux hypothèses d'anomalie */
+      if(i<last||!c.length){lo.push(null);hi.push(null);mid.push(null);continue;}
+      const bas=nn+Math.min.apply(null,c), haut=nn+Math.max.apply(null,c);
+      lo.push(Math.round(bas*10)/10);
+      hi.push(Math.round(haut*10)/10);
+      mid.push(Math.round((bas+haut)/2*10)/10);
+    }
+    return {lo,hi,mid,pass,aAn:aAn==null?null:Math.round(aAn*100)/100,
+            a90:a90==null?null:Math.round(a90*100)/100,from:last};
+  }catch(e){return null;}
+}
 function _indRenderYear(d,opts){
   opts=opts||{};const doy0=opts.doy0||0;
   const cv=document.getElementById('indicCanvas');
@@ -3378,7 +3459,16 @@ function _indRenderYear(d,opts){
   const U=opts.unit||'°';
   const norm=opts.normArr
     ?d.time.map((_,i)=>{const k=opts.doyArr?opts.doyArr[i]:((doy0+i)%opts.normArr.length);const v=opts.normArr[k%opts.normArr.length];return (v!=null&&isFinite(v))?Math.round(v*10)/10:null;})
-    :d.time.map((_,i)=>Math.round(_IND_NORM(doy0+i)*10)/10);
+    :d.time.map((t,i)=>{
+        /* jour de l'année déduit de la DATE : indispensable en mode glissant,
+           où la série ne commence pas au 1er janvier */
+        let doy=doy0+i;
+        if(typeof t==='string'&&t.length>=10){
+          const dt=new Date(t+'T12:00');
+          if(!isNaN(dt))doy=Math.floor((dt-new Date(dt.getFullYear(),0,0))/86400e3);
+        }
+        return Math.round(_IND_NORM(doy)*10)/10;
+      });
   const HOT=opts.invert?'#3c5ae1':'#e3402a', COLD=opts.invert?'#e3402a':'#3c5ae1';
   const HOTF=opts.invert?'rgba(60,90,225,0.22)':'rgba(227,60,40,0.20)', COLDF=opts.invert?'rgba(227,60,40,0.20)':'rgba(60,90,225,0.22)';
   const obs=d.vals.map((v,i)=>i<d.i0?v:null);
@@ -3419,6 +3509,27 @@ function _indRenderYear(d,opts){
       {label:'Extrapolation '+(d.xSrc==='cfs'?'(CFS)':'(stat.)'),data:extra,borderColor:'#999',borderDash:[6,5],borderWidth:1.6,pointRadius:0,tension:0.2,spanGaps:true},
       {label:(opts.normLabel||'Normale 1991-2020'),data:norm,borderColor:'#9a9a9a',borderDash:[5,4],borderWidth:1.5,pointRadius:0,tension:0.3,spanGaps:true}
   ];
+  /* Projection statistique de fin d'année (mode Année seulement) */
+  let _proj=null;
+  if(opts.projection){
+    _proj=_indProjection(d);
+    if(_proj){
+      const PJ='#c07be0';
+      /* Cloche lissée du PASSÉ : normale + anomalie observée. Jaune pointillé, en fond. */
+      if(_proj.pass&&_proj.pass.some(v=>v!=null)){
+        dsets.push({label:'Tendance de l\u2019année (normale + anomalie observée)',data:_proj.pass,
+          borderColor:'rgba(255,212,0,0.85)',borderWidth:1.8,borderDash:[3,4],
+          pointRadius:0,tension:0.3,spanGaps:true,order:9});
+      }
+      dsets.push({label:'Projection fin d\u2019année (normale + anomalie)',data:_proj.hi,
+        borderColor:PJ,borderWidth:1.3,borderDash:[2,4],pointRadius:0,tension:0.3,spanGaps:true,
+        fill:'+1',backgroundColor:'rgba(192,123,224,0.13)'});
+      dsets.push({label:'',data:_proj.lo,
+        borderColor:PJ,borderWidth:1.3,borderDash:[2,4],pointRadius:0,tension:0.3,spanGaps:true});
+      dsets.push({label:'',data:_proj.mid,
+        borderColor:PJ,borderWidth:2,borderDash:[7,4],pointRadius:0,tension:0.3,spanGaps:true});
+    }
+  }
   if(opts.cone&&d.envHi&&d.envLo){
     const showDet=(typeof _ensMode==='undefined')||_ensMode===0||_ensMode===2;
     const showEns=!!(d.ensLo&&d.ensHi&&(typeof _ensMode!=='undefined')&&_ensMode>=1);
@@ -3490,7 +3601,19 @@ function _indRenderYear(d,opts){
     const per=opts.label||'depuis le 1er janvier';
     const ref=opts.refLabel||'normale 1991-2020 (approchée)';
     const cPos=opts.invert?'#7fa0ff':'#ff5040', cNeg=opts.invert?'#ff5040':'#7fa0ff';
-    info.innerHTML=an!=null?('Anomalie moyenne '+per+' : <b style="color:'+(an>=0?cPos:cNeg)+'">'+(an>=0?'+':'')+an.toFixed(2)+U+'</b> vs '+ref):'';
+    let _txt=an!=null?('Anomalie moyenne '+per+' : <b style="color:'+(an>=0?cPos:cNeg)+'">'+(an>=0?'+':'')+an.toFixed(2)+U+'</b> vs '+ref):'';
+    if(_proj){
+      const f=x=>(x==null?'—':((x>=0?'+':'')+x.toFixed(2)+U));
+      _txt+='<div style="margin-top:3px;font-size:11px">'
+        +'<span style="color:#ffd400">╌ <b>Tendance de l\u2019année</b> : normale décalée de l\u2019anomalie observée ('
+        +((_proj.aAn==null)?'—':((_proj.aAn>=0?'+':'')+_proj.aAn.toFixed(2)+U))
+        +') — repère lissé face aux à-coups du quotidien.</span></div>'
+        +'<div style="margin-top:2px;color:#c07be0;font-size:11px">'
+        +'▨ <b>Projection fin d\u2019année</b> : normale décalée de l\u2019anomalie — bande entre '
+        +'<b>'+f(_proj.aAn)+'</b> (depuis janvier) et <b>'+f(_proj.a90)+'</b> (90 derniers jours). '
+        +'<span style="color:#8aa">Prolongement statistique, sans valeur prédictive au-delà de ~2 semaines : il suppose que l\u2019écart à la normale se maintient.</span></div>';
+    }
+    info.innerHTML=_txt;
   }
 }
 /* ══════════════════════════════════════════════════════════════
@@ -3761,7 +3884,7 @@ async function openIndic(mode,force){
   try{d=anneeMode?await _indFetchYear():await _indFetch();}
   catch(e){if(st){st.innerHTML='✕ '+e.message+' <button class="vf-act" onclick="openIndic(\''+_indMode+'\',true)">↻ Réessayer</button>';}return;}
   if(st)st.style.display='none';
-  if(_indMode==='yr'){_indRenderYear(d,{ticks:'months'});return;}
+  if(_indMode==='yr'){_indRenderYear(d,{ticks:'months',projection:true});return;}
   if(_indMode==='y40'||_indMode==='y40c'){
     const a=Math.max(0,d.i0-40);
     let end=d.vals.length;while(end>0&&d.vals[end-1]==null)end--;
@@ -4077,7 +4200,7 @@ function toggleEnsembles(){
 }
 function _ensInitBtn(){try{_ensUpdBtn();}catch(e){}}
 document.addEventListener('DOMContentLoaded',_ensInitBtn);
-document.addEventListener('DOMContentLoaded',function(){try{_ySclUpd();}catch(e){}});
+document.addEventListener('DOMContentLoaded',function(){try{_ySclUpd();}catch(e){}try{_yrSpanUpd();}catch(e){}});
 function _ensUpdBtn(){
   const b=document.getElementById('indEnsBtn');
   if(!b)return;
@@ -5764,7 +5887,7 @@ async function fetchNowcast(lat,lon){
     function(){
       const ctrl=new AbortController();
       setTimeout(function(){ctrl.abort();},6000);
-      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/4.2'}});
+      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/4.3'}});
     },
     function(){
       const ctrl=new AbortController();
@@ -9054,6 +9177,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
         <button id="indM40" onclick="openIndic('y40')">40 j</button>
         <button id="indMc" onclick="openIndic('y40c')">Cône 40j</button>
         <button id="indMyr" onclick="openIndic('yr')">Année</button>
+        <button id="indYrSpanBtn" onclick="toggleYrSpan()">↔ Année civile</button>
         <button id="indMhyd" onclick="openHydro('2m')">💧</button>
         <button id="indMh1" onclick="openHydro('1y')">1 a</button>
         <button id="indMh3" onclick="openHydro('3y')">3 a</button>
