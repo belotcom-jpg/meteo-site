@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v5.3.6 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v5.5.1 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v5.3.6</title>
+<title>MultiMaps — géographie (collège & lycée) — v5.5.1</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -107,6 +107,11 @@
     text-shadow:0 1px 2px rgba(255,255,255,.9);
   }
   .pilote-actives{ border-bottom:1.5px solid var(--trait); padding-bottom:9px; margin-bottom:1px }
+  .pilote-actives.actives-en-legende{
+    border-bottom:none; border-top:1px dashed var(--trait);
+    padding:8px 0 0; margin:0;
+  }
+  .actives-en-legende #actives-compte{ font-size:9.5px }
   .actives-tete{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:7px }
   #actives-compte{ font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:#8a8577 }
   #btn-actives-off{
@@ -848,6 +853,7 @@
     <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable dans ⚙️ Options)">✕</button>
   </div>
   <div class="widget-corps" id="legende-corps"></div>
+  <div class="widget-corps" style="padding-top:0;flex:none" id="legende-accueil-actives"></div>
 </div>
 
 <div class="widget" id="wg-actions" style="width:242px">
@@ -1202,6 +1208,9 @@
       <input type="color" id="coul-massifs-osm" value="#2563eb" title="Couleur de remplissage des contours réels" style="width:24px;height:18px;padding:0;border:1px solid var(--trait);border-radius:4px;cursor:pointer"></label>
     <button class="calque-ajout donnee" id="btn-smassifs" title="Le niveau fin du relief : 87 massifs — dont les 42 massifs géologiques officiels des Alpes (carte CGET : Genevois, Chambotte, Terres Froides, Chambaran, Arvan-Villards, Monges, Grand Coyer, Verdon, Haut Var, Ubaye…), tracés d'après la carte de référence et découpés par le relief, les vallées faisant frontière. Case « noms seulement » pour un affichage épuré — les massifs alpins (Chartreuse, Belledonne, Vercors, Vanoise, Écrins…), le Jura, les Vosges, le Massif central (Aubrac, Cantal, Cévennes…), les Pyrénées et la Corse. Le complément précis des grandes chaînes du widget ⛰ Montagnes.">🏔 Sous-massifs (Chartreuse, Belledonne…)</button>
     <label class="velo-filtre"><input type="checkbox" id="chk-smassifs-noms"> Noms seulement <small>(sans délimitation)</small></label>
+    <button class="pilote-btn" id="btn-contours-osm" style="width:100%;margin-top:4px"
+            title="Remplace les contours embarqués, saisis à la main avec une dizaine de sommets, par ceux d’OpenStreetMap : nettement plus détaillés. Interroge le service pour la zone visible, puis garde le résultat en mémoire.">✨ Contours précis (OpenStreetMap)</button>
+    <p class="sous" id="contours-osm-etat" style="margin:3px 0 0"></p>
     <button class="calque-ajout donnee" id="btn-vallees" title="51 vallées tracées le long de leur rivière réelle — sillon alpin complet (Grésivaudan + Combe de Savoie), Haute-Durance, Alpes, Pyrénées, Massif central, Vosges, Jura : Grésivaudan, Maurienne, Tarentaise, Oisans, Ubaye, Vésubie, vallée d'Aspe… Les axes de vie de la montagne, en bleu le long des rivières.">🏞 Vallées (Grésivaudan, Oisans…)</button>
   <div style="border-top:1px solid var(--trait);margin:6px 0"></div>
     <button class="calque-ajout donnee" id="btn-courbes" title="Courbes de niveau IGN (isohypses) — zoomez au niveau local pour les voir apparaître">〰 Courbes de niveau</button>
@@ -1902,7 +1911,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.3.6</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.5.1</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -2007,7 +2016,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.3.6</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.5.1</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -2274,7 +2283,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.3.6';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.5.1';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -5774,6 +5783,139 @@
     }
   });
   const famCoul = (k)=> coulStyle('fam_'+k, RELIEF_FIN.familles[k][1]);
+  // ---------- Contours précis des massifs (OpenStreetMap) ----------
+  // Les contours embarqués sont saisis à la main : 8 à 9 sommets par massif, ce qui donne
+  // des patatoïdes qui ne suivent pas le relief. OpenStreetMap décrit ces mêmes massifs par
+  // des relations dont les contours sont détaillés. On les récupère à la demande, on les
+  // garde en mémoire, et on retombe sur le tracé embarqué si le service ne répond pas.
+  const CONTOURS_OSM = { cache: {}, enCours: {}, actif: false };
+  const CLE_CONTOURS = 'geo-contours-massifs';
+  try{
+    const memo = JSON.parse(localStorage.getItem(CLE_CONTOURS) || '{}');
+    if(memo && typeof memo === 'object') CONTOURS_OSM.cache = memo;
+  }catch(e){}
+
+  function normNom(s){
+    return String(s || '').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/^(massif du |massif de la |massif des |massif d[eu] |chaine d[eu] |chaine des |les |le |la |l')/, '')
+      .replace(/[^a-z0-9]/g, '');
+  }
+
+  // assemble les segments d'une relation en anneaux fermés
+  function anneauxDepuisSegments(segments){
+    const restants = segments.filter(function(s){ return s && s.length > 1; }).map(function(s){ return s.slice(); });
+    const anneaux = [];
+    let garde = 0;
+    while(restants.length && garde++ < 4000){
+      let courant = restants.shift();
+      let progres = true;
+      while(progres && garde++ < 4000){
+        progres = false;
+        const tete = courant[0], queue = courant[courant.length - 1];
+        for(let i = 0; i < restants.length; i++){
+          const s = restants[i];
+          const a = s[0], b = s[s.length - 1];
+          const proche = function(p, q){ return Math.abs(p[0]-q[0]) < 1e-6 && Math.abs(p[1]-q[1]) < 1e-6; };
+          if(proche(queue, a)){ courant = courant.concat(s.slice(1)); restants.splice(i, 1); progres = true; break; }
+          if(proche(queue, b)){ courant = courant.concat(s.slice().reverse().slice(1)); restants.splice(i, 1); progres = true; break; }
+          if(proche(tete, b)){ courant = s.slice(0, -1).concat(courant); restants.splice(i, 1); progres = true; break; }
+          if(proche(tete, a)){ courant = s.slice().reverse().slice(0, -1).concat(courant); restants.splice(i, 1); progres = true; break; }
+        }
+      }
+      if(courant.length > 3) anneaux.push(courant);
+    }
+    return anneaux;
+  }
+
+  // récupère en une requête tous les massifs de la zone visible
+  async function contoursMassifsOSM(bnds){
+    const b = bnds || map.getBounds();
+    const bbox = b.getSouth().toFixed(3) + ',' + b.getWest().toFixed(3) + ','
+               + b.getNorth().toFixed(3) + ',' + b.getEast().toFixed(3);
+    const req = '[out:json][timeout:40];('
+      + 'relation["natural"="mountain_range"](' + bbox + ');'
+      + 'way["natural"="mountain_range"](' + bbox + ');'
+      + ');out geom;';
+    const d = await overpassRequete(req);
+    const trouves = {};
+    (d.elements || []).forEach(function(el){
+      const nom = (el.tags && (el.tags['name:fr'] || el.tags.name)) || '';
+      if(!nom) return;
+      let anneaux = [];
+      if(el.type === 'way' && el.geometry){
+        anneaux = [el.geometry.map(function(p){ return [p.lat, p.lon]; })];
+      }else if(el.members){
+        const segs = el.members
+          .filter(function(m){ return m.geometry && m.role !== 'inner'; })
+          .map(function(m){ return m.geometry.map(function(p){ return [p.lat, p.lon]; }); });
+        anneaux = anneauxDepuisSegments(segs);
+      }
+      anneaux = anneaux.filter(function(a){ return a.length > 3; });
+      if(!anneaux.length) return;
+      const cle = normNom(nom);
+      // on garde le contour le plus détaillé quand plusieurs objets portent le même nom
+      const total = anneaux.reduce(function(s, a){ return s + a.length; }, 0);
+      if(!trouves[cle] || total > trouves[cle].total){
+        trouves[cle] = { nom:nom, anneaux:anneaux, total:total };
+      }
+    });
+    Object.keys(trouves).forEach(function(k){
+      CONTOURS_OSM.cache[k] = { nom:trouves[k].nom, anneaux:trouves[k].anneaux };
+    });
+    try{
+      // on ne mémorise que les contours raisonnables, pour ne pas saturer le stockage
+      const aGarder = {};
+      Object.keys(CONTOURS_OSM.cache).forEach(function(k){
+        const c = CONTOURS_OSM.cache[k];
+        const n = c.anneaux.reduce(function(s, a){ return s + a.length; }, 0);
+        if(n <= 4000) aGarder[k] = c;
+      });
+      localStorage.setItem(CLE_CONTOURS, JSON.stringify(aGarder));
+    }catch(e){}
+    return Object.keys(trouves).length;
+  }
+
+  // contour à utiliser pour un massif : OSM si disponible, sinon le tracé embarqué
+  function contourMassif(nom, secours){
+    const c = CONTOURS_OSM.actif && CONTOURS_OSM.cache[normNom(nom)];
+    return c ? { anneaux:c.anneaux, source:'osm' } : { anneaux:[secours], source:'embarque' };
+  }
+
+  document.getElementById('btn-contours-osm').addEventListener('click', async function(){
+    const b = document.getElementById('btn-contours-osm');
+    const et = document.getElementById('contours-osm-etat');
+    if(CONTOURS_OSM.actif){
+      CONTOURS_OSM.actif = false;
+      basculerBouton(b, false, '', '\u2728 Contours pr\u00e9cis (OpenStreetMap)');
+      if(et) et.textContent = 'Contours embarqu\u00e9s \u2014 trac\u00e9s \u00e0 la main, une dizaine de sommets par massif.';
+      calculerSmassifs();
+      return;
+    }
+    if(et) et.textContent = 'Interrogation d\u2019OpenStreetMap pour la zone visible\u2026';
+    afficherInfo('\u2728 Recherche des contours de massifs dans OpenStreetMap\u2026', 0);
+    try{
+      const n = await contoursMassifsOSM(map.getBounds());
+      const total = Object.keys(CONTOURS_OSM.cache).length;
+      if(!total){
+        if(et) et.textContent = 'Aucun massif d\u00e9crit dans OpenStreetMap sur cette zone. Recentrez sur un massif, puis r\u00e9essayez.';
+        afficherInfo('\u2728 Aucun contour trouv\u00e9 ici \u2014 recentrez sur un massif', 6000);
+        return;
+      }
+      CONTOURS_OSM.actif = true;
+      basculerBouton(b, true, '\u2728 Contours pr\u00e9cis \u2715', '', '#0f766e');
+      if(et) et.textContent = n + ' massif(s) trouv\u00e9(s) dans cette vue \u00b7 ' + total + ' en m\u00e9moire. '
+        + 'Ceux qu\u2019OpenStreetMap ne d\u00e9crit pas gardent leur trac\u00e9 embarqu\u00e9.';
+      calculerSmassifs();
+      afficherInfo('\u2728 ' + n + ' contour(s) repris d\u2019OpenStreetMap \u2014 d\u00e9placez-vous et relancez pour en obtenir d\u2019autres', 8000);
+    }catch(e){
+      if(et) et.textContent = 'OpenStreetMap n\u2019a pas r\u00e9pondu : ' + String(e && e.message || e).slice(0, 70);
+      afficherInfo('\u26a0\ufe0f Contours OpenStreetMap indisponibles \u2014 les trac\u00e9s embarqu\u00e9s restent utilis\u00e9s', 7000);
+    }finally{
+      cacherInfo();
+    }
+  });
+
   const etatSmassifs = { actif:false, groupe:null };
   document.getElementById('btn-smassifs').addEventListener('click', ()=>{
     const btn = document.getElementById('btn-smassifs');
@@ -5834,15 +5976,18 @@
       const kx = 111.32*Math.cos(m[1]*Math.PI/180);
       const c = famCoul(m[3]);
       let s, n, w, e;
-      if(m[6]){ // tracé digitalisé d'après les cartes de référence
-        const la = m[6].map(p=>p[0]), lo = m[6].map(p=>p[1]);
+      // contour OSM si on l'a recupere, sinon le trace embarque
+      const co = CONTOURS_OSM.actif && CONTOURS_OSM.cache[normNom(m[0])];
+      const trace = co ? co.anneaux[0] : m[6];
+      if(trace){ // tracé OSM ou digitalisé d'après les cartes de référence
+        const la = trace.map(p=>p[0]), lo = trace.map(p=>p[1]);
         s = Math.min.apply(null, la); n = Math.max.apply(null, la);
         w = Math.min.apply(null, lo); e = Math.max.apply(null, lo);
       }else{
         const dLat = m[5]/110.57, dLon = m[5]/kx;
         s = m[1]-dLat; n = m[1]+dLat; w = m[2]-dLon; e = m[2]+dLon;
       }
-      return { m, kx, s, n, w, e, poly:m[6] || null,
+      return { m, kx, s, n, w, e, poly:trace || null, srcOsm:!!co,
                rgb:[parseInt(c.slice(1,3),16), parseInt(c.slice(3,5),16), parseInt(c.slice(5,7),16)] };
     }).filter(c=> c.e >= b.getWest() && c.w <= b.getEast() && c.n >= b.getSouth() && c.s <= b.getNorth());
     if(!cands.length){ if(etatSmassifs.calque){ map.removeLayer(etatSmassifs.calque); etatSmassifs.calque = null; } return; }
@@ -8713,6 +8858,28 @@
   // Principe emprunté aux logiciels de dessin : un tracé posé reste un objet.
   // On le sélectionne, on le restyle, on le supprime — sans le redessiner.
 
+  // Les puces « couches actives » disent la meme chose que la legende : ce qui est
+  // affiche sur la carte. En mode C, le volet de droite est permanent, on les y place.
+  // En mode O, la legende est une fenetre qu'on peut fermer : elles restent dans le rail.
+  function placerCouchesActives(){
+    const bloc = document.getElementById('pilote-actives');
+    if(!bloc) return;
+    const versLegende = document.body.classList.contains('interface-c');
+    const accueil = document.getElementById('legende-accueil-actives');
+    const rail = document.querySelector('#wg-pilote .widget-corps');
+    const cible = versLegende ? accueil : rail;
+    if(!cible || bloc.parentElement === cible) return;
+    if(versLegende){
+      cible.appendChild(bloc);
+    }else{
+      // en mode O, il reprend sa place juste apres le bouton Options
+      const apres = rail.querySelector('.pilote-grille');
+      if(apres && apres.nextSibling) rail.insertBefore(bloc, apres.nextSibling);
+      else rail.appendChild(bloc);
+    }
+    bloc.classList.toggle('actives-en-legende', versLegende);
+  }
+
   function majPanneauOutil(){
     const actif = (typeof mode !== 'undefined') ? mode : 'main';
     Array.prototype.forEach.call(document.querySelectorAll('#wg-outils .prop'), function(bloc){
@@ -9732,8 +9899,20 @@
     try{
       const dd = 0.35, bbox = (ll.lng-dd)+','+(ll.lat-dd)+','+(ll.lng+dd)+','+(ll.lat+dd);
       const url = 'https://maps.effis.emergency.copernicus.eu/effis?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=ecmwf007.fwi&QUERY_LAYERS=ecmwf007.fwi&SRS=EPSG:4326&BBOX='+bbox+'&WIDTH=101&HEIGHT=101&X=50&Y=50&FORMAT=image/png&INFO_FORMAT=application/json&TIME='+dateJour(0);
-      const r = await fetch(url); if(!r.ok) return null;
-      const j = await r.json();
+      const r = await fetch(url);
+      if(!r.ok){ noterService('Danger FWI (EFFIS)', false, 'r\u00e9ponse HTTP ' + r.status); return null; }
+      // Le service repond parfois par une page HTML d'erreur au lieu du JSON demande :
+      // le laisser filer vers .json() produit un « Unexpected token < » incomprehensible.
+      const txt = await r.text();
+      if(/^\s*</.test(txt)){
+        const m = txt.match(/<ServiceException[^>]*>([\s\S]{0,140})/i);
+        noterService('Danger FWI (EFFIS)', false,
+          'le service a r\u00e9pondu par une page d\u2019erreur' + (m ? ' : ' + m[1].replace(/<[^>]*>/g, ' ').trim() : ''));
+        return null;
+      }
+      let j;
+      try{ j = JSON.parse(txt); }
+      catch(e){ noterService('Danger FWI (EFFIS)', false, 'r\u00e9ponse illisible'); return null; }
       const f = j && j.features && j.features[0] && j.features[0].properties;
       if(!f) return null;
       for(const k in f){ const v = parseFloat(f[k]); if(isFinite(v) && v >= 0 && v <= 200){ noterService('Danger FWI (EFFIS)', true); return v; } }
@@ -10363,12 +10542,36 @@
     const el = document.getElementById('diag-liste'); if(!el) return;
     const noms = Object.keys(SANTE);
     if(!noms.length){ el.innerHTML = '<i style="color:#8a8577">Aucun service encore sollicité. Activez une couche ou lancez le test ci-dessous.</i>'; return; }
-    el.innerHTML = noms.sort().map(function(n){
+    // Le detail vient d'un message d'erreur : il peut contenir < et des URL.
+    // Sans echappement il casse la mise en page et ouvre une injection.
+    function abreger(t){
+      const s = String(t).replace(/\s+/g, ' ').trim();
+      return s.length > 90 ? s.slice(0, 88) + '\u2026' : s;
+    }
+    const ok = noms.filter(function(n){ return SANTE[n].ok; });
+    const ko = noms.filter(function(n){ return !SANTE[n].ok; });
+    const ligne = function(n){
       const s = SANTE[n];
-      const pastille = s.ok ? '<span style="color:#15803d">●</span>' : '<span style="color:#dc2626">●</span>';
-      const det = s.detail ? ' <span style="color:#8a8577;font-size:10px">('+s.detail+')</span>' : '';
-      return pastille+' '+n+det;
-    }).join('<br>');
+      const marque = s.ok
+        ? '<span style="color:#15803d;font-weight:700">\u2713</span>'
+        : '<span style="color:#dc2626;font-weight:700">\u2715</span>';
+      const det = s.detail
+        ? '<div style="color:#8a8577;font-size:10px;margin:1px 0 0 16px;line-height:1.35">' + echap(abreger(s.detail)) + '</div>'
+        : '';
+      const quand = s.t ? '<span style="color:#a8a29e;font-size:9.5px"> \u00b7 ' + new Date(s.t).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) + '</span>' : '';
+      return '<div style="margin-bottom:3px">' + marque + ' ' + echap(n) + quand + det + '</div>';
+    };
+    let html = '<div style="font-size:10px;color:#8a8577;margin-bottom:5px">'
+      + ok.length + ' service(s) joignable(s)'
+      + (ko.length ? ' \u00b7 <b style="color:#dc2626">' + ko.length + ' en \u00e9chec</b>' : '')
+      + ' sur ' + noms.length + ' sollicit\u00e9(s)</div>';
+    if(ko.length){
+      html += '<div class="etiquette" style="color:#dc2626">En \u00e9chec</div>' + ko.sort().map(ligne).join('');
+    }
+    if(ok.length){
+      html += '<div class="etiquette" style="margin-top:5px">Joignables</div>' + ok.sort().map(ligne).join('');
+    }
+    el.innerHTML = html;
   }
   function servicesEnPanne(){
     return Object.keys(SANTE).filter(function(n){ return !SANTE[n].ok; });
@@ -10384,6 +10587,37 @@
       try{ await resineuxAuPoint(c.lat, c.lng); }catch(e){}
       try{ await foyersDuJour(0); }catch(e){}
       try{ await fuelDepuisCLC(map.getBounds(), 32, 24); }catch(e){}
+      // familles non couvertes jusqu'ici : elles representent la majorite des couches
+      try{
+        const r = await fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude='
+          + c.lat.toFixed(3) + '&longitude=' + c.lng.toFixed(3) + '&current=european_aqi');
+        noterService('Qualit\u00e9 de l\u2019air (Open-Meteo)', r.ok, r.ok ? '' : 'HTTP ' + r.status);
+      }catch(e){ noterService('Qualit\u00e9 de l\u2019air (Open-Meteo)', false, String(e && e.message || e)); }
+      try{
+        const r = await fetch(WFS_GEOPF + '&TYPENAMES=ADMINEXPRESS-COG-CARTO.LATEST:region&COUNT=1');
+        noterService('Limites IGN (WFS)', r.ok, r.ok ? '' : 'HTTP ' + r.status);
+      }catch(e){ noterService('Limites IGN (WFS)', false, String(e && e.message || e)); }
+      try{
+        const t0 = Date.now();
+        await overpassRequete('[out:json][timeout:20];node(around:1200,' + c.lat.toFixed(4) + ',' + c.lng.toFixed(4) + ')[amenity=townhall];out 1;');
+        noterService('OpenStreetMap (Overpass)', true, (Date.now() - t0) + ' ms');
+      }catch(e){ noterService('OpenStreetMap (Overpass)', false, String(e && e.message || e)); }
+      try{
+        const r = await fetch('https://api.gbif.org/v1/occurrence/search?limit=1&country=FR');
+        noterService('Biodiversit\u00e9 (GBIF)', r.ok, r.ok ? '' : 'HTTP ' + r.status);
+      }catch(e){ noterService('Biodiversit\u00e9 (GBIF)', false, String(e && e.message || e)); }
+      try{
+        const r = await fetch('https://geo.api.gouv.fr/communes?nom=Paris&limit=1');
+        noterService('D\u00e9coupage administratif (geo.api.gouv.fr)', r.ok, r.ok ? '' : 'HTTP ' + r.status);
+      }catch(e){ noterService('D\u00e9coupage administratif (geo.api.gouv.fr)', false, String(e && e.message || e)); }
+      try{
+        const r = await fetch('https://api-adresse.data.gouv.fr/search/?limit=1&q=Paris');
+        noterService('Adresses (BAN)', r.ok, r.ok ? '' : 'HTTP ' + r.status);
+      }catch(e){ noterService('Adresses (BAN)', false, String(e && e.message || e)); }
+      try{
+        const t = await testerAltitudes();
+        noterService('Altitudes (relief)', t.ok, t.cause);
+      }catch(e){ noterService('Altitudes (relief)', false, String(e && e.message || e)); }
       cacherInfo(); majDiagnostic();
       const ko = servicesEnPanne();
       afficherInfo(ko.length ? '🩺 '+ko.length+' service(s) en panne : '+ko.join(', ')+' — l’appli continue avec le reste' : '🩺 Tous les services testés répondent correctement', 9000);
@@ -10721,6 +10955,7 @@
   function appliquerInterface(mode, silencieux){
     const c = (mode === 'c');
     document.body.classList.toggle('interface-c', c);
+    if(typeof placerCouchesActives === 'function') placerCouchesActives();
     const bo = document.getElementById('btn-iface-o'), bc = document.getElementById('btn-iface-c');
     if(bo) bo.classList.toggle('donnee-active', !c);
     if(bc) bc.classList.toggle('donnee-active', c);
@@ -12233,6 +12468,95 @@
   // altitudes de la vue (tuiles terrarium), on calcule la position du Soleil pour la date
   // et l'heure choisies, puis on remonte le rayon solaire depuis chaque point : s'il
   // rencontre un relief plus haut avant de sortir de la grille, le point est à l'ombre.
+  // Lecture d'altitudes pour l'ombre. altitudeGrille lit les tuiles au zoom de la carte + 1
+  // et refuse au-dela de 30 tuiles : sur un ecran courant cela represente 88 tuiles des le
+  // zoom 8, donc un refus silencieux a toutes les echelles utiles. Ici on choisit le zoom
+  // de tuiles le plus fin qui tienne dans le budget : la maille est plus grossiere en vue
+  // large, mais le calcul aboutit toujours.
+  async function altitudesOmbre(bnds, cols, lignes){
+    const crs = map.options.crs;
+    let choisi = null;
+    for(let z = 13; z >= 5; z--){
+      const pNW = map.project(bnds.getNorthWest(), z), pSE = map.project(bnds.getSouthEast(), z);
+      const nx = Math.floor(pSE.x/256) - Math.floor(pNW.x/256) + 1;
+      const ny = Math.floor(pSE.y/256) - Math.floor(pNW.y/256) + 1;
+      if(nx > 0 && ny > 0 && nx * ny <= 24){ choisi = { z:z, nx:nx, ny:ny }; break; }
+    }
+    if(!choisi) return { alt:null, cause:'emprise trop vaste m\u00eame en maille grossi\u00e8re' };
+    const z = choisi.z;
+    const pNW = map.project(bnds.getNorthWest(), z), pSE = map.project(bnds.getSouthEast(), z);
+    const tx0 = Math.floor(pNW.x/256), ty0 = Math.floor(pNW.y/256);
+    const comp = document.createElement('canvas');
+    comp.width = choisi.nx * 256; comp.height = choisi.ny * 256;
+    const cx = comp.getContext('2d', { willReadFrequently:true });
+    if(!cx) return { alt:null, cause:'toile indisponible' };
+    let recues = 0;
+    const jobs = [];
+    for(let j = 0; j < choisi.ny; j++){
+      for(let i = 0; i < choisi.nx; i++){
+        (function(i, j){
+          jobs.push(new Promise(function(res){
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = function(){ try{ cx.drawImage(img, i*256, j*256); recues++; }catch(e){} res(); };
+            img.onerror = function(){ res(); };
+            img.src = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/'+z+'/'+(tx0+i)+'/'+(ty0+j)+'.png';
+          }));
+        })(i, j);
+      }
+    }
+    await Promise.all(jobs);
+    if(!recues) return { alt:null, cause:'aucune tuile re\u00e7ue (' + choisi.nx * choisi.ny + ' demand\u00e9es au zoom ' + z + ')' };
+    let dat;
+    try{ dat = cx.getImageData(0, 0, comp.width, comp.height).data; }
+    catch(e){ return { alt:null, cause:'lecture des pixels refus\u00e9e (partage d\u2019origine)' }; }
+    const originX = tx0*256, originY = ty0*256;
+    const swP = crs.project(bnds.getSouthWest()), neP = crs.project(bnds.getNorthEast());
+    const alt = new Float32Array(cols * lignes);
+    for(let r = 0; r < lignes; r++){
+      for(let c = 0; c < cols; c++){
+        const mercX = swP.x + (c+0.5)/cols*(neP.x-swP.x);
+        const mercY = neP.y - (r+0.5)/lignes*(neP.y-swP.y);
+        const ll = crs.unproject(L.point(mercX, mercY));
+        const pp = map.project(ll, z);
+        let px = Math.round(pp.x-originX), py = Math.round(pp.y-originY);
+        if(px < 0) px = 0; if(py < 0) py = 0;
+        if(px >= comp.width) px = comp.width-1;
+        if(py >= comp.height) py = comp.height-1;
+        const k = (py*comp.width+px)*4;
+        alt[r*cols+c] = (dat[k]*256 + dat[k+1] + dat[k+2]/256) - 32768;
+      }
+    }
+    return { alt:alt, cause:choisi.nx*choisi.ny + ' tuiles au zoom ' + z, z:z };
+  }
+
+  // Sonde du service d'altitudes : charge une tuile connue et rend un verdict lisible.
+  function testerAltitudes(){
+    return new Promise(function(res){
+      const url = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/10/524/369.png';
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      const minuteur = setTimeout(function(){ res({ ok:false, cause:'delai depasse (10 s) \u2014 service injoignable ou bloque par le reseau' }); }, 10000);
+      img.onerror = function(){ clearTimeout(minuteur); res({ ok:false, cause:'chargement refuse \u2014 service injoignable ou bloque par le reseau' }); };
+      img.onload = function(){
+        clearTimeout(minuteur);
+        try{
+          const c = document.createElement('canvas');
+          c.width = 8; c.height = 8;
+          const cx = c.getContext('2d', { willReadFrequently:true });
+          cx.drawImage(img, 0, 0);
+          const p = cx.getImageData(0, 0, 8, 8).data;
+          const alt = (p[0] * 256 + p[1] + p[2] / 256) - 32768;
+          if(!isFinite(alt) || alt < -500 || alt > 9000) res({ ok:false, cause:'tuile recue mais illisible' });
+          else res({ ok:true, cause:'tuile lue, altitude temoin ' + Math.round(alt) + ' m' });
+        }catch(e){
+          res({ ok:false, cause:'lecture des pixels refusee (partage d\u2019origine) : ' + ((e && e.name) || 'erreur') });
+        }
+      };
+      img.src = url + '?t=' + Date.now();
+    });
+  }
+
   const etatOmbre = { couche:null, calcul:false, actifDemande:false, attente:null };
 
   // Position du Soleil : algorithme classique, précision de l'ordre de la minute d'arc,
@@ -12270,11 +12594,13 @@
     try{
       const b = map.getBounds();
       const cols = 260, lignes = 260;
-      const g = await altitudeGrille(b, cols, lignes);
-      // altitudeGrille rend un tableau PLAT de cols x lignes valeurs, indexe [y*cols + x].
-      if(!g || g.length !== cols * lignes){
-        afficherInfo('\u26a0\ufe0f Altitudes indisponibles ici \u2014 la lecture ne couvre qu\u2019une emprise limit\u00e9e. '
-          + 'Zoomez sur un massif ou une vall\u00e9e (niveau 9 \u00e0 13).', 7000);
+      const lu = await altitudesOmbre(b, cols, lignes);
+      const g = lu.alt;
+      noterService('Altitudes (relief)', !!g, lu.cause);
+      if(!g){
+        afficherInfo('\u26a0\ufe0f Altitudes indisponibles : ' + lu.cause, 9000);
+        const inf = document.getElementById('ombre-info');
+        if(inf) inf.textContent = 'Altitudes indisponibles : ' + lu.cause;
         return null;
       }
       const nl = lignes, nc = cols;
@@ -12377,7 +12703,19 @@
     if(reg) reg.style.display = 'block';
     basculerBouton(b, true, '\u{1F3D4} Ombre du relief \u2715', '', '#334155');
     majLegende();
-    majOmbre();
+    afficherInfo('Verification du service d’altitudes…', 0);
+    testerAltitudes().then(function(t){
+      noterService('Altitudes (relief)', t.ok, t.cause);
+      const info = document.getElementById('ombre-info');
+      if(!t.ok){
+        if(info) info.textContent = 'Service d’altitudes indisponible : ' + t.cause;
+        afficherInfo('⚠️ Altitudes indisponibles : ' + t.cause
+          + '. La vue 3D et l’hypsometrie utilisent le meme service.', 12000);
+        return;
+      }
+      if(info) info.textContent = 'Service joignable — calcul en cours…';
+      majOmbre();
+    });
   });
   ['ombre-date', 'ombre-heure'].forEach(function(id){
     const e = document.getElementById(id);
@@ -15185,6 +15523,7 @@
   // ---------- Couches actives : puces desactivables dans le rail ----------
   // Source unique de verite : etatCouchesActives(), deja utilisee par annuler / reprendre.
   function majCouchesActives(){
+    placerCouchesActives();
     const boite = document.getElementById('pilote-actives');
     const liste = document.getElementById('actives-liste');
     const compte = document.getElementById('actives-compte');
@@ -16351,7 +16690,7 @@
         +ligneLegende('#ef4444','50 \u2013 75 %','carre')+ligneLegende('#7f1d1d','75 \u2013 100 %','carre'));
     }
     if(blocs.length){
-      h += '<div class="leg-titre" style="margin-top:8px">Couches actives</div>'+blocs.join('');
+      h += blocs.join('');
     }else{
       h += '<p class="nav-note" style="margin-top:8px">Activez des couches de données pour voir leur légende ici.</p>';
     }
