@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v5.6 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v5.7.6 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v5.6</title>
+<title>MultiMaps — géographie (collège & lycée) — v5.7.6</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -147,6 +147,37 @@
   #btn-actives-off:hover{ color:var(--rouge) }
   .actives-liste{ display:flex; flex-wrap:wrap; gap:5px }
   /* légendes interactives : pastille vivante, menu, modale */
+  #aide-onglets{ flex-wrap:wrap }
+  .aide-note{ font-size:11px; color:#8a8577; line-height:1.5 }
+  .aide-groupe{ margin:14px 0 4px; font-size:12px; letter-spacing:.03em; color:var(--encre) }
+  .aide-fen{ border:1px solid var(--trait); border-radius:9px; margin-bottom:4px; background:#fdfcf9 }
+  .aide-fen > summary{
+    cursor:pointer; padding:7px 10px; font-weight:600; font-size:12.5px;
+    display:flex; align-items:center; gap:7px;
+  }
+  .aide-fen > summary:hover{ background:#f5f2ea }
+  .aide-compte{
+    margin-left:auto; font-size:10px; font-weight:400; color:#8a8577;
+    border:1px solid var(--trait); border-radius:999px; padding:1px 7px;
+  }
+  .aide-fen dl{ margin:0; padding:2px 12px 10px }
+  .aide-fen dt{ font-weight:600; font-size:12px; margin-top:7px }
+  .aide-fen dd{ margin:1px 0 0; font-size:11.5px; color:#57534e; line-height:1.5 }
+  .calque-ajout.hors-portee{ opacity:.42; filter:grayscale(1) }
+  .calque-ajout.hors-portee:hover{ opacity:.7 }
+  #bandeau-portee button{
+    pointer-events:auto; margin-left:9px; border:1px solid rgba(255,255,255,.45);
+    background:rgba(255,255,255,.14); color:#fff; border-radius:999px;
+    font:600 11px system-ui; padding:2px 9px; cursor:pointer;
+  }
+  #bandeau-portee button:hover{ background:rgba(255,255,255,.28) }
+  #bandeau-portee{
+    position:fixed; left:50%; transform:translateX(-50%); top:8px; z-index:1450;
+    max-width:min(620px,92vw); background:rgba(31,42,55,.93); color:#fff;
+    font-size:11.5px; line-height:1.45; padding:7px 13px; border-radius:999px;
+    box-shadow:0 3px 14px rgba(0,0,0,.3); pointer-events:none;
+  }
+  body.interface-c #bandeau-portee{ left:calc(50% + (var(--rail) - var(--legende)) / 2) }
   .leg-aide{
     font-size:10px; color:#8a8577; line-height:1.45; margin:0 0 7px;
     padding-bottom:6px; border-bottom:1px dashed var(--trait);
@@ -715,6 +746,7 @@
 
 <div id="map"></div>
 
+<div id="bandeau-portee" hidden><span></span><button id="retour-france" title="Recadre la carte sur la France métropolitaine.">↩ France</button></div>
 <button id="rail-toggle" title="Replier ou déplier la barre latérale">‹</button>
 <button id="legende-toggle" title="Replier ou déplier le volet de légende">›</button>
 
@@ -996,6 +1028,7 @@
     <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
   </div>
   <div class="widget-corps">
+    <button class="calque-ajout donnee" id="btn-climats" title="Les grands types de climat français, appliqués aux départements. Cliquez un département pour la fiche de son climat : caractéristiques, repères chiffrés et code Köppen. Attention : les limites climatiques réelles ne suivent pas les frontières administratives.">🌍 Carte des climats</button>
     <span class="etiquette">Moyennes climatiques</span>
     <button class="calque-ajout donnee" id="btn-clim-soleil" title="Durée d’ensoleillement moyenne annuelle par ville (normales 1991-2020). Le contraste nord-sud est l’un des plus marqués d’Europe.">☀️ Heures d’ensoleillement par an</button>
     <button class="calque-ajout donnee" id="btn-clim-soleil-surf" title="Colorie le territoire en interpolant entre les 35 stations, par pondération inverse de la distance. Les bandes de 100 heures reproduisent la lecture des cartes solaires imprimées. Entre deux stations la valeur est estimée, jamais mesurée.">🌈 Dégradé d’ensoleillement</button>
@@ -1104,6 +1137,138 @@
     <button class="calque-ajout donnee" id="btn-fleuves-noms" title="Les noms des grands fleuves et rivières de France, posés le long de leur cours : Seine, Loire, Rhône, Garonne, Rhin, Meuse, Moselle, Saône, Dordogne, Durance, Isère…">🏷 Noms des grands fleuves</button>
   </div>
 </div>
+<div class="widget" id="wg-archeo" style="width:258px">
+  <div class="widget-tete">
+    <span class="widget-titre">🏺 Archéologie &amp; fossiles</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer">✕</button>
+  </div>
+  <div class="widget-corps">
+    <span class="etiquette">Traces humaines</span>
+    <div style="font-size:10px;color:#8a8577;margin-bottom:4px">Sites recensés dans OpenStreetMap. Recentrez la carte, puis choisissez une catégorie.</div>
+    <button class="calque-ajout donnee" id="btn-archeo-sites" title="Sites archéologiques de toute nature : oppidums, villas gallo-romaines, nécropoles, habitats fouillés.">🏛 Sites archéologiques</button>
+    <button class="calque-ajout donnee" id="btn-archeo-megalithes" title="Dolmens, menhirs, cromlechs, alignements et tumulus. Densité très inégale : la Bretagne en concentre plusieurs milliers.">🗿 Mégalithes</button>
+    <button class="calque-ajout donnee" id="btn-archeo-ruines" title="Vestiges et bâtiments en ruine, de l’Antiquité à l’époque industrielle.">🏚 Ruines et vestiges</button>
+    <button class="calque-ajout donnee" id="btn-archeo-chateaux" title="Châteaux forts et fortifications médiévales.">🏰 Châteaux forts</button>
+
+    <div class="sep"></div>
+    <span class="etiquette">Fossiles — paléontologie</span>
+    <div style="font-size:10px;color:#8a8577;margin-bottom:4px">Spécimens de collection géolocalisés (GBIF). À ne pas confondre avec l’archéologie : ces espèces ont vécu bien avant l’apparition de l’humanité, sauf la dernière section.</div>
+    <details class="pilote-paquet"><summary>Au temps des dinosaures</summary>
+      <div class="pilote-grille">
+        <button class="calque-ajout donnee fossile-btn" id="btn-foss-dinosaures" data-taxon="Dinosauria" data-coul="#7c2d12" title="La France en a livré peu mais de beaux : Angeac-Charente, l’un des plus riches gisements d’Europe, Cruzy dans l’Hérault, Espéraza dans l’Aude. Attention : les dinosaures disparaissent 66 millions d’années avant les premiers humains. (Spécimens fossiles de collection recensés dans GBIF, dans la vue actuelle.)">🦖 Dinosaures</button>
+        <button class="calque-ajout donnee fossile-btn" id="btn-foss-ptero" data-taxon="Pterosauria" data-coul="#78350f" title="Reptiles volants contemporains des dinosaures, sans lien de parenté avec les oiseaux actuels — lesquels descendent au contraire des dinosaures théropodes. (Spécimens fossiles de collection recensés dans GBIF, dans la vue actuelle.)">🦎 Ptérosaures</button>
+        <button class="calque-ajout donnee fossile-btn" id="btn-foss-ichthyo" data-taxon="Ichthyosauria" data-coul="#0369a1" title="Reptiles marins en forme de dauphin : un cas d’école de convergence évolutive. Fréquents dans les marnes jurassiques du Bassin parisien et des Causses. (Spécimens fossiles de collection recensés dans GBIF, dans la vue actuelle.)">🐟 Ichtyosaures</button>
+        <button class="calque-ajout donnee fossile-btn" id="btn-foss-mosasaure" data-taxon="Mosasauridae" data-coul="#1e3a8a" title="Grands prédateurs marins de la fin du Crétacé, disparus avec les dinosaures. (Spécimens fossiles de collection recensés dans GBIF, dans la vue actuelle.)">🐊 Mosasaures</button>
+      </div>
+    </details>
+    <details class="pilote-paquet"><summary>Fossiles communs en France</summary>
+      <div class="pilote-grille">
+        <button class="calque-ajout donnee fossile-btn" id="btn-foss-ammonites" data-taxon="Ammonoidea" data-coul="#a16207" title="Le fossile français par excellence, et un marqueur chronologique : chaque espèce n’a vécu qu’un court intervalle, ce qui permet de dater les couches. Causses, Jura, Normandie, Alpes. (Spécimens fossiles de collection recensés dans GBIF, dans la vue actuelle.)">🐚 Ammonites</button>
+        <button class="calque-ajout donnee fossile-btn" id="btn-foss-trilobites" data-taxon="Trilobita" data-coul="#57534e" title="Arthropodes du Paléozoïque, disparus 250 millions d’années avant les dinosaures. Montagne Noire, Massif armoricain, Pyrénées. (Spécimens fossiles de collection recensés dans GBIF, dans la vue actuelle.)">🪲 Trilobites</button>
+        <button class="calque-ajout donnee fossile-btn" id="btn-foss-belemnites" data-taxon="Belemnitida" data-coul="#44403c" title="Les « pierres de foudre » du folklore : cônes calcaires internes de céphalopodes jurassiques. (Spécimens fossiles de collection recensés dans GBIF, dans la vue actuelle.)">🖊 Belémnites</button>
+        <button class="calque-ajout donnee fossile-btn" id="btn-foss-oursins" data-taxon="Echinoidea" data-coul="#b45309" title="Abondants dans la craie du Bassin parisien. Ramassés depuis la préhistoire, on en trouve dans des sépultures néolithiques. (Spécimens fossiles de collection recensés dans GBIF, dans la vue actuelle.)">🦔 Oursins fossiles</button>
+        <button class="calque-ajout donnee fossile-btn" id="btn-foss-brachiopodes" data-taxon="Brachiopoda" data-coul="#92400e" title="Coquillages à deux valves qui ressemblent aux mollusques sans en être : leur symétrie est différente. Très abondants avant, très rares aujourd’hui. (Spécimens fossiles de collection recensés dans GBIF, dans la vue actuelle.)">🐚 Brachiopodes</button>
+        <button class="calque-ajout donnee fossile-btn" id="btn-foss-crinoides" data-taxon="Crinoidea" data-coul="#0f766e" title="Les « lys de mer », échinodermes fixés au fond. Leurs tiges segmentées forment des calcaires entiers, dits entroquites. (Spécimens fossiles de collection recensés dans GBIF, dans la vue actuelle.)">🌸 Crinoïdes</button>
+      </div>
+    </details>
+    <details class="pilote-paquet"><summary>Mammifères du quaternaire</summary>
+      <div class="pilote-grille">
+        <button class="calque-ajout donnee fossile-btn" id="btn-foss-mammouth" data-taxon="Mammuthus" data-coul="#57534e" title="Contemporains des humains du Paléolithique, qui les ont peints à Rouffignac et à Chauvet. Disparus il y a environ 4 000 ans pour les dernières populations insulaires. (Spécimens fossiles de collection recensés dans GBIF, dans la vue actuelle.)">🦣 Mammouths</button>
+        <button class="calque-ajout donnee fossile-btn" id="btn-foss-ourscaverne" data-taxon="Ursus spelaeus" data-coul="#78350f" title="Ses ossements tapissent le sol de nombreuses grottes où il hibernait, parfois les mêmes que celles fréquentées par les humains. (Spécimens fossiles de collection recensés dans GBIF, dans la vue actuelle.)">🐻 Ours des cavernes</button>
+        <button class="calque-ajout donnee fossile-btn" id="btn-foss-rhinolaineux" data-taxon="Coelodonta antiquitatis" data-coul="#44403c" title="Adapté à la steppe froide qui couvrait la France pendant les périodes glaciaires. (Spécimens fossiles de collection recensés dans GBIF, dans la vue actuelle.)">🦏 Rhinocéros laineux</button>
+        <button class="calque-ajout donnee fossile-btn" id="btn-foss-hommeprehistorique" data-taxon="Homo neanderthalensis" data-coul="#be185d" title="Présent en Europe pendant plus de 300 000 ans, disparu il y a environ 40 000 ans. Le site éponyme est allemand, mais La Chapelle-aux-Saints et Le Moustier sont français. (Spécimens fossiles de collection recensés dans GBIF, dans la vue actuelle.)">👤 Néandertal</button>
+      </div>
+    </details>
+    <div style="font-size:9.5px;color:#57534e;margin-top:5px;line-height:1.45">⚠️ Les points marquent le <b>lieu de récolte</b> d’un spécimen conservé en collection, pas un gisement visitable ni une répartition ancienne. Beaucoup de fossiles anciens n’ont aucune coordonnée précise et n’apparaissent donc pas. La collecte est réglementée, interdite sur les sites classés et dans les réserves géologiques.</div>
+  </div>
+</div>
+
+<div class="widget" id="wg-monde" style="width:256px">
+  <div class="widget-tete">
+    <span class="widget-titre">🌍 Monde</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer">✕</button>
+  </div>
+  <div class="widget-corps">
+    <div style="font-size:10px;color:#8a8577;margin-bottom:4px">Contours et indicateurs mondiaux (Natural Earth, domaine public). Utilisable à toutes les échelles.</div>
+    <button class="calque-ajout donnee" id="btn-monde-pays" title="Les 177 pays du monde avec leurs contours. Cliquez un pays pour sa fiche : population, densité, PIB total et par habitant, niveau de revenu, catégorie de développement. Choisissez ensuite un indicateur pour colorier la carte.">🌍 Pays du monde</button>
+    <div id="monde-reglages" style="display:none">
+      <select id="monde-indicateur" class="feux-annee" style="width:100%;margin-top:4px" title="Colorie les pays selon l’indicateur choisi. Chaque échelle a ses paliers, indiqués dans la légende.">
+        <option value="aucun" selected>Contours seuls</option>
+        <option value="population">Population</option>
+        <option value="densite">Densité de population</option>
+        <option value="pib">PIB total</option>
+        <option value="pibhab">PIB par habitant</option>
+        <option value="revenu">Niveau de revenu</option>
+        <option value="developpement">Catégorie de développement</option>
+      </select>
+    </div>
+    <button class="calque-ajout donnee" id="btn-monde-villes" title="Capitales et grandes villes du monde. Les capitales sont en orange avec une étoile, les autres grandes agglomérations en gris. Cliquez pour la population de l’agglomération.">🏙 Capitales &amp; grandes villes</button>
+    <button class="calque-ajout donnee" id="btn-monde-lignes" title="Équateur, tropiques du Cancer et du Capricorne, cercles polaires et ligne de changement de date. Cliquez une ligne pour ce qu’elle signifie : où le Soleil passe au zénith, où il ne se couche pas au solstice.">🌐 Équateur, tropiques &amp; cercles polaires</button>
+    <button class="calque-ajout donnee" id="btn-monde-mers" title="Les océans et les principales mers du monde, avec leur nom français. Utile pour le repérage et pour nommer les façades maritimes.">🌊 Océans &amp; mers</button>
+    <button class="calque-ajout donnee" id="btn-monde-urbain" title="L’emprise au sol des zones urbanisées dans le monde. Dézoomez pour voir les grandes concentrations : mégalopoles américaine, européenne et japonaise, deltas asiatiques.">🌆 Taches urbaines mondiales</button>
+    <div style="font-size:9.5px;color:#57534e;margin-top:5px;line-height:1.45">⚠️ Les chiffres viennent des attributs de Natural Earth : ce sont des <b>ordres de grandeur</b> révisés périodiquement, pas des statistiques officielles à jour. La densité est calculée à partir du contour et reste approximative. Pour un chiffre précis, renvoyez à l’INSEE, à Eurostat ou à la Banque mondiale.</div>
+  </div>
+</div>
+
+<div class="widget" id="wg-vegetation" style="width:254px">
+  <div class="widget-tete">
+    <span class="widget-titre">🌿 Végétation</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer">✕</button>
+  </div>
+  <div class="widget-corps">
+    <div style="font-size:10px;color:#8a8577;margin-bottom:4px">Observations botaniques géolocalisées (GBIF). Recentrez la carte, puis choisissez une espèce. La période se règle dans 🐾 Animaux sauvages.</div>
+    <button class="calque-ajout donnee" id="btn-arbres-remarquables" title="Les arbres recensés comme remarquables dans OpenStreetMap : sujets monumentaux, arbres classés, témoins d’un événement. Cliquez un point pour son nom, son espèce et sa hauteur quand ils sont renseignés.">🌳 Arbres remarquables (OSM)</button>
+    <details class="pilote-paquet"><summary>Arbres remarquables et géants</summary>
+      <div class="pilote-grille">
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-sequoiageant" data-sci="Sequoiadendron giganteum" data-coul="#7c2d12" title="Introduit vers 1855 dans les parcs et arboretums. Les sujets français dépassent 50 mètres — une jeunesse, l’espèce vivant plus de trois mille ans en Californie. Souvent planté en allée dans les propriétés du Second Empire. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌲 Séquoia géant</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-sequoiacotier" data-sci="Sequoia sempervirens" data-coul="#78350f" title="Le cousin côtier, plus élancé, réclame de l’humidité : on le trouve surtout en Bretagne et dans le Sud-Ouest atlantique. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌲 Séquoia toujours vert</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-cedrelibean" data-sci="Cedrus libani" data-coul="#166534" title="Rapporté en 1734 par Bernard de Jussieu, dit-on dans son chapeau. Celui du Jardin des Plantes de Paris est toujours vivant. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌲 Cèdre du Liban</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-ginkgo" data-sci="Ginkgo biloba" data-coul="#ca8a04" title="Espèce inchangée depuis 200 millions d’années, seule survivante de son embranchement. Très résistante à la pollution, d’où sa présence en alignement urbain. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🍃 Ginkgo biloba</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-chenepedoncule" data-sci="Quercus robur" data-coul="#92400e" title="L’arbre des forêts domaniales du Bassin parisien, longtemps réservé à la marine royale. Les plus vieux sujets dépassent huit siècles. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌳 Chêne pédonculé</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-chatalgnier" data-sci="Castanea sativa" data-coul="#a16207" title="L’arbre à pain des Cévennes, du Limousin et de Corse : sa farine a nourri des régions entières jusqu’au XIXᵉ siècle. Ses souches peuvent être millénaires. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌰 Châtaignier</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-olivier" data-sci="Olea europaea" data-coul="#65a30d" title="Sa limite nord dessine celle du climat méditerranéen : c’est le marqueur végétal du Midi. Le gel de 1956 a détruit des oliveraies entières, dont la limite s’est ensuite déplacée. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🫒 Olivier</button>
+      </div>
+    </details>
+    <details class="pilote-paquet"><summary>Essences qui disent le climat</summary>
+      <div class="pilote-grille">
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-hetre" data-sci="Fagus sylvatica" data-coul="#15803d" title="Exige fraîcheur et humidité : il recule vers le nord et l’altitude à mesure que les étés sèchent. L’une des espèces les plus menacées par le réchauffement en plaine. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌳 Hêtre</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-sapinpectine" data-sci="Abies alba" data-coul="#0f766e" title="L’étage montagnard des Vosges, du Jura et des Alpes du Nord. Son dépérissement dans les Vosges depuis 2018 est devenu un cas d’école du stress hydrique. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌲 Sapin blanc</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-epicea" data-sci="Picea abies" data-coul="#134e4a" title="Planté massivement au XXᵉ siècle hors de son aire naturelle. Ses peuplements affaiblis par la sécheresse sont ravagés par le scolyte, ce qui a changé le paysage de massifs entiers. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌲 Épicéa</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-pinmaritime" data-sci="Pinus pinaster" data-coul="#b45309" title="La forêt des Landes, plantée à partir de 1857 pour assainir les marais : la plus vaste forêt cultivée d’Europe, et un enjeu majeur de risque incendie. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌲 Pin maritime</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-pinalep" data-sci="Pinus halepensis" data-coul="#a3a300" title="Le pin du pourtour méditerranéen, très inflammable et pionnier après incendie — ses cônes s’ouvrent à la chaleur. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌲 Pin d’Alep</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-cheneliege" data-sci="Quercus suber" data-coul="#854d0e" title="Son écorce, récoltée tous les neuf ans, le protège du feu. Massif des Maures, Corse, Pyrénées-Orientales. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌳 Chêne-liège</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-chenevert" data-sci="Quercus ilex" data-coul="#3f6212" title="Le chêne méditerranéen à feuilles persistantes. Il progresse vers le nord à mesure que le climat sèche. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌳 Chêne vert</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-meleze" data-sci="Larix decidua" data-coul="#d97706" title="Le seul conifère européen qui perd ses aiguilles : les mélèzins du Briançonnais et du Queyras dorent en octobre. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌲 Mélèze</button>
+      </div>
+    </details>
+    <details class="pilote-paquet"><summary>Milieux particuliers</summary>
+      <div class="pilote-grille">
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-lavande" data-sci="Lavandula angustifolia" data-coul="#7c3aed" title="Au-dessus de 800 mètres sur les plateaux de Haute-Provence. Le paysage de lavande est entièrement agricole, créé au XXᵉ siècle pour la parfumerie de Grasse. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">💜 Lavande vraie</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-vigne" data-sci="Vitis vinifera" data-coul="#9333ea" title="Sa limite nord a reculé puis remonte : on replante en Bretagne et dans le Nord, ce qu’on n’avait plus vu depuis le Moyen Âge. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🍇 Vigne</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-genepi" data-sci="Artemisia genipi" data-coul="#0891b2" title="Plante des éboulis d’altitude, au-dessus de 2 500 mètres. Sa cueillette est réglementée. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌿 Génépi</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-edelweiss" data-sci="Leontopodium nivale" data-coul="#e2e8f0" title="Rochers et pelouses d’altitude des Alpes et des Pyrénées. Protégée dans plusieurs départements. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">❄️ Edelweiss</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-drosera" data-sci="Drosera rotundifolia" data-coul="#dc2626" title="Plante carnivore des tourbières acides : elle compense la pauvreté du sol en capturant des insectes. Indicatrice de milieux rares et menacés. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🪴 Rossolis</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-posidonie" data-sci="Posidonia oceanica" data-coul="#0d9488" title="Plante à fleurs marine, et non une algue. Ses herbiers méditerranéens abritent la reproduction de centaines d’espèces et fixent les fonds ; les ancres des bateaux les détruisent. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌿 Posidonie</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-salicorne" data-sci="Salicornia europaea" data-coul="#16a34a" title="Des vasières salées des estuaires et de Camargue : l’une des rares plantes à supporter l’eau de mer. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌿 Salicorne</button>
+      </div>
+    </details>
+    <details class="pilote-paquet"><summary>Espèces introduites et envahissantes</summary>
+      <div class="pilote-grille">
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-renouee" data-sci="Reynoutria japonica" data-coul="#be185d" title="Introduite comme ornementale en 1825, aujourd’hui l’une des espèces les plus problématiques d’Europe : elle colonise les berges, traverse le béton et rend tout le reste impossible à pousser. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌿 Renouée du Japon</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-robinier" data-sci="Robinia pseudoacacia" data-coul="#84cc16" title="Américain, planté pour fixer les talus et fournir des piquets imputrescibles. Il fixe l’azote et modifie le sol au détriment des espèces locales. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌳 Robinier faux-acacia</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-ailante" data-sci="Ailanthus altissima" data-coul="#a16207" title="L’« arbre du ciel », introduit pour l’élevage du ver à soie. Il pousse dans les friches urbaines et les ballasts de voie ferrée. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌳 Ailante</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-jussie" data-sci="Ludwigia peploides" data-coul="#eab308" title="Elle recouvre entièrement les plans d’eau, privé de lumière et d’oxygène ce qui vit dessous. Loire, Brenne, marais de l’Ouest. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌼 Jussie</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-herbepampa" data-sci="Cortaderia selloana" data-coul="#d6d3d1" title="Ornementale sud-américaine, chaque plumeau libre un million de graines. Interdite à la vente en France depuis 2023. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌾 Herbe de la pampa</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-baccharis" data-sci="Baccharis halimifolia" data-coul="#57534e" title="Envahit les prés-salés et les marais littoraux atlantiques, où elle remplace la végétation halophile. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌿 Baccharis</button>
+      </div>
+    </details>
+    <div style="font-size:9.5px;color:#57534e;margin-top:5px;line-height:1.45">⚠️ Ces cartes montrent <b>où l’on a observé</b>, non l’aire de répartition. Les relevés botaniques se concentrent près des routes, des réserves et des villes : une zone vide peut n’avoir jamais été prospectée. Pour les espèces cultivées — vigne, lavande, olivier — les points mêlent sujets sauvages et plantations.</div>
+  </div>
+</div>
+
 <div class="widget" id="wg-animaux" style="width:254px">
   <div class="widget-tete">
     <span class="widget-titre">🐾 Animaux sauvages</span>
@@ -1178,6 +1343,21 @@
         <button class="calque-ajout donnee esp-btn" id="btn-esp-azure" data-sci="Phengaris arion" data-coul="#4f46e5" title="Sa chenille se fait adopter par des fourmis. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🦋 Azuré du serpolet</button>
         <button class="calque-ajout donnee esp-btn" id="btn-esp-morosphinx" data-sci="Macroglossum stellatarum" data-coul="#65a30d" title="Vole sur place comme un colibri. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🐛 Moro-sphinx</button>
       </div>
+    </details>
+    <details class="pilote-paquet"><summary>🦟 Espèces à enjeu sanitaire ou agricole</summary>
+      <div class="pilote-grille">
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-moustiquetigre" data-sci="Aedes albopictus" data-coul="#0f172a" title="Arrivé par le commerce international en 2004 à Menton, présent aujourd’hui dans la grande majorité des départements métropolitains. Il se reproduit dans quelques millilitres d’eau stagnante, autour des habitations. Vecteur possible de la dengue et du chikungunya. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🦟 Moustique tigre</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-moustiquecommun" data-sci="Culex pipiens" data-coul="#334155" title="Le moustique ordinaire des nuits d’été, présent partout en France depuis toujours. Actif au crépuscule, contrairement au moustique tigre qui pique de jour. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🦟 Moustique commun</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-anophele" data-sci="Anopheles maculipennis" data-coul="#475569" title="Vecteur historique du paludisme en France : les marais de Sologne, de Bresse et de Camargue en étaient les foyers jusqu’à leur assèchement au XIXᵉ siècle. L’espèce demeure ; la maladie a disparu. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🦟 Anophèle</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-frelonasiatique" data-sci="Vespa velutina" data-coul="#b45309" title="Introduit accidentellement en 2004 par un envoi de poteries depuis la Chine, arrivé dans le Lot-et-Garonne. Il a colonisé presque tout le territoire en vingt ans. Prédateur des abeilles domestiques, dont il capture les butineuses à l’entrée des ruches. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🐝 Frelon asiatique</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-frelon" data-sci="Vespa crabro" data-coul="#a16207" title="L’espèce indigène, plus grande que l’asiatique et bien moins agressive. À comparer avec la précédente : la confusion entre les deux entraîne la destruction de nids inoffensifs. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🐝 Frelon européen</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-chenilleprocessionnaire" data-sci="Thaumetopoea pityocampa" data-coul="#78350f" title="Ses chenilles portent des poils urticants dangereux pour l’homme et mortels pour les chiens. Son aire remonte vers le nord d’environ cinq kilomètres par an depuis les années 1990 : c’est l’un des indicateurs les plus lisibles du réchauffement en France. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🐛 Processionnaire du pin</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-pyralebuis" data-sci="Cydalima perspectalis" data-coul="#15803d" title="Arrivée d’Asie en 2008, elle a détruit des buissaies entières dans les gorges du Verdon et du Tarn, transformant durablement des paysages calcaires. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🐛 Pyrale du buis</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-ambroisie" data-sci="Ambrosia artemisiifolia" data-coul="#65a30d" title="Plante originaire d’Amérique du Nord, très allergisante, installée surtout dans la vallée du Rhône. Son pollen touche une part importante de la population en Auvergne-Rhône-Alpes ; sa destruction est obligatoire par arrêté préfectoral. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌿 Ambroisie</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-ecrevisselouisiane" data-sci="Procambarus clarkii" data-coul="#dc2626" title="Introduite pour l’aquaculture, elle creuse les berges, trouble l’eau et transmet aux écrevisses indigènes une maladie qui leur est fatale. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🦞 Écrevisse de Louisiane</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-ragondin" data-sci="Myocastor coypus" data-coul="#92400e" title="Échappé des élevages pour fourrure dans les années 1930. Ses terriers fragilisent les digues et les berges des cours d’eau, ce qui en fait un enjeu de gestion pour les collectivités. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🐀 Ragondin</button>
+      </div>
+      <div style="font-size:9.5px;color:#57534e;margin-top:5px;line-height:1.45">⚠️ Ces cartes montrent <b>où l’on a observé</b>, non où l’espèce est présente. Les signalements se concentrent là où vivent des observateurs : une zone vide peut être une zone non prospectée. Pour le moustique tigre, la référence officielle est la carte de veille de l’ANSES, mise à jour chaque année par département.</div>
     </details>
     <div style="font-size:9.5px;color:#57534e;margin-top:5px;line-height:1.45">💡 Pour la faune marine, élargissez la vue au large : les observations viennent surtout des campagnes scientifiques et des ferries. Comparez la <b>Méditerranée</b> (sanctuaire Pelagos) et le <b>golfe de Gascogne</b>.</div>
     <div style="font-size:9.5px;color:#8a8577;margin-top:4px;line-height:1.4">⚠️ Ce sont des <b>observations ponctuelles</b> de naturalistes et de muséums, pas une carte de répartition. L’absence de point ne prouve pas l’absence de l’espèce : elle reflète aussi où les gens observent. Source : GBIF.</div>
@@ -1509,11 +1689,11 @@
     </div>
     <div class="sep"></div>
     <div style="font-size:10px;color:#8a8577;margin-bottom:3px">Chaque réglage ouvre sa propre fenêtre.</div>
-    <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-acces">👁 Couleurs & lisibilité</button>
-    <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-explic">💬 Explication & partage</button>
-    <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-3d">🏔 Vue 3D du relief</button>
-    <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-seances">🔎 Séances pédagogiques</button>
-    <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-diag">🩺 Diagnostic des services</button>
+    <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-acces" title="Réglages d’affichage : couleur et épaisseur de chaque couche, contraste, taille des étiquettes. Utile pour projeter au tableau ou pour un élève qui distingue mal certaines teintes.">👁 Couleurs & lisibilité</button>
+    <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-explic" title="Rédige un texte d’accompagnement affiché sur la carte, et fabrique un lien qui rouvre exactement cet état — même cadrage, mêmes couches, même commentaire.">💬 Explication & partage</button>
+    <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-3d" title="Affiche le relief en trois dimensions à partir des altitudes SRTM. À utiliser en vue rapprochée sur un massif ou une vallée.">🏔 Vue 3D du relief</button>
+    <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-seances" title="Des séances prêtes à l’emploi : chacune allume les couches utiles et cadre la carte au bon endroit. Contient aussi la recherche dans toutes les couches et tous les lieux.">🔎 Séances pédagogiques</button>
+    <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-diag" title="Indique service par service ce qui répond et ce qui échoue. À consulter en premier quand une couche reste vide.">🩺 Diagnostic des services</button>
   </div>
 </div>
 <div class="widget" id="wg-acces" style="width:250px">
@@ -1921,7 +2101,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.6</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.7.6</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -1960,6 +2140,11 @@
     </div>
     <div class="pilote-sep"></div>
     <div class="pilote-grille">
+      <details class="pilote-paquet"><summary>🌍 Monde</summary>
+        <div class="pilote-grille">
+        <button class="pilote-btn" data-cible="wg-monde">🌍 Pays &amp; indicateurs</button>
+        </div>
+      </details>
       <details class="pilote-paquet"><summary>👥 Société</summary>
         <div class="pilote-grille">
         <button class="pilote-btn" data-cible="wg-ville">🏙 Ville &amp; quartiers</button>
@@ -1985,6 +2170,7 @@
         <button class="pilote-btn" data-cible="wg-foret">🌲 Forêts</button>
         <button class="pilote-btn" data-cible="wg-parcs">🌳 Parcs naturels</button>
         <button class="pilote-btn" data-cible="wg-animaux">🐾 Animaux sauvages</button>
+        <button class="pilote-btn" data-cible="wg-vegetation">🌿 Végétation</button>
         <button class="pilote-btn" data-cible="wg-pays">🏞️ Pays &amp; régions</button>
         </div>
       </details>
@@ -2012,6 +2198,7 @@
       <details class="pilote-paquet"><summary>🗿 Autres</summary>
         <div class="pilote-grille">
         <button class="pilote-btn" data-cible="wg-histoire">🏛 Histoire</button>
+        <button class="pilote-btn" data-cible="wg-archeo">🏺 Archéologie &amp; fossiles</button>
         <button class="pilote-btn" data-cible="wg-astro">🔭 Astronomie</button>
         <button class="pilote-btn" data-cible="wg-geol">🪨 Géologie</button>
         </div>
@@ -2032,7 +2219,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.6</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.7.6</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -2208,7 +2395,7 @@
   }
   // ================= Carte =================
   const map = L.map('map', {
-    center:[46.6, 2.4], zoom:6, minZoom:5, maxZoom:19,
+    center:[46.6, 2.4], zoom:6, minZoom:2, maxZoom:19,   // minZoom 2 : le monde entier tient a l'ecran
     zoomControl:true, tap:false
   });
   map.zoomControl.setPosition('bottomright');
@@ -2310,7 +2497,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.6';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.7.6';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -4713,36 +4900,213 @@
   });
 
   // ---------- ❓ Aide en ligne (simple / détaillée) ----------
-  const AIDE_SIMPLE = '<h3>Prise en main en 30 secondes</h3>'
-    +'<p><b>Panneau de droite</b> : les cartes de données (densité, pauvreté, élections, origines…). Un clic affiche la carte, la légende appara\u00eet \u00e0 gauche, un second clic la retire.</p>'
-    +'<p><b>Fen\u00eatre 🧭 pilote</b> (en haut \u00e0 gauche) : rouvre tous les widgets — annotations ✏️, montagnes ⛰, limites 🗾, for\u00eats 🌲, climat 🌡, v\u00e9lo 🚲, rando 🥾, fonds de carte 🗺, couleurs 👁…</p>'
-    +'<p><b>Zoom</b> : beaucoup de cartes changent d\u2019\u00e9chelle toutes seules (d\u00e9partements de loin, communes de pr\u00e8s).</p>'
-    +'<p><b>🧰 Actions</b> : annuler, effacer, exporter en image 🖼, quiz 🎓, comparaison ⚖.</p>'
-    +'<p><b>✏️ Annoter</b> : widget Annotations \u2192 pinceau ou zone, puis dessinez sur la carte. Gomme pour effacer un trait.</p>';
-  const AIDE_DETAIL = '<h3>Guide d\u00e9taill\u00e9</h3>'
-    +'<p><b>Cartes de donn\u00e9es (panneau droit)</b> — Ville &amp; quartiers : densit\u00e9 (3 \u00e9chelles), abstention, moins de 20 ans, ch\u00f4mage, pauvret\u00e9, HLM, aires d\u2019attraction, pr\u00e9sidentielle 2022, m\u00e9tropoles, top 100 des villes, animation de population 1876-2023 (curseur + lecture ▶), carreaux INSEE fins. Origines : part des immigr\u00e9s par pays de naissance, cases additionnables, d\u00e9partements gris = secret statistique. Une seule choropl\u00e8the \u00e0 la fois : en activer une referme la pr\u00e9c\u00e9dente.</p>'
-    +'<p><b>Widgets de carte</b> — ⛰ Montagnes : cha\u00eenes colori\u00e9es, 177 sommets class\u00e9s en 4 niveaux (+ OSM), relief estomp\u00e9, courbes de niveau, mise en couleur au-dessus d\u2019une altitude (curseur). 🗾 Limites : r\u00e9gions, d\u00e9partements, communes avec leurs noms. 🌲 For\u00eats : carte foresti\u00e8re IGN, for\u00eats publiques, parcelles. 🌡 Climat : \u00e9l\u00e9vation du niveau de la mer (curseur +1 \u00e0 +300 m en \u00e9chelle exponentielle, visualisation p\u00e9dagogique — pas un mod\u00e8le de submersion), \u00e9oliennes et solaire. 🚲/🥾 : am\u00e9nagements cyclables et sentiers GR/GRP/PR par niveaux, filtres, \u00e9paisseur r\u00e9glable − +. 🚉 \u00c9quipements : gares, monuments historiques (description au survol), sports.</p>'
-    +'<p><b>Affichage</b> — 🗺 Fonds : 9 fonds (OSM, plan IGN, photos a\u00e9riennes, topo, v\u00e9lo, clair, sombre, satellite). 👁 Couleurs : modes daltoniens (deut\u00e9ranopie, protanopie, tritanopie), haut contraste, niveaux de gris ; 🎥 mode projection (textes agrandis pour vid\u00e9oprojecteur). Tout est m\u00e9moris\u00e9 d\u2019une session \u00e0 l\u2019autre.</p>'
-    +'<p><b>Outils</b> — ✏️ Annotations : contr\u00f4le (cliquer les cartes pour les valeurs), pinceau, zone, gomme. 🧰 Actions : annuler, tout effacer, export image (la carte + la l\u00e9gende), options, import GPX, 🎓 quiz (5 questions sur les donn\u00e9es), ⚖ comparaison (deux cartes synchronis\u00e9es — activez une couche diff\u00e9rente de chaque c\u00f4t\u00e9).</p>'
-    +'<p><b>Bon \u00e0 savoir</b> — L\u2019application se compose de deux fichiers ins\u00e9parables : la page et \u00ab carte-france-geo-donnees.json \u00bb (m\u00eame dossier). Un anneau \u23f3 en haut signale les chargements. Les sources et mill\u00e9simes sont dans chaque l\u00e9gende et infobulle.</p>';
+  // ---------- Aide en ligne ----------
+  // Le catalogue est engendre a partir de l'application elle-meme : chaque bouton de
+  // couche porte deja une infobulle redigee. Une aide ecrite a la main se perimerait
+  // des la prochaine couche ajoutee ; celle-ci ne peut pas diverger.
+  function aideCatalogue(){
+    let h = '<h3>Toutes les couches, fen\u00eatre par fen\u00eatre</h3>'
+      + '<p class="aide-note">Cette liste est produite \u00e0 partir de l\u2019application : elle est '
+      + 'compl\u00e8te par construction et suit chaque ajout. Utilisez <b>Ctrl+F</b> pour y chercher un mot.</p>'
+      + '<input type="text" id="aide-filtre" placeholder="Filtrer : vigne, s\u00e9isme, INSEE\u2026" '
+      + 'style="width:100%;box-sizing:border-box;padding:7px 9px;margin:4px 0 10px;border:1px solid var(--trait);'
+      + 'border-radius:8px;font:12px system-ui">';
+
+    const groupes = Array.from(document.querySelectorAll('#wg-pilote .pilote-paquet'));
+    const vus = {};
+    const bloc = function(cible){
+      const w = document.getElementById(cible);
+      if(!w || vus[cible]) return '';
+      vus[cible] = true;
+      const titre = (w.querySelector('.widget-titre') || {}).textContent || cible;
+      const boutons = Array.from(w.querySelectorAll('.calque-ajout, .esp-btn, .fossile-btn'));
+      if(!boutons.length) return '';
+      let s = '<details class="aide-fen"><summary>' + echap(titre.trim())
+        + ' <span class="aide-compte">' + boutons.length + '</span></summary><dl>';
+      const dejaVu = {};
+      boutons.forEach(function(b){
+        const nom = b.textContent.replace('\u2715', '').replace(/\s+/g, ' ').trim();
+        if(!nom || dejaVu[nom]) return;
+        dejaVu[nom] = true;
+        const info = (b.getAttribute('title') || '').replace(/\s+/g, ' ').trim();
+        s += '<dt>' + echap(nom) + '</dt><dd>' + echap(info || 'Pas encore document\u00e9.') + '</dd>';
+      });
+      return s + '</dl></details>';
+    };
+
+    groupes.forEach(function(g){
+      const nomG = (g.querySelector('summary') || {}).textContent || '';
+      const cibles = Array.from(g.querySelectorAll('.pilote-btn')).map(function(b){ return b.dataset.cible; });
+      let dedans = '';
+      cibles.forEach(function(c){ dedans += bloc(c); });
+      if(dedans) h += '<h4 class="aide-groupe">' + echap(nomG.trim()) + '</h4>' + dedans;
+    });
+    // fenetres accessibles autrement que par un groupe du rail
+    let reste = '';
+    Array.from(document.querySelectorAll('.widget')).forEach(function(w){ reste += bloc(w.id); });
+    if(reste) h += '<h4 class="aide-groupe">Autres fen\u00eatres</h4>' + reste;
+    return h;
+  }
+
+  const AIDE_PRISE_EN_MAIN =
+      '<h3>Prise en main</h3>'
+    + '<p><b>La barre de gauche</b> rassemble tout : un champ de recherche, le bouton \u2699\ufe0f Options, '
+    + 'les couches actives, puis les outils et sept groupes th\u00e9matiques \u2014 Soci\u00e9t\u00e9, Lieux, Nature, '
+    + 'Climat, Risques, Sport, Autres. Chaque groupe s\u2019ouvre sur des fen\u00eatres.</p>'
+    + '<p><b>La recherche</b> cherche d\u2019abord dans l\u2019atlas et les lieux embarqu\u00e9s \u2014 c\u2019est imm\u00e9diat et '
+    + 'fonctionne sans r\u00e9seau. Tapez \u00ab vigne \u00bb, \u00ab Belledonne \u00bb ou \u00ab s\u00e9isme \u00bb : un clic sur un r\u00e9sultat '
+    + 'allume la couche ou d\u00e9place la carte. Si rien ne correspond, Entr\u00e9e cherche l\u2019adresse.</p>'
+    + '<p><b>Allumer une couche</b> : cliquez son bouton, il devient color\u00e9 et porte une croix. '
+    + 'Un second clic l\u2019\u00e9teint. Les couches allum\u00e9es apparaissent en pastilles : cliquer le nom la met '
+    + 'en veille sans l\u2019oublier, la croix la retire.</p>'
+    + '<p><b>La l\u00e9gende</b> se remplit toute seule. Les pastilles cercl\u00e9es y sont interactives : '
+    + 'survolez pour rep\u00e9rer les objets sur la carte, cliquez pour changer la couleur, lister les '
+    + '\u00e9l\u00e9ments ou lire les sources.</p>'
+    + '<p><b>Deux interfaces</b>, dans \u2699\ufe0f Options : \u00ab Fen\u00eatres libres \u00bb, o\u00f9 les panneaux flottent et '
+    + 'se cumulent, ou \u00ab Barre lat\u00e9rale \u00bb, o\u00f9 un seul panneau s\u2019affiche \u00e0 la fois avec la l\u00e9gende en '
+    + 'volet \u00e0 droite. Les deux volets se replient par leur chevron.</p>'
+    + '<p><b>Le zoom compte.</b> Beaucoup de couches changent d\u2019\u00e9chelle seules : d\u00e9partements de loin, '
+    + 'communes de pr\u00e8s. D\u2019autres ne chargent qu\u2019\u00e0 partir d\u2019un certain niveau et vous le disent.</p>';
+
+  const AIDE_CROQUIS =
+      '<h3>Dessiner un croquis</h3>'
+    + '<p>La fen\u00eatre \u270f\ufe0f <b>Croquis</b> est une barre de douze outils. Un seul est actif \u00e0 la fois, '
+    + 'et le panneau en dessous n\u2019affiche que ses r\u00e9glages.</p>'
+    + '<dl>'
+    + '<dt>\u2316 S\u00e9lection</dt><dd>Cliquez un trac\u00e9 pour le reprendre : couleur, \u00e9paisseur, style et '
+    + 'remplissage s\u2019appliquent alors \u00e0 lui. Ses sommets deviennent des poign\u00e9es qu\u2019on d\u00e9place. '
+    + 'Suppr l\u2019efface, \u00c9chap d\u00e9s\u00e9lectionne. Le r\u00e9sum\u00e9 donne sa longueur ou son aire.</dd>'
+    + '<dt>\u270b Main</dt><dd>D\u00e9place la carte. Cliquez un trac\u00e9 pour lire ou \u00e9crire sa note.</dd>'
+    + '<dt>\u270f\ufe0f Crayon</dt><dd>Dessin \u00e0 main lev\u00e9e. Clic droit ou Ctrl pour d\u00e9placer la carte sans changer d\u2019outil.</dd>'
+    + '<dt>\u2b1f Zone \u00b7 \u2571 Ligne \u00b7 \u2192 Fl\u00e8che \u00b7 \u25ad Rectangle \u00b7 \u25ef Cercle</dt>'
+    + '<dd>Cliquez les sommets, double-clic ou Entr\u00e9e pour terminer, \u00c9chap pour annuler. La longueur '
+    + 'ou l\u2019aire s\u2019affiche pendant le trac\u00e9. Le magn\u00e9tisme accroche les sommets \u00e0 ceux d\u00e9j\u00e0 pos\u00e9s.</dd>'
+    + '<dt>\u25c6 Figur\u00e9 \u00b7 T Texte \u00b7 📍 Rep\u00e8re</dt>'
+    + '<dd>Cliquez sur la carte pour poser. La taille d\u2019un figur\u00e9 peut porter une quantit\u00e9 : '
+    + 'c\u2019est le figur\u00e9 proportionnel du croquis de g\u00e9ographie.</dd>'
+    + '<dt>🧽 Gomme</dt><dd>Cliquez ou glissez sur un trac\u00e9 pour l\u2019effacer.</dd>'
+    + '</dl>'
+    + '<p><b>\u00c9paisseur</b> : choisissez d\u2019abord l\u2019unit\u00e9. \u00ab \u00c0 l\u2019\u00e9cran \u00bb garde la m\u00eame \u00e9paisseur \u00e0 tous '
+    + 'les zooms \u2014 c\u2019est le r\u00e9glage du croquis. \u00ab Au sol \u00bb l\u2019exprime en m\u00e8tres : le trait s\u2019\u00e9paissit '
+    + 'en zoomant, utile pour figurer une emprise r\u00e9elle.</p>'
+    + '<p><b>Couleurs et l\u00e9gende</b> : la palette suit la convention du croquis \u2014 rouge pour les '
+    + 'dynamiques, orange pour l\u2019urbain, bleu pour les flux, gris pour le d\u00e9clin. Le champ sous la '
+    + 'palette donne \u00e0 chaque couleur son intitul\u00e9, qui appara\u00eet dans la l\u00e9gende.</p>'
+    + '<p><b>Figur\u00e9s de surface</b> : aplat, hachures, hachures crois\u00e9es, semis de points, avec une '
+    + 'opacit\u00e9 r\u00e9glable. \u00c0 0 %, la zone n\u2019est plus qu\u2019un contour.</p>'
+    + '<p>Fermer la fen\u00eatre ou ouvrir une autre fen\u00eatre d\u00e9sarme l\u2019outil : le curseur redevient normal.</p>';
+
+  const AIDE_DONNEES =
+      '<h3>Importer, exporter, partager</h3>'
+    + '<p>Tout se trouve dans la fen\u00eatre 🧰 <b>Actions</b>.</p>'
+    + '<dl>'
+    + '<dt>📌 Importer des lieux</dt>'
+    + '<dd>Accepte les exports Google Takeout (JSON ou CSV), les cartes personnelles Google (KML, KMZ) '
+    + 'et les traces GPS (GPX). Plusieurs fichiers \u00e0 la fois : chacun devient une couche qu\u2019on allume, '
+    + '\u00e9teint ou retire. Les lieux sans coordonn\u00e9es sont recherch\u00e9s par leur adresse ou leur nom \u2014 '
+    + 'comptez une seconde par lieu, les services de localisation n\u2019acceptent pas plus. '
+    + 'Un point retrouv\u00e9 ainsi est marqu\u00e9 en orange, avec sa source et sa fiabilit\u00e9.</dd>'
+    + '<dt>🖼 Image de fond</dt>'
+    + '<dd>Dans 🗺 Fond de carte. Chargez une carte murale scann\u00e9e ou un plan ancien, puis calez-la '
+    + 'en deux points : cliquez un lieu tel qu\u2019il est dessin\u00e9, puis ce m\u00eame lieu \u00e0 sa vraie place. '
+    + 'Prenez deux rep\u00e8res bien \u00e9cart\u00e9s. Le calage est m\u00e9moris\u00e9 pour ce fichier.</dd>'
+    + '<dt>🖼 Image PNG \u00b7 🖨 Fiche A4</dt>'
+    + '<dd>Exporte la carte telle qu\u2019elle est affich\u00e9e, l\u00e9gende comprise.</dd>'
+    + '<dt>🔗 Copier le lien</dt>'
+    + '<dd>Fabrique une adresse qui rouvre la carte dans le m\u00eame \u00e9tat : m\u00eame cadrage, m\u00eames couches. '
+    + '\u00c0 donner aux \u00e9l\u00e8ves pour qu\u2019ils partent du m\u00eame point.</dd>'
+    + '<dt>💾 GeoJSON</dt><dd>R\u00e9exporte les lieux import\u00e9s dans un format lisible par QGIS, uMap ou Google Earth.</dd>'
+    + '</dl>'
+    + '<h3>Lire les cartes sans se tromper</h3>'
+    + '<p>Chaque l\u00e9gende porte ses limites, et il vaut la peine de les lire avec les \u00e9l\u00e8ves.</p>'
+    + '<ul>'
+    + '<li><b>Les observations naturalistes</b> (GBIF) disent o\u00f9 l\u2019on a <i>observ\u00e9</i>, pas o\u00f9 l\u2019esp\u00e8ce '
+    + 'vit. Les points suivent les observateurs : comparez avec la densit\u00e9 de population, la forme est souvent la m\u00eame.</li>'
+    + '<li><b>Les donn\u00e9es OpenStreetMap</b> sont collaboratives : un objet absent n\u2019existe pas moins, '
+    + 'il n\u2019a pas encore \u00e9t\u00e9 saisi.</li>'
+    + '<li><b>Les surfaces interpol\u00e9es</b> \u2014 ensoleillement, vent \u2014 sont calcul\u00e9es entre les stations : '
+    + 'la valeur y est estim\u00e9e, jamais mesur\u00e9e, et le relief n\u2019est pas pris en compte.</li>'
+    + '<li><b>La carte des climats</b> colorie des d\u00e9partements : les limites climatiques r\u00e9elles sont '
+    + 'progressives et ne suivent pas les fronti\u00e8res administratives.</li>'
+    + '<li><b>Les zonages r\u00e9glementaires</b> \u2014 QPV, risques, Seveso \u2014 indiquent une exposition '
+    + 'potentielle, pas un diagnostic ni une pr\u00e9diction.</li>'
+    + '</ul>'
+    + '<h3>Quand une couche reste vide</h3>'
+    + '<p>Dans l\u2019ordre : v\u00e9rifiez le niveau de zoom, car certaines couches ne chargent qu\u2019en vue '
+    + 'rapproch\u00e9e ; \u00e9largissez la vue si la couche d\u00e9pend de l\u2019emprise ; ouvrez 🔧 <b>Diagnostic des '
+    + 'services</b> dans \u2699\ufe0f Options, qui indique service par service ce qui r\u00e9pond et ce qui \u00e9choue.</p>'
+    + '<p>L\u2019application interroge une trentaine de services publics et ouverts. Si l\u2019un ne r\u00e9pond pas, '
+    + 'le reste continue de fonctionner.</p>';
+
+  const AIDE_CLAVIER =
+      '<h3>Raccourcis clavier</h3>'
+    + '<dl>'
+    + '<dt>M \u00b7 P \u00b7 Z \u00b7 G</dt><dd>Main, crayon (pinceau), zone, gomme.</dd>'
+    + '<dt>1 \u00e0 4</dt><dd>Les quatre premi\u00e8res couleurs du croquis.</dd>'
+    + '<dt>Entr\u00e9e</dt><dd>Termine un trac\u00e9 en cours, ou lance la recherche.</dd>'
+    + '<dt>\u00c9chap</dt><dd>Annule le trac\u00e9 en cours, d\u00e9s\u00e9lectionne, ferme un menu ou une fen\u00eatre d\u2019information.</dd>'
+    + '<dt>Suppr</dt><dd>Efface l\u2019objet s\u00e9lectionn\u00e9.</dd>'
+    + '<dt>Clic droit ou Ctrl + glisser</dt><dd>D\u00e9place la carte sans quitter l\u2019outil de dessin.</dd>'
+    + '</dl>'
+    + '<h3>Ce qui est gard\u00e9 sur cet ordinateur</h3>'
+    + '<p>Vos annotations, rep\u00e8res, couleurs personnalis\u00e9es, choix d\u2019interface, position des fen\u00eatres et '
+    + 'lieux import\u00e9s sont conserv\u00e9s dans le navigateur, sur ce poste uniquement. Rien n\u2019est envoy\u00e9 '
+    + 'ailleurs : les fichiers que vous importez et les images que vous chargez ne quittent jamais '
+    + 'votre machine. En cons\u00e9quence, un autre ordinateur ou un autre navigateur repart de z\u00e9ro \u2014 '
+    + 'utilisez 🔗 Copier le lien pour transporter un \u00e9tat de carte.</p>'
+    + '<h3>D\u2019o\u00f9 viennent les donn\u00e9es</h3>'
+    + '<p>IGN et G\u00e9oplateforme (limites, for\u00eats, fonds de carte), INSEE (population, logement, revenus), '
+    + 'BRGM et G\u00e9orisques (s\u00e9ismes, argiles, cavit\u00e9s, sites industriels), M\u00e9t\u00e9o-France et Open-Meteo '
+    + '(m\u00e9t\u00e9o, qualit\u00e9 de l\u2019air), Copernicus et EFFIS (feux, a\u00e9rosols), NASA FIRMS (points chauds), '
+    + 'EMSC et USGS (s\u00e9ismes), GBIF et INPN (biodiversit\u00e9), OpenStreetMap (\u00e9quipements, sentiers, '
+    + 'patrimoine), SHOM (mer), ANCT (politique de la ville). Chaque l\u00e9gende renvoie \u00e0 sa source '
+    + 'pr\u00e9cise : cliquez la pastille d\u2019une ligne, puis \u00ab Sources \u00bb.</p>';
+
   document.getElementById('btn-aide').addEventListener('click', ()=>{
     let voile = document.getElementById('aide-voile');
     if(!voile){
       voile = document.createElement('div');
       voile.id = 'aide-voile';
       voile.innerHTML = '<div id="aide-boite"><div id="aide-onglets">'
-        +'<button data-aide="simple" class="actif">Aide rapide</button>'
-        +'<button data-aide="detail">Guide d\u00e9taill\u00e9</button>'
+        +'<button data-aide="prise" class="actif">Prise en main</button>'
+        +'<button data-aide="catalogue">Toutes les couches</button>'
+        +'<button data-aide="croquis">Croquis</button>'
+        +'<button data-aide="donnees">Donn\u00e9es &amp; partage</button>'
+        +'<button data-aide="clavier">Clavier &amp; sources</button>'
         +'<button id="aide-fermer" style="margin-left:auto">\u2715</button></div>'
         +'<div id="aide-corps"></div></div>';
       document.body.appendChild(voile);
       const corps = voile.querySelector('#aide-corps');
-      corps.innerHTML = AIDE_SIMPLE;
+      const PAGES = { prise:AIDE_PRISE_EN_MAIN, croquis:AIDE_CROQUIS,
+                      donnees:AIDE_DONNEES, clavier:AIDE_CLAVIER };
+      corps.innerHTML = AIDE_PRISE_EN_MAIN;
       voile.addEventListener('click', (e)=>{
         if(e.target === voile || e.target.id === 'aide-fermer'){ voile.style.display = 'none'; return; }
         if(e.target.dataset && e.target.dataset.aide){
-          corps.innerHTML = e.target.dataset.aide === 'detail' ? AIDE_DETAIL : AIDE_SIMPLE;
+          const cle = e.target.dataset.aide;
+          // le catalogue est recalcule a chaque ouverture : il suit l'etat reel de l'application
+          corps.innerHTML = (cle === 'catalogue') ? aideCatalogue() : (PAGES[cle] || AIDE_PRISE_EN_MAIN);
+          corps.scrollTop = 0;
           voile.querySelectorAll('[data-aide]').forEach(b=>b.classList.toggle('actif', b === e.target));
+          const filtre = corps.querySelector('#aide-filtre');
+          if(filtre) filtre.addEventListener('input', function(){
+            const q = filtre.value.trim().toLowerCase();
+            corps.querySelectorAll('.aide-fen').forEach(function(f){
+              const texte = f.textContent.toLowerCase();
+              const vu = !q || texte.indexOf(q) !== -1;
+              f.style.display = vu ? '' : 'none';
+              if(q && vu) f.open = true;
+              if(!q) f.open = false;
+            });
+            corps.querySelectorAll('.aide-groupe').forEach(function(g){
+              let n = 0, e2 = g.nextElementSibling;
+              while(e2 && e2.classList.contains('aide-fen')){
+                if(e2.style.display !== 'none') n++;
+                e2 = e2.nextElementSibling;
+              }
+              g.style.display = n ? '' : 'none';
+            });
+          });
         }
       });
     }
@@ -6551,6 +6915,9 @@
   }
   function fermerToutesFenetres(){
     masquerBarresFlottantes();
+    // Fermer la fenêtre Croquis sans desarmer l'outil laisserait le curseur en croix
+    // et le pinceau actif, alors que plus aucune commande n'est visible.
+    if(typeof changerMode === 'function' && typeof mode !== 'undefined' && mode !== 'main') changerMode('main');
     const liste = (typeof WIDGETS_PILOTABLES !== 'undefined' ? WIDGETS_PILOTABLES : []);
     let fermees = 0;
     liste.forEach(id=>{
@@ -7049,8 +7416,9 @@
     if(!url) return null;
     const essais = [
       /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/,        // forme interne, la plus fiable
-      /@(-?\d+\.\d+),(-?\d+\.\d+)/,            // centre de vue
-      /[?&](?:q|ll|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/
+      /[?&](?:q|ll|center|daddr|destination)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/,  // point demande
+      /[?&]mid=[^&]*&.*?(-?\d+\.\d+),(-?\d+\.\d+)/,
+      /@(-?\d+\.\d+),(-?\d+\.\d+)/             // centre de vue : le moins precis, en dernier
     ];
     for(const re of essais){
       const m = url.match(re);
@@ -7162,29 +7530,81 @@
   }
 
   // --- géocodage de secours : Base Adresse Nationale, France uniquement ---
+  // --- localisation en cascade ---
+  // Un favori Google porte rarement une adresse : le plus souvent un nom d'enseigne, et
+  // parfois un lieu a l'etranger. La Base Adresse Nationale ne connait que les adresses
+  // francaises : elle ne peut donc pas localiser « Trattoria da Mario » a Rome. D'ou une
+  // cascade : BAN pour les vraies adresses francaises, Nominatim pour les lieux nommes,
+  // partout dans le monde. Nominatim impose une requete par seconde : on la respecte.
+  function estAdresse(t){
+    return /\d{1,4}\s+\S/.test(t)
+      || /\b(rue|avenue|boulevard|place|chemin|route|impasse|all[ée]e|quai|cours|square)\b/i.test(t)
+      || /\b\d{5}\b/.test(t);
+  }
+  async function viaBan(q){
+    const r = await fetch('https://api-adresse.data.gouv.fr/search/?limit=1&q=' + encodeURIComponent(q));
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    const f = d && d.features && d.features[0];
+    const score = (f && f.properties && typeof f.properties.score === 'number') ? f.properties.score : 0;
+    if(!f || !f.geometry || score < 0.5) return null;
+    return { lat:f.geometry.coordinates[1], lng:f.geometry.coordinates[0],
+             score:Math.round(score * 100), label:(f.properties && f.properties.label) || '', source:'BAN' };
+  }
+  async function viaNominatim(q){
+    const r = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q='
+      + encodeURIComponent(q), { headers:{ 'Accept':'application/json' } });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    const f = d && d[0];
+    if(!f || !isFinite(+f.lat) || !isFinite(+f.lon)) return null;
+    // importance : indice de confiance de Nominatim, entre 0 et 1
+    const imp = isFinite(+f.importance) ? Math.round(+f.importance * 100) : null;
+    return { lat:+f.lat, lng:+f.lon, score:imp, label:f.display_name || '', source:'OpenStreetMap' };
+  }
+
   async function geocoderManquants(lieux){
     const aFaire = lieux.filter(function(l){ return l.lat === null; });
     if(!aFaire.length) return 0;
-    const plafond = Math.min(aFaire.length, 60);
-    let trouves = 0;
-    for(let i = 0; i < plafond; i++){
+    // Aucun plafond : un export Takeout compte couramment plusieurs centaines de lieux.
+    const total = aFaire.length;
+    let trouves = 0, echecsService = 0;
+    for(let i = 0; i < total; i++){
       const l = aFaire[i];
-      const q = (l.adresse || l.nom || '').trim();
-      if(!q) continue;
+      const adresse = (l.adresse || '').trim();
+      const nom = (l.nom || '').trim();
+      const requete = adresse || nom;
+      if(!requete){ l.sansAdresse = true; continue; }
+      let res = null;
       try{
-        const r = await fetch('https://api-adresse.data.gouv.fr/search/?limit=1&q=' + encodeURIComponent(q));
-        const d = await r.json();
-        const f = d && d.features && d.features[0];
-        if(f && f.geometry){
-          l.lng = f.geometry.coordinates[0];
-          l.lat = f.geometry.coordinates[1];
-          l.approx = true;
-          trouves++;
+        // une vraie adresse francaise : la BAN est la plus precise
+        if(adresse && estAdresse(adresse)) res = await viaBan(adresse);
+        // sinon, ou en cas d'echec, on cherche le lieu par son nom, partout dans le monde
+        if(!res){
+          res = await viaNominatim(adresse ? (nom ? nom + ', ' + adresse : adresse) : nom);
+          await new Promise(function(r){ setTimeout(r, 1100); });   // 1 requete/s, regle Nominatim
         }
-      }catch(e){ /* on continue */ }
-      if(i % 5 === 4) afficherInfo('📌 Recherche des coordonnées manquantes… ' + (i+1) + '/' + plafond, 3000);
-      await new Promise(function(res){ setTimeout(res, 110); });
+      }catch(e){
+        echecsService++;
+        if(echecsService > 8){
+          afficherInfo('\u26a0\ufe0f Le service de localisation ne r\u00e9pond plus \u2014 '
+            + trouves + ' lieu(x) localis\u00e9(s) avant l\u2019interruption', 9000);
+          break;
+        }
+      }
+      if(res){
+        l.lat = res.lat; l.lng = res.lng;
+        l.approx = true; l.score = res.score; l.trouve = res.label; l.source = res.source;
+        trouves++;
+      }else{
+        l.geocodageFaible = true;
+      }
+      if(i % 10 === 9 || i === total - 1){
+        afficherInfo('📌 Localisation des lieux sans coordonn\u00e9es\u2026 ' + (i + 1) + ' sur ' + total
+          + ' \u00b7 ' + trouves + ' trouv\u00e9(s)', 4000);
+      }
     }
+    noterService('Localisation des favoris', trouves > 0, trouves + '/' + total + ' localis\u00e9(s)');
     return trouves;
   }
 
@@ -7208,7 +7628,10 @@
     let html = '<b>' + echapFav(l.nom) + '</b>';
     if(l.adresse) html += '<br><span style="color:#6b7280">' + echapFav(l.adresse) + '</span>';
     if(l.note) html += '<br>' + echapFav(l.note);
-    if(l.approx) html += '<br><i style="color:#b45309">Position approchée, retrouvée par recherche d’adresse</i>';
+    if(l.approx) html += '<br><i style="color:#b45309">Position retrouv\u00e9e par recherche'
+      + (l.source ? ' (' + echapFav(l.source) + ')' : '')
+      + (l.trouve ? ' :<br>\u00ab ' + echapFav(l.trouve) + ' \u00bb' : '')
+      + (l.score ? ' (fiabilit\u00e9 ' + l.score + ' %)' : '') + '</i>';
     if(l.url) html += '<br><a href="' + echapFav(l.url) + '" target="_blank" rel="noopener">Ouvrir dans Google Maps</a>';
     return html + '<br><span style="color:#9ca3af;font-size:10px">' + echapFav(nomJeu) + '</span>';
   }
@@ -7255,7 +7678,7 @@
   function sauverFavoris(){
     try{
       localStorage.setItem(FAV_CLE, JSON.stringify(FAVS.jeux.map(function(j){
-        return { nom:j.nom, actif:j.actif, rang:j.rang, lieux:j.lieux.slice(0, 600) };
+        return { nom:j.nom, actif:j.actif, rang:j.rang, lieux:j.lieux.slice(0, 3000) };
       })));
     }catch(e){ /* quota depasse : on continue sans memoriser */ }
   }
@@ -7383,10 +7806,32 @@
       return 0;
     }
     if(!lieux.length){ afficherInfo('\u26a0\ufe0f Aucun lieu dans ' + f.name, 5000); return 0; }
+    const courts = lieux.filter(function(l){
+      return l.lat === null && /goo\.gl|maps\.app\.goo\.gl/.test(l.url || '');
+    }).length;
     const sans = lieux.filter(function(l){ return l.lat === null; }).length;
     if(sans){
+      // Nominatim impose une requete par seconde : au-dela de quelques dizaines de lieux
+      // l'attente devient longue, on demande donc l'accord plutot que de figer l'interface.
+      const minutes = Math.ceil(sans * 1.15 / 60);
+      if(sans > 40 && !confirm(sans + ' lieu(x) de \u00ab ' + f.name + ' \u00bb n\u2019ont pas de coordonn\u00e9es.\n\n'
+        + 'Les rechercher un par un prendra environ ' + minutes + ' minute(s) : les services de\n'
+        + 'localisation n\u2019acceptent qu\u2019une demande par seconde.\n\n'
+        + 'OK pour lancer la recherche, Annuler pour n\u2019afficher que les lieux d\u00e9j\u00e0 localis\u00e9s.')){
+        afficherInfo('📌 Recherche annul\u00e9e \u2014 seuls les lieux d\u00e9j\u00e0 localis\u00e9s sont affich\u00e9s. '
+          + 'Relancez l\u2019import pour la lancer.', 8000);
+      }else{
       afficherInfo('📌 ' + f.name + ' : ' + sans + ' lieu(x) sans coordonn\u00e9es, recherche en cours\u2026', 6000);
       await geocoderManquants(lieux);
+      const echoues = lieux.filter(function(l){ return l.lat === null; }).length;
+      if(echoues){
+        afficherInfo('\u26a0\ufe0f ' + echoues + ' lieu(x) non localis\u00e9(s) sur ' + lieux.length + '. '
+          + (courts ? 'Les liens raccourcis Google (goo.gl) ne contiennent aucune coordonn\u00e9e : '
+                    + 'utilisez plut\u00f4t l\u2019export \u00ab Lieux enregistr\u00e9s \u00bb au format JSON, qui les porte. '
+                    : 'Sans adresse compl\u00e8te, la position ne peut pas \u00eatre devin\u00e9e sans risque d\u2019erreur. ')
+          + 'Ils restent list\u00e9s en rouge.', 12000);
+      }
+      }
     }
     FAVS.seq++;
     FAVS.jeux.push({
@@ -10628,6 +11073,406 @@
     g.addTo(map);
     return { n:res.length, groupe:g, total:(d && d.count) || res.length };
   }
+  // ---------- Carte des climats de France ----------
+  // On s'appuie sur les limites departementales reelles de l'IGN plutot que sur des
+  // contours dessines a la main : les frontieres sont exactes, la classification est
+  // explicite et corrigeable. C'est une approximation assumee — un departement comme la
+  // Drome est a cheval sur trois climats — et c'est ce que dit la legende.
+  const CLIMATS = {
+    oceanique:     { nom:'Oc\u00e9anique franc', coul:'#166534',
+      resume:'Hivers doux, \u00e9t\u00e9s frais, pluie r\u00e9partie toute l\u2019ann\u00e9e et amplitude thermique faible. L\u2019oc\u00e9an r\u00e9gule tout.',
+      reperes:'Amplitude annuelle inf\u00e9rieure \u00e0 13 \u00b0C \u00b7 plus de 150 jours de pluie \u00b7 gel\u00e9es rares',
+      koppen:'K\u00f6ppen Cfb' },
+    aquitain:      { nom:'Oc\u00e9anique aquitain', coul:'#a3e635',
+      resume:'Variante m\u00e9ridionale : \u00e9t\u00e9s plus chauds et plus orageux, hivers toujours doux. La fa\u00e7ade atlantique sud b\u00e9n\u00e9ficie d\u2019un ensoleillement sup\u00e9rieur.',
+      reperes:'\u00c9t\u00e9s chauds \u00b7 orages fr\u00e9quents \u00b7 fo\u0153hn au pied des Pyr\u00e9n\u00e9es',
+      koppen:'K\u00f6ppen Cfb, proche Cfa' },
+    degrade:       { nom:'Oc\u00e9anique d\u00e9grad\u00e9', coul:'#4ade80',
+      resume:'L\u2019influence oc\u00e9anique s\u2019att\u00e9nue en s\u2019\u00e9loignant des c\u00f4tes : l\u2019amplitude augmente, les pluies diminuent. C\u2019est le climat du Bassin parisien.',
+      reperes:'Amplitude 14 \u00e0 16 \u00b0C \u00b7 pr\u00e9cipitations mod\u00e9r\u00e9es \u00b7 gel\u00e9es hivernales r\u00e9guli\u00e8res',
+      koppen:'K\u00f6ppen Cfb' },
+    semicontinental:{ nom:'Semi-continental', coul:'#22d3ee',
+      resume:'Hivers froids, \u00e9t\u00e9s chauds et orageux, forte amplitude. L\u2019\u00e9loignement de l\u2019oc\u00e9an et l\u2019abri des reliefs expliquent les extr\u00eames.',
+      reperes:'Amplitude sup\u00e9rieure \u00e0 18 \u00b0C \u00b7 plus de 70 jours de gel \u00b7 orages d\u2019\u00e9t\u00e9 marqu\u00e9s',
+      koppen:'K\u00f6ppen Cfb \u00e0 Dfb en altitude' },
+    mediterraneen: { nom:'M\u00e9diterran\u00e9en', coul:'#f97316',
+      resume:'\u00c9t\u00e9 sec et chaud, pluies concentr\u00e9es \u00e0 l\u2019automne, parfois violentes. Le mistral et la tramontane assainissent l\u2019air et aggravent le risque d\u2019incendie.',
+      reperes:'Plus de 2 500 h de soleil \u00b7 s\u00e9cheresse estivale d\u2019au moins deux mois \u00b7 \u00e9pisodes c\u00e9venols',
+      koppen:'K\u00f6ppen Csa-Csb' },
+    montagnard:    { nom:'Montagnard', coul:'#1d4ed8',
+      resume:'La temp\u00e9rature baisse d\u2019environ 0,6 \u00b0C tous les 100 m\u00e8tres et les pr\u00e9cipitations augmentent avec l\u2019altitude. L\u2019exposition compte autant que la latitude : adret et ubac.',
+      reperes:'Neige plusieurs mois \u00b7 pr\u00e9cipitations sup\u00e9rieures \u00e0 1 200 mm \u00b7 forts contrastes de versant',
+      koppen:'K\u00f6ppen Dfb \u00e0 ET au-dessus de 2 500 m' }
+  };
+
+  // Classification par departement. Approximation : quand un departement est partage,
+  // c'est le type dominant en superficie qui est retenu.
+  const CLIMAT_DEP = {
+    '22':'oceanique','29':'oceanique','35':'oceanique','56':'oceanique','44':'oceanique',
+    '50':'oceanique','14':'oceanique','76':'oceanique','85':'oceanique','17':'oceanique',
+    '61':'oceanique','53':'oceanique','49':'oceanique',
+    '33':'aquitain','40':'aquitain','47':'aquitain','24':'aquitain','32':'aquitain',
+    '82':'aquitain','81':'aquitain','31':'aquitain','86':'aquitain','16':'aquitain',
+    '79':'aquitain','87':'aquitain',
+    '62':'degrade','59':'degrade','80':'degrade','60':'degrade','02':'degrade',
+    '27':'degrade','28':'degrade','78':'degrade','95':'degrade','93':'degrade',
+    '92':'degrade','94':'degrade','75':'degrade','77':'degrade','91':'degrade',
+    '45':'degrade','41':'degrade','37':'degrade','72':'degrade','36':'degrade',
+    '18':'degrade','89':'degrade','10':'degrade','51':'degrade',
+    '08':'semicontinental','55':'semicontinental','54':'semicontinental','57':'semicontinental',
+    '67':'semicontinental','68':'semicontinental','88':'semicontinental','52':'semicontinental',
+    '70':'semicontinental','90':'semicontinental','21':'semicontinental','58':'semicontinental','71':'semicontinental',
+    '39':'semicontinental','01':'semicontinental','69':'semicontinental','42':'semicontinental',
+    '13':'mediterraneen','83':'mediterraneen','06':'mediterraneen','30':'mediterraneen',
+    '34':'mediterraneen','11':'mediterraneen','66':'mediterraneen','84':'mediterraneen',
+    '2A':'mediterraneen','2B':'mediterraneen',
+    '25':'montagnard','73':'montagnard','74':'montagnard','38':'montagnard','05':'montagnard',
+    '04':'montagnard','26':'montagnard','07':'montagnard','43':'montagnard','63':'montagnard',
+    '15':'montagnard','48':'montagnard','12':'montagnard','19':'montagnard','23':'montagnard',
+    '03':'montagnard','09':'montagnard','65':'montagnard','64':'montagnard','46':'montagnard'
+  };
+
+  const etatClimats = { actif:false, groupe:null, charge:false };
+
+  function codeDepDe(p){
+    return p.code_insee || p.insee_dep || p.code || p.CODE_INSEE || p.INSEE_DEP || '';
+  }
+
+  document.getElementById('btn-climats').addEventListener('click', async function(){
+    const b = document.getElementById('btn-climats');
+    if(etatClimats.actif){
+      etatClimats.actif = false;
+      if(etatClimats.groupe) map.removeLayer(etatClimats.groupe);
+      etatClimats.groupe = null;
+      basculerBouton(b, false, '', '\u{1F30D} Carte des climats');
+      majLegende();
+      return;
+    }
+    etatClimats.actif = true;
+    basculerBouton(b, true, '\u{1F30D} Climats \u2715', '', '#166534');
+    afficherInfo('\u{1F30D} Chargement des limites d\u00e9partementales\u2026', 0);
+    try{
+      const url = WFS_GEOPF + '&TYPENAMES=ADMINEXPRESS-COG-CARTO.LATEST:departement&COUNT=120';
+      const r = await fetch(url);
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      if(!etatClimats.actif) return;
+      if(!map.getPane('climats')){
+        const p = map.createPane('climats');
+        if(p && p.style) p.style.zIndex = 235;
+      }
+      let n = 0, sansType = [];
+      const g = L.geoJSON(d, {
+        pane: 'climats',
+        style: function(f){
+          const c = CLIMAT_DEP[codeDepDe(f.properties || {})];
+          const cl = CLIMATS[c];
+          return { color:'#ffffff', weight:1, opacity:0.75, fillOpacity: cl ? 0.62 : 0,
+                   fillColor: cl ? cl.coul : 'transparent' };
+        },
+        onEachFeature: function(f, couche){
+          const p = f.properties || {};
+          const code = codeDepDe(p);
+          const c = CLIMAT_DEP[code];
+          const cl = CLIMATS[c];
+          const nomDep = p.nom || p.NOM || ('D\u00e9partement ' + code);
+          if(!cl){ sansType.push(code); return; }
+          n++;
+          couche.bindPopup('<b>' + echap(nomDep) + ' (' + echap(code) + ')</b>'
+            + '<div style="margin:3px 0 2px"><span style="display:inline-block;width:10px;height:10px;'
+            + 'background:' + cl.coul + ';border-radius:2px;margin-right:5px"></span><b>' + echap(cl.nom) + '</b>'
+            + ' <span style="color:#6b7280">' + echap(cl.koppen) + '</span></div>'
+            + echap(cl.resume)
+            + '<div style="color:#6b7280;font-size:11px;margin-top:3px">' + echap(cl.reperes) + '</div>'
+            + '<div style="color:#9ca3af;font-size:10px;margin-top:3px">Type dominant du d\u00e9partement \u2014 '
+            + 'les limites climatiques r\u00e9elles ne suivent pas les limites administratives.</div>');
+          couche.bindTooltip(nomDep + ' \u2014 ' + cl.nom, { sticky:true });
+        }
+      });
+      g.addTo(map);
+      etatClimats.groupe = g;
+      majLegende();
+      if(sansType.length) noterService('Carte des climats', true, n + ' d\u00e9partements class\u00e9s, ' + sansType.length + ' sans type');
+      else noterService('Carte des climats', true, n + ' d\u00e9partements');
+      afficherInfo('\u{1F30D} ' + n + ' d\u00e9partements color\u00e9s \u00b7 cliquez-en un pour la fiche de son climat', 8000);
+    }catch(e){
+      etatClimats.actif = false;
+      basculerBouton(b, false, '', '\u{1F30D} Carte des climats');
+      afficherInfo('\u26a0\ufe0f Limites d\u00e9partementales indisponibles \u2014 voir \u{1F527} Diagnostic des services', 7000);
+      noterService('Carte des climats', false, String(e && e.message || e));
+    }finally{ cacherInfo(); }
+  });
+
+  // ---------- Archéologie & paléontologie ----------
+  // Deux disciplines, deux sources, et surtout deux échelles de temps sans rapport :
+  // l'archéologie lit les traces humaines (quelques millénaires), la paléontologie les
+  // fossiles (des centaines de millions d'années). D'où deux mécanismes distincts.
+  const etatArcheo = {};
+  const etatFossiles = {};
+
+  // --- sites archéologiques : objets uniques, nommés, saisis dans OpenStreetMap ---
+  const SITES_ARCHEO = {
+    'archeo-sites': {
+      libelle: '\u{1F3DB} Sites arch\u00e9ologiques',
+      couleur: '#a16207',
+      requete: function(bbox){
+        return 'node["historic"="archaeological_site"](' + bbox + ');'
+             + 'way["historic"="archaeological_site"](' + bbox + ');';
+      }
+    },
+    'archeo-megalithes': {
+      libelle: '\u{1F5FF} M\u00e9galithes',
+      couleur: '#57534e',
+      requete: function(bbox){
+        return 'node["historic"="archaeological_site"]["site_type"="megalith"](' + bbox + ');'
+             + 'node["megalith_type"](' + bbox + ');'
+             + 'way["megalith_type"](' + bbox + ');';
+      }
+    },
+    'archeo-ruines': {
+      libelle: '\u{1F3DA} Ruines et vestiges',
+      couleur: '#b45309',
+      requete: function(bbox){
+        return 'node["historic"="ruins"](' + bbox + ');'
+             + 'way["historic"="ruins"](' + bbox + ');';
+      }
+    },
+    'archeo-chateaux': {
+      libelle: '\u{1F3F0} Ch\u00e2teaux forts',
+      couleur: '#7c2d12',
+      requete: function(bbox){
+        return 'node["historic"="castle"](' + bbox + ');'
+             + 'way["historic"="castle"](' + bbox + ');';
+      }
+    }
+  };
+
+  function detailArcheo(t){
+    const bribes = [];
+    const types = {
+      megalith:'m\u00e9galithe', tumulus:'tumulus', fortification:'fortification',
+      settlement:'habitat', villa:'villa gallo-romaine', hillfort:'oppidum',
+      necropolis:'n\u00e9cropole', cave:'grotte', roman:'romain', city_walls:'muraille'
+    };
+    if(t.site_type) bribes.push(types[t.site_type] || t.site_type);
+    if(t.megalith_type) bribes.push({ dolmen:'dolmen', menhir:'menhir', tumulus:'tumulus',
+      stone_circle:'cromlech', stone_row:'alignement', cairn:'cairn' }[t.megalith_type] || t.megalith_type);
+    if(t.historic === 'ruins' && t.ruins) bribes.push('ruine de ' + t.ruins);
+    if(t.castle_type) bribes.push(t.castle_type);
+    if(t.start_date) bribes.push(t.start_date);
+    if(t.inscription_date) bribes.push('class\u00e9 ' + t.inscription_date);
+    if(t.heritage) bribes.push('monument prot\u00e9g\u00e9');
+    return bribes.join(' \u00b7 ');
+  }
+
+  Object.keys(SITES_ARCHEO).forEach(function(cle){
+    const conf = SITES_ARCHEO[cle];
+    const btn = document.getElementById('btn-' + cle);
+    if(!btn) return;
+    etatArcheo[cle] = { actif:false, groupe:null };
+    btn.addEventListener('click', async function(){
+      const e = etatArcheo[cle];
+      if(e.actif){
+        e.actif = false;
+        if(e.groupe) map.removeLayer(e.groupe);
+        e.groupe = null;
+        basculerBouton(btn, false, '', conf.libelle);
+        majLegende();
+        return;
+      }
+      e.actif = true;
+      basculerBouton(btn, true, conf.libelle + ' \u2715', '', conf.couleur);
+      afficherInfo(conf.libelle + ' \u2014 interrogation d\u2019OpenStreetMap sur la vue\u2026', 0);
+      try{
+        const b = map.getBounds();
+        const bbox = b.getSouth().toFixed(4) + ',' + b.getWest().toFixed(4) + ','
+                   + b.getNorth().toFixed(4) + ',' + b.getEast().toFixed(4);
+        const d = await overpassRequete('[out:json][timeout:35];(' + conf.requete(bbox) + ');out center 500;');
+        if(!e.actif) return;
+        const g = L.layerGroup();
+        let n = 0;
+        (d.elements || []).forEach(function(el){
+          const lat = isFinite(el.lat) ? el.lat : (el.center && el.center.lat);
+          const lon = isFinite(el.lon) ? el.lon : (el.center && el.center.lon);
+          if(!isFinite(lat) || !isFinite(lon)) return;
+          const t = el.tags || {};
+          const nom = t['name:fr'] || t.name || conf.libelle.replace(/^\S+\s/, '');
+          const det = detailArcheo(t);
+          const lien = t.wikipedia
+            ? '<br><a href="https://fr.wikipedia.org/wiki/' + encodeURIComponent(String(t.wikipedia).replace(/^fr:/, ''))
+              + '" target="_blank" rel="noopener">Notice Wikip\u00e9dia</a>' : '';
+          L.circleMarker([lat, lon], { radius:6, weight:2, color:conf.couleur,
+            fillColor:'#fde68a', fillOpacity:0.9 })
+            .bindPopup('<b>' + echap(nom) + '</b>' + (det ? '<br>' + echap(det) : '') + lien
+              + '<br><span style="color:#9ca3af;font-size:10px">OpenStreetMap \u00b7 saisi par des contributeurs</span>')
+            .bindTooltip(nom, { direction:'top' })
+            .addTo(g);
+          n++;
+        });
+        if(!n){
+          e.actif = false;
+          basculerBouton(btn, false, '', conf.libelle);
+          afficherInfo(conf.libelle + ' : rien de recens\u00e9 dans cette vue \u2014 \u00e9largissez ou d\u00e9placez la carte', 7000);
+          return;
+        }
+        g.addTo(map);
+        e.groupe = g;
+        majLegende();
+        afficherInfo(conf.libelle + ' : ' + n + ' \u00e9l\u00e9ment(s) \u2014 cliquez un point pour le d\u00e9tail', 8000);
+      }catch(err){
+        e.actif = false;
+        basculerBouton(btn, false, '', conf.libelle);
+        afficherInfo('\u26a0\ufe0f OpenStreetMap n\u2019a pas r\u00e9pondu', 6000);
+        noterService('Arch\u00e9ologie (OSM)', false, String(err && err.message || err));
+      }finally{ cacherInfo(); }
+    });
+  });
+
+  // --- fossiles : GBIF sert aussi les specimens fossiles, filtrés par basisOfRecord ---
+  async function chargerFossiles(cle, taxon, coul, btn, libelle){
+    const b = map.getBounds();
+    // pas de filtre d'année ici : elle indiquerait la date de collecte, pas l'âge du fossile
+    const url = 'https://api.gbif.org/v1/occurrence/search'
+      + '?scientificName=' + encodeURIComponent(taxon)
+      + '&basisOfRecord=FOSSIL_SPECIMEN'
+      + '&decimalLatitude=' + b.getSouth().toFixed(3) + ',' + b.getNorth().toFixed(3)
+      + '&decimalLongitude=' + b.getWest().toFixed(3) + ',' + b.getEast().toFixed(3)
+      + '&hasCoordinate=true&hasGeospatialIssue=false&limit=300';
+    const r = await fetch(url);
+    if(!r.ok){ noterService('Fossiles (GBIF)', false, 'HTTP ' + r.status); throw new Error('GBIF HTTP ' + r.status); }
+    const d = await r.json();
+    const res = (d && d.results) || [];
+    noterService('Fossiles (GBIF)', true, res.length + ' sp\u00e9cimen(s)');
+    if(!res.length) return { n:0, total:(d && d.count) || 0 };
+    const g = L.layerGroup();
+    res.forEach(function(o){
+      if(o.decimalLatitude == null || o.decimalLongitude == null) return;
+      const esp = o.species || o.genus || o.scientificName || libelle;
+      const inst = o.institutionCode || o.publishingOrgKey || '';
+      const lieu = o.locality || o.county || '';
+      const geo = o.earliestPeriodOrLowestSystem || o.formation || '';
+      L.circleMarker([o.decimalLatitude, o.decimalLongitude], { radius:6, weight:2,
+        color:coul, fillColor:'#e7e5e4', fillOpacity:0.9 })
+        .bindPopup('<b>' + echap(esp) + '</b>'
+          + (lieu ? '<br>' + echap(lieu) : '')
+          + (geo ? '<br>' + echap(geo) : '')
+          + (inst ? '<br><span style="color:#6b7280">collection ' + echap(inst) + '</span>' : '')
+          + '<div style="color:#9ca3af;font-size:10px;margin-top:2px">Sp\u00e9cimen fossile de collection \u00b7 GBIF'
+          + '<br>La position est celle du lieu de r\u00e9colte</div>')
+        .bindTooltip(esp, { direction:'top' })
+        .addTo(g);
+    });
+    g.addTo(map);
+    return { n:res.length, groupe:g, total:(d && d.count) || res.length };
+  }
+
+  document.querySelectorAll('.fossile-btn').forEach(function(btn){
+    const cle = btn.id.replace('btn-foss-', '');
+    const taxon = btn.getAttribute('data-taxon'), coul = btn.getAttribute('data-coul');
+    const libelle = btn.textContent.trim();
+    etatFossiles[cle] = { actif:false, groupe:null };
+    btn.addEventListener('click', async function(){
+      const e = etatFossiles[cle];
+      if(e.actif){
+        e.actif = false;
+        if(e.groupe) map.removeLayer(e.groupe);
+        e.groupe = null;
+        basculerBouton(btn, false, '', libelle);
+        majLegende();
+        return;
+      }
+      e.actif = true;
+      basculerBouton(btn, true, libelle + ' \u2715', '', coul);
+      afficherInfo(libelle + ' \u2014 recherche des sp\u00e9cimens fossiles\u2026', 0);
+      try{
+        const rr = await chargerFossiles(cle, taxon, coul, btn, libelle);
+        if(!e.actif){ if(rr && rr.groupe) map.removeLayer(rr.groupe); return; }
+        cacherInfo();
+        if(!rr.n){
+          e.actif = false;
+          basculerBouton(btn, false, '', libelle);
+          afficherInfo(libelle + ' : aucun sp\u00e9cimen g\u00e9olocalis\u00e9 dans cette vue \u2014 \u00e9largissez la carte. '
+            + 'Beaucoup de fossiles anciens des collections n\u2019ont pas de coordonn\u00e9es pr\u00e9cises.', 9000);
+          return;
+        }
+        e.groupe = rr.groupe;
+        majLegende();
+        afficherInfo(libelle + ' : ' + rr.n + ' sp\u00e9cimen(s) affich\u00e9(s)'
+          + (rr.total > rr.n ? ' sur ' + rr.total + ' recens\u00e9s' : '') + ' \u00b7 cliquez un point pour le d\u00e9tail', 9000);
+      }catch(err){
+        e.actif = false;
+        basculerBouton(btn, false, '', libelle);
+        afficherInfo('\u26a0\ufe0f GBIF n\u2019a pas r\u00e9pondu pour les fossiles', 6000);
+      }finally{ cacherInfo(); }
+    });
+  });
+
+  // ---------- Arbres remarquables (OpenStreetMap) ----------
+  // Les arbres monumentaux ou classes sont saisis dans OSM comme natural=tree avec un
+  // attribut de remarquabilite. Contrairement a GBIF, ce sont des objets uniques, nommes.
+  const etatArbres = { actif:false, groupe:null };
+  document.getElementById('btn-arbres-remarquables').addEventListener('click', async function(){
+    const b = document.getElementById('btn-arbres-remarquables');
+    if(etatArbres.actif){
+      etatArbres.actif = false;
+      if(etatArbres.groupe) map.removeLayer(etatArbres.groupe);
+      etatArbres.groupe = null;
+      basculerBouton(b, false, '', '\u{1F333} Arbres remarquables (OSM)');
+      majLegende();
+      return;
+    }
+    etatArbres.actif = true;
+    basculerBouton(b, true, '\u{1F333} Arbres remarquables \u2715', '', '#166534');
+    afficherInfo('\u{1F333} Recherche des arbres remarquables dans la vue\u2026', 0);
+    try{
+      const bb = map.getBounds();
+      const bbox = bb.getSouth().toFixed(4) + ',' + bb.getWest().toFixed(4) + ','
+                 + bb.getNorth().toFixed(4) + ',' + bb.getEast().toFixed(4);
+      const d = await overpassRequete('[out:json][timeout:30];('
+        + 'node["natural"="tree"]["denotation"~"natural_monument|landmark"](' + bbox + ');'
+        + 'node["natural"="tree"]["monument"="yes"](' + bbox + ');'
+        + 'node["natural"="tree"]["heritage"](' + bbox + ');'
+        + 'node["natural"="tree"]["name"](' + bbox + ');'
+        + ');out body 400;');
+      if(!etatArbres.actif) return;
+      const g = L.layerGroup();
+      let n = 0;
+      (d.elements || []).forEach(function(el){
+        if(!isFinite(el.lat) || !isFinite(el.lon)) return;
+        const t = el.tags || {};
+        const nom = t['name:fr'] || t.name || 'Arbre remarquable';
+        const esp = t['species:fr'] || t.species || t.taxon || '';
+        const h0 = t.height ? t.height + ' m' : '';
+        const tour = t.circumference ? 'circonf\u00e9rence ' + t.circumference + ' m' : '';
+        const age = t.start_date ? 'plant\u00e9 vers ' + t.start_date : '';
+        const det = [esp, h0, tour, age].filter(Boolean).join(' \u00b7 ');
+        L.circleMarker([el.lat, el.lon], { radius:6, weight:2, color:'#166534',
+          fillColor:'#4ade80', fillOpacity:0.9 })
+          .bindPopup('<b>' + echap(nom) + '</b>'
+            + (det ? '<br>' + echap(det) : '')
+            + '<br><span style="color:#9ca3af;font-size:10px">OpenStreetMap \u00b7 saisi par des contributeurs</span>')
+          .bindTooltip(nom, { direction:'top' })
+          .addTo(g);
+        n++;
+      });
+      if(!n){
+        etatArbres.actif = false;
+        basculerBouton(b, false, '', '\u{1F333} Arbres remarquables (OSM)');
+        afficherInfo('\u{1F333} Aucun arbre remarquable recens\u00e9 dans cette vue \u2014 \u00e9largissez ou d\u00e9placez la carte', 7000);
+        return;
+      }
+      g.addTo(map);
+      etatArbres.groupe = g;
+      majLegende();
+      afficherInfo('\u{1F333} ' + n + ' arbre(s) remarquable(s) \u2014 cliquez un point pour son nom et son esp\u00e8ce', 8000);
+    }catch(e){
+      etatArbres.actif = false;
+      basculerBouton(b, false, '', '\u{1F333} Arbres remarquables (OSM)');
+      afficherInfo('\u26a0\ufe0f OpenStreetMap n\u2019a pas r\u00e9pondu pour les arbres remarquables', 6000);
+      noterService('Arbres remarquables (OSM)', false, String(e && e.message || e));
+    }finally{ cacherInfo(); }
+  });
+
   document.querySelectorAll('.esp-btn').forEach(function(btn){
     const cle = btn.id.replace('btn-esp-', '');
     const sci = btn.getAttribute('data-sci'), coul = btn.getAttribute('data-coul');
@@ -15032,6 +15877,384 @@
   let marqueurRecherche = null;
 
 
+  // ---------- Socle mondial ----------
+  // Natural Earth, domaine public, servi par le depot officiel du projet. Les jeux
+  // 110m suffisent a l'echelle mondiale et pesent moins de 1 Mo. Verifie avant usage :
+  // 177 pays, noms francais complets, population, PIB, continent, niveau de revenu.
+  const NE = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/';
+  const etatMonde = { pays:null, villes:null, plaques:null, choro:null, indicateur:'aucun' };
+
+  // Indicateurs derives des attributs du jeu : aucun service tiers a interroger.
+  const INDIC_MONDE = {
+    aucun: { nom:'Aucun \u2014 contours seuls' },
+    population: {
+      nom:'Population', unite:'habitants',
+      valeur:function(p){ return p.POP_EST; },
+      paliers:[[1e6,'#eff6ff'],[1e7,'#bfdbfe'],[5e7,'#60a5fa'],[1e8,'#2563eb'],[3e8,'#1e40af'],[Infinity,'#172554']],
+      format:function(v){ return v >= 1e6 ? (v/1e6).toFixed(1).replace('.', ',') + ' millions' : Math.round(v).toLocaleString('fr-FR'); },
+      note:'Population estim\u00e9e. Attention \u00e0 l\u2019effet de taille : la Chine et l\u2019Inde \u00e9crasent toute lecture, d\u2019o\u00f9 des paliers resserr\u00e9s en bas d\u2019\u00e9chelle.'
+    },
+    densite: {
+      nom:'Densit\u00e9 de population', unite:'hab./km\u00b2',
+      valeur:function(p, aire){ return aire > 0 ? p.POP_EST / aire : null; },
+      paliers:[[10,'#f7fcf5'],[50,'#c7e9c0'],[100,'#74c476'],[200,'#31a354'],[500,'#006d2c'],[Infinity,'#00441b']],
+      format:function(v){ return Math.round(v) + ' hab./km\u00b2'; },
+      note:'Calcul\u00e9e \u00e0 partir de la population et de la surface du polygone. Une densit\u00e9 nationale masque les contrastes internes : l\u2019\u00c9gypte est vide sauf le long du Nil.'
+    },
+    pib: {
+      nom:'PIB total', unite:'millions de dollars',
+      valeur:function(p){ return p.GDP_MD; },
+      paliers:[[1e4,'#fff5eb'],[1e5,'#fdd0a2'],[5e5,'#fd8d3c'],[2e6,'#e6550d'],[1e7,'#a63603'],[Infinity,'#7f2704']],
+      format:function(v){ return v >= 1e6 ? (v/1e6).toFixed(2).replace('.', ',') + ' billions $' : Math.round(v).toLocaleString('fr-FR') + ' M$'; },
+      note:'Produit int\u00e9rieur brut total. Il mesure le poids \u00e9conomique, pas le niveau de vie : comparez avec le PIB par habitant.'
+    },
+    pibhab: {
+      nom:'PIB par habitant', unite:'dollars',
+      valeur:function(p){ return (p.GDP_MD && p.POP_EST) ? p.GDP_MD * 1e6 / p.POP_EST : null; },
+      paliers:[[2000,'#fee5d9'],[6000,'#fcae91'],[15000,'#fb6a4a'],[30000,'#de2d26'],[60000,'#a50f15'],[Infinity,'#67000d']],
+      format:function(v){ return Math.round(v).toLocaleString('fr-FR') + ' $'; },
+      note:'Richesse produite rapport\u00e9e \u00e0 la population. C\u2019est une moyenne : elle ne dit rien des in\u00e9galit\u00e9s internes, tr\u00e8s fortes dans les pays p\u00e9troliers.'
+    },
+    revenu: {
+      nom:'Niveau de revenu (Banque mondiale)', unite:'',
+      categorie:true,
+      classes:{ '1':'#08519c', '2':'#3182bd', '3':'#6baed6', '4':'#bdd7e7', '5':'#eff3ff' },
+      valeur:function(p){ return p.INCOME_GRP; },
+      note:'Classement de la Banque mondiale en cinq groupes, du revenu \u00e9lev\u00e9 au revenu faible. Un seuil, donc une fronti\u00e8re conventionnelle : un pays peut changer de groupe sans que rien n\u2019ait chang\u00e9 pour ses habitants.'
+    },
+    developpement: {
+      nom:'Cat\u00e9gorie de d\u00e9veloppement', unite:'',
+      categorie:true,
+      classes:{ '1':'#08306b', '2':'#2171b5', '3':'#6baed6', '4':'#c6dbef', '5':'#fdd0a2', '6':'#fd8d3c', '7':'#a63603' },
+      valeur:function(p){ return p.ECONOMY; },
+      note:'Typologie de Natural Earth : pays d\u00e9velopp\u00e9s du G7, autres d\u00e9velopp\u00e9s, \u00e9mergents, en d\u00e9veloppement, moins avanc\u00e9s. Toute typologie est un choix : demandez aux \u00e9l\u00e8ves o\u00f9 ils placeraient la limite.'
+    }
+  };
+
+  function aireApprox(couche){
+    // surface approchee en km2, suffisante pour une densite nationale
+    try{
+      const b = couche.getBounds();
+      const lat = (b.getNorth() + b.getSouth()) / 2;
+      const h = (b.getNorth() - b.getSouth()) * 111;
+      const l = (b.getEast() - b.getWest()) * 111 * Math.cos(lat * Math.PI / 180);
+      return Math.abs(h * l) * 0.62;   // un polygone remplit rarement son rectangle
+    }catch(e){ return 0; }
+  }
+
+  function teinteIndic(cle, v){
+    const ind = INDIC_MONDE[cle];
+    if(!ind || v === null || v === undefined) return '#e7e5e4';
+    if(ind.categorie){
+      const n = String(v).match(/^(\d)/);
+      return (n && ind.classes[n[1]]) || '#e7e5e4';
+    }
+    if(!isFinite(v)) return '#e7e5e4';
+    for(let i = 0; i < ind.paliers.length; i++) if(v < ind.paliers[i][0]) return ind.paliers[i][1];
+    return ind.paliers[ind.paliers.length - 1][1];
+  }
+
+  function styleMonde(f, couche){
+    const cle = etatMonde.indicateur;
+    if(cle === 'aucun') return { color:'#57534e', weight:0.9, opacity:0.8, fillOpacity:0.04, fillColor:'#a8a29e' };
+    const ind = INDIC_MONDE[cle];
+    const v = ind.valeur(f.properties, couche ? aireApprox(couche) : 0);
+    return { color:'#ffffff', weight:0.7, opacity:0.85, fillOpacity:0.78, fillColor:teinteIndic(cle, v) };
+  }
+
+  async function chargerMonde(){
+    if(etatMonde.pays) return etatMonde.pays;
+    const r = await fetch(NE + 'ne_110m_admin_0_countries.geojson');
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    noterService('Natural Earth (pays)', true, (d.features || []).length + ' pays');
+    if(!map.getPane('monde')){
+      const p = map.createPane('monde');
+      if(p && p.style) p.style.zIndex = 232;
+    }
+    etatMonde.pays = L.geoJSON(d, {
+      pane:'monde',
+      style:function(f){ return styleMonde(f, null); },
+      onEachFeature:function(f, couche){
+        const p = f.properties;
+        couche.setStyle(styleMonde(f, couche));
+        couche.on('mouseover', function(){ couche.setStyle({ weight:2.4, color:'#111827' }); });
+        couche.on('mouseout', function(){ couche.setStyle(styleMonde(f, couche)); });
+        const aire = aireApprox(couche);
+        const ligne = function(cle){
+          const ind = INDIC_MONDE[cle];
+          if(!ind || cle === 'aucun') return '';
+          const v = ind.valeur(p, aire);
+          if(v === null || v === undefined || v === '') return '';
+          const txt = ind.categorie ? String(v).replace(/^\d\.\s*/, '') : ind.format(v);
+          return '<br>' + echap(ind.nom) + ' : <b>' + echap(txt) + '</b>';
+        };
+        couche.bindPopup('<b>' + echap(p.NAME_FR || p.ADMIN) + '</b>'
+          + '<div style="color:#6b7280;font-size:11px">' + echap(p.CONTINENT || '') + ' \u00b7 ' + echap(p.SUBREGION || '') + '</div>'
+          + ligne('population') + ligne('densite') + ligne('pib') + ligne('pibhab')
+          + ligne('revenu') + ligne('developpement')
+          + '<div style="color:#9ca3af;font-size:10px;margin-top:3px">Natural Earth \u00b7 domaine public'
+          + '<br>Surface estim\u00e9e \u00e0 partir du contour : la densit\u00e9 est un ordre de grandeur.</div>');
+        couche.bindTooltip(p.NAME_FR || p.ADMIN, { sticky:true });
+      }
+    });
+    return etatMonde.pays;
+  }
+
+  document.getElementById('btn-monde-pays').addEventListener('click', async function(){
+    const b = document.getElementById('btn-monde-pays');
+    const reg = document.getElementById('monde-reglages');
+    if(etatMonde.pays && map.hasLayer(etatMonde.pays)){
+      map.removeLayer(etatMonde.pays);
+      if(reg) reg.style.display = 'none';
+      basculerBouton(b, false, '', '\u{1F30D} Pays du monde');
+      majLegende();
+      return;
+    }
+    basculerBouton(b, true, '\u{1F30D} Pays du monde \u2715', '', '#1d4ed8');
+    afficherInfo('\u{1F30D} Chargement des contours mondiaux\u2026', 0);
+    try{
+      const c = await chargerMonde();
+      c.addTo(map);
+      if(reg) reg.style.display = 'block';
+      majLegende();
+      afficherInfo('\u{1F30D} 177 pays \u00b7 cliquez-en un pour sa fiche, ou choisissez un indicateur \u00e0 comparer', 8000);
+    }catch(e){
+      basculerBouton(b, false, '', '\u{1F30D} Pays du monde');
+      afficherInfo('\u26a0\ufe0f Contours mondiaux indisponibles \u2014 voir \u{1F527} Diagnostic des services', 7000);
+      noterService('Natural Earth (pays)', false, String(e && e.message || e));
+    }finally{ cacherInfo(); }
+  });
+
+  (function cablerIndicateur(){
+    const s = document.getElementById('monde-indicateur');
+    if(!s) return;
+    s.addEventListener('change', function(){
+      etatMonde.indicateur = s.value;
+      if(etatMonde.pays){
+        etatMonde.pays.eachLayer(function(c){ c.setStyle(styleMonde(c.feature, c)); });
+      }
+      majLegende();
+    });
+  })();
+
+  // --- capitales et grandes villes ---
+  document.getElementById('btn-monde-villes').addEventListener('click', async function(){
+    const b = document.getElementById('btn-monde-villes');
+    if(etatMonde.villes && map.hasLayer(etatMonde.villes)){
+      map.removeLayer(etatMonde.villes);
+      basculerBouton(b, false, '', '\u{1F3D9} Capitales &amp; grandes villes');
+      majLegende();
+      return;
+    }
+    basculerBouton(b, true, '\u{1F3D9} Villes du monde \u2715', '', '#b45309');
+    afficherInfo('\u{1F3D9} Chargement des villes\u2026', 0);
+    try{
+      if(!etatMonde.villes){
+        const r = await fetch(NE + 'ne_110m_populated_places_simple.geojson');
+        if(!r.ok) throw new Error('HTTP ' + r.status);
+        const d = await r.json();
+        noterService('Natural Earth (villes)', true, (d.features || []).length + ' villes');
+        etatMonde.villes = L.geoJSON(d, {
+          pointToLayer:function(f, ll){
+            const p = f.properties;
+            const capitale = p.adm0cap === 1 || p.adm0cap === '1';
+            const mega = p.megacity === 1 || p.megacity === '1';
+            return L.circleMarker(ll, {
+              radius: capitale ? 6 : (mega ? 5 : 4),
+              weight: 2, color: capitale ? '#b45309' : '#57534e',
+              fillColor: capitale ? '#fbbf24' : '#e7e5e4', fillOpacity:0.95
+            });
+          },
+          onEachFeature:function(f, c){
+            const p = f.properties;
+            const capitale = p.adm0cap === 1 || p.adm0cap === '1';
+            const pop = p.pop_max ? Number(p.pop_max).toLocaleString('fr-FR') + ' hab. (agglom\u00e9ration)' : '';
+            c.bindPopup('<b>' + echap(p.name || '') + '</b>'
+              + (capitale ? ' <span style="color:#b45309">\u2605 capitale</span>' : '')
+              + '<br>' + echap(p.sov0name || p.adm0name || '')
+              + (pop ? '<br>' + echap(pop) : '')
+              + '<div style="color:#9ca3af;font-size:10px;margin-top:3px">Natural Earth \u00b7 domaine public</div>');
+            c.bindTooltip(p.name || '', { direction:'top' });
+          }
+        });
+      }
+      etatMonde.villes.addTo(map);
+      majLegende();
+      afficherInfo('\u{1F3D9} Capitales en orange, autres grandes villes en gris', 7000);
+    }catch(e){
+      basculerBouton(b, false, '', '\u{1F3D9} Capitales &amp; grandes villes');
+      afficherInfo('\u26a0\ufe0f Villes du monde indisponibles', 6000);
+      noterService('Natural Earth (villes)', false, String(e && e.message || e));
+    }finally{ cacherInfo(); }
+  });
+
+  // --- reperes du globe : lignes remarquables, oceans, zones urbaines ---
+  // Verifie avant usage : les 6 lignes et les 29 mers portent un nom francais.
+  const REPERES_MONDE = {
+    lignes: { fichier:'ne_110m_geographic_lines.geojson', libelle:'\u{1F310} \u00c9quateur, tropiques & cercles polaires',
+      teinte:'#b45309', couche:null },
+    mers:   { fichier:'ne_110m_geography_marine_polys.geojson', libelle:'\u{1F30A} Oc\u00e9ans & mers',
+      teinte:'#0891b2', couche:null },
+    urbain: { fichier:'ne_50m_urban_areas.geojson', libelle:'\u{1F306} Taches urbaines mondiales',
+      teinte:'#b91c1c', couche:null }
+  };
+
+  function styleRepere(cle){
+    if(cle === 'lignes') return { color:'#b45309', weight:1.6, opacity:0.85, dashArray:'7 5', fill:false, interactive:true };
+    if(cle === 'mers')   return { color:'#0891b2', weight:1, opacity:0.5, fillColor:'#0891b2', fillOpacity:0.07 };
+    return { color:'#b91c1c', weight:0.4, opacity:0.6, fillColor:'#dc2626', fillOpacity:0.55 };
+  }
+
+  function infoLigne(p){
+    const n = (p.name || '').toLowerCase();
+    if(n.indexOf('equator') !== -1)
+      return 'Latitude 0\u00b0. Le Soleil y passe au z\u00e9nith deux fois par an, aux \u00e9quinoxes. Jour et nuit y durent douze heures toute l\u2019ann\u00e9e.';
+    if(n.indexOf('cancer') !== -1)
+      return 'Latitude 23\u00b026\u2032 nord. Limite septentrionale o\u00f9 le Soleil peut passer au z\u00e9nith : il y parvient au solstice de juin. Au-del\u00e0, jamais.';
+    if(n.indexOf('capricorn') !== -1)
+      return 'Latitude 23\u00b026\u2032 sud. Sym\u00e9trique du tropique du Cancer : z\u00e9nith au solstice de d\u00e9cembre.';
+    if(n.indexOf('arctic') !== -1)
+      return 'Latitude 66\u00b034\u2032 nord. \u00c0 partir d\u2019ici, le Soleil ne se couche pas au solstice de juin et ne se l\u00e8ve pas \u00e0 celui de d\u00e9cembre.';
+    if(n.indexOf('antarctic') !== -1)
+      return 'Latitude 66\u00b034\u2032 sud. Sym\u00e9trique du cercle arctique.';
+    if(n.indexOf('date') !== -1)
+      return 'Ligne de changement de date, proche du m\u00e9ridien 180\u00b0. Elle contourne les archipels pour ne pas couper un m\u00eame pays en deux jours diff\u00e9rents.';
+    return '';
+  }
+
+  Object.keys(REPERES_MONDE).forEach(function(cle){
+    const conf = REPERES_MONDE[cle];
+    const btn = document.getElementById('btn-monde-' + cle);
+    if(!btn) return;
+    btn.addEventListener('click', async function(){
+      if(conf.couche && map.hasLayer(conf.couche)){
+        map.removeLayer(conf.couche);
+        basculerBouton(btn, false, '', conf.libelle);
+        majLegende();
+        return;
+      }
+      basculerBouton(btn, true, conf.libelle + ' \u2715', '', conf.teinte);
+      afficherInfo(conf.libelle + ' \u2014 chargement\u2026', 0);
+      try{
+        if(!conf.couche){
+          const r = await fetch(NE + conf.fichier);
+          if(!r.ok) throw new Error('HTTP ' + r.status);
+          const d = await r.json();
+          noterService('Natural Earth (' + cle + ')', true, (d.features || []).length + ' entit\u00e9s');
+          if(!map.getPane('monde')){
+            const p = map.createPane('monde');
+            if(p && p.style) p.style.zIndex = 232;
+          }
+          conf.couche = L.geoJSON(d, {
+            pane:'monde',
+            style:function(){ return styleRepere(cle); },
+            onEachFeature:function(f, c){
+              const p = f.properties;
+              const nom = p.name_fr || p.NAME_FR || p.name || p.NAME || '';
+              if(!nom) return;
+              if(cle === 'lignes'){
+                const expl = infoLigne(p);
+                c.bindPopup('<b>' + echap(nom) + '</b>' + (expl ? '<br>' + echap(expl) : ''));
+                c.bindTooltip(nom, { sticky:true });
+              }else if(cle === 'mers'){
+                c.bindPopup('<b>' + echap(nom) + '</b>'
+                  + '<div style="color:#9ca3af;font-size:10px;margin-top:2px">Natural Earth \u00b7 domaine public</div>');
+                c.bindTooltip(nom, { sticky:true });
+              }else{
+                const n2 = p.name || '';
+                c.bindTooltip(n2 || 'Zone urbanis\u00e9e', { sticky:true });
+              }
+            }
+          });
+        }
+        conf.couche.addTo(map);
+        majLegende();
+        if(cle === 'lignes') afficherInfo('\u{1F310} Les lignes remarquables : cliquez-en une pour ce qu\u2019elle signifie', 8000);
+        else if(cle === 'urbain') afficherInfo('\u{1F306} Taches urbaines : d\u00e9zoomez pour voir les grandes concentrations mondiales', 8000);
+        else cacherInfo();
+      }catch(e){
+        basculerBouton(btn, false, '', conf.libelle);
+        afficherInfo('\u26a0\ufe0f ' + conf.libelle + ' indisponible', 6000);
+        noterService('Natural Earth (' + cle + ')', false, String(e && e.message || e));
+      }finally{ cacherInfo(); }
+    });
+  });
+
+  // ---------- Portée géographique des couches ----------
+  // Environ la moitié des couches vient de producteurs français : INSEE, IGN, BRGM,
+  // Géorisques. Hors de France elles ne renvoient rien, et jusqu'ici l'utilisateur
+  // n'avait aucun moyen de le savoir : le bouton s'allumait, la carte restait vide.
+  // On repère donc la vue, et on grise ce qui ne peut pas répondre, avec la raison.
+  const FRANCE_BORNES = { sud:41.2, nord:51.3, ouest:-5.4, est:9.8 };
+  const DOMTOM_BORNES = [
+    { nom:'Guadeloupe', sud:15.8, nord:16.6, ouest:-61.9, est:-60.9 },
+    { nom:'Martinique', sud:14.3, nord:15.0, ouest:-61.3, est:-60.7 },
+    { nom:'Guyane',     sud:2.0,  nord:5.9,  ouest:-54.7, est:-51.5 },
+    { nom:'La R\u00e9union', sud:-21.5, nord:-20.8, ouest:55.1, est:55.9 },
+    { nom:'Mayotte',    sud:-13.1, nord:-12.5, ouest:44.9, est:45.4 }
+  ];
+  function dansFrance(ll){
+    const b = FRANCE_BORNES;
+    if(ll.lat >= b.sud && ll.lat <= b.nord && ll.lng >= b.ouest && ll.lng <= b.est) return true;
+    return DOMTOM_BORNES.some(function(d){
+      return ll.lat >= d.sud && ll.lat <= d.nord && ll.lng >= d.ouest && ll.lng <= d.est;
+    });
+  }
+
+  // Marqueurs des producteurs strictement nationaux, cherchés dans l'infobulle du bouton
+  // ou dans l'identifiant de la couche. Tout le reste est considéré comme mondial.
+  const MOTS_FRANCE = /INSEE|\bIGN\b|BRGM|G[ée]orisques|BD For[êe]t|Admin ?Express|SHOM|ANCT|Seveso|BASIAS|SisFrance|N[ée]opal|Corine Land Cover|Cadastre|\bBAN\b|Base Adresse|Sandre|\bONF\b|catastrophe naturelle|ZFE|Action C\u0153ur de Ville|QPV|acad[ée]mie|DVF|minist[èe]re/i;
+  const ID_FRANCE = /^btn-(insee|educ|origines|population|logement|ville|qpv|acv|lim-|clc|foret|sis-|ri-|rn-|clim-soleil|clim-vent|climats|submersion|littoral|logements-mer|zfe|energie|choro|dvf|equip|smassifs|pays|massifs|glaciers|vallees|fleuves)/;
+
+  function coucheEstFrancaise(btn){
+    if(!btn) return false;
+    if(ID_FRANCE.test(btn.id || '')) return true;
+    return MOTS_FRANCE.test(btn.getAttribute('title') || '');
+  }
+
+  let horsFranceSignale = false;
+  function majPorteeCouches(){
+    const dedans = dansFrance(map.getCenter());
+    document.body.classList.toggle('hors-france', !dedans);
+    let grisees = 0;
+    document.querySelectorAll('.calque-ajout').forEach(function(b){
+      if(!coucheEstFrancaise(b)) return;
+      const allumee = (b.textContent || '').indexOf('\u2715') !== -1;
+      if(!dedans && !allumee){
+        b.classList.add('hors-portee');
+        if(!b.dataset.titreFr) b.dataset.titreFr = b.getAttribute('title') || '';
+        b.setAttribute('title', 'Donn\u00e9es fran\u00e7aises uniquement \u2014 sans effet sur cette vue. '
+          + 'Revenez sur la France pour l\u2019utiliser.\n\n' + (b.dataset.titreFr || ''));
+        grisees++;
+      }else{
+        b.classList.remove('hors-portee');
+        if(b.dataset.titreFr){ b.setAttribute('title', b.dataset.titreFr); delete b.dataset.titreFr; }
+      }
+    });
+    const bandeau = document.getElementById('bandeau-portee');
+    if(bandeau){
+      bandeau.hidden = dedans;
+      if(!dedans) bandeau.querySelector('span').textContent =
+        'Vue hors de France : ' + grisees + ' couche(s) nationale(s) gris\u00e9e(s). '
+        + 'Les esp\u00e8ces, fossiles, m\u00e9t\u00e9o, s\u00e9ismes, feux, relief, sentiers et le croquis fonctionnent partout.';
+    }
+    if(!dedans && !horsFranceSignale){
+      horsFranceSignale = true;
+      afficherInfo('🌍 Vue hors de France : les couches issues de producteurs fran\u00e7ais (INSEE, IGN, BRGM) '
+        + 'sont gris\u00e9es. Tout ce qui vient de sources mondiales reste disponible.', 10000);
+    }
+    if(dedans) horsFranceSignale = false;
+  }
+  (function cablerRetourFrance(){
+    const b = document.getElementById('retour-france');
+    if(b) b.addEventListener('click', function(){
+      map.fitBounds([[FRANCE_BORNES.sud, FRANCE_BORNES.ouest], [FRANCE_BORNES.nord, FRANCE_BORNES.est]]);
+    });
+  })();
+  map.on('moveend zoomend', majPorteeCouches);
+  setTimeout(majPorteeCouches, 700);
+
   // ---------- Barre de recherche unifiée (rail) ----------
   // Il y avait deux recherches sans lien : celle des adresses, dans une fenêtre à ouvrir,
   // et celle des couches, cachée dans la fenêtre des séances. Une seule barre les réunit :
@@ -15393,8 +16616,8 @@
   });
 
   // ================= Fenêtres flottantes (widgets) =================
-  const WIDGETS = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-industriel','wg-population','wg-climat','wg-littoral','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-limites','wg-foret','wg-pilote'];
-  const WIDGETS_PILOTABLES = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-industriel','wg-population','wg-climat','wg-littoral','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-limites','wg-foret'];
+  const WIDGETS = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-industriel','wg-population','wg-climat','wg-littoral','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-monde','wg-vegetation','wg-archeo','wg-limites','wg-foret','wg-pilote'];
+  const WIDGETS_PILOTABLES = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-industriel','wg-population','wg-climat','wg-littoral','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-monde','wg-vegetation','wg-archeo','wg-limites','wg-foret'];
   const WIDGETS_CASES = []; // remplacées par la fenêtre 🧭 pilote
   let posWidgets = {};
   try{ posWidgets = JSON.parse(localStorage.getItem('geo-widgets3')||'{}'); }catch(e){}
@@ -15452,6 +16675,9 @@
     const btnFermer = tete.querySelector('[data-action="fermer"]');
     if(btnFermer) btnFermer.addEventListener('click', ()=>{
       w.classList.add('cache');
+      // fermer le Croquis desarme l'outil : sinon le curseur reste en croix et le
+      // pinceau actif, alors que plus aucune commande n'est accessible.
+      if(w.id === 'wg-outils' && typeof changerMode === 'function' && mode !== 'main') changerMode('main');
       majCasesWidgets();
       sauverWidgets();
       afficherInfo('Fenêtre fermée — réouvrable via ⚙️ Options', 2600);
@@ -15479,14 +16705,17 @@
   initWidget('wg-risques',  { left:'12px', top:'360px', replie:true, cache:true });
   initWidget('wg-industriel',  { left:'12px', top:'360px', replie:true, cache:true });
   initWidget('wg-population', { left:'12px', top:'270px', replie:true, cache:true });
-  initWidget('wg-climat','wg-littoral',    { left:'12px', top:'110px', replie:true, cache:true });
-  initWidget('wg-littoral','wg-littoral',    { left:'12px', top:'110px', replie:true, cache:true });
+  initWidget('wg-climat',    { left:'12px', top:'110px', replie:true, cache:true });
+  initWidget('wg-littoral',  { left:'12px', top:'150px', replie:true, cache:true });
   initWidget('wg-montagnes', { left:'12px', top:'150px', replie:true, cache:true });
   initWidget('wg-rivieres',  { left:'12px', top:'190px', replie:true, cache:true });
   initWidget('wg-pays',      { left:'12px', top:'520px', replie:true, cache:true });
   initWidget('wg-mer',       { left:'12px', top:'440px', replie:true, cache:true });
   initWidget('wg-astro',   { left:'12px', top:'480px', replie:true, cache:true });
   initWidget('wg-animaux',   { left:'12px', top:'230px', replie:true, cache:true });
+  initWidget('wg-monde',     { left:'12px', top:'190px', replie:true, cache:true });
+  initWidget('wg-vegetation',{ left:'12px', top:'270px', replie:true, cache:true });
+  initWidget('wg-archeo',    { left:'12px', top:'310px', replie:true, cache:true });
   initWidget('wg-rivieres', { left:'12px', top:'250px', replie:true, cache:true });
   initWidget('wg-feux',     { left:'12px', top:'140px', replie:true, cache:true });
   initWidget('wg-meteo',    { left:'12px', top:'180px', replie:true, cache:true });
@@ -15611,6 +16840,9 @@
     panneauxAncres().forEach(function(w){
       if(w.id !== garde) w.classList.add('cache');
     });
+    // le Croquis vient d'etre masque par la mise en avant d'un autre panneau
+    const cr = document.getElementById('wg-outils');
+    if(cr && cr.classList.contains('cache') && typeof changerMode === 'function' && mode !== 'main') changerMode('main');
   }
   document.querySelectorAll('.pilote-btn').forEach(b=>{
     b.addEventListener('click', ()=>{
@@ -15619,6 +16851,9 @@
       const cachee = cible.classList.toggle('cache');
       if(!cachee) cible.classList.remove('replie');
       if(!cachee) panneauUnique(b.dataset.cible);
+      // Ouvrir une autre fenetre desarme l'outil de dessin : sinon le curseur reste en
+      // croix et le clic sur la carte continue de tracer, alors qu'on travaille ailleurs.
+      if(b.dataset.cible !== 'wg-outils' && typeof changerMode === 'function' && mode !== 'main') changerMode('main');
       majPilote();
       sauverWidgets();
     });
@@ -16298,6 +17533,17 @@
           + ligneLegende('#dc2626', 'Magnitude 4 \u00e0 5', 'rond', '')
           + ligneLegende('#7f1d1d', 'Magnitude 5 et plus', 'rond', 'Peut causer des d\u00e9g\u00e2ts'));
       }
+      if(etatClimats.actif && etatClimats.groupe){
+        blocs.push('<div class="leg-sous">\u{1F30D} Types de climat <small>(par d\u00e9partement)</small></div>'
+          + Object.keys(CLIMATS).map(function(k){
+              return ligneLegende(CLIMATS[k].coul, CLIMATS[k].nom + ' <small>(' + CLIMATS[k].koppen + ')</small>',
+                'carre', CLIMATS[k].resume);
+            }).join('')
+          + '<div style="font-size:9.5px;color:#8a8577;line-height:1.45;margin-top:3px">'
+          + 'Sch\u00e9ma : chaque d\u00e9partement re\u00e7oit son <b>type dominant</b>. Les limites climatiques r\u00e9elles sont '
+          + 'progressives et ne suivent pas les fronti\u00e8res administratives \u2014 la Dr\u00f4me ou l\u2019Ard\u00e8che sont \u00e0 cheval '
+          + 'sur trois climats. Comparez avec les d\u00e9grad\u00e9s d\u2019ensoleillement et de vent pour voir les transitions.</div>');
+      }
       if(etatClim.ventSurf){
         blocs.push('<div class="leg-sous">\u{1F300} Vent moyen interpol\u00e9 <small>(km/h \u00e0 10 m)</small></div>'
           + PALIERS_VENT.slice().reverse().map(function(p, i, t){
@@ -16309,6 +17555,38 @@
           + '<div style="font-size:9.5px;color:#8a8577;line-height:1.45;margin-top:3px">'
           + 'Vitesses mesur\u00e9es \u00e0 <b>10 m\u00e8tres</b> en station. Les atlas \u00e9oliens publient des vitesses \u00e0 50 ou 100 m\u00e8tres, '
           + 'bien sup\u00e9rieures : les contrastes r\u00e9gionaux se retrouvent, pas les valeurs.</div>');
+      }
+      const archeoOn = Object.keys(etatArcheo).filter(function(k){ return etatArcheo[k].actif; });
+      if(archeoOn.length){
+        blocs.push('<div class="leg-sous">\u{1F3FA} Arch\u00e9ologie <small>(OpenStreetMap)</small></div>'
+          + archeoOn.map(function(k){
+              return ligneLegende(SITES_ARCHEO[k].couleur, SITES_ARCHEO[k].libelle.replace(/^\S+\s/, ''), 'rond',
+                'Site saisi par des contributeurs OpenStreetMap');
+            }).join('')
+          + '<div style="font-size:9.5px;color:#8a8577;line-height:1.45;margin-top:3px">'
+          + 'Recensement collaboratif : un site absent n\u2019a pas \u00e9t\u00e9 saisi. Les localisations pr\u00e9cises de sites '
+          + 'sensibles sont parfois volontairement omises pour les prot\u00e9ger du pillage.</div>');
+      }
+      const fossOn = Object.keys(etatFossiles).filter(function(k){ return etatFossiles[k].actif; });
+      if(fossOn.length){
+        blocs.push('<div class="leg-sous">\u{1F996} Fossiles <small>(sp\u00e9cimens de collection, GBIF)</small></div>'
+          + fossOn.map(function(k){
+              const b = document.getElementById('btn-foss-' + k);
+              return ligneLegende(b ? b.getAttribute('data-coul') : '#57534e',
+                (b ? b.textContent.replace('\u2715', '').trim() : k), 'rond',
+                'Lieu de r\u00e9colte du sp\u00e9cimen, pas un gisement visitable');
+            }).join('')
+          + '<div style="font-size:9.5px;color:#8a8577;line-height:1.45;margin-top:3px">'
+          + 'Chaque point est un sp\u00e9cimen conserv\u00e9 dans une collection, positionn\u00e9 \u00e0 son lieu de r\u00e9colte. '
+          + 'Ce n\u2019est ni une carte de r\u00e9partition ancienne, ni une carte de gisements.</div>');
+      }
+      if(etatArbres.actif && etatArbres.groupe){
+        blocs.push('<div class="leg-sous">\u{1F333} Arbres remarquables</div>'
+          + ligneLegende('#4ade80', 'Arbre monumental, class\u00e9 ou nomm\u00e9', 'rond',
+              'Saisi dans OpenStreetMap par des contributeurs')
+          + '<div style="font-size:9.5px;color:#8a8577;line-height:1.45;margin-top:3px">'
+          + 'Recensement collaboratif : un arbre absent n\u2019est pas un arbre ordinaire, il n\u2019a pas encore \u00e9t\u00e9 saisi. '
+          + 'Les inventaires officiels d\u2019arbres remarquables sont tenus par les communes et les d\u00e9partements.</div>');
       }
       if(etatClim.soleilSurf){
         blocs.push('<div class="leg-sous">\u{1F308} Ensoleillement interpol\u00e9 <small>(heures par an)</small></div>'
@@ -16459,6 +17737,50 @@
           + 'Ces itin\u00e9raires sont des <b>relations</b> saisies dans OpenStreetMap par des contributeurs. '
           + 'Un sentier absent n\u2019est pas un sentier inexistant : il n\u2019a pas encore \u00e9t\u00e9 cartographi\u00e9. '
           + 'Le balisage sur le terrain fait foi.</div>');
+      }
+      if(etatMonde.pays && map.hasLayer(etatMonde.pays) && etatMonde.indicateur !== 'aucun'){
+        const ind = INDIC_MONDE[etatMonde.indicateur];
+        let lignes = '';
+        if(ind.categorie){
+          const noms = {
+            revenu:{ '1':'Revenu \u00e9lev\u00e9 (OCDE)', '2':'Revenu \u00e9lev\u00e9, hors OCDE', '3':'Revenu interm\u00e9diaire sup\u00e9rieur',
+                     '4':'Revenu interm\u00e9diaire inf\u00e9rieur', '5':'Revenu faible' },
+            developpement:{ '1':'D\u00e9velopp\u00e9, G7', '2':'D\u00e9velopp\u00e9, hors G7', '3':'\u00c9mergent, BRIC',
+                     '4':'\u00c9mergent, autre', '5':'En d\u00e9veloppement, riche en ressources',
+                     '6':'En d\u00e9veloppement', '7':'Moins avanc\u00e9' }
+          }[etatMonde.indicateur] || {};
+          lignes = Object.keys(ind.classes).map(function(k){
+            return ligneLegende(ind.classes[k], noms[k] || ('Groupe ' + k), 'carre', '');
+          }).join('');
+        }else{
+          lignes = ind.paliers.map(function(p, i, t){
+            const bas = i ? t[i-1][0] : 0;
+            const lib = (p[0] === Infinity) ? 'plus de ' + ind.format(bas) : ind.format(bas) + ' \u2013 ' + ind.format(p[0]);
+            return ligneLegende(p[1], lib, 'carre', '');
+          }).join('');
+        }
+        blocs.push('<div class="leg-sous">\u{1F30D} ' + echap(ind.nom) + ' <small>(Natural Earth)</small></div>'
+          + lignes
+          + '<div style="font-size:9.5px;color:#8a8577;line-height:1.45;margin-top:3px">' + echap(ind.note) + '</div>');
+      }
+      const rep = Object.keys(REPERES_MONDE).filter(function(k){
+        return REPERES_MONDE[k].couche && map.hasLayer(REPERES_MONDE[k].couche);
+      });
+      if(rep.length){
+        blocs.push('<div class="leg-sous">\u{1F310} Rep\u00e8res du globe</div>'
+          + rep.map(function(k){
+              const c = REPERES_MONDE[k];
+              return ligneLegende(c.teinte, c.libelle.replace(/^\S+\s/, ''), k === 'lignes' ? 'carre' : 'carre', '');
+            }).join('')
+          + (rep.indexOf('urbain') !== -1
+              ? '<div style="font-size:9.5px;color:#8a8577;line-height:1.45;margin-top:3px">'
+                + 'La tache urbaine est l\u2019emprise b\u00e2tie, pas la population : une ville \u00e9tal\u00e9e para\u00eet plus '
+                + 'grande qu\u2019une ville dense de m\u00eame taille.</div>' : ''));
+      }
+      if(etatMonde.villes && map.hasLayer(etatMonde.villes)){
+        blocs.push('<div class="leg-sous">\u{1F3D9} Villes du monde</div>'
+          + ligneLegende('#fbbf24', 'Capitale d\u2019\u00c9tat', 'rond', '')
+          + ligneLegende('#e7e5e4', 'Autre grande ville', 'rond', ''));
       }
       const pAir = POLLUANTS[etatAir.polluant] || POLLUANTS.european_aqi;
       blocs.push('<div class="leg-sous">\ud83e\udec1 '+pAir.nom+' <small>('+(pAir.unite || 'indice')+' \u00b7 mod\u00e8le CAMS)</small></div>'
