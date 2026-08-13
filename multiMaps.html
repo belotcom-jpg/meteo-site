@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v5.7.6 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v5.7.7 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v5.7.6</title>
+<title>MultiMaps — géographie (collège & lycée) — v5.7.7</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -2101,7 +2101,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.7.6</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.7.7</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -2219,7 +2219,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.7.6</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.7.7</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -2371,6 +2371,32 @@
     }
     return out;
   }
+  // Filet global sur les appels reseau. Dix-huit appels ne verifiaient pas la reponse :
+  // un serveur qui repond par une page d'erreur HTML faisait alors echouer .json() sur
+  // « Unexpected token < », message incomprehensible pour l'utilisateur. On enveloppe
+  // fetch une fois pour toutes plutot que de modifier dix-huit endroits.
+  (function filetReseau(){
+    if(typeof window.fetch !== 'function') return;
+    const brut = window.fetch.bind(window);
+    window.fetch = function(entree, options){
+      return brut(entree, options).then(function(r){
+        if(r && r.ok === false && typeof r.json === 'function'){
+          const jsonBrut = r.json.bind(r);
+          r.json = function(){
+            return jsonBrut().catch(function(){
+              const u = String((r.url || entree || '')).replace(/\?.*$/, '');
+              const e = new Error('Le service a r\u00e9pondu ' + r.status
+                + (r.statusText ? ' (' + r.statusText + ')' : '') + ' au lieu des donn\u00e9es attendues');
+              e.service = u;
+              throw e;
+            });
+          };
+        }
+        return r;
+      });
+    };
+  })();
+
   const CAT_LEG = {};
   let COULEURS_LEG = {};
   try{ COULEURS_LEG = JSON.parse(localStorage.getItem('geo-couleurs-legende') || '{}'); }catch(e){ COULEURS_LEG = {}; }
@@ -2497,7 +2523,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.7.6';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.7.7';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -4736,7 +4762,10 @@
   }
   let epaisseurDelta = parseInt(localStorage.getItem('geo-epaisseur')||'0', 10) || 0;
   function poidsTrait(base){ return Math.max(1, base + 1 + epaisseurDelta); }
-  function majEpaisseurs(){
+  // Renommee : une autre fonction majEpaisseurs existe pour les annotations, et la
+  // seconde declaration ecrasait la premiere — le recalcul des traits au zoom ne se
+  // faisait donc jamais.
+  function majEpaisseursReseaux(){
     Object.keys(VELO_NIVEAUX).forEach(t=>{
       etatVelo.groupes[t].eachLayer(l=>{ if(l.setStyle) l.setStyle({weight: poidsTrait(VELO_NIVEAUX[t].epaisseur)}); });
     });
@@ -4750,7 +4779,7 @@
     if(!b) return;
     epaisseurDelta = Math.max(-1, Math.min(4, epaisseurDelta + (b.dataset.ep==='+'?1:-1)));
     localStorage.setItem('geo-epaisseur', String(epaisseurDelta));
-    majEpaisseurs();
+    majEpaisseursReseaux();
   });
   const RANDO_NIVEAUX = {
     gr:  { libelle:'GR (grande randonnée)', reseau:'^(iwn|nwn)$', couleur:'#dc2626', epaisseur:4.5, tirets:null },
@@ -6557,7 +6586,7 @@
       scene.add(bouleB);
       // trace GPX \u00e9ventuelle, pos\u00e9e sur le terrain
       try{
-        const tGpx3d = traces.slice().reverse().find(t=>t.gpx && t.layerObj && t.layerObj.getLatLngs);
+        const tGpx3d = traits.slice().reverse().find(t=>t.gpx && t.layerObj && t.layerObj.getLatLngs);
         if(tGpx3d){
           let ll3 = tGpx3d.layerObj.getLatLngs();
           while(Array.isArray(ll3[0])) ll3 = ll3.flat();
@@ -7361,7 +7390,8 @@
     if(ev.target.checked){
       if(!map.getPane('rideau')){
         const el = map.createPane('rideau');
-        if(el && el.style) el.style.zIndex = 250;
+        // au-dessus de la geologie (250) : le rideau doit recouvrir ce qu'il compare
+        if(el && el.style) el.style.zIndex = 258;
       }
       if(RIDEAU.couche) map.removeLayer(RIDEAU.couche);
       RIDEAU.couche = fondRideau();
@@ -14365,7 +14395,7 @@
     }catch(e){ cacherInfo(); afficherInfo('📈 Tuiles d\u2019altitude inaccessibles', 5000); }
   });
   document.getElementById('btn-profil-gpx').addEventListener('click', async ()=>{
-    const tGpx = traces.slice().reverse().find(t=>t.gpx && t.layerObj && t.layerObj.getLatLngs);
+    const tGpx = traits.slice().reverse().find(t=>t.gpx && t.layerObj && t.layerObj.getLatLngs);
     if(!tGpx){ afficherInfo('📈 Aucune trace GPX \u2014 importez-en une via 🧰 Actions \u2192 import GPX', 5500); return; }
     let ll = tGpx.layerObj.getLatLngs();
     while(Array.isArray(ll[0])) ll = ll.flat();
