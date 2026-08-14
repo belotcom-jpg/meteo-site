@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v5.7.7 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v5.8.3 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v5.7.7</title>
+<title>MultiMaps — géographie (collège & lycée) — v5.8.3</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -178,6 +178,23 @@
     box-shadow:0 3px 14px rgba(0,0,0,.3); pointer-events:none;
   }
   body.interface-c #bandeau-portee{ left:calc(50% + (var(--rail) - var(--legende)) / 2) }
+  #croquis-calques{ margin-top:2px }
+  .calque-ligne{
+    display:flex; align-items:center; gap:2px; margin-bottom:3px;
+    border:1px solid var(--trait); border-radius:8px; background:#fdfcf9; overflow:hidden;
+  }
+  .calque-ligne.actif{ border-color:var(--encre); box-shadow:inset 3px 0 0 var(--encre) }
+  .calque-nom{
+    flex:1; min-width:0; border:none; background:none; cursor:pointer; font-family:inherit;
+    font-size:11.5px; text-align:left; padding:6px 4px; color:var(--encre);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .calque-ligne.actif .calque-nom{ font-weight:700 }
+  .calque-mini{
+    flex:none; width:24px; border:none; background:none; cursor:pointer;
+    font-size:11px; padding:6px 0; color:#8a8577;
+  }
+  .calque-mini:hover{ background:#f3f0e6; color:var(--encre) }
   .leg-aide{
     font-size:10px; color:#8a8577; line-height:1.45; margin:0 0 7px;
     padding-bottom:6px; border-bottom:1px dashed var(--trait);
@@ -772,14 +789,24 @@
       <button class="outil" id="btn-gomme" title="Gomme — Cliquez ou glissez sur un tracé pour l’effacer."><span class="outil-ic">🧽</span><span class="outil-nom">Gomme</span></button>
     </div>
     <p class="sous" id="outil-aide" style="margin:5px 0 6px"></p>
+    <div class="croquis-rangee" style="margin-bottom:6px">
+      <button class="croquis-btn" id="btn-annuler-croquis" title="Annuler la dernière action sur le croquis (Ctrl+Z).">↶ Annuler</button>
+      <button class="croquis-btn" id="btn-refaire-croquis" title="Rétablir ce qui vient d’être annulé (Ctrl+Y).">↷ Rétablir</button>
+    </div>
 
     <div class="prop" data-pour="select">
       <span class="etiquette">Objet sélectionné</span>
       <p class="sous" id="sel-resume" style="margin:0 0 5px">Cliquez un tracé sur la carte.</p>
       <div class="croquis-rangee">
-        <button class="croquis-btn" id="sel-supprimer" title="Supprime l’objet sélectionné (touche Suppr).">🗑 Supprimer</button>
+        <button class="croquis-btn" id="sel-supprimer" title="Supprime l’objet sélectionné (touche Suppr). Annulable par Ctrl+Z.">🗑 Supprimer</button>
         <button class="croquis-btn" id="sel-deselect" title="Ne plus rien sélectionner (touche Échap).">↶ Désélectionner</button>
       </div>
+      <div class="croquis-rangee">
+        <button class="croquis-btn" id="btn-copier-croquis" title="Copie l’objet sélectionné (Ctrl+C). Collez-le ensuite avec Ctrl+V, y compris dans un autre calque.">📋 Copier</button>
+        <button class="croquis-btn" id="btn-coller-croquis" title="Colle le dernier objet copié dans le calque actif, légèrement décalé (Ctrl+V).">📌 Coller</button>
+        <button class="croquis-btn" id="btn-dupliquer-croquis" title="Duplique l’objet sélectionné sur place (Ctrl+D). Pratique pour répéter une flèche de flux.">⧉ Dupliquer</button>
+      </div>
+      <p class="sous" style="margin:3px 0 0">Les flèches du clavier déplacent l’objet sélectionné · Maj pour un pas dix fois plus grand.</p>
     </div>
 
     <div class="prop" data-pour="select pinceau zone figure texte ligne fleche rect cercle">
@@ -879,6 +906,17 @@
     </div>
 
     <div class="prop" data-pour="select main pinceau zone ligne fleche rect cercle figure texte reperes gomme">
+      <span class="etiquette">Calques</span>
+      <div id="croquis-calques"></div>
+      <div class="croquis-rangee" style="margin-top:4px">
+        <button class="croquis-btn" id="btn-calque-plus" title="Ajouter un calque. Les prochains tracés iront dedans. Utile pour construire un croquis par étapes : le fond, puis les dynamiques, puis les flux — que l’on dévoile l’un après l’autre.">+ Calque</button>
+      </div>
+      <div class="croquis-rangee" style="margin-top:4px">
+        <button class="croquis-btn" id="btn-croquis-export" title="Enregistre le croquis entier dans un fichier : tracés, calques, figurés, textes et intitulés de légende. À conserver ou à distribuer aux élèves.">💾 Enregistrer</button>
+        <button class="croquis-btn" id="btn-croquis-ouvrir" title="Rouvre un croquis enregistré. Le croquis actuel sera remplacé, après confirmation.">📂 Ouvrir</button>
+      </div>
+      <input type="file" id="croquis-fichier" accept=".json" style="display:none">
+      <p class="sous" id="croquis-etat-sauv" style="margin:4px 0 0"></p>
       <button class="croquis-btn" id="btn-croquis-tout" style="width:100%;border-color:#b91c1c;color:#b91c1c"
               title="Efface l’intégralité du croquis : tracés de tous les calques, figurés, textes et repères. Une confirmation est demandée.">🗑 Tout effacer</button>
     </div>
@@ -2101,7 +2139,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.7.7</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.8.3</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -2219,7 +2257,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.7.7</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.8.3</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -2523,7 +2561,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.7.7';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.8.3';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -2619,7 +2657,14 @@
       ? L.polyline(segments, styleLigne(t.couleur, t.metres, t.genre, t.px))
       : L.polygon(segments, styleSurface(t.couleur, t.opa, t.px));
     t.layerObj.on('click', (e)=>{
-      if(mode==='select'){ L.DomEvent.stop(e); selectionner(t); return; }
+      if(mode==='select'){
+        L.DomEvent.stop(e);
+        if(calqueVerrouille(t.calque)){
+          afficherInfo('Calque verrouill\u00e9 \u2014 d\u00e9verrouillez-le pour modifier ce trac\u00e9', 4000);
+          return;
+        }
+        selectionner(t); return;
+      }
       if(mode!=='main') return;
       L.DomEvent.stop(e);
       ouvrirNote(t, e.latlng);
@@ -2627,13 +2672,18 @@
     if(calqueVisible(t.calque)) t.layerObj.addTo(map);
     orneTrait(t);
     traits.push(t);
+    if(typeof noterAction === 'function') noterAction('creation', null, traitEnObjet(t));
+    if(typeof sauverCroquisTraits === 'function') sauverCroquisTraits();
     return t;
   }
 
   function supprimerTrait(t){
+    if(typeof noterAction === 'function' && typeof traitEnObjet === 'function')
+      noterAction('suppression', traitEnObjet(t), null);
     map.removeLayer(t.layerObj);
     const i = traits.indexOf(t);
     if(i>=0) traits.splice(i,1);
+    if(typeof sauverCroquisTraits === 'function') sauverCroquisTraits();
   }
 
   // ================= Notes (popup) =================
@@ -6947,7 +6997,11 @@
     // Fermer la fenêtre Croquis sans desarmer l'outil laisserait le curseur en croix
     // et le pinceau actif, alors que plus aucune commande n'est visible.
     if(typeof changerMode === 'function' && typeof mode !== 'undefined' && mode !== 'main') changerMode('main');
-    const liste = (typeof WIDGETS_PILOTABLES !== 'undefined' ? WIDGETS_PILOTABLES : []);
+    // typeof sur un const declare plus loin LEVE une erreur : c'est la panne de la
+    // v4.15.1. On passe par le DOM, qui est toujours pret quand cette fonction est appelee.
+    let liste = [];
+    try{ liste = WIDGETS_PILOTABLES; }
+    catch(e){ liste = Array.prototype.slice.call(document.querySelectorAll('.widget')).map(function(w){ return w.id; }); }
     let fermees = 0;
     liste.forEach(id=>{
       if(id === 'wg-pilote') return;                    // jamais la fen\u00eatre principale MultiMaps
@@ -7241,37 +7295,76 @@
   });
 
   // ---------- Recherche universelle, seances enregistrees, rideau comparatif ----------
+  // Index de recherche. Trois defauts corriges ici :
+  //  1. « typeof X » sur un const declare plus loin LEVE une ReferenceError au lieu de
+  //     rendre 'undefined' : VILLES_METEO et MONTAGNES sont declares apres cette
+  //     fonction, l'index plantait donc silencieusement selon le moment de sa
+  //     construction — d'ou une recherche qui marchait ou non sans raison apparente ;
+  //  2. chaque source est desormais isolee : si l'une echoue, les autres tiennent ;
+  //  3. l'index etait fige au premier appel, donc aveugle aux couches creees ensuite.
+  // On passe la source dans une fonction : si le const n'est pas encore initialise,
+  // l'evaluation de l'argument leve, et le catch absorbe. Pas d'eval, pas de typeof
+  // sur une variable en zone morte.
+  function sourceSure(lire, f){
+    let v = null;
+    try{ v = lire(); }catch(e){ return; }
+    if(v) { try{ f(v); }catch(e){} }
+  }
+
   function indexRecherche(){
     const idx = [];
-    const boutons = document.querySelectorAll('.calque-ajout');
-    Array.prototype.slice.call(boutons).forEach(b=>{
-      if(!b.id) return;
-      const nom = (b.textContent||'').replace('\u2715','').trim();
-      if(nom) idx.push({ genre:'couche', nom:nom, btn:b.id });
-    });
-    const lieu = (genre, nom, lat, lon, zoom, info)=>{ if(nom) idx.push({genre:genre, nom:nom, lat:lat, lon:lon, zoom:zoom, info:info||''}); };
-    if(typeof VILLES_METEO !== 'undefined') VILLES_METEO.forEach(v=>lieu('ville', v[0], v[1], v[2], 11));
-    if(typeof RELIEF_FIN !== 'undefined'){
-      RELIEF_FIN.massifs.forEach(m=>lieu('massif', m[0], m[1], m[2], 10));
-      (RELIEF_FIN.vallees||[]).forEach(v=>{
-        const a = v[3] && v[3][Math.floor(v[3].length/2)];
+    const vus = {};
+    const ajouter = function(e){
+      const cle = e.genre + '|' + normNomParc(e.nom);
+      if(!e.nom || vus[cle]) return;
+      vus[cle] = true;
+      idx.push(e);
+    };
+    try{
+      Array.prototype.slice.call(document.querySelectorAll('.calque-ajout')).forEach(function(b){
+        if(!b.id) return;
+        const nom = (b.textContent || '').replace('\u2715', '').replace(/\s+/g, ' ').trim();
+        // on ecarte les libelles devenus des etats (« ... ✕ ») et les boutons sans texte
+        if(nom && nom.length > 1) ajouter({ genre:'couche', nom:nom, btn:b.id });
+      });
+    }catch(e){}
+    const lieu = function(genre, nom, lat, lon, zoom, info){
+      if(!nom || !isFinite(lat) || !isFinite(lon)) return;
+      ajouter({ genre:genre, nom:nom, lat:lat, lon:lon, zoom:zoom, info:info || '' });
+    };
+    sourceSure(function(){ return VILLES_METEO; }, function(v){ v.forEach(function(x){ lieu('ville', x[0], x[1], x[2], 11); }); });
+    sourceSure(function(){ return RELIEF_FIN; }, function(r){
+      (r.massifs || []).forEach(function(m){ lieu('massif', m[0], m[1], m[2], 10); });
+      (r.vallees || []).forEach(function(v){
+        const a = v[3] && v[3][Math.floor(v[3].length / 2)];
         if(a) lieu('vall\u00e9e', v[0], a[0], a[1], 10);
       });
-    }
-    if(typeof MONTAGNES !== 'undefined') MONTAGNES.sommets.forEach(s=>lieu('sommet', s[0], s[1], s[2], 12, s[3]+' m'));
-    if(typeof HISTOIRE !== 'undefined'){
-      HISTOIRE.pays.forEach(p=>lieu('pays', p[0], p[1], p[2], 9));
-      HISTOIRE.peuples.forEach(p=>lieu('peuple gaulois', p[0], p[1], p[2], 9, p[3]));
-    }
-    if(typeof PARCS !== 'undefined'){
-      PARCS.pn.forEach(p=>lieu('parc national', p[0], p[1], p[2], 9, 'cr\u00e9\u00e9 en '+p[4]));
-      PARCS.pnr.forEach(p=>lieu('PNR', p[0], p[1], p[2], 9, 'class\u00e9 en '+p[4]));
-    }
+    });
+    sourceSure(function(){ return MONTAGNES; }, function(m){
+      (m.sommets || []).forEach(function(s){ lieu('sommet', s[0], s[1], s[2], 12, s[3] + ' m'); });
+    });
+    sourceSure(function(){ return HISTOIRE; }, function(hh){
+      (hh.pays || []).forEach(function(p){ lieu('pays', p[0], p[1], p[2], 9); });
+      (hh.peuples || []).forEach(function(p){ lieu('peuple gaulois', p[0], p[1], p[2], 9, p[3]); });
+    });
+    sourceSure(function(){ return PARCS; }, function(p){
+      (p.pn || []).forEach(function(x){ lieu('parc national', x[0], x[1], x[2], 9, 'cr\u00e9\u00e9 en ' + x[4]); });
+      (p.pnr || []).forEach(function(x){ lieu('PNR', x[0], x[1], x[2], 9, 'class\u00e9 en ' + x[4]); });
+    });
+    sourceSure(function(){ return METROPOLES; }, function(m){ m.forEach(function(x){ lieu('m\u00e9tropole', x[0], x[1], x[2], 10); }); });
+    sourceSure(function(){ return SOLEIL; }, function(s){ s.forEach(function(x){ lieu('station m\u00e9t\u00e9o', x[0], x[1], x[2], 10, x[3] + ' h de soleil/an'); }); });
     return idx;
   }
   let INDEX_RECHERCHE = null;
+  let INDEX_HORODATE = 0;
   function chercher(txt){
-    if(!INDEX_RECHERCHE) INDEX_RECHERCHE = indexRecherche();
+    // l'index se refait s'il est vide, incomplet, ou vieux de plus de vingt secondes :
+    // les couches creees en cours de route (fichiers importes) y entrent ainsi.
+    const maintenant = Date.now();
+    if(!INDEX_RECHERCHE || INDEX_RECHERCHE.length < 50 || maintenant - INDEX_HORODATE > 20000){
+      INDEX_RECHERCHE = indexRecherche();
+      INDEX_HORODATE = maintenant;
+    }
     const q = normNomParc(txt);
     if(q.length < 2) return [];
     const debut = [], dedans = [];
@@ -9063,6 +9156,442 @@
     }
   });
 
+  // ---------- Sauvegarde du croquis et calques ----------
+  // Jusqu'ici rien n'etait conserve : figures et reperes survivaient au rechargement,
+  // mais les traits, zones et fleches disparaissaient. Un croquis de quarante minutes
+  // etait perdu a la fermeture de l'onglet.
+  const CLE_CROQUIS = 'geo-croquis-traits';
+  const CLE_CALQUES = 'geo-croquis-calques';
+  let sauvegardeEnAttente = null;
+
+  function traitEnObjet(t){
+    return { id:t.id, calque:t.calque, type:t.type, couleur:t.couleur, metres:t.metres,
+             note:t.note || '', genre:t.genre, fleche:t.fleche, motif:t.motif,
+             opa:t.opa, px:t.px, segments:t.segments };
+  }
+
+  function sauverCroquisTraits(){
+    clearTimeout(sauvegardeEnAttente);
+    sauvegardeEnAttente = setTimeout(function(){
+      try{
+        localStorage.setItem(CLE_CROQUIS, JSON.stringify(traits.map(traitEnObjet)));
+        localStorage.setItem(CLE_CALQUES, JSON.stringify({ liste:calques, actif:calqueActif, compteur:compteurCalque }));
+        majEtatSauvegarde(traits.length);
+      }catch(e){
+        // quota depasse : on previent plutot que d'echouer en silence
+        majEtatSauvegarde(-1);
+      }
+    }, 500);
+  }
+
+  function majEtatSauvegarde(n){
+    const el = document.getElementById('croquis-etat-sauv');
+    if(!el) return;
+    if(n < 0){ el.textContent = '\u26a0\ufe0f M\u00e9moire pleine : le croquis n\u2019est plus enregistr\u00e9. Exportez-le en fichier.'; return; }
+    const h = new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    el.textContent = n ? n + ' trac\u00e9(s) \u00b7 enregistr\u00e9 \u00e0 ' + h : 'Aucun trac\u00e9 pour l\u2019instant.';
+  }
+
+  function restaurerCroquis(){
+    try{
+      const memoC = JSON.parse(localStorage.getItem(CLE_CALQUES) || 'null');
+      if(memoC && memoC.liste && memoC.liste.length){
+        calques = memoC.liste;
+        calqueActif = memoC.actif || calques[0].id;
+        compteurCalque = memoC.compteur || calques.length;
+      }
+      const memo = JSON.parse(localStorage.getItem(CLE_CROQUIS) || '[]');
+      if(!memo.length){ majListeCalques(); majEtatSauvegarde(0); return 0; }
+      memo.forEach(function(o){
+        if(!o.segments || !o.segments.length) return;
+        const t = {
+          id:o.id || ('t' + (++compteurTrait)), calque:o.calque || 'c1', type:o.type,
+          couleur:o.couleur, metres:o.metres, note:o.note || '',
+          genre:o.genre, fleche:o.fleche, motif:o.motif, opa:o.opa, px:o.px,
+          segments:o.segments
+        };
+        t.layerObj = (t.type === 'ligne')
+          ? L.polyline(t.segments, styleLigne(t.couleur, t.metres, t.genre, t.px))
+          : L.polygon(t.segments, styleSurface(t.couleur, t.opa, t.px));
+        t.layerObj.on('click', function(e){
+          if(mode === 'select'){ L.DomEvent.stop(e); selectionner(t); return; }
+          if(mode !== 'main') return;
+          L.DomEvent.stop(e);
+          ouvrirNote(t, e.latlng);
+        });
+        if(calqueVisible(t.calque)) t.layerObj.addTo(map);
+        orneTrait(t);
+        traits.push(t);
+        const n = parseInt(String(t.id).replace(/\D/g, ''), 10);
+        if(isFinite(n) && n > compteurTrait) compteurTrait = n;
+      });
+      majListeCalques();
+      majEtatSauvegarde(traits.length);
+      return traits.length;
+    }catch(e){
+      majEtatSauvegarde(0);
+      return 0;
+    }
+  }
+
+  // --- calques : le moteur existait deja, aucune interface ne l'exposait ---
+  function calqueVerrouille(id){
+    const c = calques.find(function(x){ return x.id === id; });
+    return !!(c && c.verrou);
+  }
+
+  function majListeCalques(){
+    const boite = document.getElementById('croquis-calques');
+    if(!boite) return;
+    boite.textContent = '';
+    calques.forEach(function(c, rang){
+      const n = traits.filter(function(t){ return t.calque === c.id; }).length;
+      const ligne = document.createElement('div');
+      ligne.className = 'calque-ligne' + (c.id === calqueActif ? ' actif' : '');
+
+      const oeil = document.createElement('button');
+      oeil.className = 'calque-mini';
+      oeil.textContent = c.visible === false ? '\u25cb' : '\u25c9';
+      oeil.title = c.visible === false ? 'Afficher ce calque' : 'Masquer ce calque';
+      oeil.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        c.visible = (c.visible === false);
+        traits.forEach(function(t){
+          if(t.calque !== c.id) return;
+          if(c.visible) t.layerObj.addTo(map); else map.removeLayer(t.layerObj);
+        });
+        majListeCalques();
+        sauverCroquisTraits();
+      });
+
+      const nom = document.createElement('button');
+      nom.className = 'calque-nom';
+      nom.textContent = c.nom + '  (' + n + ')';
+      nom.title = 'Dessiner dans ce calque. Double-cliquez pour le renommer.';
+      nom.addEventListener('click', function(){
+        calqueActif = c.id;
+        majListeCalques();
+        sauverCroquisTraits();
+        afficherInfo('Les prochains trac\u00e9s iront dans \u00ab ' + c.nom + ' \u00bb', 3500);
+      });
+      nom.addEventListener('dblclick', function(){
+        const v = prompt('Nom du calque :', c.nom);
+        if(v && v.trim()){ c.nom = v.trim().slice(0, 28); majListeCalques(); sauverCroquisTraits(); }
+      });
+
+      const cadenas = document.createElement('button');
+      cadenas.className = 'calque-mini';
+      cadenas.textContent = c.verrou ? '\u{1F512}' : '\u{1F513}';
+      cadenas.title = c.verrou
+        ? 'Calque verrouill\u00e9 : ses trac\u00e9s ne peuvent \u00eatre ni modifi\u00e9s ni effac\u00e9s. Cliquez pour d\u00e9verrouiller.'
+        : 'Verrouiller ce calque pour travailler par-dessus sans l\u2019ab\u00eemer.';
+      cadenas.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        c.verrou = !c.verrou;
+        majListeCalques();
+        sauverCroquisTraits();
+      });
+
+      const x = document.createElement('button');
+      x.className = 'calque-mini';
+      x.textContent = '\u2715';
+      x.title = 'Supprimer ce calque et ses ' + n + ' trac\u00e9(s).';
+      x.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        if(calques.length < 2){ afficherInfo('Il faut au moins un calque', 3500); return; }
+        if(n && !confirm('Supprimer le calque \u00ab ' + c.nom + ' \u00bb et ses ' + n + ' trac\u00e9(s) ?')) return;
+        traits.slice().forEach(function(t){ if(t.calque === c.id) supprimerTrait(t); });
+        calques = calques.filter(function(y){ return y.id !== c.id; });
+        if(calqueActif === c.id) calqueActif = calques[0].id;
+        majListeCalques();
+        sauverCroquisTraits();
+      });
+
+      ligne.appendChild(oeil);
+      ligne.appendChild(nom);
+      ligne.appendChild(cadenas);
+      ligne.appendChild(x);
+      boite.appendChild(ligne);
+    });
+  }
+
+  // restauration au chargement, une fois la carte prete
+  setTimeout(function(){
+    try{
+      const n = restaurerCroquis();
+      if(n) afficherInfo('\u270f\ufe0f Croquis pr\u00e9c\u00e9dent restaur\u00e9 : ' + n + ' trac\u00e9(s). '
+        + 'Utilisez \u{1F4BE} Enregistrer pour en garder une copie durable.', 8000);
+    }catch(e){}
+  }, 800);
+
+  (function cablerCalques(){
+    const plus = document.getElementById('btn-calque-plus');
+    if(plus) plus.addEventListener('click', function(){
+      compteurCalque++;
+      const id = 'c' + compteurCalque;
+      calques.push({ id:id, nom:'Calque ' + compteurCalque, visible:true });
+      calqueActif = id;
+      majListeCalques();
+      sauverCroquisTraits();
+      afficherInfo('Nouveau calque \u2014 les prochains trac\u00e9s iront dedans', 4000);
+    });
+
+    const exporter = document.getElementById('btn-croquis-export');
+    if(exporter) exporter.addEventListener('click', function(){
+      const doc = { format:'multimaps-croquis', version:1, date:new Date().toISOString(),
+                    calques:calques, actif:calqueActif, traits:traits.map(traitEnObjet),
+                    objets:CROQUIS.objets.map(function(o){
+                      return { genre:o.genre, forme:o.forme, texte:o.texte, couleur:o.couleur,
+                               taille:o.taille, lat:o.lat, lng:o.lng };
+                    }),
+                    etiquettes:etiquettes };
+      const b = new Blob([JSON.stringify(doc, null, 1)], { type:'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(b);
+      a.download = 'croquis-' + new Date().toISOString().slice(0, 10) + '.json';
+      a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+      afficherInfo('\u{1F4BE} Croquis enregistr\u00e9 \u2014 rouvrez-le avec \u{1F4C2} Ouvrir un croquis', 6000);
+    });
+
+    const champ = document.getElementById('croquis-fichier');
+    const ouvrir = document.getElementById('btn-croquis-ouvrir');
+    if(ouvrir && champ){
+      ouvrir.addEventListener('click', function(){ champ.click(); });
+      champ.addEventListener('change', async function(ev){
+        const f = ev.target.files && ev.target.files[0];
+        ev.target.value = '';
+        if(!f) return;
+        try{
+          const doc = JSON.parse(await f.text());
+          if(doc.format !== 'multimaps-croquis') throw new Error('format inconnu');
+          if(traits.length && !confirm('Remplacer le croquis actuel (' + traits.length + ' trac\u00e9s) '
+            + 'par celui du fichier (' + (doc.traits || []).length + ') ?')) return;
+          traits.slice().forEach(supprimerTrait);
+          viderCroquis();
+          calques = (doc.calques && doc.calques.length) ? doc.calques : [{ id:'c1', nom:'G\u00e9n\u00e9ral', visible:true }];
+          calqueActif = doc.actif || calques[0].id;
+          compteurCalque = calques.length;
+          try{
+            localStorage.setItem(CLE_CROQUIS, JSON.stringify(doc.traits || []));
+            localStorage.setItem(CLE_CALQUES, JSON.stringify({ liste:calques, actif:calqueActif, compteur:compteurCalque }));
+          }catch(e){}
+          restaurerCroquis();
+          (doc.objets || []).forEach(function(o){ CROQUIS.objets.push(o); objetCroquis(o); });
+          sauverCroquis();
+          if(doc.etiquettes) Object.keys(doc.etiquettes).forEach(function(k){ etiquettes[k] = doc.etiquettes[k]; });
+          majLegende();
+          const places = traits.filter(function(t){ return t.segments && t.segments.length; });
+          if(places.length){
+            const pts = [];
+            places.forEach(function(t){ t.segments.forEach(function(s){ if(s && s.length === 2) pts.push(s); }); });
+            if(pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.12));
+          }
+          afficherInfo('\u{1F4C2} Croquis ouvert : ' + traits.length + ' trac\u00e9(s), '
+            + calques.length + ' calque(s)', 7000);
+        }catch(e){
+          afficherInfo('\u26a0\ufe0f Fichier illisible \u2014 attendu : un croquis enregistr\u00e9 depuis cette application', 7000);
+        }
+      });
+    }
+  })();
+
+  // ---------- Historique du croquis, copie, déplacement ----------
+  // L'annulation supprimait le dernier tracé sans rien mémoriser : impossible de
+  // rétablir, et un objet effacé par erreur était perdu. On tient désormais deux piles.
+  const PILE = { annuler: [], refaire: [], enCours: false, max: 60 };
+
+  function instantaneTrait(t){
+    return { objet: traitEnObjet(t) };
+  }
+
+  function noterAction(genre, avant, apres){
+    if(PILE.enCours) return;
+    PILE.annuler.push({ genre: genre, avant: avant, apres: apres });
+    if(PILE.annuler.length > PILE.max) PILE.annuler.shift();
+    PILE.refaire.length = 0;
+    majBoutonsHisto();
+  }
+
+  function majBoutonsHisto(){
+    const a = document.getElementById('btn-annuler-croquis') || document.getElementById('btn-annuler');
+    const r = document.getElementById('btn-refaire-croquis');
+    if(a){
+      a.disabled = PILE.annuler.length === 0;
+      a.title = PILE.annuler.length
+        ? 'Annuler : ' + libelleAction(PILE.annuler[PILE.annuler.length - 1]) + ' (Ctrl+Z)'
+        : 'Rien \u00e0 annuler';
+    }
+    if(r){
+      r.disabled = PILE.refaire.length === 0;
+      r.title = PILE.refaire.length
+        ? 'R\u00e9tablir : ' + libelleAction(PILE.refaire[PILE.refaire.length - 1]) + ' (Ctrl+Y)'
+        : 'Rien \u00e0 r\u00e9tablir';
+    }
+  }
+  function libelleAction(a){
+    return { creation:'un trac\u00e9 ajout\u00e9', suppression:'une suppression',
+             style:'un changement de style', deplacement:'un d\u00e9placement' }[a.genre] || 'la derni\u00e8re action';
+  }
+
+  // reconstruit un tracé à partir de son instantané
+  function retablirTrait(o){
+    const t = { id:o.id, calque:o.calque, type:o.type, couleur:o.couleur, metres:o.metres,
+                note:o.note || '', genre:o.genre, fleche:o.fleche, motif:o.motif,
+                opa:o.opa, px:o.px, segments:o.segments };
+    t.layerObj = (t.type === 'ligne')
+      ? L.polyline(t.segments, styleLigne(t.couleur, t.metres, t.genre, t.px))
+      : L.polygon(t.segments, styleSurface(t.couleur, t.opa, t.px));
+    t.layerObj.on('click', function(e){
+      if(mode === 'select'){
+        L.DomEvent.stop(e);
+        if(calqueVerrouille(t.calque)){
+          afficherInfo('Calque verrouill\u00e9 \u2014 d\u00e9verrouillez-le pour modifier ce trac\u00e9', 4000);
+          return;
+        }
+        selectionner(t); return;
+      }
+      if(mode !== 'main') return;
+      L.DomEvent.stop(e);
+      ouvrirNote(t, e.latlng);
+    });
+    if(calqueVisible(t.calque)) t.layerObj.addTo(map);
+    orneTrait(t);
+    traits.push(t);
+    return t;
+  }
+
+  function retirerParId(id){
+    const t = traits.find(function(x){ return x.id === id; });
+    if(!t) return false;
+    if(selection === t) deselectionner();
+    try{ map.removeLayer(t.layerObj); }catch(e){}
+    const i = traits.indexOf(t);
+    if(i >= 0) traits.splice(i, 1);
+    return true;
+  }
+
+  function annulerCroquis(){
+    const a = PILE.annuler.pop();
+    if(!a){ afficherInfo('Rien \u00e0 annuler', 2500); return; }
+    PILE.enCours = true;
+    try{
+      if(a.genre === 'creation') retirerParId(a.apres.id);
+      else if(a.genre === 'suppression') retablirTrait(a.avant);
+      else { retirerParId(a.apres.id); retablirTrait(a.avant); }
+      PILE.refaire.push(a);
+      sauverCroquisTraits();
+      majListeCalques();
+      afficherInfo('\u21b6 Annul\u00e9 : ' + libelleAction(a) + ' \u2014 Ctrl+Y pour r\u00e9tablir', 4000);
+    }finally{ PILE.enCours = false; majBoutonsHisto(); }
+  }
+
+  function refaireCroquis(){
+    const a = PILE.refaire.pop();
+    if(!a){ afficherInfo('Rien \u00e0 r\u00e9tablir', 2500); return; }
+    PILE.enCours = true;
+    try{
+      if(a.genre === 'creation') retablirTrait(a.apres);
+      else if(a.genre === 'suppression') retirerParId(a.avant.id);
+      else { retirerParId(a.avant.id); retablirTrait(a.apres); }
+      PILE.annuler.push(a);
+      sauverCroquisTraits();
+      majListeCalques();
+      afficherInfo('\u21b7 R\u00e9tabli', 3000);
+    }finally{ PILE.enCours = false; majBoutonsHisto(); }
+  }
+
+  // ---------- copier, coller, dupliquer ----------
+  let pressePapierCroquis = null;
+
+  function decalerSegments(seg, dLat, dLng){
+    return seg.map(function(p){
+      if(Array.isArray(p) && p.length === 2 && typeof p[0] === 'number') return [p[0] + dLat, p[1] + dLng];
+      return p;
+    });
+  }
+
+  function copierSelection(){
+    if(!selection){ afficherInfo('S\u00e9lectionnez d\u2019abord un trac\u00e9 (outil \u2316)', 3500); return; }
+    pressePapierCroquis = traitEnObjet(selection);
+    afficherInfo('\u{1F4CB} Trac\u00e9 copi\u00e9 \u2014 Ctrl+V pour le coller', 3500);
+  }
+
+  function collerCroquis(decalage){
+    if(!pressePapierCroquis){ afficherInfo('Rien dans le presse-papier', 2500); return; }
+    const o = JSON.parse(JSON.stringify(pressePapierCroquis));
+    o.id = 't' + (++compteurTrait);
+    o.calque = calqueActif;
+    // on décale d'environ 3 km pour que la copie ne recouvre pas l'original
+    const d = decalage === false ? 0 : 0.028;
+    if(d) o.segments = decalerSegments(o.segments, -d, d);
+    const t = retablirTrait(o);
+    noterAction('creation', null, traitEnObjet(t));
+    sauverCroquisTraits();
+    majListeCalques();
+    selectionner(t);
+    afficherInfo('\u{1F4CB} Trac\u00e9 coll\u00e9 dans \u00ab ' + (calques.find(function(c){ return c.id === calqueActif; }) || {}).nom + ' \u00bb', 4000);
+  }
+
+  function dupliquerSelection(){
+    if(!selection){ afficherInfo('S\u00e9lectionnez d\u2019abord un trac\u00e9 (outil \u2316)', 3500); return; }
+    pressePapierCroquis = traitEnObjet(selection);
+    collerCroquis(true);
+  }
+
+  // ---------- déplacement au clavier ----------
+  function deplacerSelection(dLat, dLng){
+    if(!selection) return;
+    if(calqueVerrouille(selection.calque)){
+      afficherInfo('Calque verrouill\u00e9 \u2014 d\u00e9verrouillez-le pour d\u00e9placer ce trac\u00e9', 3500);
+      return;
+    }
+    const avant = traitEnObjet(selection);
+    selection.segments = decalerSegments(selection.segments, dLat, dLng);
+    try{ selection.layerObj.setLatLngs(selection.segments); }catch(e){}
+    if(typeof poserPoignees === 'function') poserPoignees(selection);
+    majResumeSelection();
+    clearTimeout(deplacerSelection.attente);
+    deplacerSelection.attente = setTimeout(function(){
+      noterAction('deplacement', avant, traitEnObjet(selection));
+      sauverCroquisTraits();
+    }, 450);
+  }
+
+  (function cablerHistoCroquis(){
+    const r = document.getElementById('btn-refaire-croquis');
+    if(r) r.addEventListener('click', refaireCroquis);
+    const c = document.getElementById('btn-copier-croquis');
+    if(c) c.addEventListener('click', copierSelection);
+    const dup = document.getElementById('btn-dupliquer-croquis');
+    if(dup) dup.addEventListener('click', dupliquerSelection);
+    const col = document.getElementById('btn-coller-croquis');
+    if(col) col.addEventListener('click', function(){ collerCroquis(true); });
+
+    document.addEventListener('keydown', function(e){
+      const dansChamp = e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
+      if(dansChamp) return;
+      const ctrl = e.ctrlKey || e.metaKey;
+      const k = (e.key || '').toLowerCase();
+      // l'historique du croquis ne prend la main que si un croquis existe
+      if(ctrl && k === 'z' && !e.shiftKey && traits.length){ e.preventDefault(); annulerCroquis(); return; }
+      if(ctrl && (k === 'y' || (k === 'z' && e.shiftKey))){ e.preventDefault(); refaireCroquis(); return; }
+      if(ctrl && k === 'c' && selection){ e.preventDefault(); copierSelection(); return; }
+      if(ctrl && k === 'v' && pressePapierCroquis){ e.preventDefault(); collerCroquis(true); return; }
+      if(ctrl && k === 'd' && selection){ e.preventDefault(); dupliquerSelection(); return; }
+      if(!ctrl && selection && k.indexOf('arrow') === 0){
+        e.preventDefault();
+        // un pas fin, dix fois plus grand avec Maj
+        const pas = (e.shiftKey ? 0.02 : 0.002);
+        if(k === 'arrowup') deplacerSelection(pas, 0);
+        if(k === 'arrowdown') deplacerSelection(-pas, 0);
+        if(k === 'arrowleft') deplacerSelection(0, -pas);
+        if(k === 'arrowright') deplacerSelection(0, pas);
+      }
+    });
+    majBoutonsHisto();
+  })();
+
   // ---------- Croquis étape 2 : outils géométriques, poignées, magnétisme ----------
   // Tout passe par creerTrait() : ligne et flèche donnent un tracé de type 'ligne',
   // rectangle et cercle un tracé de type 'surface'. Rien de nouveau à stocker, et
@@ -9128,7 +9657,7 @@
       creerTrait('surface', cercleEnPolygone(c, map.distance(c, b)), couleur, tailleMetres);
     }
     nettoyerGeom();
-    if(typeof sauverEtat === 'function') sauverEtat();
+    if(typeof sauverCroquisTraits === 'function') sauverCroquisTraits();
   }
 
   function apercuGeom(survol){
@@ -9213,7 +9742,7 @@
           map.off('mousemove', bouge);
           map.off('mouseup', fin);
           map.dragging.enable();
-          if(typeof sauverEtat === 'function') sauverEtat();
+          if(typeof sauverCroquisTraits === 'function') sauverCroquisTraits();
         };
         map.on('mousemove', bouge);
         map.on('mouseup', fin);
@@ -9336,6 +9865,7 @@
   function appliquerASelection(champ, valeur){
     if(!selection) return false;
     const t = selection;
+    const avantStyle = (typeof traitEnObjet === 'function') ? traitEnObjet(t) : null;
     if(champ === 'couleur') t.couleur = valeur;
     if(champ === 'metres'){ t.metres = valeur.m; t.px = valeur.px; }
     if(champ === 'genre')   t.genre = valeur;
@@ -9357,7 +9887,8 @@
       t.layerObj.setStyle({ opacity:1, weight:Math.max(3, (t.layerObj.options.weight || 3) + 2) });
     }catch(e){}
     majResumeSelection();
-    if(typeof sauverEtat === 'function') sauverEtat();
+    if(avantStyle && typeof noterAction === 'function') noterAction('style', avantStyle, traitEnObjet(t));
+    if(typeof sauverCroquisTraits === 'function') sauverCroquisTraits();
     return true;
   }
 
@@ -9369,7 +9900,7 @@
     try{ map.removeLayer(t.layerObj); }catch(e){}
     const i = traits.indexOf(t);
     if(i >= 0) traits.splice(i, 1);
-    if(typeof sauverEtat === 'function') sauverEtat();
+    if(typeof sauverCroquisTraits === 'function') sauverCroquisTraits();
     majResumeSelection();
     afficherInfo('Objet supprimé', 2500);
   }
@@ -9629,7 +10160,7 @@
       etatReperes.marks.slice().forEach(function(m){ map.removeLayer(m); });
       etatReperes.marks.length = 0;
       sauverReperes();
-      if(typeof sauverEtat === 'function') sauverEtat();
+      if(typeof sauverCroquisTraits === 'function') sauverCroquisTraits();
       afficherInfo('Croquis effacé — ' + total + ' élément(s)', 5000);
     });
 
@@ -10267,16 +10798,30 @@
   async function fwiEffis(ll){
     try{
       const dd = 0.35, bbox = (ll.lng-dd)+','+(ll.lat-dd)+','+(ll.lng+dd)+','+(ll.lat+dd);
-      const url = 'https://maps.effis.emergency.copernicus.eu/effis?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=ecmwf007.fwi&QUERY_LAYERS=ecmwf007.fwi&SRS=EPSG:4326&BBOX='+bbox+'&WIDTH=101&HEIGHT=101&X=50&Y=50&FORMAT=image/png&INFO_FORMAT=application/json&TIME='+dateJour(0);
+      // MapServer 8 refuse une requete sans STYLES : c'est la cause du message
+      // « msWMSLoadGetMapParams(): WMS server error ». Le parametre est obligatoire
+      // meme vide. FEATURE_COUNT et EXCEPTIONS rendent l'echec lisible s'il persiste.
+      const url = 'https://maps.effis.emergency.copernicus.eu/effis?SERVICE=WMS&VERSION=1.1.1'
+        + '&REQUEST=GetFeatureInfo&LAYERS=ecmwf007.fwi&QUERY_LAYERS=ecmwf007.fwi&STYLES='
+        + '&SRS=EPSG:4326&BBOX='+bbox+'&WIDTH=101&HEIGHT=101&X=50&Y=50'
+        + '&FORMAT=image/png&INFO_FORMAT=application/json&FEATURE_COUNT=1'
+        + '&EXCEPTIONS=application/vnd.ogc.se_xml&TIME='+dateJour(0);
       const r = await fetch(url);
       if(!r.ok){ noterService('Danger FWI (EFFIS)', false, 'r\u00e9ponse HTTP ' + r.status); return null; }
       // Le service repond parfois par une page HTML d'erreur au lieu du JSON demande :
       // le laisser filer vers .json() produit un « Unexpected token < » incomprehensible.
       const txt = await r.text();
       if(/^\s*</.test(txt)){
-        const m = txt.match(/<ServiceException[^>]*>([\s\S]{0,140})/i);
-        noterService('Danger FWI (EFFIS)', false,
-          'le service a r\u00e9pondu par une page d\u2019erreur' + (m ? ' : ' + m[1].replace(/<[^>]*>/g, ' ').trim() : ''));
+        const m = txt.match(/<ServiceException[^>]*>([\s\S]{0,180})/i);
+        const brut = m ? m[1].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+        let cause = brut;
+        if(/Invalid layer|might be disabled/i.test(brut))
+          cause = 'la couche FWI n\u2019est plus interrogeable au point cliqu\u00e9 sur ce service';
+        else if(/STYLES/i.test(brut))
+          cause = 'param\u00e8tre STYLES refus\u00e9 par le serveur';
+        else if(/TIME|time/i.test(brut))
+          cause = 'la date demand\u00e9e n\u2019est pas disponible (donn\u00e9e du jour pas encore publi\u00e9e)';
+        noterService('Danger FWI (EFFIS)', false, cause || 'r\u00e9ponse inattendue du service');
         return null;
       }
       let j;
@@ -16630,12 +17175,11 @@
   });
 
   // ================= Annuler / effacer =================
-  function annuler(){
-    for(let i=traits.length-1; i>=0; i--){
-      if(traits[i].calque===calqueActif){ supprimerTrait(traits[i]); return; }
-    }
-  }
+  // L'ancienne annulation supprimait sans memoire : rien ne permettait de retablir.
+  function annuler(){ if(typeof annulerCroquis === 'function') annulerCroquis(); }
   document.getElementById('btn-annuler').addEventListener('click', annuler);
+  (function(){ const b = document.getElementById('btn-annuler-croquis');
+    if(b) b.addEventListener('click', annuler); })();
   document.getElementById('btn-effacer').addEventListener('click', ()=>{
     const duCalque = traits.filter(t=>t.calque===calqueActif);
     if(duCalque.length===0){ afficherInfo('Le calque actif est déjà vide'); return; }
@@ -18090,17 +18634,19 @@
   document.addEventListener('keydown', (e)=>{
     const cible = e.target;
     if(cible.tagName==='INPUT' || cible.tagName==='TEXTAREA') return;
-    if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='z'){ e.preventDefault(); annuler(); return; }
+    // Ctrl+Z est traite par l'historique du croquis, qui sait aussi retablir
     if(e.key==='Escape' && mode==='zone'){ annulerZone(); afficherInfo('Zone annulée'); return; }
     if(e.key==='Enter' && mode==='zone'){ terminerZone(); return; }
     if(e.ctrlKey || e.metaKey || e.altKey) return; // ne pas capturer Ctrl+R, Cmd+C, etc.
     const k = e.key.toLowerCase();
     if(k==='m') changerMode('main');
     if(k==='p') changerMode('pinceau');
-    if(k==='r') changerMode('rue');
+    // 'rue', 'commune' et 'note' visaient des modes supprimes de longue date
     if(k==='z') changerMode('zone');
-    if(k==='c') changerMode('commune');
-    if(k==='v') changerMode('note');
+    if(k==='s') changerMode('select');
+    if(k==='l') changerMode('ligne');
+    if(k==='f') changerMode('fleche');
+    if(k==='t') changerMode('texte');
     if(k==='g') changerMode('gomme');
     const idx = {'1':0,'2':1,'3':2,'4':3}[e.key];
     if(idx!==undefined) document.querySelectorAll('.couleur')[idx].click();
