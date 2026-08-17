@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v5.11.1 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v5.11.6 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v5.11.1</title>
+<title>MultiMaps — géographie (collège & lycée) — v5.11.6</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -210,6 +210,13 @@
   .leg-largeur{ display:none; font-size:13px; line-height:1 }
   .leg-largeur:disabled{ opacity:.3; cursor:default }
   body.interface-c #wg-legende{ transition:width .18s ease }
+  .journal-corps{
+    max-height:300px; overflow-y:auto; border:1px solid var(--trait); border-radius:8px;
+    background:#fdfcf9; padding:5px 7px; font:10.5px/1.55 ui-monospace,SFMono-Regular,monospace;
+  }
+  .journal-ligne{ display:flex; gap:6px; padding:1px 0; border-bottom:1px solid #f3f0e6 }
+  .journal-heure{ flex:none; color:#a8a29e }
+  .journal-genre{ flex:none; width:56px; font-weight:700 }
   .alti-etiq{ pointer-events:none }
   .alti-etiq span{
     font:700 11px system-ui; white-space:nowrap;
@@ -1846,6 +1853,7 @@
     <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-3d" title="Affiche le relief en trois dimensions à partir des altitudes SRTM. À utiliser en vue rapprochée sur un massif ou une vallée.">🏔 Vue 3D du relief</button>
     <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-seances" title="Des séances prêtes à l’emploi : chacune allume les couches utiles et cadre la carte au bon endroit. Contient aussi la recherche dans toutes les couches et tous les lieux.">🔎 Séances pédagogiques</button>
     <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-diag" title="Indique service par service ce qui répond et ce qui échoue. À consulter en premier quand une couche reste vide.">🩺 Diagnostic des services</button>
+    <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-journal" title="Le journal complet de ce qui se passe dans l’application : erreurs, appels réseau, messages affichés. À copier et transmettre en cas de problème.">📋 Journal de l’application</button>
   </div>
 </div>
 <div class="widget" id="wg-acces" style="width:250px">
@@ -1994,6 +2002,36 @@
   </div>
   </div>
 </div>
+<div class="widget" id="wg-journal" style="width:420px">
+  <div class="widget-tete">
+    <span class="widget-titre">📋 Journal de l’application</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer">✕</button>
+  </div>
+  <div class="widget-corps">
+    <div style="font-size:10px;color:#8a8577;margin-bottom:5px">Tout ce que fait l’application : erreurs, appels réseau, messages, couches. En cas de problème, copiez ce journal.</div>
+    <div class="croquis-rangee">
+      <select id="journal-filtre" class="feux-annee" style="flex:1" title="N’afficher qu’un type d’événement.">
+        <option value="tout">Tout</option>
+        <option value="erreur">Erreurs seulement</option>
+        <option value="reseau">Appels réseau</option>
+        <option value="service">Tests de services</option>
+        <option value="couche">Couches</option>
+        <option value="message">Messages affichés</option>
+        <option value="action">Actions</option>
+      </select>
+    </div>
+    <div class="croquis-rangee" style="margin-top:4px">
+      <button class="croquis-btn" id="btn-journal-test" title="Interroge les principaux services un par un et note lesquels répondent.">🩺 Tester les services</button>
+      <button class="croquis-btn" id="btn-journal-copier" title="Copie tout le journal, avec le navigateur et la vue en cours.">📋 Copier tout</button>
+      <button class="croquis-btn" id="btn-journal-vider" title="Efface le journal.">🗑 Vider</button>
+    </div>
+    <p class="sous" id="journal-compte" style="margin:4px 0 2px"></p>
+    <div id="journal-corps" class="journal-corps"></div>
+    <textarea id="journal-brut" hidden style="width:100%;height:90px;font:10px ui-monospace,monospace;margin-top:4px"></textarea>
+  </div>
+</div>
+
 <div class="widget" id="wg-diag" style="width:264px">
   <div class="widget-tete">
     <span class="widget-titre">🩺 Diagnostic des services</span>
@@ -2263,7 +2301,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.11.1</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.11.6</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -2382,7 +2420,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.11.1</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.11.6</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -2595,6 +2633,162 @@
     };
   })();
 
+  // ---------- Journal général de l'application ----------
+  // Tout ce qui se passe est consigné ici : erreurs JavaScript, promesses rejetées,
+  // appels réseau et leur résultat, messages affichés, couches allumées ou éteintes.
+  // Objectif : ne plus jamais avoir à deviner pourquoi quelque chose ne marche pas.
+  const JOURNAL = [];
+  const JOURNAL_MAX = 400;
+
+  function journal(genre, texte, detail){
+    const d = new Date();
+    JOURNAL.push({
+      t: d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit', second:'2-digit' })
+         + '.' + String(d.getMilliseconds()).padStart(3, '0'),
+      genre: genre,
+      texte: String(texte == null ? '' : texte).slice(0, 300),
+      detail: detail == null ? '' : String(detail).slice(0, 400)
+    });
+    if(JOURNAL.length > JOURNAL_MAX) JOURNAL.shift();
+    const c = document.getElementById('journal-corps');
+    if(c && c.offsetParent) rendreJournal();
+  }
+
+  // --- captures automatiques ---
+  window.addEventListener('error', function(e){
+    journal('erreur', e.message || 'erreur inconnue',
+      (e.filename ? e.filename.split('/').pop() : '') + (e.lineno ? ' ligne ' + e.lineno : ''));
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    const r = e && e.reason;
+    journal('erreur', 'promesse rejet\u00e9e : ' + (r && r.message ? r.message : String(r)),
+      r && r.stack ? String(r.stack).split('\n')[1] : '');
+  });
+
+  // toute requête réseau est tracée, avec sa durée et son issue
+  (function tracerReseau(){
+    if(typeof window.fetch !== 'function') return;
+    const brut = window.fetch.bind(window);
+    window.fetch = function(entree, options){
+      const url = String((entree && entree.url) || entree || '');
+      const court = url.replace(/^https?:\/\//, '').split('?')[0].slice(0, 70);
+      const t0 = Date.now();
+      return brut(entree, options).then(function(r){
+        const ms = Date.now() - t0;
+        if(r && r.ok === false) journal('reseau', court + ' \u2192 HTTP ' + r.status, ms + ' ms');
+        else journal('reseau', court + ' \u2192 ok', ms + ' ms');
+        return r;
+      }).catch(function(e){
+        journal('reseau', court + ' \u2192 \u00c9CHEC', String(e && e.message || e).slice(0, 90));
+        throw e;
+      });
+    };
+  })();
+
+  function rendreJournal(){
+    const c = document.getElementById('journal-corps');
+    if(!c) return;
+    const filtre = (document.getElementById('journal-filtre') || {}).value || 'tout';
+    const couleurs = { erreur:'#b91c1c', reseau:'#0369a1', message:'#8a8577',
+                       couche:'#166534', action:'#7c2d12', service:'#a16207' };
+    const vus = JOURNAL.filter(function(l){ return filtre === 'tout' || l.genre === filtre; });
+    const compte = document.getElementById('journal-compte');
+    if(compte){
+      const err = JOURNAL.filter(function(l){ return l.genre === 'erreur'; }).length;
+      compte.textContent = JOURNAL.length + ' entr\u00e9e(s)'
+        + (err ? ' \u00b7 ' + err + ' erreur(s)' : ' \u00b7 aucune erreur');
+      compte.style.color = err ? '#b91c1c' : '#166534';
+    }
+    if(!vus.length){ c.textContent = 'Rien \u00e0 afficher pour ce filtre.'; return; }
+    c.textContent = '';
+    vus.slice().reverse().forEach(function(l){
+      const d = document.createElement('div');
+      d.className = 'journal-ligne';
+      const h = document.createElement('span');
+      h.className = 'journal-heure';
+      h.textContent = l.t;
+      const g = document.createElement('span');
+      g.className = 'journal-genre';
+      g.textContent = l.genre;
+      g.style.color = couleurs[l.genre] || '#57534e';
+      const t = document.createElement('span');
+      t.textContent = l.texte + (l.detail ? '  \u2014 ' + l.detail : '');
+      d.appendChild(h); d.appendChild(g); d.appendChild(t);
+      c.appendChild(d);
+    });
+  }
+
+  function texteJournal(){
+    const nav = navigator.userAgent;
+    const entete = 'MultiMaps \u2014 journal\n'
+      + 'Date : ' + new Date().toLocaleString('fr-FR') + '\n'
+      + 'Navigateur : ' + nav + '\n'
+      + 'Adresse : ' + location.href + '\n'
+      + 'Leaflet : ' + (typeof L !== 'undefined' && L.version ? L.version : 'absent') + '\n'
+      + 'Vue : ' + (function(){ try{ const c = map.getCenter();
+          return c.lat.toFixed(4) + ', ' + c.lng.toFixed(4) + ' \u00b7 zoom ' + map.getZoom(); }
+          catch(e){ return 'indisponible'; } })() + '\n'
+      + '\u2014'.repeat(40) + '\n';
+    return entete + JOURNAL.map(function(l){
+      return l.t + '  [' + l.genre + ']  ' + l.texte + (l.detail ? '  \u2014 ' + l.detail : '');
+    }).join('\n');
+  }
+
+  // le contenu se compose a l'ouverture de la fenetre, pas seulement a chaque entree
+  (function cablerOuvertureJournal(){
+    document.addEventListener('click', function(ev){
+      const b = ev.target && ev.target.closest && ev.target.closest('[data-ouvre="wg-journal"]');
+      const p = ev.target && ev.target.closest && ev.target.closest('[data-cible="wg-journal"]');
+      if(b || p) setTimeout(rendreJournal, 60);
+    }, true);
+  })();
+
+  (function cablerJournal(){
+    const f = document.getElementById('journal-filtre');
+    if(f) f.addEventListener('change', rendreJournal);
+    const c = document.getElementById('btn-journal-copier');
+    if(c) c.addEventListener('click', async function(){
+      const txt = texteJournal();
+      try{
+        await navigator.clipboard.writeText(txt);
+        c.textContent = '\u2713 Copi\u00e9';
+        setTimeout(function(){ c.textContent = '\u{1F4CB} Copier tout'; }, 2500);
+      }catch(e){
+        // le presse-papier peut être refusé : on offre le texte à sélectionner
+        const z = document.getElementById('journal-brut');
+        if(z){ z.value = txt; z.hidden = false; z.select(); }
+      }
+    });
+    const v = document.getElementById('btn-journal-vider');
+    if(v) v.addEventListener('click', function(){
+      JOURNAL.length = 0;
+      journal('action', 'journal vid\u00e9');
+      rendreJournal();
+    });
+    const t = document.getElementById('btn-journal-test');
+    if(t) t.addEventListener('click', async function(){
+      journal('action', '\u2014 test des services lanc\u00e9 \u2014');
+      const cibles = [
+        ['OpenStreetMap (Overpass)', 'https://overpass-api.de/api/status'],
+        ['IGN G\u00e9oplateforme', 'https://data.geopf.fr/annexes/ressources/vectorTiles/styles/PLAN.IGN/standard.json'],
+        ['Adresse (BAN)', 'https://api-adresse.data.gouv.fr/search/?q=paris&limit=1'],
+        ['GBIF', 'https://api.gbif.org/v1/species/match?name=Vulpes%20vulpes'],
+        ['Open-Meteo', 'https://api.open-meteo.com/v1/forecast?latitude=48.85&longitude=2.35&current=temperature_2m']
+      ];
+      for(const [nom, url] of cibles){
+        const t0 = Date.now();
+        try{
+          const r = await fetch(url, { method:'GET' });
+          journal('service', nom + ' : ' + (r.ok ? 'joignable' : 'HTTP ' + r.status), (Date.now() - t0) + ' ms');
+        }catch(e){
+          journal('service', nom + ' : INJOIGNABLE', String(e && e.message || e).slice(0, 70));
+        }
+      }
+      journal('action', '\u2014 test termin\u00e9 \u2014');
+      rendreJournal();
+    });
+  })();
+
   const CAT_LEG = {};
   let COULEURS_LEG = {};
   try{ COULEURS_LEG = JSON.parse(localStorage.getItem('geo-couleurs-legende') || '{}'); }catch(e){ COULEURS_LEG = {}; }
@@ -2614,6 +2808,7 @@
   // ================= Santé des services externes =================
   const SANTE = {};
   function noterService(nom, ok, detail){
+    if(typeof journal === 'function') journal('service', nom + ' : ' + (ok ? 'ok' : 'ECHEC'), detail);
     SANTE[nom] = { ok:ok, detail:detail||'', t:Date.now() };
     if(typeof majDiagnostic === 'function') majDiagnostic();
   }
@@ -2721,7 +2916,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.11.1';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.11.6';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -2739,6 +2934,7 @@
     }
   }
   function afficherInfo(txt, duree){
+    if(typeof journal === 'function') journal('message', txt);
     if(duree === 0 && !afficherInfo._enCours){ afficherInfo._enCours = true; majTitre(1); }
     info.textContent = txt;
     info.classList.add('visible');
@@ -2747,6 +2943,25 @@
       if(afficherInfo._enCours){ afficherInfo._enCours = false; majTitre(-1); }
       infoTimer = setTimeout(()=>info.classList.remove('visible'), duree || 2600);
     }
+  }
+  // Message persistant : reste jusqu'a ce que l'usager le ferme. Les messages
+  // d'echec disparaissaient avant d'avoir pu etre lus.
+  function afficherAlerte(txt){
+    if(typeof journal === 'function') journal('message', '\u26a0 ' + txt);
+    clearTimeout(infoTimer);
+    info.textContent = '';
+    const t = document.createElement('span');
+    t.textContent = txt;
+    const x = document.createElement('button');
+    x.textContent = '\u2715';
+    x.title = 'Fermer ce message';
+    x.style.cssText = 'margin-left:10px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.15);'
+      + 'color:inherit;border-radius:999px;font:700 11px system-ui;padding:1px 7px;cursor:pointer';
+    x.addEventListener('click', function(){ info.classList.remove('visible'); });
+    info.appendChild(t);
+    info.appendChild(x);
+    info.classList.add('visible');
+    if(afficherInfo._enCours){ afficherInfo._enCours = false; majTitre(-1); }
   }
   function cacherInfo(){
     clearTimeout(infoTimer); info.classList.remove('visible');
@@ -4012,14 +4227,24 @@
   // Depuis avril 2026, overpass-api.de renvoie des 406 (Not Acceptable) à des requêtes valides
   // émises depuis un navigateur : filtrage anti-moissonnage. Les miroirs n'appliquent pas ces
   // défenses. Il reste en dernier recours au cas où le filtrage serait levé.
+  // Le serveur qui a repondu en dernier est essaye en premier au coup suivant : sans
+  // cela, on repayait 40 s d'attente sur des miroirs muets avant d'atteindre le bon.
   const OVERPASS_SERVEURS = [
-    'https://overpass.kumi.systems/api/interpreter',      // g\u00e9n\u00e9ralement le plus rapide
-    'https://overpass.private.coffee/api/interpreter',    // miroir communautaire, fiable en 2026
-    'https://overpass.osm.ch/api/interpreter',            // Suisse
+    'https://overpass.osm.ch/api/interpreter',            // Suisse, le plus regulier
+    'https://overpass.kumi.systems/api/interpreter',      // rapide quand il repond
+    'https://overpass.private.coffee/api/interpreter',    // miroir communautaire
     'https://overpass-api.de/api/interpreter'             // serveur principal : 406 fr\u00e9quents
   ];
   let overpassIndice = 0;
   let overpassChaine = Promise.resolve();
+  (function ordonnerOverpass(){
+    try{
+      const m = localStorage.getItem('geo-overpass-ok');
+      const i = OVERPASS_SERVEURS.indexOf(m);
+      if(i > 0) OVERPASS_SERVEURS.unshift(OVERPASS_SERVEURS.splice(i, 1)[0]);
+    }catch(e){}
+  })();
+
   async function overpassRequete(corps){
     majTitre(1);
     try{ return await overpassRequeteInterne(corps); }
@@ -4040,6 +4265,7 @@
           if(garde) clearTimeout(garde);
           if(!r.ok) throw new Error('overpass '+r.status);
           overpassIndice = indice % OVERPASS_SERVEURS.length; // ce serveur marche : on le garde
+          try{ localStorage.setItem('geo-overpass-ok', url); }catch(e2){}
           try{ noterService('Donn\u00e9es OSM (Overpass)', true, url.replace('https://','').split('/')[0]); }catch(e2){}
           return r;
         })
@@ -12628,16 +12854,14 @@
 
   const TERROIR = {
     spiritueux: { nom:'🍸 Spiritueux locaux', coul:'#b45309',
-      req:function(b){ return 'node["shop"="alcohol"]["shop:spirits"](' + b + ');'
-        + 'node["craft"="distillery"]["product"](' + b + ');'
-        + 'node["shop"="alcohol"]["spirits"="yes"](' + b + ');'
-        + 'node["amenity"="shop"]["drink:spirits"="yes"](' + b + ');'; },
+      req:function(b){ return 'node["shop"="alcohol"](' + b + ');way["shop"="alcohol"](' + b + ');'
+        + 'node["craft"="distillery"](' + b + ');'; },
       note:'Eaux-de-vie, liqueurs, gin, rhum arrang\u00e9. Cat\u00e9gorie sans \u00e9tiquette d\u00e9di\u00e9e dans OpenStreetMap : '
         + 'on approche par les commerces qui d\u00e9clarent vendre des spiritueux.' },
     pastis: { nom:'🌿 Pastis &amp; anis\u00e9s', coul:'#f9a825',
-      req:function(b){ return 'node["craft"="distillery"]["product"~"pastis|anis|absinth",i](' + b + ');'
-        + 'way["craft"="distillery"]["product"~"pastis|anis|absinth",i](' + b + ');'
-        + 'node["name"~"pastis|ricard|pernod|janot|henri bardouin",i]["craft"](' + b + ');'; },
+      req:function(b){ return 'node["name"~"pastis|ricard|pernod|janot|bardouin|anis",i](' + b + ');'
+        + 'way["name"~"pastis|ricard|pernod|janot|bardouin|anis",i](' + b + ');'
+        + 'node["craft"="distillery"](' + b + ');'; },
       note:'Le pastis n\u2019a pas d\u2019appellation prot\u00e9g\u00e9e mais un ancrage tr\u00e8s net : Marseille et la Provence. '
         + 'Son histoire tient \u00e0 une loi \u2014 absinthe interdite en 1915, anis\u00e9s r\u00e9autoris\u00e9s en 1932. '
         + 'Ricard na\u00eet \u00e0 Marseille cette ann\u00e9e-l\u00e0. L\u2019anis \u00e9toil\u00e9 vient d\u2019Asie, la r\u00e9glisse du Levant : '
@@ -12661,8 +12885,8 @@
       note:'Fromageries, affineurs et cr\u00e9meries. \u00c0 croiser avec le relief et les zones d\u2019\u00e9levage : '
         + 'les p\u00e2tes press\u00e9es cuites sont montagnardes, la conservation longue r\u00e9pondant \u00e0 l\u2019hivernage.' },
     miel: { nom:'🍯 Miels &amp; ruches', coul:'#d97706',
-      req:function(b){ return 'node["craft"="beekeeper"](' + b + ');node["shop"="honey"](' + b + ');'
-        + 'node["produce"="honey"](' + b + ');node["man_made"="beehive"](' + b + ');'; },
+      req:function(b){ return 'node["craft"="beekeeper"](' + b + ');way["craft"="beekeeper"](' + b + ');'
+        + 'node["shop"="honey"](' + b + ');node["name"~"miel|apicult|rucher",i]["shop"](' + b + ');'; },
       note:'Apiculteurs et points de vente. Le miel porte son terroir plus directement qu\u2019aucun autre produit : '
         + 'lavande, sapin, ch\u00e2taignier, garrigue \u2014 c\u2019est la flore locale qu\u2019on go\u00fbte.' },
     boulangerie: { nom:'🥖 Boulangeries', coul:'#a16207',
@@ -12693,8 +12917,9 @@
       note:'Cat\u00e9gorie sans \u00e9tiquette d\u00e9di\u00e9e : on approche par les \u00e9piceries fines et les conserveries d\u00e9clar\u00e9es. '
         + 'R\u00e9sultat n\u00e9cessairement partiel.' },
     plantes: { nom:'🌿 Plantes aromatiques', coul:'#7c3aed',
-      req:function(b){ return 'node["shop"="herbalist"](' + b + ');node["produce"~"lavender|herb",i](' + b + ');'
-        + 'way["crop"~"lavender|herb",i](' + b + ');way["landuse"="farmland"]["crop"~"lavender",i](' + b + ');'; },
+      req:function(b){ return 'node["shop"="herbalist"](' + b + ');'
+        + 'way["crop"~"lavender|herb",i](' + b + ');'
+        + 'node["name"~"lavand|herboriste|plantes",i]["shop"](' + b + ');'; },
       note:'Herboristeries et cultures aromatiques. La lavande de Haute-Provence, au-dessus de 800 m, '
         + 'est un paysage enti\u00e8rement agricole cr\u00e9\u00e9 au XX\u1d49 si\u00e8cle pour la parfumerie de Grasse.' },
     chocolat: { nom:'🍫 Chocolats &amp; confiseries', coul:'#78350f',
@@ -12708,13 +12933,12 @@
       note:'March\u00e9s couverts, march\u00e9s de plein vent et vente \u00e0 la ferme. '
         + 'La carte des march\u00e9s dessine encore l\u2019armature urbaine ancienne, celle des bourgs-centres.' },
     artisanat: { nom:'🏺 Artisanat traditionnel', coul:'#57534e',
-      req:function(b){ return 'node["craft"~"potter|glassblower|basket_maker|blacksmith|leather|weaver|tinsmith"](' + b + ');'
-        + 'way["craft"~"potter|glassblower|basket_maker|blacksmith"](' + b + ');'; },
+      req:function(b){ return 'node["craft"](' + b + ');way["craft"](' + b + ');'; },
       note:'Potiers, verriers, vanniers, forgerons, tanneurs. Ces m\u00e9tiers suivent les ressources : '
         + 'argile, sable, sa\u00fcle, minerai \u2014 d\u2019o\u00f9 des concentrations tr\u00e8s locales.' },
     huile: { nom:'🫒 Huiles &amp; olives', coul:'#65a30d',
       req:function(b){ return 'node["craft"="oil_mill"](' + b + ');way["craft"="oil_mill"](' + b + ');'
-        + 'node["product"~"olive|oil",i](' + b + ');way["landuse"="orchard"]["trees"="olive_trees"](' + b + ');'; },
+        + 'way["trees"="olive_trees"](' + b + ');node["name"~"moulin.*huile|olive",i](' + b + ');'; },
       note:'Moulins \u00e0 huile et oliveraies. La limite nord de l\u2019olivier dessine celle du climat m\u00e9diterran\u00e9en \u2014 '
         + 'le gel de 1956 a d\u00e9truit des oliveraies enti\u00e8res et d\u00e9plac\u00e9 cette limite.' },
     agricole: { nom:'🌾 Productions agricoles', coul:'#a3a300',
@@ -12741,6 +12965,7 @@
         return;
       }
       e.actif = true;
+      let echoue = false, messagePose = false;
       basculerBouton(btn, true, nom + ' \u2715', '', conf.coul);
       afficherInfo(nom + ' \u2014 interrogation d\u2019OpenStreetMap sur la vue\u2026', 0);
       try{
@@ -12753,8 +12978,8 @@
           e.actif = false;
           basculerBouton(btn, false, '', conf.nom);
           noterTerroir(cle + ' : refus\u00e9 avant envoi, emprise trop vaste');
-          afficherInfo(nom + ' : vue trop large pour interroger OpenStreetMap. Zoomez sur une r\u00e9gion, puis r\u00e9essayez.', 9000);
-          cacherInfo();
+          messagePose = true;
+          afficherAlerte(nom + ' : vue trop large pour interroger OpenStreetMap. Zoomez sur une r\u00e9gion, puis r\u00e9essayez.');
           return;
         }
         // une emprise nulle donne une requete vide : cela arrive quand la carte n'a pas
@@ -12763,13 +12988,19 @@
           e.actif = false;
           basculerBouton(btn, false, '', conf.nom);
           noterTerroir(cle + ' : emprise nulle, requete abandonnee');
-          afficherInfo(nom + ' : la carte n\u2019est pas encore pr\u00eate. D\u00e9placez-la l\u00e9g\u00e8rement, puis r\u00e9essayez.', 7000);
-          cacherInfo();
+          messagePose = true;
+          afficherAlerte(nom + ' : la carte n\u2019est pas encore pr\u00eate. D\u00e9placez-la l\u00e9g\u00e8rement, puis r\u00e9essayez.');
           return;
         }
         noterTerroir(cle + ' : envoi sur ' + bbox);
+        if(typeof journal === 'function')
+          journal('couche', cle + ' : bbox ' + bbox + ' \u00b7 zoom ' + map.getZoom(),
+            conf.req(bbox).slice(0, 260));
         const d = await overpassRequete('[out:json][timeout:40];(' + conf.req(bbox) + ');out center 500;');
         noterTerroir(cle + ' \u2192 ' + ((d.elements || []).length) + ' \u00e9l\u00e9ment(s) re\u00e7u(s)');
+        if(typeof journal === 'function')
+          journal('couche', cle + ' \u2192 ' + ((d.elements || []).length) + ' \u00e9l\u00e9ment(s)',
+            'remarque : ' + (d.remark || '\u2014') + ' \u00b7 cl\u00e9s : ' + Object.keys(d || {}).join(','));
         if(!e.actif) return;
         const g = L.layerGroup();
         let n = 0;
@@ -12799,7 +13030,8 @@
           e.actif = false;
           basculerBouton(btn, false, '', conf.nom);
           noterTerroir(cle + ' \u2192 aucun point exploitable');
-          afficherInfo(nom + ' : rien de recens\u00e9 dans cette vue. ' + conf.note, 11000);
+          messagePose = true;
+          afficherAlerte(nom + ' : rien de recens\u00e9 dans cette vue. ' + conf.note);
           return;
         }
         noterTerroir(cle + ' \u2192 ' + n + ' point(s) affich\u00e9(s)');
@@ -12810,11 +13042,15 @@
       }catch(err){
         e.actif = false;
         basculerBouton(btn, false, '', conf.nom);
+        echoue = true;
         const raison = String(err && err.message || err).slice(0, 90);
         noterTerroir(cle + ' \u2192 \u00e9chec : ' + raison);
-        afficherInfo('\u26a0\ufe0f ' + nom + ' : ' + raison + '. D\u00e9tail dans le Diagnostic des services.', 10000);
+        afficherAlerte('\u26a0\ufe0f ' + nom + ' : ' + raison + '. D\u00e9tail dans le Diagnostic des services.');
         noterService('Terroir (OSM)', false, raison);
-      }finally{ cacherInfo(); }
+      }finally{
+        // aucun cacherInfo ici : il effacait le message d'echec pose juste avant.
+        // Les messages durables portent leur propre croix de fermeture.
+      }
     });
   });
 
@@ -18236,8 +18472,8 @@
   });
 
   // ================= Fenêtres flottantes (widgets) =================
-  const WIDGETS = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-industriel','wg-population','wg-climat','wg-littoral','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-monde','wg-vegetation','wg-terroir','wg-archeo','wg-limites','wg-foret','wg-pilote'];
-  const WIDGETS_PILOTABLES = ['wg-outils','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-industriel','wg-population','wg-climat','wg-littoral','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-monde','wg-vegetation','wg-terroir','wg-archeo','wg-limites','wg-foret'];
+  const WIDGETS = ['wg-outils','wg-journal','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-industriel','wg-population','wg-climat','wg-littoral','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-monde','wg-vegetation','wg-terroir','wg-archeo','wg-limites','wg-foret','wg-pilote'];
+  const WIDGETS_PILOTABLES = ['wg-outils','wg-journal','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-industriel','wg-population','wg-climat','wg-littoral','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-monde','wg-vegetation','wg-terroir','wg-archeo','wg-limites','wg-foret'];
   const WIDGETS_CASES = []; // remplacées par la fenêtre 🧭 pilote
   let posWidgets = {};
   try{ posWidgets = JSON.parse(localStorage.getItem('geo-widgets3')||'{}'); }catch(e){}
@@ -18350,6 +18586,7 @@
   initWidget('wg-explic', { left:'36px', top:'140px', replie:false, cache:true });
   initWidget('wg-3d', { left:'52px', top:'170px', replie:false, cache:true });
   initWidget('wg-seances', { left:'68px', top:'200px', replie:false, cache:true });
+  initWidget('wg-journal', { left:'84px', top:'170px', replie:false, cache:true });
   initWidget('wg-diag', { left:'84px', top:'230px', replie:false, cache:true });
   initWidget('wg-pilote',    { left:'12px', top:'12px' });
   document.getElementById('wg-pilote').classList.remove('cache'); // le pilote ne peut jamais être caché
