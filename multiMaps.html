@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v5.8.3 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v5.10.3 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v5.8.3</title>
+<title>MultiMaps — géographie (collège & lycée) — v5.10.3</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -178,6 +178,64 @@
     box-shadow:0 3px 14px rgba(0,0,0,.3); pointer-events:none;
   }
   body.interface-c #bandeau-portee{ left:calc(50% + (var(--rail) - var(--legende)) / 2) }
+  .btn-action-3d{
+    display:flex; align-items:center; gap:9px; width:100%; margin-top:5px;
+    padding:9px 11px; border:1.5px solid var(--encre); border-radius:11px;
+    background:linear-gradient(180deg,#fdfcf9,#f3f0e6); color:var(--encre);
+    font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer; text-align:left;
+  }
+  .btn-action-3d:hover{ background:var(--encre); color:#fff }
+  .btn-action-3d span{ display:flex; flex-direction:column; line-height:1.25 }
+  .btn-action-3d small{ font-weight:400; font-size:10px; opacity:.7 }
+  .btn-action-3d svg{ flex:none }
+  /* Volet large : la legende se repartit en deux colonnes, pour supprimer l'ascenseur
+     plutot que d'etirer une colonne unique. Les blocs ne se coupent jamais en deux. */
+  body.interface-c.legende-large #legende-corps{
+    /* .widget-corps est en display:flex, et column-count n'a AUCUN effet sur un
+       conteneur flex : il faut le repasser en bloc pour que les colonnes existent. */
+    display:block !important;
+    column-count:2; column-gap:14px; column-rule:1px dashed var(--trait);
+  }
+  /* le gap du flex disparaissant, on redonne un peu d'air entre les blocs */
+  body.interface-c.legende-large #legende-corps > *{ margin-bottom:6px }
+  body.interface-c.legende-large #legende-corps .leg-sous,
+  body.interface-c.legende-large #legende-corps .leg-ligne,
+  body.interface-c.legende-large #legende-corps .leg-aide,
+  body.interface-c.legende-large #legende-corps > div{
+    break-inside:avoid; -webkit-column-break-inside:avoid;
+  }
+  body.interface-c.legende-large #legende-corps .leg-aide{ column-span:all }
+  body.interface-c.legende-large .pilote-actives{ column-span:all }
+  body.interface-c .leg-largeur{ display:inline-flex }
+  .leg-largeur{ display:none; font-size:13px; line-height:1 }
+  .leg-largeur:disabled{ opacity:.3; cursor:default }
+  body.interface-c #wg-legende{ transition:width .18s ease }
+  .alti-etiq{ pointer-events:none }
+  .alti-etiq span{
+    font:700 11px system-ui; white-space:nowrap;
+    -webkit-text-stroke:3px rgba(255,255,255,.85); paint-order:stroke fill;
+    text-shadow:0 1px 2px rgba(255,255,255,.9);
+  }
+  .alti-bulle{ font-weight:700 }
+  .alti-saisie{
+    width:52px; font-family:inherit; font-size:11px; text-align:right;
+    padding:2px 4px; border:1px solid var(--trait); border-radius:5px; background:#fff;
+  }
+  .alti-unite{ font-size:10.5px; color:#8a8577; margin-left:1px }
+  .gpx-palette{ margin-top:5px }
+  .gpx-palette .palette-grille{ grid-template-columns:repeat(10,1fr) }
+  .gpx-liste{ margin-top:5px }
+  .gpx-ligne{
+    display:flex; align-items:center; gap:2px; margin-bottom:3px;
+    border:1px solid var(--trait); border-radius:8px; background:#fdfcf9; overflow:hidden;
+  }
+  .gpx-bloc{ flex:1; min-width:0; display:flex; flex-direction:column; padding:3px 2px }
+  .gpx-bloc .calque-nom{ padding:0 3px }
+  .gpx-detail{ font-size:9.5px; color:#8a8577; padding:0 3px }
+  .gpx-teinte{
+    flex:none; width:15px; height:15px; margin-left:2px; border-radius:4px;
+    border:1px solid rgba(0,0,0,.25); cursor:pointer; padding:0;
+  }
   #croquis-calques{ margin-top:2px }
   .calque-ligne{
     display:flex; align-items:center; gap:2px; margin-bottom:3px;
@@ -930,7 +988,9 @@
 <div class="widget" id="wg-legende" style="width:220px">
   <div class="widget-tete">
     <span class="widget-titre">🧭 Légende</span>
-    <button class="widget-btn" id="btn-legende-replier" title="Replier le volet de légende">›</button>
+    <button class="widget-btn leg-largeur" id="btn-legende-large" title="Élargir le volet vers la gauche. Trois largeurs : étroite, normale, double.">«</button>
+    <button class="widget-btn leg-largeur" id="btn-legende-etroit" title="Rétrécir le volet. Trois largeurs : double, normale, étroite.">»</button>
+    <button class="widget-btn" id="btn-legende-replier" title="Masquer le volet de légende sur la droite">›</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
     <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable dans ⚙️ Options)">✕</button>
   </div>
@@ -981,7 +1041,13 @@
       <button id="btn-options" title="Options : seuil des tops 50, fenêtres">⚙️ Options</button>
       <button id="btn-aide" title="Aide : mode d'emploi rapide ou guide détaillé de toutes les fonctions">❓ Aide</button>
     </div>
-    <input type="file" id="fichier-gpx" accept=".gpx" style="display:none">
+    <input type="file" id="fichier-gpx" accept=".gpx" multiple style="display:none">
+    <div id="gpx-palette" class="gpx-palette">
+      <span class="etiquette">Couleur des prochaines traces</span>
+      <div class="palette-grille" id="gpx-palette-grille"></div>
+    </div>
+    <div id="gpx-liste" class="gpx-liste" hidden></div>
+    <button class="croquis-btn" id="btn-gpx-purge" style="width:100%;margin-top:4px;border-color:#b91c1c;color:#b91c1c" title="Retire toutes les traces GPX de la carte ET de la mémoire du navigateur, y compris celles importées avec une version précédente qui n’apparaissent pas dans la liste. Vos annotations dessinées à la main ne sont pas touchées.">🗑 Effacer toutes les traces GPX</button>
   </div>
 </div>
 
@@ -1445,23 +1511,41 @@
     <button class="calque-ajout donnee" id="btn-hypso" title="Jusqu'à trois étages d'altitude simultanés : cochez 1, 2 ou 3 seuils, chacun avec sa couleur — le plus haut seuil l'emporte pixel par pixel, comme une carte hypsométrique par paliers. Calculé à la volée depuis les tuiles d'altitude libres (SRTM) — précision ~90 m, recalcul à chaque déplacement.">⛰ Zones au-dessus du seuil</button>
     <div class="hypso-ligne">
       <input type="checkbox" id="chk-alti-1" checked title="Étage 1">
-      <input type="range" id="curseur-alti" min="100" max="3000" step="100" value="1000" aria-label="Seuil d'altitude — étage 1">
-      <span id="valeur-alti">1 000 m</span>
+      <input type="range" id="curseur-alti" min="0" max="3000" step="1" value="1000" aria-label="Seuil d'altitude — étage 1">
+      <input type="number" class="alti-saisie" id="valeur-alti" min="0" max="3000" step="1" value="1000" aria-label="Seuil en mètres — étage 1" title="Saisissez la valeur exacte en mètres, puis Entrée."><span class="alti-unite">m</span>
       <input type="color" id="coul-alti-1" value="#8b5a2b" title="Couleur de l'étage 1">
     </div>
     <div class="hypso-ligne">
       <input type="checkbox" id="chk-alti-2" title="Étage 2">
-      <input type="range" id="curseur-alti-2" min="100" max="3500" step="100" value="1500" aria-label="Seuil d'altitude — étage 2">
-      <span id="valeur-alti-2">1 500 m</span>
+      <input type="range" id="curseur-alti-2" min="0" max="3500" step="1" value="1500" aria-label="Seuil d'altitude — étage 2">
+      <input type="number" class="alti-saisie" id="valeur-alti-2" min="0" max="3500" step="1" value="1500" aria-label="Seuil en mètres — étage 2" title="Saisissez la valeur exacte en mètres, puis Entrée."><span class="alti-unite">m</span>
       <input type="color" id="coul-alti-2" value="#6e4423" title="Couleur de l'étage 2">
     </div>
     <div class="hypso-ligne">
       <input type="checkbox" id="chk-alti-3" title="Étage 3">
-      <input type="range" id="curseur-alti-3" min="100" max="4000" step="100" value="2200" aria-label="Seuil d'altitude — étage 3">
-      <span id="valeur-alti-3">2 200 m</span>
+      <input type="range" id="curseur-alti-3" min="0" max="4000" step="1" value="2200" aria-label="Seuil d'altitude — étage 3">
+      <input type="number" class="alti-saisie" id="valeur-alti-3" min="0" max="4000" step="1" value="2200" aria-label="Seuil en mètres — étage 3" title="Saisissez la valeur exacte en mètres, puis Entrée."><span class="alti-unite">m</span>
       <input type="color" id="coul-alti-3" value="#43290f" title="Couleur de l'étage 3">
     </div>
+    <div class="hypso-ligne">
+      <input type="checkbox" id="chk-alti-4" title="Étage 4 — basses terres">
+      <input type="range" id="curseur-alti-4" min="0" max="200" step="1" value="20" aria-label="Seuil d'altitude — étage 4">
+      <input type="number" class="alti-saisie" id="valeur-alti-4" min="0" max="200" step="1" value="20" aria-label="Seuil en mètres — étage 4" title="Basses terres : de 0 à 200 m, au mètre près."><span class="alti-unite">m</span>
+      <input type="color" id="coul-alti-4" value="#7dd3fc" title="Couleur de l'étage 4">
+    </div>
+    <div class="hypso-ligne">
+      <input type="checkbox" id="chk-alti-5" title="Étage 5 — basses terres">
+      <input type="range" id="curseur-alti-5" min="0" max="200" step="1" value="100" aria-label="Seuil d'altitude — étage 5">
+      <input type="number" class="alti-saisie" id="valeur-alti-5" min="0" max="200" step="1" value="100" aria-label="Seuil en mètres — étage 5" title="Basses terres : de 0 à 200 m, au mètre près."><span class="alti-unite">m</span>
+      <input type="color" id="coul-alti-5" value="#38bdf8" title="Couleur de l'étage 5">
+    </div>
     <p class="sous" style="margin:4px 0 0">Jusqu'à trois étages d'altitude, chacun avec son seuil et sa couleur — le seuil le plus haut l'emporte pixel par pixel (carte hypsométrique par paliers). Données SRTM.</p>
+    <div class="croquis-rangee" style="margin-top:5px">
+      <button class="calque-ajout donnee" id="btn-alti-grille" title="Affiche les altitudes chiffrées en quadrillage sur la vue, par exemple « 33 m ». La grille se recalcule quand vous vous déplacez. Valeurs du modèle de terrain SRTM : altitude du sol, précision de l’ordre de la dizaine de mètres.">📏 Grille d’altitudes</button>
+    </div>
+    <div class="croquis-rangee">
+      <button class="calque-ajout donnee" id="btn-alti-point" title="Activez, puis cliquez un point de la carte : son altitude s’affiche sur place. Vous pouvez en poser autant que vous voulez ; cliquez un repère pour le retirer.">📍 Altitude d’un point</button>
+    </div>
   <div style="border-top:1px solid var(--trait);margin:6px 0"></div>
       <button class="calque-ajout donnee" id="btn-massifs" title="Les grandes chaînes et massifs français entourés et coloriés en brun : Alpes, Pyrénées, Massif central, Jura, Vosges, Ardennes, Morvan, montagne corse. Contours schématiques à but pédagogique (pas de valeur réglementaire), brun foncé = hautes montagnes, brun clair = moyennes montagnes.">⛰ Chaînes de montagnes</button>
     <button class="calque-ajout donnee" id="btn-altcouleur" title="Teinte l'altitude en couleur (vert = plaines → brun → blanc = sommets), comme topographic-map.com. L'échelle de couleur s'ADAPTE au zoom : dézoomé, elle couvre tout le relief français ; zoomé, elle détaille le relief local. Données AWS Terrain, calculées dans le navigateur.">🏔 Altitude en couleur</button>
@@ -1763,7 +1847,7 @@
       <input type="color" id="rando-couleur" value="#b91c1c" style="width:26px;height:20px;padding:0;border:1px solid var(--trait);border-radius:5px;cursor:pointer"></label>
     <label class="velo-filtre" style="margin-top:3px">📈 Traces GPX :
       <span style="display:inline-flex;align-items:center;gap:4px;font-size:11.5px">
-        <input type="color" id="gpx-couleur" value="#1d4ed8" title="Couleur des traces GPX" style="width:26px;height:22px;padding:0;border:1px solid var(--trait);border-radius:5px;cursor:pointer">
+        <input type="color" id="gpx-couleur" value="#1d4ed8" title="Couleur des prochaines traces importées. Pour changer celle d’une trace déjà chargée, cliquez sa pastille dans la liste, sous 📈 Trace GPX (fenêtre 🧰 Actions)." style="width:26px;height:22px;padding:0;border:1px solid var(--trait);border-radius:5px;cursor:pointer">
         <button data-gpxl="-" title="Trace GPX plus fine" style="border:1px solid var(--trait);border-radius:5px;background:#fff;cursor:pointer;padding:0 6px">−</button><b id="gpx-larg-val">×3</b><button data-gpxl="+" title="Trace GPX plus large" style="border:1px solid var(--trait);border-radius:5px;background:#fff;cursor:pointer;padding:0 6px">+</button>
       </span>
     </label>
@@ -1807,9 +1891,19 @@
       <b id="valeur-3d-exag">1,6</b>
     </div>
     <div style="border-top:1px solid var(--trait);margin:6px 0"></div>
-    <button class="calque-ajout donnee" id="btn-profil" title="Deux clics sur la carte : le profil altimétrique du trait entre les deux points s'affiche — courbe, distance, altitudes min/max, dénivelés D+ et D−. Altitudes SRTM (~90 m), échantillonnage en 240 points.">📈 Profil altimétrique (2 clics)</button>
+    <button class="calque-ajout donnee" id="btn-profil" title="Coupe topographique entre deux points : cliquez le premier point sur la carte, puis le second. La courbe montre le relief le long de la ligne, avec les dénivelés. C’est la coupe de terrain classique du croquis de géographie.">📉 Coupe entre 2 points (profil)</button>
     <button class="calque-ajout donnee" id="btn-profil-gpx" title="Trace le profil altimétrique de la dernière trace GPX importée (outil 🧰 → import GPX) : la courbe de votre randonnée, avec D+ et D− calculés sur les altitudes SRTM.">📈 Profil du dernier GPX</button>
-    <button class="calque-ajout donnee" id="btn-3d-ouvrir" title="Construit la scène 3D : terrain réel (altitudes SRTM) drapé du fond choisi, caméra placée au point de vue, regard vers la cible. Glissez pour orbiter, molette pour avancer.">🏔 Ouvrir la vue 3D</button>
+    <button class="btn-action-3d calque-ajout" id="btn-3d-ouvrir" title="Construit la scène 3D : terrain réel (altitudes SRTM) drapé du fond choisi, caméra placée au point de vue, regard vers la cible. Vos traces GPX y sont posées sur le relief. Glissez pour orbiter, molette pour avancer.">
+      <svg viewBox="0 0 46 26" width="42" height="24" aria-hidden="true">
+        <path d="M2 23 L20 9 L44 9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity=".45"/>
+        <circle cx="13" cy="17" r="3.4" fill="none" stroke="currentColor" stroke-width="1.7"/>
+        <circle cx="24" cy="12" r="3.4" fill="none" stroke="currentColor" stroke-width="1.7"/>
+        <path d="M13 17 L18 12 L24 12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M18 12 L19.5 8.5 L23 8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20.5" cy="6" r="1.9" fill="currentColor"/>
+      </svg>
+      <span>Ouvrir la vue 3D<small>relief réel · traces GPX posées dessus</small></span>
+    </button>
   </div>
   </div>
 </div>
@@ -2139,7 +2233,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.8.3</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.10.3</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -2257,7 +2351,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.8.3</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.10.3</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -2561,7 +2655,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.8.3';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.10.3';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -5609,7 +5703,10 @@
   const ETAGES_ALTI = [
     { chk:'chk-alti-1', curseur:'curseur-alti',   valeur:'valeur-alti',   coul:'coul-alti-1', dalton:[68,1,84] },
     { chk:'chk-alti-2', curseur:'curseur-alti-2', valeur:'valeur-alti-2', coul:'coul-alti-2', dalton:[59,82,139] },
-    { chk:'chk-alti-3', curseur:'curseur-alti-3', valeur:'valeur-alti-3', coul:'coul-alti-3', dalton:[33,145,140] }
+    { chk:'chk-alti-3', curseur:'curseur-alti-3', valeur:'valeur-alti-3', coul:'coul-alti-3', dalton:[33,145,140] },
+    // deux etages pour les basses terres : plaines littorales, deltas, polders
+    { chk:'chk-alti-4', curseur:'curseur-alti-4', valeur:'valeur-alti-4', coul:'coul-alti-4', dalton:[94,201,98] },
+    { chk:'chk-alti-5', curseur:'curseur-alti-5', valeur:'valeur-alti-5', coul:'coul-alti-5', dalton:[253,231,37] }
   ];
   function lireEtagesAlti(){
     return ETAGES_ALTI.map(e=>{
@@ -5622,15 +5719,40 @@
       };
     }).filter(e=>e.actif).sort((a,b)=>b.seuil - a.seuil); // le plus haut d'abord
   }
+  // Le champ chiffre et le curseur pilotent le meme seuil : chacun met l'autre a jour,
+  // sans boucle. La saisie permet une valeur exacte, impossible a viser au curseur.
   ETAGES_ALTI.forEach(e=>{
-    const maj = ()=>{
-      document.getElementById(e.valeur).textContent =
-        parseInt(document.getElementById(e.curseur).value, 10).toLocaleString('fr-FR')+' m';
-      if(etatHypso.actif){ clearTimeout(etatHypso.minuteur); etatHypso.minuteur = setTimeout(calculerHypso, 350); majLegende(); }
+    const cur = document.getElementById(e.curseur);
+    const champ = document.getElementById(e.valeur);
+    const recalculer = ()=>{
+      if(etatHypso.actif){
+        clearTimeout(etatHypso.minuteur);
+        etatHypso.minuteur = setTimeout(calculerHypso, 350);
+        majLegende();
+      }
     };
-    document.getElementById(e.curseur).addEventListener('input', maj);
-    document.getElementById(e.coul).addEventListener('input', maj);
-    document.getElementById(e.chk).addEventListener('change', maj);
+    const borner = (v)=> Math.max(+cur.min, Math.min(+cur.max, v));
+    cur.addEventListener('input', ()=>{
+      if(champ) champ.value = cur.value;
+      recalculer();
+    });
+    if(champ){
+      champ.addEventListener('input', ()=>{
+        const v = parseInt(champ.value, 10);
+        if(!isFinite(v)) return;          // saisie en cours : on attend
+        cur.value = borner(v);
+        recalculer();
+      });
+      // a la sortie du champ, on ramene une valeur hors bornes dans l'intervalle
+      champ.addEventListener('change', ()=>{
+        const v = parseInt(champ.value, 10);
+        champ.value = isFinite(v) ? borner(v) : cur.value;
+        cur.value = champ.value;
+        recalculer();
+      });
+    }
+    document.getElementById(e.coul).addEventListener('input', recalculer);
+    document.getElementById(e.chk).addEventListener('change', recalculer);
   });
   curseurAlti.addEventListener('input', ()=>{
     etatHypso.seuil = parseInt(curseurAlti.value, 10);
@@ -6636,10 +6758,20 @@
       scene.add(bouleB);
       // trace GPX \u00e9ventuelle, pos\u00e9e sur le terrain
       try{
-        const tGpx3d = traits.slice().reverse().find(t=>t.gpx && t.layerObj && t.layerObj.getLatLngs);
-        if(tGpx3d){
-          let ll3 = tGpx3d.layerObj.getLatLngs();
+        // toutes les traces GPX visibles, chacune avec sa couleur
+        // pas de typeof sur GPX : c'est un const declare plus loin, et typeof leverait
+        let listeGpx = [];
+        try{ listeGpx = (GPX && GPX.traces) ? GPX.traces : []; }catch(e){ listeGpx = []; }
+        const aTracer = listeGpx.length
+          ? listeGpx.filter(function(x){ return x.visible && x.trait && x.trait.layerObj; })
+              .map(function(x){ return { obj:x.trait.layerObj, coul:x.couleur, nom:x.nom }; })
+          : traits.filter(function(t){ return t.gpx && t.layerObj && t.layerObj.getLatLngs; })
+              .map(function(t){ return { obj:t.layerObj, coul:t.couleur || gpxCouleur, nom:'trace' }; });
+        let posees = 0;
+        aTracer.forEach(function(tr){
+          let ll3 = tr.obj.getLatLngs();
           while(Array.isArray(ll3[0])) ll3 = ll3.flat();
+          if(ll3.length < 2) return;
           const pas = Math.max(1, Math.floor(ll3.length/400));
           const pts3 = [];
           for(let k=0; k<ll3.length; k+=pas){
@@ -6648,9 +6780,14 @@
           }
           if(pts3.length > 1){
             const geoT = new THREE.BufferGeometry().setFromPoints(pts3);
-            scene.add(new THREE.Line(geoT, new THREE.LineBasicMaterial({ color: new THREE.Color(gpxCouleur || '#1d4ed8'), linewidth: 2 })));
-            document.getElementById('scene3d-titre').textContent += ' \u00b7 + trace GPX';
+            scene.add(new THREE.Line(geoT, new THREE.LineBasicMaterial({
+              color: new THREE.Color(tr.coul || '#1d4ed8'), linewidth: 2 })));
+            posees++;
           }
+        });
+        if(posees){
+          document.getElementById('scene3d-titre').textContent +=
+            ' \u00b7 + ' + posees + ' trace' + (posees > 1 ? 's' : '') + ' GPX';
         }
       }catch(e){ /* pas de trace : tant pis */ }
       document.getElementById('scene3d-titre').textContent =
@@ -7323,7 +7460,11 @@
     try{
       Array.prototype.slice.call(document.querySelectorAll('.calque-ajout')).forEach(function(b){
         if(!b.id) return;
-        const nom = (b.textContent || '').replace('\u2715', '').replace(/\s+/g, ' ').trim();
+        // un bouton peut contenir un pictogramme et un sous-titre : on prend le
+        // premier libelle lisible plutot que tout le texte concatene
+        const porteur = b.querySelector('span') || b;
+        let nom = (porteur.childNodes[0] && porteur.childNodes[0].nodeValue) || porteur.textContent || '';
+        nom = nom.replace('\u2715', '').replace(/\s+/g, ' ').trim();
         // on ecarte les libelles devenus des etats (« ... ✕ ») et les boutons sans texte
         if(nom && nom.length > 1) ajouter({ genre:'couche', nom:nom, btn:b.id });
       });
@@ -9156,6 +9297,325 @@
     }
   });
 
+  // ---------- Traces GPX : import multiple et gestion ----------
+  // Trois defauts corriges : un seul fichier etait lu (files[0]), les altitudes du GPX
+  // etaient jetees alors qu'elles y sont, et aucune liste ne permettait de reprendre
+  // une trace apres coup — ni de la masquer, ni de la recolorier, ni de la supprimer.
+  const GPX = { traces: [], seq: 0 };
+  const TEINTES_GPX = ['#1d4ed8', '#dc2626', '#15803d', '#b45309', '#7c3aed',
+                       '#0891b2', '#db2777', '#57534e'];
+
+  function lireGpxComplet(xml, nom){
+    const segments = [], altitudes = [];
+    const lireSerie = function(noeuds){
+      const pts = [], alt = [];
+      Array.prototype.forEach.call(noeuds, function(pt){
+        const la = parseFloat(pt.getAttribute('lat')), lo = parseFloat(pt.getAttribute('lon'));
+        if(!isFinite(la) || !isFinite(lo)) return;
+        pts.push(L.latLng(la, lo));
+        const e = pt.querySelector('ele');
+        const v = e ? parseFloat(e.textContent) : NaN;
+        alt.push(isFinite(v) ? v : null);
+      });
+      return { pts: pts, alt: alt };
+    };
+    Array.prototype.forEach.call(xml.querySelectorAll('trkseg'), function(seg){
+      const s = lireSerie(seg.querySelectorAll('trkpt'));
+      if(s.pts.length > 1){ segments.push(s.pts); altitudes.push(s.alt); }
+    });
+    if(!segments.length){
+      const s = lireSerie(xml.querySelectorAll('rtept'));
+      if(s.pts.length > 1){ segments.push(s.pts); altitudes.push(s.alt); }
+    }
+    const meta = xml.querySelector('trk > name, metadata > name');
+    return { segments: segments, altitudes: altitudes,
+             nom: (meta && meta.textContent.trim()) || nom.replace(/\.gpx$/i, '') };
+  }
+
+  // longueur, denivele et altitudes extremes, calcules depuis le fichier lui-meme
+  function statsTrace(tr){
+    let dist = 0, montee = 0, descente = 0, mini = null, maxi = null, avecAlt = 0, total = 0;
+    tr.segments.forEach(function(seg, is){
+      const alt = tr.altitudes[is] || [];
+      for(let i = 0; i < seg.length; i++){
+        total++;
+        const a = alt[i];
+        if(a !== null && a !== undefined){
+          avecAlt++;
+          if(mini === null || a < mini) mini = a;
+          if(maxi === null || a > maxi) maxi = a;
+        }
+        if(i === 0) continue;
+        try{ dist += map.distance(seg[i-1], seg[i]); }catch(e){}
+        const b = alt[i-1];
+        if(a !== null && b !== null && a !== undefined && b !== undefined){
+          const d = a - b;
+          // seuil de 2 m : sous ce niveau, c'est le bruit du GPS, pas du denivele
+          if(d > 2) montee += d; else if(d < -2) descente += -d;
+        }
+      }
+    });
+    return { km: dist / 1000, montee: Math.round(montee), descente: Math.round(descente),
+             mini: mini, maxi: maxi, points: total, avecAlt: avecAlt };
+  }
+
+  // Palette visible la ou l'on importe : l'ancien selecteur est dans la fenetre
+  // « Couleurs & lisibilite », loin du bouton d'import, donc introuvable en pratique.
+  let couleurProchaine = null;
+  (function garnirPaletteGpx(){
+    const g = document.getElementById('gpx-palette-grille');
+    if(!g) return;
+    TEINTES_GPX.concat(['#111827', '#a8a29e']).forEach(function(c){
+      const b = document.createElement('button');
+      b.className = 'couleur';
+      b.style.color = c;
+      b.dataset.coul = c;
+      b.title = 'Les prochaines traces import\u00e9es prendront cette couleur.';
+      b.addEventListener('click', function(){
+        couleurProchaine = c;
+        Array.prototype.forEach.call(g.querySelectorAll('.couleur'), function(x){
+          x.classList.toggle('actif', x === b);
+        });
+        const sel = document.getElementById('gpx-couleur');
+        if(sel) sel.value = c;
+      });
+      g.appendChild(b);
+    });
+  })();
+
+  function majListeGpx(){
+    const boite = document.getElementById('gpx-liste');
+    if(!boite) return;
+    boite.textContent = '';
+    boite.hidden = GPX.traces.length === 0;
+    const pal = document.getElementById('gpx-palette');
+    if(pal) pal.hidden = false;   // toujours visible : elle sert avant l'import
+    if(!GPX.traces.length) return;
+
+    const tete = document.createElement('div');
+    tete.className = 'favoris-tete';
+    const c = document.createElement('span');
+    c.className = 'favoris-compte';
+    const totalKm = GPX.traces.filter(function(t){ return t.visible; })
+      .reduce(function(s, t){ return s + t.stats.km; }, 0);
+    c.textContent = GPX.traces.length + ' trace' + (GPX.traces.length > 1 ? 's' : '')
+      + (totalKm ? ' \u00b7 ' + (Math.round(totalKm * 10) / 10).toLocaleString('fr-FR') + ' km' : '');
+    const liens = document.createElement('div');
+    liens.className = 'favoris-liens';
+    const cadrer = document.createElement('button');
+    cadrer.type = 'button';
+    cadrer.className = 'lien-mini';
+    cadrer.textContent = 'tout voir';
+    cadrer.title = 'Recadre la carte sur l\u2019ensemble des traces affich\u00e9es.';
+    cadrer.addEventListener('click', cadrerGpx);
+    const vider = document.createElement('button');
+    vider.type = 'button';
+    vider.className = 'lien-mini';
+    vider.textContent = 'tout retirer';
+    vider.title = 'Retire toutes les traces import\u00e9es.';
+    vider.addEventListener('click', function(){
+      GPX.traces.slice().forEach(function(t){ if(t.trait) supprimerTrait(t.trait); });
+      GPX.traces = [];
+      majListeGpx();
+    });
+    liens.appendChild(cadrer); liens.appendChild(vider);
+    tete.appendChild(c); tete.appendChild(liens);
+    boite.appendChild(tete);
+
+    GPX.traces.forEach(function(tr){
+      const ligne = document.createElement('div');
+      ligne.className = 'gpx-ligne';
+
+      const oeil = document.createElement('button');
+      oeil.className = 'calque-mini';
+      oeil.textContent = tr.visible ? '\u25c9' : '\u25cb';
+      oeil.title = tr.visible ? 'Masquer cette trace' : 'Afficher cette trace';
+      oeil.addEventListener('click', function(){
+        tr.visible = !tr.visible;
+        if(tr.trait && tr.trait.layerObj){
+          if(tr.visible) tr.trait.layerObj.addTo(map); else map.removeLayer(tr.trait.layerObj);
+        }
+        majListeGpx();
+      });
+
+      const pastille = document.createElement('button');
+      pastille.className = 'gpx-teinte';
+      pastille.style.background = tr.couleur;
+      pastille.title = 'Changer la couleur de cette trace.';
+      pastille.addEventListener('click', function(){ menuTeinteGpx(tr, pastille); });
+
+      const nom = document.createElement('button');
+      nom.className = 'calque-nom';
+      const s = tr.stats;
+      nom.textContent = tr.nom;
+      nom.title = tr.nom + '\n' + (Math.round(s.km * 10) / 10) + ' km'
+        + (s.avecAlt ? ' \u00b7 ' + s.montee + ' m de mont\u00e9e, ' + s.descente + ' m de descente'
+                       + ' \u00b7 de ' + Math.round(s.mini) + ' \u00e0 ' + Math.round(s.maxi) + ' m'
+                     : ' \u00b7 pas d\u2019altitude dans le fichier')
+        + '\n' + s.points + ' points. Cliquez pour recadrer sur cette trace.';
+      nom.addEventListener('click', function(){
+        if(tr.trait && tr.trait.layerObj) map.fitBounds(tr.trait.layerObj.getBounds().pad(0.1));
+      });
+
+      const detail = document.createElement('span');
+      detail.className = 'gpx-detail';
+      detail.textContent = (Math.round(s.km * 10) / 10) + ' km'
+        + (s.avecAlt ? ' \u00b7 +' + s.montee + ' m' : '');
+
+      const prof = document.createElement('button');
+      prof.className = 'calque-mini';
+      prof.textContent = '\u{1F4C8}';
+      prof.title = s.avecAlt
+        ? 'Profil altim\u00e9trique, calcul\u00e9 depuis les altitudes du fichier GPX.'
+        : 'Profil altim\u00e9trique \u2014 ce fichier ne contient pas d\u2019altitude, elle sera lue sur les tuiles de relief.';
+      prof.addEventListener('click', function(){ profilTrace(tr); });
+
+      const x = document.createElement('button');
+      x.className = 'calque-mini';
+      x.textContent = '\u2715';
+      x.title = 'Retirer cette trace.';
+      x.addEventListener('click', function(){
+        if(tr.trait) supprimerTrait(tr.trait);
+        GPX.traces = GPX.traces.filter(function(y){ return y !== tr; });
+        majListeGpx();
+      });
+
+      ligne.appendChild(oeil);
+      ligne.appendChild(pastille);
+      const bloc = document.createElement('span');
+      bloc.className = 'gpx-bloc';
+      bloc.appendChild(nom);
+      bloc.appendChild(detail);
+      ligne.appendChild(bloc);
+      ligne.appendChild(prof);
+      ligne.appendChild(x);
+      boite.appendChild(ligne);
+    });
+  }
+
+  // Secours : retire toute trace GPX, meme celles enregistrees par une version
+  // anterieure et qui n'apparaissent dans aucune liste. On distingue une trace d'un
+  // trace fait a la main par sa forme : longue polyligne sans note.
+  function estTraceGps(t){
+    if(t.gpx) return true;
+    if(t.type !== 'ligne' || t.note) return false;
+    let sommets = 0;
+    try{
+      const s = t.segments || [];
+      sommets = (Array.isArray(s[0]) && typeof s[0][0] === 'number')
+        ? s.length : s.reduce(function(a, x){ return a + (x ? x.length : 0); }, 0);
+    }catch(e){}
+    return sommets > 40;
+  }
+
+  (function cablerPurgeGpx(){
+    const b = document.getElementById('btn-gpx-purge');
+    if(!b) return;
+    b.addEventListener('click', function(){
+      const vises = traits.filter(estTraceGps);
+      if(!vises.length && !GPX.traces.length){
+        afficherInfo('Aucune trace GPX sur la carte', 3500);
+        return;
+      }
+      if(!confirm('Effacer ' + Math.max(vises.length, GPX.traces.length) + ' trace(s) GPX ?\n\n'
+        + 'Elles seront retir\u00e9es de la carte et de la m\u00e9moire du navigateur.\n'
+        + 'Vos annotations dessin\u00e9es \u00e0 la main ne sont pas touch\u00e9es.')) return;
+      vises.forEach(function(t){ try{ supprimerTrait(t); }catch(e){} });
+      GPX.traces = [];
+      GPX.seq = 0;
+      majListeGpx();
+      if(typeof sauverCroquisTraits === 'function') sauverCroquisTraits();
+      afficherInfo('🗑 ' + vises.length + ' trace(s) GPX effac\u00e9e(s), m\u00e9moire comprise', 6000);
+    });
+  })();
+
+  function menuTeinteGpx(tr, ancre){
+    const anc = document.getElementById('gpx-menu-teinte');
+    if(anc) anc.remove();
+    const m = document.createElement('div');
+    m.id = 'gpx-menu-teinte';
+    m.className = 'leg-menu';
+    const g = document.createElement('div');
+    g.className = 'palette-grille';
+    g.style.padding = '5px';
+    TEINTES_GPX.concat(['#111827', '#a8a29e']).forEach(function(c){
+      const b = document.createElement('button');
+      b.className = 'couleur';
+      b.style.color = c;
+      b.title = c;
+      b.addEventListener('click', function(){
+        tr.couleur = c;
+        if(tr.trait){
+          tr.trait.couleur = c;
+          try{ tr.trait.layerObj.setStyle({ color:c }); }catch(e){}
+        }
+        m.remove();
+        majListeGpx();
+        if(typeof sauverCroquisTraits === 'function') sauverCroquisTraits();
+      });
+      g.appendChild(b);
+    });
+    m.appendChild(g);
+    const r = ancre.getBoundingClientRect();
+    m.style.left = Math.min(window.innerWidth - 200, r.left) + 'px';
+    m.style.top = (r.bottom + 4) + 'px';
+    document.body.appendChild(m);
+    setTimeout(function(){
+      document.addEventListener('click', function f(ev){
+        if(!m.contains(ev.target)){ m.remove(); document.removeEventListener('click', f); }
+      });
+    }, 0);
+  }
+
+  function cadrerGpx(){
+    const pts = [];
+    GPX.traces.forEach(function(tr){
+      if(!tr.visible) return;
+      tr.segments.forEach(function(s){ s.forEach(function(p){ pts.push(p); }); });
+    });
+    if(pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.1));
+    else afficherInfo('Aucune trace affich\u00e9e', 3500);
+  }
+
+  // profil : on privilegie les altitudes du fichier, bien plus fideles que les tuiles
+  async function profilTrace(tr){
+    const pts = [], alts = [];
+    tr.segments.forEach(function(seg, is){
+      const a = tr.altitudes[is] || [];
+      seg.forEach(function(p, i){ pts.push({ lat:p.lat, lon:p.lng }); alts.push(a[i]); });
+    });
+    if(pts.length < 2){ afficherInfo('\u{1F4C8} Trace trop courte', 4000); return; }
+    if(tr.stats.avecAlt > pts.length * 0.5){
+      // dessinerProfil attend { alts, dists, total, lats, lons } : on batit le meme
+      // objet a partir des altitudes du fichier, sans passer par les tuiles de relief.
+      const pas = Math.max(1, Math.floor(pts.length / 240));
+      const lats = [], lons = [], dd = [], aa = [];
+      const kx = 111.32 * Math.cos(pts[0].lat * Math.PI / 180), ky = 110.57;
+      let cumul = 0, precedent = null;
+      for(let i = 0; i < pts.length; i++){
+        if(precedent) cumul += Math.hypot((pts[i].lat - precedent.lat) * ky, (pts[i].lon - precedent.lon) * kx);
+        precedent = pts[i];
+        if(i % pas !== 0 && i !== pts.length - 1) continue;
+        if(alts[i] === null || alts[i] === undefined) continue;
+        lats.push(pts[i].lat); lons.push(pts[i].lon); dd.push(cumul); aa.push(alts[i]);
+      }
+      if(aa.length > 1){
+        dessinerProfil('Profil \u2014 ' + tr.nom + ' (altitudes du fichier GPX)',
+          { alts:aa, dists:dd, total:dd[dd.length - 1], lats:lats, lons:lons });
+        return;
+      }
+    }
+    afficherInfo('\u{1F4C8} Ce fichier ne contient pas d\u2019altitude : lecture sur les tuiles de relief\u2026', 0);
+    try{
+      const p = await altitudesLeLong(pts, 240);
+      cacherInfo();
+      dessinerProfil('Profil \u2014 ' + tr.nom + ' (altitudes du relief)', p);
+    }catch(e){
+      cacherInfo();
+      afficherInfo('\u{1F4C8} Tuiles d\u2019altitude inaccessibles', 5000);
+    }
+  }
+
   // ---------- Sauvegarde du croquis et calques ----------
   // Jusqu'ici rien n'etait conserve : figures et reperes survivaient au rechargement,
   // mais les traits, zones et fleches disparaissaient. Un croquis de quarante minutes
@@ -9167,7 +9627,10 @@
   function traitEnObjet(t){
     return { id:t.id, calque:t.calque, type:t.type, couleur:t.couleur, metres:t.metres,
              note:t.note || '', genre:t.genre, fleche:t.fleche, motif:t.motif,
-             opa:t.opa, px:t.px, segments:t.segments };
+             opa:t.opa, px:t.px, segments:t.segments,
+             // sans ces deux champs, une trace GPX restauree revenait sur la carte
+             // sans jamais rejoindre la liste : elle devenait impossible a retirer
+             gpx:!!t.gpx, nomGpx:t.nomGpx || '', altGpx:t.altGpx || null };
   }
 
   function sauverCroquisTraits(){
@@ -9224,8 +9687,39 @@
         traits.push(t);
         const n = parseInt(String(t.id).replace(/\D/g, ''), 10);
         if(isFinite(n) && n > compteurTrait) compteurTrait = n;
+        // Une trace GPX reprend sa place dans la liste, donc redevient gerable.
+        // Les traces enregistrees par une version anterieure n'ont pas de marqueur :
+        // on les reconnait a leur forme — une polyligne de plus de 40 sommets, sans
+        // note, n'est pas un trace fait a la main mais un releve GPS.
+        let estGpx = !!o.gpx;
+        if(!estGpx && t.type === 'ligne' && !t.note){
+          let sommets = 0;
+          try{
+            sommets = (Array.isArray(t.segments[0]) && typeof t.segments[0][0] === 'number')
+              ? t.segments.length
+              : t.segments.reduce(function(s, x){ return s + (x ? x.length : 0); }, 0);
+          }catch(e){}
+          if(sommets > 40) estGpx = true;
+        }
+        if(estGpx){
+          t.gpx = true;
+          t.nomGpx = o.nomGpx || 'Trace import\u00e9e';
+          t.altGpx = o.altGpx || null;
+          try{
+            GPX.seq++;
+            const segs = (t.type === 'ligne' && Array.isArray(t.segments[0]) && typeof t.segments[0][0] === 'number')
+              ? [t.segments.map(function(p){ return L.latLng(p[0], p[1]); })]
+              : t.segments.map(function(s){ return s.map(function(p){ return L.latLng(p[0], p[1]); }); });
+            const tr = { id:'gpx' + GPX.seq, nom:t.nomGpx, couleur:t.couleur, visible:true,
+                         segments:segs, altitudes:t.altGpx || segs.map(function(s){ return s.map(function(){ return null; }); }),
+                         trait:t };
+            tr.stats = statsTrace(tr);
+            GPX.traces.push(tr);
+          }catch(e){}
+        }
       });
       majListeCalques();
+      if(typeof majListeGpx === 'function') majListeGpx();
       majEtatSauvegarde(traits.length);
       return traits.length;
     }catch(e){
@@ -9591,6 +10085,210 @@
     });
     majBoutonsHisto();
   })();
+
+  // ---------- Largeur du volet de légende ----------
+  // Trois crans : etroit (118 px), normal (236 px), double (472 px). Toute la mise en
+  // page depend de la variable --legende : carte, pastille et bandeau suivent seuls.
+  // 520 px au cran large : deux colonnes de 241 px, soit un peu plus que le volet
+  // normal — sinon les libelles longs se casseraient et on perdrait le benefice.
+  const LARGEURS_LEG = [118, 236, 520];
+  let cranLegende = 1;
+  try{
+    const m = parseInt(localStorage.getItem('geo-largeur-legende'), 10);
+    if(isFinite(m) && m >= 0 && m < LARGEURS_LEG.length) cranLegende = m;
+  }catch(e){}
+
+  function appliquerLargeurLegende(){
+    const px = LARGEURS_LEG[cranLegende];
+    // La variable est definie sur « body.interface-c » : la poser sur <html> serait
+    // moins specifique, donc sans effet. On la pose sur <body>, ou le style en ligne
+    // l'emporte sur la feuille de style.
+    document.body.style.setProperty('--legende', px + 'px');
+    document.documentElement.style.setProperty('--legende', px + 'px');
+    // La fenetre porte un attribut style="width:220px" en dur, qui l'emporte sur toute
+    // regle de feuille de style : sans cette ligne, la variable changeait sans effet.
+    const vol = document.getElementById('wg-legende');
+    if(vol){
+      if(document.body.classList.contains('interface-c')) vol.style.width = px + 'px';
+      else vol.style.width = '';   // en mode O, la fenetre reprend sa largeur propre
+    }
+    const g = document.getElementById('btn-legende-large');
+    const p = document.getElementById('btn-legende-etroit');
+    if(g){
+      g.disabled = cranLegende >= LARGEURS_LEG.length - 1;
+      g.title = g.disabled ? 'Largeur maximale atteinte'
+        : '\u00c9largir le volet vers la gauche (' + LARGEURS_LEG[cranLegende + 1] + ' px)';
+    }
+    if(p){
+      p.disabled = cranLegende <= 0;
+      p.title = p.disabled ? 'Largeur minimale atteinte'
+        : 'R\u00e9tr\u00e9cir le volet (' + LARGEURS_LEG[cranLegende - 1] + ' px)';
+    }
+    // deux colonnes au cran large : c'est la raison d'etre de cette largeur
+    document.body.classList.toggle('legende-large', cranLegende >= LARGEURS_LEG.length - 1);
+    try{ localStorage.setItem('geo-largeur-legende', String(cranLegende)); }catch(e){}
+    try{ if(map && map.invalidateSize) setTimeout(function(){ map.invalidateSize(); }, 220); }catch(e){}
+  }
+
+  (function cablerLargeurLegende(){
+    const g = document.getElementById('btn-legende-large');
+    const p = document.getElementById('btn-legende-etroit');
+    const nom = ['\u00e9troit', 'normal', 'double'];
+    if(g) g.addEventListener('click', function(){
+      if(cranLegende >= LARGEURS_LEG.length - 1) return;
+      cranLegende++;
+      appliquerLargeurLegende();
+      afficherInfo('\u{1F9ED} Volet ' + nom[cranLegende] + ' \u2014 ' + LARGEURS_LEG[cranLegende] + ' px', 3000);
+    });
+    if(p) p.addEventListener('click', function(){
+      if(cranLegende <= 0) return;
+      cranLegende--;
+      appliquerLargeurLegende();
+      afficherInfo('\u{1F9ED} Volet ' + nom[cranLegende] + ' \u2014 ' + LARGEURS_LEG[cranLegende] + ' px', 3000);
+    });
+    appliquerLargeurLegende();
+  })();
+
+  // ---------- Altitudes chiffrées : grille et point cliqué ----------
+  // Les valeurs viennent des mêmes tuiles SRTM que l'hypsométrie et l'ombre du relief :
+  // maille d'environ 30 à 90 m selon la latitude, donc une altitude de terrain, pas de
+  // toiture ni de canopée. On l'écrit dans l'infobulle plutôt que de laisser croire à
+  // une précision de géomètre.
+  const etatAltiTexte = { actif:false, groupe:null, attente:null };
+  const etatAltiPoint = { actif:false, groupe:null };
+
+  function couleurLisible(alt){
+    // texte sombre sur fond clair, clair sur fond sombre : lisible sur toute carte
+    return alt >= 1500 ? '#ffffff' : '#111827';
+  }
+
+  async function dessinerGrilleAlti(){
+    if(!etatAltiTexte.actif) return;
+    const z = map.getZoom();
+    if(z < 8){
+      afficherInfo('\u{1F4CF} Zoomez au niveau 8 au moins : \u00e0 cette \u00e9chelle les valeurs se chevaucheraient', 6000);
+      return;
+    }
+    const b = map.getBounds();
+    // densité choisie pour rester lisible : environ un chiffre tous les 90 pixels
+    const t = map.getSize ? map.getSize() : { x:1000, y:700 };
+    const cols = Math.max(4, Math.min(14, Math.round(t.x / 95)));
+    const lignes = Math.max(3, Math.min(11, Math.round(t.y / 95)));
+    afficherInfo('\u{1F4CF} Lecture des altitudes\u2026', 0);
+    try{
+      const lu = await altitudesOmbre(b, cols, lignes);
+      if(!etatAltiTexte.actif) return;
+      noterService('Altitudes (grille)', !!lu.alt, lu.cause);
+      if(!lu.alt){
+        afficherInfo('\u26a0\ufe0f Altitudes indisponibles : ' + lu.cause, 8000);
+        return;
+      }
+      if(etatAltiTexte.groupe) map.removeLayer(etatAltiTexte.groupe);
+      const g = L.layerGroup();
+      const N = b.getNorth(), S = b.getSouth(), W = b.getWest(), E = b.getEast();
+      let posees = 0;
+      for(let r = 0; r < lignes; r++){
+        for(let c = 0; c < cols; c++){
+          const a = lu.alt[r * cols + c];
+          if(!isFinite(a) || a < -420 || a > 9000) continue;
+          const lat = N - (r + 0.5) / lignes * (N - S);
+          const lng = W + (c + 0.5) / cols * (E - W);
+          const v = Math.round(a);
+          L.marker([lat, lng], {
+            interactive: false, keyboard: false,
+            icon: L.divIcon({ className:'alti-etiq',
+              html:'<span style="color:' + couleurLisible(v) + '">' + v + '\u202fm</span>',
+              iconSize:null })
+          }).addTo(g);
+          posees++;
+        }
+      }
+      g.addTo(map);
+      etatAltiTexte.groupe = g;
+      cacherInfo();
+      afficherInfo('\u{1F4CF} ' + posees + ' altitudes affich\u00e9es \u00b7 ' + lu.cause
+        + ' \u2014 valeurs du terrain, pr\u00e9cision de l\u2019ordre de la dizaine de m\u00e8tres', 7000);
+    }catch(e){
+      afficherInfo('\u26a0\ufe0f Lecture des altitudes impossible', 5000);
+      noterService('Altitudes (grille)', false, String(e && e.message || e));
+    }finally{ cacherInfo(); }
+  }
+
+  document.getElementById('btn-alti-grille').addEventListener('click', function(){
+    const b = document.getElementById('btn-alti-grille');
+    if(etatAltiTexte.actif){
+      etatAltiTexte.actif = false;
+      if(etatAltiTexte.groupe){ map.removeLayer(etatAltiTexte.groupe); etatAltiTexte.groupe = null; }
+      basculerBouton(b, false, '', '\u{1F4CF} Grille d\u2019altitudes');
+      majLegende();
+      return;
+    }
+    etatAltiTexte.actif = true;
+    basculerBouton(b, true, '\u{1F4CF} Grille d\u2019altitudes \u2715', '', '#8b5a2b');
+    majLegende();
+    dessinerGrilleAlti();
+  });
+
+  // la grille suit les déplacements, avec un délai pour ne pas recalculer sans cesse
+  map.on('moveend zoomend', function(){
+    if(!etatAltiTexte.actif) return;
+    clearTimeout(etatAltiTexte.attente);
+    etatAltiTexte.attente = setTimeout(dessinerGrilleAlti, 420);
+  });
+
+  // --- altitude d'un point précis ---
+  async function altitudeDuPoint(latlng){
+    // on lit une toute petite emprise autour du point : la valeur est celle du pixel
+    const d = 0.004;
+    const b = L.latLngBounds([latlng.lat - d, latlng.lng - d], [latlng.lat + d, latlng.lng + d]);
+    const lu = await altitudesOmbre(b, 3, 3);
+    if(!lu.alt) throw new Error(lu.cause);
+    const v = lu.alt[4];   // centre de la grille 3 x 3
+    if(!isFinite(v)) throw new Error('valeur illisible');
+    return v;
+  }
+
+  document.getElementById('btn-alti-point').addEventListener('click', function(){
+    const b = document.getElementById('btn-alti-point');
+    if(etatAltiPoint.actif){
+      etatAltiPoint.actif = false;
+      if(etatAltiPoint.groupe){ map.removeLayer(etatAltiPoint.groupe); etatAltiPoint.groupe = null; }
+      if(mapEl) mapEl.style.cursor = '';
+      basculerBouton(b, false, '', '\u{1F4CD} Altitude d\u2019un point');
+      return;
+    }
+    etatAltiPoint.actif = true;
+    if(!etatAltiPoint.groupe) etatAltiPoint.groupe = L.layerGroup().addTo(map);
+    if(mapEl) mapEl.style.cursor = 'crosshair';
+    basculerBouton(b, true, '\u{1F4CD} Cliquez la carte \u2715', '', '#8b5a2b');
+    afficherInfo('\u{1F4CD} Cliquez un point de la carte pour son altitude \u00b7 cliquez un rep\u00e8re pos\u00e9 pour le retirer', 7000);
+  });
+
+  map.on('click', async function(e){
+    if(!etatAltiPoint.actif || !e || !e.latlng) return;
+    const ll = e.latlng;
+    const marque = L.circleMarker(ll, { radius:5, weight:2, color:'#8b5a2b',
+      fillColor:'#fde68a', fillOpacity:0.95 });
+    marque.bindTooltip('Lecture\u2026', { permanent:true, direction:'top', className:'alti-bulle' });
+    marque.on('click', function(ev){
+      L.DomEvent.stop(ev);
+      etatAltiPoint.groupe.removeLayer(marque);
+    });
+    marque.addTo(etatAltiPoint.groupe);
+    try{
+      const a = await altitudeDuPoint(ll);
+      const v = Math.round(a);
+      marque.setTooltipContent('<b>' + v + '\u202fm</b>');
+      marque.bindPopup('<b>' + v + ' m</b> d\u2019altitude'
+        + '<div style="color:#6b7280;font-size:11px;margin-top:2px">'
+        + ll.lat.toFixed(5) + ', ' + ll.lng.toFixed(5) + '</div>'
+        + '<div style="color:#9ca3af;font-size:10px;margin-top:3px">Mod\u00e8le de terrain SRTM \u00b7 maille '
+        + 'de 30 \u00e0 90 m : c\u2019est l\u2019altitude du sol, arrondie, ni celle d\u2019un toit ni celle de la cime des arbres.</div>');
+    }catch(err){
+      marque.setTooltipContent('\u2014');
+      marque.bindPopup('Altitude indisponible ici : ' + echap(String(err && err.message || err)));
+    }
+  });
 
   // ---------- Croquis étape 2 : outils géométriques, poignées, magnétisme ----------
   // Tout passe par creerTrait() : ligne et flèche donnent un tracé de type 'ligne',
@@ -10795,44 +11493,92 @@
   function facteurPompiers(){ const el = document.getElementById('feu-pompiers'); let v = el ? parseFloat(el.value) : 45; if(isNaN(v)) v = 45; return 0.12 + 0.88*(v/100); }
   function libellePompiers(){ const el = document.getElementById('feu-pompiers'); let v = el ? parseFloat(el.value) : 45; if(isNaN(v)) v = 45; return v <= 15 ? 'interv. max' : (v <= 45 ? 'interv. forte' : (v <= 75 ? 'interv. moy.' : (v >= 96 ? 'sans interv.' : 'interv. faible'))); }
   function majPompiersLbl(){ const l = document.getElementById('feu-pompiers-lbl'); if(l) l.textContent = libellePompiers(); }
+  // Journal detaille du service : ce qui a ete tente, dans l'ordre, avec le resultat.
+  // Sans cela, un echec ne dit ni quelle date ni quelle couche a ete demandee.
+  const JOURNAL_FWI = [];
+  function noterFwi(ligne){
+    JOURNAL_FWI.push(new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit', second:'2-digit' })
+      + ' \u00b7 ' + ligne);
+    if(JOURNAL_FWI.length > 12) JOURNAL_FWI.shift();
+  }
+
+  function urlFwi(bbox, jour, couche){
+    return 'https://maps.effis.emergency.copernicus.eu/effis?SERVICE=WMS&VERSION=1.1.1'
+      + '&REQUEST=GetFeatureInfo&LAYERS=' + couche + '&QUERY_LAYERS=' + couche + '&STYLES='
+      + '&SRS=EPSG:4326&BBOX=' + bbox + '&WIDTH=101&HEIGHT=101&X=50&Y=50'
+      + '&FORMAT=image/png&INFO_FORMAT=application/json&FEATURE_COUNT=1'
+      + '&EXCEPTIONS=application/vnd.ogc.se_xml&TIME=' + jour;
+  }
+
+  function causeLisible(brut){
+    if(/Invalid layer|might be disabled|not queryable/i.test(brut))
+      return 'la couche demand\u00e9e n\u2019est pas interrogeable sur ce serveur';
+    if(/STYLES/i.test(brut)) return 'param\u00e8tre STYLES refus\u00e9';
+    if(/msWMSLoadGetMapParams/i.test(brut)) return 'param\u00e8tre de requ\u00eate refus\u00e9 par le serveur';
+    if(/time|TIME/.test(brut)) return 'date non disponible dans les donn\u00e9es publi\u00e9es';
+    if(/bbox|BBOX/i.test(brut)) return 'zone demand\u00e9e hors de l\u2019emprise du service';
+    return brut || 'r\u00e9ponse inattendue';
+  }
+
+  // La documentation EFFIS donne « ecmwf007.fwi » et precise que le parametre TIME est
+  // obligatoire. Mais la donnee du jour n'est publiee qu'apres le calcul du modele : on
+  // essaie donc aujourd'hui, puis les jours precedents, avant de renoncer.
   async function fwiEffis(ll){
-    try{
-      const dd = 0.35, bbox = (ll.lng-dd)+','+(ll.lat-dd)+','+(ll.lng+dd)+','+(ll.lat+dd);
-      // MapServer 8 refuse une requete sans STYLES : c'est la cause du message
-      // « msWMSLoadGetMapParams(): WMS server error ». Le parametre est obligatoire
-      // meme vide. FEATURE_COUNT et EXCEPTIONS rendent l'echec lisible s'il persiste.
-      const url = 'https://maps.effis.emergency.copernicus.eu/effis?SERVICE=WMS&VERSION=1.1.1'
-        + '&REQUEST=GetFeatureInfo&LAYERS=ecmwf007.fwi&QUERY_LAYERS=ecmwf007.fwi&STYLES='
-        + '&SRS=EPSG:4326&BBOX='+bbox+'&WIDTH=101&HEIGHT=101&X=50&Y=50'
-        + '&FORMAT=image/png&INFO_FORMAT=application/json&FEATURE_COUNT=1'
-        + '&EXCEPTIONS=application/vnd.ogc.se_xml&TIME='+dateJour(0);
-      const r = await fetch(url);
-      if(!r.ok){ noterService('Danger FWI (EFFIS)', false, 'r\u00e9ponse HTTP ' + r.status); return null; }
-      // Le service repond parfois par une page HTML d'erreur au lieu du JSON demande :
-      // le laisser filer vers .json() produit un « Unexpected token < » incomprehensible.
-      const txt = await r.text();
-      if(/^\s*</.test(txt)){
-        const m = txt.match(/<ServiceException[^>]*>([\s\S]{0,180})/i);
-        const brut = m ? m[1].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '';
-        let cause = brut;
-        if(/Invalid layer|might be disabled/i.test(brut))
-          cause = 'la couche FWI n\u2019est plus interrogeable au point cliqu\u00e9 sur ce service';
-        else if(/STYLES/i.test(brut))
-          cause = 'param\u00e8tre STYLES refus\u00e9 par le serveur';
-        else if(/TIME|time/i.test(brut))
-          cause = 'la date demand\u00e9e n\u2019est pas disponible (donn\u00e9e du jour pas encore publi\u00e9e)';
-        noterService('Danger FWI (EFFIS)', false, cause || 'r\u00e9ponse inattendue du service');
-        return null;
+    const dd = 0.35, bbox = (ll.lng-dd)+','+(ll.lat-dd)+','+(ll.lng+dd)+','+(ll.lat+dd);
+    const couches = ['ecmwf007.fwi', 'ecmwf.fwi'];
+    let derniereCause = '';
+    for(let ic = 0; ic < couches.length; ic++){
+      for(let jour = 0; jour <= 3; jour++){
+        const d = dateJour(jour);
+        try{
+          const r = await fetch(urlFwi(bbox, d, couches[ic]));
+          if(!r.ok){
+            derniereCause = 'HTTP ' + r.status;
+            noterFwi(couches[ic] + ' au ' + d + ' \u2192 HTTP ' + r.status);
+            continue;
+          }
+          const txt = await r.text();
+          if(/^\s*</.test(txt)){
+            const m = txt.match(/<ServiceException[^>]*>([\s\S]{0,200})/i);
+            const brut = m ? m[1].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+            derniereCause = causeLisible(brut);
+            noterFwi(couches[ic] + ' au ' + d + ' \u2192 ' + derniereCause);
+            continue;
+          }
+          let js2;
+          try{ js2 = JSON.parse(txt); }
+          catch(e){
+            derniereCause = 'r\u00e9ponse illisible';
+            noterFwi(couches[ic] + ' au ' + d + ' \u2192 r\u00e9ponse illisible');
+            continue;
+          }
+          const f = js2 && js2.features && js2.features[0] && js2.features[0].properties;
+          if(!f){
+            derniereCause = 'aucune valeur \u00e0 ce point';
+            noterFwi(couches[ic] + ' au ' + d + ' \u2192 aucune valeur \u00e0 ce point');
+            continue;
+          }
+          for(const k in f){
+            const v = parseFloat(f[k]);
+            if(isFinite(v) && v >= 0 && v <= 200){
+              noterFwi(couches[ic] + ' au ' + d + ' \u2192 FWI ' + Math.round(v * 10) / 10 + ' (champ ' + k + ')');
+              noterService('Danger FWI (EFFIS)', true, couches[ic] + ' au ' + d
+                + (jour ? ' (donn\u00e9e du jour non publi\u00e9e, repli \u00e0 J-' + jour + ')' : ''));
+              return v;
+            }
+          }
+          derniereCause = 'r\u00e9ponse sans valeur num\u00e9rique exploitable';
+          noterFwi(couches[ic] + ' au ' + d + ' \u2192 champs : ' + Object.keys(f).join(', ').slice(0, 60));
+        }catch(e){
+          derniereCause = String(e && e.message || e).slice(0, 70);
+          noterFwi(couches[ic] + ' au ' + d + ' \u2192 ' + derniereCause);
+        }
       }
-      let j;
-      try{ j = JSON.parse(txt); }
-      catch(e){ noterService('Danger FWI (EFFIS)', false, 'r\u00e9ponse illisible'); return null; }
-      const f = j && j.features && j.features[0] && j.features[0].properties;
-      if(!f) return null;
-      for(const k in f){ const v = parseFloat(f[k]); if(isFinite(v) && v >= 0 && v <= 200){ noterService('Danger FWI (EFFIS)', true); return v; } }
-      noterService('Danger FWI (EFFIS)', false, 'réponse sans valeur exploitable');
-      return null;
-    }catch(e){ noterService('Danger FWI (EFFIS)', false, e && e.message); return null; }
+    }
+    noterService('Danger FWI (EFFIS)', false, derniereCause
+      + ' \u2014 ' + (couches.length * 4) + ' tentatives (2 couches \u00d7 4 jours). D\u00e9tail dans le journal.');
+    return null;
+  
   }
   function recalculerFeu(){
     ['btn-panache','btn-simfeu','btn-extension'].forEach(function(id){ const b = document.getElementById(id); if(b && b.textContent.indexOf('\u2715') !== -1){ b.click(); b.click(); } });
@@ -11475,6 +12221,26 @@
       const quand = s.t ? '<span style="color:#a8a29e;font-size:9.5px"> \u00b7 ' + new Date(s.t).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) + '</span>' : '';
       return '<div style="margin-bottom:3px">' + marque + ' ' + echap(n) + quand + det + '</div>';
     };
+    // le journal detaille du service FWI, quand il a quelque chose a dire
+    // pas de typeof sur un const declare plus loin : il leve au lieu de rendre 'undefined'
+    let listeFoss = [];
+    try{ listeFoss = JOURNAL_FOSS || []; }catch(e){ listeFoss = []; }
+    const journalFoss = listeFoss.length
+      ? '<details style="margin-top:7px"><summary style="cursor:pointer;font-size:10.5px;color:#8a8577">'
+        + 'Journal des recherches de fossiles (' + listeFoss.length + ')</summary>'
+        + '<div style="font-size:9.5px;color:#57534e;line-height:1.5;margin-top:3px;'
+        + 'font-family:ui-monospace,monospace;white-space:pre-wrap">'
+        + listeFoss.map(function(l){ return echap(l); }).join('\n')
+        + '</div></details>'
+      : '';
+    const journal = (typeof JOURNAL_FWI !== 'undefined' && JOURNAL_FWI.length)
+      ? '<details style="margin-top:7px"><summary style="cursor:pointer;font-size:10.5px;color:#8a8577">'
+        + 'Journal des tentatives FWI (' + JOURNAL_FWI.length + ')</summary>'
+        + '<div style="font-size:9.5px;color:#57534e;line-height:1.5;margin-top:3px;'
+        + 'font-family:ui-monospace,monospace;white-space:pre-wrap">'
+        + JOURNAL_FWI.map(function(l){ return echap(l); }).join('\n')
+        + '</div></details>'
+      : '';
     let html = '<div style="font-size:10px;color:#8a8577;margin-bottom:5px">'
       + ok.length + ' service(s) joignable(s)'
       + (ko.length ? ' \u00b7 <b style="color:#dc2626">' + ko.length + ' en \u00e9chec</b>' : '')
@@ -11485,7 +12251,7 @@
     if(ok.length){
       html += '<div class="etiquette" style="margin-top:5px">Joignables</div>' + ok.sort().map(ligne).join('');
     }
-    el.innerHTML = html;
+    el.innerHTML = html + journal + journalFoss;
   }
   function servicesEnPanne(){
     return Object.keys(SANTE).filter(function(n){ return !SANTE[n].ok; });
@@ -11904,24 +12670,87 @@
   });
 
   // --- fossiles : GBIF sert aussi les specimens fossiles, filtrés par basisOfRecord ---
+  // GBIF resout « scientificName » en coulisse contre son referentiel, et rend une
+  // erreur 400 quand le nom n'y figure pas. Or Dinosauria, Pterosauria ou Ichthyosauria
+  // sont des clades, absents des rangs du referentiel. On resout donc le nom nous-memes
+  // en cle numerique, ce qui est aussi plus rapide et sans ambiguite.
+  // Journal des tentatives, consultable dans le Diagnostic : sans lui, un echec ne dit
+  // ni quel nom a ete demande, ni ce que le service a repondu.
+  const JOURNAL_FOSS = [];
+  function noterFoss(l){
+    JOURNAL_FOSS.push(new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit', second:'2-digit' }) + ' \u00b7 ' + l);
+    if(JOURNAL_FOSS.length > 14) JOURNAL_FOSS.shift();
+  }
+  const CLES_TAXON = {};
+  async function cleTaxon(nom){
+    if(CLES_TAXON[nom] !== undefined) return CLES_TAXON[nom];
+    try{
+      const r = await fetch('https://api.gbif.org/v1/species/match?name=' + encodeURIComponent(nom));
+      if(!r.ok){ noterFoss(nom + ' \u2192 correspondance HTTP ' + r.status); throw new Error('HTTP ' + r.status); }
+      const d = await r.json();
+      // matchType NONE : le nom n'existe pas dans le referentiel
+      const k = (d && d.matchType && d.matchType !== 'NONE' && (d.usageKey || d.acceptedUsageKey)) || null;
+      noterFoss(nom + ' \u2192 ' + (k ? 'cl\u00e9 ' + k + ' (' + (d.rank || 'rang inconnu') + ', ' + d.matchType + ')'
+        : 'absent du r\u00e9f\u00e9rentiel (' + (d && d.matchType || 'sans r\u00e9ponse') + ')'));
+      CLES_TAXON[nom] = k;
+      return k;
+    }catch(e){
+      noterFoss(nom + ' \u2192 \u00e9chec : ' + String(e && e.message || e).slice(0, 50));
+      CLES_TAXON[nom] = null;
+      return null;
+    }
+  }
+
   async function chargerFossiles(cle, taxon, coul, btn, libelle){
     const b = map.getBounds();
+    // Certains clades ne figurent pas dans le referentiel comme rangs. On tente alors
+    // des familles ou genres bien etablis, qui y sont sans ambiguite.
+    const REPLIS = {
+      'Dinosauria':  ['Tyrannosauridae', 'Diplodocidae', 'Iguanodontidae', 'Ceratopsidae'],
+      'Pterosauria': ['Pterodactylidae', 'Rhamphorhynchidae', 'Pterodactylus'],
+      'Ichthyosauria':['Ichthyosauridae', 'Ichthyosaurus'],
+      'Mosasauridae':['Mosasaurus'],
+      'Ammonoidea':  ['Ammonitida', 'Ammonites'],
+      'Belemnitida': ['Belemnitidae', 'Belemnites']
+    };
+    let k = await cleTaxon(taxon);
+    let nomRetenu = taxon;
+    if(!k && REPLIS[taxon]){
+      for(const secours of REPLIS[taxon]){
+        k = await cleTaxon(secours);
+        if(k){ nomRetenu = secours; break; }
+      }
+    }
+    if(!k){
+      noterService('Fossiles (GBIF)', false, taxon + ' : nom absent du r\u00e9f\u00e9rentiel GBIF');
+      throw new Error('Le nom \u00ab ' + taxon + ' \u00bb n\u2019existe pas dans le r\u00e9f\u00e9rentiel GBIF : '
+        + 'c\u2019est souvent le cas des clades, que GBIF ne classe pas comme rangs');
+    }
     // pas de filtre d'année ici : elle indiquerait la date de collecte, pas l'âge du fossile
     const url = 'https://api.gbif.org/v1/occurrence/search'
-      + '?scientificName=' + encodeURIComponent(taxon)
+      + '?taxonKey=' + k
       + '&basisOfRecord=FOSSIL_SPECIMEN'
       + '&decimalLatitude=' + b.getSouth().toFixed(3) + ',' + b.getNorth().toFixed(3)
       + '&decimalLongitude=' + b.getWest().toFixed(3) + ',' + b.getEast().toFixed(3)
       + '&hasCoordinate=true&hasGeospatialIssue=false&limit=300';
+    noterFoss('recherche ' + nomRetenu + ' (cl\u00e9 ' + k + ') sur la vue');
     const r = await fetch(url);
-    if(!r.ok){ noterService('Fossiles (GBIF)', false, 'HTTP ' + r.status); throw new Error('GBIF HTTP ' + r.status); }
+    if(!r.ok){
+      noterFoss('\u2192 refus\u00e9e : HTTP ' + r.status);
+      noterService('Fossiles (GBIF)', false, 'HTTP ' + r.status + ' sur ' + nomRetenu);
+      throw new Error('GBIF a refus\u00e9 la requ\u00eate (HTTP ' + r.status + ') pour \u00ab ' + nomRetenu + ' \u00bb');
+    }
     const d = await r.json();
     const res = (d && d.results) || [];
-    noterService('Fossiles (GBIF)', true, res.length + ' sp\u00e9cimen(s)');
+    noterFoss('\u2192 ' + res.length + ' r\u00e9ponse(s) de GBIF');
     if(!res.length) return { n:0, total:(d && d.count) || 0 };
     const g = L.layerGroup();
+    let places = 0;
     res.forEach(function(o){
+      // GBIF renvoie des specimens sans coordonnees malgre hasCoordinate : on les
+      // comptait comme affiches, d'ou une couche allumee mais vide sur la carte.
       if(o.decimalLatitude == null || o.decimalLongitude == null) return;
+      places++;
       const esp = o.species || o.genus || o.scientificName || libelle;
       const inst = o.institutionCode || o.publishingOrgKey || '';
       const lieu = o.locality || o.county || '';
@@ -11937,8 +12766,18 @@
         .bindTooltip(esp, { direction:'top' })
         .addTo(g);
     });
+    // la note du service reflete ce qui est reellement affichable, pas ce qui est recu
+    noterFoss('\u2192 ' + res.length + ' re\u00e7u(s), ' + places + ' plac\u00e9(s) sur la carte');
+    noterService('Fossiles (GBIF)', places > 0,
+      places > 0 ? places + ' sp\u00e9cimen(s) plac\u00e9(s) \u00b7 ' + nomRetenu
+                     + (nomRetenu !== taxon ? ' (repli)' : '')
+                 : res.length + ' re\u00e7u(s) mais aucun g\u00e9olocalis\u00e9 \u00b7 ' + nomRetenu);
+    if(!places){
+      return { n:0, groupe:null, total:(d && d.count) || 0, nom:nomRetenu, demande:taxon,
+               recus:res.length, sansCoord:true };
+    }
     g.addTo(map);
-    return { n:res.length, groupe:g, total:(d && d.count) || res.length };
+    return { n:places, groupe:g, total:(d && d.count) || places, nom:nomRetenu, demande:taxon, recus:res.length };
   }
 
   document.querySelectorAll('.fossile-btn').forEach(function(btn){
@@ -11966,18 +12805,24 @@
         if(!rr.n){
           e.actif = false;
           basculerBouton(btn, false, '', libelle);
-          afficherInfo(libelle + ' : aucun sp\u00e9cimen g\u00e9olocalis\u00e9 dans cette vue \u2014 \u00e9largissez la carte. '
-            + 'Beaucoup de fossiles anciens des collections n\u2019ont pas de coordonn\u00e9es pr\u00e9cises.', 9000);
+          afficherInfo(rr.sansCoord
+            ? libelle + ' : ' + rr.recus + ' sp\u00e9cimen(s) trouv\u00e9(s) ici, mais aucun n\u2019a de coordonn\u00e9es '
+              + 'exploitables. Les fossiles anciens sont souvent localis\u00e9s au seul nom de commune.'
+            : libelle + ' : aucun sp\u00e9cimen dans cette vue. D\u00e9zoomez largement \u2014 les gisements sont rares '
+              + 'et tr\u00e8s in\u00e9galement r\u00e9partis.', 10000);
           return;
         }
         e.groupe = rr.groupe;
         majLegende();
         afficherInfo(libelle + ' : ' + rr.n + ' sp\u00e9cimen(s) affich\u00e9(s)'
-          + (rr.total > rr.n ? ' sur ' + rr.total + ' recens\u00e9s' : '') + ' \u00b7 cliquez un point pour le d\u00e9tail', 9000);
+          + (rr.total > rr.n ? ' sur ' + rr.total + ' recens\u00e9s' : '')
+          + (rr.nom !== rr.demande ? ' \u00b7 recherche men\u00e9e sur \u00ab ' + rr.nom
+              + ' \u00bb, le nom de groupe n\u2019existant pas dans GBIF' : '')
+          + ' \u00b7 cliquez un point pour le d\u00e9tail', 10000);
       }catch(err){
         e.actif = false;
         basculerBouton(btn, false, '', libelle);
-        afficherInfo('\u26a0\ufe0f GBIF n\u2019a pas r\u00e9pondu pour les fossiles', 6000);
+        afficherInfo('\u26a0\ufe0f ' + libelle + ' : ' + String(err && err.message || err), 9000);
       }finally{ cacherInfo(); }
     });
   });
@@ -12270,6 +13115,7 @@
     const c = (mode === 'c');
     document.body.classList.toggle('interface-c', c);
     if(typeof placerCouchesActives === 'function') placerCouchesActives();
+    if(typeof appliquerLargeurLegende === 'function') appliquerLargeurLegende();
     const bo = document.getElementById('btn-iface-o'), bc = document.getElementById('btn-iface-c');
     if(bo) bo.classList.toggle('donnee-active', !c);
     if(bc) bc.classList.toggle('donnee-active', c);
@@ -15694,28 +16540,37 @@
   const fichierGpx = document.getElementById('fichier-gpx');
   document.getElementById('btn-gpx').addEventListener('click', ()=>fichierGpx.click());
   fichierGpx.addEventListener('change', async ()=>{
-    const f = fichierGpx.files[0];
+    const liste = Array.prototype.slice.call(fichierGpx.files || []);
     fichierGpx.value = '';
-    if(!f) return;
-    try{
-      const xml = new DOMParser().parseFromString(await f.text(), 'application/xml');
-      const segments = [];
-      xml.querySelectorAll('trkseg').forEach(seg=>{
-        const pts = [...seg.querySelectorAll('trkpt')].map(pt=>L.latLng(parseFloat(pt.getAttribute('lat')), parseFloat(pt.getAttribute('lon'))));
-        if(pts.length>1) segments.push(pts);
-      });
-      if(segments.length===0){
-        const rte = [...xml.querySelectorAll('rtept')].map(pt=>L.latLng(parseFloat(pt.getAttribute('lat')), parseFloat(pt.getAttribute('lon'))));
-        if(rte.length>1) segments.push(rte);
-      }
-      if(segments.length===0){ afficherInfo('Aucune trace exploitable dans ce GPX'); return; }
-      const t = creerTrait('ligne', segments, gpxCouleur, tailleMetres*gpxLargeur);
-      t.gpx = true;
-      map.fitBounds(t.layerObj.getBounds().pad(0.12));
-      afficherInfo('📈 Trace GPX importée ('+segments.reduce((s,x)=>s+x.length,0)+' points) sur le calque actif — elle se sauvegarde et s\u2019exporte comme un trait normal', 6000);
-    }catch(e){
-      afficherInfo('GPX illisible');
+    if(!liste.length) return;
+    let ajoutees = 0, refusees = [];
+    for(const f of liste){
+      try{
+        const xml = new DOMParser().parseFromString(await f.text(), 'application/xml');
+        const lu = lireGpxComplet(xml, f.name);
+        if(!lu.segments.length){ refusees.push(f.name); continue; }
+        GPX.seq++;
+        const couleur = couleurProchaine || TEINTES_GPX[(GPX.seq - 1) % TEINTES_GPX.length];
+        const t = creerTrait('ligne', lu.segments, couleur, tailleMetres * gpxLargeur);
+        t.gpx = true;
+        t.nomGpx = lu.nom.slice(0, 30);
+        t.altGpx = lu.altitudes;
+        const tr = { id:'gpx' + GPX.seq, nom:lu.nom.slice(0, 30), couleur:couleur, visible:true,
+                     segments:lu.segments, altitudes:lu.altitudes, trait:t };
+        tr.stats = statsTrace(tr);
+        GPX.traces.push(tr);
+        ajoutees++;
+      }catch(e){ refusees.push(f.name); }
     }
+    majListeGpx();
+    if(ajoutees) cadrerGpx();
+    const dernier = GPX.traces[GPX.traces.length - 1];
+    afficherInfo(ajoutees
+      ? '\u{1F4C8} ' + ajoutees + ' trace(s) import\u00e9e(s)'
+        + (dernier && dernier.stats.avecAlt ? ' \u00b7 altitudes lues dans le fichier' : '')
+        + (refusees.length ? ' \u00b7 ' + refusees.length + ' fichier(s) sans trace exploitable' : '')
+        + ' \u2014 g\u00e9rez-les dans la liste ci-dessous'
+      : '\u26a0\ufe0f Aucune trace exploitable dans ' + (refusees.join(', ') || 'ces fichiers'), 8000);
   });
 
   // ---------- 💰 Fichiers INSEE : indicateurs communaux réels ----------
