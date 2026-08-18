@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v5.14 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v5.16.4.1 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v5.14</title>
+<title>MultiMaps — géographie (collège & lycée) — v5.16.4.1</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -219,6 +219,37 @@
   body:not(.volet-journal) #btn-journal-legende{ display:none }
   body.interface-c.volet-journal #wg-journal .leg-largeur{ display:inline-flex }
   #wg-journal .leg-largeur{ display:none }
+  /* Passerelle Google : trois boutons compacts, sans etirement ni debordement. */
+  .google-rangee{ display:flex; gap:4px; margin-bottom:4px; align-items:stretch }
+  /* « .actions button » impose padding:8px 12px et box-shadow a tous les boutons de la
+     fenetre : on lui passe devant en nommant le conteneur. */
+  .actions .google-rangee button.google-btn,
+  button.google-btn{
+    flex-grow:1 !important; flex-shrink:1 !important; flex-basis:0 !important;
+    min-width:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:3px;
+    padding:7px 2px !important; font-family:inherit; font-size:10.5px !important;
+    font-weight:600; line-height:1.15; border:1px solid var(--trait);
+    border-radius:9px; background:#fdfcf9; color:var(--encre); cursor:pointer;
+    box-shadow:none !important;
+  }
+  .actions .google-rangee button.google-btn:hover,
+  button.google-btn:hover{ background:var(--encre); color:#fff }
+  .google-btn span{ display:block; width:100%; text-align:center; overflow:hidden;
+    text-overflow:ellipsis; white-space:nowrap }
+  .google-coller{ display:flex; gap:4px; align-items:center }
+  .google-coller input{
+    flex:1 1 0; min-width:0; font:11px system-ui; padding:5px 7px;
+    border:1px solid var(--trait); border-radius:7px; background:#fff;
+  }
+  .actions .google-coller button,
+  .google-coller .croquis-btn{
+    flex-grow:0 !important; flex-shrink:0 !important; flex-basis:36px !important;
+    padding:6px 0 !important; font-size:13px !important;
+    box-shadow:none !important;
+  }
+  .actions .google-coller input{ box-shadow:none }
+  .google-note{ margin:4px 0 0; font-size:9.5px; line-height:1.4; color:#8a8577 }
   .journal-corps{
     max-height:300px; overflow-y:auto; border:1px solid var(--trait); border-radius:8px;
     background:#fdfcf9; padding:5px 7px; font:10.5px/1.55 ui-monospace,SFMono-Regular,monospace;
@@ -1065,7 +1096,19 @@
     <div class="actions">
       <button id="btn-image" title="Exporter la vue actuelle en image PNG">🖼 Image PNG</button>
       <button id="btn-fiche" title="Fiche A4 imprimable : la carte actuelle, sa légende complète et ses sources, mises en page pour le classeur ou la photocopieuse. S'ouvre dans un onglet prêt à imprimer (ou à enregistrer en PDF via l'imprimante).">🖨 Fiche A4</button>
-      <button id="btn-lien" title="Copie un lien qui rouvre exactement cette carte : position, zoom et couches actives. Collez-le dans Pronote ou l'ENT — la classe ouvre votre vue préparée.">🔗 Copier le lien</button>
+      <button id="btn-lien" title="Copie un lien qui rouvre exactement cette carte : position, zoom et couches actives. À partager pour que d’autres ouvrent exactement la même vue.">🔗 Copier le lien</button>
+    <div class="sep"></div>
+    <span class="etiquette">Google Maps</span>
+    <div class="google-rangee">
+      <button class="google-btn" id="btn-google-plan" title="Ouvre Google Maps dans un nouvel onglet, cadré exactement sur la vue actuelle : même centre, même zoom.">🗺<span>Plan</span></button>
+      <button class="google-btn" id="btn-google-sat" title="Ouvre Google Maps en vue satellite sur la vue actuelle.">🛰<span>Satellite</span></button>
+      <button class="google-btn" id="btn-google-street" title="Ouvre Street View au centre de la vue actuelle.">🚶<span>Street&nbsp;View</span></button>
+    </div>
+    <div class="google-coller">
+      <input type="text" id="google-url" placeholder="Coller un lien Google…" title="Copiez l’adresse depuis la barre du navigateur dans Google Maps, collez-la ici : la carte se recadre au même endroit, avec le même zoom. Entrée pour valider.">
+      <button class="croquis-btn" id="btn-google-coller" title="Recadre la carte sur le lien collé.">↵</button>
+    </div>
+    <p class="sous google-note">Google refuse la superposition : ces boutons gardent les deux cartes calées sur la même vue.</p>
       <button id="btn-fichiers" title="La liste des fichiers de données à télécharger pour débloquer les prochaines couches, avec leurs liens officiels">📥 Fichiers</button>
     </div>
 
@@ -1443,6 +1486,7 @@
         <button class="calque-ajout donnee esp-btn" id="btn-esp-drosera" data-sci="Drosera rotundifolia" data-coul="#dc2626" title="Plante carnivore des tourbières acides : elle compense la pauvreté du sol en capturant des insectes. Indicatrice de milieux rares et menacés. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🪴 Rossolis</button>
         <button class="calque-ajout donnee esp-btn" id="btn-esp-posidonie" data-sci="Posidonia oceanica" data-coul="#0d9488" title="Plante à fleurs marine, et non une algue. Ses herbiers méditerranéens abritent la reproduction de centaines d’espèces et fixent les fonds ; les ancres des bateaux les détruisent. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌿 Posidonie</button>
         <button class="calque-ajout donnee esp-btn" id="btn-esp-salicorne" data-sci="Salicornia europaea" data-coul="#16a34a" title="Des vasières salées des estuaires et de Camargue : l’une des rares plantes à supporter l’eau de mer. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌿 Salicorne</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-argousier" data-sci="Hippophae rhamnoides" data-coul="#fb923c" title="L’argousier est un arbuste pionnier des sols nus : il fixe l’azote de l’air grâce à une bactérie de ses racines, et pousse donc là où rien ne pousse encore — sable, graviers, éboulis. Sa répartition française est disjointe et remarquable : les dunes du Nord, de Picardie et de Normandie d’un côté, les alluvions et terrasses des Alpes de l’autre. Deux milieux sans rapport, même contrainte : un substrat mobile, pauvre, sans concurrence. C’est un vestige de la végétation postglaciaire, quand la steppe froide couvrait la France. Il sert aujourd’hui à fixer les dunes, et ses baies orange sont parmi les plus riches en vitamine C d’Europe. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🟠 Argousier</button>
       </div>
     </details>
     <details class="pilote-paquet"><summary>Espèces introduites et envahissantes</summary>
@@ -1964,7 +2008,7 @@
     <button class="calque-ajout donnee" id="btn-explic-max" title="Fenêtre déplaçable avec l’explication complète : données, méthode, limites et messages de précaution.">📚 Explication complète + précautions</button>
     <button class="calque-ajout donnee" id="btn-export-png" title="Télécharge une image PNG de la vue actuelle avec le bandeau de précaution INCRUSTÉ dans l’image — impossible de partager la carte sans l’avertissement.">📸 Image de la vue (précaution incrustée)</button>
     <button class="calque-ajout donnee" id="btn-lien-vue" title="Copie un LIEN qui rouvre exactement cette vue : position, zoom, couches actives et horloge. Parfait pour un tweet ou une consigne de classe.">🔗 Copier le lien de cette vue</button>
-    <button class="calque-ajout donnee" id="btn-projection" title="Mode PROJECTION pour la classe : masque les fenêtres secondaires, grossit la légende, la barre de temps et les infobulles. Re-cliquez pour revenir à l’affichage normal.">📽️ Mode projection (classe)</button>
+    <button class="calque-ajout donnee" id="btn-projection" title="Mode PROJECTION : masque les fenêtres secondaires, grossit la légende, la barre de temps et les infobulles. Re-cliquez pour revenir à l’affichage normal.">📽️ Mode projection (classe)</button>
   </div>
 </div>
 <div class="widget" id="wg-3d" style="width:254px">
@@ -2306,6 +2350,19 @@
     <select id="aller-parc" class="feux-annee" style="width:100%;margin-top:3px" title="Choisissez un parc : la carte s'y rend directement et allume la couche correspondante.">
       <option value="">→ Aller à un parc…</option>
     </select>
+  
+    <div class="sep"></div>
+    <span class="etiquette">Inventaire naturaliste</span>
+    <button class="calque-ajout donnee" id="btn-znieff-1" title="Zones naturelles d’intérêt écologique, faunistique et floristique de type I : secteurs de superficie limitée abritant des espèces ou des habitats remarquables. Attention : un inventaire, pas une protection. Zoomez sur un département avant de l’activer.">🌿 ZNIEFF de type I</button>
+    <button class="calque-ajout donnee" id="btn-znieff-2" title="ZNIEFF de type II : grands ensembles naturels riches ou peu modifiés, englobant souvent plusieurs zones de type I. Un massif, une vallée, un estuaire.">🌲 ZNIEFF de type II</button>
+
+    <div class="sep"></div>
+    <span class="etiquette">Protections réglementaires</span>
+    <button class="calque-ajout donnee" id="btn-n2000-hab" title="Sites d’intérêt communautaire au titre de la directive européenne Habitats de 1992. Contrairement aux ZNIEFF, la protection est réelle : tout projet susceptible d’affecter le site doit faire l’objet d’une évaluation des incidences.">📘 Natura 2000 — Habitats</button>
+    <button class="calque-ajout donnee" id="btn-n2000-ois" title="Zones de protection spéciale au titre de la directive Oiseaux de 1979, la plus ancienne directive environnementale européenne. Estuaires, lagunes, plaines céréalières à outardes.">🐦 Natura 2000 — Oiseaux</button>
+    <button class="calque-ajout donnee" id="btn-reserves" title="Réserves naturelles nationales et régionales : la protection la plus forte après le cœur de parc national. Environ 350 réserves, moins de 1 % du territoire.">🛡 Réserves naturelles</button>
+    <button class="calque-ajout donnee" id="btn-biotope" title="Arrêtés préfectoraux de protection de biotope : outil rapide pris pour sauver un milieu précis abritant une espèce protégée. Souvent minuscules — une falaise, une frayerère, une mare.">🦎 Arrêtés de biotope</button>
+    <div style="font-size:9.5px;color:#57534e;margin-top:5px;line-height:1.45">⚠️ Une ZNIEFF est un <b>inventaire</b>, pas une protection : elle n’interdit rien par elle-même. Elle vaut porter-à-connaissance, et son omission dans une étude d’impact fait annuler des projets devant le juge administratif.</div>
   </div>
 </div>
 
@@ -2361,7 +2418,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.14</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.16.4.1</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -2481,7 +2538,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.14</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.16.4.1</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -2835,6 +2892,9 @@
   (function cablerVoletDroite(){
     const s = document.getElementById('volet-droite');
     if(!s) return;
+    // Au premier lancement le volet montre la legende ; on ne bascule sur le journal
+    // que si l'usager l'a explicitement choisi lors d'une session precedente.
+    s.value = 'legende';
     try{
       const m = localStorage.getItem('geo-volet-droite');
       if(m === 'journal') s.value = 'journal';
@@ -2930,6 +2990,19 @@
       }
       return false;
     }
+  }
+
+  // Au-dela d'un certain dezoom, Leaflet rend des longitudes hors de [-180, 180] et des
+  // latitudes hors de [-90, 90]. GBIF comme Overpass refusent alors la requete avec un
+  // code 400. On borne donc systematiquement l'emprise avant tout appel.
+  function empriseSure(b){
+    const borne = function(v, min, max){ return Math.max(min, Math.min(max, v)); };
+    return {
+      sud:  borne(b.getSouth(), -90, 90),
+      nord: borne(b.getNorth(), -90, 90),
+      ouest: borne(b.getWest(), -180, 180),
+      est:   borne(b.getEast(), -180, 180)
+    };
   }
 
   const CAT_LEG = {};
@@ -3059,7 +3132,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.14';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.16.4.1';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -4379,32 +4452,67 @@
   // défenses. Il reste en dernier recours au cas où le filtrage serait levé.
   // Le serveur qui a repondu en dernier est essaye en premier au coup suivant : sans
   // cela, on repayait 40 s d'attente sur des miroirs muets avant d'atteindre le bon.
+  // ATTENTION : overpass.osm.ch est un miroir SUISSE, il ne contient que la Suisse et
+  // ses abords. L'avoir place en tete faisait remonter 500 boulangeries suisses et zero
+  // francaise. On ne garde que des serveurs a couverture MONDIALE.
   const OVERPASS_SERVEURS = [
-    'https://overpass.osm.ch/api/interpreter',            // Suisse, le plus regulier
-    'https://overpass.kumi.systems/api/interpreter',      // rapide quand il repond
-    'https://overpass.private.coffee/api/interpreter',    // miroir communautaire
-    'https://overpass-api.de/api/interpreter'             // serveur principal : 406 fr\u00e9quents
+    'https://overpass-api.de/api/interpreter',            // serveur principal, mondial
+    'https://overpass.kumi.systems/api/interpreter',      // miroir mondial, rapide
+    'https://overpass.private.coffee/api/interpreter',    // miroir mondial
+    // Dernier recours : miroir SUISSE, couverture regionale seulement. Mieux vaut des
+    // donnees partielles que rien, mais l'application previent quand il repond.
+    'https://overpass.osm.ch/api/interpreter'
   ];
+  const OVERPASS_REGIONAL = /osm\.ch/;
+  // Un serveur qui echoue en moins d'une seconde ne repond pas : c'est un blocage du
+  // navigateur, pas une lenteur. Inutile de le reessayer a chaque couche.
+  const OVERPASS_MORTS = {};
+
+  // File d'attente : deux requetes a la fois au maximum. Dix-huit couches lancees
+  // ensemble saturaient les serveurs, qui repondaient 504 apres trente secondes.
+  const FILE_OVERPASS = { enCours: 0, max: 2, attente: [] };
+  function placeOverpass(){
+    if(FILE_OVERPASS.enCours < FILE_OVERPASS.max){
+      FILE_OVERPASS.enCours++;
+      return Promise.resolve();
+    }
+    return new Promise(function(res){ FILE_OVERPASS.attente.push(res); });
+  }
+  function libererOverpass(){
+    const suivant = FILE_OVERPASS.attente.shift();
+    if(suivant) suivant();
+    else FILE_OVERPASS.enCours = Math.max(0, FILE_OVERPASS.enCours - 1);
+  }
   let overpassIndice = 0;
   let overpassChaine = Promise.resolve();
   (function ordonnerOverpass(){
     try{
       const m = localStorage.getItem('geo-overpass-ok');
-      const i = OVERPASS_SERVEURS.indexOf(m);
+      // un miroir regional memorise par une version anterieure ne doit pas revenir
+      // un miroir regional ne doit jamais passer devant : il donnerait des resultats
+      // faussement vides hors de sa zone
+      const i = OVERPASS_REGIONAL.test(String(m)) ? -1 : OVERPASS_SERVEURS.indexOf(m);
       if(i > 0) OVERPASS_SERVEURS.unshift(OVERPASS_SERVEURS.splice(i, 1)[0]);
     }catch(e){}
   })();
 
   async function overpassRequete(corps){
     majTitre(1);
+    await placeOverpass();
     try{ return await overpassRequeteInterne(corps); }
-    finally{ majTitre(-1); }
+    finally{ majTitre(-1); libererOverpass(); }
   }
   function overpassRequeteInterne(corps){
     const unEssai = (indice)=>{
       const url = OVERPASS_SERVEURS[indice % OVERPASS_SERVEURS.length];
+      // serveur declare inaccessible plus tot dans la session : on ne perd pas de temps
+      if(OVERPASS_MORTS[url]) return Promise.reject(new Error('serveur inaccessible'));
+      const debut = Date.now();
       const ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-      const garde = ctl ? setTimeout(()=>ctl.abort(), 20000) : null;
+      // 35 s : les miroirs repondent couramment en 8 a 12 s sur de grosses requetes,
+      // et 20 s les faisait abandonner juste avant leur reponse.
+      // 30 s : au-dela les serveurs rendent eux-memes une erreur 504
+      const garde = ctl ? setTimeout(()=>ctl.abort(), 30000) : null;
       return fetch(url, {
         method:'POST',
         headers:{ 'Content-Type':'application/x-www-form-urlencoded', 'Accept':'application/json, application/xml;q=0.9, */*;q=0.8' },
@@ -4414,13 +4522,37 @@
         .then(r=>{
           if(garde) clearTimeout(garde);
           if(!r.ok) throw new Error('overpass '+r.status);
-          overpassIndice = indice % OVERPASS_SERVEURS.length; // ce serveur marche : on le garde
-          try{ memoSet('geo-overpass-ok', url); }catch(e2){}
-          try{ noterService('Donn\u00e9es OSM (Overpass)', true, url.replace('https://','').split('/')[0]); }catch(e2){}
+          // Un serveur qui marche devient le point de depart suivant — SAUF le miroir
+          // regional : y rester collerait toutes les requetes sur la Suisse, et donnerait
+          // zero resultat partout ailleurs. On repart alors des serveurs mondiaux.
+          if(OVERPASS_REGIONAL.test(url)){
+            overpassIndice = 0;
+          }else{
+            overpassIndice = indice % OVERPASS_SERVEURS.length;
+            try{ memoSet('geo-overpass-ok', url); }catch(e2){}
+          }
+          try{
+            const hote = url.replace('https://','').split('/')[0];
+            noterService('Donn\u00e9es OSM (Overpass)', true, hote
+              + (OVERPASS_REGIONAL.test(url) ? ' \u2014 couverture SUISSE uniquement' : ''));
+            if(OVERPASS_REGIONAL.test(url) && typeof afficherAlerte === 'function'){
+              afficherAlerte('\u26a0\ufe0f Les serveurs mondiaux n\u2019ont pas r\u00e9pondu : les donn\u00e9es viennent '
+                + 'du miroir suisse, qui ne couvre que la Suisse et ses abords. Les r\u00e9sultats en France '
+                + 'seront incomplets ou absents. R\u00e9essayez dans un instant.');
+            }
+          }catch(e2){}
           return r;
         })
         .catch(err=>{
           if(garde) clearTimeout(garde);
+          // un echec en moins d'une seconde = blocage du navigateur, pas une lenteur.
+          // Fréquent en file:// : le serveur est ecarte pour le reste de la session.
+          if(Date.now() - debut < 1000 && /Failed to fetch|NetworkError|CORS/i.test(String(err && err.message || err))){
+            OVERPASS_MORTS[url] = true;
+            if(typeof journal === 'function')
+              journal('reseau', url.replace('https://','').split('/')[0] + ' \u00e9cart\u00e9 pour cette session',
+                'refus imm\u00e9diat du navigateur');
+          }
           try{ noterService('Donn\u00e9es OSM (Overpass)', false, url.replace('https://','').split('/')[0]+' : '+((err && err.message) || 'd\u00e9lai d\u00e9pass\u00e9')); }catch(e2){}
           throw err;
         });
@@ -6982,7 +7114,7 @@
       let parRiviere = [];
       for(let lot = 0; lot < RELIEF_FIN.vallees.length; lot += 8){
         const tranche = RELIEF_FIN.vallees.slice(lot, lot+8);
-        let requete = '[out:json][timeout:40];(';
+        let requete = '[out:json][timeout:25];(';
         const ART = "^(Le |La |Les |L'|l')? ?";
         tranche.forEach(v=>{
           requete += 'way["waterway"="river"]["name"~"'+ART+v[1]+'$"]('+v[2].join(',')+');';
@@ -7836,7 +7968,7 @@
     ouvrirRecit(choix === 'perso' ? lireRecitPerso() : (RECITS_PRETS[choix] || {}).etapes);
   });
   document.getElementById('btn-recit-ajout').addEventListener('click', ()=>{
-    const t = window.prompt('Commentaire de cette \u00e9tape (ce que la classe doit retenir) :', '');
+    const t = window.prompt('Commentaire de cette \u00e9tape :', '');
     if(t === null) return;
     const c = map.getCenter();
     const etapes = lireRecitPerso();
@@ -12718,12 +12850,15 @@
       return '<div style="margin-bottom:3px">' + marque + ' ' + echap(n) + quand + det + '</div>';
     };
     // le journal detaille du service FWI, quand il a quelque chose a dire
-    const journal = (typeof JOURNAL_FWI !== 'undefined' && JOURNAL_FWI.length)
+    // pas de typeof sur un const declare plus loin : il LEVE au lieu de rendre 'undefined'
+    let listeFwi = [];
+    try{ listeFwi = JOURNAL_FWI || []; }catch(e){ listeFwi = []; }
+    const journal = listeFwi.length
       ? '<details style="margin-top:7px"><summary style="cursor:pointer;font-size:10.5px;color:#8a8577">'
-        + 'Journal des tentatives FWI (' + JOURNAL_FWI.length + ')</summary>'
+        + 'Journal des tentatives FWI (' + listeFwi.length + ')</summary>'
         + '<div style="font-size:9.5px;color:#57534e;line-height:1.5;margin-top:3px;'
         + 'font-family:ui-monospace,monospace;white-space:pre-wrap">'
-        + JOURNAL_FWI.map(function(l){ return echap(l); }).join('\n')
+        + listeFwi.map(function(l){ return echap(l); }).join('\n')
         + '</div></details>'
       : '';
     let html = '<div style="font-size:10px;color:#8a8577;margin-bottom:5px">'
@@ -12866,14 +13001,51 @@
     }
   });
   // ---------- 🐾 Animaux sauvages : observations GBIF ----------
+  // Fiches de reference : l'INPN (national) et l'atlas Biodiv'AURA (regional) utilisent
+  // le meme identifiant, le CD_NOM du referentiel TAXREF du Museum. On le resout une
+  // fois par espece, puis on met les liens dans la bulle de chaque observation.
+  const CD_NOM = {};
+  async function cdNom(sci){
+    if(CD_NOM[sci] !== undefined) return CD_NOM[sci];
+    CD_NOM[sci] = null;
+    try{
+      const r = await fetch('https://taxref.mnhn.fr/api/taxa/search?scientificNames='
+        + encodeURIComponent(sci) + '&page=1&size=1', { headers:{ 'Accept':'application/json' } });
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      const t = d && d._embedded && d._embedded.taxa && d._embedded.taxa[0];
+      const k = t && (t.referenceId || t.id);
+      if(k){
+        CD_NOM[sci] = String(k);
+        if(typeof journal === 'function') journal('couche', 'TAXREF ' + sci + ' \u2192 CD_NOM ' + k);
+      }
+    }catch(e){
+      if(typeof journal === 'function') journal('couche', 'TAXREF ' + sci + ' \u2192 non r\u00e9solu');
+    }
+    return CD_NOM[sci];
+  }
+
+  function liensFiches(sci){
+    const k = CD_NOM[sci];
+    if(!k) return '';
+    // ouverture en nouvelle fenetre : c'est la condition posee par Biodiv'AURA
+    return '<div style="margin-top:4px;font-size:11px">'
+      + '<a href="https://inpn.mnhn.fr/espece/cd_nom/' + k + '" target="_blank" rel="noopener">Fiche INPN</a>'
+      + ' \u00b7 <a href="https://atlas.biodiversite-auvergne-rhone-alpes.fr/espece/' + k
+      + '" target="_blank" rel="noopener">Atlas Auvergne-Rh\u00f4ne-Alpes</a></div>';
+  }
+
   const etatEspeces = {};   // cle -> { actif, groupe }
   async function chargerEspece(cle, sci, coul, btn, libelle){
     const b = map.getBounds();
+    // resolution en parallele : si TAXREF ne repond pas, les liens sont simplement absents
+    cdNom(sci).catch(function(){});
+    const eSure = empriseSure(b);
     const an = (document.getElementById('esp-periode')||{value:'2015'}).value;
     const url = 'https://api.gbif.org/v1/occurrence/search'
       + '?scientificName=' + encodeURIComponent(sci)
-      + '&decimalLatitude=' + b.getSouth().toFixed(3) + ',' + b.getNorth().toFixed(3)
-      + '&decimalLongitude=' + b.getWest().toFixed(3) + ',' + b.getEast().toFixed(3)
+      + '&decimalLatitude=' + eSure.sud.toFixed(3) + ',' + eSure.nord.toFixed(3)
+      + '&decimalLongitude=' + eSure.ouest.toFixed(3) + ',' + eSure.est.toFixed(3)
       + '&hasCoordinate=true&hasGeospatialIssue=false'
       + '&year=' + an + ',' + new Date().getFullYear()
       + '&limit=300';
@@ -12902,6 +13074,7 @@
           + (obs ? 'Observateur : '+String(obs).slice(0,60)+'<br>' : '')
           + (src ? 'Source : '+String(src).slice(0,60)+'<br>' : '')
           + '<small style="color:#8a8577">'+o.decimalLatitude.toFixed(4)+', '+o.decimalLongitude.toFixed(4)+'</small>'
+          + liensFiches(sci)
           + '<div style="color:#7f1d1d;font-size:10px;margin-top:3px">Observation ponctuelle \u2014 pas une carte de r\u00e9partition</div></div>')
         .addTo(g);
     });
@@ -13174,8 +13347,9 @@
       afficherInfo(nom + ' \u2014 interrogation d\u2019OpenStreetMap sur la vue\u2026', 0);
       try{
         const b = map.getBounds();
-        const bbox = b.getSouth().toFixed(4) + ',' + b.getWest().toFixed(4) + ','
-                   + b.getNorth().toFixed(4) + ',' + b.getEast().toFixed(4);
+        const eS = empriseSure(b);
+        const bbox = eS.sud.toFixed(4) + ',' + eS.ouest.toFixed(4) + ','
+                   + eS.nord.toFixed(4) + ',' + eS.est.toFixed(4);
         // la trace vient en premier : meme un refus doit apparaitre dans le journal
         if(typeof journal === 'function')
           journal('couche', cle + ' : bbox ' + bbox + ' \u00b7 zoom ' + map.getZoom()
@@ -13206,7 +13380,7 @@
         noterTerroir(cle + ' : envoi sur ' + bbox);
         // overpassRequete rend la REPONSE HTTP, pas les donnees : sans .json() ici,
         // d.elements etait toujours undefined et la couche restait vide en silence.
-        const rep = await overpassRequete('[out:json][timeout:40];(' + conf.req(bbox) + ');out center 500;');
+        const rep = await overpassRequete('[out:json][timeout:25];(' + conf.req(bbox) + ');out center 500;');
         const d = await rep.json();
         noterTerroir(cle + ' \u2192 ' + ((d.elements || []).length) + ' \u00e9l\u00e9ment(s) re\u00e7u(s)');
         if(typeof journal === 'function')
@@ -13261,6 +13435,263 @@
       }finally{
         // aucun cacherInfo ici : il effacait le message d'echec pose juste avant.
         // Les messages durables portent leur propre croix de fermeture.
+      }
+    });
+  });
+
+  // ---------- Passerelle Google Maps ----------
+  // Google interdit l'affichage de sa carte dans un cadre, et son serveur le bloque.
+  // On ne peut donc pas superposer les deux cartes. En revanche on peut les tenir
+  // synchronisees : ouvrir Google sur la vue courante, et recadrer MultiMaps depuis
+  // une adresse Google collee.
+  function zoomDepuisUrl(url){
+    const m = String(url || '').match(/@-?\d+\.\d+,-?\d+\.\d+,(\d+(?:\.\d+)?)z/);
+    const z = m ? Math.round(parseFloat(m[1])) : null;
+    return (z && z >= 1 && z <= 21) ? z : null;
+  }
+
+  function ouvrirDansGoogle(mode){
+    const c = map.getCenter();
+    const z = Math.max(1, Math.min(21, map.getZoom()));
+    const lat = c.lat.toFixed(6), lng = c.lng.toFixed(6);
+    let url;
+    if(mode === 'satellite'){
+      // t=k : vue satellite. La forme /@lat,lng,zoom conserve le cadrage.
+      url = 'https://www.google.com/maps/@' + lat + ',' + lng + ',' + z + 'z/data=!3m1!1e3';
+    }else if(mode === 'street'){
+      // Street View a la position courante : Google place l'usager sur la voie la plus proche
+      url = 'https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=' + lat + ',' + lng;
+    }else{
+      url = 'https://www.google.com/maps/@' + lat + ',' + lng + ',' + z + 'z';
+    }
+    if(typeof journal === 'function') journal('action', 'ouverture Google Maps (' + (mode || 'plan') + ')', lat + ',' + lng + ' z' + z);
+    window.open(url, '_blank', 'noopener');
+  }
+
+  function collerDepuisGoogle(){
+    const champ = document.getElementById('google-url');
+    if(!champ) return;
+    const txt = (champ.value || '').trim();
+    if(!txt){
+      afficherAlerte('Collez d\u2019abord une adresse Google Maps dans le champ. '
+        + 'Dans Google : bouton Partager, puis Copier le lien.');
+      return;
+    }
+    const p = coordsDepuisUrl(txt);
+    if(!p){
+      // les liens raccourcis ne portent aucune coordonnee : le navigateur seul peut les suivre
+      const court = /goo\.gl|maps\.app\.goo\.gl/.test(txt);
+      afficherAlerte(court
+        ? 'Ce lien est raccourci (goo.gl) et ne contient aucune coordonn\u00e9e. Ouvrez-le dans '
+          + 'Google Maps, puis recopiez l\u2019adresse compl\u00e8te depuis la barre du navigateur.'
+        : 'Aucune coordonn\u00e9e trouv\u00e9e dans ce texte. Attendu : une adresse Google Maps '
+          + 'contenant @latitude,longitude, ou copi\u00e9e depuis la barre d\u2019adresse.');
+      if(typeof journal === 'function') journal('action', 'collage Google : aucune coordonn\u00e9e', txt.slice(0, 70));
+      return;
+    }
+    const z = zoomDepuisUrl(txt) || Math.max(map.getZoom(), 14);
+    map.setView([p.lat, p.lng], z);
+    // un repere temporaire, pour voir ou l'on vient d'arriver
+    try{
+      const m = L.circleMarker([p.lat, p.lng], { radius:11, weight:3, color:'#dc2626',
+        fillColor:'#fecaca', fillOpacity:0.55 }).addTo(map);
+      m.bindTooltip('Point venu de Google Maps', { permanent:true, direction:'top' }).openTooltip();
+      setTimeout(function(){ try{ map.removeLayer(m); }catch(e){} }, 9000);
+    }catch(e){}
+    if(typeof journal === 'function')
+      journal('action', 'recadrage depuis Google Maps', p.lat.toFixed(5) + ',' + p.lng.toFixed(5) + ' z' + z);
+    afficherInfo('📍 Carte recadr\u00e9e sur ' + p.lat.toFixed(5) + ', ' + p.lng.toFixed(5)
+      + ' \u00b7 zoom ' + z, 6000);
+    champ.value = '';
+  }
+
+  (function cablerGoogle(){
+    const paires = [['btn-google-plan', null], ['btn-google-sat', 'satellite'], ['btn-google-street', 'street']];
+    paires.forEach(function(p){
+      const b = document.getElementById(p[0]);
+      if(b) b.addEventListener('click', function(){ ouvrirDansGoogle(p[1]); });
+    });
+    const c = document.getElementById('btn-google-coller');
+    if(c) c.addEventListener('click', collerDepuisGoogle);
+    const champ = document.getElementById('google-url');
+    if(champ) champ.addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ e.preventDefault(); collerDepuisGoogle(); }
+    });
+  })();
+
+  // ---------- ZNIEFF ----------
+  // Zones naturelles d'intérêt écologique, faunistique et floristique. Servies par la
+  // Géoplateforme IGN en WFS, la même source que les limites administratives — celle
+  // dont le journal montre qu'elle répond en quelques dizaines de millisecondes.
+  //
+  // Deux types, et la distinction est le cœur de l'affaire :
+  //   type I  : secteurs de superficie limitée, à espèces ou habitats remarquables ;
+  //   type II : grands ensembles naturels riches et peu modifiés, souvent englobants.
+  //
+  // Une ZNIEFF n'est PAS une protection : c'est un inventaire. Elle n'interdit rien.
+  // Mais elle vaut porter-à-connaissance, et son omission dans une étude d'impact est
+  // un motif classique d'annulation d'un projet par le juge administratif.
+  // Meme mecanisme pour les protections reglementaires, qui elles ont une vraie force
+  // juridique — contrairement aux ZNIEFF. La distinction est le coeur du sujet.
+  const ZNIEFF = {
+    'znieff-1': {
+      nom:'🌿 ZNIEFF de type I', coul:'#15803d',
+      typename:'PROTECTEDAREAS.ZNIEFF1:znieff1',
+      texte:'Secteur de superficie limitée, abritant des esp\u00e8ces ou des habitats rares, '
+        + 'remarquables ou caract\u00e9ristiques. C\u2019est l\u2019\u00e9chelle du site pr\u00e9cis : une tourbi\u00e8re, '
+        + 'une pelouse s\u00e8che, une falaise \u00e0 rapaces.'
+    },
+    'znieff-2': {
+      nom:'🌲 ZNIEFF de type II', coul:'#065f46',
+      typename:'PROTECTEDAREAS.ZNIEFF2:znieff2',
+      texte:'Grand ensemble naturel riche, ou peu modifi\u00e9, offrant des potentialit\u00e9s '
+        + 'biologiques importantes. Un massif entier, une vall\u00e9e, un estuaire \u2014 englobant '
+        + 'souvent plusieurs ZNIEFF de type I.'
+    },
+    'n2000-hab': {
+      nom:'📘 Natura 2000 \u2014 Habitats', coul:'#1d4ed8',
+      typename:'PROTECTEDAREAS.SIC:sic',
+      texte:'Site d\u2019int\u00e9r\u00eat communautaire, au titre de la directive europ\u00e9enne Habitats de 1992. '
+        + 'Ici la protection est r\u00e9elle : tout projet susceptible d\u2019affecter le site doit faire l\u2019objet '
+        + 'd\u2019une \u00e9valuation des incidences, et peut \u00eatre refus\u00e9. La France a \u00e9t\u00e9 condamn\u00e9e '
+        + 'plusieurs fois pour d\u00e9signation insuffisante.'
+    },
+    'n2000-ois': {
+      nom:'🐦 Natura 2000 \u2014 Oiseaux', coul:'#7c3aed',
+      typename:'PROTECTEDAREAS.ZPS:zps',
+      texte:'Zone de protection sp\u00e9ciale, au titre de la directive Oiseaux de 1979 \u2014 la plus ancienne '
+        + 'directive environnementale europ\u00e9enne. Vise les esp\u00e8ces d\u2019oiseaux menac\u00e9es et les haltes '
+        + 'migratoires : estuaires, lagunes, grandes plaines c\u00e9r\u00e9ali\u00e8res \u00e0 outardes.'
+    },
+    'reserves': {
+      nom:'🛡 R\u00e9serves naturelles', coul:'#b91c1c',
+      typename:'PROTECTEDAREAS.RN:rn',
+      texte:'La protection la plus forte du droit fran\u00e7ais apr\u00e8s le c\u0153ur de parc national. '
+        + 'R\u00e9glementation propre \u00e0 chaque r\u00e9serve, souvent tr\u00e8s stricte : circulation, cueillette, '
+        + 'chasse, survol. Environ 350 r\u00e9serves pour moins de 1 % du territoire.'
+    },
+    'biotope': {
+      nom:'🦎 Arr\u00eat\u00e9s de biotope', coul:'#ea580c',
+      typename:'PROTECTEDAREAS.APB:apb',
+      texte:'Arr\u00eat\u00e9 pr\u00e9fectoral de protection de biotope : outil rapide et peu co\u00fbteux, pris pour '
+        + 'sauver un milieu pr\u00e9cis abritant une esp\u00e8ce prot\u00e9g\u00e9e \u2014 une falaise \u00e0 faucons, une frayer\u00e8re, '
+        + 'une mare \u00e0 amphibiens. Souvent minuscule, parfois quelques hectares.'
+    }
+  };
+
+  const etatZnieff = {};
+
+  Object.keys(ZNIEFF).forEach(function(cle){
+    const conf = ZNIEFF[cle];
+    const btn = document.getElementById('btn-' + cle);
+    if(!btn) return;
+    etatZnieff[cle] = { actif:false, groupe:null };
+    btn.addEventListener('click', async function(){
+      const e = etatZnieff[cle];
+      if(e.actif){
+        e.actif = false;
+        if(e.groupe) map.removeLayer(e.groupe);
+        e.groupe = null;
+        basculerBouton(btn, false, '', conf.nom);
+        majLegende();
+        return;
+      }
+      e.actif = true;
+      basculerBouton(btn, true, conf.nom + ' \u2715', '', conf.coul);
+
+      const b = map.getBounds();
+      const eS = empriseSure(b);
+      // les ZNIEFF sont nombreuses et detaillees : au-dela d'une region, le service
+      // renvoie des milliers de polygones et la carte devient illisible
+      const surface = Math.abs((eS.nord - eS.sud) * (eS.est - eS.ouest));
+      if(typeof journal === 'function')
+        journal('couche', cle + ' : surface ' + surface.toFixed(1) + ' \u00b7 ' + conf.typename);
+      // les ZNIEFF sont bien plus denses que les protections reglementaires
+      const seuil = /^znieff/.test(cle) ? 12 : 40;
+      if(surface > seuil){
+        e.actif = false;
+        basculerBouton(btn, false, '', conf.nom);
+        afficherAlerte(conf.nom.replace(/^\S+\s/, '') + ' : vue trop large. Zoomez sur un d\u00e9partement '
+          + 'ou une petite r\u00e9gion \u2014 les ZNIEFF sont tr\u00e8s nombreuses et d\u00e9taill\u00e9es.');
+        return;
+      }
+      afficherInfo(conf.nom + ' \u2014 chargement depuis la G\u00e9oplateforme IGN\u2026', 0);
+      try{
+        // BBOX en CRS:84 : ouest,sud,est,nord
+        const url = WFS_GEOPF + '&TYPENAMES=' + conf.typename + '&COUNT=600'
+          + '&BBOX=' + eS.ouest.toFixed(5) + ',' + eS.sud.toFixed(5) + ','
+          + eS.est.toFixed(5) + ',' + eS.nord.toFixed(5) + ',CRS:84';
+        const r = await fetch(url);
+        if(!r.ok) throw new Error('HTTP ' + r.status);
+        const d = await r.json();
+        if(!e.actif) return;
+        const n = (d.features || []).length;
+        if(typeof journal === 'function') journal('couche', cle + ' \u2192 ' + n + ' zone(s)');
+        if(!n){
+          e.actif = false;
+          basculerBouton(btn, false, '', conf.nom);
+          afficherAlerte(conf.nom.replace(/^\S+\s/, '') + ' : aucune zone dans cette vue. '
+            + 'D\u00e9placez la carte, ou v\u00e9rifiez 🔧 Diagnostic des services.');
+          noterService(/^znieff/.test(cle) ? 'ZNIEFF (IGN)' : 'Zonages prot\u00e9g\u00e9s (IGN)', false, '0 zone sur cette emprise');
+          return;
+        }
+        if(!map.getPane('znieff')){
+          const p = map.createPane('znieff');
+          if(p && p.style) p.style.zIndex = 238;
+        }
+        const g = L.geoJSON(d, {
+          pane:'znieff',
+          style:function(){
+            return { color:conf.coul, weight: cle === 'znieff-1' ? 1.6 : 2.4,
+                     opacity:0.9, fillColor:conf.coul,
+                     fillOpacity: cle === 'znieff-1' ? 0.22 : 0.10,
+                     dashArray: cle === 'znieff-2' ? '7 4' : null };
+          },
+          onEachFeature:function(f, c){
+            const p = f.properties || {};
+            const nom = p.nom || p.NOM || p.nom_znieff || p.libelle || 'ZNIEFF';
+            const id = p.id_mnhn || p.ID_MNHN || p.id_local || p.identifiant || '';
+            const surf = p.surface || p.SURFACE || '';
+            c.on('mouseover', function(){ c.setStyle({ weight:3.4, fillOpacity:0.34 }); });
+            c.on('mouseout', function(){
+              c.setStyle({ weight: cle === 'znieff-1' ? 1.6 : 2.4,
+                           fillOpacity: cle === 'znieff-1' ? 0.22 : 0.10 });
+            });
+            c.bindPopup('<b>' + echap(nom) + '</b>'
+              + '<div style="color:' + conf.coul + ';font-weight:700;font-size:11.5px;margin-top:2px">'
+              + echap(conf.nom.replace(/^\S+\s/, '')) + '</div>'
+              + (id ? '<div style="font-size:11px;color:#6b7280">Identifiant national : '
+                      + echap(String(id)) + '</div>' : '')
+              + (surf ? '<div style="font-size:11px;color:#6b7280">' + echap(String(surf)) + ' ha</div>' : '')
+              + '<div style="font-size:11.5px;line-height:1.5;margin-top:4px">' + echap(conf.texte) + '</div>'
+              + (id ? '<div style="margin-top:4px;font-size:11px"><a href="https://inpn.mnhn.fr/zone/'
+                      + (/^znieff/.test(cle) ? 'znieff/' : 'sit/') + encodeURIComponent(String(id))
+                      + '" target="_blank" rel="noopener">Fiche INPN d\u00e9taill\u00e9e</a></div>' : '')
+              + (/^znieff/.test(cle)
+                  ? '<div style="color:#9ca3af;font-size:10px;margin-top:4px">Inventaire, <b>pas une protection</b> : '
+                    + 'une ZNIEFF n\u2019interdit rien par elle-m\u00eame. Elle vaut porter-\u00e0-connaissance, et son oubli '
+                    + 'dans une \u00e9tude d\u2019impact fait annuler des projets.</div>'
+                  : '<div style="color:#7f1d1d;font-size:10px;margin-top:4px"><b>Protection r\u00e9glementaire</b> : '
+                    + 'contrairement aux ZNIEFF, ce zonage a une force juridique. Consultez la fiche pour '
+                    + 'le r\u00e9gime applicable.</div>'));
+            c.bindTooltip(nom, { sticky:true });
+          }
+        });
+        g.addTo(map);
+        e.groupe = g;
+        majLegende();
+        noterService(/^znieff/.test(cle) ? 'ZNIEFF (IGN)' : 'Zonages prot\u00e9g\u00e9s (IGN)', true, n + ' zone(s)');
+        afficherInfo(conf.nom + ' : ' + n + ' zone(s)'
+          + (n >= 600 ? ' (limite atteinte, zoomez pour tout voir)' : '')
+          + ' \u00b7 cliquez pour le d\u00e9tail', 8000);
+      }catch(err){
+        e.actif = false;
+        basculerBouton(btn, false, '', conf.nom);
+        const raison = String(err && err.message || err).slice(0, 90);
+        if(typeof journal === 'function') journal('couche', cle + ' \u2192 \u00e9chec : ' + raison);
+        afficherAlerte('\u26a0\ufe0f ' + conf.nom.replace(/^\S+\s/, '') + ' : ' + raison
+          + '. D\u00e9tail dans 🔧 Diagnostic des services.');
+        noterService(/^znieff/.test(cle) ? 'ZNIEFF (IGN)' : 'Zonages prot\u00e9g\u00e9s (IGN)', false, raison);
       }
     });
   });
@@ -13375,8 +13806,9 @@
       afficherInfo(nom + ' \u2014 interrogation d\u2019OpenStreetMap\u2026', 0);
       try{
         const b = map.getBounds();
-        const bbox = b.getSouth().toFixed(4) + ',' + b.getWest().toFixed(4) + ','
-                   + b.getNorth().toFixed(4) + ',' + b.getEast().toFixed(4);
+        const eS = empriseSure(b);
+        const bbox = eS.sud.toFixed(4) + ',' + eS.ouest.toFixed(4) + ','
+                   + eS.nord.toFixed(4) + ',' + eS.est.toFixed(4);
         const surface = Math.abs((b.getNorth() - b.getSouth()) * (b.getEast() - b.getWest()));
         if(typeof journal === 'function')
           journal('couche', cle + ' : bbox ' + bbox + ' \u00b7 surface ' + surface.toFixed(1),
@@ -13388,7 +13820,7 @@
           return;
         }
         // overpassRequete rend la reponse HTTP : il FAUT lire le JSON ensuite
-        const rep = await overpassRequete('[out:json][timeout:40];(' + conf.req(bbox) + ');out center 400;');
+        const rep = await overpassRequete('[out:json][timeout:25];(' + conf.req(bbox) + ');out center 400;');
         const d = await rep.json();
         if(!e.actif) return;
         if(typeof journal === 'function')
@@ -13568,9 +14000,10 @@
       afficherInfo(conf.libelle + ' \u2014 interrogation d\u2019OpenStreetMap sur la vue\u2026', 0);
       try{
         const b = map.getBounds();
-        const bbox = b.getSouth().toFixed(4) + ',' + b.getWest().toFixed(4) + ','
-                   + b.getNorth().toFixed(4) + ',' + b.getEast().toFixed(4);
-        const repA = await overpassRequete('[out:json][timeout:35];(' + conf.requete(bbox) + ');out center 500;');
+        const eS = empriseSure(b);
+        const bbox = eS.sud.toFixed(4) + ',' + eS.ouest.toFixed(4) + ','
+                   + eS.nord.toFixed(4) + ',' + eS.est.toFixed(4);
+        const repA = await overpassRequete('[out:json][timeout:25];(' + conf.requete(bbox) + ');out center 500;');
         const d = await repA.json();
         if(!e.actif) return;
         const g = L.layerGroup();
@@ -13613,24 +14046,77 @@
   });
 
   // --- fossiles : GBIF sert aussi les specimens fossiles, filtrés par basisOfRecord ---
+  // GBIF resout « scientificName » contre son referentiel et rend une erreur 400 quand
+  // le nom n'y figure pas. Or Dinosauria, Pterosauria et Ichthyosauria sont des clades,
+  // absents des rangs du referentiel. On resout donc le nom en cle numerique nous-memes,
+  // avec des noms de repli pour les clades.
+  const CLES_TAXON = {};
+  async function cleTaxon(nom){
+    if(CLES_TAXON[nom] !== undefined) return CLES_TAXON[nom];
+    try{
+      const r = await fetch('https://api.gbif.org/v1/species/match?name=' + encodeURIComponent(nom));
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      const k = (d && d.matchType && d.matchType !== 'NONE' && (d.usageKey || d.acceptedUsageKey)) || null;
+      if(typeof journal === 'function')
+        journal('couche', 'fossile ' + nom + ' \u2192 ' + (k ? 'cle ' + k + ' (' + (d.rank || '?') + ')' : 'absent du referentiel'));
+      CLES_TAXON[nom] = k;
+      return k;
+    }catch(e){
+      if(typeof journal === 'function') journal('couche', 'fossile ' + nom + ' \u2192 echec : ' + String(e && e.message || e));
+      CLES_TAXON[nom] = null;
+      return null;
+    }
+  }
+
+  const REPLIS_FOSSILES = {
+    'Dinosauria':   ['Tyrannosauridae', 'Diplodocidae', 'Iguanodontidae', 'Ceratopsidae'],
+    'Pterosauria':  ['Pterodactylidae', 'Rhamphorhynchidae', 'Pterodactylus'],
+    'Ichthyosauria':['Ichthyosauridae', 'Ichthyosaurus'],
+    'Mosasauridae': ['Mosasaurus'],
+    'Ammonoidea':   ['Ammonitida', 'Ammonites'],
+    'Belemnitida':  ['Belemnitidae', 'Belemnites']
+  };
+
   async function chargerFossiles(cle, taxon, coul, btn, libelle){
     const b = map.getBounds();
+    const eSure = empriseSure(b);
+    let k = await cleTaxon(taxon);
+    let nomRetenu = taxon;
+    if(!k && REPLIS_FOSSILES[taxon]){
+      for(const secours of REPLIS_FOSSILES[taxon]){
+        k = await cleTaxon(secours);
+        if(k){ nomRetenu = secours; break; }
+      }
+    }
+    if(!k){
+      noterService('Fossiles (GBIF)', false, taxon + ' absent du referentiel');
+      throw new Error('\u00ab ' + taxon + ' \u00bb n\u2019existe pas dans le r\u00e9f\u00e9rentiel GBIF, '
+        + 'et aucun nom de repli n\u2019a \u00e9t\u00e9 trouv\u00e9');
+    }
     // pas de filtre d'année ici : elle indiquerait la date de collecte, pas l'âge du fossile
     const url = 'https://api.gbif.org/v1/occurrence/search'
-      + '?scientificName=' + encodeURIComponent(taxon)
+      + '?taxonKey=' + k
       + '&basisOfRecord=FOSSIL_SPECIMEN'
-      + '&decimalLatitude=' + b.getSouth().toFixed(3) + ',' + b.getNorth().toFixed(3)
-      + '&decimalLongitude=' + b.getWest().toFixed(3) + ',' + b.getEast().toFixed(3)
+      + '&decimalLatitude=' + eSure.sud.toFixed(3) + ',' + eSure.nord.toFixed(3)
+      + '&decimalLongitude=' + eSure.ouest.toFixed(3) + ',' + eSure.est.toFixed(3)
       + '&hasCoordinate=true&hasGeospatialIssue=false&limit=300';
     const r = await fetch(url);
-    if(!r.ok){ noterService('Fossiles (GBIF)', false, 'HTTP ' + r.status); throw new Error('GBIF HTTP ' + r.status); }
+    if(!r.ok){
+      noterService('Fossiles (GBIF)', false, 'HTTP ' + r.status + ' sur ' + nomRetenu);
+      throw new Error('GBIF a refus\u00e9 la requ\u00eate (HTTP ' + r.status + ') pour \u00ab ' + nomRetenu + ' \u00bb');
+    }
     const d = await r.json();
     const res = (d && d.results) || [];
     noterService('Fossiles (GBIF)', true, res.length + ' sp\u00e9cimen(s)');
     if(!res.length) return { n:0, total:(d && d.count) || 0 };
     const g = L.layerGroup();
+    let places = 0;
     res.forEach(function(o){
+      // GBIF renvoie des specimens sans coordonnees malgre hasCoordinate : les compter
+      // comme affiches produisait une couche allumee mais vide.
       if(o.decimalLatitude == null || o.decimalLongitude == null) return;
+      places++;
       const esp = o.species || o.genus || o.scientificName || libelle;
       const inst = o.institutionCode || o.publishingOrgKey || '';
       const lieu = o.locality || o.county || '';
@@ -13646,8 +14132,14 @@
         .bindTooltip(esp, { direction:'top' })
         .addTo(g);
     });
+    if(typeof journal === 'function')
+      journal('couche', 'fossile ' + nomRetenu + ' \u2192 ' + res.length + ' recu(s), ' + places + ' place(s)');
+    noterService('Fossiles (GBIF)', places > 0,
+      places > 0 ? places + ' place(s) \u00b7 ' + nomRetenu + (nomRetenu !== taxon ? ' (repli)' : '')
+                 : res.length + ' recu(s) mais aucun geolocalise');
+    if(!places) return { n:0, groupe:null, total:0, recus:res.length, sansCoord:true, nom:nomRetenu, demande:taxon };
     g.addTo(map);
-    return { n:res.length, groupe:g, total:(d && d.count) || res.length };
+    return { n:places, groupe:g, total:(d && d.count) || places, recus:res.length, nom:nomRetenu, demande:taxon };
   }
 
   document.querySelectorAll('.fossile-btn').forEach(function(btn){
@@ -13675,8 +14167,10 @@
         if(!rr.n){
           e.actif = false;
           basculerBouton(btn, false, '', libelle);
-          afficherInfo(libelle + ' : aucun sp\u00e9cimen g\u00e9olocalis\u00e9 dans cette vue \u2014 \u00e9largissez la carte. '
-            + 'Beaucoup de fossiles anciens des collections n\u2019ont pas de coordonn\u00e9es pr\u00e9cises.', 9000);
+          afficherAlerte(rr.sansCoord
+            ? libelle + ' : ' + rr.recus + ' sp\u00e9cimen(s) trouv\u00e9(s) ici, mais aucun n\u2019a de coordonn\u00e9es. '
+              + 'Les fossiles de collection sont souvent localis\u00e9s au seul nom de commune.'
+            : libelle + ' : aucun sp\u00e9cimen dans cette vue. D\u00e9zoomez largement \u2014 les gisements sont rares.');
           return;
         }
         e.groupe = rr.groupe;
@@ -13686,7 +14180,7 @@
       }catch(err){
         e.actif = false;
         basculerBouton(btn, false, '', libelle);
-        afficherInfo('\u26a0\ufe0f GBIF n\u2019a pas r\u00e9pondu pour les fossiles', 6000);
+        afficherAlerte('\u26a0\ufe0f ' + libelle + ' : ' + String(err && err.message || err).slice(0, 140));
       }finally{ cacherInfo(); }
     });
   });
@@ -13710,8 +14204,9 @@
     afficherInfo('🌳 Recherche des arbres remarquables dans la vue\u2026', 0);
     try{
       const bb = map.getBounds();
-      const bbox = bb.getSouth().toFixed(4) + ',' + bb.getWest().toFixed(4) + ','
-                 + bb.getNorth().toFixed(4) + ',' + bb.getEast().toFixed(4);
+      const eA = empriseSure(bb);
+      const bbox = eA.sud.toFixed(4) + ',' + eA.ouest.toFixed(4) + ','
+                 + eA.nord.toFixed(4) + ',' + eA.est.toFixed(4);
       const repT = await overpassRequete('[out:json][timeout:30];('
         + 'node["natural"="tree"]["denotation"~"natural_monument|landmark"](' + bbox + ');'
         + 'node["natural"="tree"]["monument"="yes"](' + bbox + ');'
@@ -14035,8 +14530,10 @@
     if(lt && lt.addEventListener) lt.addEventListener('click', basculerLegende);
     const bl = document.getElementById('btn-legende-replier');
     if(bl && bl.addEventListener) bl.addEventListener('click', function(ev){ ev.stopPropagation(); basculerLegende(); });
-    let choix = 'o';
-    try{ choix = localStorage.getItem('geo-interface') || 'o'; }catch(e){}
+    // Au tout premier lancement : interface C (barre laterale). Un choix deja
+    // enregistre par l'usager reste prioritaire.
+    let choix = 'c';
+    try{ choix = localStorage.getItem('geo-interface') || 'c'; }catch(e){}
     appliquerInterface(choix, true);
   })();
   // ---------- Moyennes climatiques : soleil, vents ----------
