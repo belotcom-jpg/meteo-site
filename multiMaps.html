@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v5.11.6 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v5.14 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v5.11.6</title>
+<title>MultiMaps — géographie (collège & lycée) — v5.14</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -210,6 +210,15 @@
   .leg-largeur{ display:none; font-size:13px; line-height:1 }
   .leg-largeur:disabled{ opacity:.3; cursor:default }
   body.interface-c #wg-legende{ transition:width .18s ease }
+  /* en volet, le journal occupe toute la hauteur disponible */
+  /* hors bascule, le journal reprend sa taille de fenetre flottante */
+  body:not(.volet-journal) #wg-journal{ position:absolute; right:auto; width:420px }
+  body.interface-c.volet-journal #wg-journal .journal-corps{ max-height:none; flex:1 1 auto; min-height:0 }
+  body.interface-c.volet-journal #wg-journal .widget-corps{ display:flex; flex-direction:column }
+  body:not(.volet-journal) #wg-journal .leg-largeur{ display:none }
+  body:not(.volet-journal) #btn-journal-legende{ display:none }
+  body.interface-c.volet-journal #wg-journal .leg-largeur{ display:inline-flex }
+  #wg-journal .leg-largeur{ display:none }
   .journal-corps{
     max-height:300px; overflow-y:auto; border:1px solid var(--trait); border-radius:8px;
     background:#fdfcf9; padding:5px 7px; font:10.5px/1.55 ui-monospace,SFMono-Regular,monospace;
@@ -746,7 +755,8 @@
   body.interface-c #wg-pilote .widget-corps{ overflow-y:auto !important; max-height:none !important }
   body.interface-c.rail-ferme #wg-pilote{ transform:translateX(-100%) !important; box-shadow:none }
   /* les panneaux se logent tous dans une colonne à droite du rail : plus de fenêtres éparpillées */
-  body.interface-c .widget:not(#wg-pilote):not(#wg-legende){
+  body.interface-c:not(.volet-journal) .widget:not(#wg-pilote):not(#wg-legende),
+  body.interface-c .widget:not(#wg-pilote):not(#wg-legende):not(#wg-journal){
     left:var(--rail) !important; top:0 !important; bottom:0 !important; right:auto !important;
     width:var(--panneau) !important; max-width:calc(100vw - var(--rail));
     height:100% !important; max-height:none !important; border-radius:0;
@@ -754,10 +764,28 @@
     box-shadow:6px 0 18px rgba(0,0,0,.08);
   }
   body.interface-c .widget:not(#wg-pilote):not(#wg-legende) .widget-tete{ border-radius:0; cursor:default }
-  body.interface-c .widget:not(#wg-pilote):not(#wg-legende).replie{ height:auto !important; bottom:auto !important }
-  body.interface-c.rail-ferme .widget:not(#wg-pilote):not(#wg-legende){ display:none !important }
+  body.interface-c .widget:not(#wg-pilote):not(#wg-legende):not(#wg-journal).replie{ height:auto !important; bottom:auto !important }
+  body.interface-c.rail-ferme .widget:not(#wg-pilote):not(#wg-legende):not(#wg-journal){ display:none !important }
   /* la légende devient un volet à droite, symétrique du rail principal */
   body.interface-c #wg-legende, body.interface-c #wg-legende.cache{
+    display:flex !important; visibility:visible !important; opacity:1 !important;
+    position:fixed !important; right:0 !important; left:auto !important;
+    top:0 !important; bottom:0 !important;
+    width:var(--legende) !important; height:100% !important; max-height:none !important;
+    flex-direction:column; background:var(--papier); border:none;
+    border-left:1px solid var(--trait); border-radius:0; z-index:1500;
+    box-shadow:-2px 0 12px rgba(0,0,0,.07); transition:transform .18s ease;
+  }
+
+  /* Placee APRES la regle ci-dessus : a specificite egale, c'est l'ordre qui tranche. */
+  body.interface-c.volet-journal #wg-legende,
+  body.interface-c.volet-journal #wg-legende.cache{
+    display:none !important; visibility:hidden !important;
+  }
+
+  /* Le journal prend exactement la place de la legende quand le volet bascule. */
+  body.interface-c.volet-journal #wg-journal:not(#wg-pilote):not(#wg-legende),
+  body.interface-c.volet-journal #wg-journal.cache:not(#wg-pilote):not(#wg-legende){
     display:flex !important; visibility:visible !important; opacity:1 !important;
     position:fixed !important; right:0 !important; left:auto !important;
     top:0 !important; bottom:0 !important;
@@ -1278,6 +1306,27 @@
   </div>
 </div>
 
+<div class="widget" id="wg-mineraux" style="width:258px">
+  <div class="widget-tete">
+    <span class="widget-titre">💎 Minéraux &amp; mines</span>
+    <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
+    <button class="widget-btn" data-action="fermer" title="Fermer">✕</button>
+  </div>
+  <div class="widget-corps">
+    <div style="font-size:10px;color:#8a8577;margin-bottom:4px">Ce que le sous-sol a donné : métaux, pierres, cristaux. La répartition des mines suit exactement la géologie.</div>
+    <span class="etiquette">Gisements célèbres</span>
+    <button class="calque-ajout donnee" id="btn-min-gisements" title="Quatorze gisements historiques français : or de Salsigne, argent de Sainte-Marie-aux-Mines, cuivre de Chessy, améthystes du Livradois, talc de Trimouns, saphirs du Velay. Cliquez un point pour l’histoire du site et ce qu’il a produit.">💎 Gisements historiques</button>
+
+    <div class="sep"></div>
+    <span class="etiquette">Sites recensés (OpenStreetMap)</span>
+    <button class="calque-ajout donnee" id="btn-min-mines" title="Puits de mine, chevalements et sites miniers, en activité ou abandonnés. Le minerai exploité est indiqué quand il est renseigné.">⛏ Mines &amp; puits</button>
+    <button class="calque-ajout donnee" id="btn-min-carrieres" title="Carrières de pierre, sable, gravier, calcaire, ardoise. Leur carte est presque une carte géologique.">🪨 Carrières</button>
+    <button class="calque-ajout donnee" id="btn-min-galeries" title="Galeries d’accès creusées à flanc de versant. Elles trahissent un gisement affleurant, moins coûteux à atteindre qu’en creusant un puits.">🕳 Galeries &amp; entrées</button>
+    <button class="calque-ajout donnee" id="btn-min-musees" title="Musées de minéralogie et mines aménagées pour la visite.">🏛 Musées &amp; mines visitables</button>
+    <div style="font-size:9.5px;color:#57534e;margin-top:5px;line-height:1.45">⚠️ Les gisements sont situés au <b>centre de leur commune</b>, non à l’entrée du site. La plupart sont fermés, et les anciennes mines sont <b>dangereuses</b> : effondrements, gaz, puits noyés. Le ramassage de minéraux est réglementé et interdit dans les réserves.</div>
+  </div>
+</div>
+
 <div class="widget" id="wg-archeo" style="width:258px">
   <div class="widget-tete">
     <span class="widget-titre">🏺 Archéologie &amp; fossiles</span>
@@ -1582,6 +1631,7 @@
     </div>
     <div class="croquis-rangee">
       <button class="calque-ajout donnee" id="btn-alti-point" title="Activez, puis cliquez un point de la carte : son altitude s’affiche sur place. Vous pouvez en poser autant que vous voulez ; cliquez un repère pour le retirer.">📍 Altitude d’un point</button>
+      <button class="croquis-btn" id="btn-alti-tout" style="width:100%;margin-top:3px" title="Retire tous les repères d’altitude posés sur la carte.">🗑 Aucun repère</button>
     </div>
   <div style="border-top:1px solid var(--trait);margin:6px 0"></div>
       <button class="calque-ajout donnee" id="btn-massifs" title="Les grandes chaînes et massifs français entourés et coloriés en brun : Alpes, Pyrénées, Massif central, Jura, Vosges, Ardennes, Morvan, montagne corse. Contours schématiques à but pédagogique (pas de valeur réglementaire), brun foncé = hautes montagnes, brun clair = moyennes montagnes.">⛰ Chaînes de montagnes</button>
@@ -1853,6 +1903,13 @@
     <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-3d" title="Affiche le relief en trois dimensions à partir des altitudes SRTM. À utiliser en vue rapprochée sur un massif ou une vallée.">🏔 Vue 3D du relief</button>
     <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-seances" title="Des séances prêtes à l’emploi : chacune allume les couches utiles et cadre la carte au bon endroit. Contient aussi la recherche dans toutes les couches et tous les lieux.">🔎 Séances pédagogiques</button>
     <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-diag" title="Indique service par service ce qui répond et ce qui échoue. À consulter en premier quand une couche reste vide.">🩺 Diagnostic des services</button>
+    <label class="velo-filtre" style="margin:2px 0" title="Choisit ce qu’affiche le volet de droite : la légende des couches, ou le journal de l’application. Utile pour suivre en direct ce qui se passe.">
+      Volet de droite :
+      <select id="volet-droite" class="feux-annee" style="margin-left:4px">
+        <option value="legende">🧭 Légende</option>
+        <option value="journal">📋 Journal</option>
+      </select>
+    </label>
     <button class="calque-ajout donnee opt-ouvre" data-ouvre="wg-journal" title="Le journal complet de ce qui se passe dans l’application : erreurs, appels réseau, messages affichés. À copier et transmettre en cas de problème.">📋 Journal de l’application</button>
   </div>
 </div>
@@ -2005,6 +2062,8 @@
 <div class="widget" id="wg-journal" style="width:420px">
   <div class="widget-tete">
     <span class="widget-titre">📋 Journal de l’application</span>
+    <button class="widget-btn leg-largeur" id="btn-journal-large" title="Élargir le volet vers la gauche. Trois largeurs : étroite, normale, double.">«</button>
+    <button class="widget-btn leg-largeur" id="btn-journal-etroit" title="Rétrécir le volet.">»</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
     <button class="widget-btn" data-action="fermer" title="Fermer">✕</button>
   </div>
@@ -2025,6 +2084,7 @@
       <button class="croquis-btn" id="btn-journal-test" title="Interroge les principaux services un par un et note lesquels répondent.">🩺 Tester les services</button>
       <button class="croquis-btn" id="btn-journal-copier" title="Copie tout le journal, avec le navigateur et la vue en cours.">📋 Copier tout</button>
       <button class="croquis-btn" id="btn-journal-vider" title="Efface le journal.">🗑 Vider</button>
+      <button class="croquis-btn" id="btn-journal-legende" title="Rendre la place à la légende dans le volet de droite.">🧭 Revenir à la légende</button>
     </div>
     <p class="sous" id="journal-compte" style="margin:4px 0 2px"></p>
     <div id="journal-corps" class="journal-corps"></div>
@@ -2301,7 +2361,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.11.6</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.14</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -2400,6 +2460,7 @@
         <button class="pilote-btn" data-cible="wg-histoire">🏛 Histoire</button>
         <button class="pilote-btn" data-cible="wg-archeo">🏺 Archéologie &amp; fossiles</button>
         <button class="pilote-btn" data-cible="wg-terroir">🧺 Produits du terroir</button>
+        <button class="pilote-btn" data-cible="wg-mineraux">💎 Minéraux &amp; mines</button>
         <button class="pilote-btn" data-cible="wg-astro">🔭 Astronomie</button>
         <button class="pilote-btn" data-cible="wg-geol">🪨 Géologie</button>
         </div>
@@ -2420,7 +2481,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.11.6</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.14</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -2743,6 +2804,55 @@
     }, true);
   })();
 
+  // Bascule du volet de droite : legende ou journal. En mode O il n'y a pas de volet
+  // fixe, le journal y reste une fenetre flottante.
+  function appliquerVoletDroite(){
+    const s = document.getElementById('volet-droite');
+    const journalEnVolet = s && s.value === 'journal';
+    document.body.classList.toggle('volet-journal', !!journalEnVolet);
+    const wj = document.getElementById('wg-journal');
+    if(wj && journalEnVolet){
+      wj.classList.remove('cache');
+      wj.hidden = false;
+      // initWidget a pose left/top en style en ligne : ils prennent le pas sur la
+      // regle du volet. On les neutralise, la feuille de style reprend la main.
+      wj.style.left = ''; wj.style.top = ''; wj.style.right = ''; wj.style.bottom = '';
+      // largeur posee tout de suite : sans cela le volet garde la largeur heritee
+      // jusqu'au premier reglage des fleches
+      // pas de typeof sur un const declare plus loin : il leve au lieu de rendre 'undefined'
+      let large = 236;
+      try{ large = LARGEURS_LEG[cranLegende] || 236; }catch(e){ large = 236; }
+      wj.style.width = large + 'px';
+      rendreJournal();
+    }
+    // la largeur doit etre posee APRES le changement de classe, sinon le journal
+    // garde la largeur de fenetre flottante jusqu'au premier reglage
+    if(typeof appliquerLargeurLegende === 'function') setTimeout(appliquerLargeurLegende, 0);
+    try{ memoSet('geo-volet-droite', journalEnVolet ? 'journal' : 'legende'); }catch(e){}
+    try{ if(map && map.invalidateSize) setTimeout(function(){ map.invalidateSize(); }, 220); }catch(e){}
+  }
+
+  (function cablerVoletDroite(){
+    const s = document.getElementById('volet-droite');
+    if(!s) return;
+    try{
+      const m = localStorage.getItem('geo-volet-droite');
+      if(m === 'journal') s.value = 'journal';
+    }catch(e){}
+    s.addEventListener('change', appliquerVoletDroite);
+    setTimeout(appliquerVoletDroite, 400);
+  })();
+
+  // Porte de sortie : depuis le journal lui-meme, on rend la place a la legende.
+  (function cablerRetourLegende(){
+    const b = document.getElementById('btn-journal-legende');
+    if(!b) return;
+    b.addEventListener('click', function(){
+      const s = document.getElementById('volet-droite');
+      if(s){ s.value = 'legende'; appliquerVoletDroite(); }
+    });
+  })();
+
   (function cablerJournal(){
     const f = document.getElementById('journal-filtre');
     if(f) f.addEventListener('change', rendreJournal);
@@ -2752,7 +2862,7 @@
       try{
         await navigator.clipboard.writeText(txt);
         c.textContent = '\u2713 Copi\u00e9';
-        setTimeout(function(){ c.textContent = '\u{1F4CB} Copier tout'; }, 2500);
+        setTimeout(function(){ c.textContent = '📋 Copier tout'; }, 2500);
       }catch(e){
         // le presse-papier peut être refusé : on offre le texte à sélectionner
         const z = document.getElementById('journal-brut');
@@ -2788,6 +2898,39 @@
       rendreJournal();
     });
   })();
+
+  // Ecriture memorisee tolerante : si le quota du navigateur est plein, on le signale
+  // une fois et on continue. Une exception ici interrompait la fonction appelante.
+  let quotaSignale = false;
+  function memoSet(cle, valeur){
+    try{
+      localStorage.setItem(cle, valeur);
+      return true;
+    }catch(e){
+      if(typeof journal === 'function') journal('erreur', 'm\u00e9moire pleine sur ' + cle, String(e && e.name || e));
+      if(!quotaSignale){
+        quotaSignale = true;
+        // afficherAlerte est une declaration de fonction, remontee a l'execution, mais
+        // elle depend d'elements du document : on attend qu'ils soient prets.
+        const direQuota = function(){
+          const el = document.getElementById('mode-info');
+          // au plus dix tentatives : une boucle sans borne ne finirait jamais
+          direQuota.essais = (direQuota.essais || 0) + 1;
+          if((!el || typeof afficherAlerte !== 'function') && direQuota.essais < 10){
+            setTimeout(direQuota, 600); return;
+          }
+          if(!el || typeof afficherAlerte !== 'function') return;
+          try{
+            afficherAlerte('\u26a0\ufe0f M\u00e9moire du navigateur pleine : vos r\u00e9glages et votre croquis ne sont '
+              + 'plus enregistr\u00e9s. Exportez votre croquis, puis videz les donn\u00e9es du site dans les '
+              + 'r\u00e9glages du navigateur.', true);
+          }catch(e2){}
+        };
+        setTimeout(direQuota, 900);
+      }
+      return false;
+    }
+  }
 
   const CAT_LEG = {};
   let COULEURS_LEG = {};
@@ -2855,7 +2998,7 @@
   if(!FONDS[fondActuelId]) fondActuelId = 'osm';
   let fondActuel = null;
   let fondOpacite = parseFloat(localStorage.getItem('geo-fond-opacite'));
-  if(!isFinite(fondOpacite) || fondOpacite <= 0.05){ fondOpacite = 1; try{ localStorage.setItem('geo-fond-opacite','1'); }catch(e){} }  // un fond invisible (0%) sauvegardé ne doit jamais masquer toute la carte au rechargement
+  if(!isFinite(fondOpacite) || fondOpacite <= 0.05){ fondOpacite = 1; try{ memoSet('geo-fond-opacite','1'); }catch(e){} }  // un fond invisible (0%) sauvegardé ne doit jamais masquer toute la carte au rechargement
   function appliquerFond(id){
     const f = FONDS[id]; if(!f) return;
     if(fondActuel) map.removeLayer(fondActuel);
@@ -2864,7 +3007,7 @@
           attribution:f.att, maxZoom:19, crossOrigin:'anonymous', opacity:fondOpacite }).addTo(map)
       : L.tileLayer(f.url, { attribution:f.att, maxZoom:19, maxNativeZoom:f.max || 19, crossOrigin:'anonymous', opacity:fondOpacite }).addTo(map);
     fondActuelId = id;
-    localStorage.setItem('geo-fond', id);
+    memoSet('geo-fond', id);
   }
   appliquerFond(fondActuelId);
   (function(){
@@ -2885,7 +3028,7 @@
       fondOpacite = (parseInt(sl.value, 10) || 0)/100;
       if(fondActuel && fondActuel.setOpacity) fondActuel.setOpacity(fondOpacite);
       if(vl) vl.textContent = Math.round(fondOpacite*100)+'%';
-      try{ localStorage.setItem('geo-fond-opacite', String(fondOpacite)); }catch(e){}
+      try{ memoSet('geo-fond-opacite', String(fondOpacite)); }catch(e){}
     });
   })();
 
@@ -2916,7 +3059,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.11.6';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.14';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -2935,6 +3078,9 @@
   }
   function afficherInfo(txt, duree){
     if(typeof journal === 'function') journal('message', txt);
+    // un avertissement critique reste affiche : il ne doit pas etre chasse par un
+    // message courant survenu juste apres
+    if(info && info.dataset && info.dataset.critique === '1') return;
     if(duree === 0 && !afficherInfo._enCours){ afficherInfo._enCours = true; majTitre(1); }
     info.textContent = txt;
     info.classList.add('visible');
@@ -2946,8 +3092,9 @@
   }
   // Message persistant : reste jusqu'a ce que l'usager le ferme. Les messages
   // d'echec disparaissaient avant d'avoir pu etre lus.
-  function afficherAlerte(txt){
+  function afficherAlerte(txt, critique){
     if(typeof journal === 'function') journal('message', '\u26a0 ' + txt);
+    if(critique && info && info.dataset) info.dataset.critique = '1';
     clearTimeout(infoTimer);
     info.textContent = '';
     const t = document.createElement('span');
@@ -2957,7 +3104,10 @@
     x.title = 'Fermer ce message';
     x.style.cssText = 'margin-left:10px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.15);'
       + 'color:inherit;border-radius:999px;font:700 11px system-ui;padding:1px 7px;cursor:pointer';
-    x.addEventListener('click', function(){ info.classList.remove('visible'); });
+    x.addEventListener('click', function(){
+      if(info.dataset) info.dataset.critique = '';
+      info.classList.remove('visible');
+    });
     info.appendChild(t);
     info.appendChild(x);
     info.classList.add('visible');
@@ -4265,7 +4415,7 @@
           if(garde) clearTimeout(garde);
           if(!r.ok) throw new Error('overpass '+r.status);
           overpassIndice = indice % OVERPASS_SERVEURS.length; // ce serveur marche : on le garde
-          try{ localStorage.setItem('geo-overpass-ok', url); }catch(e2){}
+          try{ memoSet('geo-overpass-ok', url); }catch(e2){}
           try{ noterService('Donn\u00e9es OSM (Overpass)', true, url.replace('https://','').split('/')[0]); }catch(e2){}
           return r;
         })
@@ -4335,7 +4485,7 @@
     STYLES[cle] = STYLES[cle] || {};
     if(valeur === null) delete STYLES[cle][champ]; else STYLES[cle][champ] = valeur;
     if(!Object.keys(STYLES[cle]).length) delete STYLES[cle];
-    localStorage.setItem('geo-styles', JSON.stringify(STYLES));
+    memoSet('geo-styles', JSON.stringify(STYLES));
   }
   const CATALOGUE_STYLES = [
     // sections : lim, eau, risq, fam
@@ -4612,12 +4762,12 @@
   document.body.classList.toggle('mode-projo', chkProjo.checked);
   chkProjo.addEventListener('change', ()=>{
     document.body.classList.toggle('mode-projo', chkProjo.checked);
-    localStorage.setItem('geo-projo', chkProjo.checked ? '1' : '0');
+    memoSet('geo-projo', chkProjo.checked ? '1' : '0');
   });
   document.addEventListener('change', (e)=>{
     if(!e.target || e.target.name !== 'mode-couleurs') return;
     modeCouleurs = e.target.value;
-    localStorage.setItem('geo-couleurs', modeCouleurs);
+    memoSet('geo-couleurs', modeCouleurs);
     appliquerModeCouleurs();
     // recalcul immédiat des couches bon marché
     if(typeof choroActif !== 'undefined' && choroActif) chargerChoro();
@@ -5214,7 +5364,7 @@
     const b = e.target && e.target.closest ? e.target.closest('[data-ep]') : null;
     if(!b) return;
     epaisseurDelta = Math.max(-1, Math.min(4, epaisseurDelta + (b.dataset.ep==='+'?1:-1)));
-    localStorage.setItem('geo-epaisseur', String(epaisseurDelta));
+    memoSet('geo-epaisseur', String(epaisseurDelta));
     majEpaisseursReseaux();
   });
   const RANDO_NIVEAUX = {
@@ -5247,10 +5397,10 @@
     if(veloCoulUnique){ cv.checked = true; iv.value = veloCoulUnique; }
     if(randoCoulUnique){ cr.checked = true; ir.value = randoCoulUnique; }
     function majV(){ veloCoulUnique = cv.checked ? iv.value : null;
-      if(veloCoulUnique) localStorage.setItem('geo-velo-coul', veloCoulUnique); else localStorage.removeItem('geo-velo-coul');
+      if(veloCoulUnique) memoSet('geo-velo-coul', veloCoulUnique); else localStorage.removeItem('geo-velo-coul');
       restylerTraces(); }
     function majR(){ randoCoulUnique = cr.checked ? ir.value : null;
-      if(randoCoulUnique) localStorage.setItem('geo-rando-coul', randoCoulUnique); else localStorage.removeItem('geo-rando-coul');
+      if(randoCoulUnique) memoSet('geo-rando-coul', randoCoulUnique); else localStorage.removeItem('geo-rando-coul');
       restylerTraces(); }
     cv.addEventListener('change', majV); iv.addEventListener('input', majV);
     cr.addEventListener('change', majR); ir.addEventListener('input', majR);
@@ -6230,7 +6380,7 @@
     }
   });
   document.getElementById('fleuves-source').addEventListener('change', ()=>{
-    localStorage.setItem('geo-fleuves-src', document.getElementById('fleuves-source').value);
+    memoSet('geo-fleuves-src', document.getElementById('fleuves-source').value);
     if(etatFleuves.actif) montrerFleuves();
   });
   if(localStorage.getItem('geo-fleuves-src')) document.getElementById('fleuves-source').value = localStorage.getItem('geo-fleuves-src');
@@ -6657,7 +6807,7 @@
     else if(etatMassifOsm.groupe){ map.removeLayer(etatMassifOsm.groupe); etatMassifOsm.groupe = null; }
   });
   document.getElementById('coul-massifs-osm').addEventListener('input', (e)=>{
-    localStorage.setItem('geo-coul-massifs-osm', e.target.value);
+    memoSet('geo-coul-massifs-osm', e.target.value);
     if(document.getElementById('chk-smassifs-osm').checked) chargerMassifsOsm();
   });
   map.on('moveend', ()=>{
@@ -6806,7 +6956,7 @@
     }
   }
   document.getElementById('chk-smassifs-noms').addEventListener('change', ()=>{
-    localStorage.setItem('geo-smassifs-noms', document.getElementById('chk-smassifs-noms').checked ? '1' : '');
+    memoSet('geo-smassifs-noms', document.getElementById('chk-smassifs-noms').checked ? '1' : '');
     if(etatSmassifs.actif) calculerSmassifs();
   });
   if(localStorage.getItem('geo-smassifs-noms') === '1') document.getElementById('chk-smassifs-noms').checked = true;
@@ -7656,7 +7806,7 @@
   function lireRecitPerso(){
     try{ return JSON.parse(localStorage.getItem('geo-recit-perso') || '[]'); }catch(e){ return []; }
   }
-  function ecrireRecitPerso(t){ localStorage.setItem('geo-recit-perso', JSON.stringify(t)); }
+  function ecrireRecitPerso(t){ memoSet('geo-recit-perso', JSON.stringify(t)); }
   function jouerEtape(){
     const e = RECIT.etapes[RECIT.i];
     if(!e) return;
@@ -7867,7 +8017,7 @@
     const c = map.getCenter();
     const s = lireSeances();
     s[nom] = { couches: couchesActives(), vue: [c.lat, c.lng, map.getZoom()] };
-    localStorage.setItem('geo-seances', JSON.stringify(s));
+    memoSet('geo-seances', JSON.stringify(s));
     majListeSeances();
     afficherInfo('\ud83d\udcbe S\u00e9ance \u00ab '+nom+' \u00bb enregistr\u00e9e ('+s[nom].couches.length+' couche(s))', 5000);
   });
@@ -7888,7 +8038,7 @@
     if(!nom) return;
     const s = lireSeances();
     delete s[nom];
-    localStorage.setItem('geo-seances', JSON.stringify(s));
+    memoSet('geo-seances', JSON.stringify(s));
     majListeSeances();
     afficherInfo('\ud83d\uddd1 S\u00e9ance \u00ab '+nom+' \u00bb supprim\u00e9e', 4000);
   });
@@ -8233,7 +8383,7 @@
   }
   function sauverFavoris(){
     try{
-      localStorage.setItem(FAV_CLE, JSON.stringify(FAVS.jeux.map(function(j){
+      memoSet(FAV_CLE, JSON.stringify(FAVS.jeux.map(function(j){
         return { nom:j.nom, actif:j.actif, rang:j.rang, lieux:j.lieux.slice(0, 3000) };
       })));
     }catch(e){ /* quota depasse : on continue sans memoriser */ }
@@ -8528,7 +8678,7 @@
     try{ const v = localStorage.getItem(cle); return v ? JSON.parse(v) : null; }catch(e){ return null; }
   }
   function ecrireCalage(cle, bornes){
-    try{ localStorage.setItem(cle, JSON.stringify(bornes)); }catch(e){}
+    try{ memoSet(cle, JSON.stringify(bornes)); }catch(e){}
   }
 
   document.getElementById('btn-img-fond').addEventListener('click', ()=>{
@@ -9756,7 +9906,7 @@
 
       const prof = document.createElement('button');
       prof.className = 'calque-mini';
-      prof.textContent = '\u{1F4C8}';
+      prof.textContent = '📈';
       prof.title = s.avecAlt
         ? 'Profil altim\u00e9trique, calcul\u00e9 depuis les altitudes du fichier GPX.'
         : 'Profil altim\u00e9trique \u2014 ce fichier ne contient pas d\u2019altitude, elle sera lue sur les tuiles de relief.';
@@ -9876,7 +10026,7 @@
       const a = tr.altitudes[is] || [];
       seg.forEach(function(p, i){ pts.push({ lat:p.lat, lon:p.lng }); alts.push(a[i]); });
     });
-    if(pts.length < 2){ afficherInfo('\u{1F4C8} Trace trop courte', 4000); return; }
+    if(pts.length < 2){ afficherInfo('📈 Trace trop courte', 4000); return; }
     if(tr.stats.avecAlt > pts.length * 0.5){
       // dessinerProfil attend { alts, dists, total, lats, lons } : on batit le meme
       // objet a partir des altitudes du fichier, sans passer par les tuiles de relief.
@@ -9897,14 +10047,14 @@
         return;
       }
     }
-    afficherInfo('\u{1F4C8} Ce fichier ne contient pas d\u2019altitude : lecture sur les tuiles de relief\u2026', 0);
+    afficherInfo('📈 Ce fichier ne contient pas d\u2019altitude : lecture sur les tuiles de relief\u2026', 0);
     try{
       const p = await altitudesLeLong(pts, 240);
       cacherInfo();
       dessinerProfil('Profil \u2014 ' + tr.nom + ' (altitudes du relief)', p);
     }catch(e){
       cacherInfo();
-      afficherInfo('\u{1F4C8} Tuiles d\u2019altitude inaccessibles', 5000);
+      afficherInfo('📈 Tuiles d\u2019altitude inaccessibles', 5000);
     }
   }
 
@@ -9929,8 +10079,8 @@
     clearTimeout(sauvegardeEnAttente);
     sauvegardeEnAttente = setTimeout(function(){
       try{
-        localStorage.setItem(CLE_CROQUIS, JSON.stringify(traits.map(traitEnObjet)));
-        localStorage.setItem(CLE_CALQUES, JSON.stringify({ liste:calques, actif:calqueActif, compteur:compteurCalque }));
+        memoSet(CLE_CROQUIS, JSON.stringify(traits.map(traitEnObjet)));
+        memoSet(CLE_CALQUES, JSON.stringify({ liste:calques, actif:calqueActif, compteur:compteurCalque }));
         majEtatSauvegarde(traits.length);
       }catch(e){
         // quota depasse : on previent plutot que d'echouer en silence
@@ -10067,7 +10217,7 @@
 
       const cadenas = document.createElement('button');
       cadenas.className = 'calque-mini';
-      cadenas.textContent = c.verrou ? '\u{1F512}' : '\u{1F513}';
+      cadenas.textContent = c.verrou ? '🔒' : '🔓';
       cadenas.title = c.verrou
         ? 'Calque verrouill\u00e9 : ses trac\u00e9s ne peuvent \u00eatre ni modifi\u00e9s ni effac\u00e9s. Cliquez pour d\u00e9verrouiller.'
         : 'Verrouiller ce calque pour travailler par-dessus sans l\u2019ab\u00eemer.';
@@ -10106,7 +10256,7 @@
     try{
       const n = restaurerCroquis();
       if(n) afficherInfo('\u270f\ufe0f Croquis pr\u00e9c\u00e9dent restaur\u00e9 : ' + n + ' trac\u00e9(s). '
-        + 'Utilisez \u{1F4BE} Enregistrer pour en garder une copie durable.', 8000);
+        + 'Utilisez 💾 Enregistrer pour en garder une copie durable.', 8000);
     }catch(e){}
   }, 800);
 
@@ -10137,7 +10287,7 @@
       a.download = 'croquis-' + new Date().toISOString().slice(0, 10) + '.json';
       a.click();
       setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
-      afficherInfo('\u{1F4BE} Croquis enregistr\u00e9 \u2014 rouvrez-le avec \u{1F4C2} Ouvrir un croquis', 6000);
+      afficherInfo('💾 Croquis enregistr\u00e9 \u2014 rouvrez-le avec 📂 Ouvrir un croquis', 6000);
     });
 
     const champ = document.getElementById('croquis-fichier');
@@ -10159,8 +10309,8 @@
           calqueActif = doc.actif || calques[0].id;
           compteurCalque = calques.length;
           try{
-            localStorage.setItem(CLE_CROQUIS, JSON.stringify(doc.traits || []));
-            localStorage.setItem(CLE_CALQUES, JSON.stringify({ liste:calques, actif:calqueActif, compteur:compteurCalque }));
+            memoSet(CLE_CROQUIS, JSON.stringify(doc.traits || []));
+            memoSet(CLE_CALQUES, JSON.stringify({ liste:calques, actif:calqueActif, compteur:compteurCalque }));
           }catch(e){}
           restaurerCroquis();
           (doc.objets || []).forEach(function(o){ CROQUIS.objets.push(o); objetCroquis(o); });
@@ -10173,7 +10323,7 @@
             places.forEach(function(t){ t.segments.forEach(function(s){ if(s && s.length === 2) pts.push(s); }); });
             if(pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.12));
           }
-          afficherInfo('\u{1F4C2} Croquis ouvert : ' + traits.length + ' trac\u00e9(s), '
+          afficherInfo('📂 Croquis ouvert : ' + traits.length + ' trac\u00e9(s), '
             + calques.length + ' calque(s)', 7000);
         }catch(e){
           afficherInfo('\u26a0\ufe0f Fichier illisible \u2014 attendu : un croquis enregistr\u00e9 depuis cette application', 7000);
@@ -10300,7 +10450,7 @@
   function copierSelection(){
     if(!selection){ afficherInfo('S\u00e9lectionnez d\u2019abord un trac\u00e9 (outil \u2316)', 3500); return; }
     pressePapierCroquis = traitEnObjet(selection);
-    afficherInfo('\u{1F4CB} Trac\u00e9 copi\u00e9 \u2014 Ctrl+V pour le coller', 3500);
+    afficherInfo('📋 Trac\u00e9 copi\u00e9 \u2014 Ctrl+V pour le coller', 3500);
   }
 
   function collerCroquis(decalage){
@@ -10316,7 +10466,7 @@
     sauverCroquisTraits();
     majListeCalques();
     selectionner(t);
-    afficherInfo('\u{1F4CB} Trac\u00e9 coll\u00e9 dans \u00ab ' + (calques.find(function(c){ return c.id === calqueActif; }) || {}).nom + ' \u00bb', 4000);
+    afficherInfo('📋 Trac\u00e9 coll\u00e9 dans \u00ab ' + (calques.find(function(c){ return c.id === calqueActif; }) || {}).nom + ' \u00bb', 4000);
   }
 
   function dupliquerSelection(){
@@ -10399,11 +10549,17 @@
     document.documentElement.style.setProperty('--legende', px + 'px');
     // La fenetre porte un attribut style="width:220px" en dur, qui l'emporte sur toute
     // regle de feuille de style : sans cette ligne, la variable changeait sans effet.
+    const enC = document.body.classList.contains('interface-c');
+    const journalEnVolet = document.body.classList.contains('volet-journal');
     const vol = document.getElementById('wg-legende');
-    if(vol){
-      if(document.body.classList.contains('interface-c')) vol.style.width = px + 'px';
-      else vol.style.width = '';   // en mode O, la fenetre reprend sa largeur propre
-    }
+    if(vol) vol.style.width = enC ? px + 'px' : '';
+    // le journal partage la largeur du volet quand il l'occupe
+    const wj = document.getElementById('wg-journal');
+    if(wj) wj.style.width = (enC && journalEnVolet) ? px + 'px' : '';
+    const gj2 = document.getElementById('btn-journal-large');
+    const pj2 = document.getElementById('btn-journal-etroit');
+    if(gj2) gj2.disabled = cranLegende >= LARGEURS_LEG.length - 1;
+    if(pj2) pj2.disabled = cranLegende <= 0;
     const g = document.getElementById('btn-legende-large');
     const p = document.getElementById('btn-legende-etroit');
     if(g){
@@ -10418,26 +10574,34 @@
     }
     // deux colonnes au cran large : c'est la raison d'etre de cette largeur
     document.body.classList.toggle('legende-large', cranLegende >= LARGEURS_LEG.length - 1);
-    try{ localStorage.setItem('geo-largeur-legende', String(cranLegende)); }catch(e){}
+    try{ memoSet('geo-largeur-legende', String(cranLegende)); }catch(e){}
     try{ if(map && map.invalidateSize) setTimeout(function(){ map.invalidateSize(); }, 220); }catch(e){}
   }
 
   (function cablerLargeurLegende(){
+    // les fleches existent en double : dans l'en-tete de la legende et dans celui du
+    // journal, puisque l'un remplace l'autre dans le volet
     const g = document.getElementById('btn-legende-large');
     const p = document.getElementById('btn-legende-etroit');
+    const gj = document.getElementById('btn-journal-large');
+    const pj = document.getElementById('btn-journal-etroit');
     const nom = ['\u00e9troit', 'normal', 'double'];
-    if(g) g.addEventListener('click', function(){
+    const elargir = function(){
       if(cranLegende >= LARGEURS_LEG.length - 1) return;
       cranLegende++;
       appliquerLargeurLegende();
-      afficherInfo('\u{1F9ED} Volet ' + nom[cranLegende] + ' \u2014 ' + LARGEURS_LEG[cranLegende] + ' px', 3000);
-    });
-    if(p) p.addEventListener('click', function(){
+      afficherInfo('🧭 Volet ' + nom[cranLegende] + ' \u2014 ' + LARGEURS_LEG[cranLegende] + ' px', 3000);
+    };
+    const retrecir = function(){
       if(cranLegende <= 0) return;
       cranLegende--;
       appliquerLargeurLegende();
-      afficherInfo('\u{1F9ED} Volet ' + nom[cranLegende] + ' \u2014 ' + LARGEURS_LEG[cranLegende] + ' px', 3000);
-    });
+      afficherInfo('🧭 Volet ' + nom[cranLegende] + ' \u2014 ' + LARGEURS_LEG[cranLegende] + ' px', 3000);
+    };
+    if(g) g.addEventListener('click', elargir);
+    if(p) p.addEventListener('click', retrecir);
+    if(gj) gj.addEventListener('click', elargir);
+    if(pj) pj.addEventListener('click', retrecir);
     appliquerLargeurLegende();
   })();
 
@@ -10458,7 +10622,7 @@
     if(!etatAltiTexte.actif) return;
     const z = map.getZoom();
     if(z < 8){
-      afficherInfo('\u{1F4CF} Zoomez au niveau 8 au moins : \u00e0 cette \u00e9chelle les valeurs se chevaucheraient', 6000);
+      afficherInfo('📏 Zoomez au niveau 8 au moins : \u00e0 cette \u00e9chelle les valeurs se chevaucheraient', 6000);
       return;
     }
     const b = map.getBounds();
@@ -10466,7 +10630,7 @@
     const t = map.getSize ? map.getSize() : { x:1000, y:700 };
     const cols = Math.max(4, Math.min(14, Math.round(t.x / 95)));
     const lignes = Math.max(3, Math.min(11, Math.round(t.y / 95)));
-    afficherInfo('\u{1F4CF} Lecture des altitudes\u2026', 0);
+    afficherInfo('📏 Lecture des altitudes\u2026', 0);
     try{
       const lu = await altitudesOmbre(b, cols, lignes);
       if(!etatAltiTexte.actif) return;
@@ -10498,7 +10662,7 @@
       g.addTo(map);
       etatAltiTexte.groupe = g;
       cacherInfo();
-      afficherInfo('\u{1F4CF} ' + posees + ' altitudes affich\u00e9es \u00b7 ' + lu.cause
+      afficherInfo('📏 ' + posees + ' altitudes affich\u00e9es \u00b7 ' + lu.cause
         + ' \u2014 valeurs du terrain, pr\u00e9cision de l\u2019ordre de la dizaine de m\u00e8tres', 7000);
     }catch(e){
       afficherInfo('\u26a0\ufe0f Lecture des altitudes impossible', 5000);
@@ -10511,12 +10675,12 @@
     if(etatAltiTexte.actif){
       etatAltiTexte.actif = false;
       if(etatAltiTexte.groupe){ map.removeLayer(etatAltiTexte.groupe); etatAltiTexte.groupe = null; }
-      basculerBouton(b, false, '', '\u{1F4CF} Grille d\u2019altitudes');
+      basculerBouton(b, false, '', '📏 Grille d\u2019altitudes');
       majLegende();
       return;
     }
     etatAltiTexte.actif = true;
-    basculerBouton(b, true, '\u{1F4CF} Grille d\u2019altitudes \u2715', '', '#8b5a2b');
+    basculerBouton(b, true, '📏 Grille d\u2019altitudes \u2715', '', '#8b5a2b');
     majLegende();
     dessinerGrilleAlti();
   });
@@ -10540,21 +10704,59 @@
     return v;
   }
 
+  // Le bouton n'arme ou ne desarme que l'outil : les reperes deja poses restent sur la
+  // carte. Les effacer est une action distincte, volontaire.
+  etatAltiPoint.reperes = [];
+
+  function majBoutonsAlti(){
+    const n = etatAltiPoint.reperes.length;
+    const t = document.getElementById('btn-alti-tout');
+    if(t){
+      t.disabled = n === 0;
+      t.textContent = n ? '🗑 Effacer les ' + n + ' rep\u00e8re(s)' : '🗑 Aucun rep\u00e8re';
+      t.title = n ? 'Retire les ' + n + ' rep\u00e8re(s) d\u2019altitude pos\u00e9(s) sur la carte.'
+                  : 'Aucun rep\u00e8re d\u2019altitude sur la carte.';
+    }
+  }
+
+  function retirerRepereAlti(m){
+    try{ etatAltiPoint.groupe.removeLayer(m); }catch(e){}
+    etatAltiPoint.reperes = etatAltiPoint.reperes.filter(function(x){ return x !== m; });
+    majBoutonsAlti();
+  }
+
   document.getElementById('btn-alti-point').addEventListener('click', function(){
     const b = document.getElementById('btn-alti-point');
     if(etatAltiPoint.actif){
+      // on desarme l'outil SANS toucher aux reperes deja poses
       etatAltiPoint.actif = false;
-      if(etatAltiPoint.groupe){ map.removeLayer(etatAltiPoint.groupe); etatAltiPoint.groupe = null; }
       if(mapEl) mapEl.style.cursor = '';
-      basculerBouton(b, false, '', '\u{1F4CD} Altitude d\u2019un point');
+      basculerBouton(b, false, '', '📍 Altitude d\u2019un point');
+      const n = etatAltiPoint.reperes.length;
+      if(n) afficherInfo('📍 Outil d\u00e9sarm\u00e9 \u00b7 ' + n + ' rep\u00e8re(s) conserv\u00e9(s) sur la carte', 5000);
       return;
     }
     etatAltiPoint.actif = true;
     if(!etatAltiPoint.groupe) etatAltiPoint.groupe = L.layerGroup().addTo(map);
     if(mapEl) mapEl.style.cursor = 'crosshair';
-    basculerBouton(b, true, '\u{1F4CD} Cliquez la carte \u2715', '', '#8b5a2b');
-    afficherInfo('\u{1F4CD} Cliquez un point de la carte pour son altitude \u00b7 cliquez un rep\u00e8re pos\u00e9 pour le retirer', 7000);
+    basculerBouton(b, true, '📍 Cliquez la carte \u2715', '', '#8b5a2b');
+    afficherInfo('📍 Cliquez un point pour son altitude \u00b7 la croix d\u2019un rep\u00e8re le retire, sinon ils restent', 8000);
   });
+
+  (function cablerEffacerAlti(){
+    const t = document.getElementById('btn-alti-tout');
+    if(t) t.addEventListener('click', function(){
+      const n = etatAltiPoint.reperes.length;
+      if(!n) return;
+      etatAltiPoint.reperes.slice().forEach(function(m){
+        try{ etatAltiPoint.groupe.removeLayer(m); }catch(e){}
+      });
+      etatAltiPoint.reperes = [];
+      majBoutonsAlti();
+      afficherInfo('🗑 ' + n + ' rep\u00e8re(s) d\u2019altitude effac\u00e9(s)', 4000);
+    });
+    majBoutonsAlti();
+  })();
 
   map.on('click', async function(e){
     if(!etatAltiPoint.actif || !e || !e.latlng) return;
@@ -10564,9 +10766,11 @@
     marque.bindTooltip('Lecture\u2026', { permanent:true, direction:'top', className:'alti-bulle' });
     marque.on('click', function(ev){
       L.DomEvent.stop(ev);
-      etatAltiPoint.groupe.removeLayer(marque);
+      retirerRepereAlti(marque);
     });
     marque.addTo(etatAltiPoint.groupe);
+    etatAltiPoint.reperes.push(marque);
+    majBoutonsAlti();
     try{
       const a = await altitudeDuPoint(ll);
       const v = Math.round(a);
@@ -11056,7 +11260,7 @@
   }
   function sauverCroquis(){
     try{
-      localStorage.setItem('geo-croquis', JSON.stringify(CROQUIS.objets.map(function(o){
+      memoSet('geo-croquis', JSON.stringify(CROQUIS.objets.map(function(o){
         return { genre:o.genre, forme:o.forme, texte:o.texte, couleur:o.couleur,
                  taille:o.taille, lat:o.lat, lng:o.lng };
       })));
@@ -11175,7 +11379,7 @@
   const etatReperes = { icone:'\u2622\ufe0f', marks:[] };
   let repereSeq = 0;
   function iconeRepere(ic){ return L.divIcon({ className:'repere-marqueur', html:'<span style="font-size:22px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55))">'+ic+'</span>', iconSize:[26,26], iconAnchor:[13,13] }); }
-  function sauverReperes(){ try{ localStorage.setItem('geo-reperes', JSON.stringify(etatReperes.marks.map(function(m){ const ll = m.getLatLng(); return { lat:ll.lat, lng:ll.lng, ic:m._ic }; }))); }catch(e){} }
+  function sauverReperes(){ try{ memoSet('geo-reperes', JSON.stringify(etatReperes.marks.map(function(m){ const ll = m.getLatLng(); return { lat:ll.lat, lng:ll.lng, ic:m._ic }; }))); }catch(e){} }
   function retirerRepere(id){ const i = etatReperes.marks.findIndex(function(x){ return x._id === id; }); if(i >= 0){ map.removeLayer(etatReperes.marks[i]); etatReperes.marks.splice(i, 1); sauverReperes(); } return false; }
   if(typeof window !== 'undefined') window.retirerRepere = retirerRepere;
   function ajouterRepere(lat, lng, ic){
@@ -11227,7 +11431,7 @@
     if(!r.ok) throw new Error('meteo '+r.status);
     const d = await r.json();
     cacheMeteo[url] = { t:t, d:d };
-    try{ const s = JSON.stringify({t:t, d:d}); if(s.length < 90000) localStorage.setItem(cle, s); }catch(e){}
+    try{ const s = JSON.stringify({t:t, d:d}); if(s.length < 90000) memoSet(cle, s); }catch(e){}
     return d;
   }
   async function ventFoyerH(ll){
@@ -11310,7 +11514,7 @@
   (function initFranceControles(){
     const s = document.getElementById('france-jours'); if(s && s.addEventListener) s.addEventListener('input', majFranceJoursLbl); majFranceJoursLbl();
     const k = document.getElementById('firms-key');
-    if(k){ try{ const sauve = localStorage.getItem('geo-firms-key'); if(sauve) k.value = sauve; }catch(e){} if(k.addEventListener) k.addEventListener('change', function(){ try{ localStorage.setItem('geo-firms-key', k.value.trim()); }catch(e){} }); }
+    if(k){ try{ const sauve = localStorage.getItem('geo-firms-key'); if(sauve) k.value = sauve; }catch(e){} if(k.addEventListener) k.addEventListener('change', function(){ try{ memoSet('geo-firms-key', k.value.trim()); }catch(e){} }); }
   })();
   function isoJour(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
   async function fetchFirmsCSV(cle, coords, dayRange, dateStr){
@@ -12064,7 +12268,7 @@
       ap.style.display = ouvert ? 'flex' : 'none';
       if(ab.addEventListener) ab.addEventListener('click', function(){
         ouvert = ap.style.display === 'none'; ap.style.display = ouvert ? 'flex' : 'none';
-        try{ localStorage.setItem('geo-feu-avance-ouvert', ouvert ? '1' : '0'); }catch(e){}
+        try{ memoSet('geo-feu-avance-ouvert', ouvert ? '1' : '0'); }catch(e){}
       });
     }
     if(fm && fm.addEventListener) fm.addEventListener('click', function(){ horlogeLectureFeu(false); ['btn-prospfeu','btn-animfeu','btn-panache','btn-extension','btn-simfeu'].forEach(function(id){ const b = document.getElementById(id); if(b && b.textContent.indexOf('✕')!==-1) b.click(); }); });
@@ -12164,7 +12368,7 @@
             let jn = []; try{ jn = JSON.parse(localStorage.getItem(cle)||'[]'); }catch(e2){}
             jn.push({ d:new Date().toISOString().slice(0,10), nJ:nJ, pc:pc });
             if(jn.length > 60) jn = jn.slice(-60);
-            localStorage.setItem(cle, JSON.stringify(jn));
+            memoSet(cle, JSON.stringify(jn));
             const tri = jn.map(function(x){ return x.pc; }).sort(function(a, b){ return a-b; });
             score += ' · 📓 journal : '+jn.length+' vérif., médiane '+tri[Math.floor(tri.length/2)]+' %';
           }catch(e2){}
@@ -12775,13 +12979,13 @@
       etatClimats.actif = false;
       if(etatClimats.groupe) map.removeLayer(etatClimats.groupe);
       etatClimats.groupe = null;
-      basculerBouton(b, false, '', '\u{1F30D} Carte des climats');
+      basculerBouton(b, false, '', '🌍 Carte des climats');
       majLegende();
       return;
     }
     etatClimats.actif = true;
-    basculerBouton(b, true, '\u{1F30D} Climats \u2715', '', '#166534');
-    afficherInfo('\u{1F30D} Chargement des limites d\u00e9partementales\u2026', 0);
+    basculerBouton(b, true, '🌍 Climats \u2715', '', '#166534');
+    afficherInfo('🌍 Chargement des limites d\u00e9partementales\u2026', 0);
     try{
       const url = WFS_GEOPF + '&TYPENAMES=ADMINEXPRESS-COG-CARTO.LATEST:departement&COUNT=120';
       const r = await fetch(url);
@@ -12825,11 +13029,11 @@
       majLegende();
       if(sansType.length) noterService('Carte des climats', true, n + ' d\u00e9partements class\u00e9s, ' + sansType.length + ' sans type');
       else noterService('Carte des climats', true, n + ' d\u00e9partements');
-      afficherInfo('\u{1F30D} ' + n + ' d\u00e9partements color\u00e9s \u00b7 cliquez-en un pour la fiche de son climat', 8000);
+      afficherInfo('🌍 ' + n + ' d\u00e9partements color\u00e9s \u00b7 cliquez-en un pour la fiche de son climat', 8000);
     }catch(e){
       etatClimats.actif = false;
-      basculerBouton(b, false, '', '\u{1F30D} Carte des climats');
-      afficherInfo('\u26a0\ufe0f Limites d\u00e9partementales indisponibles \u2014 voir \u{1F527} Diagnostic des services', 7000);
+      basculerBouton(b, false, '', '🌍 Carte des climats');
+      afficherInfo('\u26a0\ufe0f Limites d\u00e9partementales indisponibles \u2014 voir 🔧 Diagnostic des services', 7000);
       noterService('Carte des climats', false, String(e && e.message || e));
     }finally{ cacherInfo(); }
   });
@@ -12972,9 +13176,16 @@
         const b = map.getBounds();
         const bbox = b.getSouth().toFixed(4) + ',' + b.getWest().toFixed(4) + ','
                    + b.getNorth().toFixed(4) + ',' + b.getEast().toFixed(4);
+        // la trace vient en premier : meme un refus doit apparaitre dans le journal
+        if(typeof journal === 'function')
+          journal('couche', cle + ' : bbox ' + bbox + ' \u00b7 zoom ' + map.getZoom()
+            + ' \u00b7 surface ' + Math.abs((b.getNorth() - b.getSouth()) * (b.getEast() - b.getWest())).toFixed(1),
+            conf.req(bbox).slice(0, 240));
         // Overpass expire sur de trop vastes emprises : on le dit avant d'envoyer.
         const surface = Math.abs((b.getNorth() - b.getSouth()) * (b.getEast() - b.getWest()));
-        if(surface > 30){
+        // 120 degres carres : la France entiere en fait environ 60, l Europe 400.
+        // Le seuil de 30 refusait des vues parfaitement legitimes.
+        if(surface > 120){
           e.actif = false;
           basculerBouton(btn, false, '', conf.nom);
           noterTerroir(cle + ' : refus\u00e9 avant envoi, emprise trop vaste');
@@ -12993,10 +13204,10 @@
           return;
         }
         noterTerroir(cle + ' : envoi sur ' + bbox);
-        if(typeof journal === 'function')
-          journal('couche', cle + ' : bbox ' + bbox + ' \u00b7 zoom ' + map.getZoom(),
-            conf.req(bbox).slice(0, 260));
-        const d = await overpassRequete('[out:json][timeout:40];(' + conf.req(bbox) + ');out center 500;');
+        // overpassRequete rend la REPONSE HTTP, pas les donnees : sans .json() ici,
+        // d.elements etait toujours undefined et la couche restait vide en silence.
+        const rep = await overpassRequete('[out:json][timeout:40];(' + conf.req(bbox) + ');out center 500;');
+        const d = await rep.json();
         noterTerroir(cle + ' \u2192 ' + ((d.elements || []).length) + ' \u00e9l\u00e9ment(s) re\u00e7u(s)');
         if(typeof journal === 'function')
           journal('couche', cle + ' \u2192 ' + ((d.elements || []).length) + ' \u00e9l\u00e9ment(s)',
@@ -13054,13 +13265,238 @@
     });
   });
 
+  // ---------- Minéraux, mines & gemmes ----------
+  // Deux sources : OpenStreetMap pour les mines et carrieres existantes, et une liste
+  // de gisements historiques situes par leur COMMUNE, geocodee par la Base Adresse
+  // Nationale a la demande. Aucune coordonnee n'est ecrite en dur : elles seraient
+  // invérifiables et probablement fausses.
+  const etatMineraux = {};
+
+  const MINES_OSM = {
+    'min-mines': {
+      nom:'\u26cf Mines &amp; puits', coul:'#57534e',
+      req:function(b){
+        return 'node["man_made"="mineshaft"](' + b + ');way["man_made"="mineshaft"](' + b + ');'
+             + 'node["historic"="mine"](' + b + ');way["historic"="mine"](' + b + ');'
+             + 'node["historic"="mine_shaft"](' + b + ');'
+             + 'node["disused:man_made"="mineshaft"](' + b + ');';
+      },
+      note:'Puits, chevalements et sites miniers, en activit\u00e9 ou abandonn\u00e9s. Le Nord, la Lorraine, '
+        + 'le Massif central et les C\u00e9vennes en concentrent le plus.'
+    },
+    'min-carrieres': {
+      nom:'🪨 Carri\u00e8res', coul:'#a16207',
+      req:function(b){
+        return 'way["landuse"="quarry"](' + b + ');relation["landuse"="quarry"](' + b + ');'
+             + 'node["landuse"="quarry"](' + b + ');';
+      },
+      note:'Carri\u00e8res de pierre, sable, gravier, calcaire. Leur r\u00e9partition suit exactement la '
+        + 'g\u00e9ologie : calcaire dans les bassins s\u00e9dimentaires, granite dans les massifs anciens.'
+    },
+    'min-galeries': {
+      nom:'🕳 Galeries &amp; entr\u00e9es', coul:'#78350f',
+      req:function(b){
+        return 'node["man_made"="adit"](' + b + ');way["man_made"="adit"](' + b + ');'
+             + 'node["historic"="adit"](' + b + ');'
+             + 'node["natural"="cave_entrance"]["mine"](' + b + ');';
+      },
+      note:'Galeries d\u2019acc\u00e8s creus\u00e9es \u00e0 flanc de versant, moins co\u00fbteuses qu\u2019un puits vertical. '
+        + 'Elles trahissent un gisement affleurant.'
+    },
+    'min-musees': {
+      nom:'🏛 Mus\u00e9es &amp; mines visitables', coul:'#7c3aed',
+      req:function(b){
+        return 'node["tourism"="museum"]["museum"~"mining|geology|mineral",i](' + b + ');'
+             + 'node["tourism"="attraction"]["attraction"~"mine",i](' + b + ');'
+             + 'node["tourism"="museum"]["name"~"min\u00e9ral|mine|g\u00e9olog|fossile",i](' + b + ');'
+             + 'way["tourism"="museum"]["museum"~"mining|geology",i](' + b + ');';
+      },
+      note:'Mus\u00e9es de min\u00e9ralogie et mines am\u00e9nag\u00e9es pour la visite. Peu nombreux, mais souvent '
+        + 'install\u00e9s sur le gisement lui-m\u00eame.'
+    }
+  };
+
+  // Gisements historiques : commune + departement, situes par la BAN a la demande.
+  const GISEMENTS = [
+    { n:'Salsigne', d:'11', m:'Or, arsenic', t:'La plus grande mine d\u2019or d\u2019Europe occidentale, ferm\u00e9e en 2004. '
+      + 'Elle a produit environ 120 tonnes d\u2019or en un si\u00e8cle. Le site reste l\u2019un des plus pollu\u00e9s de France, '
+      + 'l\u2019arsenic accompagnant l\u2019or dans le m\u00eame minerai.' },
+    { n:'Sainte-Marie-aux-Mines', d:'68', m:'Argent, plomb', t:'Exploit\u00e9e d\u00e8s le X\u1d49 si\u00e8cle, apog\u00e9e au XVI\u1d49. '
+      + 'Jusqu\u2019\u00e0 3 000 mineurs pour 30 000 habitants. La ville accueille aujourd\u2019hui l\u2019une des plus grandes '
+      + 'bourses aux min\u00e9raux du monde.' },
+    { n:'Chessy', d:'69', m:'Cuivre', t:'A donn\u00e9 son nom \u00e0 la chessylite, autre nom de l\u2019azurite. '
+      + 'Les cristaux de Chessy sont dans toutes les grandes collections min\u00e9ralogiques.' },
+    { n:'Vernet-la-Varenne', d:'63', m:'Am\u00e9thyste', t:'Les filons du Livradois ont fourni des am\u00e9thystes '
+      + 'd\u2019un violet profond, tr\u00e8s recherch\u00e9es au XIX\u1d49 si\u00e8cle. La recherche amateur y reste pratiqu\u00e9e.' },
+    { n:'Luzenac', d:'09', m:'Talc', t:'La carri\u00e8re de Trimouns, \u00e0 1 800 m d\u2019altitude, est le premier gisement '
+      + 'de talc au monde. Le talc y provient de la transformation de dolomies par des fluides chauds.' },
+    { n:'Saint-Laurent-le-Minier', d:'30', m:'Zinc, plomb', t:'Les mines des Malines, dans les C\u00e9vennes, '
+      + 'exploit\u00e9es de l\u2019Antiquit\u00e9 \u00e0 1991. Les sols alentour restent charg\u00e9s en plomb.' },
+    { n:'Le Chalard', d:'87', m:'Or', t:'Le district aurif\u00e8re du Limousin, exploit\u00e9 d\u00e8s les Gaulois. '
+      + 'La derni\u00e8re mine fran\u00e7aise d\u2019or, Le Bourneix, a ferm\u00e9 en 2001.' },
+    { n:'Bourg-d\u2019Oisans', d:'38', m:'Quartz, axinite, \u00e9pidote', t:'Le site min\u00e9ralogique le plus c\u00e9l\u00e8bre de France. '
+      + 'Les fentes alpines du massif ont livr\u00e9 des cristaux de quartz exceptionnels, form\u00e9s pendant la '
+      + 'sur\u00e9l\u00e9vation des Alpes.' },
+    { n:'Saint-Pierre-de-Mésage', d:'38', m:'Anthracite', t:'La Mure et son bassin anthracif\u00e8re, exploit\u00e9 jusqu\u2019en 1997. '
+      + 'Le charbon des Alpes est le plus ancien de France, d\u2019\u00e2ge carbonif\u00e8re.' },
+    { n:'Lewarde', d:'59', m:'Charbon', t:'Fosse Delloye, devenue le Centre historique minier. '
+      + 'Le bassin du Nord-Pas-de-Calais a employ\u00e9 jusqu\u2019\u00e0 220 000 mineurs et fa\u00e7onn\u00e9 tout un paysage : '
+      + 'terrils, corons, cavaliers.' },
+    { n:'Bruoux', d:'84', m:'Ocre', t:'Les mines d\u2019ocre du Luberon, autour de Roussillon et Gargas. '
+      + 'L\u2019ocre est une argile color\u00e9e par des oxydes de fer, exploit\u00e9e pour les pigments.' },
+    { n:'Batère', d:'66', m:'Fer', t:'Les mines de fer du Canigou, dans les Pyr\u00e9n\u00e9es-Orientales, '
+      + 'exploit\u00e9es depuis l\u2019Antiquit\u00e9. Le fer catalan a nourri une m\u00e9tallurgie locale pendant des si\u00e8cles.' },
+    { n:'Saint-Amand-les-Eaux', d:'59', m:'Fluorine', t:'Le gisement du Beaujolais et du Morvan a longtemps '
+      + 'fourni la fluorine fran\u00e7aise, utilis\u00e9e en sid\u00e9rurgie et en optique.' },
+    { n:'Le Puy-en-Velay', d:'43', m:'Zircon, saphir', t:'Les alluvions du Velay livrent des saphirs et des zircons, '
+      + 'remont\u00e9s par le volcanisme. Le seul gisement de saphirs de France m\u00e9tropolitaine.' }
+  ];
+
+  const etatGisements = { actif:false, groupe:null, charge:false };
+
+  Object.keys(MINES_OSM).forEach(function(cle){
+    const conf = MINES_OSM[cle];
+    const btn = document.getElementById('btn-' + cle);
+    if(!btn) return;
+    etatMineraux[cle] = { actif:false, groupe:null };
+    const nom = conf.nom.replace(/&amp;/g, '&');
+    btn.addEventListener('click', async function(){
+      const e = etatMineraux[cle];
+      if(e.actif){
+        e.actif = false;
+        if(e.groupe) map.removeLayer(e.groupe);
+        e.groupe = null;
+        basculerBouton(btn, false, '', conf.nom);
+        majLegende();
+        return;
+      }
+      e.actif = true;
+      basculerBouton(btn, true, nom + ' \u2715', '', conf.coul);
+      afficherInfo(nom + ' \u2014 interrogation d\u2019OpenStreetMap\u2026', 0);
+      try{
+        const b = map.getBounds();
+        const bbox = b.getSouth().toFixed(4) + ',' + b.getWest().toFixed(4) + ','
+                   + b.getNorth().toFixed(4) + ',' + b.getEast().toFixed(4);
+        const surface = Math.abs((b.getNorth() - b.getSouth()) * (b.getEast() - b.getWest()));
+        if(typeof journal === 'function')
+          journal('couche', cle + ' : bbox ' + bbox + ' \u00b7 surface ' + surface.toFixed(1),
+            conf.req(bbox).slice(0, 200));
+        if(surface > 120){
+          e.actif = false;
+          basculerBouton(btn, false, '', conf.nom);
+          afficherAlerte(nom + ' : vue trop large. Zoomez sur une r\u00e9gion, puis r\u00e9essayez.');
+          return;
+        }
+        // overpassRequete rend la reponse HTTP : il FAUT lire le JSON ensuite
+        const rep = await overpassRequete('[out:json][timeout:40];(' + conf.req(bbox) + ');out center 400;');
+        const d = await rep.json();
+        if(!e.actif) return;
+        if(typeof journal === 'function')
+          journal('couche', cle + ' \u2192 ' + ((d.elements || []).length) + ' \u00e9l\u00e9ment(s)');
+        const g = L.layerGroup();
+        let n = 0;
+        (d.elements || []).forEach(function(el){
+          const lat = isFinite(el.lat) ? el.lat : (el.center && el.center.lat);
+          const lon = isFinite(el.lon) ? el.lon : (el.center && el.center.lon);
+          if(!isFinite(lat) || !isFinite(lon)) return;
+          const t = el.tags || {};
+          const titre = t['name:fr'] || t.name || nom.replace(/^\S+\s/, '');
+          const bribes = [];
+          ['resource', 'mineral', 'product', 'material', 'operator'].forEach(function(k){
+            if(t[k] && String(t[k]) !== 'yes') bribes.push(t[k]);
+          });
+          if(t.start_date) bribes.push('depuis ' + t.start_date);
+          if(t['disused'] === 'yes' || /^disused:/.test(Object.keys(t)[0] || '')) bribes.push('d\u00e9saffect\u00e9');
+          L.circleMarker([lat, lon], { radius:6, weight:2, color:conf.coul,
+            fillColor:'#e7e5e4', fillOpacity:0.92 })
+            .bindPopup('<b>' + echap(titre) + '</b>'
+              + (bribes.length ? '<br>' + echap(bribes.join(' \u00b7 ')) : '')
+              + '<div style="color:#9ca3af;font-size:10px;margin-top:3px">OpenStreetMap</div>')
+            .bindTooltip(titre, { direction:'top' })
+            .addTo(g);
+          n++;
+        });
+        if(!n){
+          e.actif = false;
+          basculerBouton(btn, false, '', conf.nom);
+          afficherAlerte(nom + ' : rien de recens\u00e9 dans cette vue. ' + conf.note);
+          return;
+        }
+        g.addTo(map);
+        e.groupe = g;
+        majLegende();
+        afficherInfo(nom + ' : ' + n + ' site(s) \u00b7 cliquez un point pour le d\u00e9tail', 7000);
+      }catch(err){
+        e.actif = false;
+        basculerBouton(btn, false, '', conf.nom);
+        const raison = String(err && err.message || err).slice(0, 90);
+        if(typeof journal === 'function') journal('couche', cle + ' \u2192 \u00e9chec : ' + raison);
+        afficherAlerte('\u26a0\ufe0f ' + nom + ' : ' + raison);
+      }
+    });
+  });
+
+  // --- gisements historiques, situes par la BAN ---
+  document.getElementById('btn-min-gisements').addEventListener('click', async function(){
+    const b = document.getElementById('btn-min-gisements');
+    if(etatGisements.actif){
+      etatGisements.actif = false;
+      if(etatGisements.groupe) map.removeLayer(etatGisements.groupe);
+      basculerBouton(b, false, '', '💎 Gisements historiques');
+      majLegende();
+      return;
+    }
+    etatGisements.actif = true;
+    basculerBouton(b, true, '💎 Gisements historiques \u2715', '', '#0891b2');
+    if(etatGisements.groupe){
+      etatGisements.groupe.addTo(map);
+      majLegende();
+      return;
+    }
+    afficherInfo('💎 Localisation des ' + GISEMENTS.length + ' gisements\u2026', 0);
+    const g = L.layerGroup();
+    let trouves = 0, manques = [];
+    for(const gis of GISEMENTS){
+      if(!etatGisements.actif) return;
+      try{
+        const r = await fetch('https://api-adresse.data.gouv.fr/search/?limit=1&type=municipality&q='
+          + encodeURIComponent(gis.n) + '&postcode=' + (gis.d.length === 2 ? gis.d + '000' : ''));
+        const d = await r.json();
+        const f = d && d.features && d.features[0];
+        if(!f || !f.geometry){ manques.push(gis.n); continue; }
+        const [lon, lat] = f.geometry.coordinates;
+        L.circleMarker([lat, lon], { radius:7, weight:2, color:'#0891b2',
+          fillColor:'#a5f3fc', fillOpacity:0.95 })
+          .bindPopup('<b>' + echap(gis.n) + '</b> <span style="color:#6b7280">(' + echap(gis.d) + ')</span>'
+            + '<div style="font-weight:700;color:#0891b2;margin-top:2px">' + echap(gis.m) + '</div>'
+            + '<div style="font-size:11.5px;line-height:1.5;margin-top:3px">' + echap(gis.t) + '</div>'
+            + '<div style="color:#9ca3af;font-size:10px;margin-top:4px">Position : centre de la commune, '
+            + 'pas l\u2019entr\u00e9e du gisement. Beaucoup de ces sites sont ferm\u00e9s et dangereux.</div>')
+          .bindTooltip(gis.n + ' \u2014 ' + gis.m, { direction:'top' })
+          .addTo(g);
+        trouves++;
+      }catch(e){ manques.push(gis.n); }
+      await new Promise(function(res){ setTimeout(res, 120); });
+    }
+    if(!etatGisements.actif) return;
+    g.addTo(map);
+    etatGisements.groupe = g;
+    majLegende();
+    if(typeof journal === 'function')
+      journal('couche', 'gisements : ' + trouves + '/' + GISEMENTS.length + ' localis\u00e9s',
+        manques.length ? 'manquants : ' + manques.join(', ') : '');
+    afficherInfo('💎 ' + trouves + ' gisement(s) situ\u00e9(s)'
+      + (manques.length ? ' \u00b7 ' + manques.length + ' non localis\u00e9(s)' : '')
+      + ' \u00b7 cliquez pour l\u2019histoire du site', 8000);
+  });
+
   const etatArcheo = {};
   const etatFossiles = {};
 
   // --- sites archéologiques : objets uniques, nommés, saisis dans OpenStreetMap ---
   const SITES_ARCHEO = {
     'archeo-sites': {
-      libelle: '\u{1F3DB} Sites arch\u00e9ologiques',
+      libelle: '🏛 Sites arch\u00e9ologiques',
       couleur: '#a16207',
       requete: function(bbox){
         return 'node["historic"="archaeological_site"](' + bbox + ');'
@@ -13068,7 +13504,7 @@
       }
     },
     'archeo-megalithes': {
-      libelle: '\u{1F5FF} M\u00e9galithes',
+      libelle: '🗿 M\u00e9galithes',
       couleur: '#57534e',
       requete: function(bbox){
         return 'node["historic"="archaeological_site"]["site_type"="megalith"](' + bbox + ');'
@@ -13077,7 +13513,7 @@
       }
     },
     'archeo-ruines': {
-      libelle: '\u{1F3DA} Ruines et vestiges',
+      libelle: '🏚 Ruines et vestiges',
       couleur: '#b45309',
       requete: function(bbox){
         return 'node["historic"="ruins"](' + bbox + ');'
@@ -13085,7 +13521,7 @@
       }
     },
     'archeo-chateaux': {
-      libelle: '\u{1F3F0} Ch\u00e2teaux forts',
+      libelle: '🏰 Ch\u00e2teaux forts',
       couleur: '#7c2d12',
       requete: function(bbox){
         return 'node["historic"="castle"](' + bbox + ');'
@@ -13134,7 +13570,8 @@
         const b = map.getBounds();
         const bbox = b.getSouth().toFixed(4) + ',' + b.getWest().toFixed(4) + ','
                    + b.getNorth().toFixed(4) + ',' + b.getEast().toFixed(4);
-        const d = await overpassRequete('[out:json][timeout:35];(' + conf.requete(bbox) + ');out center 500;');
+        const repA = await overpassRequete('[out:json][timeout:35];(' + conf.requete(bbox) + ');out center 500;');
+        const d = await repA.json();
         if(!e.actif) return;
         const g = L.layerGroup();
         let n = 0;
@@ -13264,23 +13701,24 @@
       etatArbres.actif = false;
       if(etatArbres.groupe) map.removeLayer(etatArbres.groupe);
       etatArbres.groupe = null;
-      basculerBouton(b, false, '', '\u{1F333} Arbres remarquables (OSM)');
+      basculerBouton(b, false, '', '🌳 Arbres remarquables (OSM)');
       majLegende();
       return;
     }
     etatArbres.actif = true;
-    basculerBouton(b, true, '\u{1F333} Arbres remarquables \u2715', '', '#166534');
-    afficherInfo('\u{1F333} Recherche des arbres remarquables dans la vue\u2026', 0);
+    basculerBouton(b, true, '🌳 Arbres remarquables \u2715', '', '#166534');
+    afficherInfo('🌳 Recherche des arbres remarquables dans la vue\u2026', 0);
     try{
       const bb = map.getBounds();
       const bbox = bb.getSouth().toFixed(4) + ',' + bb.getWest().toFixed(4) + ','
                  + bb.getNorth().toFixed(4) + ',' + bb.getEast().toFixed(4);
-      const d = await overpassRequete('[out:json][timeout:30];('
+      const repT = await overpassRequete('[out:json][timeout:30];('
         + 'node["natural"="tree"]["denotation"~"natural_monument|landmark"](' + bbox + ');'
         + 'node["natural"="tree"]["monument"="yes"](' + bbox + ');'
         + 'node["natural"="tree"]["heritage"](' + bbox + ');'
         + 'node["natural"="tree"]["name"](' + bbox + ');'
         + ');out body 400;');
+      const d = await repT.json();
       if(!etatArbres.actif) return;
       const g = L.layerGroup();
       let n = 0;
@@ -13304,17 +13742,17 @@
       });
       if(!n){
         etatArbres.actif = false;
-        basculerBouton(b, false, '', '\u{1F333} Arbres remarquables (OSM)');
-        afficherInfo('\u{1F333} Aucun arbre remarquable recens\u00e9 dans cette vue \u2014 \u00e9largissez ou d\u00e9placez la carte', 7000);
+        basculerBouton(b, false, '', '🌳 Arbres remarquables (OSM)');
+        afficherInfo('🌳 Aucun arbre remarquable recens\u00e9 dans cette vue \u2014 \u00e9largissez ou d\u00e9placez la carte', 7000);
         return;
       }
       g.addTo(map);
       etatArbres.groupe = g;
       majLegende();
-      afficherInfo('\u{1F333} ' + n + ' arbre(s) remarquable(s) \u2014 cliquez un point pour son nom et son esp\u00e8ce', 8000);
+      afficherInfo('🌳 ' + n + ' arbre(s) remarquable(s) \u2014 cliquez un point pour son nom et son esp\u00e8ce', 8000);
     }catch(e){
       etatArbres.actif = false;
-      basculerBouton(b, false, '', '\u{1F333} Arbres remarquables (OSM)');
+      basculerBouton(b, false, '', '🌳 Arbres remarquables (OSM)');
       afficherInfo('\u26a0\ufe0f OpenStreetMap n\u2019a pas r\u00e9pondu pour les arbres remarquables', 6000);
       noterService('Arbres remarquables (OSM)', false, String(e && e.message || e));
     }finally{ cacherInfo(); }
@@ -13546,7 +13984,7 @@
     const bo = document.getElementById('btn-iface-o'), bc = document.getElementById('btn-iface-c');
     if(bo) bo.classList.toggle('donnee-active', !c);
     if(bc) bc.classList.toggle('donnee-active', c);
-    try{ localStorage.setItem('geo-interface', c ? 'c' : 'o'); }catch(e){}
+    try{ memoSet('geo-interface', c ? 'c' : 'o'); }catch(e){}
     if(c){
       // en mode rail, la fenêtre principale doit être visible et dépliée
       const p = document.getElementById('wg-pilote');
@@ -13794,12 +14232,12 @@
     if(etatClim.soleilSurf){
       map.removeLayer(etatClim.soleilSurf);
       etatClim.soleilSurf = null;
-      basculerBouton(b, false, '', '\u{1F308} D\u00e9grad\u00e9 d\u2019ensoleillement');
+      basculerBouton(b, false, '', '🌈 D\u00e9grad\u00e9 d\u2019ensoleillement');
       majLegende();
       return;
     }
-    basculerBouton(b, true, '\u{1F308} D\u00e9grad\u00e9 \u2715', '', '#ef6c1a');
-    afficherInfo('\u{1F308} Interpolation des 35 stations\u2026', 0);
+    basculerBouton(b, true, '🌈 D\u00e9grad\u00e9 \u2715', '', '#ef6c1a');
+    afficherInfo('🌈 Interpolation des 35 stations\u2026', 0);
     setTimeout(function(){
       try{
         if(!map.getPane('soleilSurf')){
@@ -13812,10 +14250,10 @@
           attribution: 'Interpolation MultiMaps d\u2019apr\u00e8s les normales 1991-2020'
         }).addTo(map);
         majLegende();
-        afficherInfo('\u{1F308} D\u00e9grad\u00e9 calcul\u00e9 \u2014 surface interpol\u00e9e, pas une mesure : '
+        afficherInfo('🌈 D\u00e9grad\u00e9 calcul\u00e9 \u2014 surface interpol\u00e9e, pas une mesure : '
           + 'entre deux stations la valeur est estim\u00e9e, jamais observ\u00e9e.', 8000);
       }catch(e){
-        basculerBouton(b, false, '', '\u{1F308} D\u00e9grad\u00e9 d\u2019ensoleillement');
+        basculerBouton(b, false, '', '🌈 D\u00e9grad\u00e9 d\u2019ensoleillement');
         afficherInfo('\u26a0\ufe0f Calcul du d\u00e9grad\u00e9 impossible', 5000);
         noterService('D\u00e9grad\u00e9 soleil', false, String(e && e.message || e));
       }
@@ -13827,12 +14265,12 @@
     if(etatClim.ventSurf){
       map.removeLayer(etatClim.ventSurf);
       etatClim.ventSurf = null;
-      basculerBouton(b, false, '', '\u{1F300} D\u00e9grad\u00e9 des vents');
+      basculerBouton(b, false, '', '🌀 D\u00e9grad\u00e9 des vents');
       majLegende();
       return;
     }
-    basculerBouton(b, true, '\u{1F300} D\u00e9grad\u00e9 vents \u2715', '', '#4f46e5');
-    afficherInfo('\u{1F300} Interpolation des 25 stations\u2026', 0);
+    basculerBouton(b, true, '🌀 D\u00e9grad\u00e9 vents \u2715', '', '#4f46e5');
+    afficherInfo('🌀 Interpolation des 25 stations\u2026', 0);
     setTimeout(function(){
       try{
         if(!map.getPane('ventSurf')){
@@ -13844,10 +14282,10 @@
           attribution: 'Interpolation MultiMaps d\u2019apr\u00e8s les normales de vent'
         }).addTo(map);
         majLegende();
-        afficherInfo('\u{1F300} Couloirs venteux : vall\u00e9e du Rh\u00f4ne, Languedoc, littoral atlantique. '
+        afficherInfo('🌀 Couloirs venteux : vall\u00e9e du Rh\u00f4ne, Languedoc, littoral atlantique. '
           + 'Vitesses \u00e0 10 m\u00e8tres, pas celles des atlas \u00e9oliens \u00e0 50 m\u00e8tres.', 8000);
       }catch(e){
-        basculerBouton(b, false, '', '\u{1F300} D\u00e9grad\u00e9 des vents');
+        basculerBouton(b, false, '', '🌀 D\u00e9grad\u00e9 des vents');
         afficherInfo('\u26a0\ufe0f Calcul du d\u00e9grad\u00e9 impossible', 5000);
         noterService('D\u00e9grad\u00e9 vent', false, String(e && e.message || e));
       }
@@ -15269,7 +15707,7 @@
 
   async function majOmbre(){
     if(!etatOmbre.actifDemande) return;
-    afficherInfo('\u{1F3D4} Lecture des altitudes et calcul de l\u2019ombre\u2026', 0);
+    afficherInfo('🏔 Lecture des altitudes et calcul de l\u2019ombre\u2026', 0);
     const res = await calculerOmbre();
     dessinerOmbre(res);
     cacherInfo();
@@ -15282,13 +15720,13 @@
       etatOmbre.actifDemande = false;
       if(etatOmbre.couche){ map.removeLayer(etatOmbre.couche); etatOmbre.couche = null; }
       if(reg) reg.style.display = 'none';
-      basculerBouton(b, false, '', '\u{1F3D4} Ombre port\u00e9e du relief');
+      basculerBouton(b, false, '', '🏔 Ombre port\u00e9e du relief');
       majLegende();
       return;
     }
     etatOmbre.actifDemande = true;
     if(reg) reg.style.display = 'block';
-    basculerBouton(b, true, '\u{1F3D4} Ombre du relief \u2715', '', '#334155');
+    basculerBouton(b, true, '🏔 Ombre du relief \u2715', '', '#334155');
     majLegende();
     afficherInfo('Verification du service d’altitudes…', 0);
     testerAltitudes().then(function(t){
@@ -15353,12 +15791,12 @@
       noterService('Waymarked Trails', true, genre);
       majLegende();
       afficherInfo(cle === 'rando'
-        ? '\u{1F97E} Itin\u00e9raires balis\u00e9s affich\u00e9s \u2014 zoomez pour distinguer les niveaux. Rouge : international et national ; bleu : r\u00e9gional ; vert : local.'
-        : '\u{1F6B4} V\u00e9loroutes affich\u00e9es \u2014 EuroVelo, itin\u00e9raires nationaux et boucles locales.', 7000);
+        ? '🥾 Itin\u00e9raires balis\u00e9s affich\u00e9s \u2014 zoomez pour distinguer les niveaux. Rouge : international et national ; bleu : r\u00e9gional ; vert : local.'
+        : '🚴 V\u00e9loroutes affich\u00e9es \u2014 EuroVelo, itin\u00e9raires nationaux et boucles locales.', 7000);
     });
   }
-  basculeWaymarked('btn-waymarked', 'rando', 'hiking', '\u{1F97E} Itin\u00e9raires balis\u00e9s (Waymarked Trails)', '#b45309');
-  basculeWaymarked('btn-waymarked-velo', 'velo', 'cycling', '\u{1F6B4} Itin\u00e9raires cyclables balis\u00e9s', '#1d4ed8');
+  basculeWaymarked('btn-waymarked', 'rando', 'hiking', '🥾 Itin\u00e9raires balis\u00e9s (Waymarked Trails)', '#b45309');
+  basculeWaymarked('btn-waymarked-velo', 'velo', 'cycling', '🚴 Itin\u00e9raires cyclables balis\u00e9s', '#1d4ed8');
 
   // ---------- Polluants au choix ----------
   // L'API renvoyait deja PM2,5, PM10, NO2 et ozone : seules ces valeurs etaient jetees.
@@ -15668,7 +16106,7 @@
     return (champ && champ.value.trim()) || 'pluiePro.html';
   }
   document.getElementById('url-meteo').addEventListener('change', (ev)=>{
-    localStorage.setItem('geo-url-meteo', ev.target.value.trim());
+    memoSet('geo-url-meteo', ev.target.value.trim());
     afficherInfo('\ud83c\udf21 MultiM\u00e9t\u00e9o : lien enregistr\u00e9 (' + ev.target.value.trim() + ')', 4000);
   });
   document.getElementById('btn-villes-meteo').addEventListener('click', async ()=>{
@@ -15851,7 +16289,7 @@
     }
   }
   document.getElementById('coul-parcs-osm').addEventListener('input', (e)=>{
-    localStorage.setItem('geo-coul-parcs-osm', e.target.value);
+    memoSet('geo-coul-parcs-osm', e.target.value);
     if(document.getElementById('chk-parcs-osm').checked) chargerParcsOsm();
   });
   document.getElementById('chk-parcs-osm').addEventListener('change', (e)=>{
@@ -16955,13 +17393,13 @@
     });
   }
   document.getElementById('gpx-couleur').addEventListener('input', (e)=>{
-    gpxCouleur = e.target.value; localStorage.setItem('geo-gpx-coul', gpxCouleur); majTraitsGpx();
+    gpxCouleur = e.target.value; memoSet('geo-gpx-coul', gpxCouleur); majTraitsGpx();
   });
   document.addEventListener('click', (e)=>{
     const b = e.target && e.target.closest ? e.target.closest('[data-gpxl]') : null;
     if(!b) return;
     gpxLargeur = Math.max(1, Math.min(8, gpxLargeur + (b.dataset.gpxl==='+'?1:-1)));
-    localStorage.setItem('geo-gpx-larg', String(gpxLargeur));
+    memoSet('geo-gpx-larg', String(gpxLargeur));
     majTraitsGpx();
   });
   const fichierGpx = document.getElementById('fichier-gpx');
@@ -16993,7 +17431,7 @@
     if(ajoutees) cadrerGpx();
     const dernier = GPX.traces[GPX.traces.length - 1];
     afficherInfo(ajoutees
-      ? '\u{1F4C8} ' + ajoutees + ' trace(s) import\u00e9e(s)'
+      ? '📈 ' + ajoutees + ' trace(s) import\u00e9e(s)'
         + (dernier && dernier.stats.avecAlt ? ' \u00b7 altitudes lues dans le fichier' : '')
         + (refusees.length ? ' \u00b7 ' + refusees.length + ' fichier(s) sans trace exploitable' : '')
         + ' \u2014 g\u00e9rez-les dans la liste ci-dessous'
@@ -17864,21 +18302,21 @@
     if(etatMonde.pays && map.hasLayer(etatMonde.pays)){
       map.removeLayer(etatMonde.pays);
       if(reg) reg.style.display = 'none';
-      basculerBouton(b, false, '', '\u{1F30D} Pays du monde');
+      basculerBouton(b, false, '', '🌍 Pays du monde');
       majLegende();
       return;
     }
-    basculerBouton(b, true, '\u{1F30D} Pays du monde \u2715', '', '#1d4ed8');
-    afficherInfo('\u{1F30D} Chargement des contours mondiaux\u2026', 0);
+    basculerBouton(b, true, '🌍 Pays du monde \u2715', '', '#1d4ed8');
+    afficherInfo('🌍 Chargement des contours mondiaux\u2026', 0);
     try{
       const c = await chargerMonde();
       c.addTo(map);
       if(reg) reg.style.display = 'block';
       majLegende();
-      afficherInfo('\u{1F30D} 177 pays \u00b7 cliquez-en un pour sa fiche, ou choisissez un indicateur \u00e0 comparer', 8000);
+      afficherInfo('🌍 177 pays \u00b7 cliquez-en un pour sa fiche, ou choisissez un indicateur \u00e0 comparer', 8000);
     }catch(e){
-      basculerBouton(b, false, '', '\u{1F30D} Pays du monde');
-      afficherInfo('\u26a0\ufe0f Contours mondiaux indisponibles \u2014 voir \u{1F527} Diagnostic des services', 7000);
+      basculerBouton(b, false, '', '🌍 Pays du monde');
+      afficherInfo('\u26a0\ufe0f Contours mondiaux indisponibles \u2014 voir 🔧 Diagnostic des services', 7000);
       noterService('Natural Earth (pays)', false, String(e && e.message || e));
     }finally{ cacherInfo(); }
   });
@@ -17900,12 +18338,12 @@
     const b = document.getElementById('btn-monde-villes');
     if(etatMonde.villes && map.hasLayer(etatMonde.villes)){
       map.removeLayer(etatMonde.villes);
-      basculerBouton(b, false, '', '\u{1F3D9} Capitales &amp; grandes villes');
+      basculerBouton(b, false, '', '🏙 Capitales &amp; grandes villes');
       majLegende();
       return;
     }
-    basculerBouton(b, true, '\u{1F3D9} Villes du monde \u2715', '', '#b45309');
-    afficherInfo('\u{1F3D9} Chargement des villes\u2026', 0);
+    basculerBouton(b, true, '🏙 Villes du monde \u2715', '', '#b45309');
+    afficherInfo('🏙 Chargement des villes\u2026', 0);
     try{
       if(!etatMonde.villes){
         const r = await fetch(NE + 'ne_110m_populated_places_simple.geojson');
@@ -17938,9 +18376,9 @@
       }
       etatMonde.villes.addTo(map);
       majLegende();
-      afficherInfo('\u{1F3D9} Capitales en orange, autres grandes villes en gris', 7000);
+      afficherInfo('🏙 Capitales en orange, autres grandes villes en gris', 7000);
     }catch(e){
-      basculerBouton(b, false, '', '\u{1F3D9} Capitales &amp; grandes villes');
+      basculerBouton(b, false, '', '🏙 Capitales &amp; grandes villes');
       afficherInfo('\u26a0\ufe0f Villes du monde indisponibles', 6000);
       noterService('Natural Earth (villes)', false, String(e && e.message || e));
     }finally{ cacherInfo(); }
@@ -17949,11 +18387,11 @@
   // --- reperes du globe : lignes remarquables, oceans, zones urbaines ---
   // Verifie avant usage : les 6 lignes et les 29 mers portent un nom francais.
   const REPERES_MONDE = {
-    lignes: { fichier:'ne_110m_geographic_lines.geojson', libelle:'\u{1F310} \u00c9quateur, tropiques & cercles polaires',
+    lignes: { fichier:'ne_110m_geographic_lines.geojson', libelle:'🌐 \u00c9quateur, tropiques & cercles polaires',
       teinte:'#b45309', couche:null },
-    mers:   { fichier:'ne_110m_geography_marine_polys.geojson', libelle:'\u{1F30A} Oc\u00e9ans & mers',
+    mers:   { fichier:'ne_110m_geography_marine_polys.geojson', libelle:'🌊 Oc\u00e9ans & mers',
       teinte:'#0891b2', couche:null },
-    urbain: { fichier:'ne_50m_urban_areas.geojson', libelle:'\u{1F306} Taches urbaines mondiales',
+    urbain: { fichier:'ne_50m_urban_areas.geojson', libelle:'🌆 Taches urbaines mondiales',
       teinte:'#b91c1c', couche:null }
   };
 
@@ -18027,8 +18465,8 @@
         }
         conf.couche.addTo(map);
         majLegende();
-        if(cle === 'lignes') afficherInfo('\u{1F310} Les lignes remarquables : cliquez-en une pour ce qu\u2019elle signifie', 8000);
-        else if(cle === 'urbain') afficherInfo('\u{1F306} Taches urbaines : d\u00e9zoomez pour voir les grandes concentrations mondiales', 8000);
+        if(cle === 'lignes') afficherInfo('🌐 Les lignes remarquables : cliquez-en une pour ce qu\u2019elle signifie', 8000);
+        else if(cle === 'urbain') afficherInfo('🌆 Taches urbaines : d\u00e9zoomez pour voir les grandes concentrations mondiales', 8000);
         else cacherInfo();
       }catch(e){
         basculerBouton(btn, false, '', conf.libelle);
@@ -18472,8 +18910,8 @@
   });
 
   // ================= Fenêtres flottantes (widgets) =================
-  const WIDGETS = ['wg-outils','wg-journal','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-industriel','wg-population','wg-climat','wg-littoral','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-monde','wg-vegetation','wg-terroir','wg-archeo','wg-limites','wg-foret','wg-pilote'];
-  const WIDGETS_PILOTABLES = ['wg-outils','wg-journal','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-industriel','wg-population','wg-climat','wg-littoral','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-monde','wg-vegetation','wg-terroir','wg-archeo','wg-limites','wg-foret'];
+  const WIDGETS = ['wg-outils','wg-journal','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-industriel','wg-population','wg-climat','wg-littoral','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-monde','wg-vegetation','wg-terroir','wg-mineraux','wg-archeo','wg-limites','wg-foret','wg-pilote'];
+  const WIDGETS_PILOTABLES = ['wg-outils','wg-journal','wg-diag','wg-seances','wg-3d','wg-explic','wg-acces','wg-ville','wg-educ','wg-insee','wg-origines','wg-legende','wg-actions','wg-velo','wg-rando','wg-options','wg-fonds','wg-sites','wg-sols','wg-equip','wg-geol','wg-sismique','wg-risques','wg-industriel','wg-population','wg-climat','wg-littoral','wg-meteo','wg-feux','wg-logement','wg-histoire','wg-parcs','wg-montagnes','wg-rivieres','wg-pays','wg-mer','wg-astro','wg-animaux','wg-monde','wg-vegetation','wg-terroir','wg-mineraux','wg-archeo','wg-limites','wg-foret'];
   const WIDGETS_CASES = []; // remplacées par la fenêtre 🧭 pilote
   let posWidgets = {};
   try{ posWidgets = JSON.parse(localStorage.getItem('geo-widgets3')||'{}'); }catch(e){}
@@ -18484,7 +18922,7 @@
       s[id] = { left:w.style.left, top:w.style.top,
                 replie:w.classList.contains('replie'), cache:w.classList.contains('cache') };
     });
-    try{ localStorage.setItem('geo-widgets3', JSON.stringify(s)); }catch(e){}
+    try{ memoSet('geo-widgets3', JSON.stringify(s)); }catch(e){}
   }
   function bornerWidget(w){
     let x = parseFloat(w.style.left), y = parseFloat(w.style.top);
@@ -18572,6 +19010,7 @@
   initWidget('wg-monde',     { left:'12px', top:'190px', replie:true, cache:true });
   initWidget('wg-vegetation',{ left:'12px', top:'270px', replie:true, cache:true });
   initWidget('wg-terroir',    { left:'12px', top:'310px', replie:true, cache:true });
+  initWidget('wg-mineraux',    { left:'12px', top:'310px', replie:true, cache:true });
   initWidget('wg-archeo',    { left:'12px', top:'310px', replie:true, cache:true });
   initWidget('wg-rivieres', { left:'12px', top:'250px', replie:true, cache:true });
   initWidget('wg-feux',     { left:'12px', top:'140px', replie:true, cache:true });
@@ -18689,12 +19128,18 @@
   })();
   function panneauxAncres(){
     return Array.prototype.slice.call(document.querySelectorAll('.widget')).filter(function(w){
+      // le journal en volet de droite n'est pas un panneau du rail : il ne doit pas
+      // etre masque quand on ouvre autre chose
+      if(w.id === 'wg-journal' && document.body.classList.contains('volet-journal')) return false;
       return w.id !== 'wg-pilote' && w.id !== 'wg-legende';
     });
   }
   function panneauUnique(garde){
     if(!document.body.classList.contains('interface-c')) return;   // interface O : rien ne change
     if(garde === 'wg-legende') return;
+    // en volet de droite, le journal n'est plus un panneau du rail : l'ouvrir ne doit
+    // pas masquer Options, sans quoi on ne peut plus revenir en arriere
+    if(garde === 'wg-journal' && document.body.classList.contains('volet-journal')) return;
     panneauxAncres().forEach(function(w){
       if(w.id !== garde) w.classList.add('cache');
     });
@@ -18940,7 +19385,7 @@
     });
     d.couleur = nouvelle;
     COULEURS_LEG[cle] = nouvelle;
-    try{ localStorage.setItem('geo-couleurs-legende', JSON.stringify(COULEURS_LEG)); }catch(e){}
+    try{ memoSet('geo-couleurs-legende', JSON.stringify(COULEURS_LEG)); }catch(e){}
     majLegende();
     return n;
   }
@@ -19392,7 +19837,7 @@
           + ligneLegende('#7f1d1d', 'Magnitude 5 et plus', 'rond', 'Peut causer des d\u00e9g\u00e2ts'));
       }
       if(etatClimats.actif && etatClimats.groupe){
-        blocs.push('<div class="leg-sous">\u{1F30D} Types de climat <small>(par d\u00e9partement)</small></div>'
+        blocs.push('<div class="leg-sous">🌍 Types de climat <small>(par d\u00e9partement)</small></div>'
           + Object.keys(CLIMATS).map(function(k){
               return ligneLegende(CLIMATS[k].coul, CLIMATS[k].nom + ' <small>(' + CLIMATS[k].koppen + ')</small>',
                 'carre', CLIMATS[k].resume);
@@ -19403,7 +19848,7 @@
           + 'sur trois climats. Comparez avec les d\u00e9grad\u00e9s d\u2019ensoleillement et de vent pour voir les transitions.</div>');
       }
       if(etatClim.ventSurf){
-        blocs.push('<div class="leg-sous">\u{1F300} Vent moyen interpol\u00e9 <small>(km/h \u00e0 10 m)</small></div>'
+        blocs.push('<div class="leg-sous">🌀 Vent moyen interpol\u00e9 <small>(km/h \u00e0 10 m)</small></div>'
           + PALIERS_VENT.slice().reverse().map(function(p, i, t){
               const lib = (i === 0) ? 'plus de ' + t[1][0] + ' km/h'
                         : (i === t.length - 1) ? 'moins de ' + t[i-1][0] + ' km/h'
@@ -19416,7 +19861,7 @@
       }
       const archeoOn = Object.keys(etatArcheo).filter(function(k){ return etatArcheo[k].actif; });
       if(archeoOn.length){
-        blocs.push('<div class="leg-sous">\u{1F3FA} Arch\u00e9ologie <small>(OpenStreetMap)</small></div>'
+        blocs.push('<div class="leg-sous">🏺 Arch\u00e9ologie <small>(OpenStreetMap)</small></div>'
           + archeoOn.map(function(k){
               return ligneLegende(SITES_ARCHEO[k].couleur, SITES_ARCHEO[k].libelle.replace(/^\S+\s/, ''), 'rond',
                 'Site saisi par des contributeurs OpenStreetMap');
@@ -19427,7 +19872,7 @@
       }
       const fossOn = Object.keys(etatFossiles).filter(function(k){ return etatFossiles[k].actif; });
       if(fossOn.length){
-        blocs.push('<div class="leg-sous">\u{1F996} Fossiles <small>(sp\u00e9cimens de collection, GBIF)</small></div>'
+        blocs.push('<div class="leg-sous">🦖 Fossiles <small>(sp\u00e9cimens de collection, GBIF)</small></div>'
           + fossOn.map(function(k){
               const b = document.getElementById('btn-foss-' + k);
               return ligneLegende(b ? b.getAttribute('data-coul') : '#57534e',
@@ -19439,7 +19884,7 @@
           + 'Ce n\u2019est ni une carte de r\u00e9partition ancienne, ni une carte de gisements.</div>');
       }
       if(etatArbres.actif && etatArbres.groupe){
-        blocs.push('<div class="leg-sous">\u{1F333} Arbres remarquables</div>'
+        blocs.push('<div class="leg-sous">🌳 Arbres remarquables</div>'
           + ligneLegende('#4ade80', 'Arbre monumental, class\u00e9 ou nomm\u00e9', 'rond',
               'Saisi dans OpenStreetMap par des contributeurs')
           + '<div style="font-size:9.5px;color:#8a8577;line-height:1.45;margin-top:3px">'
@@ -19447,7 +19892,7 @@
           + 'Les inventaires officiels d\u2019arbres remarquables sont tenus par les communes et les d\u00e9partements.</div>');
       }
       if(etatClim.soleilSurf){
-        blocs.push('<div class="leg-sous">\u{1F308} Ensoleillement interpol\u00e9 <small>(heures par an)</small></div>'
+        blocs.push('<div class="leg-sous">🌈 Ensoleillement interpol\u00e9 <small>(heures par an)</small></div>'
           + PALIERS_SOLEIL.slice().reverse().map(function(p, i, t){
               const bas = (i === t.length - 1) ? 'moins de ' + t[i-1][0] : (i === 0 ? 'plus de ' + t[1][0] : '');
               const lib = bas || (t[i+1][0] + ' \u00e0 ' + p[0]);
@@ -19579,7 +20024,7 @@
     }
     if(etatAir.actif){
       if(etatOmbre.actifDemande){
-        blocs.push('<div class="leg-sous">\u{1F3D4} Ombre port\u00e9e du relief</div>'
+        blocs.push('<div class="leg-sous">🏔 Ombre port\u00e9e du relief</div>'
           + ligneLegende('#101830', 'Versant \u00e0 l\u2019ombre du relief', 'carre', 'Le Soleil est masqu\u00e9 par un relief situ\u00e9 dans sa direction')
           + '<div style="font-size:9.5px;color:#8a8577;line-height:1.45;margin-top:3px">'
           + 'Calcul\u00e9 sur la vue affich\u00e9e \u00e0 partir des altitudes SRTM (maille d\u2019environ 90 m). '
@@ -19587,7 +20032,7 @@
           + 'n\u2019est pas pris en compte \u2014 une montagne juste au sud de l\u2019\u00e9cran ne projette pas son ombre.</div>');
       }
       if(WAYMARKED.rando || WAYMARKED.velo){
-        blocs.push('<div class="leg-sous">\u{1F97E} Itin\u00e9raires balis\u00e9s <small>(Waymarked Trails)</small></div>'
+        blocs.push('<div class="leg-sous">🥾 Itin\u00e9raires balis\u00e9s <small>(Waymarked Trails)</small></div>'
           + ligneLegende('#d32f2f', 'International et national <small>(GR, EuroVelo)</small>', 'carre', '')
           + ligneLegende('#1d4ed8', 'R\u00e9gional <small>(GRP, v\u00e9loroutes r\u00e9gionales)</small>', 'carre', '')
           + ligneLegende('#2e9e44', 'Local <small>(sentiers de pays, boucles)</small>', 'carre', '')
@@ -19617,7 +20062,7 @@
             return ligneLegende(p[1], lib, 'carre', '');
           }).join('');
         }
-        blocs.push('<div class="leg-sous">\u{1F30D} ' + echap(ind.nom) + ' <small>(Natural Earth)</small></div>'
+        blocs.push('<div class="leg-sous">🌍 ' + echap(ind.nom) + ' <small>(Natural Earth)</small></div>'
           + lignes
           + '<div style="font-size:9.5px;color:#8a8577;line-height:1.45;margin-top:3px">' + echap(ind.note) + '</div>');
       }
@@ -19625,7 +20070,7 @@
         return REPERES_MONDE[k].couche && map.hasLayer(REPERES_MONDE[k].couche);
       });
       if(rep.length){
-        blocs.push('<div class="leg-sous">\u{1F310} Rep\u00e8res du globe</div>'
+        blocs.push('<div class="leg-sous">🌐 Rep\u00e8res du globe</div>'
           + rep.map(function(k){
               const c = REPERES_MONDE[k];
               return ligneLegende(c.teinte, c.libelle.replace(/^\S+\s/, ''), k === 'lignes' ? 'carre' : 'carre', '');
@@ -19636,7 +20081,7 @@
                 + 'grande qu\u2019une ville dense de m\u00eame taille.</div>' : ''));
       }
       if(etatMonde.villes && map.hasLayer(etatMonde.villes)){
-        blocs.push('<div class="leg-sous">\u{1F3D9} Villes du monde</div>'
+        blocs.push('<div class="leg-sous">🏙 Villes du monde</div>'
           + ligneLegende('#fbbf24', 'Capitale d\u2019\u00c9tat', 'rond', '')
           + ligneLegende('#e7e5e4', 'Autre grande ville', 'rond', ''));
       }
