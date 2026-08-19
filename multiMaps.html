@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v5.16.4.1 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v6.0.1 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v5.16.4.1</title>
+<title>MultiMaps — géographie (collège & lycée) — v6.0.1</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -219,8 +219,14 @@
   body:not(.volet-journal) #btn-journal-legende{ display:none }
   body.interface-c.volet-journal #wg-journal .leg-largeur{ display:inline-flex }
   #wg-journal .leg-largeur{ display:none }
-  /* Passerelle Google : trois boutons compacts, sans etirement ni debordement. */
-  .google-rangee{ display:flex; gap:4px; margin-bottom:4px; align-items:stretch }
+  /* « .actions » est une grille a DEUX colonnes : chaque enfant occupe une case, ce qui
+     coupait le bloc Google en morceaux. On lui fait occuper toute la largeur. */
+  .actions .etiquette,
+  .actions .google-rangee,
+  .actions .google-coller,
+  .actions .google-note,
+  .actions .sep{ grid-column:1 / -1 }
+  .google-rangee{ display:flex; gap:5px; margin-bottom:5px; align-items:stretch; width:100% }
   /* « .actions button » impose padding:8px 12px et box-shadow a tous les boutons de la
      fenetre : on lui passe devant en nommant le conteneur. */
   .actions .google-rangee button.google-btn,
@@ -237,7 +243,7 @@
   button.google-btn:hover{ background:var(--encre); color:#fff }
   .google-btn span{ display:block; width:100%; text-align:center; overflow:hidden;
     text-overflow:ellipsis; white-space:nowrap }
-  .google-coller{ display:flex; gap:4px; align-items:center }
+  .google-coller{ display:flex; gap:5px; align-items:center; width:100% }
   .google-coller input{
     flex:1 1 0; min-width:0; font:11px system-ui; padding:5px 7px;
     border:1px solid var(--trait); border-radius:7px; background:#fff;
@@ -249,7 +255,7 @@
     box-shadow:none !important;
   }
   .actions .google-coller input{ box-shadow:none }
-  .google-note{ margin:4px 0 0; font-size:9.5px; line-height:1.4; color:#8a8577 }
+  .google-note{ margin:5px 0 0; font-size:9.5px; line-height:1.45; color:#8a8577; width:100% }
   .journal-corps{
     max-height:300px; overflow-y:auto; border:1px solid var(--trait); border-radius:8px;
     background:#fdfcf9; padding:5px 7px; font:10.5px/1.55 ui-monospace,SFMono-Regular,monospace;
@@ -1704,16 +1710,7 @@
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
     <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
   </div>
-  <div class="widget-corps"><button class="calque-ajout donnee" id="btn-feu-fbl" title="Le périmètre brûlé du feu de Fontainebleau (juillet 2026), cartographié par satellite par le service Copernicus EMS (activation EMSR894, produit de délinéation v2). Surfaces classées « Burnt area », simplifiées pour l'affichage.">🔥 Feu de Fontainebleau (juil. 2026)</button>
-      <button class="calque-ajout donnee" id="btn-feux-effis" title="Les surfaces brûlées cartographiées par le système européen EFFIS (Copernicus) à partir des satellites MODIS et VIIRS — saison en cours par défaut, années passées au sélecteur. Feux d'environ 30 ha et plus.">🔥 Feux de forêts (EFFIS)</button>
-      <select id="feux-annee" style="margin:2px 0 4px;font-size:12px;border:1px solid var(--trait);border-radius:6px;padding:2px">
-        <option value="">Saison en cours</option>
-        <option value="2025">2025</option>
-        <option value="2024">2024</option>
-        <option value="2023">2023</option>
-        <option value="2022">2022 (été record)</option>
-      </select>
-      <button class="calque-ajout donnee" id="btn-foret" title="Carte forestière BD Forêt® V2 de l'IGN : 32 types de peuplements photo-interprétés (feuillus, conifères, mixtes, peupleraies…) sur toute la métropole. En mode contrôle, cliquez sur une forêt pour connaître son type de peuplement et son essence dominante.">🌲 Carte forestière (IGN)</button>
+  <div class="widget-corps">      <button class="calque-ajout donnee" id="btn-foret" title="Carte forestière BD Forêt® V2 de l'IGN : 32 types de peuplements photo-interprétés (feuillus, conifères, mixtes, peupleraies…) sur toute la métropole. En mode contrôle, cliquez sur une forêt pour connaître son type de peuplement et son essence dominante.">🌲 Carte forestière (IGN)</button>
     <button class="calque-ajout donnee" id="btn-resineux" title="Échantillonne la vue actuelle (grille de points) via BD Forêt® IGN et calcule le taux de résineux (conifères) parmi les forêts détectées. Utilisé aussi pour affiner la vitesse de propagation du feu (les résineux brûlent plus vite que les feuillus).">🌲🔥 Taux de résineux (vue)</button>
       <button class="calque-ajout donnee" id="btn-foret-pub" title="Forêts publiques gérées par l'ONF : forêts domaniales (État) et forêts des collectivités (communales, départementales…). En mode contrôle, cliquez sur une forêt pour son nom. Repère : la forêt couvre ≈ 17,5 millions d'hectares en métropole (près d'un tiers du territoire) — ¾ privée, ¼ publique gérée par l'ONF.">🌳 Forêts publiques (ONF)</button>
       <button class="calque-ajout donnee" id="btn-foret-verte" title="La forêt entière en une seule teinte vert pomme : la carte forestière IGN + les forêts publiques ONF (recolorées) + les bois OpenStreetMap de la vue, fusionnés sans distinction de type ni de propriété. Partie OSM : zoom 10 minimum, rechargée au déplacement.">🌳 Forêt (fusion, vert pomme)</button>
@@ -2232,7 +2229,7 @@
         <input type="range" class="jour-range" id="jour-max" min="0" max="15" value="15" title="Jour le plus ancien affiché">
       </div>
     </div>
-    <button class="calque-ajout donnee" id="btn-feux-actifs" title="Affiche les points chauds détectés par les satellites : chaque point est une zone anormalement chaude vue depuis l'espace. Toutes les sources (NASA GIBS et EFFIS, VIIRS et MODIS) sont superposées d'un coup : celle qui répond s'affiche. Mise à jour 6 fois par jour, 2 à 3 h après le passage du satellite.">🔥 Feux détectés</button>
+        <button class="calque-ajout donnee" id="btn-feux-actifs" title="Affiche les points chauds détectés par les satellites : chaque point est une zone anormalement chaude vue depuis l'espace. Toutes les sources (NASA GIBS et EFFIS, VIIRS et MODIS) sont superposées d'un coup : celle qui répond s'affiche. Mise à jour 6 fois par jour, 2 à 3 h après le passage du satellite.">🔥 Feux détectés</button>
     <button class="calque-ajout donnee" id="btn-zones-feux" title="Dessine un halo jaune translucide, entouré d'un liseré ambre, autour des secteurs où les points chauds se concentrent — calculé en direct dans le navigateur à partir des détections satellite (flou + seuil), sans données ni clé externes. Calculé pour la zone affichée puis figé sur la carte : il grandit et rétrécit avec le zoom sans disparaître. Recentrez (zone entière visible) puis relancez pour un autre secteur.">🟡 Zones de feux (halo)</button>
     <button class="calque-ajout donnee" id="btn-fleches" style="display:none" title="Sur chaque foyer : une flèche ROUGE = sens de propagation du feu (déduit de l'historique 15 jours, du plus ancien vers le plus récent), et des flèches BLEUES = vent qui pousse le feu, maintenant et prévu à +24 h et +48 h. Activez d'abord « Zones de feux ».">➤ Flèches : propagation &amp; vent</button>
     <button class="calque-ajout donnee" id="btn-risque-feu" title="Le risque d'incendie du jour (indice Feu Météo / FWI, EFFIS-Copernicus) : du vert « faible » au rouge « extrême », en HACHURES pour laisser voir la carte et se distinguer des feux réels. C'est le DANGER prévu, pas des feux détectés.">🔶 Risque incendie (hachuré)</button>
@@ -2247,11 +2244,25 @@
       <option value="1" selected>Vérifier : hier (J-1)</option>
       <option value="2">J-2</option><option value="3">J-3</option><option value="4">J-4</option><option value="5">J-5</option><option value="6">J-6</option>
     </select>
-    <button class="calque-ajout donnee" id="btn-fwi" title="Carte OFFICIELLE du danger d’incendie : indice FWI du jour calculé par EFFIS / Copernicus — celle que consultent les services d’incendie européens.">🗺️ Danger FWI (EFFIS)</button>
     <button class="calque-ajout donnee" id="btn-msgfrp" title="Détections de feux par le satellite géostationnaire MSG (LSA SAF, FRP-PIXEL) — mis à jour toutes les 15 minutes, bien plus fréquent que VIIRS/MODIS (3-4 passages/jour). Moins précis spatialement. Cliquez un point (mode contrôle) pour la puissance radiative, la confiance et l’heure exactes.">🛰️ Détections MSG (15 min)</button>
     <button class="calque-ajout donnee" id="btn-ptschauds" title="Points chauds VIIRS individuels, dimensionnés selon leur PUISSANCE RADIATIVE (FRP, en mégawatts) : plus le point est gros et rouge, plus le foyer dégage d’énergie. Cliquez un point pour le détail complet. Nécessite la clé FIRMS gratuite (champ ci-dessous).">🔴 Points chauds détaillés (FIRMS)</button>
-    <div id="msgfrp-lbl" style="display:none;font-size:10px;color:#8a8577;padding:1px 2px 3px"></div>
     <button class="calque-ajout donnee" id="btn-france-feux" title="VUE D'ENSEMBLE : bulles proportionnelles à l’ampleur estimée des groupes de détections satellite sur toute la France, colorées selon la récence. Précision réelle si une clé FIRMS gratuite est renseignée ; sinon estimation grossière par comptage de pixels. Ce n’est PAS le statut officiel (voir feuxdeforet.fr / PSFDF).">🗺️ Vue d’ensemble France</button>
+    <div class="sep"></div>
+    <span class="etiquette">Danger et bilans</span>
+    <button class="calque-ajout donnee" id="btn-fwi" title="Carte OFFICIELLE du danger d’incendie : indice FWI du jour calculé par EFFIS / Copernicus — celle que consultent les services d’incendie européens.">🔴 Danger d’incendie du jour (FWI)</button>
+    <button class="calque-ajout donnee" id="btn-feu-fbl" title="Le périmètre brûlé du feu de Fontainebleau (juillet 2026), cartographié par satellite par le service Copernicus EMS (activation EMSR894, produit de délinéation v2). Surfaces classées « Burnt area », simplifiées pour l'affichage.">🔥 Feu de Fontainebleau (juil. 2026)</button>
+      <button class="calque-ajout donnee" id="btn-feux-effis" title="Les surfaces brûlées cartographiées par le système européen EFFIS (Copernicus) à partir des satellites MODIS et VIIRS — saison en cours par défaut, années passées au sélecteur. Feux d'environ 30 ha et plus.">🟫 Surfaces brûlées (EFFIS)</button>
+      <select id="feux-annee" style="margin:2px 0 4px;font-size:12px;border:1px solid var(--trait);border-radius:6px;padding:2px">
+        <option value="">Saison en cours</option>
+        <option value="2025">2025</option>
+        <option value="2024">2024</option>
+        <option value="2023">2023</option>
+        <option value="2022">2022 (été record)</option>
+      </select>
+    
+    
+    <div id="msgfrp-lbl" style="display:none;font-size:10px;color:#8a8577;padding:1px 2px 3px"></div>
+    
     <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#57534e;margin:3px 0 1px">
       <span>Fenêtre :</span>
       <input type="range" id="france-jours" min="0" max="40" value="7" style="flex:1;accent-color:#7c2d12">
@@ -2418,7 +2429,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v5.16.4.1</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v6.0.1</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -2538,7 +2549,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v5.16.4.1</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v6.0.1</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -2759,6 +2770,15 @@
   const JOURNAL_MAX = 400;
 
   function journal(genre, texte, detail){
+    // Une entree identique a la precedente est comptee, pas repetee : les tuiles d'une
+    // meme couche produisaient vingt lignes consecutives qui noyaient le reste.
+    const der = JOURNAL[JOURNAL.length - 1];
+    if(der && der.genre === genre && der.texte === String(texte == null ? '' : texte).slice(0, 300)){
+      der.repete = (der.repete || 1) + 1;
+      const c = document.getElementById('journal-corps');
+      if(c && c.offsetParent) rendreJournal();
+      return;
+    }
     const d = new Date();
     JOURNAL.push({
       t: d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit', second:'2-digit' })
@@ -2830,7 +2850,8 @@
       g.textContent = l.genre;
       g.style.color = couleurs[l.genre] || '#57534e';
       const t = document.createElement('span');
-      t.textContent = l.texte + (l.detail ? '  \u2014 ' + l.detail : '');
+      t.textContent = l.texte + (l.repete ? '  (\u00d7' + l.repete + ')' : '')
+        + (l.detail ? '  \u2014 ' + l.detail : '');
       d.appendChild(h); d.appendChild(g); d.appendChild(t);
       c.appendChild(d);
     });
@@ -2848,7 +2869,8 @@
           catch(e){ return 'indisponible'; } })() + '\n'
       + '\u2014'.repeat(40) + '\n';
     return entete + JOURNAL.map(function(l){
-      return l.t + '  [' + l.genre + ']  ' + l.texte + (l.detail ? '  \u2014 ' + l.detail : '');
+      return l.t + '  [' + l.genre + ']  ' + l.texte + (l.repete ? '  (\u00d7' + l.repete + ')' : '')
+        + (l.detail ? '  \u2014 ' + l.detail : '');
     }).join('\n');
   }
 
@@ -3132,7 +3154,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v5.16.4.1';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v6.0.1';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -6962,7 +6984,12 @@
     }
     if(!etatSmassifs.groupe){
       etatSmassifs.groupe = L.layerGroup();
-      if(!map.getPane('choro')){ const el = map.createPane('choro'); if(el && el.style) el.style.zIndex = 350; }
+      // pane dedie : dans « choro », les sous-massifs passaient sous les cartes
+      // choroplethes et sous les surfaces climatiques, donc invisibles a l'ecran
+      if(!map.getPane('smassifs')){
+        const el = map.createPane('smassifs');
+        if(el && el.style) el.style.zIndex = 372;
+      }
       RELIEF_FIN.massifs.forEach(m=>{
         const fam = RELIEF_FIN.familles[m[3]];
         L.marker(L.latLng(m[1], m[2]), { keyboard:false, icon: L.divIcon({
@@ -7078,11 +7105,18 @@
       ctx.putImageData(donnees, 0, 0);
       const bornes = [[latDeY(y2+1, z), lonDeX(x1, z)], [latDeY(y1, z), lonDeX(x2+1, z)]];
       if(etatSmassifs.calque) map.removeLayer(etatSmassifs.calque);
-      if(!map.getPane('choro')){ const el = map.createPane('choro'); if(el && el.style) el.style.zIndex = 350; }
-      etatSmassifs.calque = L.imageOverlay(cv.toDataURL('image/png'), bornes, { pane:'choro', opacity:1 }).addTo(map);
+      // pane dedie plutot que « choro » : les cartes choroplethes et les surfaces
+      // climatiques y passaient par-dessus, rendant les sous-massifs invisibles
+      if(!map.getPane('smassifs')){
+        const el = map.createPane('smassifs');
+        if(el && el.style) el.style.zIndex = 372;
+      }
+      etatSmassifs.calque = L.imageOverlay(cv.toDataURL('image/png'), bornes, { pane:'smassifs', opacity:1 }).addTo(map);
       cacherInfo();
     }catch(e){
       if(idReq !== etatSmassifs.requete) return;
+      if(typeof journal === 'function')
+        journal('couche', 'sous-massifs : \u00e9chec du calcul', String(e && e.message || e).slice(0, 80));
       cacherInfo();
       afficherInfo('🏔 Tuiles d\u2019altitude inaccessibles \u2014 seuls les noms sont affich\u00e9s', 5000);
     }
@@ -7782,11 +7816,16 @@
       return;
     }
     const b = map.getBounds();
-    const bbox = [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()].map(x=>x.toFixed(4)).join(',');
-    const requete = '[out:json][timeout:30];('
+    const eS = empriseSure(b);
+    const bbox = [eS.sud, eS.ouest, eS.nord, eS.est].map(x=>x.toFixed(4)).join(',');
+    // Sans motorway_link, l'autoroute paraissait coupee a chaque echangeur ; sans trunk,
+    // tout le reseau structurant des anciennes nationales a 2x2 voies manquait.
+    const requete = '[out:json][timeout:25];('
       + 'way["highway"="motorway"]('+bbox+');'
+      + 'way["highway"="motorway_link"]('+bbox+');'
+      + 'way["highway"="trunk"]('+bbox+');'
       + 'way["railway"="rail"]["highspeed"="yes"]('+bbox+');'
-      + ');out geom 900;';
+      + ');out geom 1200;';
     try{
       const rep = await overpassRequete(requete);
       const r = await rep.json();
@@ -7794,14 +7833,29 @@
       if(!e.groupe) e.groupe = L.layerGroup();
       e.groupe.clearLayers();
       let auto = 0, lgv = 0;
+      const parType = { autoroute:0, bretelle:0, trunk:0, lgv:0 };
       (r.elements||[]).forEach(el=>{
         if(!el.geometry || el.geometry.length < 2) return;
-        const estLgv = el.tags && el.tags.railway === 'rail';
+        const t = el.tags || {};
+        const estLgv = t.railway === 'rail';
+        const genre = estLgv ? 'lgv'
+                    : (t.highway === 'motorway_link' ? 'bretelle'
+                    : (t.highway === 'trunk' ? 'trunk' : 'autoroute'));
         if(estLgv) lgv++; else auto++;
-        L.polyline(ptsGeom(el.geometry), {
-          color: estLgv ? '#be185d' : '#1d4ed8', weight: estLgv ? 2.6 : 3.2,
-          opacity:0.9, dashArray: estLgv ? '10 5' : null
-        }).bindTooltip('<b>'+echap((el.tags && (el.tags.name || el.tags.ref)) || (estLgv ? 'Ligne \u00e0 grande vitesse' : 'Autoroute'))+'</b>'
+        parType[genre]++;
+        const style = {
+          autoroute: { color:'#1d4ed8', weight:4.2, opacity:0.95, dashArray:null },
+          bretelle:  { color:'#60a5fa', weight:2.2, opacity:0.85, dashArray:null },
+          trunk:     { color:'#0891b2', weight:3, opacity:0.9, dashArray:null },
+          lgv:       { color:'#be185d', weight:2.8, opacity:0.95, dashArray:'11 5' }
+        }[genre];
+        const pts = ptsGeom(el.geometry);
+        // lisere blanc dessous : sans lui les traits se confondent avec le fond routier
+        if(genre === 'autoroute' || genre === 'lgv'){
+          L.polyline(pts, { color:'#ffffff', weight:style.weight + 3, opacity:0.55,
+            dashArray:null, interactive:false }).addTo(e.groupe);
+        }
+        L.polyline(pts, style).bindTooltip('<b>'+echap((el.tags && (el.tags.name || el.tags.ref)) || (estLgv ? 'Ligne \u00e0 grande vitesse' : 'Autoroute'))+'</b>'
           +'<br><small>'+(estLgv ? 'LGV' : 'autoroute')+' \u00b7 trac\u00e9 OpenStreetMap</small>', {sticky:true})
           .addTo(e.groupe);
       });
@@ -7829,8 +7883,9 @@
     if(!e.actif) return;
     if(map.getZoom() < 8){ afficherInfo('\ud83d\ude86 Zoomez (niveau 8 minimum) pour tracer les voies ferr\u00e9es de la zone', 4500); return; }
     const b = map.getBounds();
-    const bbox = [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()].map(x=>x.toFixed(4)).join(',');
-    const requete = '[out:json][timeout:30];('
+    const eSr = empriseSure(b);
+    const bbox = [eSr.sud, eSr.ouest, eSr.nord, eSr.est].map(x=>x.toFixed(4)).join(',');
+    const requete = '[out:json][timeout:25];('
       + 'way["railway"~"^(rail|light_rail|narrow_gauge)$"]('+bbox+');'  // TOUT le réseau ferré (rail, voies légères, voie étroite), service compris
       + ');out geom 6000;';
     try{
@@ -7847,10 +7902,18 @@
         const service = !!t.service;                         // triage, garage, tiroir\u2026
         const branche = t.usage === 'branch' || t.railway === 'narrow_gauge' || t.railway === 'light_rail';
         n++; if(hs) lgv++;
-        L.polyline(ptsGeom(el.geometry), {
-          color: hs ? '#be185d' : (service ? '#9ca3af' : (branche ? '#6b7280' : '#334155')),
-          weight: hs ? 2.6 : (service ? 1.1 : (branche ? 1.6 : 2.3)), opacity: service ? 0.75 : 0.9,
-          dashArray: hs ? '10 5' : (service ? '2 4' : null)
+        const ptsR = ptsGeom(el.geometry);
+        const larg = hs ? 3 : (service ? 1.1 : (branche ? 1.7 : 2.6));
+        // lisere clair sous les lignes qui structurent le reseau : sans lui, un trait
+        // sombre de 2 px se perd dans le detail du fond de carte
+        if(hs || (!service && !branche)){
+          L.polyline(ptsR, { color:'#ffffff', weight:larg + 2.6, opacity:0.5,
+            dashArray:null, interactive:false }).addTo(e.groupe);
+        }
+        L.polyline(ptsR, {
+          color: hs ? '#be185d' : (service ? '#9ca3af' : (branche ? '#78716c' : '#1e293b')),
+          weight: larg, opacity: service ? 0.7 : 0.95,
+          dashArray: hs ? '11 5' : (service ? '2 4' : null)
         }).bindTooltip('<b>'+echap(t.name || t.ref || 'Voie ferr\u00e9e')+'</b>'
           +'<br><small>'+(hs ? 'ligne \u00e0 grande vitesse' : (service ? 'voie de service' : (branche ? 'ligne secondaire' : 'ligne principale')))
           +(t.electrified && t.electrified !== 'no' ? ' \u00b7 \u00e9lectrifi\u00e9e' : '')+' \u00b7 OSM</small>', {sticky:true})
@@ -8980,7 +9043,7 @@
       etatCumulBrule.libelle = null;
       for(let a = anCourant; a >= premier; a--){
         etatCumulBrule.annees.push(a);
-        const couche = L.tileLayer.wms('https://maps.effis.emergency.copernicus.eu/effis?', {
+        const couche = L.tileLayer.wms(EFFIS_SERVEURS[effisIndice % EFFIS_SERVEURS.length] + '?', {
           layers:'viirs.ba.poly,modis.ba.poly', format:'image/png', transparent:true, version:'1.1.1',
           opacity:0.75, time:String(a), attribution:'&copy; Copernicus EFFIS' });
         brancher(couche, '\ud83d\udfeb EFFIS ne r\u00e9pond pas pour certaines ann\u00e9es \u2014 les autres restent affich\u00e9es');
@@ -9349,7 +9412,7 @@
     }
     etatRisqueFeu.actif = true;
     basculerBouton(btn, true, '\ud83d\udd36 Risque incendie \u2715', '', '#ea580c');
-    const couche = L.tileLayer.wms('https://maps.effis.emergency.copernicus.eu/effis?', {
+    const couche = L.tileLayer.wms(EFFIS_SERVEURS[effisIndice % EFFIS_SERVEURS.length] + '?', {
       layers:'ecmwf007.fwi', format:'image/png', transparent:true, version:'1.1.1',
       opacity:0.8, time:dateJour(0), pane:'risqueFeu', attribution:'&copy; Copernicus EFFIS \u2014 indice FWI (ECMWF)' });
     let signale = false;
@@ -12130,8 +12193,17 @@
     if(JOURNAL_FWI.length > 12) JOURNAL_FWI.shift();
   }
 
-  function urlFwi(bbox, jour, couche){
-    return 'https://maps.effis.emergency.copernicus.eu/effis?SERVICE=WMS&VERSION=1.1.1'
+  // EFFIS publie DEUX serveurs WMS equivalents. Celui de Copernicus refuse
+  // GetFeatureInfo sur la couche FWI ; celui du JRC repond. On essaie les deux.
+  const EFFIS_SERVEURS = [
+    'https://ies-ows.jrc.ec.europa.eu/effis',
+    'https://maps.effis.emergency.copernicus.eu/effis'
+  ];
+  let effisIndice = 0;
+
+  function urlFwi(bbox, jour, couche, serveur){
+    return (serveur || EFFIS_SERVEURS[effisIndice % EFFIS_SERVEURS.length])
+      + '?SERVICE=WMS&VERSION=1.1.1'
       + '&REQUEST=GetFeatureInfo&LAYERS=' + couche + '&QUERY_LAYERS=' + couche + '&STYLES='
       + '&SRS=EPSG:4326&BBOX=' + bbox + '&WIDTH=101&HEIGHT=101&X=50&Y=50'
       + '&FORMAT=image/png&INFO_FORMAT=application/json&FEATURE_COUNT=1'
@@ -12154,15 +12226,17 @@
   async function fwiEffis(ll){
     const dd = 0.35, bbox = (ll.lng-dd)+','+(ll.lat-dd)+','+(ll.lng+dd)+','+(ll.lat+dd);
     const couches = ['ecmwf007.fwi', 'ecmwf.fwi'];
+    const serveurs = EFFIS_SERVEURS;
     let derniereCause = '';
     for(let ic = 0; ic < couches.length; ic++){
       for(let jour = 0; jour <= 3; jour++){
         const d = dateJour(jour);
         try{
-          const r = await fetch(urlFwi(bbox, d, couches[ic]));
+          const srv = serveurs[(ic + jour) % serveurs.length];
+          const r = await fetch(urlFwi(bbox, d, couches[ic], srv));
           if(!r.ok){
             derniereCause = 'HTTP ' + r.status;
-            noterFwi(couches[ic] + ' au ' + d + ' \u2192 HTTP ' + r.status);
+            noterFwi(couches[ic] + ' au ' + d + ' sur ' + srv.replace('https://','').split('/')[0] + ' \u2192 HTTP ' + r.status);
             continue;
           }
           const txt = await r.text();
@@ -12170,7 +12244,7 @@
             const m = txt.match(/<ServiceException[^>]*>([\s\S]{0,200})/i);
             const brut = m ? m[1].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '';
             derniereCause = causeLisible(brut);
-            noterFwi(couches[ic] + ' au ' + d + ' \u2192 ' + derniereCause);
+            noterFwi(couches[ic] + ' au ' + d + ' sur ' + srv.replace('https://','').split('/')[0] + ' \u2192 ' + derniereCause);
             continue;
           }
           let js2;
@@ -12190,7 +12264,9 @@
             const v = parseFloat(f[k]);
             if(isFinite(v) && v >= 0 && v <= 200){
               noterFwi(couches[ic] + ' au ' + d + ' \u2192 FWI ' + Math.round(v * 10) / 10 + ' (champ ' + k + ')');
+              effisIndice = serveurs.indexOf(srv);
               noterService('Danger FWI (EFFIS)', true, couches[ic] + ' au ' + d
+                + ' sur ' + srv.replace('https://','').split('/')[0]
                 + (jour ? ' (donn\u00e9e du jour non publi\u00e9e, repli \u00e0 J-' + jour + ')' : ''));
               return v;
             }
@@ -12199,7 +12275,7 @@
           noterFwi(couches[ic] + ' au ' + d + ' \u2192 champs : ' + Object.keys(f).join(', ').slice(0, 60));
         }catch(e){
           derniereCause = String(e && e.message || e).slice(0, 70);
-          noterFwi(couches[ic] + ' au ' + d + ' \u2192 ' + derniereCause);
+          noterFwi(couches[ic] + ' au ' + d + ' sur ' + srv.replace('https://','').split('/')[0] + ' \u2192 ' + derniereCause);
         }
       }
     }
@@ -12516,7 +12592,7 @@
     const btn = document.getElementById('btn-fwi');
     if(etatFwi.actif){ etatFwi.actif = false; if(etatFwi.layer) map.removeLayer(etatFwi.layer); etatFwi.layer = null; basculerBouton(btn, false, '', '🗺️ Danger FWI (EFFIS)'); return; }
     etatFwi.actif = true; basculerBouton(btn, true, '🗺️ FWI ✕', '', '#b91c1c');
-    etatFwi.layer = L.tileLayer.wms('https://maps.effis.emergency.copernicus.eu/effis?', { layers:'ecmwf007.fwi', format:'image/png', transparent:true, version:'1.1.1', opacity:0.55, time:dateJour(0), attribution:'EFFIS / Copernicus EMS' });
+    etatFwi.layer = L.tileLayer.wms(EFFIS_SERVEURS[effisIndice % EFFIS_SERVEURS.length] + '?', { layers:'ecmwf007.fwi', format:'image/png', transparent:true, version:'1.1.1', opacity:0.55, time:dateJour(0), attribution:'EFFIS / Copernicus EMS' });
     etatFwi.layer.addTo(map);
     afficherInfo('🗺️ Indice FWI du jour (EFFIS / Copernicus) — la carte officielle du danger d’incendie · couleurs chaudes = danger élevé', 8000);
   });
@@ -13891,11 +13967,26 @@
     for(const gis of GISEMENTS){
       if(!etatGisements.actif) return;
       try{
-        const r = await fetch('https://api-adresse.data.gouv.fr/search/?limit=1&type=municipality&q='
-          + encodeURIComponent(gis.n) + '&postcode=' + (gis.d.length === 2 ? gis.d + '000' : ''));
+        // Le filtre « postcode » supposait que le code postal soit le numero du
+        // departement suivi de trois zeros : faux presque partout — Salsigne est a
+        // 11600, Chessy a 69380. On demande donc plusieurs resultats et on retient
+        // celui dont le departement correspond.
+        const r = await fetch('https://api-adresse.data.gouv.fr/search/?limit=8&type=municipality&q='
+          + encodeURIComponent(gis.n));
         const d = await r.json();
-        const f = d && d.features && d.features[0];
+        const liste = (d && d.features) || [];
+        const bon = liste.find(function(x){
+          const p = x.properties || {};
+          const code = String(p.citycode || p.postcode || '');
+          // code INSEE ou postal : les deux commencent par le numero de departement,
+          // avec le cas particulier de la Corse (2A, 2B) et des territoires ultramarins
+          return code.indexOf(gis.d) === 0;
+        });
+        const f = bon || liste[0];
         if(!f || !f.geometry){ manques.push(gis.n); continue; }
+        if(!bon && typeof journal === 'function')
+          journal('couche', 'gisement ' + gis.n + ' : departement non confirme',
+            'attendu ' + gis.d + ', retenu ' + ((f.properties || {}).citycode || '?'));
         const [lon, lat] = f.geometry.coordinates;
         L.circleMarker([lat, lon], { radius:7, weight:2, color:'#0891b2',
           fillColor:'#a5f3fc', fillOpacity:0.95 })
@@ -14069,13 +14160,23 @@
     }
   }
 
+  // Quand un clade n'existe pas dans le referentiel GBIF, on interroge PLUSIEURS familles
+  // a la fois : GBIF accepte autant de taxonKey que l'on veut dans une meme requete.
+  // Se rabattre sur une seule famille donnait zero resultat — Tyrannosauridae est
+  // nord-americain et asiatique, il n'y en a aucun en Europe.
   const REPLIS_FOSSILES = {
-    'Dinosauria':   ['Tyrannosauridae', 'Diplodocidae', 'Iguanodontidae', 'Ceratopsidae'],
-    'Pterosauria':  ['Pterodactylidae', 'Rhamphorhynchidae', 'Pterodactylus'],
-    'Ichthyosauria':['Ichthyosauridae', 'Ichthyosaurus'],
-    'Mosasauridae': ['Mosasaurus'],
-    'Ammonoidea':   ['Ammonitida', 'Ammonites'],
-    'Belemnitida':  ['Belemnitidae', 'Belemnites']
+    'Dinosauria': [
+      // familles europeennes d'abord, puis les grandes familles mondiales
+      'Iguanodontidae', 'Megalosauridae', 'Titanosauria', 'Hadrosauridae',
+      'Diplodocidae', 'Allosauridae', 'Stegosauridae', 'Ceratopsidae',
+      'Tyrannosauridae', 'Ornithomimidae', 'Dromaeosauridae', 'Theropoda',
+      'Sauropoda', 'Ornithischia'
+    ],
+    'Pterosauria':  ['Pterodactylidae', 'Rhamphorhynchidae', 'Pterodactylus', 'Pterodactyloidea'],
+    'Ichthyosauria':['Ichthyosauridae', 'Ichthyosaurus', 'Ichthyopterygia'],
+    'Mosasauridae': ['Mosasaurus', 'Mosasaurinae'],
+    'Ammonoidea':   ['Ammonitida', 'Ammonites', 'Ammonitina'],
+    'Belemnitida':  ['Belemnitidae', 'Belemnites', 'Belemnitina']
   };
 
   async function chargerFossiles(cle, taxon, coul, btn, libelle){
@@ -14083,10 +14184,23 @@
     const eSure = empriseSure(b);
     let k = await cleTaxon(taxon);
     let nomRetenu = taxon;
+    let clefs = k ? [k] : [];
     if(!k && REPLIS_FOSSILES[taxon]){
+      // on resout TOUTES les familles de repli et on les interroge ensemble : une seule
+      // ne couvrirait qu'une region du monde, souvent pas l'Europe.
+      const noms = [];
       for(const secours of REPLIS_FOSSILES[taxon]){
-        k = await cleTaxon(secours);
-        if(k){ nomRetenu = secours; break; }
+        const kk = await cleTaxon(secours);
+        if(kk && clefs.indexOf(kk) === -1){ clefs.push(kk); noms.push(secours); }
+      }
+      if(clefs.length){
+        k = clefs[0];
+        nomRetenu = noms.length > 1
+          ? noms.length + ' familles (' + noms.slice(0, 3).join(', ')
+            + (noms.length > 3 ? '\u2026' : '') + ')'
+          : noms[0];
+        if(typeof journal === 'function')
+          journal('couche', 'fossile ' + taxon + ' \u2192 ' + clefs.length + ' taxon(s) interroge(s)', noms.join(', '));
       }
     }
     if(!k){
@@ -14096,7 +14210,7 @@
     }
     // pas de filtre d'année ici : elle indiquerait la date de collecte, pas l'âge du fossile
     const url = 'https://api.gbif.org/v1/occurrence/search'
-      + '?taxonKey=' + k
+      + '?' + clefs.map(function(x){ return 'taxonKey=' + x; }).join('&')
       + '&basisOfRecord=FOSSIL_SPECIMEN'
       + '&decimalLatitude=' + eSure.sud.toFixed(3) + ',' + eSure.nord.toFixed(3)
       + '&decimalLongitude=' + eSure.ouest.toFixed(3) + ',' + eSure.est.toFixed(3)
@@ -17443,7 +17557,7 @@
       version:'1.1.1', opacity:0.85, attribution:'&copy; Copernicus EFFIS' };
     if(annee) opts.time = annee;
     if(etatEffis.layer) map.removeLayer(etatEffis.layer);
-    etatEffis.layer = L.tileLayer.wms('https://maps.effis.emergency.copernicus.eu/effis?', opts);
+    etatEffis.layer = L.tileLayer.wms(EFFIS_SERVEURS[effisIndice % EFFIS_SERVEURS.length] + '?', opts);
     etatEffis.layer.on('tileerror', ()=>{
       if(!etatEffis.alerte){ etatEffis.alerte = true; afficherInfo('🔥 Le flux EFFIS ne r\u00e9pond pas pour le moment \u2014 r\u00e9essayez plus tard', 5000); }
     });
