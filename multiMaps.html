@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v6.0.5.1 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v6.0.9 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v6.0.5.1</title>
+<title>MultiMaps — géographie (collège & lycée) — v6.0.9</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -256,6 +256,22 @@
   }
   .actions .google-coller input{ box-shadow:none }
   .google-note{ margin:5px 0 0; font-size:9.5px; line-height:1.45; color:#8a8577; width:100% }
+  /* Curseur de zoom, sous la recherche du rail. */
+  .rail-zoom{ display:flex; align-items:center; gap:6px; margin:5px 0 2px }
+  .rail-zoom input[type=range]{ flex:1 1 0; min-width:0; height:16px; cursor:pointer; accent-color:var(--encre) }
+  #zoom-valeur{
+    flex:0 0 auto; min-width:34px; text-align:center; font:700 11px ui-monospace,monospace;
+    color:var(--encre); background:#fdfcf9; border:1px solid var(--trait);
+    border-radius:6px; padding:1px 5px;
+  }
+  /* Nom du massif, pose au centre de son contour reel. */
+  .massif-etq{ background:none !important; border:0 !important; pointer-events:none }
+  .massif-etq span{
+    display:inline-block; transform:translate(-50%, -50%);
+    font:700 12px/1.15 system-ui, sans-serif; white-space:nowrap;
+    text-shadow:0 0 3px #fff, 0 0 3px #fff, 0 0 5px #fff, 1px 1px 0 #fff, -1px -1px 0 #fff;
+    letter-spacing:.02em;
+  }
   .journal-corps{
     max-height:300px; overflow-y:auto; border:1px solid var(--trait); border-radius:8px;
     background:#fdfcf9; padding:5px 7px; font:10.5px/1.55 ui-monospace,SFMono-Regular,monospace;
@@ -2124,6 +2140,7 @@
     <div class="croquis-rangee" style="margin-top:4px">
       <button class="croquis-btn" id="btn-journal-test" title="Interroge les principaux services un par un et note lesquels répondent.">🩺 Tester les services</button>
       <button class="croquis-btn" id="btn-journal-copier" title="Copie tout le journal, avec le navigateur et la vue en cours.">📋 Copier tout</button>
+      <button class="croquis-btn" id="btn-journal-perf" title="Classe les services par temps de réponse moyen : voir en un coup d’œil lequel ralentit l’application.">⏱ Temps de réponse</button>
       <button class="croquis-btn" id="btn-journal-vider" title="Efface le journal.">🗑 Vider</button>
       <button class="croquis-btn" id="btn-journal-legende" title="Rendre la place à la légende dans le volet de droite.">🧭 Revenir à la légende</button>
     </div>
@@ -2429,7 +2446,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v6.0.5.1</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v6.0.9</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -2441,6 +2458,10 @@
       <button id="btn-rail-cherche" title="Chercher">🔍</button>
     </div>
     <div id="res-rail" class="res-rail" hidden></div>
+    <div class="rail-zoom" title="Niveau de zoom de la carte. Glissez pour changer d’échelle : 5 = la France entière, 10 = un département, 14 = une ville, 18 = une rue.">
+      <input type="range" id="zoom-curseur" min="3" max="18" step="1" value="6" aria-label="Niveau de zoom">
+      <span id="zoom-valeur">6</span>
+    </div>
     <div class="pilote-grille">
       <button class="pilote-btn" data-cible="wg-options" title="Réglages d’affichage, couleurs, lisibilité, choix de l’interface et partage">⚙️ Options</button>
     </div>
@@ -2549,7 +2570,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v6.0.5.1</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v6.0.9</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -2767,6 +2788,8 @@
   // appels réseau et leur résultat, messages affichés, couches allumées ou éteintes.
   // Objectif : ne plus jamais avoir à deviner pourquoi quelque chose ne marche pas.
   const JOURNAL = [];
+  // temps de reponse par service : moyenne, maximum et nombre d'echecs
+  const CHRONO = {};
   const JOURNAL_MAX = 400;
 
   function journal(genre, texte, detail){
@@ -2813,10 +2836,21 @@
       const t0 = Date.now();
       return brut(entree, options).then(function(r){
         const ms = Date.now() - t0;
+        // on tient une moyenne par service, pour reperer d'un coup d'oeil ce qui traine
+        try{
+          const hote = court.split('/')[0];
+          const s = CHRONO[hote] || (CHRONO[hote] = { n:0, total:0, max:0, echecs:0 });
+          s.n++; s.total += ms; if(ms > s.max) s.max = ms;
+        }catch(e){}
         if(r && r.ok === false) journal('reseau', court + ' \u2192 HTTP ' + r.status, ms + ' ms');
         else journal('reseau', court + ' \u2192 ok', ms + ' ms');
         return r;
       }).catch(function(e){
+        try{
+          const hote = court.split('/')[0];
+          const s = CHRONO[hote] || (CHRONO[hote] = { n:0, total:0, max:0, echecs:0 });
+          s.echecs++;
+        }catch(e2){}
         journal('reseau', court + ' \u2192 \u00c9CHEC', String(e && e.message || e).slice(0, 90));
         throw e;
       });
@@ -2938,6 +2972,21 @@
   (function cablerJournal(){
     const f = document.getElementById('journal-filtre');
     if(f) f.addEventListener('change', rendreJournal);
+    const p = document.getElementById('btn-journal-perf');
+    if(p) p.addEventListener('click', function(){
+      const lignes = Object.keys(CHRONO).map(function(k){
+        const s = CHRONO[k];
+        return { hote:k, moy: s.n ? Math.round(s.total / s.n) : 0, max:s.max, n:s.n, echecs:s.echecs };
+      }).sort(function(a, b){ return b.moy - a.moy; });
+      if(!lignes.length){ afficherInfo('Aucun appel r\u00e9seau mesur\u00e9 pour l\u2019instant', 4000); return; }
+      journal('action', '\u2014 temps de r\u00e9ponse par service \u2014');
+      lignes.slice(0, 14).forEach(function(l){
+        journal('service', l.hote + ' : ' + l.moy + ' ms en moyenne',
+          'max ' + l.max + ' ms \u00b7 ' + l.n + ' appel(s)' + (l.echecs ? ' \u00b7 ' + l.echecs + ' \u00e9chec(s)' : ''));
+      });
+      rendreJournal();
+    });
+
     const c = document.getElementById('btn-journal-copier');
     if(c) c.addEventListener('click', async function(){
       const txt = texteJournal();
@@ -3154,7 +3203,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v6.0.5.1';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v6.0.9';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -4489,6 +4538,9 @@
   // Un serveur qui echoue en moins d'une seconde ne repond pas : c'est un blocage du
   // navigateur, pas une lenteur. Inutile de le reessayer a chaque couche.
   const OVERPASS_MORTS = {};
+  // dernier serveur ayant reellement repondu : permet de savoir si la reponse vient
+  // d'un miroir regional, dont un « 0 resultat » ne prouve rien hors de sa zone
+  const DERNIER_OVERPASS = { url:'' };
 
   // File d'attente : deux requetes a la fois au maximum. Dix-huit couches lancees
   // ensemble saturaient les serveurs, qui repondaient 504 apres trente secondes.
@@ -4518,10 +4570,39 @@
     }catch(e){}
   })();
 
+  // Cache des reponses Overpass : revenir sur une zone deja consultee ne doit pas
+  // couter une nouvelle attente de plusieurs secondes. La requete elle-meme sert de
+  // cle — elle contient deja l'emprise et les etiquettes cherchees.
+  const CACHE_OVERPASS = new Map();
+  const CACHE_DUREE = 10 * 60 * 1000;   // dix minutes : OSM bouge peu a cette echelle
+  const CACHE_MAX = 40;
+
   async function overpassRequete(corps){
+    const cle = String(corps);
+    const garde = CACHE_OVERPASS.get(cle);
+    if(garde && (Date.now() - garde.t) < CACHE_DUREE){
+      if(typeof journal === 'function')
+        journal('reseau', 'Overpass \u2192 servi depuis le cache', 'r\u00e9ponse de moins de 10 min');
+      // on rend une reponse neuve : le texte est relu a chaque fois par l'appelant
+      return { ok:true, status:200, json:async()=>JSON.parse(garde.texte), text:async()=>garde.texte };
+    }
     majTitre(1);
     await placeOverpass();
-    try{ return await overpassRequeteInterne(corps); }
+    try{
+      const rep = await overpassRequeteInterne(corps);
+      // on lit le corps UNE fois, on le garde, et on rend une reponse relisible
+      let texte = '';
+      try{ texte = await rep.text(); }catch(e){ return rep; }
+      if(texte){
+        CACHE_OVERPASS.set(cle, { t:Date.now(), texte:texte });
+        if(CACHE_OVERPASS.size > CACHE_MAX){
+          const plusVieux = CACHE_OVERPASS.keys().next().value;
+          CACHE_OVERPASS.delete(plusVieux);
+        }
+      }
+      return { ok:rep.ok, status:rep.status,
+               json:async()=>JSON.parse(texte), text:async()=>texte };
+    }
     finally{ majTitre(-1); libererOverpass(); }
   }
   function overpassRequeteInterne(corps){
@@ -4547,6 +4628,7 @@
           // Un serveur qui marche devient le point de depart suivant — SAUF le miroir
           // regional : y rester collerait toutes les requetes sur la Suisse, et donnerait
           // zero resultat partout ailleurs. On repart alors des serveurs mondiaux.
+          DERNIER_OVERPASS.url = url;
           if(OVERPASS_REGIONAL.test(url)){
             overpassIndice = 0;
           }else{
@@ -6927,28 +7009,82 @@
       return;
     }
     const b = map.getBounds();
-    const bbox = [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()].map(x=>x.toFixed(4)).join(',');
-    const requete = '[out:json][timeout:30];('
+    const eM = empriseSure(b);
+    const bbox = [eM.sud, eM.ouest, eM.nord, eM.est].map(x=>x.toFixed(4)).join(',');
+    // Les relations de massifs portent des geometries enormes : demander 40 contours
+    // complets faisait expirer les serveurs mondiaux au bout de 30 s, et l'application
+    // se rabattait sur le miroir suisse — qui ignore les Alpes francaises.
+    const surfM = Math.abs((eM.nord - eM.sud) * (eM.est - eM.ouest));
+    if(surfM > 25){
+      afficherInfo('\ud83d\uddfa Vue trop large pour les contours r\u00e9els \u2014 zoomez sur un massif', 5000);
+      return;
+    }
+    if(typeof journal === 'function')
+      journal('couche', 'massifs OSM : bbox ' + bbox + ' \u00b7 surface ' + surfM.toFixed(1));
+    // timeout court et nombre reduit : mieux vaut douze contours en trois secondes que
+    // quarante jamais rendus.
+    const requete = '[out:json][timeout:20];('
       + 'relation["natural"="mountain_range"]('+bbox+');'
       + 'relation["place"="region"]["region:type"="mountain_area"]('+bbox+');'
-      + ');out geom 40;';
+      + ');out geom 12;';
     try{
       const rep = await overpassRequete(requete);
       const r = await rep.json();
       if(!chk.checked) return;
-      if(!etatMassifOsm.groupe) etatMassifOsm.groupe = L.layerGroup();
-      etatMassifOsm.groupe.clearLayers();
+      // Un « 0 massif » venu du miroir suisse ne veut rien dire en France : on garde
+      // l'affichage precedent plutot que de conclure a tort qu'il n'y a rien ici.
+      const viaRegional = OVERPASS_REGIONAL.test(String(DERNIER_OVERPASS.url || ''));
+      if(viaRegional && !(r.elements || []).length){
+        if(typeof journal === 'function')
+          journal('couche', 'massifs OSM : reponse du miroir suisse ignor\u00e9e', '0 massif hors de sa zone');
+        afficherAlerte('\ud83d\uddfa Contours r\u00e9els : seul le miroir suisse a r\u00e9pondu, il ne couvre pas '
+          + 'la France. Les tracés de r\u00e9f\u00e9rence restent affich\u00e9s \u2014 r\u00e9essayez dans un instant.');
+        return;
+      }
+      // On prepare le NOUVEAU calque a part, et on ne retire l'ancien qu'une fois celui-ci
+      // pret : vider avant l'arrivee des donnees faisait disparaitre les massifs a chaque
+      // deplacement, d'ou le clignotement.
+      const neuf = L.layerGroup();
       const remplissage = coulOsmMemo('coul-massifs-osm', '#2563eb');
       let nb = 0;
+      // Une teinte par massif, tiree de son nom : deux massifs voisins ne se confondent
+      // plus. Le reglage manuel, s'il est modifie, reprend la main sur tous.
+      const manuel = remplissage !== '#2563eb';
+      const teinte = function(nom){
+        if(manuel) return remplissage;
+        let s = 0;
+        for(let i = 0; i < nom.length; i++) s = (s * 31 + nom.charCodeAt(i)) >>> 0;
+        // on evite les jaunes ternes du fond de carte : on saute la plage 45-75 degres
+        let h = s % 330;
+        if(h > 40 && h < 80) h += 60;
+        return 'hsl(' + h + ', 68%, 42%)';
+      };
       (r.elements||[]).forEach(el=>{
-        anneauxOsm(el).forEach(an=>{
-          L.polygon(an.map(p=>L.latLng(p.lat, p.lon)), { color:remplissage, weight:2, opacity:0.95,
-            fillColor:remplissage, fillOpacity:0.3 })
-            .bindTooltip('<b>'+echap((el.tags && el.tags.name) || 'Massif')+'</b><br><small>contour r\u00e9el OpenStreetMap \u2014 remplissage r\u00e9glable</small>', {sticky:true})
-            .addTo(etatMassifOsm.groupe);
+        const nom = (el.tags && (el.tags['name:fr'] || el.tags.name)) || 'Massif';
+        const c = teinte(nom);
+        const anneaux = anneauxOsm(el);
+        let centre = null;
+        anneaux.forEach(an=>{
+          const poly = L.polygon(an.map(p=>L.latLng(p.lat, p.lon)), { color:c, weight:2.4, opacity:0.95,
+            fillColor:c, fillOpacity:0.22 })
+            .bindTooltip('<b>' + echap(nom) + '</b><br><small>contour r\u00e9el OpenStreetMap \u2014 remplissage r\u00e9glable</small>', {sticky:true});
+          poly.addTo(neuf);
+          try{ if(!centre) centre = poly.getBounds().getCenter(); }catch(e){}
           nb++;
         });
+        // le nom, pose une fois au centre du massif, lisible sans survol
+        if(centre && nom !== 'Massif'){
+          L.marker(centre, { keyboard:false, interactive:false, icon: L.divIcon({
+            className:'massif-etq',
+            html:'<span style="color:' + c + '">' + echap(nom) + '</span>',
+            iconSize:null }) }).addTo(neuf);
+        }
       });
+      if(typeof journal === 'function')
+        journal('couche', 'massifs OSM \u2192 ' + ((r.elements||[]).length) + ' relation(s), '
+          + nb + ' contour(s) trace(s)');
+      if(etatMassifOsm.groupe) map.removeLayer(etatMassifOsm.groupe);
+      etatMassifOsm.groupe = neuf;
       etatMassifOsm.groupe.addTo(map);
       afficherInfo(nb ? '\ud83d\uddfa '+nb+' contour(s) r\u00e9el(s) de massif charg\u00e9(s) \u2014 le masque de relief reste dessous'
         : '\ud83d\uddfa OpenStreetMap ne cartographie aucun massif ici \u2014 les trac\u00e9s de r\u00e9f\u00e9rence restent seuls', 5500);
@@ -6966,8 +7102,9 @@
   });
   map.on('moveend', ()=>{
     if(document.getElementById('chk-smassifs-osm').checked){
+      // 800 ms : on laisse le deplacement se terminer avant de relancer la requete
       clearTimeout(etatMassifOsm.tempo);
-      etatMassifOsm.tempo = setTimeout(chargerMassifsOsm, 500);
+      etatMassifOsm.tempo = setTimeout(chargerMassifsOsm, 800);
     }
   });
   const famCoul = (k)=> coulStyle('fam_'+k, RELIEF_FIN.familles[k][1]);
@@ -10817,6 +10954,42 @@
     try{ memoSet('geo-largeur-legende', String(cranLegende)); }catch(e){}
     try{ if(map && map.invalidateSize) setTimeout(function(){ map.invalidateSize(); }, 220); }catch(e){}
   }
+
+  // Curseur de zoom : il suit la carte, et la carte le suit.
+  (function cablerZoomCurseur(){
+    const c = document.getElementById('zoom-curseur');
+    const v = document.getElementById('zoom-valeur');
+    if(!c || !v) return;
+    const echelles = { 3:'monde', 5:'France', 7:'r\u00e9gion', 9:'d\u00e9partement',
+                       11:'agglom\u00e9ration', 13:'ville', 15:'quartier', 17:'rue' };
+    function libelle(z){
+      let meilleur = '';
+      Object.keys(echelles).forEach(function(k){ if(z >= +k) meilleur = echelles[k]; });
+      return meilleur;
+    }
+    function refleter(){
+      const z = Math.round(map.getZoom());
+      c.value = z;
+      v.textContent = z;
+      v.title = 'Zoom ' + z + ' \u00b7 \u00e9chelle : ' + libelle(z);
+    }
+    // on evite de relancer la carte quand c'est elle qui a bouge
+    let interne = false;
+    c.addEventListener('input', function(){
+      v.textContent = c.value;
+      interne = true;
+      map.setZoom(+c.value);
+      setTimeout(function(){ interne = false; }, 60);
+    });
+    map.on('zoomend', function(){ if(!interne) refleter(); else { c.value = Math.round(map.getZoom()); v.textContent = c.value; } });
+    // bornes reelles de la carte, plutot que des valeurs devinees
+    try{
+      const mn = map.getMinZoom(), mx = map.getMaxZoom();
+      if(isFinite(mn)) c.min = Math.max(2, mn);
+      if(isFinite(mx)) c.max = Math.min(20, mx);
+    }catch(e){}
+    refleter();
+  })();
 
   (function cablerLargeurLegende(){
     // les fleches existent en double : dans l'en-tete de la legende et dans celui du
