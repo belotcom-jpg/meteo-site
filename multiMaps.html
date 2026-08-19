@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v6.0.1 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v6.0.5.1 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v6.0.1</title>
+<title>MultiMaps — géographie (collège & lycée) — v6.0.5.1</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -2429,7 +2429,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v6.0.1</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v6.0.5.1</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -2549,7 +2549,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v6.0.1</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v6.0.5.1</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -3154,7 +3154,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v6.0.1';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v6.0.5.1';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -7679,6 +7679,10 @@
   // ---------- Feux en cours : points chauds satellitaires (choix strict de la source) ----------
   // ---------- Historique : annuler / reprendre / tout desactiver ----------
   const HISTO = { pile:[], refaire:[], enCours:false };
+  // Pendant un nettoyage general, toute couche dont la requete revient du reseau doit
+  // renoncer a se poser : sinon elle se rallume juste apres avoir ete eteinte.
+  const NETTOYAGE = { enCours:false };
+
   function etatCouchesActives(){
     return Array.prototype.slice.call(document.querySelectorAll('.calque-ajout'))
       .filter(b=>b.id && (b.textContent||'').indexOf('\u2715') !== -1).map(b=>b.id);
@@ -7717,18 +7721,59 @@
     afficherInfo('\u21b7 Repris \u2014 '+etatCouchesActives().length+' couche(s) active(s)', 4000);
   });
   document.getElementById('btn-tout-off').addEventListener('click', ()=>{
+    NETTOYAGE.enCours = true;
+    // on relache le verrou apres le temps qu'une requete lente met a revenir
+    setTimeout(function(){ NETTOYAGE.enCours = false; }, 4000);
     const avant = etatCouchesActives();
     HISTO.pile.push(avant);
     HISTO.refaire.length = 0;
     HISTO.enCours = true;
     avant.forEach(id=>{ const b = document.getElementById(id); if(b) b.click(); });
+    // Trois boutons de feux n'affichent pas de croix une fois actifs : ils echappaient
+    // au recensement par la croix. On les eteint sur leur etat interne.
+    // On lit l'etat directement, sans eval : chaque objet est deja dans la portee.
+    let feuxEteints = 0;
+    const etatsSansCroix = [];
+    try{ etatsSansCroix.push(['btn-fleches', etatFleches]); }catch(e){}
+    try{ etatsSansCroix.push(['btn-fumees', etatFumees]); }catch(e){}
+    try{ etatsSansCroix.push(['btn-ptschauds', etatPtsChauds]); }catch(e){}
+    // btn-vent-feu n'est qu'un relais vers btn-vent : son libelle se met a jour apres
+    // coup et peut le laisser actif alors que la couche est eteinte. On le remet a plat.
+    setTimeout(function(){
+      const vf = document.getElementById('btn-vent-feu');
+      let ventActif = false;
+      try{ ventActif = !!(etatVent && etatVent.actif); }catch(e){}
+      if(vf && !ventActif) basculerBouton(vf, false, '', '💨 Vent (direction + force)');
+    }, 300);
+
+    etatsSansCroix.forEach(function(p){
+      const b = document.getElementById(p[0]);
+      if(!b || avant.indexOf(p[0]) !== -1) return;   // deja traite par la croix
+      if(p[1] && p[1].actif){ b.click(); feuxEteints++; }
+    });
+
+    // Certaines couches sont pilotees par une CASE A COCHER, pas par un bouton portant
+    // une croix : elles echappaient donc au recensement et restaient affichees.
+    let cochesEteintes = 0;
+    ['chk-smassifs-osm', 'chk-smassifs-noms', 'chk-parcs-osm', 'chk-peuples',
+     'pays-etiq', 'chk-logement-points'].forEach(function(id){
+      const c = document.getElementById(id);
+      if(c && c.checked){
+        c.checked = false;
+        c.dispatchEvent(new Event('change', { bubbles:true }));
+        cochesEteintes++;
+      }
+    });
     HISTO.enCours = false;
     majLegende();
-    afficherInfo(avant.length
-      ? '\u26d4 '+avant.length+' couche(s) \u00e9teinte(s) \u2014 \u21b6 Annuler r\u00e9tablit tout'
-      : '\u26d4 Aucune couche n\u2019\u00e9tait active', 5500);
     fermerToutesFenetres();
-  });
+    const total = avant.length + cochesEteintes + feuxEteints;
+    afficherInfo(total
+      ? '\u26d4 ' + total + ' couche(s) \u00e9teinte(s)'
+        + (cochesEteintes ? ' (dont ' + cochesEteintes + ' option(s) coch\u00e9e(s))' : '')
+        + ' \u2014 \u21b6 Annuler r\u00e9tablit les couches'
+      : '\u26d4 Aucune couche n\u2019\u00e9tait active', 5500);
+      });
     function masquerBarresFlottantes(){
     // barres et panneaux flottants (temps du feu, r\u00e9glages, radar, vent 48 h, bandeaux\u2026)
     ['feu-temps','feu-avance','feu-badge','feu-avert','feu-methode','radar-ctrl',
@@ -13977,10 +14022,17 @@
         const liste = (d && d.features) || [];
         const bon = liste.find(function(x){
           const p = x.properties || {};
-          const code = String(p.citycode || p.postcode || '');
-          // code INSEE ou postal : les deux commencent par le numero de departement,
-          // avec le cas particulier de la Corse (2A, 2B) et des territoires ultramarins
-          return code.indexOf(gis.d) === 0;
+          // Le code INSEE porte le departement sur ses DEUX premiers caracteres (trois
+          // outre-mer). Comparer par « commence par » faisait retenir 69198 pour le
+          // departement 63, puisque 69198 commence par 6. On compare la vraie tranche.
+          const insee = String(p.citycode || '');
+          const cp = String(p.postcode || '');
+          const dep = gis.d;
+          const tranche = function(code){
+            if(!code) return '';
+            return /^9[7-8]/.test(code) ? code.slice(0, 3) : code.slice(0, 2);
+          };
+          return tranche(insee) === dep || tranche(cp) === dep;
         });
         const f = bon || liste[0];
         if(!f || !f.geometry){ manques.push(gis.n); continue; }
@@ -16633,6 +16685,14 @@
         .addTo(etatVent.groupe);
     });
     etatVent.maxi = maxi;
+    // La requete met une seconde ou deux : si la couche a ete eteinte entre-temps
+    // (nettoyage general, par exemple), on ne repose surtout pas le calque.
+    if(!etatVent.actif || NETTOYAGE.enCours){
+      try{ map.removeLayer(etatVent.groupe); }catch(e){}
+      etatVent.actif = false;
+      try{ basculerBouton(document.getElementById('btn-vent'), false, '', '💨 Vent (direction + force)'); }catch(e){}
+      return;
+    }
     etatVent.groupe.addTo(map);
     cacherInfo(); majLegende();
     afficherInfo('\ud83d\udca8 Vent \u2014 '+cr.titre+' \u00b7 taille + barbules = force \u00b7 rafale max '+Math.round(maxi)+' km/h', 6000);
