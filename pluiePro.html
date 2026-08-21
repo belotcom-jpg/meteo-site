@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>MultiMeteo v4.3</title>
+<title>MultiMeteo v4.3.8</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -147,6 +147,30 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   #scaleMenu button.on{background:#2a2410;color:#ffd400}
   #scaleMenu button span{flex:1;font-weight:400;font-size:10px;color:#888}
   #scaleMenu button.on span{color:#ffd400}
+/* Téléphone en PAYSAGE : c'est la HAUTEUR qui manque (≈390-430 px), pas la largeur.
+   On compacte tout le chrome pour rendre l'espace au tracé, et on cible sur max-height
+   plutôt que sur max-width (un iPhone 15 Pro Max fait 932 px de large en paysage). */
+@media (max-height:520px) and (orientation:landscape){
+  html.simple #favBar{display:none}                 /* favoris : retrouvables via la recherche */
+  html.simple #perfCard{display:none}
+  html.simple .search{margin:1px 0}
+  html.simple .search input{padding:5px 8px;font-size:13px}
+  html.simple #sourcesBar{padding:0 5px;font-size:8px}
+  html.simple .tm-ttl{font-size:11px}
+  html.simple #scaleBar,html.simple .ind-modes{gap:3px}
+  /* le graphe prend la hauteur restante, sans minimum qui déborderait */
+  html.simple .canvas-container{min-height:0;height:calc(100vh - 96px)}
+  html.rain-only .canvas-container{height:calc(100vh - 78px)}
+  html.simple #chartWrapper{padding:0}
+}
+/* Vue « Pluie uniquement » : seul le panneau du haut reste visible */
+html.rain-only #graphPanel,
+html.rain-only #horairePanel{display:none !important}
+html.rain-only #chartWrapper{flex:1 1 auto;min-height:0}
+html.rain-only .canvas-container{height:auto;min-height:58vh}
+#gpsBtn{flex:0 0 auto;background:#0d2030;border:1px solid #2a5a7a;border-radius:10px;color:#7ec9ff;font-size:16px;cursor:pointer;padding:0 10px;line-height:1;transition:background .15s}
+#gpsBtn:hover{background:#123048}
+#gpsBtn:active{background:#1a4060}
 #perfCard{background:#0a0f0a;border:1px solid #1e2e1e;border-radius:6px;padding:4px 9px;font-size:11px;color:#9fd0a0;font-family:'Courier New',monospace;line-height:1.5}
 #sourcesBar{display:none;background:#080808;border:1px solid #1e1e1e;border-radius:6px;padding:3px 8px;flex-wrap:wrap;gap:4px;align-items:center}
 .src-lbl{font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:2px;color:#444;flex-shrink:0}
@@ -585,11 +609,18 @@ html.simple.phone-col #phoneBtn{background:#00ffff!important;color:#000!importan
   try{
     var _p=new URLSearchParams(location.search).get('simple');
     var _isIPhone=/iPhone|iPod/.test(navigator.userAgent||'');
-    var _simple=(_p==='ok'||_p==='full'||_p==='detail')?true:((_p==='no')?false:_isIPhone);
+    var _simple=(_p==='ok'||_p==='full'||_p==='detail'||_p==='rain')?true:((_p==='no')?false:_isIPhone);
     if(!_simple)return;
+    /* iPhone sans paramètre explicite → vue « Pluie uniquement » par défaut */
+    if(!_p&&_isIPhone)_p='rain';
     document.documentElement.classList.add('simple');
     document.documentElement.classList.add('simple-full');   /* toutes les vues gardent les boutons */
-    if(_p==='ok'||!_p)document.documentElement.classList.add('phone-col');   /* vue iPhone : colonne téléphone sur PC */
+    if(_p==='ok')document.documentElement.classList.add('phone-col');   /* vue iPhone : colonne téléphone sur PC */
+    if(_p==='rain'){
+      /* Vue Pluie uniquement : on garde le panneau du haut, on masque le graphe du bas.
+         Le panneau du haut occupe alors toute la hauteur disponible. */
+      document.documentElement.classList.add('rain-only');
+    }
     if(_p==='detail'){
       /* Vue Détail = layout vue iPhone, mais le pane du bas affiche le tableau ¼ h (openHoraire) dès que la ville est chargée */
       document.addEventListener('DOMContentLoaded',function(){
@@ -602,6 +633,7 @@ html.simple.phone-col #phoneBtn{background:#00ffff!important;color:#000!importan
     }
     document.addEventListener('DOMContentLoaded',function(){
       try{
+        if(_p==='rain')return;   /* pluie seule : pas de graphe du bas */
         var gp=document.getElementById('graphPanel'),cw=document.getElementById('chartWrapper');
         if(gp&&cw&&cw.parentNode){cw.parentNode.insertBefore(gp,cw.nextSibling);gp.classList.add('open');}
       }catch(e){}
@@ -619,6 +651,7 @@ document.addEventListener('DOMContentLoaded',function(){try{var vt=document.getE
            onkeypress="if(event.key==='Enter'){this.blur();load()}"
            autocomplete="off" autocorrect="off" spellcheck="false">
     <button id="clearBtn" onclick="clearSearch()" title="Effacer">✕</button>
+    <button id="gpsBtn" onclick="loadGPS()" aria-label="Utiliser ma position" title="Utiliser ma position (GPS)">📍</button>
     <div id="scaleWrap">
       <button id="scaleBtn" onclick="toggleScaleMenu(event)" aria-label="Échelle du graphe" title="Échelle verticale du graphe de pluie">⇕</button>
       <div id="scaleMenu">
@@ -649,6 +682,7 @@ document.addEventListener('DOMContentLoaded',function(){try{var vt=document.getE
         <button onclick="setViewMode('full')">📈 <span>Météo J+12</span></button>
         <button onclick="setViewMode('no')">🌧 <span>Pluie dans l'heure</span></button>
         <button onclick="setViewMode('detail')">🕒 <span>Détail horaire</span></button>
+        <button onclick="setViewMode('rain')">💧 <span>Pluie uniquement</span></button>
       </div>
     </div>
     <div id="helpWrap">
@@ -831,7 +865,10 @@ const _hasMouse=!!(window.matchMedia&&window.matchMedia('(pointer:fine)').matche
     const ml=document.createElement('link');ml.rel='manifest';ml.href=mUrl;document.head.appendChild(ml);
   }catch(e){}
 })();
-let _layers={wind:false,uv:false,pollen:false,poll:false,proba:false,nuage:false,temp:false,humidity:false,orage:false,soleil:false,models:false};
+/* La probabilité de pluie est affichée d'emblée : c'est l'information complémentaire
+   la plus utile sur le graphe, et elle n'encombre pas (axe de droite dédié). */
+let _layers={wind:false,uv:false,pollen:false,poll:false,proba:true,
+  nuage:false,temp:false,humidity:false,orage:false,soleil:false,models:false};
 let _loadDebounce=null;
 const _hiddenModels=new Set(); /* modèles masqués par clic légende */
 let _tempHourly=null;
@@ -1250,8 +1287,12 @@ function setMode(mode){
    · racine carrée : rend lisibles les faibles intensités sans écraser les pics d'orage
      (2 mm/j étalés sur 24 h = 0,09 mm/h, soit ~1 % de la hauteur en échelle linéaire)
    · référence du maximum : courbe bleue (scénario pessimiste) ou courbe jaune P80 */
-let _ySqrt=(function(){try{return localStorage.getItem('pp_ysqrt')==='1';}catch(e){return false;}})();
-let _yRef=(function(){try{return localStorage.getItem('pp_yref')||'max';}catch(e){return 'max';}})();
+/* Valeurs par défaut : échelle racine + axe calé sur le P80.
+   L'échelle linéaire calée sur le scénario pessimiste écrasait les pluies faibles
+   (0,09 mm/h ≈ 1 % de la hauteur) — ces réglages les rendent lisibles d'emblée.
+   Le choix de l'utilisateur, une fois exprimé, reste prioritaire. */
+let _ySqrt=(function(){try{const v=localStorage.getItem('pp_ysqrt');return v==null?true:(v==='1');}catch(e){return true;}})();
+let _yRef=(function(){try{return localStorage.getItem('pp_yref')||'p80';}catch(e){return 'p80';}})();
 let _sqrtOK=false;
 (function _registerSqrtScale(){
   try{
@@ -4200,7 +4241,17 @@ function toggleEnsembles(){
 }
 function _ensInitBtn(){try{_ensUpdBtn();}catch(e){}}
 document.addEventListener('DOMContentLoaded',_ensInitBtn);
-document.addEventListener('DOMContentLoaded',function(){try{_ySclUpd();}catch(e){}try{_yrSpanUpd();}catch(e){}});
+document.addEventListener('DOMContentLoaded',function(){
+  try{_ySclUpd();}catch(e){}
+  try{_yrSpanUpd();}catch(e){}
+  /* refléter l'état initial des couches sur leurs boutons (PROBA est actif par défaut) */
+  try{
+    const map={wind:'tbWind',uv:'tbUV',pollen:'tbPollen',poll:'tbPoll',orage:'tbOrage',
+               soleil:'tbSoleil',proba:'tbProba',nuage:'tbNuage',temp:'tbTemp',
+               humidity:'tbHumid',models:'tbModels'};
+    Object.keys(map).forEach(k=>{const b=document.getElementById(map[k]);if(b)b.classList.toggle('ton',!!_layers[k]);});
+  }catch(e){}
+});
 function _ensUpdBtn(){
   const b=document.getElementById('indEnsBtn');
   if(!b)return;
@@ -5887,7 +5938,7 @@ async function fetchNowcast(lat,lon){
     function(){
       const ctrl=new AbortController();
       setTimeout(function(){ctrl.abort();},6000);
-      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/4.3'}});
+      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/4.3.8'}});
     },
     function(){
       const ctrl=new AbortController();
@@ -6217,6 +6268,16 @@ async function fetchMfRain(lat,lon){
 }
 
 
+/* ── iPhone, premier lancement : proposer la ville la plus proche ──
+   Une seule fois (mémorisé), et jamais si une ville est déjà demandée dans l'URL :
+   on ne veut pas écraser un choix explicite ni redemander l'autorisation à chaque ouverture. */
+/* Le bouton 📍 est écrit EN DUR dans la barre de recherche (voir le HTML) : le navigateur
+   — iOS comme PC — n'autorise getCurrentPosition QUE depuis un geste utilisateur, et un
+   bouton statique ne dépend ni de l'ordre d'exécution ni d'un sélecteur.
+   Ici on se contente de le masquer si la géolocalisation n'est pas disponible. */
+document.addEventListener('DOMContentLoaded',function(){
+  try{if(!navigator.geolocation){const b=document.getElementById('gpsBtn');if(b)b.style.display='none';}}catch(e){}
+});
 /* ── GPS : charger la ville la plus proche ── */
 async function loadGPS(){
   const btn=document.getElementById('exploreBtn');
@@ -7141,18 +7202,21 @@ function processData(omMain,omM15,rainMx,probMx){
   const hLast=(_viewMode==='j0')?24:23;
   for(let i=hStart;i<=hLast;i++){if(i<N_HRS)push(i===24?'24h':i+'h',0,i);}
 
+  /* Libellé d'un point : à 0 h on affiche le JOUR (« ven 12 ») au lieu de « 0h ».
+     Sans ça, les vues J+5 et au-delà n'affichaient qu'une suite d'heures sans repère de date. */
+  const _hLbl=(hr,d)=>(hr===0?_hlDay(d):(hr+'h'));
   /* Jours suivants selon la vue */
   if(_viewMode==='j0'){
   } else if(_viewMode==='j1'){
     for(let hr=0;hr<=24;hr++){const idx=24+hr;if(idx<N_HRS)push((hr===24?'24h':hr+'h'),1,idx);}
   } else if(_viewMode==='j5'){
-    for(let hr=0;hr<24;hr++){const idx=24+hr;if(idx<N_HRS)push(hr+'h',1,idx);}
-    for(let d=2;d<=5;d++)for(let hr=0;hr<24;hr+=3){const idx=d*24+hr;if(idx<N_HRS)push(hr+'h',d,idx);}
+    for(let hr=0;hr<24;hr++){const idx=24+hr;if(idx<N_HRS)push(_hLbl(hr,1),1,idx);}
+    for(let d=2;d<=5;d++)for(let hr=0;hr<24;hr+=3){const idx=d*24+hr;if(idx<N_HRS)push(_hLbl(hr,d),d,idx);}
   } else if(_viewMode==='j8'||_viewMode==='j14'){
-    for(let hr=0;hr<24;hr++){const idx=24+hr;if(idx<N_HRS)push(hr+'h',1,idx);}
-    for(let d=2;d<=4;d++)for(let hr=0;hr<24;hr+=3){const idx=d*24+hr;if(idx<N_HRS)push(hr+'h',d,idx);}
+    for(let hr=0;hr<24;hr++){const idx=24+hr;if(idx<N_HRS)push(_hLbl(hr,1),1,idx);}
+    for(let d=2;d<=4;d++)for(let hr=0;hr<24;hr+=3){const idx=d*24+hr;if(idx<N_HRS)push(_hLbl(hr,d),d,idx);}
     const maxD=_viewMode==='j14'?12:7;   /* bornes réelles : vue « J+12 » s'arrête à J+12, vue « J+7 » à J+7 */
-    for(let d=5;d<=maxD;d++)for(let hr=0;hr<24;hr+=8){const idx=d*24+hr;if(idx<N_HRS)push(hr+'h',d,idx);}
+    for(let d=5;d<=maxD;d++)for(let hr=0;hr<24;hr+=8){const idx=d*24+hr;if(idx<N_HRS)push(_hLbl(hr,d),d,idx);}
     const _sentIdx=(maxD+1)*24;if(_sentIdx<N_HRS)push('0h',maxD+1,_sentIdx); /* borne droite : rend le dernier jour pleine largeur (sinon masqué par le garde-fou cellW<50) */
   }
 
@@ -7413,7 +7477,7 @@ function renderJm1(pts,mods,realPrecip){
         ...modelDS,
         {data:pts.map(p=>p.mx),borderColor:_simpleMode?'transparent':'#4488ff',borderWidth:isMob?4:6,borderDash:[8,3,2,3],fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:2},
         {data:pts.map(p=>p.r),borderColor:pts.some(p=>p.spread>1.5)?'#ffcc00':'#ffe600',borderWidth:isMob?4:6,fill:false,tension:0.4,pointRadius:0,yAxisID:'y',order:1},
-        {data:pts.map(p=>p.p),borderColor:_ultraMode?'rgba(0,0,0,0)':'rgba(255,255,255,0.85)',borderWidth:_ultraMode?0:isMob?2.5:3.5,borderDash:[6,3],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:3},
+        {data:pts.map(p=>p.p),borderColor:_layers.proba?'rgba(255,255,255,0.85)':'rgba(0,0,0,0)',borderWidth:_layers.proba?(isMob?2.5:3.5):0,borderDash:[6,3],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:3},
         {data:pts.map(p=>_cloudData&&p.hourIdx>=0?(_cloudData[p.hourIdx]??null):null),borderColor:_ultraMode?'rgba(0,0,0,0)':'#ff3333',borderWidth:_ultraMode?0:isMob?3:4,borderDash:[6,3,6,3],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:6,spanGaps:true},
         /* Humidité — bleu clair pointillé */
         {data:pts.map(p=>_humidityHourly&&p.hourIdx>=0?(_humidityHourly[p.hourIdx]??null):null),borderColor:'rgba(0,0,0,0)',borderWidth:0,borderDash:[5,4],tension:0.4,pointRadius:0,fill:false,yAxisID:'yProb',order:7,spanGaps:true,label:'humidity'},
@@ -7427,7 +7491,7 @@ function renderJm1(pts,mods,realPrecip){
       scales:{
         x:{ticks:{color:'#bbb',font:{weight:'bold',size:isMob?8:10,family:'Courier New'},maxRotation:0,autoSkip:false,callback(v){const l=this.getLabelForValue(v);return l||null;}},grid:{display:false},border:{color:'#555'}},
         y:{position:'left',beginAtZero:true,grace:'5%',grid:{color:'#181818',lineWidth:1},ticks:{color:'#ffe600',font:{weight:'bold',size:isMob?8:11,family:'Courier New'}},border:{color:'#555'},title:{display:!isMob,text:'mm/h',color:'#ffe600',font:{size:9,family:'Courier New'}}},
-        yProb:{position:'right',min:0,max:100,display:!_ultraMode,grid:{display:false},ticks:{color:'rgba(255,255,255,0.4)',font:{weight:'bold',size:isMob?8:11,family:'Courier New'},callback:v=>v+'%',stepSize:25},border:{color:'#555'},title:{display:!isMob,text:'prob.',color:'rgba(255,255,255,0.4)',font:{size:9,family:'Courier New'}}}
+        yProb:{position:'right',min:0,max:100,display:(_layers.proba||_layers.nuage||_layers.humidity||_layers.orage||_layers.soleil||!_ultraMode),grid:{display:false},ticks:{color:'rgba(255,255,255,0.4)',font:{weight:'bold',size:isMob?8:11,family:'Courier New'},callback:v=>v+'%',stepSize:25},border:{color:'#555'},title:{display:!isMob,text:'prob.',color:'rgba(255,255,255,0.4)',font:{size:9,family:'Courier New'}}}
       },
       plugins:{legend:{display:false},tooltip:{enabled:false}}
     },
@@ -7670,6 +7734,7 @@ function render(pts,mods){
             callback(val){
               const l=this.getLabelForValue(val);if(!l)return null;
               if(l.includes("'"))return l;
+              if(/^[a-zé]{3} /.test(l))return l;   /* repère de jour (« ven 12 ») : toujours affiché */
               if(isMob){const n=parseInt(l);if(!isNaN(n)&&n%3!==0)return null;}
               return l;
             }
@@ -8302,7 +8367,13 @@ function buildSummary(chart,pts,days,xp){
     const maxP=(_probByDay&&daysFromToday>=0&&_probByDay[daysFromToday]!=null)?_probByDay[daysFromToday]:Math.max(...dd.map(p=>p.p),0);
     /* Label */
     const isToday=dateMidnight.getTime()===todayMidnight.getTime();
-    const lbl=(isToday?'AUJ.':dn[date.getDay()])+' '+date.getDate()+'/'+(date.getMonth()+1);
+    const _j=isToday?'AUJ.':dn[date.getDay()];
+    /* Format selon la place réelle : au-delà de J+5 un jour ne compte que 3 points,
+       la cellule devient étroite et le libellé complet était rogné (« SAM 22/8 » → « 3/8 »). */
+    const lbl=(cellW>=88)
+      ?(_j+' '+date.getDate()+'/'+(date.getMonth()+1))     /* SAM 22/8 */
+      :((cellW>=52)?(_j+' '+date.getDate())                /* SAM 22 */
+      :(isToday?'AUJ.':_j));                               /* SAM */
     /* Température */
     const dt=_tempByDay?.[daysFromToday];
     const tMax=dt?.max??null,tMin=dt?.min??null;
@@ -8321,7 +8392,7 @@ function buildSummary(chart,pts,days,xp){
       ?'flex:0 0 '+cellW+'px;overflow:hidden;box-sizing:border-box;padding:0 3px;display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:7px;text-align:center;border-left:1px solid #1a1a1a;'
       :'flex:0 0 '+cellW+'px;overflow:hidden;box-sizing:border-box;padding:1px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1px;border-left:1px solid #1a1a1a;';
     div.innerHTML=
-      '<div style="font-size:clamp(8px,1.9vw,11px);font-weight:900;color:#888;letter-spacing:0.3px;white-space:nowrap;line-height:1.4">'+lbl+'</div>'+
+      '<div title="'+_j+' '+date.getDate()+'/'+(date.getMonth()+1)+'" style="font-size:clamp(8px,1.9vw,11px);font-weight:900;color:#888;letter-spacing:0.3px;white-space:nowrap;line-height:1.4;text-overflow:clip;max-width:100%">'+lbl+'</div>'+
       '<div style="font-size:clamp(9px,2.1vw,12px);font-weight:900;color:#ffe600;white-space:nowrap;line-height:1.5">'+total.toFixed(1)+'<span style="font-size:8px;opacity:.6">mm</span>\u00a0'+Math.round(maxP)+'<span style="font-size:8px;opacity:.6">%</span></div>'+
       tempHTML;
     row.appendChild(div);
