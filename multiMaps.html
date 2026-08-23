@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v6.6 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v6.8 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v6.6</title>
+<title>MultiMaps — géographie (collège & lycée) — v6.8</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -2447,6 +2447,46 @@
     <div style="font-size:9.5px;color:#57534e;margin-top:4px;line-height:1.45">L’empire colonial est présenté à part : ce fut une <b>conquête et une domination</b>, non une extension du territoire national.</div>
 
     <div class="sep"></div>
+    <span class="etiquette">La société : peuplement et travail</span>
+    <button class="calque-ajout donnee" id="btn-exode" title="L’exode rural depuis 1851. La Creuse a moins d’habitants aujourd’hui qu’au milieu du XIXᵉ siècle : ce n’est pas un accident récent mais un mouvement long d’un siècle et demi.">📉 Exode rural</button>
+    <div id="exo-panneau" hidden>
+      <div class="croquis-rangee" style="margin-top:4px;align-items:center">
+        <input type="range" id="exo-annee" min="0" max="5" step="1" value="5" style="flex:1;min-width:0" title="Année du recensement affiché. Base 100 en 1851.">
+        <span id="exo-annee-val" class="sous" style="min-width:40px;text-align:right;font-weight:700">2021</span>
+      </div>
+      <p class="sous" id="exo-compte" style="margin:2px 0"></p>
+      <div style="font-size:9.5px;color:#57534e;margin-top:4px;line-height:1.45">Indice base 100 en 1851 : <b>rouge</b> = le département s’est vidé, <b>vert</b> = il s’est rempli. Vingt départements témoins, valeurs arrondies — les ordres de grandeur sont sûrs.</div>
+    </div>
+    <button class="calque-ajout donnee" id="btn-dupin" title="La ligne tracée par Charles Dupin en 1826 sépare une France alphabétisée d’une France qui l’est peu — et recoupe l’héritage, la taille des fermes, la pratique religieuse. Une frontière que personne n’a décidée.">📏 Ligne Saint-Malo – Genève</button>
+    <button class="calque-ajout donnee" id="btn-industrie" title="Sept bassins industriels : essor, apogée, effondrement. Le cercle grandit puis retombe. Ils expliquent une grande part de la géographie sociale actuelle.">🏭 Bassins industriels</button>
+    <div id="ind-panneau" hidden>
+      <div class="croquis-rangee" style="margin-top:4px;align-items:center">
+        <input type="range" id="ind-annee" min="1720" max="2026" step="1" value="2026" style="flex:1;min-width:0" title="Année affichée. Le cercle suit l’activité du bassin.">
+        <span id="ind-annee-val" class="sous" style="min-width:40px;text-align:right;font-weight:700">2026</span>
+      </div>
+      <p class="sous" id="ind-compte" style="margin:2px 0"></p>
+    </div>
+
+    <div class="sep"></div>
+    <span class="etiquette">Réseaux et épidémies</span>
+    <button class="calque-ajout donnee" id="btn-ferre" title="L’étoile de Legrand, décidée par la loi de 1842 : neuf lignes rayonnant depuis Paris. Ce n’est pas une nécessité technique mais une décision politique, prise contre les projets de réseau maillé. Elle structure encore le pays.">🚆 L’étoile ferroviaire</button>
+    <div id="fer-panneau" hidden>
+      <div class="croquis-rangee" style="margin-top:4px;align-items:center">
+        <input type="range" id="fer-annee" min="1837" max="2026" step="1" value="2026" style="flex:1;min-width:0" title="Année affichée : seules les lignes ouvertes avant cette date apparaissent.">
+        <span id="fer-annee-val" class="sous" style="min-width:40px;text-align:right;font-weight:700">2026</span>
+      </div>
+      <p class="sous" id="fer-compte" style="margin:2px 0"></p>
+      <div id="fer-types" style="font-size:10px;color:#57534e;line-height:1.7"></div>
+      <div style="font-size:9.5px;color:#57534e;margin-top:4px;line-height:1.45">Les traits sont <b>schématiques</b> : ils relient les extrémités, non le tracé réel des voies. Le réseau atteint son maximum vers 1930 avec 42 000 km ; la moitié a disparu depuis.</div>
+    </div>
+    <button class="calque-ajout donnee" id="btn-epidemies" title="Peste noire, choléra de 1832, grippe de 1918 : la diffusion suit les routes commerciales et les mouvements de troupes. Chaque étape est datée.">🦠 Épidémies</button>
+    <div id="epi-panneau" hidden>
+      <select id="epi-choix" class="feux-annee" style="width:100%;margin-top:4px" title="Choisissez une épidémie."></select>
+      <div id="epi-fiche" class="bat-fiche" style="max-height:230px"></div>
+      <div style="font-size:9.5px;color:#57534e;margin-top:4px;line-height:1.45">Les cercles s’éclaircissent au fil de la diffusion. Les bilans anciens sont des <b>ordres de grandeur</b> : on ne comptait pas les morts.</div>
+    </div>
+
+    <div class="sep"></div>
     <span class="etiquette">Batailles : le déroulé pas à pas</span>
     <button class="calque-ajout donnee" id="btn-batailles" title="Trente batailles qui ont pesé sur l’histoire de France, d’Alésia à Diên Biên Phủ. Chacune se déroule phase par phase : le texte explique ce qui se joue, les flèches montrent les mouvements.">⚔ Batailles</button>
     <div id="bat-panneau" hidden>
@@ -2498,7 +2538,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v6.6</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v6.8</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -2622,7 +2662,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v6.6</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v6.8</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -3255,7 +3295,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v6.6';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v6.8';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -12050,6 +12090,116 @@
         + 'aujourd\u2019hui.' }
   ];
 
+  // ---------- Le réseau ferré, 1837-2026 ----------
+  //
+  // L'étoile de Legrand, décidée par la loi du 11 juin 1842 : neuf grandes lignes
+  // rayonnant depuis Paris. Ce n'est pas une nécessité technique — c'est une décision
+  // politique, prise contre les projets de réseau maillé. Elle structure encore le pays :
+  // aller de Nantes à Lyon reste plus long que d'aller de Nantes à Paris.
+  const FERRE = [
+    { an:1837, n:'Paris \u2013 Saint-Germain', a:[48.87,2.32], b:[48.90,2.09], t:'p',
+      x:'Premi\u00e8re ligne de voyageurs de France, 19 km. Con\u00e7ue comme une curiosit\u00e9 : on doute '
+        + 'encore que le train serve \u00e0 autre chose qu\u2019\u00e0 promener les Parisiens.' },
+    { an:1843, n:'Paris \u2013 Orl\u00e9ans', a:[48.85,2.35], b:[47.90,1.90], t:'e',
+      x:'Premi\u00e8re branche de l\u2019\u00e9toile r\u00e9alis\u00e9e. Le trajet passe de deux jours de diligence \u00e0 '
+        + 'quatre heures.' },
+    { an:1846, n:'Paris \u2013 Lille \u2013 Bruxelles', a:[48.85,2.35], b:[50.63,3.06], t:'e',
+      x:'Le Nord, r\u00e9seau du bassin houiller, est le plus rentable de tous. Il financera les '
+        + 'autres.' },
+    { an:1849, n:'Paris \u2013 Rouen \u2013 Le Havre', a:[48.85,2.35], b:[49.49,0.11], t:'e',
+      x:'Construite avec des capitaux et des ing\u00e9nieurs britanniques. Relie la capitale \u00e0 son '
+        + 'port atlantique.' },
+    { an:1852, n:'Paris \u2013 Strasbourg', a:[48.85,2.35], b:[48.58,7.75], t:'e',
+      x:'Ligne strat\u00e9gique autant qu\u2019\u00e9conomique : l\u2019arm\u00e9e y voit le moyen de porter des troupes '
+        + '\u00e0 la fronti\u00e8re en un jour.' },
+    { an:1857, n:'Paris \u2013 Lyon \u2013 Marseille', a:[48.85,2.35], b:[43.30,5.37], t:'e',
+      x:'Le PLM, plus longue et plus rentable ligne du pays. La vall\u00e9e du Rh\u00f4ne devient le '
+        + 'grand couloir fran\u00e7ais \u2014 elle l\u2019est encore, autoroute et TGV superpos\u00e9s.' },
+    { an:1857, n:'Paris \u2013 Bordeaux', a:[48.85,2.35], b:[44.84,-0.58], t:'e',
+      x:'L\u2019\u00e9toile atteint l\u2019Atlantique sud. Les vins du Bordelais gagnent Paris en une nuit.' },
+    { an:1863, n:'Paris \u2013 Brest', a:[48.85,2.35], b:[48.39,-4.49], t:'e',
+      x:'Derni\u00e8re grande branche. La Bretagne, longtemps \u00e0 l\u2019\u00e9cart, entre dans le march\u00e9 '
+        + 'national \u2014 et son \u00e9migration vers Paris commence.' },
+    { an:1879, n:'Plan Freycinet', a:[46.50,2.50], b:[46.50,2.50], t:'m',
+      x:'8 700 km de lignes d\u2019int\u00e9r\u00eat local d\u00e9cid\u00e9s d\u2019un coup : chaque sous-pr\u00e9fecture doit avoir '
+        + 'sa gare. Beaucoup ne seront jamais rentables. Le r\u00e9seau atteint son maximum vers 1930, '
+        + '\u00e0 42 000 km.' },
+    { an:1938, n:'Cr\u00e9ation de la SNCF', a:[48.85,2.35], b:[48.85,2.35], t:'m',
+      x:'Les six grandes compagnies, ruin\u00e9es par la crise et la concurrence routi\u00e8re, sont '
+        + 'nationalis\u00e9es. L\u2019\u00c9tat h\u00e9rite d\u2019un r\u00e9seau surdimensionn\u00e9.' },
+    { an:1955, n:'Fermetures des lignes locales', a:[45.50,2.50], b:[45.50,2.50], t:'f',
+      x:'D\u00e9but des fermetures massives : la moiti\u00e9 du r\u00e9seau dispara\u00eet en trente ans. Les '
+        + 'campagnes perdent leur gare au moment o\u00f9 elles perdent leurs habitants \u2014 les deux se '
+        + 'nourrissent l\u2019un l\u2019autre.' },
+    { an:1981, n:'TGV Paris \u2013 Lyon', a:[48.85,2.35], b:[45.76,4.83], t:'t',
+      x:'Deux heures au lieu de quatre. Le TGV reproduit exactement l\u2019\u00e9toile de 1842 : il '
+        + 'rapproche les villes de Paris, pas les villes entre elles.' },
+    { an:1989, n:'TGV Atlantique', a:[48.85,2.35], b:[47.22,-1.55], t:'t',
+      x:'Le Mans, Nantes, Rennes, puis Tours et Bordeaux. La Bretagne se rapproche de Paris '
+        + 'plus vite que de Lyon.' },
+    { an:1993, n:'TGV Nord \u2013 tunnel sous la Manche', a:[48.85,2.35], b:[50.95,1.86], t:'t',
+      x:'Lille devient un carrefour europ\u00e9en \u2014 le seul cas fran\u00e7ais o\u00f9 la grande vitesse a '
+        + 'chang\u00e9 le destin d\u2019une ville.' },
+    { an:2001, n:'TGV M\u00e9diterran\u00e9e', a:[45.76,4.83], b:[43.30,5.37], t:'t',
+      x:'Marseille \u00e0 trois heures de Paris. La vall\u00e9e du Rh\u00f4ne concentre d\u00e9sormais LGV, '
+        + 'autoroute, fleuve et ol\u00e9oduc sur quelques kilom\u00e8tres de large.' },
+    { an:2017, n:'TGV Bordeaux et Rennes', a:[48.85,2.35], b:[44.84,-0.58], t:'t',
+      x:'Bordeaux \u00e0 deux heures. Mais les lignes transversales \u2014 Bordeaux-Lyon, '
+        + 'Nantes-Strasbourg \u2014 restent aussi lentes qu\u2019en 1970.' }
+  ];
+
+  const TYPES_FER = {
+    p:['Premi\u00e8re ligne', '#7c3aed'],
+    e:['Branche de l\u2019\u00e9toile', '#1d4ed8'],
+    m:['D\u00e9cision nationale', '#a16207'],
+    f:['Fermetures', '#525252'],
+    t:['Grande vitesse', '#b91c1c']
+  };
+
+  // ---------- Épidémies ----------
+  //
+  // La diffusion des épidémies suit les routes commerciales : c'est de la géographie
+  // pure. Les foyers et les dates sont ceux retenus par les historiens ; les bilans
+  // anciens restent des ordres de grandeur.
+  const EPIDEMIES = [
+    { n:'Peste noire', an1:1347, an2:1352, coul:'#450a0a',
+      bilan:'Un tiers \u00e0 la moiti\u00e9 de la population europ\u00e9enne',
+      x:'Arriv\u00e9e par bateau \u00e0 Marseille en novembre 1347, depuis Caffa en Crim\u00e9e. Elle remonte '
+        + 'la vall\u00e9e du Rh\u00f4ne, gagne Paris en juin 1348, puis le Nord. Dix-huit mois pour '
+        + 'traverser le royaume \u2014 la vitesse des convois marchands. Les r\u00e9gions \u00e0 l\u2019\u00e9cart des '
+        + 'routes sont largement \u00e9pargn\u00e9es.',
+      etapes:[[1347.9,43.30,5.37,'Marseille \u2014 arriv\u00e9e des navires g\u00e9nois'],
+              [1348.1,43.95,4.81,'Avignon \u2014 la cour pontificale d\u00e9cim\u00e9e'],
+              [1348.3,45.76,4.83,'Lyon'],
+              [1348.4,44.84,-0.58,'Bordeaux'],
+              [1348.5,48.85,2.35,'Paris \u2014 environ 800 morts par jour au pic'],
+              [1348.7,49.49,0.11,'Rouen'],
+              [1349.0,50.63,3.06,'Lille'],
+              [1349.3,48.58,7.75,'Strasbourg']] },
+    { n:'Chol\u00e9ra', an1:1832, an2:1832, coul:'#0e7490',
+      bilan:'Environ 100 000 morts en France',
+      x:'Venu du Bengale par la Russie et l\u2019Allemagne. Il frappe d\u2019abord les quartiers '
+        + 'populaires de Paris \u2014 ce qui d\u00e9clenche des \u00e9meutes, la rumeur accusant les riches '
+        + 'd\u2019empoisonner les puits. Il r\u00e9v\u00e8le l\u2019insalubrit\u00e9 urbaine et prépare les grands '
+        + 'travaux d\u2019assainissement.',
+      etapes:[[1832.2,50.95,1.86,'Calais \u2014 par les bateaux anglais'],
+              [1832.3,48.85,2.35,'Paris \u2014 20 000 morts en six mois'],
+              [1832.5,45.76,4.83,'Lyon'],
+              [1832.6,43.30,5.37,'Marseille'],
+              [1832.7,44.84,-0.58,'Bordeaux']] },
+    { n:'Grippe de 1918', an1:1918, an2:1919, coul:'#7c2d12',
+      bilan:'240 000 morts en France, 50 millions dans le monde',
+      x:'Mal nomm\u00e9e \u00ab espagnole \u00bb : l\u2019Espagne, neutre, ne censurait pas sa presse et fut donc '
+        + 'la premi\u00e8re \u00e0 en parler. Les mouvements de troupes la diffusent \u00e0 une vitesse '
+        + 'in\u00e9dite. Elle tue surtout des adultes jeunes \u2014 caract\u00e9ristique rare et encore '
+        + 'discut\u00e9e.',
+      etapes:[[1918.3,49.90,2.30,'Front de la Somme \u2014 premiers cas group\u00e9s'],
+              [1918.6,48.85,2.35,'Paris'],
+              [1918.8,45.76,4.83,'Lyon \u2014 vague d\u2019automne, la plus meurtri\u00e8re'],
+              [1918.9,43.30,5.37,'Marseille \u2014 par le port'],
+              [1919.1,44.84,-0.58,'Bordeaux']] }
+  ];
+
   const etatFront = { actif:false, groupe:null, annee:2026 };
   const etatColo = { actif:false, groupe:null };
 
@@ -12280,6 +12430,438 @@
     afficherInfo('🌐 ' + COLONIES.length + ' ensembles coloniaux \u2014 la taille du cercle '
       + 'suit la dur\u00e9e de la domination \u00b7 cliquez pour le d\u00e9tail', 9000);
   });
+
+  // ---------- L'exode rural ----------
+  //
+  // Un mouvement long, non un accident récent : la Creuse a moins d'habitants aujourd'hui
+  // qu'en 1850. Les valeurs sont des indices base 100 en 1851, arrondis — les ordres de
+  // grandeur sont sûrs, le détail décimal ne le serait pas.
+  const EXODE = [
+    { d:'23', n:'Creuse',            lat:46.17, lon:2.00,  v:[100, 96, 74, 52, 36, 33] },
+    { d:'15', n:'Cantal',            lat:45.05, lon:2.65,  v:[100, 94, 76, 58, 47, 44] },
+    { d:'48', n:'Loz\u00e8re',       lat:44.52, lon:3.50,  v:[100, 92, 71, 55, 47, 47] },
+    { d:'12', n:'Aveyron',           lat:44.35, lon:2.57,  v:[100, 96, 80, 65, 60, 62] },
+    { d:'09', n:'Ari\u00e8ge',       lat:42.97, lon:1.61,  v:[100, 90, 66, 47, 45, 51] },
+    { d:'52', n:'Haute-Marne',       lat:48.11, lon:5.14,  v:[100, 93, 76, 65, 62, 55] },
+    { d:'55', n:'Meuse',             lat:48.97, lon:5.37,  v:[100, 91, 66, 62, 61, 57] },
+    { d:'32', n:'Gers',              lat:43.65, lon:0.59,  v:[100, 88, 66, 52, 52, 60] },
+    { d:'75', n:'Paris',             lat:48.86, lon:2.35,  v:[100, 250, 275, 268, 200, 195] },
+    { d:'69', n:'Rh\u00f4ne',        lat:45.76, lon:4.83,  v:[100, 145, 175, 215, 290, 340] },
+    { d:'13', n:'Bouches-du-Rh\u00f4ne', lat:43.30, lon:5.37, v:[100, 135, 175, 240, 340, 390] },
+    { d:'59', n:'Nord',              lat:50.63, lon:3.06,  v:[100, 135, 160, 175, 190, 195] },
+    { d:'44', n:'Loire-Atlantique',  lat:47.22, lon:-1.55, v:[100, 105, 115, 140, 190, 260] },
+    { d:'33', n:'Gironde',           lat:44.84, lon:-0.58, v:[100, 110, 120, 135, 175, 230] },
+    { d:'34', n:'H\u00e9rault',      lat:43.61, lon:3.88,  v:[100, 115, 125, 130, 175, 260] },
+    { d:'74', n:'Haute-Savoie',      lat:45.90, lon:6.13,  v:[100, 98, 100, 115, 175, 290] },
+    { d:'35', n:'Ille-et-Vilaine',   lat:48.11, lon:-1.68, v:[100, 100, 96, 105, 135, 190] },
+    { d:'29', n:'Finist\u00e8re',    lat:48.39, lon:-4.49, v:[100, 108, 108, 115, 125, 140] },
+    { d:'62', n:'Pas-de-Calais',     lat:50.43, lon:2.83,  v:[100, 125, 145, 155, 160, 155] },
+    { d:'57', n:'Moselle',           lat:49.12, lon:6.18,  v:[100, 108, 120, 155, 180, 185] }
+  ];
+  const EXODE_ANNEES = [1851, 1891, 1931, 1962, 1990, 2021];
+
+  // ---------- La ligne Saint-Malo – Genève ----------
+  //
+  // Tracée par Charles Dupin en 1826 pour cartographier l'instruction. Elle sépare une
+  // France du Nord-Est alphabétisée d'une France du Sud-Ouest qui l'est peu — et elle
+  // recoupe, sans que personne l'ait voulu, la taille des exploitations, le mode
+  // d'héritage, la pratique religieuse, plus tard le vote. Une frontière que nul n'a
+  // décidée.
+  const LIGNE_DUPIN = [
+    [48.65,-2.02],[48.30,-1.10],[47.90,-0.20],[47.60,0.70],[47.30,1.60],[47.05,2.50],
+    [46.85,3.40],[46.65,4.30],[46.40,5.20],[46.20,5.70],[46.20,6.14]
+  ];
+
+  const DUPIN_FAITS = [
+    { n:'L\u2019instruction en 1826', lat:47.60, lon:0.70,
+      x:'Dupin publie une carte des conscrits sachant lire. Au nord-est, 60 \u00e0 90 % ; au '
+        + 'sud-ouest, 10 \u00e0 30 %. Il parle de \u00ab France \u00e9clair\u00e9e \u00bb et de \u00ab France obscure \u00bb \u2014 les '
+        + 'termes de l\u2019\u00e9poque, qui en disent long sur le regard port\u00e9.' },
+    { n:'L\u2019h\u00e9ritage', lat:46.85, lon:3.40,
+      x:'Au nord, on partage \u00e9galement entre les enfants ; au sud, on privil\u00e9gie un h\u00e9ritier '
+        + 'pour ne pas morceler la terre. Deux droits coutumiers, deux structures familiales, '
+        + 'de part et d\u2019autre de la m\u00eame ligne.' },
+    { n:'La taille des fermes', lat:47.30, lon:1.60,
+      x:'Grandes exploitations c\u00e9r\u00e9ali\u00e8res au nord, petites propri\u00e9t\u00e9s polyvalentes au sud. '
+        + 'L\u2019\u00e9cart existe avant la m\u00e9canisation et l\u2019explique en partie.' },
+    { n:'Ce que la ligne n\u2019explique pas', lat:46.20, lon:5.70,
+      x:'Elle est une corr\u00e9lation, non une cause. Les historiens discutent encore ce qui la '
+        + 'produit : densit\u00e9 des r\u00e9seaux paroissiaux, proximit\u00e9 des villes, richesse agricole, '
+        + 'h\u00e9ritage carolingien. Aucune explication seule ne suffit \u2014 et la ligne s\u2019estompe '
+        + 'apr\u00e8s 1900.' }
+  ];
+
+  // ---------- Industrialisation et désindustrialisation ----------
+  const INDUSTRIE = [
+    { n:'Bassin houiller du Nord-Pas-de-Calais', lat:50.43, lon:3.10, deb:1720, pic:1930, fin:1990,
+      emploi:'220 000 mineurs au maximum',
+      x:'Charbon d\u00e9couvert \u00e0 Fresnes en 1720. Le bassin fa\u00e7onne un paysage entier : terrils, '
+        + 'corons, cavaliers, fosses. La derni\u00e8re remont\u00e9e a lieu \u00e0 Oignies le 21 d\u00e9cembre 1990.',
+      apres:'Le bassin minier est class\u00e9 au patrimoine mondial en 2012. Le ch\u00f4mage y reste parmi '
+        + 'les plus \u00e9lev\u00e9s de France trente ans apr\u00e8s.' },
+    { n:'Sid\u00e9rurgie lorraine', lat:49.35, lon:5.95, deb:1870, pic:1960, fin:1990,
+      emploi:'90 000 sid\u00e9rurgistes en 1960',
+      x:'Le proc\u00e9d\u00e9 Thomas, invent\u00e9 en 1878, permet enfin d\u2019exploiter la minette lorraine, riche '
+        + 'en phosphore. La Lorraine devient le premier bassin sid\u00e9rurgique fran\u00e7ais.',
+      apres:'Fermeture des hauts fourneaux de 1978 \u00e0 2011. Le dernier, \u00e0 Florange, s\u2019arr\u00eate en '
+        + '2013 apr\u00e8s une bataille politique nationale.' },
+    { n:'Textile du Nord', lat:50.69, lon:3.17, deb:1800, pic:1930, fin:1985,
+      emploi:'180 000 emplois dans la r\u00e9gion',
+      x:'Roubaix-Tourcoing devient la capitale mondiale de la laine peign\u00e9e. Les courées, '
+        + 'logements ouvriers en impasse, y concentrent une mis\u00e8re d\u00e9crite d\u00e8s les ann\u00e9es 1840.',
+      apres:'Effondrement face \u00e0 la concurrence asiatique dans les ann\u00e9es 1970-80. Roubaix est '
+        + 'aujourd\u2019hui la commune la plus pauvre de France.' },
+    { n:'Saint-\u00c9tienne \u2014 charbon, armes, rubans', lat:45.44, lon:4.39, deb:1750, pic:1900, fin:1983,
+      emploi:'20 000 mineurs vers 1900',
+      x:'Premier bassin charbonnier exploit\u00e9 industriellement en France, doubl\u00e9 d\u2019une '
+        + 'manufacture d\u2019armes et d\u2019un textile de rubans. Trois industries dans une seule vall\u00e9e.',
+      apres:'Derni\u00e8re mine ferm\u00e9e en 1983. La ville perd un tiers de sa population entre 1975 '
+        + 'et 2010.' },
+    { n:'Le Creusot \u2014 Schneider', lat:46.80, lon:4.44, deb:1836, pic:1900, fin:1984,
+      emploi:'12 000 ouvriers',
+      x:'Ville-usine par excellence : la famille Schneider y contr\u00f4le l\u2019emploi, le logement, '
+        + 'l\u2019\u00e9cole, l\u2019\u00e9glise et la mairie. Un mod\u00e8le paternaliste \u00e9tudi\u00e9 dans le monde entier.',
+      apres:'D\u00e9mant\u00e8lement dans les ann\u00e9es 1980. Le site accueille aujourd\u2019hui des activit\u00e9s '
+        + 'de haute technologie \u2014 avec dix fois moins d\u2019emplois.' },
+    { n:'Chantiers navals de Saint-Nazaire', lat:47.27, lon:-2.21, deb:1862, pic:1960, fin:2026,
+      emploi:'8 000 emplois directs',
+      x:'Le Normandie, le France, aujourd\u2019hui les plus grands paquebots du monde. L\u2019un des rares '
+        + 'bassins industriels historiques encore en activit\u00e9.',
+      apres:'Toujours actif, mais apr\u00e8s des crises r\u00e9p\u00e9t\u00e9es et des changements de propri\u00e9taires. '
+        + 'L\u2019exception qui souligne la r\u00e8gle.' },
+    { n:'Bassin de Decazeville', lat:44.56, lon:2.25, deb:1826, pic:1950, fin:2001,
+      emploi:'6 000 mineurs',
+      x:'Charbon et sid\u00e9rurgie au c\u0153ur de l\u2019Aveyron rural. La gr\u00e8ve avec occupation de 1961-62, '
+        + 'longue de soixante-six jours, marque l\u2019histoire sociale.',
+      apres:'Derni\u00e8re mine \u00e0 ciel ouvert ferm\u00e9e en 2001. Le bassin a perdu la moiti\u00e9 de sa '
+        + 'population.' }
+  ];
+
+  const etatFerre = { actif:false, groupe:null, annee:2026 };
+  const etatEpid = { actif:false, groupe:null, sel:0 };
+
+  function dessinerFerre(){
+    if(!etatFerre.actif) return;
+    if(etatFerre.groupe) map.removeLayer(etatFerre.groupe);
+    const g = L.layerGroup();
+    let n = 0;
+    FERRE.forEach(function(l){
+      if(l.an > etatFerre.annee) return;
+      n++;
+      const t = TYPES_FER[l.t] || TYPES_FER.e;
+      const ligne = (l.a[0] !== l.b[0] || l.a[1] !== l.b[1]);
+      if(ligne){
+        L.polyline([l.a, l.b], { color:t[1], weight: l.t === 't' ? 4 : 3,
+          opacity:0.85, dashArray: l.t === 't' ? null : null })
+          .bindTooltip('<b>' + l.an + '</b> \u2014 ' + echap(l.n), { sticky:true })
+          .bindPopup('<b>' + echap(l.n) + '</b> <span style="color:#6b7280">\u00b7 ' + l.an + '</span>'
+            + '<div style="color:' + t[1] + ';font-weight:700;font-size:11px;margin-top:2px">'
+            + echap(t[0]) + '</div>'
+            + '<div style="font-size:11.5px;line-height:1.55;margin-top:4px">' + echap(l.x) + '</div>')
+          .addTo(g);
+      }
+      L.circleMarker(l.b, { radius:5, weight:2, color:t[1], fillColor:'#fff', fillOpacity:0.9 })
+        .bindTooltip('<b>' + l.an + '</b> \u2014 ' + echap(l.n), { direction:'top' })
+        .bindPopup('<b>' + echap(l.n) + '</b> <span style="color:#6b7280">\u00b7 ' + l.an + '</span>'
+          + '<div style="color:' + t[1] + ';font-weight:700;font-size:11px;margin-top:2px">'
+          + echap(t[0]) + '</div>'
+          + '<div style="font-size:11.5px;line-height:1.55;margin-top:4px">' + echap(l.x) + '</div>')
+        .addTo(g);
+    });
+    g.addTo(map);
+    etatFerre.groupe = g;
+    const v = document.getElementById('fer-annee-val');
+    if(v) v.textContent = etatFerre.annee;
+    const c = document.getElementById('fer-compte');
+    if(c) c.textContent = n + ' \u00e9tape(s) sur ' + FERRE.length;
+    majLegende();
+  }
+
+  document.getElementById('btn-ferre').addEventListener('click', function(){
+    const btn = document.getElementById('btn-ferre');
+    const pan = document.getElementById('fer-panneau');
+    if(etatFerre.actif){
+      etatFerre.actif = false;
+      if(etatFerre.groupe){ map.removeLayer(etatFerre.groupe); etatFerre.groupe = null; }
+      if(pan) pan.hidden = true;
+      basculerBouton(btn, false, '', '🚆 L\u2019\u00e9toile ferroviaire');
+      majLegende();
+      return;
+    }
+    etatFerre.actif = true;
+    basculerBouton(btn, true, '🚆 L\u2019\u00e9toile ferroviaire \u2715', '', '#1d4ed8');
+    if(pan) pan.hidden = false;
+    dessinerFerre();
+    afficherInfo('🚆 Glissez le curseur : l\u2019\u00e9toile de Legrand se dessine \u00e0 partir de 1842', 8000);
+  });
+
+  (function cablerFerre(){
+    const c = document.getElementById('fer-annee');
+    if(c) c.addEventListener('input', function(){
+      etatFerre.annee = +c.value;
+      dessinerFerre();
+    });
+    const lg = document.getElementById('fer-types');
+    if(lg){
+      lg.innerHTML = Object.keys(TYPES_FER).map(function(k){
+        const t = TYPES_FER[k];
+        return '<span style="display:inline-flex;align-items:center;gap:3px;margin:0 7px 2px 0">'
+          + '<span style="width:12px;height:3px;background:' + t[1] + '"></span>' + t[0] + '</span>';
+      }).join('');
+    }
+  })();
+
+  function dessinerEpidemie(){
+    if(!etatEpid.actif) return;
+    if(etatEpid.groupe) map.removeLayer(etatEpid.groupe);
+    const e = EPIDEMIES[etatEpid.sel];
+    const g = L.layerGroup();
+    const n = e.etapes.length;
+    e.etapes.forEach(function(et, i){
+      // la teinte s'eclaircit avec l'avancee : on lit le sens de la diffusion
+      const part = i / Math.max(1, n - 1);
+      L.circleMarker([et[1], et[2]], {
+        radius: 13 - part * 5, weight:2.5, color:e.coul,
+        fillColor:e.coul, fillOpacity: 0.55 - part * 0.35
+      })
+        .bindTooltip('<b>' + echap(et[3].split(' \u2014 ')[0]) + '</b><br><small>'
+          + Math.floor(et[0]) + '</small>', { direction:'top' })
+        .bindPopup('<b>' + echap(e.n) + '</b> <span style="color:#6b7280">\u00b7 \u00e9tape ' + (i + 1)
+          + ' sur ' + n + '</span>'
+          + '<div style="font-weight:700;color:' + e.coul + ';margin-top:2px">' + echap(et[3]) + '</div>'
+          + '<div style="font-size:11px;color:#6b7280;margin-top:2px">vers ' + Math.floor(et[0]) + '</div>')
+        .addTo(g);
+      // la fleche vers l'etape suivante
+      if(i < n - 1){
+        const s = e.etapes[i + 1];
+        L.polyline([[et[1], et[2]], [s[1], s[2]]], { color:e.coul, weight:2,
+          opacity:0.5, dashArray:'6 5' }).addTo(g);
+      }
+    });
+    g.addTo(map);
+    etatEpid.groupe = g;
+    const f = document.getElementById('epi-fiche');
+    if(f) f.innerHTML = '<b>' + echap(e.n) + '</b> <span style="color:#6b7280">\u00b7 '
+      + e.an1 + (e.an2 !== e.an1 ? '\u2013' + e.an2 : '') + '</span>'
+      + '<div style="font-weight:700;color:' + e.coul + ';font-size:11px;margin-top:2px">'
+      + echap(e.bilan) + '</div>'
+      + '<div style="margin-top:4px;line-height:1.55">' + echap(e.x) + '</div>';
+    majLegende();
+  }
+
+  document.getElementById('btn-epidemies').addEventListener('click', function(){
+    const btn = document.getElementById('btn-epidemies');
+    const pan = document.getElementById('epi-panneau');
+    if(etatEpid.actif){
+      etatEpid.actif = false;
+      if(etatEpid.groupe){ map.removeLayer(etatEpid.groupe); etatEpid.groupe = null; }
+      if(pan) pan.hidden = true;
+      basculerBouton(btn, false, '', '🦠 \u00c9pid\u00e9mies');
+      majLegende();
+      return;
+    }
+    etatEpid.actif = true;
+    basculerBouton(btn, true, '🦠 \u00c9pid\u00e9mies \u2715', '', '#450a0a');
+    if(pan) pan.hidden = false;
+    dessinerEpidemie();
+    afficherInfo('🦠 La diffusion suit les routes commerciales \u2014 cliquez une \u00e9tape pour la date', 8000);
+  });
+
+  (function cablerEpidemies(){
+    const s = document.getElementById('epi-choix');
+    if(!s) return;
+    s.innerHTML = EPIDEMIES.map(function(e, i){
+      return '<option value="' + i + '">' + echap(e.n + ' (' + e.an1 + ')') + '</option>';
+    }).join('');
+    s.addEventListener('change', function(){
+      etatEpid.sel = +s.value;
+      dessinerEpidemie();
+    });
+  })();
+
+  const etatExode = { actif:false, groupe:null, idx:5 };
+  const etatDupin = { actif:false, groupe:null };
+  const etatIndus = { actif:false, groupe:null, annee:2026 };
+
+  function dessinerExode(){
+    if(!etatExode.actif) return;
+    if(etatExode.groupe) map.removeLayer(etatExode.groupe);
+    const g = L.layerGroup();
+    const i = etatExode.idx;
+    let perdants = 0, gagnants = 0;
+    EXODE.forEach(function(d){
+      const v = d.v[i];
+      // échelle : 100 = stable. En dessous, le département s'est vidé.
+      const perte = v < 100;
+      if(perte) perdants++; else gagnants++;
+      const ecart = Math.abs(v - 100);
+      const r = 6 + Math.min(18, ecart / 12);
+      const coul = perte
+        ? (v < 60 ? '#7f1d1d' : (v < 85 ? '#dc2626' : '#f87171'))
+        : (v > 200 ? '#14532d' : (v > 120 ? '#16a34a' : '#86efac'));
+      L.circleMarker([d.lat, d.lon], { radius:r, weight:2, color:coul,
+        fillColor:coul, fillOpacity:0.42 })
+        .bindTooltip('<b>' + echap(d.n) + '</b><br>' + v + ' pour 100 en 1851', { direction:'top' })
+        .bindPopup('<b>' + echap(d.n) + '</b> <span style="color:#6b7280">\u00b7 ' + d.d + '</span>'
+          + '<div style="font-weight:700;color:' + coul + ';font-size:13px;margin-top:3px">'
+          + v + ' <span style="font-size:11px;font-weight:400">pour 100 habitants en 1851</span></div>'
+          + '<div style="font-size:11px;color:#6b7280;margin-top:3px">'
+          + EXODE_ANNEES.map(function(a, k){
+              return a + ' : ' + d.v[k];
+            }).join(' \u00b7 ') + '</div>'
+          + '<div style="font-size:11px;line-height:1.5;margin-top:4px;color:#57534e">'
+          + (perte
+              ? 'Ce d\u00e9partement a <b>perdu</b> ' + Math.round(100 - v) + ' % de sa population '
+                + 'depuis 1851. Le mouvement commence bien avant 1900.'
+              : 'Ce d\u00e9partement a <b>gagn\u00e9</b> ' + Math.round(v - 100) + ' %. '
+                + 'Les d\u00e9parts des campagnes alimentent ces villes.') + '</div>')
+        .addTo(g);
+    });
+    g.addTo(map);
+    etatExode.groupe = g;
+    const v = document.getElementById('exo-annee-val');
+    if(v) v.textContent = EXODE_ANNEES[i];
+    const c = document.getElementById('exo-compte');
+    if(c) c.textContent = perdants + ' en recul \u00b7 ' + gagnants + ' en hausse (base 100 en 1851)';
+    majLegende();
+  }
+
+  document.getElementById('btn-exode').addEventListener('click', function(){
+    const btn = document.getElementById('btn-exode');
+    const pan = document.getElementById('exo-panneau');
+    if(etatExode.actif){
+      etatExode.actif = false;
+      if(etatExode.groupe){ map.removeLayer(etatExode.groupe); etatExode.groupe = null; }
+      if(pan) pan.hidden = true;
+      basculerBouton(btn, false, '', '📉 Exode rural');
+      majLegende();
+      return;
+    }
+    etatExode.actif = true;
+    basculerBouton(btn, true, '📉 Exode rural \u2715', '', '#dc2626');
+    if(pan) pan.hidden = false;
+    dessinerExode();
+    afficherInfo('📉 Rouge : le d\u00e9partement se vide \u00b7 vert : il se remplit \u2014 '
+      + 'base 100 en 1851', 8000);
+  });
+
+  (function cablerExode(){
+    const c = document.getElementById('exo-annee');
+    if(c) c.addEventListener('input', function(){
+      etatExode.idx = +c.value;
+      dessinerExode();
+    });
+  })();
+
+  document.getElementById('btn-dupin').addEventListener('click', function(){
+    const btn = document.getElementById('btn-dupin');
+    if(etatDupin.actif){
+      etatDupin.actif = false;
+      if(etatDupin.groupe){ map.removeLayer(etatDupin.groupe); etatDupin.groupe = null; }
+      basculerBouton(btn, false, '', '📏 Ligne Saint-Malo \u2013 Gen\u00e8ve');
+      majLegende();
+      return;
+    }
+    etatDupin.actif = true;
+    basculerBouton(btn, true, '📏 Ligne Saint-Malo \u2013 Gen\u00e8ve \u2715', '', '#7c2d12');
+    const g = L.layerGroup();
+    // liseré blanc dessous, comme pour les axes : le trait doit se détacher
+    L.polyline(LIGNE_DUPIN, { color:'#ffffff', weight:8, opacity:0.6, interactive:false }).addTo(g);
+    L.polyline(LIGNE_DUPIN, { color:'#7c2d12', weight:4, opacity:0.95, dashArray:'12 6' })
+      .bindTooltip('<b>Ligne Saint-Malo \u2013 Gen\u00e8ve</b><br><small>trac\u00e9e par Dupin en 1826</small>',
+        { sticky:true })
+      .bindPopup('<b>Ligne Saint-Malo \u2013 Gen\u00e8ve</b>'
+        + '<div style="font-size:11.5px;line-height:1.55;margin-top:4px">Charles Dupin la trace en '
+        + '1826 en cartographiant les conscrits sachant lire. Elle s\u00e9pare une France du Nord-Est '
+        + 'alphab\u00e9tis\u00e9e d\u2019une France du Sud-Ouest qui l\u2019est peu \u2014 et elle recoupe, sans que '
+        + 'personne l\u2019ait voulu, la taille des exploitations, le mode d\u2019h\u00e9ritage, la pratique '
+        + 'religieuse, plus tard le vote.</div>'
+        + '<div style="margin-top:5px;font-size:10.5px;color:#7f1d1d">Une fronti\u00e8re que nul '
+        + 'n\u2019a d\u00e9cid\u00e9e, et qui n\u2019appara\u00eet sur aucune carte officielle.</div>')
+      .addTo(g);
+    DUPIN_FAITS.forEach(function(f){
+      L.circleMarker([f.lat, f.lon], { radius:7, weight:2.5, color:'#7c2d12',
+        fillColor:'#fed7aa', fillOpacity:0.9 })
+        .bindTooltip('<b>' + echap(f.n) + '</b>', { direction:'top' })
+        .bindPopup('<b>' + echap(f.n) + '</b>'
+          + '<div style="font-size:11.5px;line-height:1.55;margin-top:4px">' + echap(f.x) + '</div>')
+        .addTo(g);
+    });
+    g.addTo(map);
+    etatDupin.groupe = g;
+    majLegende();
+    afficherInfo('📏 Une fronti\u00e8re que personne n\u2019a d\u00e9cid\u00e9e \u2014 cliquez les points '
+      + 'pour ce qu\u2019elle s\u00e9pare', 9000);
+  });
+
+  function dessinerIndustrie(){
+    if(!etatIndus.actif) return;
+    if(etatIndus.groupe) map.removeLayer(etatIndus.groupe);
+    const g = L.layerGroup();
+    const an = etatIndus.annee;
+    let vifs = 0, morts = 0;
+    INDUSTRIE.forEach(function(b){
+      if(an < b.deb) return;
+      // un bassin dont la fin est 2026 est toujours actif, pas ferme
+      const ferme = b.fin < 2026 && an >= b.fin;
+      if(ferme) morts++; else vifs++;
+      // le cercle grandit jusqu'au pic, puis retombe
+      let force;
+      if(an <= b.pic) force = (an - b.deb) / Math.max(1, b.pic - b.deb);
+      else force = Math.max(0.15, 1 - (an - b.pic) / Math.max(1, b.fin - b.pic));
+      const coul = ferme ? '#525252' : (an >= b.pic ? '#ea580c' : '#b91c1c');
+      L.circleMarker([b.lat, b.lon], {
+        radius: 7 + force * 15, weight:2.5, color:coul,
+        fillColor:coul, fillOpacity: ferme ? 0.15 : 0.35,
+        dashArray: ferme ? '4 3' : null
+      })
+        .bindTooltip('<b>' + echap(b.n) + '</b><br><small>' + (ferme ? 'ferm\u00e9 en ' + b.fin
+          : (an >= b.pic ? 'en d\u00e9clin' : 'en essor')) + '</small>', { direction:'top' })
+        .bindPopup('<b>' + echap(b.n) + '</b>'
+          + '<div style="color:' + coul + ';font-weight:700;font-size:11px;margin-top:2px">'
+          + b.deb + ' \u2013 ' + (b.fin >= 2026 ? 'toujours actif' : b.fin)
+          + ' \u00b7 apog\u00e9e ' + b.pic + '</div>'
+          + '<div style="font-size:11px;color:#6b7280;margin-top:2px">' + echap(b.emploi) + '</div>'
+          + '<div style="font-size:11.5px;line-height:1.55;margin-top:4px">' + echap(b.x) + '</div>'
+          + '<div style="font-size:11.5px;line-height:1.5;margin-top:5px;padding-top:4px;'
+          + 'border-top:1px solid var(--trait)"><b>Apr\u00e8s</b> \u00b7 ' + echap(b.apres) + '</div>')
+        .addTo(g);
+    });
+    g.addTo(map);
+    etatIndus.groupe = g;
+    const v = document.getElementById('ind-annee-val');
+    if(v) v.textContent = an;
+    const c = document.getElementById('ind-compte');
+    if(c) c.textContent = vifs + ' en activit\u00e9 \u00b7 ' + morts + ' ferm\u00e9(s)';
+    majLegende();
+  }
+
+  document.getElementById('btn-industrie').addEventListener('click', function(){
+    const btn = document.getElementById('btn-industrie');
+    const pan = document.getElementById('ind-panneau');
+    if(etatIndus.actif){
+      etatIndus.actif = false;
+      if(etatIndus.groupe){ map.removeLayer(etatIndus.groupe); etatIndus.groupe = null; }
+      if(pan) pan.hidden = true;
+      basculerBouton(btn, false, '', '🏭 Bassins industriels');
+      majLegende();
+      return;
+    }
+    etatIndus.actif = true;
+    basculerBouton(btn, true, '🏭 Bassins industriels \u2715', '', '#b91c1c');
+    if(pan) pan.hidden = false;
+    dessinerIndustrie();
+    afficherInfo('🏭 Le cercle grandit jusqu\u2019\u00e0 l\u2019apog\u00e9e, puis retombe \u00b7 '
+      + 'gris pointill\u00e9 = ferm\u00e9', 8000);
+  });
+
+  (function cablerIndustrie(){
+    const c = document.getElementById('ind-annee');
+    if(c) c.addEventListener('input', function(){
+      etatIndus.annee = +c.value;
+      dessinerIndustrie();
+    });
+  })();
 
   (function cablerLargeurLegende(){
     // les fleches existent en double : dans l'en-tete de la legende et dans celui du
