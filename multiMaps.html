@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v6.1 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v6.6 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v6.1</title>
+<title>MultiMaps — géographie (collège & lycée) — v6.6</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -271,6 +271,18 @@
     font:700 12px/1.15 system-ui, sans-serif; white-space:nowrap;
     text-shadow:0 0 3px #fff, 0 0 3px #fff, 0 0 5px #fff, 1px 1px 0 #fff, -1px -1px 0 #fff;
     letter-spacing:.02em;
+  }
+  /* Module Batailles */
+  .bat-pion{ background:none !important; border:0 !important }
+  .bat-pion span{
+    display:inline-block; transform:translate(-50%,-50%);
+    width:22px; height:22px; line-height:22px; text-align:center;
+    background:#7f1d1d; color:#fff; border:2px solid #fff; border-radius:50%;
+    font-size:12px; box-shadow:0 1px 3px rgba(0,0,0,.4); cursor:pointer;
+  }
+  .bat-fiche{
+    margin-top:5px; padding:7px 8px; border:1px solid var(--trait); border-radius:8px;
+    background:#fdfcf9; font-size:12px; line-height:1.5; max-height:290px; overflow-y:auto;
   }
   .journal-corps{
     max-height:300px; overflow-y:auto; border:1px solid var(--trait); border-radius:8px;
@@ -2408,6 +2420,46 @@
     <button class="calque-ajout donnee" id="btn-pays" title="Les pays et régions naturelles : Beauce, Brie, Sologne, Perche, Camargue, Causses, Landes de Gascogne, Médoc, Côte d'Émeraude… Ces découpages d'usage, hérités de la géographie et de l'histoire longues, ne figurent sur aucune carte administrative — positions et étendues approximatives.">🌾 Pays et régions naturelles (137)</button>
     <div id="pays-familles" style="margin:2px 0 3px"></div>
     <button class="calque-ajout donnee" id="btn-langues" title="Les grands domaines linguistiques et la limite oïl / oc — la frontière la plus durable de France, tracée ici de façon approximative (le « croissant » est une zone de transition, pas une ligne).">🗣 Domaines linguistiques</button>
+    <div class="sep"></div>
+    <span class="etiquette">Frontières et territoire</span>
+    <button class="calque-ajout donnee" id="btn-frontieres" title="La formation du territoire français depuis le traité de Verdun (843) : chaque acquisition ou perte apparaît à sa date, colorée selon son mode — héritage, mariage, conquête, achat, traité, vote. Glissez le curseur pour dérouler mille ans.">🗺 Formation du territoire</button>
+    <div id="front-panneau" hidden>
+      <div class="croquis-rangee" style="margin-top:4px;align-items:center">
+        <input type="range" id="front-annee" min="843" max="2026" step="1" value="2026" style="flex:1;min-width:0" title="Année affichée : seules les étapes antérieures apparaissent. Les acquisitions de moins de quarante ans sont mises en avant.">
+        <span id="front-annee-val" class="sous" style="min-width:40px;text-align:right;font-weight:700">2026</span>
+      </div>
+      <p class="sous" id="front-compte" style="margin:2px 0"></p>
+      <div id="front-modes" style="font-size:10px;color:#57534e;line-height:1.7;margin-top:2px"></div>
+      <details style="margin-top:6px">
+        <summary style="cursor:pointer;font-size:11px;font-weight:700;color:var(--encre)">📖 Comment s’est faite la France</summary>
+        <div style="font-size:11.5px;line-height:1.6;margin-top:5px;color:#3f3f46">
+          <p style="margin:0 0 6px"><b>Un royaume qui n’est pas un territoire.</b> En 987, Hugues Capet est élu roi mais ne commande vraiment qu’une bande de Paris à Orléans. Le duc de Normandie, le comte de Toulouse, le duc d’Aquitaine sont plus riches et plus puissants que lui. Le royaume est un réseau de fidélités, non un espace continu : on est sujet d’un homme, pas habitant d’un pays.</p>
+          <p style="margin:0 0 6px"><b>Trois siècles de patience.</b> Les Capétiens agrandissent le domaine par tous les moyens sauf, le plus souvent, la guerre ouverte : mariages (la Bretagne, deux fois), héritages (la Provence, la Bourgogne), achats (le Dauphiné, la Corse), confiscations judiciaires (la Normandie en 1204, jugée avant d’être prise). Sur nos vingt-sept étapes, la conquête pure est minoritaire.</p>
+          <p style="margin:0 0 6px"><b>La frontière naît au XVIIᵉ siècle.</b> Avant, il y a des zones où deux souverains lèvent l’impôt, des villes libres, des enclaves — Avignon au pape pendant 443 ans, Mulhouse alliée aux Suisses, Montbéliard au duc de Wurtemberg. C’est Westphalie (1648) et les Pyrénées (1659) qui inventent la frontière-ligne, tracée sur une carte et gardée par des forteresses. Vauban en construira trente-trois.</p>
+          <p style="margin:0 0 6px"><b>Le « pré carré ».</b> L’idée d’une France aux « frontières naturelles » — Rhin, Alpes, Pyrénées, océan — est une justification inventée après coup, popularisée sous la Révolution. Aucun roi médiéval n’a raisonné ainsi. Elle a servi à légitimer des conquêtes, pas à les guider.</p>
+          <p style="margin:0 0 6px"><b>Et les gens ?</b> Devenir français ne signifiait pas parler français : au moment de la Révolution, une large part de la population ne le parle pas. Ni être traité pareil : la Bretagne, la Provence et le Languedoc gardent leurs états et leurs impôts propres jusqu’en 1789, la Franche-Comté conquise perd les siens immédiatement. L’uniformisation est l’œuvre de la Révolution et du XIXᵉ siècle, pas des rois.</p>
+          <p style="margin:0"><b>Une fin récente.</b> La dernière modification de la frontière métropolitaine date de 1947 : Tende et La Brigue, quelques centaines de kilomètres carrés pris à l’Italie vaincue, après référendum local. Mille ans pour en arriver là.</p>
+        </div>
+      </details>
+      <div style="font-size:9.5px;color:#57534e;margin-top:5px;line-height:1.45">⚠️ Avant le XVIIᵉ siècle, <b>les frontières ne sont pas des lignes</b> : il y a des allégeances, des enclaves, des zones où deux souverains lèvent l’impôt. On montre donc des acquisitions datées, non des contours continus — tracer un trait net sur 1180 serait une invention rétrospective.</div>
+    </div>
+    <button class="calque-ajout donnee" id="btn-colonies" title="L’empire colonial : dix ensembles, de la Nouvelle-France à l’Indochine. La taille du cercle suit la durée de la domination. Chaque fiche donne la prise de contrôle, ce qu’elle a coûté, et la sortie.">🌐 Empire colonial</button>
+    <div style="font-size:9.5px;color:#57534e;margin-top:4px;line-height:1.45">L’empire colonial est présenté à part : ce fut une <b>conquête et une domination</b>, non une extension du territoire national.</div>
+
+    <div class="sep"></div>
+    <span class="etiquette">Batailles : le déroulé pas à pas</span>
+    <button class="calque-ajout donnee" id="btn-batailles" title="Trente batailles qui ont pesé sur l’histoire de France, d’Alésia à Diên Biên Phủ. Chacune se déroule phase par phase : le texte explique ce qui se joue, les flèches montrent les mouvements.">⚔ Batailles</button>
+    <div id="bat-panneau" hidden>
+      <select id="bat-choix" class="feux-annee" style="width:100%;margin-top:4px" title="Choisissez une bataille. La carte se recadre dessus."></select>
+      <div class="croquis-rangee" style="margin-top:4px;align-items:center">
+        <button class="croquis-btn" id="bat-prec" title="Phase précédente">◀</button>
+        <button class="croquis-btn" id="bat-suiv" title="Phase suivante">▶</button>
+        <button class="croquis-btn" id="bat-fin" title="Aller à la dernière phase et à l’issue">▶|</button>
+        <span id="bat-compteur" class="sous" style="margin-left:auto;white-space:nowrap"></span>
+      </div>
+      <div id="bat-fiche" class="bat-fiche"></div>
+      <div style="font-size:9.5px;color:#8a8577;margin-top:5px;line-height:1.45">⚠️ Les flèches sont un <b>schéma pédagogique</b>, pas un relevé topographique : elles indiquent le sens des mouvements, non leur tracé exact. Plusieurs localisations sont elles-mêmes discutées par les historiens (Alésia, Poitiers 732, Champs Catalauniques).</div>
+    </div>
   </div>
 </div>
 
@@ -2446,7 +2498,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v6.1</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v6.6</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -2570,7 +2622,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v6.1</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v6.6</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -3203,7 +3255,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v6.1';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v6.6';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -10990,6 +11042,1244 @@
     }catch(e){}
     refleter();
   })();
+
+  // ---------- Batailles : le déroulé pas à pas ----------
+  // Trente batailles qui ont pesé sur l'histoire de France. Chacune est découpée en
+  // phases : on avance d'un clic, le texte explique ce qui se joue, les flèches montrent
+  // les mouvements. Les flèches sont un SCHÉMA, jamais un relevé topographique.
+  //
+  // Sur les localisations : plusieurs sont discutées par les historiens. Alésia n'a été
+  // fixée à Alise-Sainte-Reine qu'au XIXe siècle et la controverse n'est pas éteinte ;
+  // Poitiers 732 est situé quelque part entre Tours et Poitiers, sans certitude ; les
+  // Champs Catalauniques restent introuvables. Le texte le dit quand c'est le cas.
+  //
+  // Format : { n:nom, an:année, lat, lon, camps:[[nom,couleur],…], issue, portee,
+  //            phases:[{t:titre, x:texte, f:[[latA,lonA,latB,lonB,camp],…]}] }
+  const BATAILLES = [
+    { n:'Alésia', an:'52 av. J.-C.', lat:47.5370, lon:4.5030,
+      camps:[['Rome','#b91c1c'], ['Gaulois','#1d4ed8']],
+      issue:'Victoire romaine \u2014 fin de la guerre des Gaules',
+      portee:'La Gaule devient romaine pour cinq si\u00e8cles. Le latin, le droit et les villes '
+        + 'que nous habitons encore d\u00e9coulent de cette d\u00e9faite.',
+      lieuSur:false,
+      phases:[
+        { t:'Le blocus', x:'Vercing\u00e9torix se r\u00e9fugie sur l\u2019oppidum avec environ 80 000 hommes. '
+          + 'C\u00e9sar, plut\u00f4t que d\u2019assaillir la position, choisit de l\u2019affamer : il fait creuser une '
+          + 'double ligne de fortifications, la contrevallation tourn\u00e9e vers l\u2019oppidum et la '
+          + 'circonvallation tourn\u00e9e vers l\u2019ext\u00e9rieur, soit une trentaine de kilom\u00e8tres de foss\u00e9s.',
+          f:[[47.55,4.48,47.537,4.503,0],[47.52,4.53,47.537,4.503,0]] },
+        { t:'La sortie de cavalerie', x:'Vercing\u00e9torix tente une perc\u00e9e avec sa cavalerie pour '
+          + 'aller chercher des renforts. Elle \u00e9choue, mais quelques cavaliers passent : l\u2019appel '
+          + 'aux peuples gaulois est lanc\u00e9.',
+          f:[[47.537,4.503,47.56,4.46,1]] },
+        { t:'L\u2019arm\u00e9e de secours', x:'Une arm\u00e9e de secours gauloise arrive \u2014 les chiffres antiques '
+          + 'parlent de 250 000 hommes, sans doute tr\u00e8s exag\u00e9r\u00e9s. C\u00e9sar se retrouve pris entre deux '
+          + 'feux, assi\u00e9geant et assi\u00e9g\u00e9.',
+          f:[[47.60,4.40,47.55,4.47,1],[47.48,4.42,47.52,4.47,1]] },
+        { t:'L\u2019assaut du mont R\u00e9a', x:'Les Gaulois rep\u00e8rent un point faible au nord-ouest, l\u00e0 o\u00f9 '
+          + 'le relief emp\u00each\u00e9 de fermer compl\u00e8tement la ligne. L\u2019attaque converge : sortie depuis '
+          + 'l\u2019oppidum, assaut de l\u2019ext\u00e9rieur.',
+          f:[[47.56,4.46,47.545,4.485,1],[47.537,4.503,47.545,4.485,1]] },
+        { t:'La reddition', x:'C\u00e9sar engage sa r\u00e9serve et conduit lui-m\u00eame la contre-attaque, '
+          + 'reconnaissable \u00e0 son manteau rouge. La cavalerie germaine prend les Gaulois \u00e0 revers. '
+          + 'Le lendemain, Vercing\u00e9torix se rend.',
+          f:[[47.51,4.52,47.545,4.485,0],[47.57,4.52,47.545,4.485,0]] }
+      ] },
+
+    { n:'Champs Catalauniques', an:'451', lat:48.9500, lon:4.3500,
+      camps:[['Rome et alli\u00e9s','#b91c1c'], ['Huns','#7c2d12']],
+      issue:'Attila arr\u00eat\u00e9 \u2014 sans \u00eatre d\u00e9truit',
+      portee:'Derni\u00e8re grande victoire de l\u2019arm\u00e9e romaine d\u2019Occident, remport\u00e9e par une coalition '
+        + 'de Wisigoths, de Francs et d\u2019Alains. L\u2019Empire tient encore vingt-cinq ans.',
+      lieuSur:false,
+      phases:[
+        { t:'L\u2019invasion', x:'Attila franchit le Rhin, prend Metz, manque Paris et \u00e9choue devant '
+          + 'Orl\u00e9ans. Il se replie vers l\u2019est, poursuivi.', f:[[49.5,6.2,48.95,4.35,1]] },
+        { t:'La coalition', x:'A\u00e9tius, g\u00e9n\u00e9ral romain, rassemble ce qui reste : Wisigoths de '
+          + 'Th\u00e9odoric, Francs, Burgondes, Alains. Une arm\u00e9e romaine faite surtout de barbares.',
+          f:[[48.5,3.5,48.9,4.3,0],[48.3,4.8,48.9,4.35,0]] },
+        { t:'La cr\u00eate disput\u00e9e', x:'Tout se joue sur une hauteur que les deux camps veulent tenir. '
+          + 'Les Romains y arrivent les premiers. Th\u00e9odoric est tu\u00e9 dans la m\u00eal\u00e9e.',
+          f:[[48.92,4.30,48.95,4.35,0],[48.98,4.42,48.95,4.35,1]] },
+        { t:'Le retrait', x:'Attila se retranche derri\u00e8re ses chariots, pr\u00eat \u00e0 br\u00fbler ses selles '
+          + 'plut\u00f4t que d\u2019\u00eatre pris. A\u00e9tius le laisse partir : d\u00e9truire les Huns renforcerait les '
+          + 'Wisigoths. Calcul politique plus que militaire.',
+          f:[[48.95,4.35,49.4,5.5,1]] }
+      ] },
+
+    { n:'Vouill\u00e9', an:'507', lat:46.6400, lon:0.1700,
+      camps:[['Francs','#1d4ed8'], ['Wisigoths','#a16207']],
+      issue:'Victoire franque \u2014 les Wisigoths quittent la Gaule',
+      portee:'Clovis repousse les Wisigoths au-del\u00e0 des Pyr\u00e9n\u00e9es. La Gaule devient franque, '
+        + 'et le royaume prend la forme qui deviendra la France.',
+      phases:[
+        { t:'La marche vers le sud', x:'Clovis, converti au catholicisme, marche contre Alaric II, '
+          + 'wisigoth et arien. La religion sert d\u2019argument : il se pose en lib\u00e9rateur des '
+          + 'catholiques du Sud.', f:[[48.85,2.35,46.7,0.3,0]] },
+        { t:'Le choc', x:'Les deux arm\u00e9es se rencontrent pr\u00e8s de Poitiers. Les Wisigoths, habitu\u00e9s '
+          + 'au combat \u00e0 distance, subissent le corps \u00e0 corps franc.',
+          f:[[46.70,0.10,46.64,0.17,0],[46.58,0.25,46.64,0.17,1]] },
+        { t:'La mort d\u2019Alaric', x:'Alaric II est tu\u00e9 \u2014 par Clovis lui-m\u00eame selon Gr\u00e9goire de '
+          + 'Tours, qui \u00e9crit un si\u00e8cle plus tard et forge une l\u00e9gende. L\u2019arm\u00e9e wisigothe se '
+          + 'd\u00e9bande.', f:[[46.64,0.17,46.3,0.5,1]] }
+      ] },
+
+    { n:'Poitiers (Moussais)', an:'732', lat:46.8300, lon:0.3800,
+      camps:[['Francs','#1d4ed8'], ['Omeyyades','#0f766e']],
+      issue:'Victoire franque \u2014 arr\u00eat de la pouss\u00e9e vers le nord',
+      portee:'Longtemps pr\u00e9sent\u00e9e comme le sauvetage de la chr\u00e9tient\u00e9, la bataille est '
+        + 'aujourd\u2019hui lue plus sobrement : un raid arr\u00eat\u00e9, dans une s\u00e9rie d\u2019affrontements. '
+        + 'Elle asseoit surtout le pouvoir de Charles Martel.',
+      lieuSur:false,
+      phases:[
+        { t:'Le raid', x:'Abd al-Rahman remonte d\u2019Espagne par la vall\u00e9e de la Garonne, bat le duc '
+          + 'd\u2019Aquitaine \u00e0 Bordeaux et pille en direction de Tours et de son abbaye riche.',
+          f:[[43.6,-0.5,46.8,0.4,1]] },
+        { t:'Le mur franc', x:'Charles Martel choisit le terrain et attend. Son infanterie forme un '
+          + 'carr\u00e9 compact, d\u00e9crit par un chroniqueur comme un mur de glace.',
+          f:[[47.4,0.7,46.83,0.38,0]] },
+        { t:'Les charges', x:'La cavalerie arabe charge \u00e0 plusieurs reprises sans rompre la ligne. '
+          + 'Le combat dure une journ\u00e9e enti\u00e8re.',
+          f:[[46.78,0.45,46.83,0.38,1],[46.80,0.30,46.83,0.38,1]] },
+        { t:'Le repli nocturne', x:'Abd al-Rahman est tu\u00e9. La nuit venue, l\u2019arm\u00e9e omeyyade se '
+          + 'retire discr\u00e8tement vers le sud, laissant son camp.',
+          f:[[46.83,0.38,45.8,0.6,1]] }
+      ] },
+
+    { n:'Hastings', an:'1066', lat:50.9120, lon:0.4870,
+      camps:[['Normands','#7c3aed'], ['Anglo-Saxons','#b45309']],
+      issue:'Victoire normande \u2014 Guillaume devient roi d\u2019Angleterre',
+      portee:'Un duc de Normandie devient roi d\u2019Angleterre. Cette double appartenance nourrira '
+        + 'les conflits franco-anglais pendant quatre si\u00e8cles, jusqu\u2019\u00e0 la guerre de Cent Ans.',
+      phases:[
+        { t:'La double menace', x:'Harold doit affronter deux invasions. Il bat les Norv\u00e9giens '
+          + 'dans le Nord, puis redescend en h\u00e2te : 400 km en quelques jours, avec une arm\u00e9e '
+          + '\u00e9puis\u00e9e.', f:[[53.9,-1.1,50.95,0.5,1]] },
+        { t:'Le mur de boucliers', x:'Harold occupe la cr\u00eate et forme le mur de boucliers, '
+          + 'infanterie serr\u00e9e. Position d\u00e9fensive redoutable tant qu\u2019elle tient.', f:[] },
+        { t:'La fausse fuite', x:'Les charges normandes \u00e9chouent. Une aile normande recule \u2014 '
+          + 'peut-\u00eatre par panique d\u2019abord, puis d\u00e9lib\u00e9r\u00e9ment. Les Anglo-Saxons rompent leur ligne '
+          + 'pour poursuivre : c\u2019est l\u2019erreur d\u00e9cisive.',
+          f:[[50.90,0.47,50.86,0.44,0],[50.92,0.50,50.88,0.46,1]] },
+        { t:'La fin d\u2019Harold', x:'Les archers tirent en cloche. Harold tombe \u2014 une fl\u00e8che dans '
+          + 'l\u2019\u0153il selon la tapisserie de Bayeux, qui est un r\u00e9cit normand. Le mur c\u00e8de.',
+          f:[[50.87,0.44,50.912,0.487,0]] }
+      ] },
+
+    { n:'Bouvines', an:'1214', lat:50.5830, lon:3.1900,
+      camps:[['France','#1d4ed8'], ['Coalition','#b91c1c']],
+      issue:'Victoire fran\u00e7aise \u2014 le royaume consolid\u00e9',
+      portee:'Philippe Auguste \u00e9crase une coalition men\u00e9e par l\u2019empereur Otton IV. La victoire '
+        + 'fonde le prestige de la monarchie : on parle d\u00e8s lors du roi de France, non plus du roi '
+        + 'des Francs.',
+      phases:[
+        { t:'L\u2019\u00e9tau', x:'Jean sans Terre attaque par l\u2019ouest, la coalition imp\u00e9riale par le '
+          + 'nord-est. Philippe Auguste doit choisir : il fonce sur la seconde.',
+          f:[[47.4,-0.5,48.5,1.5,1],[50.9,4.0,50.6,3.3,1]] },
+        { t:'Le pont de Bouvines', x:'Surpris pendant sa retraite, le roi fait demi-tour et d\u00e9ploie '
+          + 'son arm\u00e9e dos au pont \u2014 un dimanche, jour o\u00f9 l\u2019on ne devait pas combattre.',
+          f:[[50.60,3.25,50.583,3.19,0]] },
+        { t:'Les ailes', x:'Le combat s\u2019engage sur les ailes. La cavalerie fran\u00e7aise enfonce la '
+          + 'droite imp\u00e9riale ; \u00e0 gauche, elle plie mais r\u00e9siste.',
+          f:[[50.57,3.15,50.60,3.23,0],[50.60,3.23,50.57,3.16,1]] },
+        { t:'Le roi \u00e0 terre', x:'Philippe Auguste est d\u00e9sar\u00e7onn\u00e9 et manque d\u2019\u00eatre tu\u00e9. Sauv\u00e9 par '
+          + 'ses chevaliers, il remonte en selle. Otton fuit ; la coalition s\u2019effondre.',
+          f:[[50.583,3.19,50.9,3.9,1]] }
+      ] },
+
+    { n:'Cr\u00e9cy', an:'1346', lat:50.2570, lon:1.8970,
+      camps:[['Angleterre','#b45309'], ['France','#1d4ed8']],
+      issue:'D\u00e9sastre fran\u00e7ais \u2014 l\u2019arc long fait ses preuves',
+      portee:'La chevalerie lourde, reine des champs de bataille, est battue par des archers \u00e0 '
+        + 'pied. Un basculement militaire, et social : le paysan anglais entra\u00een\u00e9 vaut le noble '
+        + 'fran\u00e7ais.',
+      phases:[
+        { t:'La chevauch\u00e9e', x:'\u00c9douard III d\u00e9barque en Normandie et traverse le nord de la '
+          + 'France en pillant. Philippe VI le poursuit.', f:[[49.3,-1.2,50.26,1.9,0]] },
+        { t:'La position', x:'\u00c9douard s\u2019installe sur une pente douce, archers en herse sur les '
+          + 'ailes, hommes d\u2019armes \u00e0 pied au centre. Il attend.', f:[] },
+        { t:'Les arbal\u00e9triers', x:'Les arbal\u00e9triers g\u00e9nois, envoy\u00e9s en premier, tirent trois fois '
+          + 'moins vite que les archers anglais et n\u2019ont pas leurs pavois. Ils refluent \u2014 et la '
+          + 'chevalerie fran\u00e7aise les pi\u00e9tine.', f:[[50.22,1.93,50.26,1.90,1]] },
+        { t:'Seize charges', x:'La chevalerie charge seize fois dans le d\u00e9sordre, sous une pluie '
+          + 'de fl\u00e8ches. Environ 1 500 nobles fran\u00e7ais y meurent, dont le roi de Boh\u00eame, aveugle, '
+          + 'qui avait demand\u00e9 qu\u2019on le m\u00e8ne au combat.',
+          f:[[50.21,1.95,50.255,1.90,1],[50.23,1.86,50.255,1.89,1]] }
+      ] },
+
+    { n:'Poitiers', an:'1356', lat:46.6100, lon:0.4500,
+      camps:[['Angleterre','#b45309'], ['France','#1d4ed8']],
+      issue:'Le roi de France fait prisonnier',
+      portee:'Jean le Bon captur\u00e9 : une ran\u00e7on \u00e9norme, un royaume sans roi, et la r\u00e9volte '
+        + 'parisienne d\u2019\u00c9tienne Marcel. La monarchie touche le fond.',
+      phases:[
+        { t:'La poursuite', x:'Le Prince Noir, en chevauch\u00e9e vers le nord, est rattrap\u00e9 par une '
+          + 'arm\u00e9e fran\u00e7aise bien plus nombreuse. Il tente de n\u00e9gocier : refus\u00e9.',
+          f:[[45.8,0.6,46.6,0.45,0]] },
+        { t:'Les haies', x:'Les Anglais se retranchent derri\u00e8re des haies et des vignes, qui '
+          + 'canalisent l\u2019attaque dans des passages \u00e9troits.', f:[] },
+        { t:'\u00c0 pied', x:'Ayant retenu Cr\u00e9cy, les Fran\u00e7ais attaquent \u00e0 pied \u2014 mais en armure '
+          + 'lourde, sur un terrain montant. Ils arrivent \u00e9puis\u00e9s.',
+          f:[[46.57,0.48,46.61,0.45,1]] },
+        { t:'Le contournement', x:'Un d\u00e9tachement anglais contourne par le flanc. Jean le Bon, '
+          + 'qui combat \u00e0 pied avec son plus jeune fils, est captur\u00e9.',
+          f:[[46.63,0.42,46.60,0.47,0]] }
+      ] },
+
+    { n:'Azincourt', an:'1415', lat:50.4630, lon:2.1350,
+      camps:[['Angleterre','#b45309'], ['France','#1d4ed8']],
+      issue:'D\u00e9sastre fran\u00e7ais \u2014 la boue et l\u2019\u00e9troitesse',
+      portee:'Troisi\u00e8me d\u00e9sastre du m\u00eame type en soixante-dix ans. La noblesse fran\u00e7aise y perd '
+        + 'une g\u00e9n\u00e9ration ; le trait\u00e9 de Troyes, cinq ans plus tard, livre la couronne aux Anglais.',
+      phases:[
+        { t:'Une arm\u00e9e \u00e9puis\u00e9e', x:'Henri V, d\u00e9barqu\u00e9 depuis deux mois, cherche \u00e0 rejoindre '
+          + 'Calais avec une arm\u00e9e affaiblie par la dysenterie. Les Fran\u00e7ais lui barrent la route.',
+          f:[[49.9,1.1,50.46,2.13,0]] },
+        { t:'Le d\u00e9fil\u00e9 labour\u00e9', x:'Le champ est un labour d\u00e9tremp\u00e9 par la pluie, resserr\u00e9 entre '
+          + 'deux bois. Le nombre fran\u00e7ais devient un handicap : impossible de se d\u00e9ployer.', f:[] },
+        { t:'La provocation', x:'Henri avance ses archers \u00e0 port\u00e9e et fait planter des pieux. Les '
+          + 'premi\u00e8res vol\u00e9es obligent les Fran\u00e7ais \u00e0 charger.', f:[[50.44,2.16,50.463,2.135,0]] },
+        { t:'L\u2019enlisement', x:'Les hommes d\u2019armes fran\u00e7ais avancent dans la boue, en armure de '
+          + 'trente kilos, sur trois cents m\u00e8tres. Compress\u00e9s, beaucoup meurent \u00e9touff\u00e9s ou '
+          + 'pi\u00e9tin\u00e9s avant tout combat.', f:[[50.48,2.11,50.463,2.135,1]] },
+        { t:'Les prisonniers', x:'Craignant une contre-attaque, Henri fait ex\u00e9cuter une partie des '
+          + 'prisonniers \u2014 d\u00e9cision qui a choqu\u00e9 jusque dans son propre camp.', f:[] }
+      ] },
+
+    { n:'Si\u00e8ge d\u2019Orl\u00e9ans', an:'1429', lat:47.9030, lon:1.9090,
+      camps:[['France','#1d4ed8'], ['Angleterre','#b45309']],
+      issue:'Victoire fran\u00e7aise \u2014 le tournant de la guerre de Cent Ans',
+      portee:'Premi\u00e8re victoire fran\u00e7aise majeure depuis des d\u00e9cennies. Elle rend possible le '
+        + 'sacre de Charles VII \u00e0 Reims et retourne le cours de la guerre.',
+      phases:[
+        { t:'La ville assi\u00e9g\u00e9e', x:'Orl\u00e9ans tient le dernier pont sur la Loire aux mains '
+          + 'fran\u00e7aises. Sa chute ouvrirait le Sud. Les Anglais l\u2019encerclent depuis sept mois par '
+          + 'une s\u00e9rie de bastilles.', f:[] },
+        { t:'L\u2019entr\u00e9e de Jeanne', x:'Jeanne d\u2019Arc entre dans la ville le 29 avril avec un convoi '
+          + 'de ravitaillement. Son effet est d\u2019abord moral : elle rend l\u2019offensive pensable.',
+          f:[[47.85,2.05,47.903,1.909,0]] },
+        { t:'Les bastilles', x:'Contre l\u2019avis des capitaines, elle pousse \u00e0 l\u2019assaut direct des '
+          + 'fortins anglais. Saint-Loup tombe, puis les Augustins.',
+          f:[[47.903,1.909,47.90,1.96,0],[47.903,1.909,47.89,1.87,0]] },
+        { t:'Les Tourelles', x:'Le 7 mai, assaut sur le fort des Tourelles qui commande le pont. '
+          + 'Jeanne est bless\u00e9e \u00e0 l\u2019\u00e9paule par un carreau d\u2019arbal\u00e8te, revient au combat. Le fort '
+          + 'tombe le soir.', f:[[47.903,1.909,47.895,1.905,0]] },
+        { t:'La lev\u00e9e du si\u00e8ge', x:'Le 8 mai au matin, les Anglais rangent leurs troupes en '
+          + 'bataille. Jeanne refuse le combat un dimanche. Ils se retirent.',
+          f:[[47.90,1.88,47.7,1.6,1]] }
+      ] },
+
+    { n:'Castillon', an:'1453', lat:44.8560, lon:0.0350,
+      camps:[['France','#1d4ed8'], ['Angleterre','#b45309']],
+      issue:'Victoire fran\u00e7aise \u2014 fin de la guerre de Cent Ans',
+      portee:'Derni\u00e8re bataille de la guerre de Cent Ans, et premi\u00e8re o\u00f9 l\u2019artillerie de campagne '
+        + 'd\u00e9cide du sort d\u2019un combat. L\u2019Angleterre ne garde que Calais.',
+      phases:[
+        { t:'Le camp d\u2019artillerie', x:'Les fr\u00e8res Bureau, ma\u00eetres de l\u2019artillerie royale, '
+          + 'installent un camp retranch\u00e9 h\u00e9riss\u00e9 de trois cents bouches \u00e0 feu. Un dispositif '
+          + 'in\u00e9dit.', f:[] },
+        { t:'La m\u00e9prise', x:'Talbot, averti d\u2019un nuage de poussi\u00e8re, croit les Fran\u00e7ais en fuite. '
+          + 'Il attaque sans attendre son infanterie.', f:[[44.85,0.10,44.856,0.035,1]] },
+        { t:'La d\u00e9charge', x:'Les canons tirent \u00e0 bout portant sur la colonne anglaise engag\u00e9e. '
+          + 'Un boulet abat le cheval de Talbot, qui est achev\u00e9 au sol.', f:[] },
+        { t:'La d\u00e9route', x:'L\u2019arm\u00e9e anglaise se disloque. Bordeaux, anglaise depuis trois '
+          + 'si\u00e8cles, capitule en octobre.', f:[[44.856,0.035,44.84,-0.58,1]] }
+      ] },
+
+    { n:'Marignan', an:'1515', lat:45.3300, lon:9.3400,
+      camps:[['France','#1d4ed8'], ['Suisses','#b91c1c']],
+      issue:'Victoire fran\u00e7aise \u2014 la Lombardie conquise',
+      portee:'Fran\u00e7ois I\u1d49r, roi depuis huit mois, bat les redout\u00e9s piquiers suisses. La paix '
+        + 'perp\u00e9tuelle qui suit fonde la neutralit\u00e9 suisse, encore en vigueur.',
+      phases:[
+        { t:'Le passage des Alpes', x:'L\u2019arm\u00e9e franchit les Alpes par un col r\u00e9put\u00e9 impraticable '
+          + 'pour l\u2019artillerie, en d\u00e9montant les canons. Surprise strat\u00e9gique compl\u00e8te.',
+          f:[[44.9,6.9,45.33,9.34,0]] },
+        { t:'Le premier jour', x:'Les Suisses attaquent en fin d\u2019apr\u00e8s-midi, en carr\u00e9s de piques. '
+          + 'Le combat se poursuit dans la nuit, confus, jusqu\u2019\u00e0 ce que les deux camps s\u2019arr\u00eatent '
+          + 'd\u2019\u00e9puisement.', f:[[45.37,9.31,45.33,9.34,1]] },
+        { t:'L\u2019artillerie', x:'Au matin, l\u2019artillerie fran\u00e7aise ouvre des br\u00e8ches dans les carr\u00e9s '
+          + 'suisses \u2014 formations denses, donc cibles id\u00e9ales.', f:[] },
+        { t:'Les V\u00e9nitiens', x:'L\u2019arriv\u00e9e de la cavalerie v\u00e9nitienne alli\u00e9e emporte la d\u00e9cision. '
+          + 'Fran\u00e7ois I\u1d49r se fait armer chevalier sur le champ de bataille par Bayard.',
+          f:[[45.28,9.45,45.33,9.36,0]] }
+      ] },
+
+    { n:'Pavie', an:'1525', lat:45.1850, lon:9.1560,
+      camps:[['Empire','#7c2d12'], ['France','#1d4ed8']],
+      issue:'D\u00e9sastre fran\u00e7ais \u2014 le roi prisonnier',
+      portee:'Fran\u00e7ois I\u1d49r captur\u00e9 et emmen\u00e9 \u00e0 Madrid. \u00ab Tout est perdu fors l\u2019honneur \u00bb, \u00e9crit-il '
+        + '\u2014 la formule exacte est plus longue. L\u2019arquebuse s\u2019impose face \u00e0 la cavalerie.',
+      phases:[
+        { t:'Le si\u00e8ge', x:'Les Fran\u00e7ais assi\u00e8gent Pavie depuis quatre mois. Une arm\u00e9e imp\u00e9riale '
+          + 'de secours s\u2019approche et campe \u00e0 proximit\u00e9.', f:[[45.25,9.25,45.20,9.18,1]] },
+        { t:'La br\u00e8che nocturne', x:'Dans la nuit, les Imp\u00e9riaux ouvrent une br\u00e8che dans le mur du '
+          + 'parc de Mirabello et s\u2019y engouffrent.', f:[[45.21,9.16,45.19,9.155,1]] },
+        { t:'La charge du roi', x:'Fran\u00e7ois I\u1d49r charge \u00e0 la t\u00eate de sa cavalerie \u2014 et se place '
+          + 'devant sa propre artillerie, qui doit cesser le feu.', f:[[45.17,9.14,45.19,9.16,0]] },
+        { t:'Les arquebusiers', x:'Les arquebusiers espagnols, dispers\u00e9s dans les bois, tirent \u00e0 '
+          + 'couvert sur les cavaliers immobilis\u00e9s. Le roi, d\u00e9mont\u00e9, est fait prisonnier.', f:[] }
+      ] },
+
+    { n:'Rocroi', an:'1643', lat:49.9250, lon:4.5220,
+      camps:[['France','#1d4ed8'], ['Espagne','#a16207']],
+      issue:'Victoire fran\u00e7aise \u2014 fin de la sup\u00e9riorit\u00e9 espagnole',
+      portee:'Le duc d\u2019Enghien, futur Grand Cond\u00e9, a vingt-deux ans. Il brise les tercios '
+        + 'espagnols, invaincus depuis un si\u00e8cle. La France devient la premi\u00e8re puissance '
+        + 'militaire d\u2019Europe.',
+      phases:[
+        { t:'La place menac\u00e9e', x:'Rocroi est assi\u00e9g\u00e9e. Louis XIII vient de mourir ; une d\u00e9faite '
+          + 'ouvrirait la route de Paris \u00e0 l\u2019arm\u00e9e espagnole.', f:[[50.1,4.6,49.93,4.52,1]] },
+        { t:'Le d\u00e9bouch\u00e9', x:'Enghien fait passer son arm\u00e9e par un d\u00e9fil\u00e9 \u00e9troit, de nuit. Les '
+          + 'Espagnols le laissent faire, s\u00fbrs de les \u00e9craser en terrain d\u00e9couvert.',
+          f:[[49.88,4.48,49.925,4.522,0]] },
+        { t:'L\u2019aile droite', x:'\u00c0 gauche, les Fran\u00e7ais sont enfonc\u00e9s. Mais Enghien, \u00e0 droite, '
+          + 'perce, contourne l\u2019arm\u00e9e espagnole par l\u2019arri\u00e8re et attaque son aile victorieuse \u00e0 '
+          + 'revers.', f:[[49.94,4.56,49.90,4.47,0]] },
+        { t:'Les tercios', x:'Restent les tercios, carr\u00e9s de piques et d\u2019arquebuses. Trois assauts '
+          + '\u00e9chouent. Enghien fait avancer l\u2019artillerie \u00e0 bout portant. Il accorde ensuite les '
+          + 'honneurs de la guerre aux survivants.', f:[] }
+      ] },
+
+    { n:'Denain', an:'1712', lat:50.3290, lon:3.3920,
+      camps:[['France','#1d4ed8'], ['Coalition','#b91c1c']],
+      issue:'Victoire fran\u00e7aise \u2014 le royaume sauv\u00e9',
+      portee:'Apr\u00e8s dix ans de d\u00e9faites et une famine terrible, Villars sauve le royaume au bord '
+        + 'de l\u2019effondrement. La victoire permet des n\u00e9gociations acceptables \u00e0 Utrecht.',
+      phases:[
+        { t:'La situation d\u00e9sesp\u00e9r\u00e9e', x:'Les coalis\u00e9s ont pris les places du Nord et marchent '
+          + 'vers Paris. Louis XIV envisage de se retirer sur la Loire.', f:[[50.5,3.6,49.5,2.8,1]] },
+        { t:'La feinte', x:'Villars fait croire \u00e0 une attaque sur Landrecies, y envoie des '
+          + 'reconnaissances bruyantes, puis change de direction dans la nuit.',
+          f:[[50.20,3.70,50.13,3.70,0]] },
+        { t:'La marche de nuit', x:'L\u2019arm\u00e9e franchit l\u2019Escaut sur des ponts de bateaux et parcourt '
+          + 'une trentaine de kilom\u00e8tres en une nuit.', f:[[50.13,3.70,50.329,3.392,0]] },
+        { t:'L\u2019assaut', x:'Au matin, les retranchements de Denain sont attaqu\u00e9s sans pr\u00e9paration '
+          + 'd\u2019artillerie, \u00e0 la ba\u00efonnette. Ils tombent en une heure.', f:[] }
+      ] },
+
+    { n:'Fontenoy', an:'1745', lat:50.5560, lon:3.5090,
+      camps:[['France','#1d4ed8'], ['Coalition','#b45309']],
+      issue:'Victoire fran\u00e7aise \u2014 en pr\u00e9sence du roi',
+      portee:'Louis XV assiste \u00e0 la bataille avec le dauphin. La victoire ouvre la conqu\u00eate des '
+        + 'Pays-Bas autrichiens \u2014 que le roi rendra \u00e0 la paix, \u00ab pour la gloire \u00bb.',
+      phases:[
+        { t:'Le si\u00e8ge de Tournai', x:'Les Fran\u00e7ais assi\u00e8gent Tournai. Une arm\u00e9e alli\u00e9e vient la '
+          + 'secourir ; Maurice de Saxe l\u2019attend sur un terrain choisi.', f:[[50.60,3.39,50.556,3.509,1]] },
+        { t:'Les redoutes', x:'Le dispositif fran\u00e7ais s\u2019appuie sur des redoutes et des bois qui '
+          + 'canalisent l\u2019attaque vers un couloir \u00e9troit.', f:[] },
+        { t:'La colonne anglaise', x:'Une colonne anglo-hanovrienne de 15 000 hommes s\u2019engage dans '
+          + 'le couloir et progresse, imperturbable sous le feu crois\u00e9.',
+          f:[[50.53,3.53,50.556,3.509,1]] },
+        { t:'La contre-attaque', x:'Maurice de Saxe rassemble artillerie l\u00e9g\u00e8re, cavalerie et '
+          + 'r\u00e9serves \u2014 dont la Brigade irlandaise \u2014 et frappe la colonne de trois c\u00f4t\u00e9s. Elle '
+          + 'rompt.', f:[[50.57,3.48,50.545,3.52,0],[50.52,3.49,50.545,3.52,0]] }
+      ] },
+
+    { n:'Valmy', an:'1792', lat:49.0830, lon:4.7750,
+      camps:[['R\u00e9publique','#1d4ed8'], ['Prusse','#334155']],
+      issue:'Canonnade victorieuse \u2014 la R\u00e9volution sauv\u00e9e',
+      portee:'Plus canonnade que bataille, mais l\u2019effet est immense : l\u2019arm\u00e9e r\u00e9volutionnaire ne '
+        + 'fuit pas. La R\u00e9publique est proclam\u00e9e le lendemain. Goethe, pr\u00e9sent, y voit le d\u00e9but '
+        + 'd\u2019une \u00e8re nouvelle.',
+      phases:[
+        { t:'L\u2019invasion', x:'L\u2019arm\u00e9e prussienne, r\u00e9put\u00e9e la meilleure d\u2019Europe, marche sur Paris '
+          + 'et a d\u00e9j\u00e0 pris Verdun. Rien ne semble pouvoir l\u2019arr\u00eater.', f:[[49.16,5.38,49.08,4.78,1]] },
+        { t:'La jonction', x:'Dumouriez et Kellermann r\u00e9ussissent leur jonction et occupent les '
+          + 'hauteurs, coupant la route de Paris.', f:[[49.2,4.6,49.083,4.775,0],[48.9,4.6,49.08,4.77,0]] },
+        { t:'La canonnade', x:'Un duel d\u2019artillerie de plusieurs heures, dans la brume. Vingt mille '
+          + 'boulets tir\u00e9s, quelques centaines de morts. Le combat rapproch\u00e9 n\u2019a pas lieu.', f:[] },
+        { t:'\u00ab Vive la Nation \u00bb', x:'Kellermann fait crier \u00ab Vive la Nation \u00bb \u00e0 ses troupes, '
+          + 'chapeau lev\u00e9 sur son sabre. Les Prussiens, voyant que la ligne tient, renoncent \u00e0 '
+          + 'l\u2019assaut et se retirent quelques jours plus tard.', f:[[49.08,4.78,49.3,5.2,1]] }
+      ] },
+
+    { n:'Austerlitz', an:'1805', lat:49.1280, lon:16.7620,
+      camps:[['France','#1d4ed8'], ['Russie et Autriche','#b91c1c']],
+      issue:'Victoire fran\u00e7aise \u2014 le chef-d\u2019\u0153uvre de Napol\u00e9on',
+      portee:'La bataille des Trois Empereurs, souvent tenue pour la manœuvre la plus aboutie de '
+        + 'Napol\u00e9on. Elle brise la troisi\u00e8me coalition et met fin au Saint-Empire.',
+      phases:[
+        { t:'Le pi\u00e8ge', x:'Napol\u00e9on abandonne volontairement le plateau de Pratzen, position '
+          + 'dominante, et affaiblit ostensiblement son aile droite. Il offre une tentation.',
+          f:[[49.13,16.74,49.10,16.70,0]] },
+        { t:'L\u2019app\u00e2t saisi', x:'Les coalis\u00e9s mordent : ils descendent du plateau pour envelopper '
+          + 'la droite fran\u00e7aise, d\u00e9garnissant le centre.', f:[[49.13,16.79,49.08,16.75,1]] },
+        { t:'La perc\u00e9e au centre', x:'Le brouillard se l\u00e8ve. Soult lance deux divisions sur le '
+          + 'plateau vid\u00e9 : le centre alli\u00e9 est coup\u00e9 en deux.', f:[[49.11,16.71,49.128,16.762,0]] },
+        { t:'Les \u00e9tangs', x:'L\u2019aile gauche alli\u00e9e, isol\u00e9e, se replie sur des \u00e9tangs gel\u00e9s. '
+          + 'L\u2019artillerie fran\u00e7aise tire sur la glace \u2014 \u00e9pisode r\u00e9el, mais dont le bilan a \u00e9t\u00e9 '
+          + 'consid\u00e9rablement grossi par la propagande.', f:[[49.10,16.78,49.06,16.73,1]] }
+      ] },
+
+    { n:'I\u00e9na', an:'1806', lat:50.9270, lon:11.5890,
+      camps:[['France','#1d4ed8'], ['Prusse','#334155']],
+      issue:'Victoire fran\u00e7aise \u2014 la Prusse effondr\u00e9e',
+      portee:'L\u2019arm\u00e9e prussienne, h\u00e9riti\u00e8re de Fr\u00e9d\u00e9ric II, est an\u00e9antie en une journ\u00e9e. La d\u00e9faite '
+        + 'provoquera les r\u00e9formes qui feront la Prusse du XIX\u1d49 si\u00e8cle.',
+      phases:[
+        { t:'Deux batailles', x:'Le m\u00eame jour, \u00e0 vingt kilom\u00e8tres d\u2019\u00e9cart, deux batailles distinctes '
+          + 'sont livr\u00e9es : Napol\u00e9on \u00e0 I\u00e9na, Davout \u00e0 Auerstaedt.', f:[] },
+        { t:'Le plateau', x:'Napol\u00e9on hisse son artillerie sur le Landgrafenberg pendant la nuit, '
+          + 'par un chemin \u00e9troit.', f:[[50.93,11.57,50.927,11.589,0]] },
+        { t:'Davout seul', x:'\u00c0 Auerstaedt, Davout affronte avec un seul corps le gros de l\u2019arm\u00e9e '
+          + 'prussienne \u2014 deux fois plus nombreuse \u2014 et la bat.', f:[[51.10,11.60,51.05,11.65,0]] },
+        { t:'La poursuite', x:'La poursuite dure un mois. Berlin tombe. La cavalerie fran\u00e7aise '
+          + 'capture des forteresses par simple sommation.', f:[[50.93,11.59,52.52,13.40,0]] }
+      ] },
+
+    { n:'Waterloo', an:'1815', lat:50.6800, lon:4.4120,
+      camps:[['France','#1d4ed8'], ['Coalition','#b45309']],
+      issue:'D\u00e9faite fran\u00e7aise \u2014 fin de l\u2019Empire',
+      portee:'Quatre jours plus tard, Napol\u00e9on abdique. L\u2019Europe des congr\u00e8s s\u2019installe pour un '
+        + 'demi-si\u00e8cle. Le nom est devenu synonyme de d\u00e9faite d\u00e9finitive.',
+      phases:[
+        { t:'La boue', x:'La pluie de la nuit d\u00e9trempe le sol. Napol\u00e9on retarde l\u2019attaque de '
+          + 'plusieurs heures pour laisser s\u00e9cher le terrain \u2014 d\u00e9lai qui profitera aux Prussiens.', f:[] },
+        { t:'Hougoumont', x:'L\u2019attaque de diversion sur la ferme d\u2019Hougoumont devient un combat '
+          + 'acharn\u00e9 qui absorbe des milliers d\u2019hommes toute la journ\u00e9e.',
+          f:[[50.66,4.38,50.672,4.396,0]] },
+        { t:'Les charges de Ney', x:'Ney lance la cavalerie sur les carr\u00e9s anglais \u2014 sans '
+          + 'infanterie ni artillerie d\u2019accompagnement. Des milliers de cavaliers s\u2019y usent.',
+          f:[[50.66,4.41,50.685,4.41,0]] },
+        { t:'Les Prussiens', x:'Bl\u00fccher, qu\u2019on croyait hors de combat, arrive par l\u2019est en fin '
+          + 'de journ\u00e9e et frappe le flanc droit fran\u00e7ais.', f:[[50.68,4.60,50.69,4.45,1]] },
+        { t:'La Garde recule', x:'La Vieille Garde, engag\u00e9e en dernier recours, est repouss\u00e9e. '
+          + 'Le cri \u00ab La Garde recule \u00bb d\u00e9clenche la d\u00e9route g\u00e9n\u00e9rale.',
+          f:[[50.67,4.41,50.688,4.408,0]] }
+      ] },
+
+    { n:'S\u00e9dan', an:'1870', lat:49.7020, lon:4.9420,
+      camps:[['Prusse','#334155'], ['France','#1d4ed8']],
+      issue:'Capitulation fran\u00e7aise \u2014 l\u2019Empereur prisonnier',
+      portee:'Napol\u00e9on III captur\u00e9 avec 83 000 hommes. La R\u00e9publique est proclam\u00e9e deux jours '
+        + 'plus tard. L\u2019Empire allemand na\u00eetra \u00e0 Versailles, et l\u2019Alsace-Lorraine sera annex\u00e9e.',
+      phases:[
+        { t:'La nasse', x:'L\u2019arm\u00e9e de Ch\u00e2lons, voulant secourir Metz assi\u00e9g\u00e9e, se laisse enfermer '
+          + 'dans la boucle de la Meuse \u00e0 S\u00e9dan.', f:[[49.60,4.70,49.702,4.942,1]] },
+        { t:'L\u2019encerclement', x:'Les Prussiens ferment le cercle par les hauteurs et installent '
+          + 'plus de quatre cents canons qui dominent la cuvette.',
+          f:[[49.75,4.85,49.72,4.92,0],[49.66,5.02,49.69,4.96,0]] },
+        { t:'Les charges de Floing', x:'La cavalerie fran\u00e7aise charge trois fois pour ouvrir une '
+          + 'br\u00e8che. \u00ab Ah, les braves gens \u00bb, dit Guillaume I\u1d49r en les regardant se faire faucher.',
+          f:[[49.71,4.90,49.74,4.87,1]] },
+        { t:'Le drapeau blanc', x:'La ville est bombard\u00e9e sans discontinuer. Napol\u00e9on III fait '
+          + 'hisser le drapeau blanc et se constitue prisonnier.', f:[] }
+      ] },
+
+    { n:'La Marne', an:'1914', lat:48.8500, lon:3.3000,
+      camps:[['France et Royaume-Uni','#1d4ed8'], ['Allemagne','#334155']],
+      issue:'Victoire alli\u00e9e \u2014 l\u2019invasion arr\u00eat\u00e9e',
+      portee:'Le plan allemand de guerre courte \u00e9choue. S\u2019ouvre alors une guerre de tranch\u00e9es de '
+        + 'quatre ans, que personne n\u2019avait pr\u00e9vue.',
+      phases:[
+        { t:'La grande retraite', x:'Depuis un mois, les arm\u00e9es fran\u00e7aises reculent. Les Allemands '
+          + 'sont \u00e0 quarante kilom\u00e8tres de Paris.', f:[[50.5,3.5,48.9,3.2,1]] },
+        { t:'Le flanc offert', x:'La I\u1d49 arm\u00e9e allemande de von Kluck oblique vers le sud-est pour '
+          + 'poursuivre, et pr\u00e9sente son flanc droit \u00e0 Paris.', f:[[49.2,2.9,48.9,3.4,1]] },
+        { t:'Gallieni voit', x:'Le gouverneur de Paris rep\u00e8re la faute. Joffre lance l\u2019offensive '
+          + 'g\u00e9n\u00e9rale. Les taxis parisiens transportent quelques milliers d\u2019hommes \u2014 geste surtout '
+          + 'symbolique, mais qui a marqu\u00e9 les esprits.', f:[[48.86,2.35,48.98,3.05,0]] },
+        { t:'La br\u00e8che', x:'Une br\u00e8che de cinquante kilom\u00e8tres s\u2019ouvre entre les deux arm\u00e9es '
+          + 'allemandes. Les Britanniques s\u2019y engagent.', f:[[48.7,3.0,48.95,3.35,0]] },
+        { t:'Le repli', x:'Le commandement allemand ordonne le repli sur l\u2019Aisne. Les deux camps '
+          + 'commencent \u00e0 creuser : le front se fige pour quatre ans.', f:[[48.95,3.35,49.4,3.6,1]] }
+      ] },
+
+    { n:'Verdun', an:'1916', lat:49.1600, lon:5.3800,
+      camps:[['France','#1d4ed8'], ['Allemagne','#334155']],
+      issue:'Le front tient \u2014 au prix de 700 000 pertes',
+      portee:'Dix mois de bataille sur quelques kilom\u00e8tres carr\u00e9s. Verdun devient le symbole de '
+        + 'l\u2019endurance fran\u00e7aise et de l\u2019absurdit\u00e9 de la guerre industrielle.',
+      phases:[
+        { t:'L\u2019id\u00e9e de Falkenhayn', x:'Le chef d\u2019\u00e9tat-major allemand choisit un point que les '
+          + 'Fran\u00e7ais ne pourront pas abandonner, pour les y \u00ab saigner \u00e0 blanc \u00bb. La bataille est '
+          + 'con\u00e7ue comme une machine \u00e0 tuer, non comme une perc\u00e9e.', f:[] },
+        { t:'Le 21 f\u00e9vrier', x:'Un million d\u2019obus tomb\u00e9s en dix heures sur un front de quinze '
+          + 'kilom\u00e8tres. Les lance-flammes apparaissent.', f:[[49.25,5.45,49.20,5.42,1]] },
+        { t:'Douaumont', x:'Le fort de Douaumont, quasiment d\u00e9garni, est pris par une poign\u00e9e de '
+          + 'soldats allemands presque sans combat. Choc \u00e9norme en France.',
+          f:[[49.22,5.44,49.212,5.442,1]] },
+        { t:'La Voie sacr\u00e9e', x:'Une seule route ravitaille le saillant : un camion toutes les '
+          + 'quatorze secondes, jour et nuit. P\u00e9tain fait tourner les unit\u00e9s \u2014 les trois quarts de '
+          + 'l\u2019arm\u00e9e fran\u00e7aise passeront par Verdun.', f:[[48.77,5.16,49.16,5.38,0]] },
+        { t:'La reprise', x:'\u00c0 l\u2019automne, Nivelle et Mangin reprennent Douaumont et Vaux. En '
+          + 'd\u00e9cembre, le front est presque revenu \u00e0 son point de d\u00e9part.', f:[[49.14,5.40,49.212,5.442,0]] }
+      ] },
+
+    { n:'Le Chemin des Dames', an:'1917', lat:49.4500, lon:3.6500,
+      camps:[['France','#1d4ed8'], ['Allemagne','#334155']],
+      issue:'\u00c9chec fran\u00e7ais \u2014 les mutineries',
+      portee:'L\u2019offensive promise d\u00e9cisive \u00e9choue en quelques jours. Les mutineries qui suivent '
+        + 'touchent des dizaines de divisions : une crise de confiance sans pr\u00e9c\u00e9dent.',
+      phases:[
+        { t:'La promesse', x:'Nivelle annonce une perc\u00e9e en vingt-quatre heures. L\u2019offensive est '
+          + 'pr\u00e9par\u00e9e au grand jour ; les Allemands connaissent le plan.', f:[] },
+        { t:'La cr\u00eate fortifi\u00e9e', x:'Le Chemin des Dames est une cr\u00eate creus\u00e9e de carri\u00e8res '
+          + 'souterraines o\u00f9 les d\u00e9fenseurs s\u2019abritent des bombardements.', f:[] },
+        { t:'Le 16 avril', x:'L\u2019attaque part sous la pluie et la neige fondue. Les mitrailleuses '
+          + 'sortent des abris intacts. Les chars, employ\u00e9s pour la premi\u00e8re fois par la France, '
+          + 'sont d\u00e9truits presque tous.', f:[[49.40,3.62,49.45,3.65,0]] },
+        { t:'Les mutineries', x:'En quelques semaines, des unit\u00e9s refusent de monter en ligne \u2014 '
+          + 'sans d\u00e9serter : elles tiennent la tranch\u00e9e mais refusent l\u2019assaut. P\u00e9tain remplace '
+          + 'Nivelle et change de m\u00e9thode.', f:[] }
+      ] },
+
+    { n:'Sedan et la perc\u00e9e', an:'1940', lat:49.7000, lon:4.9400,
+      camps:[['Allemagne','#334155'], ['France','#1d4ed8']],
+      issue:'Perc\u00e9e allemande \u2014 effondrement du front',
+      portee:'En six semaines, la France est vaincue. La perc\u00e9e des Ardennes, jug\u00e9es '
+        + 'infranchissables, est le point de bascule.',
+      phases:[
+        { t:'Les Ardennes', x:'Sept divisions blind\u00e9es traversent un massif r\u00e9put\u00e9 impraticable '
+          + 'aux chars, en une colonne de 250 kilom\u00e8tres.', f:[[50.1,6.1,49.72,4.98,0]] },
+        { t:'Le 13 mai', x:'Franchissement de la Meuse sous un bombardement a\u00e9rien continu \u2014 les '
+          + 'Stuka remplacent l\u2019artillerie lourde absente.', f:[[49.72,4.96,49.69,4.92,0]] },
+        { t:'La course \u00e0 la mer', x:'Les blind\u00e9s ne foncent pas sur Paris mais vers la Manche, '
+          + 'coupant les meilleures arm\u00e9es alli\u00e9es de leurs arri\u00e8res.', f:[[49.70,4.94,50.10,1.85,0]] },
+        { t:'Dunkerque', x:'Les Alli\u00e9s sont acculés \u00e0 la mer. 340 000 hommes sont \u00e9vacu\u00e9s, sans '
+          + 'leur mat\u00e9riel.', f:[[50.35,2.30,51.03,2.37,1]] }
+      ] },
+
+    { n:'D\u00e9barquement de Normandie', an:'1944', lat:49.3400, lon:-0.5100,
+      camps:[['Alli\u00e9s','#1d4ed8'], ['Allemagne','#334155']],
+      issue:'T\u00eate de pont \u00e9tablie \u2014 le second front ouvert',
+      portee:'La plus grande op\u00e9ration amphibie de l\u2019histoire. Elle ouvre le front occidental et '
+        + 'engage la lib\u00e9ration de l\u2019Europe de l\u2019Ouest.',
+      phases:[
+        { t:'La tromperie', x:'L\u2019op\u00e9ration Fortitude fait croire \u00e0 un d\u00e9barquement dans le '
+          + 'Pas-de-Calais : fausses arm\u00e9es, faux messages. Des divisions allemandes y resteront '
+          + 'des semaines apr\u00e8s le 6 juin.', f:[[51.1,1.3,50.9,1.6,0]] },
+        { t:'La nuit a\u00e9roport\u00e9e', x:'Trois divisions parachut\u00e9es s\u00e9curisent les flancs, souvent '
+          + 'largu\u00e9es loin de leurs objectifs \u2014 dispersion qui d\u00e9sorientera aussi la d\u00e9fense.',
+          f:[[49.42,-1.30,49.40,-1.25,0],[49.25,-0.25,49.28,-0.30,0]] },
+        { t:'Les cinq plages', x:'Utah, Omaha, Gold, Juno, Sword. \u00c0 Omaha, la falaise et les '
+          + 'd\u00e9fenses intactes co\u00fbtent plus de 2 000 hommes en quelques heures.',
+          f:[[49.55,-1.17,49.42,-1.17,0],[49.50,-0.85,49.37,-0.85,0],[49.45,-0.25,49.33,-0.25,0]] },
+        { t:'La jonction', x:'Les t\u00eates de pont se rejoignent le 12 juin. Un port artificiel est '
+          + 'remorqu\u00e9 depuis l\u2019Angleterre \u2014 on d\u00e9barque sans port.', f:[[49.34,-0.55,49.34,-0.25,0]] }
+      ] },
+
+    { n:'Bir Hakeim', an:'1942', lat:31.5960, lon:23.4870,
+      camps:[['France libre','#1d4ed8'], ['Axe','#334155']],
+      issue:'R\u00e9sistance de seize jours \u2014 puis sortie de vive force',
+      portee:'3 700 Fran\u00e7ais libres tiennent seize jours face \u00e0 Rommel. La France libre gagne l\u00e0 '
+        + 'sa cr\u00e9dibilit\u00e9 militaire aupr\u00e8s des Alli\u00e9s.',
+      phases:[
+        { t:'Le verrou', x:'La position tient le flanc sud du dispositif britannique en Libye. '
+          + 'K\u0153nig re\u00e7oit l\u2019ordre de tenir deux jours.', f:[] },
+        { t:'L\u2019encerclement', x:'Rommel contourne par le sud et encercle la position, qu\u2019il croit '
+          + 'r\u00e9duire en quelques heures.', f:[[31.4,23.7,31.596,23.487,1]] },
+        { t:'Seize jours', x:'Assauts, bombardements, soif. La position tient bien au-del\u00e0 de ce '
+          + 'qui \u00e9tait demand\u00e9, retardant toute l\u2019offensive de Rommel.', f:[] },
+        { t:'La sortie', x:'Dans la nuit du 10 juin, la garnison sort de vive force \u00e0 travers les '
+          + 'lignes ennemies. Les deux tiers rejoignent les lignes britanniques.',
+          f:[[31.596,23.487,31.65,23.90,0]] }
+      ] },
+
+    { n:'Provence (Anvil-Dragoon)', an:'1944', lat:43.2000, lon:6.4000,
+      camps:[['Alli\u00e9s et France','#1d4ed8'], ['Allemagne','#334155']],
+      issue:'Succ\u00e8s rapide \u2014 remont\u00e9e de la vall\u00e9e du Rh\u00f4ne',
+      portee:'Souvent \u00e9clips\u00e9 par la Normandie, ce d\u00e9barquement lib\u00e8re Marseille et Toulon en '
+        + 'deux semaines et fournit les ports dont les Alli\u00e9s manquaient cruellement.',
+      phases:[
+        { t:'Le 15 ao\u00fbt', x:'D\u00e9barquement entre Cavalaire et Saint-Rapha\u00ebl, avec une large part '
+          + 'de troupes fran\u00e7aises \u2014 dont beaucoup venues d\u2019Afrique du Nord.',
+          f:[[43.05,6.50,43.20,6.45,0]] },
+        { t:'Toulon et Marseille', x:'De Lattre attaque les deux ports sans attendre les d\u00e9lais '
+          + 'pr\u00e9vus. Ils tombent en deux semaines au lieu de deux mois.',
+          f:[[43.20,6.40,43.12,5.93,0],[43.15,6.20,43.30,5.37,0]] },
+        { t:'La remont\u00e9e', x:'La progression vers le nord est rapide, appuy\u00e9e par les maquis qui '
+          + 'harc\u00e8lent les colonnes allemandes.', f:[[43.30,5.40,45.76,4.83,0]] },
+        { t:'La jonction', x:'Le 12 septembre, jonction pr\u00e8s de Dijon avec les arm\u00e9es venues de '
+          + 'Normandie. Le front est continu de la Manche \u00e0 la Suisse.', f:[[45.76,4.83,47.32,5.04,0]] }
+      ] },
+
+    { n:'Lib\u00e9ration de Paris', an:'1944', lat:48.8566, lon:2.3522,
+      camps:[['France et Alli\u00e9s','#1d4ed8'], ['Allemagne','#334155']],
+      issue:'Reddition allemande \u2014 Paris intact',
+      portee:'La capitale est lib\u00e9r\u00e9e sans les destructions ordonn\u00e9es par Hitler. Elle donne \u00e0 '
+        + 'de Gaulle la l\u00e9gitimit\u00e9 politique dont il avait besoin.',
+      phases:[
+        { t:'L\u2019insurrection', x:'La police se met en gr\u00e8ve, puis occupe la pr\u00e9fecture. Les '
+          + 'barricades se dressent. Le rapport de forces est tr\u00e8s d\u00e9favorable aux insurg\u00e9s.', f:[] },
+        { t:'La d\u00e9cision', x:'Eisenhower voulait contourner Paris. De Gaulle obtient que la '
+          + '2\u1d49 DB de Leclerc y soit envoy\u00e9e \u2014 une division fran\u00e7aise, pour une raison politique.',
+          f:[[48.60,1.50,48.82,2.30,0]] },
+        { t:'La Nueve', x:'Les premiers blind\u00e9s \u00e0 entrer dans Paris sont ceux de la 9\u1d49 compagnie, '
+          + 'compos\u00e9e en majorit\u00e9 de r\u00e9publicains espagnols exil\u00e9s.', f:[[48.82,2.35,48.8566,2.3522,0]] },
+        { t:'La reddition', x:'Von Choltitz signe la reddition sans ex\u00e9cuter l\u2019ordre de d\u00e9truire '
+          + 'la ville. Le lendemain, de Gaulle descend les Champs-\u00c9lys\u00e9es.', f:[] }
+      ] },
+
+    { n:'Di\u00ean Bi\u00ean Ph\u1ee7', an:'1954', lat:21.3830, lon:103.0230,
+      camps:[['Vi\u1ec7t Minh','#b91c1c'], ['France','#1d4ed8']],
+      issue:'D\u00e9faite fran\u00e7aise \u2014 fin de l\u2019Indochine fran\u00e7aise',
+      portee:'La cuvette devait attirer l\u2019adversaire pour l\u2019\u00e9craser. Le calcul s\u2019inverse '
+        + 'compl\u00e8tement. Les accords de Gen\u00e8ve suivent ; le fait colonial europ\u00e9en est \u00e9branl\u00e9 '
+        + 'partout.',
+      phases:[
+        { t:'La cuvette', x:'Le camp retranch\u00e9 est install\u00e9 dans une vall\u00e9e entour\u00e9e de collines, '
+          + 'ravitaill\u00e9 seulement par air. L\u2019\u00e9tat-major juge impossible d\u2019y hisser de l\u2019artillerie '
+          + 'lourde.', f:[] },
+        { t:'Les canons sur les cr\u00eates', x:'Giap fait d\u00e9monter des canons et les fait porter '
+          + 'pi\u00e8ce par pi\u00e8ce sur les hauteurs, \u00e0 dos d\u2019homme et \u00e0 v\u00e9lo, par des dizaines de '
+          + 'milliers de porteurs.', f:[[21.45,103.10,21.40,103.05,0],[21.32,102.95,21.37,103.00,0]] },
+        { t:'La piste coup\u00e9e', x:'D\u00e8s les premiers jours, l\u2019artillerie rend la piste d\u2019aviation '
+          + 'inutilisable. Tout doit venir par parachutage, sous le feu.', f:[] },
+        { t:'Les points d\u2019appui', x:'Les positions tombent une \u00e0 une, en cinquante-six jours, sous '
+          + 'des assauts appuy\u00e9s par des tranch\u00e9es creus\u00e9es toujours plus pr\u00e8s.',
+          f:[[21.42,103.06,21.395,103.03,0],[21.35,103.01,21.375,103.02,0]] }
+      ] },
+
+    { n:'Camerone', an:'1863', lat:18.9200, lon:-96.6800,
+      camps:[['L\u00e9gion','#1d4ed8'], ['Mexique','#166534']],
+      issue:'An\u00e9antissement de la compagnie \u2014 f\u00eate de la L\u00e9gion',
+      portee:'Soixante-cinq l\u00e9gionnaires tiennent une hacienda contre deux mille Mexicains, '
+        + 'pendant onze heures. D\u00e9faite militaire, mais fondatrice pour la L\u00e9gion \u00e9trang\u00e8re, qui '
+        + 'la c\u00e9l\u00e8bre chaque 30 avril.',
+      phases:[
+        { t:'Le convoi', x:'Une compagnie escorte un convoi d\u2019or et de mat\u00e9riel de si\u00e8ge vers '
+          + 'Puebla. Elle est intercept\u00e9e.', f:[[18.85,-96.75,18.92,-96.68,0]] },
+        { t:'L\u2019hacienda', x:'Le capitaine Danjou fait retrancher ses hommes dans une ferme aux '
+          + 'murs bas. Il leur fait jurer de se battre jusqu\u2019au bout.', f:[] },
+        { t:'Onze heures', x:'Sans eau, sous le soleil, ils repoussent assaut apr\u00e8s assaut. Danjou '
+          + 'est tu\u00e9 dans la matin\u00e9e ; sa main de bois, retrouv\u00e9e plus tard, est devenue la relique '
+          + 'de la L\u00e9gion.', f:[] },
+        { t:'Les six derniers', x:'\u00c0 la fin, six hommes valides chargent \u00e0 la ba\u00efonnette. Le '
+          + 'colonel mexicain accepte leur reddition avec les honneurs \u2014 \u00ab ce ne sont pas des '
+          + 'hommes, ce sont des d\u00e9mons \u00bb.', f:[] }
+      ] }
+  ];
+
+  const etatBatailles = { actif:false, groupe:null, sel:0, phase:0, calquePh:null };
+
+  function fleche(a, b, coul){
+    // Fleche schematique : un trait epais et une pointe. Ce n'est PAS un releve de
+    // terrain, seulement le sens general d'un mouvement.
+    const g = L.layerGroup();
+    L.polyline([a, b], { color:coul, weight:4, opacity:0.85, lineCap:'round' }).addTo(g);
+    const ang = Math.atan2(b[0] - a[0], b[1] - a[1]);
+    const d = 0.28 * Math.hypot(b[0] - a[0], b[1] - a[1]) + 0.012;
+    [[ang + 2.5], [ang - 2.5]].forEach(function(p){
+      L.polyline([b, [b[0] + d * Math.sin(p[0]), b[1] + d * Math.cos(p[0])]],
+        { color:coul, weight:4, opacity:0.85, lineCap:'round' }).addTo(g);
+    });
+    return g;
+  }
+
+  function majFicheBataille(){
+    const b = BATAILLES[etatBatailles.sel];
+    const ph = b.phases[etatBatailles.phase];
+    const fiche = document.getElementById('bat-fiche');
+    const cpt = document.getElementById('bat-compteur');
+    if(cpt) cpt.textContent = 'phase ' + (etatBatailles.phase + 1) + ' / ' + b.phases.length;
+    if(!fiche) return;
+    const legende = b.camps.map(function(c){
+      return '<span style="display:inline-flex;align-items:center;gap:4px;margin-right:9px">'
+        + '<span style="width:9px;height:9px;border-radius:50%;background:' + c[1] + '"></span>'
+        + echap(c[0]) + '</span>';
+    }).join('');
+    fiche.innerHTML = '<b>' + echap(b.n) + ' (' + echap(b.an) + ') \u2014 ' + echap(ph.t) + '</b>'
+      + '<div style="margin-top:4px;line-height:1.55">' + echap(ph.x) + '</div>'
+      + '<div style="margin-top:6px;font-size:10.5px">' + legende + '</div>'
+      + (etatBatailles.phase === b.phases.length - 1
+          ? '<div style="margin-top:6px;padding-top:5px;border-top:1px solid var(--trait)">'
+            + '<b style="font-size:11px">Issue</b> \u00b7 ' + echap(b.issue)
+            + '<div style="margin-top:3px;font-size:11.5px;line-height:1.5;color:#57534e">'
+            + echap(b.portee) + '</div></div>'
+          : '');
+  }
+
+  function dessinerPhase(){
+    if(!etatBatailles.actif) return;
+    const b = BATAILLES[etatBatailles.sel];
+    const ph = b.phases[etatBatailles.phase];
+    if(etatBatailles.calquePh){ map.removeLayer(etatBatailles.calquePh); }
+    const g = L.layerGroup();
+    (ph.f || []).forEach(function(f){
+      const coul = (b.camps[f[4]] || b.camps[0])[1];
+      fleche([f[0], f[1]], [f[2], f[3]], coul).addTo(g);
+    });
+    g.addTo(map);
+    etatBatailles.calquePh = g;
+    majFicheBataille();
+  }
+
+  function allerBataille(i, recadrer){
+    etatBatailles.sel = Math.max(0, Math.min(i, BATAILLES.length - 1));
+    etatBatailles.phase = 0;
+    const b = BATAILLES[etatBatailles.sel];
+    const sel = document.getElementById('bat-choix');
+    if(sel) sel.value = String(etatBatailles.sel);
+    if(recadrer !== false){
+      try{ map.setView([b.lat, b.lon], b.lat > 60 || Math.abs(b.lon) > 20 ? 6 : 11); }catch(e){}
+    }
+    dessinerPhase();
+  }
+
+  function posesBatailles(){
+    const g = L.layerGroup();
+    BATAILLES.forEach(function(b, i){
+      L.marker([b.lat, b.lon], { keyboard:false, icon: L.divIcon({
+        className:'bat-pion',
+        html:'<span title="' + echap(b.n + ' \u2014 ' + b.an) + '">\u2694</span>', iconSize:null }) })
+        .bindTooltip('<b>' + echap(b.n) + '</b> \u2014 ' + echap(b.an)
+          + '<br><small>' + echap(b.issue) + '</small>', { direction:'top' })
+        .on('click', function(){ allerBataille(i, false); })
+        .addTo(g);
+    });
+    return g;
+  }
+
+  document.getElementById('btn-batailles').addEventListener('click', function(){
+    const btn = document.getElementById('btn-batailles');
+    const pan = document.getElementById('bat-panneau');
+    if(etatBatailles.actif){
+      etatBatailles.actif = false;
+      if(etatBatailles.groupe){ map.removeLayer(etatBatailles.groupe); etatBatailles.groupe = null; }
+      if(etatBatailles.calquePh){ map.removeLayer(etatBatailles.calquePh); etatBatailles.calquePh = null; }
+      if(pan) pan.hidden = true;
+      basculerBouton(btn, false, '', '\u2694 Batailles');
+      majLegende();
+      return;
+    }
+    etatBatailles.actif = true;
+    basculerBouton(btn, true, '\u2694 Batailles \u2715', '', '#b91c1c');
+    if(pan) pan.hidden = false;
+    etatBatailles.groupe = posesBatailles();
+    etatBatailles.groupe.addTo(map);
+    allerBataille(etatBatailles.sel, true);
+    majLegende();
+    afficherInfo('\u2694 ' + BATAILLES.length + ' batailles \u2014 choisissez-en une, puis avancez phase par phase', 8000);
+  });
+
+  (function cablerBatailles(){
+    const sel = document.getElementById('bat-choix');
+    if(sel){
+      // tri chronologique a l'affichage : l'ordre de declaration importe peu
+      const annee = function(a){
+        const m = String(a).match(/\d+/);
+        const v = m ? +m[0] : 0;
+        return /av\. J/.test(a) ? -v : v;
+      };
+      BATAILLES.map(function(b, i){ return { i:i, b:b }; })
+        .sort(function(x, y){ return annee(x.b.an) - annee(y.b.an); })
+        .forEach(function(o){
+          const opt = document.createElement('option');
+          opt.value = String(o.i);
+          opt.textContent = o.b.an + ' \u2014 ' + o.b.n;
+          sel.appendChild(opt);
+        });
+      sel.addEventListener('change', function(){ allerBataille(+sel.value, true); });
+    }
+    const prec = document.getElementById('bat-prec');
+    if(prec) prec.addEventListener('click', function(){
+      if(etatBatailles.phase > 0){ etatBatailles.phase--; dessinerPhase(); }
+    });
+    const suiv = document.getElementById('bat-suiv');
+    if(suiv) suiv.addEventListener('click', function(){
+      const b = BATAILLES[etatBatailles.sel];
+      if(etatBatailles.phase < b.phases.length - 1){ etatBatailles.phase++; dessinerPhase(); }
+    });
+    const fin = document.getElementById('bat-fin');
+    if(fin) fin.addEventListener('click', function(){
+      etatBatailles.phase = BATAILLES[etatBatailles.sel].phases.length - 1;
+      dessinerPhase();
+    });
+  })();
+
+  // ---------- Frontières : la formation du territoire ----------
+  //
+  // Avertissement méthodologique, porté dans l'interface : avant le XVIIe siècle, les
+  // frontières ne sont pas des lignes. Il y a des allégeances, des enclaves, des zones
+  // où deux souverains lèvent l'impôt. Tracer un trait net sur 1180 serait une invention
+  // rétrospective. On montre donc des ACQUISITIONS ET DES PERTES DATÉES, chacune avec
+  // son mode d'entrée — ce qui est solide — plutôt que des contours continus.
+  //
+  // Modes : h=héritage, m=mariage, c=conquête, a=achat, t=traité, v=vote/plébiscite,
+  //         p=perte, r=retour
+  const MODES_FRONT = {
+    h:['H\u00e9ritage', '#7c3aed'],
+    m:['Mariage', '#be185d'],
+    c:['Conqu\u00eate', '#b91c1c'],
+    a:['Achat', '#a16207'],
+    t:['Trait\u00e9', '#1d4ed8'],
+    v:['Vote', '#166534'],
+    p:['Perte', '#525252'],
+    r:['Retour', '#0891b2']
+  };
+
+  const FRONTIERES = [
+    { an:843, n:'Trait\u00e9 de Verdun', lat:49.16, lon:5.38, mode:'t',
+      x:'L\u2019empire de Charlemagne est partag\u00e9 entre ses trois petits-fils. Charles le Chauve '
+        + 're\u00e7oit la Francie occidentale, \u00e0 l\u2019ouest de l\u2019Escaut, de la Meuse, de la Sa\u00f4ne et du '
+        + 'Rh\u00f4ne. Cette ligne restera pour huit si\u00e8cles la fronti\u00e8re orientale de r\u00e9f\u00e9rence \u2014 et '
+        + 'l\u2019argument des rois qui voudront l\u2019atteindre.' },
+    { an:987, n:'Le domaine royal cap\u00e9tien', lat:48.85, lon:2.35, mode:'h',
+      x:'Hugues Capet est \u00e9lu roi, mais ne contr\u00f4le directement qu\u2019un mince domaine autour de '
+        + 'Paris et d\u2019Orl\u00e9ans. Le duc de Normandie ou le comte de Toulouse sont bien plus '
+        + 'puissants que lui. Le royaume est une suzerainet\u00e9, pas un territoire.' },
+    { an:1204, n:'Normandie et Anjou confisqu\u00e9s', lat:49.18, lon:-0.37, mode:'c',
+      x:'Philippe Auguste fait juger Jean sans Terre par la cour des pairs, comme vassal '
+        + 'f\u00e9lon, et confisque ses fiefs continentaux. La proc\u00e9dure est juridique, l\u2019ex\u00e9cution '
+        + 'militaire : Ch\u00e2teau-Gaillard tombe apr\u00e8s six mois de si\u00e8ge. Le domaine royal triple.' },
+    { an:1229, n:'Languedoc \u2014 trait\u00e9 de Paris', lat:43.60, lon:1.44, mode:'t',
+      x:'La croisade contre les Albigeois s\u2019ach\u00e8ve par un trait\u00e9 : le comt\u00e9 de Toulouse '
+        + 'reviendra \u00e0 la couronne faute d\u2019h\u00e9ritier m\u00e2le. Ce sera fait en 1271. Une guerre de '
+        + 'religion se solde par une annexion \u2014 les contemporains le voyaient d\u00e9j\u00e0.' },
+    { an:1349, n:'Dauphin\u00e9', lat:45.19, lon:5.72, mode:'a',
+      x:'Humbert II, ruin\u00e9 et sans h\u00e9ritier, vend son Dauphin\u00e9 au roi de France. Condition : '
+        + 'le fils a\u00een\u00e9 du roi en portera le titre. D\u2019o\u00f9 le mot \u00ab dauphin \u00bb. Le Dauphin\u00e9 \u00e9tait '
+        + 'terre d\u2019Empire : la France franchit ici le Rh\u00f4ne.' },
+    { an:1360, n:'Br\u00e9tigny \u2014 l\u2019Aquitaine c\u00e9d\u00e9e', lat:44.84, lon:-0.58, mode:'p',
+      x:'Pour lib\u00e9rer Jean le Bon prisonnier, la France c\u00e8de en pleine souverainet\u00e9 un tiers du '
+        + 'royaume : Aquitaine, Poitou, Limousin, Calais. La ran\u00e7on \u00e9quivaut \u00e0 plusieurs ann\u00e9es '
+        + 'de revenus royaux. Le trait\u00e9 sera d\u00e9nonc\u00e9 neuf ans plus tard.' },
+    { an:1453, n:'Fin de la guerre de Cent Ans', lat:44.84, lon:-0.58, mode:'r',
+      x:'Apr\u00e8s Castillon, l\u2019Angleterre ne conserve que Calais. La Guyenne, anglaise depuis le '
+        + 'mariage d\u2019Ali\u00e9nor en 1152, redevient fran\u00e7aise apr\u00e8s trois si\u00e8cles \u2014 et l\u2019accepte mal.' },
+    { an:1477, n:'Bourgogne \u2014 mort de Charles le T\u00e9m\u00e9raire', lat:47.32, lon:5.04, mode:'h',
+      x:'Charles le T\u00e9m\u00e9raire meurt \u00e0 Nancy. Louis XI saisit le duch\u00e9 de Bourgogne comme fief '
+        + 'masculin revenant \u00e0 la couronne. Mais la Franche-Comt\u00e9 et les Pays-Bas passent aux '
+        + 'Habsbourg par le mariage de Marie : la France h\u00e9rite d\u2019un rival pour trois si\u00e8cles.' },
+    { an:1481, n:'Provence', lat:43.53, lon:5.45, mode:'h',
+      x:'Charles du Maine l\u00e8gue la Provence au roi. Elle garde longtemps ses \u00e9tats et ses '
+        + 'privil\u00e8ges : \u00eatre rattach\u00e9 ne signifie pas \u00eatre uniformis\u00e9. Le Comtat Venaissin et '
+        + 'Avignon, papaux, restent enclav\u00e9s dedans.' },
+    { an:1532, n:'Bretagne', lat:48.11, lon:-1.68, mode:'m',
+      x:'Anne de Bretagne \u00e9pouse successivement Charles VIII puis Louis XII \u2014 la seconde union '
+        + '\u00e9tant pr\u00e9vue au contrat de la premi\u00e8re, pour garder le duch\u00e9. Sa fille Claude \u00e9pouse '
+        + 'Fran\u00e7ois I\u1d49r, qui fait voter l\u2019union en 1532, avec maintien des privil\u00e8ges bretons.' },
+    { an:1552, n:'Trois-\u00c9v\u00each\u00e9s : Metz, Toul, Verdun', lat:49.12, lon:6.18, mode:'c',
+      x:'Henri II occupe les trois villes \u00e9piscopales, terres d\u2019Empire, en se pr\u00e9sentant comme '
+        + 'protecteur des princes protestants allemands. Occupation de fait pendant un si\u00e8cle : '
+        + 'l\u2019Empire ne la reconna\u00eetra qu\u2019en 1648.' },
+    { an:1558, n:'Calais reprise', lat:50.95, lon:1.86, mode:'c',
+      x:'Le duc de Guise reprend Calais, derni\u00e8re possession anglaise, apr\u00e8s deux si\u00e8cles. '
+        + 'Marie Tudor aurait dit qu\u2019on trouverait \u00ab Calais \u00bb grav\u00e9 dans son c\u0153ur.' },
+    { an:1601, n:'Bresse, Bugey, Valromey', lat:46.20, lon:5.22, mode:'t',
+      x:'Trait\u00e9 de Lyon : Henri IV \u00e9change le marquisat de Saluces, au-del\u00e0 des Alpes, contre '
+        + 'des territoires en de\u00e7\u00e0. Un renoncement d\u00e9lib\u00e9r\u00e9 \u00e0 l\u2019Italie au profit d\u2019une fronti\u00e8re '
+        + 'plus ramass\u00e9e.' },
+    { an:1648, n:'Westphalie \u2014 l\u2019Alsace, en partie', lat:48.58, lon:7.75, mode:'t',
+      x:'Les trait\u00e9s de Westphalie c\u00e8dent \u00e0 la France les droits des Habsbourg en Alsace \u2014 dans '
+        + 'des termes volontairement ambigus. Strasbourg, ville libre d\u2019Empire, n\u2019est pas '
+        + 'concern\u00e9e. L\u2019ambigu\u00eft\u00e9 durera quarante ans et servira de pr\u00e9texte.' },
+    { an:1659, n:'Roussillon et Artois', lat:42.70, lon:2.90, mode:'t',
+      x:'Trait\u00e9 des Pyr\u00e9n\u00e9es : la fronti\u00e8re est fix\u00e9e \u00e0 la cr\u00eate, principe alors nouveau. Le '
+        + 'Roussillon catalan devient fran\u00e7ais ; la langue et les liens familiaux, eux, '
+        + 'traversent la ligne. La Cerdagne est coup\u00e9e en deux, laissant Llivia enclav\u00e9e en '
+        + 'France \u2014 elle l\u2019est encore.' },
+    { an:1668, n:'Flandre \u2014 Lille, Douai', lat:50.63, lon:3.06, mode:'c',
+      x:'Guerre de D\u00e9volution : Louis XIV r\u00e9clame les Pays-Bas espagnols au nom d\u2019un droit '
+        + 'priv\u00e9 de sa femme. L\u2019argument juridique habille la conqu\u00eate. Vauban fortifiera la '
+        + '\u00ab ceinture de fer \u00bb.' },
+    { an:1678, n:'Franche-Comt\u00e9', lat:47.24, lon:6.02, mode:'c',
+      x:'Trait\u00e9 de Nim\u00e8gue. La Franche-Comt\u00e9, espagnole depuis Charles Quint, est conquise en '
+        + 'six semaines. La province perd ses institutions propres, contrairement \u00e0 la Bretagne '
+        + 'ou \u00e0 la Provence : le rattachement est ici brutal.' },
+    { an:1681, n:'Strasbourg annex\u00e9e', lat:48.58, lon:7.75, mode:'c',
+      x:'En pleine paix, Louis XIV fait encercler Strasbourg par 30 000 hommes. La ville '
+        + 'capitule sans combat. C\u2019est la politique des \u00ab R\u00e9unions \u00bb : des tribunaux fran\u00e7ais '
+        + 'jugent que des territoires d\u2019Empire d\u00e9pendent de fiefs d\u00e9j\u00e0 fran\u00e7ais. Proc\u00e9d\u00e9 '
+        + 'largement d\u00e9nonc\u00e9 en Europe, et cause de la guerre suivante.' },
+    { an:1713, n:'Utrecht \u2014 pertes et ajustements', lat:50.29, lon:2.78, mode:'p',
+      x:'La guerre de Succession d\u2019Espagne se solde par la perte de Terre-Neuve, de l\u2019Acadie et '
+        + 'de la baie d\u2019Hudson au profit de l\u2019Angleterre. En Europe, la fronti\u00e8re du Nord se fixe '
+        + 'peu ou prou o\u00f9 elle est encore.' },
+    { an:1766, n:'Lorraine', lat:48.69, lon:6.18, mode:'t',
+      x:'Arrangement diplomatique : Stanislas Leszczy\u0144ski, beau-p\u00e8re de Louis XV, re\u00e7oit la '
+        + 'Lorraine \u00e0 titre viager ; \u00e0 sa mort elle revient \u00e0 la France. Une annexion pr\u00e9vue '
+        + 'trente ans \u00e0 l\u2019avance, sans un coup de feu.' },
+    { an:1768, n:'Corse achet\u00e9e \u00e0 G\u00eanes', lat:42.15, lon:9.13, mode:'a',
+      x:'G\u00eanes, incapable de mater la r\u00e9volte de Pascal Paoli, c\u00e8de ses droits \u00e0 la France par '
+        + 'le trait\u00e9 de Versailles. Les Corses, ind\u00e9pendants de fait depuis 1755 avec une '
+        + 'constitution propre, r\u00e9sistent et sont vaincus \u00e0 Ponte Novu en 1769 \u2014 l\u2019ann\u00e9e de la '
+        + 'naissance de Napol\u00e9on.' },
+    { an:1791, n:'Avignon et Comtat Venaissin', lat:43.95, lon:4.81, mode:'v',
+      x:'Enclave papale depuis 1348, Avignon vote son rattachement \u00e0 la France. Le vote est '
+        + 'r\u00e9el mais disput\u00e9, et pr\u00e9c\u00e9d\u00e9 de violences graves. L\u2019Assembl\u00e9e ent\u00e9rine. La derni\u00e8re '
+        + 'grande enclave \u00e9trang\u00e8re dispara\u00eet.' },
+    { an:1860, n:'Savoie et Nice', lat:45.57, lon:6.32, mode:'v',
+      x:'Napol\u00e9on III obtient Savoie et Nice pour prix de son aide \u00e0 l\u2019unit\u00e9 italienne. Des '
+        + 'pl\u00e9biscites approuvent \u00e0 plus de 99 % \u2014 mais le vote est public, l\u2019administration '
+        + 'fait ouvertement campagne, et le clerg\u00e9 aussi. Le rattachement est sans doute '
+        + 'majoritaire ; la proc\u00e9dure, elle, ne prouve rien.' },
+    { an:1871, n:'Alsace-Moselle perdue', lat:48.58, lon:7.75, mode:'p',
+      x:'Le trait\u00e9 de Francfort c\u00e8de l\u2019Alsace et une partie de la Lorraine \u00e0 l\u2019Empire allemand. '
+        + '130 000 habitants choisissent la France et partent. La \u00ab ligne bleue des Vosges \u00bb '
+        + 'devient une obsession nationale pour quarante-sept ans.' },
+    { an:1918, n:'Alsace-Moselle retrouv\u00e9e', lat:48.58, lon:7.75, mode:'r',
+      x:'Le retour se fait sans pl\u00e9biscite \u2014 la France le refuse, craignant le r\u00e9sultat apr\u00e8s '
+        + 'deux g\u00e9n\u00e9rations allemandes. Le droit local allemand y subsiste encore aujourd\u2019hui : '
+        + 'r\u00e9gime des cultes, s\u00e9curit\u00e9 sociale, jours f\u00e9ri\u00e9s.' },
+    { an:1947, n:'Tende et La Brigue', lat:44.09, lon:7.60, mode:'v',
+      x:'Trait\u00e9 de Paris avec l\u2019Italie vaincue. Un r\u00e9f\u00e9rendum local approuve le rattachement. '
+        + 'Derni\u00e8re modification de la fronti\u00e8re m\u00e9tropolitaine \u2014 quelques centaines de '
+        + 'kilom\u00e8tres carr\u00e9s.' },
+    { an:1976, n:'Mayotte reste fran\u00e7aise', lat:-12.78, lon:45.23, mode:'v',
+      x:'Les Comores acc\u00e8dent \u00e0 l\u2019ind\u00e9pendance ; Mayotte vote pour rester fran\u00e7aise \u00e0 deux '
+        + 'reprises. L\u2019ONU conteste ces scrutins s\u00e9par\u00e9s et continue de consid\u00e9rer Mayotte '
+        + 'comme comorienne. Elle devient d\u00e9partement en 2011.' }
+  ];
+
+  // ---------- Empire colonial ----------
+  //
+  // Traité comme ce qu'il fut : une conquête et une domination, non une extension
+  // naturelle du territoire. Chaque entrée donne la prise de contrôle, ce qu'elle a
+  // coûté, et la sortie.
+  const COLONIES = [
+    { n:'Nouvelle-France', deb:1608, fin:1763, lat:46.81, lon:-71.21, pic:'\u00c9tendue de Qu\u00e9bec \u00e0 la Louisiane',
+      x:'Champlain fonde Qu\u00e9bec. L\u2019empire s\u2019\u00e9tend un si\u00e8cle plus tard du Saint-Laurent au '
+        + 'golfe du Mexique, mais reste tr\u00e8s peu peupl\u00e9 : 70 000 colons contre plus d\u2019un million '
+        + 'dans les colonies anglaises. Perdu au trait\u00e9 de Paris de 1763.',
+      sortie:'C\u00e9d\u00e9e \u00e0 l\u2019Angleterre (1763) \u2014 Voltaire parlait de \u00ab quelques arpents de neige \u00bb' },
+    { n:'Saint-Domingue', deb:1697, fin:1804, lat:18.54, lon:-72.34, pic:'La colonie la plus rentable du monde',
+      x:'\u00cele \u00e0 sucre et \u00e0 caf\u00e9, elle fournit \u00e0 elle seule le tiers du commerce ext\u00e9rieur '
+        + 'fran\u00e7ais. Cette richesse repose enti\u00e8rement sur l\u2019esclavage : environ 500 000 esclaves '
+        + 'pour 30 000 Blancs. La R\u00e9volution y d\u00e9clenche la seule r\u00e9volte d\u2019esclaves victorieuse '
+        + 'de l\u2019histoire.',
+      sortie:'Ind\u00e9pendance d\u2019Ha\u00efti (1804), puis une dette impos\u00e9e en 1825 qui l\u2019asphyxiera un si\u00e8cle' },
+    { n:'Comptoirs de l\u2019Inde', deb:1674, fin:1954, lat:11.94, lon:79.83, pic:'Cinq comptoirs',
+      x:'Pondich\u00e9ry, Chandernagor, Karikal, Mah\u00e9, Yanaon. Dupleix r\u00eave un temps d\u2019un empire '
+        + 'indien fran\u00e7ais ; la d\u00e9faite face aux Britanniques r\u00e9duit la pr\u00e9sence \u00e0 cinq villes '
+        + 'sans arri\u00e8re-pays.',
+      sortie:'Transf\u00e9r\u00e9s \u00e0 l\u2019Inde (1954), sans guerre' },
+    { n:'Alg\u00e9rie', deb:1830, fin:1962, lat:36.75, lon:3.06, pic:'Trois d\u00e9partements fran\u00e7ais',
+      x:'La conqu\u00eate, commenc\u00e9e sous un pr\u00e9texte diplomatique, dure dix-sept ans et fait des '
+        + 'centaines de milliers de morts. L\u2019Alg\u00e9rie est administrativement fran\u00e7aise \u2014 des '
+        + 'd\u00e9partements \u2014 mais ses habitants musulmans n\u2019ont pas la citoyennet\u00e9 pleine : c\u2019est le '
+        + 'r\u00e9gime de l\u2019indig\u00e9nat.',
+      sortie:'Ind\u00e9pendance (1962) apr\u00e8s huit ans de guerre, plusieurs centaines de milliers de morts' },
+    { n:'Afrique-Occidentale fran\u00e7aise', deb:1895, fin:1960, lat:14.72, lon:-17.47, pic:'Huit territoires',
+      x:'De Dakar au Niger. La conqu\u00eate suit le partage de l\u2019Afrique d\u00e9cid\u00e9 \u00e0 Berlin en 1885, '
+        + 'entre Europ\u00e9ens et sans les Africains. Travail forc\u00e9, cultures obligatoires, imp\u00f4t de '
+        + 'capitation.',
+      sortie:'Ind\u00e9pendances group\u00e9es en 1960' },
+    { n:'Afrique-\u00c9quatoriale fran\u00e7aise', deb:1910, fin:1960, lat:-4.27, lon:15.28, pic:'Quatre territoires',
+      x:'Gabon, Congo, Oubangui-Chari, Tchad. R\u00e9gime des compagnies concessionnaires : le '
+        + 'rapport Gide de 1927 et le voyage d\u2019Albert Londres d\u00e9crivent une mortalit\u00e9 effroyable '
+        + 'sur le chantier du chemin de fer Congo-Oc\u00e9an.',
+      sortie:'Ind\u00e9pendances en 1960' },
+    { n:'Indochine', deb:1858, fin:1954, lat:21.03, lon:105.85, pic:'Cinq pays de l\u2019Union',
+      x:'Vietnam, Cambodge, Laos. \u00c9conomie de plantation \u2014 h\u00e9v\u00e9a, riz \u2014 et monopoles d\u2019\u00c9tat '
+        + 'sur l\u2019alcool, le sel et l\u2019opium, qui financent l\u2019administration.',
+      sortie:'Ind\u00e9pendances apr\u00e8s Di\u00ean Bi\u00ean Ph\u1ee7 et les accords de Gen\u00e8ve (1954)' },
+    { n:'Maroc', deb:1912, fin:1956, lat:34.02, lon:-6.83, pic:'Protectorat',
+      x:'Protectorat, non colonie : le sultan r\u00e8gne, Lyautey gouverne. La distinction juridique '
+        + 'compte peu dans les faits, mais elle facilitera une sortie n\u00e9goci\u00e9e.',
+      sortie:'Ind\u00e9pendance n\u00e9goci\u00e9e (1956)' },
+    { n:'Tunisie', deb:1881, fin:1956, lat:36.80, lon:10.18, pic:'Protectorat',
+      x:'Protectorat \u00e9tabli apr\u00e8s l\u2019expos\u00e9 du congr\u00e8s de Berlin, o\u00f9 Bismarck encourage la France '
+        + '\u00e0 s\u2019y \u00e9tablir \u2014 pour la d\u00e9tourner de l\u2019Alsace.',
+      sortie:'Ind\u00e9pendance (1956)' },
+    { n:'Madagascar', deb:1896, fin:1960, lat:-18.88, lon:47.51, pic:'Colonie',
+      x:'La monarchie merina est abolie, la reine exil\u00e9e. L\u2019insurrection de 1947 est r\u00e9prim\u00e9e '
+        + 'avec une violence extr\u00eame : les estimations vont de 11 000 \u00e0 90 000 morts, l\u2019\u00e9cart '
+        + 'lui-m\u00eame en dit long sur l\u2019absence de comptage.',
+      sortie:'Ind\u00e9pendance (1960)' }
+  ];
+
+  // ---------- Contours du royaume ----------
+  //
+  // Neuf états du territoire. Le champ « sur » dit le degré de certitude du tracé :
+  //   1 = frontière négociée et cartographiée (traités modernes) → trait plein
+  //   0 = reconstitution d'après les allégeances → trait fondu et pointillé
+  //
+  // Les contours anciens sont volontairement schématiques : à l'échelle où on les
+  // regarde, ils disent l'ordre de grandeur et la direction de l'expansion, pas le
+  // détail. Les enclaves majeures sont signalées à part.
+  const CONTOURS = [
+    { an:987, t:'Domaine royal cap\u00e9tien', sur:0,
+      x:'Ce que le roi contr\u00f4le vraiment : une bande de Paris \u00e0 Orl\u00e9ans. Le reste du royaume '
+        + 'est aux mains de vassaux souvent plus puissants que lui.',
+      p:[[47.75,1.30],[47.80,2.05],[48.10,2.62],[48.55,3.05],[49.05,3.12],[49.32,2.62],[49.30,1.90],[48.95,1.42],[48.40,1.22],[47.95,1.15],[47.75,1.30]] },
+    { an:1180, t:'Royaume au d\u00e9but de Philippe Auguste', sur:0,
+      x:'Le domaine royal reste modeste ; les Plantagen\u00eat tiennent la Normandie, l\u2019Anjou et '
+        + 'l\u2019Aquitaine, soit la moiti\u00e9 ouest. La ligne dessin\u00e9e ici est une reconstitution : '
+        + 'les contemporains raisonnent en fid\u00e9lit\u00e9s, non en territoire continu.',
+      p:[[50.05,1.55],[49.90,1.10],[49.75,0.60],[49.60,0.35],[49.30,0.65],[48.95,0.85],[48.60,0.60],[48.20,0.75],[47.85,0.95],[47.40,0.85],[47.05,1.05],[46.60,1.15],[46.10,1.45],[45.60,1.75],[45.10,2.05],[44.60,2.55],[44.10,3.05],[43.70,3.35],[43.45,3.20],[43.30,2.90],[43.05,2.20],[42.85,1.85],[42.75,1.35],[43.00,0.15],[43.35,-0.30],[43.60,0.35],[44.20,0.85],[44.90,1.35],[45.60,1.95],[46.30,2.25],[47.00,2.35],[47.70,2.65],[48.30,2.95],[48.90,3.05],[49.45,3.35],[49.85,3.05],[50.05,2.35],[50.05,1.55]] },
+    { an:1328, t:'Royaume des derniers Cap\u00e9tiens directs', sur:0,
+      x:'Le domaine s\u2019est \u00e9tendu par confiscations, mariages et h\u00e9ritages. Restent en dehors : '
+        + 'la Bretagne, la Guyenne anglaise, la Flandre imp\u00e9riale, le Dauphin\u00e9 et la Provence, '
+        + 'terres d\u2019Empire.',
+      p:[[50.95,1.85],[50.72,1.60],[50.12,1.42],[49.98,1.08],[49.93,0.68],[49.72,0.20],[49.65,-0.25],[49.44,-0.55],[49.35,-1.15],[49.72,-1.55],[49.68,-1.94],[49.35,-1.60],[48.90,-1.55],[49.20,-1.30],[48.85,-1.45],[48.55,-1.45],[48.20,-1.60],[47.80,-1.75],[47.35,-1.85],[47.10,-2.05],[46.85,-1.95],[46.50,-1.79],[46.30,-1.52],[45.95,-1.09],[45.60,-1.06],[45.40,-0.60],[45.05,-0.35],[44.75,-0.15],[44.55,0.15],[44.20,1.05],[43.70,1.50],[43.35,2.05],[43.10,2.65],[42.95,2.95],[42.75,2.05],[42.80,1.30],[43.05,0.05],[43.45,-0.55],[44.05,-0.35],[44.55,0.15],[43.30,4.60],[43.95,4.72],[44.60,4.72],[45.30,4.68],[45.75,4.72],[46.20,4.85],[46.75,5.02],[47.30,5.15],[47.90,5.20],[48.45,5.35],[49.10,5.10],[49.55,4.85],[50.10,4.30],[50.45,4.15],[50.70,3.60],[50.80,3.15],[51.00,2.50],[50.95,1.85]] },
+    { an:1461, t:'\u00c0 la fin de la guerre de Cent Ans', sur:0,
+      x:'L\u2019Angleterre ne tient plus que Calais. La Bourgogne, le Dauphin\u00e9 et la Provence ne '
+        + 'sont pas encore rattach\u00e9s ; la Bretagne reste un duch\u00e9 distinct.',
+      p:[[50.95,1.85],[50.72,1.60],[50.12,1.42],[49.98,1.08],[49.93,0.68],[49.72,0.20],[49.65,-0.25],[49.44,-0.55],[49.35,-1.15],[49.72,-1.55],[49.68,-1.94],[49.35,-1.60],[48.90,-1.55],[49.20,-1.30],[48.85,-1.45],[48.55,-1.45],[48.20,-1.60],[47.80,-1.75],[47.35,-1.85],[47.10,-2.05],[46.85,-1.95],[46.50,-1.79],[46.30,-1.52],[45.95,-1.09],[45.60,-1.06],[45.15,-1.17],[44.66,-1.19],[44.20,-1.25],[43.68,-1.44],[43.39,-1.79],[43.31,-1.62],[43.05,-1.34],[42.96,-0.75],[42.80,-0.32],[42.70,0.28],[42.72,0.68],[42.60,1.00],[42.50,1.42],[42.43,1.72],[42.50,2.05],[42.35,2.55],[42.43,3.17],[42.90,3.05],[43.17,3.22],[43.32,3.55],[43.41,4.15],[43.30,4.60],[43.95,4.72],[44.60,4.72],[45.30,4.68],[45.75,4.72],[46.20,4.85],[46.75,5.02],[47.30,5.15],[47.90,5.20],[48.45,5.35],[49.10,5.10],[49.55,4.85],[50.10,4.30],[50.45,4.15],[50.70,3.60],[50.80,3.15],[51.00,2.50],[50.95,1.85]] },
+    { an:1547, t:'Apr\u00e8s Bretagne, Provence et Dauphin\u00e9', sur:0,
+      x:'Le territoire prend une forme reconnaissable. La Bretagne est unie en 1532, la '
+        + 'Provence l\u00e9gu\u00e9e en 1481, le Dauphin\u00e9 achet\u00e9 en 1349. Restent hors du royaume : '
+        + 'l\u2019Artois, la Franche-Comt\u00e9, l\u2019Alsace, la Lorraine, la Savoie, le Roussillon.',
+      p:[[50.95,1.85],[50.72,1.60],[50.12,1.42],[49.98,1.08],[49.93,0.68],[49.72,0.20],[49.65,-0.25],[49.44,-0.55],[49.35,-1.15],[49.72,-1.55],[49.68,-1.94],[49.35,-1.60],[48.90,-1.55],[48.68,-1.51],[48.65,-2.02],[48.83,-2.55],[48.72,-3.05],[48.87,-3.55],[48.73,-4.02],[48.55,-4.55],[48.35,-4.78],[48.32,-4.55],[48.10,-4.35],[47.98,-4.38],[47.80,-4.05],[47.60,-3.12],[47.52,-2.90],[47.28,-2.45],[47.24,-2.18],[46.99,-2.12],[46.50,-1.79],[46.30,-1.52],[45.95,-1.09],[45.60,-1.06],[45.15,-1.17],[44.66,-1.19],[44.20,-1.25],[43.68,-1.44],[43.39,-1.79],[43.31,-1.62],[43.05,-1.34],[42.96,-0.75],[42.80,-0.32],[42.70,0.28],[42.72,0.68],[42.60,1.00],[42.50,1.42],[42.43,1.72],[42.50,2.05],[42.35,2.55],[42.43,3.17],[42.90,3.05],[43.17,3.22],[43.32,3.55],[43.41,4.15],[43.34,4.85],[43.35,5.21],[43.20,5.36],[43.05,5.80],[43.10,6.20],[43.45,6.90],[44.10,6.65],[44.85,6.72],[45.15,6.35],[45.60,5.95],[46.05,5.85],[46.55,5.85],[47.10,5.55],[47.60,5.35],[48.20,5.45],[48.90,5.30],[49.45,5.10],[49.90,4.85],[50.25,4.30],[50.55,4.15],[50.75,3.60],[50.85,3.15],[51.02,2.50],[50.95,1.85]] },
+    { an:1697, t:'Apr\u00e8s Westphalie, les Pyr\u00e9n\u00e9es et Nim\u00e8gue', sur:1,
+      x:'Premi\u00e8re fois que le trac\u00e9 repose sur des trait\u00e9s n\u00e9goci\u00e9s et cartographi\u00e9s. Artois, '
+        + 'Roussillon, Franche-Comt\u00e9 et Alsace sont acquis. La fronti\u00e8re des Pyr\u00e9n\u00e9es suit la '
+        + 'ligne de cr\u00eate \u2014 principe alors nouveau.',
+      p:[[50.95,1.85],[50.72,1.60],[50.12,1.42],[49.98,1.08],[49.93,0.68],[49.72,0.20],[49.65,-0.25],[49.44,-0.55],[49.35,-1.15],[49.72,-1.55],[49.68,-1.94],[49.35,-1.60],[48.90,-1.55],[48.68,-1.51],[48.65,-2.02],[48.83,-2.55],[48.72,-3.05],[48.87,-3.55],[48.73,-4.02],[48.55,-4.55],[48.35,-4.78],[48.32,-4.55],[48.10,-4.35],[47.98,-4.38],[47.80,-4.05],[47.60,-3.12],[47.52,-2.90],[47.28,-2.45],[47.24,-2.18],[46.99,-2.12],[46.50,-1.79],[46.30,-1.52],[45.95,-1.09],[45.60,-1.06],[45.15,-1.17],[44.66,-1.19],[44.20,-1.25],[43.68,-1.44],[43.39,-1.79],[43.31,-1.62],[43.05,-1.34],[42.96,-0.75],[42.80,-0.32],[42.70,0.28],[42.72,0.68],[42.60,1.00],[42.50,1.42],[42.43,1.72],[42.50,2.05],[42.35,2.55],[42.43,3.17],[42.90,3.05],[43.17,3.22],[43.32,3.55],[43.41,4.15],[43.34,4.85],[43.35,5.21],[43.20,5.36],[43.05,5.80],[43.11,6.15],[43.42,6.75],[46.25,6.80],[45.92,6.80],[45.71,6.80],[45.42,6.80],[45.13,6.63],[44.85,6.95],[44.40,7.14],[44.16,7.68],[47.35,6.95],[47.10,6.45],[46.72,6.06],[46.40,6.28],[47.55,7.58],[47.90,7.55],[48.30,7.60],[48.55,7.72],[48.75,7.10],[48.95,6.30],[49.20,6.35],[49.50,6.30],[49.60,5.85],[49.85,5.45],[50.18,4.85],[50.30,4.16],[50.52,4.15],[50.72,3.66],[50.80,3.20],[51.02,2.55],[50.95,1.85]] },
+    { an:1789, t:'\u00c0 la veille de la R\u00e9volution', sur:1,
+      x:'La Lorraine est rattach\u00e9e en 1766, la Corse achet\u00e9e en 1768. Restent enclav\u00e9s : '
+        + 'Avignon et le Comtat Venaissin, papaux ; Mulhouse, r\u00e9publique alli\u00e9e des Suisses ; '
+        + 'Montb\u00e9liard, au duc de Wurtemberg.',
+      p:[[50.95,1.85],[50.72,1.60],[50.12,1.42],[49.98,1.08],[49.93,0.68],[49.72,0.20],[49.65,-0.25],[49.44,-0.55],[49.35,-1.15],[49.72,-1.55],[49.68,-1.94],[49.35,-1.60],[48.90,-1.55],[48.68,-1.51],[48.65,-2.02],[48.83,-2.55],[48.72,-3.05],[48.87,-3.55],[48.73,-4.02],[48.55,-4.55],[48.35,-4.78],[48.32,-4.55],[48.10,-4.35],[47.98,-4.38],[47.80,-4.05],[47.60,-3.12],[47.52,-2.90],[47.28,-2.45],[47.24,-2.18],[46.99,-2.12],[46.50,-1.79],[46.30,-1.52],[45.95,-1.09],[45.60,-1.06],[45.15,-1.17],[44.66,-1.19],[44.20,-1.25],[43.68,-1.44],[43.39,-1.79],[43.31,-1.62],[43.05,-1.34],[42.96,-0.75],[42.80,-0.32],[42.70,0.28],[42.72,0.68],[42.60,1.00],[42.50,1.42],[42.43,1.72],[42.50,2.05],[42.35,2.55],[42.43,3.17],[42.90,3.05],[43.17,3.22],[43.32,3.55],[43.41,4.15],[43.34,4.85],[43.35,5.21],[43.20,5.36],[43.05,5.80],[43.11,6.15],[43.42,6.75],[46.25,6.80],[45.92,6.80],[45.71,6.80],[45.42,6.80],[45.13,6.63],[44.85,6.95],[44.40,7.14],[44.16,7.68],[47.35,6.95],[47.10,6.45],[46.72,6.06],[46.40,6.28],[47.55,7.58],[47.90,7.55],[48.30,7.60],[48.72,7.80],[48.97,8.23],[49.05,8.20],[49.16,6.87],[49.46,6.36],[49.54,5.86],[49.79,5.45],[50.15,4.85],[50.27,4.16],[50.50,4.15],[50.70,3.66],[50.78,3.20],[51.00,2.55],[50.95,1.85]] },
+    { an:1871, t:'Apr\u00e8s la perte de l\u2019Alsace-Moselle', sur:1,
+      x:'Le trait\u00e9 de Francfort ampute le nord-est. La Savoie et Nice, acquises en 1860, '
+        + 'compensent \u00e0 peine en superficie \u2014 et pas du tout dans les esprits.',
+      p:[[50.95,1.85],[50.72,1.60],[50.12,1.42],[49.98,1.08],[49.93,0.68],[49.72,0.20],[49.65,-0.25],[49.44,-0.55],[49.35,-1.15],[49.72,-1.55],[49.68,-1.94],[49.35,-1.60],[48.90,-1.55],[48.68,-1.51],[48.65,-2.02],[48.83,-2.55],[48.72,-3.05],[48.87,-3.55],[48.73,-4.02],[48.55,-4.55],[48.35,-4.78],[48.32,-4.55],[48.10,-4.35],[47.98,-4.38],[47.80,-4.05],[47.60,-3.12],[47.52,-2.90],[47.28,-2.45],[47.24,-2.18],[46.99,-2.12],[46.50,-1.79],[46.30,-1.52],[45.95,-1.09],[45.60,-1.06],[45.15,-1.17],[44.66,-1.19],[44.20,-1.25],[43.68,-1.44],[43.39,-1.79],[43.31,-1.62],[43.05,-1.34],[42.96,-0.75],[42.80,-0.32],[42.70,0.28],[42.72,0.68],[42.60,1.00],[42.50,1.42],[42.43,1.72],[42.50,2.05],[42.35,2.55],[42.43,3.17],[42.90,3.05],[43.17,3.22],[43.32,3.55],[43.41,4.15],[43.34,4.85],[43.35,5.21],[43.20,5.36],[43.05,5.80],[43.11,6.15],[43.42,6.75],[43.55,7.12],[43.75,7.53],[46.25,6.80],[45.92,6.80],[45.71,6.80],[45.42,6.80],[45.13,6.63],[44.85,6.95],[44.40,7.14],[44.16,7.68],[47.35,6.95],[47.10,6.45],[46.72,6.06],[46.40,6.28],[47.45,7.00],[47.75,7.05],[48.10,6.95],[48.40,7.05],[48.65,6.55],[48.95,5.95],[49.25,5.85],[49.50,5.85],[49.60,5.45],[49.85,5.45],[50.18,4.85],[50.30,4.16],[50.52,4.15],[50.72,3.66],[50.80,3.20],[51.02,2.55],[50.95,1.85]] },
+    { an:2026, t:'Aujourd\u2019hui', sur:1,
+      x:'L\u2019Alsace-Moselle est revenue en 1918. Tende et La Brigue en 1947 sont la derni\u00e8re '
+        + 'modification de la fronti\u00e8re m\u00e9tropolitaine.',
+      p:[[50.95,1.85],[50.72,1.60],[50.12,1.42],[49.98,1.08],[49.93,0.68],[49.72,0.20],[49.65,-0.25],[49.44,-0.55],[49.35,-1.15],[49.72,-1.55],[49.68,-1.94],[49.35,-1.60],[48.90,-1.55],[48.68,-1.51],[48.65,-2.02],[48.83,-2.55],[48.72,-3.05],[48.87,-3.55],[48.73,-4.02],[48.55,-4.55],[48.35,-4.78],[48.32,-4.55],[48.10,-4.35],[47.98,-4.38],[47.80,-4.05],[47.60,-3.12],[47.52,-2.90],[47.28,-2.45],[47.24,-2.18],[46.99,-2.12],[46.50,-1.79],[46.30,-1.52],[45.95,-1.09],[45.60,-1.06],[45.15,-1.17],[44.66,-1.19],[44.20,-1.25],[43.68,-1.44],[43.39,-1.79],[43.31,-1.62],[43.05,-1.34],[42.96,-0.75],[42.80,-0.32],[42.70,0.28],[42.72,0.68],[42.60,1.00],[42.50,1.42],[42.43,1.72],[42.50,2.05],[42.35,2.55],[42.43,3.17],[42.90,3.05],[43.17,3.22],[43.32,3.55],[43.41,4.15],[43.34,4.85],[43.35,5.21],[43.20,5.36],[43.05,5.80],[43.11,6.15],[43.42,6.75],[43.55,7.12],[43.75,7.53],[46.25,6.80],[45.92,6.80],[45.71,6.80],[45.42,6.80],[45.13,6.63],[44.85,6.95],[44.40,7.14],[44.16,7.68],[47.35,6.95],[47.10,6.45],[46.72,6.06],[46.40,6.28],[47.55,7.58],[47.90,7.55],[48.30,7.60],[48.72,7.80],[48.97,8.23],[49.05,8.20],[49.16,6.87],[49.46,6.36],[49.54,5.86],[49.79,5.45],[50.15,4.85],[50.27,4.16],[50.50,4.15],[50.70,3.66],[50.78,3.20],[51.00,2.55],[50.95,1.85]] }
+  ];
+
+  // Enclaves : elles disent mieux que tout que la frontière n'était pas une ligne
+  const ENCLAVES = [
+    { an1:1348, an2:1791, n:'Avignon et Comtat Venaissin', lat:43.95, lon:4.81,
+      x:'Territoire du pape au milieu de la Provence fran\u00e7aise, pendant 443 ans.' },
+    { an1:1300, an2:1798, n:'Mulhouse', lat:47.75, lon:7.34,
+      x:'R\u00e9publique ind\u00e9pendante alli\u00e9e aux cantons suisses, enclav\u00e9e en Alsace fran\u00e7aise '
+        + 'apr\u00e8s 1648. Elle vote son rattachement en 1798.' },
+    { an1:1400, an2:1793, n:'Montb\u00e9liard', lat:47.51, lon:6.80,
+      x:'Possession des ducs de Wurtemberg, luth\u00e9rienne, au milieu de la Franche-Comt\u00e9 '
+        + 'catholique et fran\u00e7aise.' },
+    { an1:1659, an2:2026, n:'Llivia', lat:42.46, lon:1.98,
+      x:'Le trait\u00e9 des Pyr\u00e9n\u00e9es c\u00e8de \u00e0 la France les villages de Cerdagne \u2014 mais Llivia \u00e9tait '
+        + 'une ville, non un village. Elle reste espagnole, enclav\u00e9e en France. Toujours '
+        + 'aujourd\u2019hui.' }
+  ];
+
+  const etatFront = { actif:false, groupe:null, annee:2026 };
+  const etatColo = { actif:false, groupe:null };
+
+  function contourDeLAnnee(an){
+    // le dernier contour dont la date est atteinte
+    let choisi = CONTOURS[0];
+    CONTOURS.forEach(function(c){ if(c.an <= an) choisi = c; });
+    return choisi;
+  }
+
+  // Frontieres historiques REELLES : projet historical-basemaps d'Andrei Ourednik,
+  // meme depot GitHub que Natural Earth. Chaque entite porte un champ BORDERPRECISION
+  // (1 = incertain, 3 = frontiere etablie) donne par les auteurs eux-memes : on ne
+  // devine plus le degre de certitude, on le lit.
+  // Les contours dessines a la main restent en secours si le reseau ne repond pas.
+  const HISTO_BASE = 'https://raw.githubusercontent.com/aourednik/historical-basemaps/master/geojson/world_';
+  const HISTO_ANNEES = [1000, 1279, 1400, 1500, 1600, 1650, 1715, 1783, 1800, 1815,
+                        1880, 1900, 1920, 1938, 1960, 1994, 2010];
+  const HISTO_CACHE = {};
+
+  function anneeHisto(an){
+    let choisie = HISTO_ANNEES[0];
+    HISTO_ANNEES.forEach(function(a){ if(a <= an) choisie = a; });
+    return choisie;
+  }
+
+  async function contourReel(an){
+    const a = anneeHisto(an);
+    if(HISTO_CACHE[a] !== undefined) return HISTO_CACHE[a];
+    HISTO_CACHE[a] = null;   // evite les appels en rafale pendant le chargement
+    try{
+      const r = await fetch(HISTO_BASE + a + '.geojson');
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      const fr = (d.features || []).filter(function(f){
+        const n = String((f.properties || {}).NAME || '').trim();
+        return n === 'France' || n === 'Kingdom of France' || n === 'French Republic';
+      });
+      if(!fr.length) throw new Error('France absente du fichier ' + a);
+      HISTO_CACHE[a] = { an:a, geo:{ type:'FeatureCollection', features:fr },
+                         prec:+((fr[0].properties || {}).BORDERPRECISION || 1) };
+      if(typeof journal === 'function')
+        journal('couche', 'fronti\u00e8res ' + a + ' : ' + fr.length + ' entit\u00e9(s), pr\u00e9cision '
+          + HISTO_CACHE[a].prec + '/3', 'historical-basemaps');
+      return HISTO_CACHE[a];
+    }catch(e){
+      if(typeof journal === 'function')
+        journal('couche', 'fronti\u00e8res ' + a + ' \u2192 \u00e9chec, trac\u00e9 de secours utilis\u00e9',
+          String(e && e.message || e).slice(0, 70));
+      HISTO_CACHE[a] = false;   // false = essaye et echoue : on ne reessaie pas
+      return false;
+    }
+  }
+
+  function dessinerFrontieres(){
+    if(!etatFront.actif) return;
+    if(etatFront.groupe) map.removeLayer(etatFront.groupe);
+    const g = L.layerGroup();
+    let visibles = 0;
+
+    // Le contour du royaume. Trait plein quand la frontiere est negociee et
+    // cartographiee ; fondu et pointille quand c'est une reconstitution.
+    const ct = contourDeLAnnee(etatFront.annee);
+    if(!map.getPane('contour-fr')){
+      const pn = map.createPane('contour-fr');
+      if(pn && pn.style) pn.style.zIndex = 368;
+    }
+    // si les donnees reelles sont deja en cache, on les prefere au trace dessine
+    const reel = HISTO_CACHE[anneeHisto(etatFront.annee)];
+    if(reel){
+      L.geoJSON(reel.geo, {
+        pane:'contour-fr',
+        style:function(){
+          const sur = reel.prec >= 3;
+          return { color: sur ? '#1e3a8a' : '#64748b', weight: sur ? 2.6 : 2.2,
+                   opacity: sur ? 0.95 : 0.6, dashArray: sur ? null : '9 7',
+                   fillColor: sur ? '#3b82f6' : '#94a3b8', fillOpacity: sur ? 0.10 : 0.07 };
+        }
+      })
+        .bindTooltip('<b>France en ' + reel.an + '</b><br><small>fronti\u00e8res historiques r\u00e9elles \u00b7 '
+          + 'pr\u00e9cision ' + reel.prec + '/3</small>', { sticky:true })
+        .bindPopup('<b>France en ' + reel.an + '</b>'
+          + '<div style="font-size:11.5px;line-height:1.55;margin-top:4px">' + echap(ct.x) + '</div>'
+          + '<div style="margin-top:5px;font-size:10px;color:' + (reel.prec >= 3 ? '#166534' : '#7f1d1d') + '">'
+          + (reel.prec >= 3
+              ? '\u2713 Trac\u00e9 issu du projet historical-basemaps, pr\u00e9cision d\u00e9clar\u00e9e 3/3.'
+              : '\u26a0 Trac\u00e9 issu du projet historical-basemaps, pr\u00e9cision d\u00e9clar\u00e9e ' + reel.prec
+                + '/3 : \u00e0 cette \u00e9poque la fronti\u00e8re n\u2019est pas une ligne mais un ensemble '
+                + 'd\u2019all\u00e9geances.')
+          + '</div>'
+          + '<div style="margin-top:4px;font-size:10px;color:#9ca3af">Source : historical-basemaps '
+          + '(A. Ourednik), donn\u00e9es ouvertes</div>')
+        .addTo(g);
+    }else{
+    L.polygon(ct.p, {
+      pane:'contour-fr',
+      color: ct.sur ? '#1e3a8a' : '#64748b',
+      weight: ct.sur ? 3 : 2.4,
+      opacity: ct.sur ? 0.95 : 0.55,
+      dashArray: ct.sur ? null : '9 7',
+      fillColor: ct.sur ? '#3b82f6' : '#94a3b8',
+      fillOpacity: ct.sur ? 0.10 : 0.07
+    })
+      .bindTooltip('<b>' + echap(ct.t) + '</b> \u00b7 ' + ct.an
+        + '<br><small>' + (ct.sur ? 'fronti\u00e8re n\u00e9goci\u00e9e et cartographi\u00e9e'
+                                  : 'reconstitution \u2014 trac\u00e9 incertain') + '</small>', { sticky:true })
+      .bindPopup('<b>' + echap(ct.t) + '</b> <span style="color:#6b7280">\u00b7 ' + ct.an + '</span>'
+        + '<div style="font-size:11.5px;line-height:1.55;margin-top:4px">' + echap(ct.x) + '</div>'
+        + '<div style="margin-top:5px;font-size:10px;color:' + (ct.sur ? '#166534' : '#7f1d1d') + '">'
+        + (ct.sur ? '\u2713 Trac\u00e9 d\u2019apr\u00e8s des trait\u00e9s : fiable.'
+                  : '\u26a0 Trac\u00e9 reconstitu\u00e9 : \u00e0 cette \u00e9poque la fronti\u00e8re n\u2019est pas une ligne '
+                    + 'mais un ensemble d\u2019all\u00e9geances. Le trait est fondu pour le rappeler.') + '</div>')
+      .addTo(g);
+    }
+
+    // Les enclaves, qui disent mieux que tout que la frontiere n'etait pas une ligne
+    ENCLAVES.forEach(function(e){
+      if(etatFront.annee < e.an1 || etatFront.annee > e.an2) return;
+      L.circleMarker([e.lat, e.lon], { pane:'contour-fr', radius:6, weight:2.4,
+        color:'#c026d3', fillColor:'#f5d0fe', fillOpacity:0.85, dashArray:'3 2' })
+        .bindTooltip('<b>' + echap(e.n) + '</b><br><small>enclave \u00e9trang\u00e8re</small>', { direction:'top' })
+        .bindPopup('<b>' + echap(e.n) + '</b>'
+          + '<div style="color:#a21caf;font-weight:700;font-size:11px;margin-top:2px">Enclave \u00e9trang\u00e8re \u00b7 '
+          + e.an1 + '\u2013' + (e.an2 >= 2026 ? 'toujours' : e.an2) + '</div>'
+          + '<div style="font-size:11.5px;line-height:1.55;margin-top:4px">' + echap(e.x) + '</div>')
+        .addTo(g);
+    });
+
+    FRONTIERES.forEach(function(f){
+      if(f.an > etatFront.annee) return;
+      visibles++;
+      const m = MODES_FRONT[f.mode] || MODES_FRONT.t;
+      const recent = (etatFront.annee - f.an) < 40;
+      L.circleMarker([f.lat, f.lon], {
+        radius: recent ? 10 : 7, weight: recent ? 3 : 2,
+        color: m[1], fillColor: m[1], fillOpacity: recent ? 0.55 : 0.28
+      })
+        .bindPopup('<b>' + echap(f.n) + '</b> <span style="color:#6b7280">\u00b7 ' + f.an + '</span>'
+          + '<div style="color:' + m[1] + ';font-weight:700;font-size:11px;margin-top:2px">'
+          + echap(m[0]) + '</div>'
+          + '<div style="font-size:11.5px;line-height:1.55;margin-top:4px">' + echap(f.x) + '</div>')
+        .bindTooltip('<b>' + f.an + '</b> \u2014 ' + echap(f.n), { direction:'top' })
+        .addTo(g);
+    });
+    g.addTo(map);
+    etatFront.groupe = g;
+    // chargement en arriere-plan : au retour, on redessine avec le trace reel
+    if(HISTO_CACHE[anneeHisto(etatFront.annee)] === undefined){
+      contourReel(etatFront.annee).then(function(r){ if(r && etatFront.actif) dessinerFrontieres(); });
+    }
+    const c = document.getElementById('front-annee-val');
+    if(c) c.textContent = etatFront.annee;
+    const cpt = document.getElementById('front-compte');
+    const ctA = contourDeLAnnee(etatFront.annee);
+    if(cpt) cpt.textContent = visibles + ' \u00e9tape(s) \u00b7 contour ' + ctA.an
+      + (ctA.sur ? '' : ' (incertain)');
+    majLegende();
+  }
+
+  document.getElementById('btn-frontieres').addEventListener('click', function(){
+    const btn = document.getElementById('btn-frontieres');
+    const pan = document.getElementById('front-panneau');
+    if(etatFront.actif){
+      etatFront.actif = false;
+      if(etatFront.groupe){ map.removeLayer(etatFront.groupe); etatFront.groupe = null; }
+      if(pan) pan.hidden = true;
+      basculerBouton(btn, false, '', '🗺 Formation du territoire');
+      majLegende();
+      return;
+    }
+    etatFront.actif = true;
+    basculerBouton(btn, true, '🗺 Formation du territoire \u2715', '', '#1d4ed8');
+    if(pan) pan.hidden = false;
+    dessinerFrontieres();
+    afficherInfo('🗺 Glissez le curseur : les acquisitions apparaissent \u00e0 leur date, '
+      + 'color\u00e9es par mode d\u2019entr\u00e9e', 9000);
+  });
+
+  (function cablerFrontieres(){
+    const c = document.getElementById('front-annee');
+    if(c) c.addEventListener('input', function(){
+      etatFront.annee = +c.value;
+      dessinerFrontieres();
+    });
+    // la legende des modes, construite depuis les donnees
+    const lg = document.getElementById('front-modes');
+    if(lg){
+      lg.innerHTML = Object.keys(MODES_FRONT).map(function(k){
+        const m = MODES_FRONT[k];
+        return '<span style="display:inline-flex;align-items:center;gap:3px;margin:0 7px 2px 0">'
+          + '<span style="width:8px;height:8px;border-radius:50%;background:' + m[1] + '"></span>'
+          + m[0] + '</span>';
+      }).join('');
+    }
+  })();
+
+  document.getElementById('btn-colonies').addEventListener('click', function(){
+    const btn = document.getElementById('btn-colonies');
+    if(etatColo.actif){
+      etatColo.actif = false;
+      if(etatColo.groupe){ map.removeLayer(etatColo.groupe); etatColo.groupe = null; }
+      basculerBouton(btn, false, '', '🌐 Empire colonial');
+      majLegende();
+      return;
+    }
+    etatColo.actif = true;
+    basculerBouton(btn, true, '🌐 Empire colonial \u2715', '', '#7c2d12');
+    const g = L.layerGroup();
+    COLONIES.forEach(function(c){
+      const duree = c.fin - c.deb;
+      L.circleMarker([c.lat, c.lon], {
+        radius: Math.max(7, Math.min(14, duree / 14)), weight:2.5,
+        color:'#7c2d12', fillColor:'#c2410c', fillOpacity:0.4
+      })
+        .bindPopup('<b>' + echap(c.n) + '</b>'
+          + '<div style="color:#7c2d12;font-weight:700;font-size:11px;margin-top:2px">'
+          + c.deb + ' \u2013 ' + c.fin + ' \u00b7 ' + duree + ' ans \u00b7 ' + echap(c.pic) + '</div>'
+          + '<div style="font-size:11.5px;line-height:1.55;margin-top:4px">' + echap(c.x) + '</div>'
+          + '<div style="font-size:11.5px;line-height:1.5;margin-top:5px;padding-top:4px;'
+          + 'border-top:1px solid var(--trait)"><b>Sortie</b> \u00b7 ' + echap(c.sortie) + '</div>')
+        .bindTooltip('<b>' + echap(c.n) + '</b><br><small>' + c.deb + '\u2013' + c.fin + '</small>',
+          { direction:'top' })
+        .addTo(g);
+    });
+    g.addTo(map);
+    etatColo.groupe = g;
+    majLegende();
+    afficherInfo('🌐 ' + COLONIES.length + ' ensembles coloniaux \u2014 la taille du cercle '
+      + 'suit la dur\u00e9e de la domination \u00b7 cliquez pour le d\u00e9tail', 9000);
+  });
 
   (function cablerLargeurLegende(){
     // les fleches existent en double : dans l'en-tete de la legende et dans celui du
