@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>MultiMeteo v4.4.1</title>
+<title>MultiMeteo v4.4.2</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -159,8 +159,23 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   html.simple .tm-ttl{font-size:11px}
   html.simple #scaleBar,html.simple .ind-modes{gap:3px}
   /* le graphe prend la hauteur restante, sans minimum qui déborderait */
-  html.simple .canvas-container{min-height:0;height:calc(100vh - 168px)}   /* bande de résumé empilée incluse */
-  html.rain-only .canvas-container{height:calc(100vh - 150px)}
+  /* iOS : `vh` est calculé sur l'écran ENTIER, barres de Safari comprises — le canvas
+     dépassait donc la zone visible et l'axe des heures se retrouvait sous la barre du bas.
+     `dvh` suit la hauteur réellement disponible ; la règle en `vh` reste en repli pour
+     les navigateurs qui ne connaissent pas `dvh`. */
+  /* Repli avant la première mesure de _fitLandscape() ; l'ajustement JS prend
+     ensuite le relais avec la hauteur réellement disponible (style en ligne). */
+  html.simple .canvas-container{min-height:0;height:calc(100vh - 176px)}
+  html.simple .canvas-container{min-height:0;height:calc(100dvh - 176px)}
+  html.rain-only .canvas-container{height:calc(100vh - 158px)}
+  html.rain-only .canvas-container{height:calc(100dvh - 158px)}
+  /* rien ne doit dépasser sous la ligne de flottaison */
+  html.simple body{overflow-x:hidden}
+  html.simple #chartWrapper{overflow:hidden}
+  /* bande de résumé resserrée en paysage (style posé en ligne par le JS → !important) */
+  html.simple #summaryRow{min-height:50px !important}
+  /* l'axe des heures doit rester lisible même très compacté */
+  html.simple .canvas-container canvas{display:block}
   html.simple #chartWrapper{padding:0}
 }
 /* Vue « Pluie uniquement » : seul le panneau du haut reste visible */
@@ -5942,7 +5957,7 @@ async function fetchNowcast(lat,lon){
     function(){
       const ctrl=new AbortController();
       setTimeout(function(){ctrl.abort();},6000);
-      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/4.4.1'}});
+      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/4.4.2'}});
     },
     function(){
       const ctrl=new AbortController();
@@ -6294,6 +6309,34 @@ document.addEventListener('DOMContentLoaded',function(){
     setTimeout(function(){try{loadGPS(true);}catch(e){}},600);
   }catch(e){}
 });
+/* ── Ajustement du graphe en PAYSAGE sur téléphone ──
+   Aucun calcul en `vh`/`dvh` moins un nombre fixe ne peut convenir : la hauteur
+   réellement visible dépend des barres de Safari (qui apparaissent et disparaissent)
+   et celle de la bande de résumé varie selon qu'elle est sur une ou plusieurs lignes.
+   On mesure donc la place restante au lieu de la deviner. */
+function _fitLandscape(){
+  try{
+    const cc=document.querySelector('.canvas-container');
+    if(!cc)return;
+    const vh=(window.visualViewport&&window.visualViewport.height)||window.innerHeight||0;
+    const paysage=(vh<=560)&&(window.innerWidth>vh);
+    if(!paysage){cc.style.height='';if(typeof myChart!=='undefined'&&myChart)myChart.resize();return;}
+    const top=cc.getBoundingClientRect().top;
+    const sr=document.getElementById('summaryRow');
+    const hSum=sr?sr.offsetHeight:0;
+    const sb=document.getElementById('scrollbarWrap');
+    const hSb=(sb&&sb.style.display!=='none')?sb.offsetHeight:0;
+    const h=Math.max(110,Math.floor(vh-top-hSum-hSb-4));
+    cc.style.height=h+'px';
+    if(typeof myChart!=='undefined'&&myChart)myChart.resize();
+  }catch(e){}
+}
+let _fitT=null;
+function _fitLandscapeSoon(){clearTimeout(_fitT);_fitT=setTimeout(_fitLandscape,90);}
+window.addEventListener('resize',_fitLandscapeSoon);
+window.addEventListener('orientationchange',function(){setTimeout(_fitLandscape,350);});
+if(window.visualViewport)window.visualViewport.addEventListener('resize',_fitLandscapeSoon);
+document.addEventListener('DOMContentLoaded',function(){setTimeout(_fitLandscape,300);});
 /* ── GPS : charger la ville la plus proche ── */
 /* Géocodage inverse : Nominatim limite fortement les appels automatiques.
    On enchaîne donc deux services publics sans clé, puis un repli hors ligne
@@ -8460,6 +8503,8 @@ function buildSummary(chart,pts,days,xp){
   const sR=document.createElement('div');
   sR.style.cssText='flex:0 0 '+(cW-chartArea.right)+'px';
   row.appendChild(sR);
+  /* la bande vient de changer de hauteur → réajuster le graphe en paysage */
+  try{if(typeof _fitLandscapeSoon==='function')_fitLandscapeSoon();}catch(e){}
 }
 /* ══════════════════════════════════════════════
    RADAR
