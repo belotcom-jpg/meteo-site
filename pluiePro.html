@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>MultiMeteo v4.4.7</title>
+<title>MultiMeteo v4.4.8</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -178,9 +178,9 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   html.simple .canvas-container canvas{display:block}
   html.simple #chartWrapper{padding:0}
 }
-/* Vue « Pluie uniquement » : seul le panneau du haut reste visible */
-html.rain-only #graphPanel,
-html.rain-only #horairePanel{display:none !important}
+/* Vue « Pluie uniquement » : masquage déplacé en fin de feuille (voir plus bas),
+   car `html.simple #graphPanel{display:flex!important}` a la même spécificité
+   et l'emportait par simple ordre d'écriture. */
 html.rain-only #chartWrapper{flex:1 1 auto;min-height:0}
 html.rain-only .canvas-container{height:auto;min-height:58vh}
 /* ── Vue de contrôle : cadre 844 × 390 au format iPhone paysage ── */
@@ -624,6 +624,19 @@ html.simple.phone-col #phoneBtn{background:#00ffff!important;color:#000!importan
     #chartWrapper>*:not(.canvas-container){display:none!important}
     .canvas-container{height:calc(100dvh - 6px)!important;max-height:none!important;min-height:0!important}
   }
+/* ═══════════════════════════════════════════════════════════════
+   VUE « PLUIE UNIQUEMENT » — masquage prioritaire
+   Placé en DERNIER et avec une spécificité renforcée (deux classes)
+   pour l'emporter sur `html.simple #graphPanel{display:flex!important}`,
+   qui a la même spécificité et gagnait par ordre d'écriture.
+   ═══════════════════════════════════════════════════════════════ */
+html.rain-only.simple #graphPanel,
+html.rain-only.simple #horairePanel,
+html.rain-only #graphPanel,
+html.rain-only #horairePanel,
+html.rain-only #qdHost,
+html.rain-only #scrapePanel{display:none!important}
+html.rain-only.simple #chartWrapper{flex:1 1 auto!important;min-height:0!important}
 </style>
 </head>
 <body>
@@ -5970,7 +5983,7 @@ async function fetchNowcast(lat,lon){
     function(){
       const ctrl=new AbortController();
       setTimeout(function(){ctrl.abort();},6000);
-      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/4.4.7'}});
+      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/4.4.8'}});
     },
     function(){
       const ctrl=new AbortController();
