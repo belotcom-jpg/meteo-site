@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>MultiMeteo v4.4.6</title>
+<title>MultiMeteo v4.4.7</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -639,14 +639,16 @@ html.simple.phone-col #phoneBtn{background:#00ffff!important;color:#000!importan
     document.documentElement.classList.add('simple-full');   /* toutes les vues gardent les boutons */
     if(_p==='ok')document.documentElement.classList.add('phone-col');   /* vue iPhone : colonne téléphone sur PC */
     if(_p==='rain'){
-      /* Choix explicite « Pluie uniquement » : le graphe du bas est masqué en permanence. */
+      /* Choix explicite « Pluie uniquement » : masqué en permanence, dans les deux sens. */
       document.documentElement.classList.add('rain-only');
+      document.documentElement.classList.add('rain-forced');
     }
-    /* iPhone sans paramètre : la vue SUIT L'ORIENTATION —
-       portrait = vue complète (graphe du bas compris), paysage = pluie seule.
-       Le graphe du bas reste inséré dans le DOM : seul le CSS le masque en paysage,
-       ce qui permet de basculer d'une orientation à l'autre sans rechargement. */
-    if(!_p&&_isIPhone)document.documentElement.classList.add('auto-orient');
+    /* PAYSAGE sur téléphone : la hauteur ne permet pas deux panneaux → pluie seule.
+       Décidé sur la GÉOMÉTRIE réelle, et non sur l'user-agent ni sur l'absence de
+       ?simple= : `setViewMode` recharge toujours avec ?simple=…, si bien qu'après le
+       moindre passage par le menu la règle précédente ne s'appliquait plus jamais.
+       Le graphe du bas reste dans le DOM, seul le CSS le masque → rotation sans rechargement. */
+    if(_p!=='detail')document.documentElement.classList.add('auto-orient');
     if(_p==='detail'){
       /* Vue Détail = layout vue iPhone, mais le pane du bas affiche le tableau ¼ h (openHoraire) dès que la ville est chargée */
       document.addEventListener('DOMContentLoaded',function(){
@@ -5968,7 +5970,7 @@ async function fetchNowcast(lat,lon){
     function(){
       const ctrl=new AbortController();
       setTimeout(function(){ctrl.abort();},6000);
-      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/4.4.6'}});
+      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/4.4.7'}});
     },
     function(){
       const ctrl=new AbortController();
@@ -6351,9 +6353,13 @@ document.addEventListener('DOMContentLoaded',function(){
 function _applyOrientView(){
   try{
     const r=document.documentElement;
+    if(r.classList.contains('rain-forced'))return;      /* choix explicite : on n'y touche pas */
     if(!r.classList.contains('auto-orient'))return;
     const vh=(window.visualViewport&&window.visualViewport.height)||window.innerHeight||0;
-    r.classList.toggle('rain-only',window.innerWidth>vh);
+    const simu=r.classList.contains('iphone-land');
+    /* téléphone couché : écran bas ET plus large que haut */
+    const paysagePhone=simu||((vh>0&&vh<=560)&&(window.innerWidth>vh));
+    r.classList.toggle('rain-only',paysagePhone);
   }catch(e){}
 }
 /* ── Ajustement du graphe en PAYSAGE sur téléphone ──
