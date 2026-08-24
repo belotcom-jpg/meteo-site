@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>MultiMeteo v4.3.8</title>
+<title>MultiMeteo v4.4.1</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -159,8 +159,8 @@ input:focus{border-color:#00ffff;box-shadow:0 0 10px rgba(0,255,255,.3)}
   html.simple .tm-ttl{font-size:11px}
   html.simple #scaleBar,html.simple .ind-modes{gap:3px}
   /* le graphe prend la hauteur restante, sans minimum qui déborderait */
-  html.simple .canvas-container{min-height:0;height:calc(100vh - 96px)}
-  html.rain-only .canvas-container{height:calc(100vh - 78px)}
+  html.simple .canvas-container{min-height:0;height:calc(100vh - 168px)}   /* bande de résumé empilée incluse */
+  html.rain-only .canvas-container{height:calc(100vh - 150px)}
   html.simple #chartWrapper{padding:0}
 }
 /* Vue « Pluie uniquement » : seul le panneau du haut reste visible */
@@ -850,7 +850,7 @@ let _uvHourlyData2=null;
 let _uvHourlyData=null;
 let _pollenHourly=null;
 let _aqiHourly=null;
-let _viewMode='j1',_cachedData=null,_cachedJm1=null,_cachedJm7=null,_simpleMode=true,_ultraMode=true,_gradCache=null;
+let _viewMode='j0',_cachedData=null,_cachedJm1=null,_cachedJm7=null,_simpleMode=true,_ultraMode=true,_gradCache=null;
 /* Desktop (souris) vs tactile : réactive les tooltips de graphe seulement à la souris */
 const _hasMouse=!!(window.matchMedia&&window.matchMedia('(pointer:fine)').matches);
 /* PWA : icône (goutte) + manifest injectés au runtime (installable / plein écran) */
@@ -1393,8 +1393,12 @@ function applyComplexity(){
       if(ds[i]){ds[i].borderColor=solo?s.color:'transparent';ds[i].borderWidth=solo?(_isMob?2.5:3.5):0;}});
     if(ds[idxFill])ds[idxFill].backgroundColor='rgba(0,0,0,0)';
     if(ds[idxMax]){ds[idxMax].borderColor='transparent';ds[idxMax].borderWidth=0;}
-    /* idxProb = nSrc+3, idxCloud = nSrc+4 — forcer width=0 ET transparent */
-    if(ds[idxProb]){ds[idxProb].borderColor='rgba(0,0,0,0)';ds[idxProb].borderWidth=0;}
+    /* idxProb = nSrc+3, idxCloud = nSrc+4 — masqués SAUF si la couche est demandée.
+       (Le mode ultra les masquait inconditionnellement, ce qui annulait _layers.proba.) */
+    if(ds[idxProb]){
+      ds[idxProb].borderColor=_layers.proba?'rgba(255,255,255,0.85)':'rgba(0,0,0,0)';
+      ds[idxProb].borderWidth=_layers.proba?(_isMob?2.5:3.5):0;
+    }
     const idxCloudU=nSrc+4;
     if(ds[idxCloudU]){ds[idxCloudU].borderColor='rgba(0,0,0,0)';ds[idxCloudU].borderWidth=0;}
     if(ds[idxReal])ds[idxReal].borderColor='rgba(255,255,255,0.92)';
@@ -1402,8 +1406,8 @@ function applyComplexity(){
     const ymx=Math.max(p80d.length?Math.max(...p80d):1,0.5)*1.2;
     myChart.options.scales.y.max=ymx;
     myChart.options.scales.y.suggestedMax=undefined;
-    /* axe proba masqué en ultra */
-    if(myChart.options.scales.yProb)myChart.options.scales.yProb.display=false;
+    /* axe proba : visible seulement si une couche l'utilise */
+    if(myChart.options.scales.yProb)myChart.options.scales.yProb.display=!!(_layers.proba||_layers.nuage||_layers.humidity||_layers.orage||_layers.soleil);
   } else if(_simpleMode){
     if(sb)sb.style.display='none';
     idxModels.forEach(i=>{const s=SOURCES[i-1];const solo=_hiddenModels.size>0&&s&&!_hiddenModels.has(s.key);
@@ -5413,7 +5417,7 @@ function setViewMode(v){
   }catch(_){}
   /* Conserver aussi l'échéance courante (sinon retour à J+1 par défaut) */
   var jp='';
-  try{if(typeof _viewMode!=='undefined'&&_viewMode&&_viewMode!=='j1')jp='&j='+_viewMode.replace('j','');}catch(_){}
+  try{if(typeof _viewMode!=='undefined'&&_viewMode&&_viewMode!=='j0')jp='&j='+_viewMode.replace('j','');}catch(_){}
   location.href=bare+'?simple='+v+(ville?'&ville='+encodeURIComponent(ville):'')+jp;
 }
 function togglePhoneView(){
@@ -5938,7 +5942,7 @@ async function fetchNowcast(lat,lon){
     function(){
       const ctrl=new AbortController();
       setTimeout(function(){ctrl.abort();},6000);
-      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/4.3.8'}});
+      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/4.4.1'}});
     },
     function(){
       const ctrl=new AbortController();
@@ -6276,29 +6280,67 @@ async function fetchMfRain(lat,lon){
    bouton statique ne dépend ni de l'ordre d'exécution ni d'un sélecteur.
    Ici on se contente de le masquer si la géolocalisation n'est pas disponible. */
 document.addEventListener('DOMContentLoaded',function(){
-  try{if(!navigator.geolocation){const b=document.getElementById('gpsBtn');if(b)b.style.display='none';}}catch(e){}
+  try{
+    if(!navigator.geolocation||location.protocol==='file:'){
+      const b=document.getElementById('gpsBtn');
+      if(b&&!navigator.geolocation)b.style.display='none';
+      if(b&&location.protocol==='file:')b.title='Géolocalisation indisponible sur un fichier local (origine non sécurisée)';
+      return;
+    }
+    /* Géolocalisation automatique au démarrage, en silence :
+       jamais si une ville est déjà demandée dans l'URL, et sans message d'erreur
+       si l'utilisateur refuse — le bouton 📍 reste disponible pour réessayer. */
+    if(new URLSearchParams(location.search).get('ville'))return;
+    setTimeout(function(){try{loadGPS(true);}catch(e){}},600);
+  }catch(e){}
 });
 /* ── GPS : charger la ville la plus proche ── */
-async function loadGPS(){
-  const btn=document.getElementById('exploreBtn');
+/* Géocodage inverse : Nominatim limite fortement les appels automatiques.
+   On enchaîne donc deux services publics sans clé, puis un repli hors ligne
+   sur la station la plus proche parmi les 30 déjà embarquées. */
+async function _reverseGeo(lat,lon){
+  try{
+    const g=await _fetchTO('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json&accept-language=fr',7000).then(r=>r.json());
+    const c=g?.address?.city||g?.address?.town||g?.address?.village||g?.address?.municipality;
+    if(c)return c;
+  }catch(e){}
+  try{
+    const g=await _fetchTO('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude='+lat+'&longitude='+lon+'&localityLanguage=fr',7000).then(r=>r.json());
+    const c=g?.city||g?.locality||g?.principalSubdivision;
+    if(c)return c;
+  }catch(e){}
+  try{
+    /* repli hors ligne : station la plus proche (approximation, mais jamais un échec) */
+    let best=null,bd=1e9;
+    _IND_ST.forEach(s=>{const d=(s[1]-lat)*(s[1]-lat)+((s[2]-lon)*Math.cos(lat*Math.PI/180))*((s[2]-lon)*Math.cos(lat*Math.PI/180));if(d<bd){bd=d;best=s[0];}});
+    if(best)return best;
+  }catch(e){}
+  return '';
+}
+async function loadGPS(silencieux){
+  const btn=document.getElementById('gpsBtn');
   if(btn){btn.textContent='⏳';btn.disabled=true;}
   try{
+    if(!navigator.geolocation)throw new Error('indisponible');
+    /* file:// n'est pas une origine sécurisée : la géolocalisation y est refusée */
+    if(location.protocol==='file:'){
+      if(!silencieux)showStatus('Géolocalisation impossible sur un fichier local — utilisez la version en ligne','#ffaa00');
+      return;
+    }
     const pos=await new Promise(function(res,rej){
-      navigator.geolocation.getCurrentPosition(res,rej,{timeout:8000,maximumAge:60000});
+      navigator.geolocation.getCurrentPosition(res,rej,{timeout:10000,maximumAge:300000,enableHighAccuracy:false});
     });
     const lat=pos.coords.latitude,lon=pos.coords.longitude;
-    /* Reverse geocode via Nominatim */
-    const geo=await _fetchTO(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=fr`,8000).then(r=>r.json());
-    const city=geo?.address?.city||geo?.address?.town||geo?.address?.village||geo?.address?.municipality||'';
+    const city=await _reverseGeo(lat,lon);
     if(city){
       document.getElementById('cityInput').value=city;
-      document.getElementById('clearBtn').style.display='block';
+      const cb=document.getElementById('clearBtn');if(cb)cb.style.display='block';
       await load();
-    } else {
+    } else if(!silencieux){
       showStatus('Position trouvée mais ville non identifiée','#ffaa00');
     }
   }catch(e){
-    showStatus('GPS non disponible ou refusé','#ff3d57');
+    if(!silencieux)showStatus('GPS non disponible ou refusé','#ff3d57');
   }finally{
     if(btn){btn.textContent='📍';btn.disabled=false;}
   }
@@ -6977,7 +7019,7 @@ function _updateURL(){
     const city=document.getElementById('cityInput').value.trim();
     const params=new URLSearchParams();
     if(city)params.set('ville',city);
-    if(_viewMode&&_viewMode!=='j1')params.set('j',_viewMode.replace('j',''));
+    if(_viewMode&&_viewMode!=='j0')params.set('j',_viewMode.replace('j',''));
     const newURL=window.location.pathname+(params.toString()?'?'+params.toString():'');
     history.replaceState(null,'',newURL);
   }catch(e){}
@@ -8341,13 +8383,13 @@ function buildSummary(chart,pts,days,xp){
   const todayMidnight=new Date(cn.getFullYear(),cn.getMonth(),cn.getDate());
   row.innerHTML='';
   const _simple=document.documentElement.classList.contains('simple');
-  row.style.cssText='display:flex;flex-direction:row;align-items:stretch;border-top:2px solid #444;background:#060606;overflow:hidden;'+
-    (_simple?'min-height:26px':(days.length>2?'min-height:clamp(94px,19vw,112px)':'min-height:clamp(78px,16vw,92px)'));
-  /* Spacer gauche = axe Y */
-  const sL=document.createElement('div');
-  sL.style.cssText='flex:0 0 '+chartArea.left+'px';
-  row.appendChild(sL);
-  /* Cellules */
+  /* ── Pré-passe : mesurer les cellules pour choisir la disposition ──
+     En vue compacte, tout tient sur UNE ligne (jour · mm/% · températures · ressenti),
+     mais dès J+5 un jour ne compte plus que 3 points : la cellule se resserre, le
+     contenu déborde et — `justify-content:center` + `overflow:hidden` — se fait rogner
+     des DEUX côtés. Le libellé du jour, placé en premier, disparaissait le premier.
+     En dessous du seuil, on bascule sur la disposition multi-lignes de la vue complète. */
+  const _cells=[];
   days.forEach((d,di)=>{
     const isLast=di===days.length-1;
     const vL=chartArea.left,vR=chartArea.right;
@@ -8356,6 +8398,21 @@ function buildSummary(chart,pts,days,xp){
     const cellR=isLast?vR:clampX(xp[days[di+1]]);
     const cellW=Math.max(0,cellR-cellL);
     if(isLast&&cellW<50)return;
+    _cells.push({d,cellW});
+  });
+  const _minW=_cells.length?Math.min.apply(null,_cells.map(c=>c.cellW)):0;
+  const _ROW_NEED=250;                       /* largeur nécessaire pour une seule ligne */
+  const _stack=(!_simple)||(_minW<_ROW_NEED);
+  row.style.cssText='display:flex;flex-direction:row;align-items:stretch;border-top:2px solid #444;background:#060606;overflow:hidden;'+
+    (!_stack?'min-height:26px'
+      :(_simple?'min-height:clamp(58px,12vw,74px)'      /* compact empilé : 4 lignes courtes */
+      :(days.length>2?'min-height:clamp(94px,19vw,112px)':'min-height:clamp(78px,16vw,92px)')));
+  /* Spacer gauche = axe Y */
+  const sL=document.createElement('div');
+  sL.style.cssText='flex:0 0 '+chartArea.left+'px';
+  row.appendChild(sL);
+  /* Cellules */
+  _cells.forEach(({d,cellW})=>{
     /* Date réelle de cette colonne */
     const baseDate=_summaryStartDate?new Date(_summaryStartDate):cn;
     const date=new Date(baseDate);date.setDate(baseDate.getDate()+d);
@@ -8370,9 +8427,11 @@ function buildSummary(chart,pts,days,xp){
     const _j=isToday?'AUJ.':dn[date.getDay()];
     /* Format selon la place réelle : au-delà de J+5 un jour ne compte que 3 points,
        la cellule devient étroite et le libellé complet était rogné (« SAM 22/8 » → « 3/8 »). */
-    const lbl=(cellW>=88)
+    /* Empilé, le libellé dispose de toute la cellule ; en ligne, d'un tiers environ. */
+    const _wLbl=_stack?cellW:cellW*0.34;
+    const lbl=(_wLbl>=62)
       ?(_j+' '+date.getDate()+'/'+(date.getMonth()+1))     /* SAM 22/8 */
-      :((cellW>=52)?(_j+' '+date.getDate())                /* SAM 22 */
+      :((_wLbl>=42)?(_j+' '+date.getDate())                /* SAM 22 */
       :(isToday?'AUJ.':_j));                               /* SAM */
     /* Température */
     const dt=_tempByDay?.[daysFromToday];
@@ -8388,7 +8447,7 @@ function buildSummary(chart,pts,days,xp){
       ?'<div style="font-size:clamp(10px,2.3vw,13px);font-weight:900;white-space:nowrap;line-height:1.4;text-align:center"><span style="color:#88aaff">'+Math.round(tMin??0)+'°</span><span style="color:#ff8844">/'+Math.round(tMax)+'°</span></div>'+(showMaxMod?'<div title="Plus chaud : '+tMaxModel+' '+Math.round(tMaxMod)+'° · '+confTxt+'" style="font-size:clamp(8px,1.9vw,11px);font-weight:900;color:#ffaa44;white-space:nowrap;line-height:1.3;text-align:center;cursor:help">('+Math.round(tMaxMod)+'°) '+confDot+'</div>':'')
       :'';
     const div=document.createElement('div');
-    div.style.cssText=_simple
+    div.style.cssText=(!_stack)
       ?'flex:0 0 '+cellW+'px;overflow:hidden;box-sizing:border-box;padding:0 3px;display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:7px;text-align:center;border-left:1px solid #1a1a1a;'
       :'flex:0 0 '+cellW+'px;overflow:hidden;box-sizing:border-box;padding:1px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1px;border-left:1px solid #1a1a1a;';
     div.innerHTML=
