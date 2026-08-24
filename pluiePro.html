@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>MultiMeteo v4.4.2</title>
+<title>MultiMeteo v4.4.6</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -183,6 +183,15 @@ html.rain-only #graphPanel,
 html.rain-only #horairePanel{display:none !important}
 html.rain-only #chartWrapper{flex:1 1 auto;min-height:0}
 html.rain-only .canvas-container{height:auto;min-height:58vh}
+/* ── Vue de contrôle : cadre 844 × 390 au format iPhone paysage ── */
+html.iphone-land body{width:844px!important;height:390px!important;min-height:0!important;margin:26px auto!important;
+  border:11px solid #1a1a1a!important;border-radius:26px!important;overflow:hidden!important;
+  box-shadow:0 0 0 3px #3a3a3a,0 18px 50px rgba(0,0,0,.7)!important;position:relative!important}
+html.iphone-land .wrap{height:390px!important;max-height:390px!important;overflow:hidden!important}
+html.iphone-land::after{content:'📱 simulation iPhone paysage 844×390 — décochez dans ⚙ OPTION';
+  position:fixed;left:0;right:0;bottom:6px;text-align:center;color:#7a8a99;
+  font:11px/1.4 'Courier New',monospace;pointer-events:none;z-index:99999}
+#iphoneSimBtn.on{border-color:#ffd400!important;color:#ffd400!important;background:rgba(255,212,0,0.12)!important}
 #gpsBtn{flex:0 0 auto;background:#0d2030;border:1px solid #2a5a7a;border-radius:10px;color:#7ec9ff;font-size:16px;cursor:pointer;padding:0 10px;line-height:1;transition:background .15s}
 #gpsBtn:hover{background:#123048}
 #gpsBtn:active{background:#1a4060}
@@ -626,16 +635,18 @@ html.simple.phone-col #phoneBtn{background:#00ffff!important;color:#000!importan
     var _isIPhone=/iPhone|iPod/.test(navigator.userAgent||'');
     var _simple=(_p==='ok'||_p==='full'||_p==='detail'||_p==='rain')?true:((_p==='no')?false:_isIPhone);
     if(!_simple)return;
-    /* iPhone sans paramètre explicite → vue « Pluie uniquement » par défaut */
-    if(!_p&&_isIPhone)_p='rain';
     document.documentElement.classList.add('simple');
     document.documentElement.classList.add('simple-full');   /* toutes les vues gardent les boutons */
     if(_p==='ok')document.documentElement.classList.add('phone-col');   /* vue iPhone : colonne téléphone sur PC */
     if(_p==='rain'){
-      /* Vue Pluie uniquement : on garde le panneau du haut, on masque le graphe du bas.
-         Le panneau du haut occupe alors toute la hauteur disponible. */
+      /* Choix explicite « Pluie uniquement » : le graphe du bas est masqué en permanence. */
       document.documentElement.classList.add('rain-only');
     }
+    /* iPhone sans paramètre : la vue SUIT L'ORIENTATION —
+       portrait = vue complète (graphe du bas compris), paysage = pluie seule.
+       Le graphe du bas reste inséré dans le DOM : seul le CSS le masque en paysage,
+       ce qui permet de basculer d'une orientation à l'autre sans rechargement. */
+    if(!_p&&_isIPhone)document.documentElement.classList.add('auto-orient');
     if(_p==='detail'){
       /* Vue Détail = layout vue iPhone, mais le pane du bas affiche le tableau ¼ h (openHoraire) dès que la ville est chargée */
       document.addEventListener('DOMContentLoaded',function(){
@@ -5957,7 +5968,7 @@ async function fetchNowcast(lat,lon){
     function(){
       const ctrl=new AbortController();
       setTimeout(function(){ctrl.abort();},6000);
-      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/4.4.2'}});
+      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/4.4.6'}});
     },
     function(){
       const ctrl=new AbortController();
@@ -6309,6 +6320,42 @@ document.addEventListener('DOMContentLoaded',function(){
     setTimeout(function(){try{loadGPS(true);}catch(e){}},600);
   }catch(e){}
 });
+/* Vue de contrôle : reproduit un iPhone en paysage sur un écran de PC.
+   Force aussi les classes « simple » et « rain-only » pour être fidèle au défaut mobile. */
+function toggleIphoneLand(){
+  const r=document.documentElement;
+  const on=!r.classList.contains('iphone-land');
+  r.classList.toggle('iphone-land',on);
+  if(on){r.classList.add('simple');r.classList.add('rain-only');}
+  try{localStorage.setItem('pp_iphland',on?'1':'0');}catch(e){}
+  _iphLandUpd();
+  setTimeout(function(){try{_fitLandscape();}catch(e){}},120);
+}
+function _iphLandUpd(){
+  const b=document.getElementById('iphoneSimBtn');
+  if(!b)return;
+  const on=document.documentElement.classList.contains('iphone-land');
+  b.classList.toggle('on',on);
+  b.textContent=on?'📱 iPhone horizontal ✓':'📱 iPhone horizontal';
+}
+document.addEventListener('DOMContentLoaded',function(){
+  try{
+    if(localStorage.getItem('pp_iphland')==='1'){
+      document.documentElement.classList.add('iphone-land','simple','rain-only');
+    }
+    _iphLandUpd();
+  }catch(e){}
+});
+/* Vue selon l'orientation (iPhone par défaut) : portrait = complète, paysage = pluie seule.
+   Ne s'applique jamais si l'utilisateur a choisi une vue explicitement (?simple=…). */
+function _applyOrientView(){
+  try{
+    const r=document.documentElement;
+    if(!r.classList.contains('auto-orient'))return;
+    const vh=(window.visualViewport&&window.visualViewport.height)||window.innerHeight||0;
+    r.classList.toggle('rain-only',window.innerWidth>vh);
+  }catch(e){}
+}
 /* ── Ajustement du graphe en PAYSAGE sur téléphone ──
    Aucun calcul en `vh`/`dvh` moins un nombre fixe ne peut convenir : la hauteur
    réellement visible dépend des barres de Safari (qui apparaissent et disparaissent)
@@ -6319,24 +6366,39 @@ function _fitLandscape(){
     const cc=document.querySelector('.canvas-container');
     if(!cc)return;
     const vh=(window.visualViewport&&window.visualViewport.height)||window.innerHeight||0;
-    const paysage=(vh<=560)&&(window.innerWidth>vh);
-    if(!paysage){cc.style.height='';if(typeof myChart!=='undefined'&&myChart)myChart.resize();return;}
+    const simu=document.documentElement.classList.contains('iphone-land');
+    const paysage=simu||((vh<=560)&&(window.innerWidth>vh));
+    if(!paysage){
+      ['flex','height','max-height','min-height'].forEach(p=>cc.style.removeProperty(p));
+      if(typeof myChart!=='undefined'&&myChart)myChart.resize();
+      return;
+    }
     const top=cc.getBoundingClientRect().top;
     const sr=document.getElementById('summaryRow');
     const hSum=sr?sr.offsetHeight:0;
     const sb=document.getElementById('scrollbarWrap');
     const hSb=(sb&&sb.style.display!=='none')?sb.offsetHeight:0;
-    const h=Math.max(110,Math.floor(vh-top-hSum-hSb-4));
-    cc.style.height=h+'px';
+    /* Limite basse = le plus contraignant entre la fenêtre visible et le conteneur
+       (ce dernier compte pour la vue de contrôle iPhone sur PC, où l'écran est plus grand). */
+    const wrap=document.querySelector('.wrap');
+    const bWrap=wrap?wrap.getBoundingClientRect().bottom:vh;
+    const limite=Math.min(bWrap>0?bWrap:vh,vh);
+    const h=Math.max(110,Math.floor(limite-top-hSum-hSb-4));
+    /* La chaîne flex de la vue compacte impose height/flex/max-height en !important :
+       il faut donc écrire en !important pour que la mesure prenne effet. */
+    cc.style.setProperty('flex','0 0 '+h+'px','important');
+    cc.style.setProperty('height',h+'px','important');
+    cc.style.setProperty('max-height',h+'px','important');
+    cc.style.setProperty('min-height','0','important');
     if(typeof myChart!=='undefined'&&myChart)myChart.resize();
   }catch(e){}
 }
 let _fitT=null;
-function _fitLandscapeSoon(){clearTimeout(_fitT);_fitT=setTimeout(_fitLandscape,90);}
+function _fitLandscapeSoon(){clearTimeout(_fitT);_fitT=setTimeout(function(){_applyOrientView();_fitLandscape();},90);}
 window.addEventListener('resize',_fitLandscapeSoon);
-window.addEventListener('orientationchange',function(){setTimeout(_fitLandscape,350);});
+window.addEventListener('orientationchange',function(){setTimeout(function(){_applyOrientView();_fitLandscape();},350);});
 if(window.visualViewport)window.visualViewport.addEventListener('resize',_fitLandscapeSoon);
-document.addEventListener('DOMContentLoaded',function(){setTimeout(_fitLandscape,300);});
+document.addEventListener('DOMContentLoaded',function(){_applyOrientView();setTimeout(function(){_applyOrientView();_fitLandscape();},300);});
 /* ── GPS : charger la ville la plus proche ── */
 /* Géocodage inverse : Nominatim limite fortement les appels automatiques.
    On enchaîne donc deux services publics sans clé, puis un repli hors ligne
@@ -9397,6 +9459,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOragesPanel();}
     </div>
     <div class="hl-quick">
       <button id="phoneBtn" onclick="togglePhoneView()" title="Vue iPhone (enfoncé = actif)">📱 Vue iPhone</button>
+      <button id="iphoneSimBtn" onclick="toggleIphoneLand()" title="Simule un écran 844 × 390 pour vérifier le rendu paysage depuis un PC">📱 iPhone horizontal</button>
       <button onclick="closeHealth();openOpt()">🌡 Zones de canicule…</button>
     </div>
     <div class="hl-quick">
