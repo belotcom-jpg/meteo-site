@@ -1,8 +1,31 @@
 <!DOCTYPE html>
 <!--
-================ RECAP · Canicules France v2.4 ================
+================ RECAP · Canicules France v2.5 ================
 Frise generative des vagues de chaleur en France (X = duree, Y = intensite max, taille = severite).
 Fichier autonome unique (SVG + JS pur, sans dependance) - marche en file:// et GitHub Pages.
+
+v2.5 (multi-vues)
+- Six vues basculables et exclusives, partageant controles, fiches et donnees :
+  * bulles     : nuage duree x intensite (taille = severite)
+  * vagues     : deferlantes, une ligne par annee, mai->septembre (d'apres J.J. Gonzalez-Aleman, ERA5)
+  * courbes    : profils journaliers J0->J25, echelle 23-33 C, references 2003 / juin 2026 / juillet 2026
+  * indice     : chaleur cumulee annuelle 1947-> + tendance (moyenne glissante 15 ans)
+  * calendrier : graphique de reference Meteo-France, une colonne par ete, une cellule par jour
+  * saisons    : cumuls par saison, une bulle par annee (Y = intensite max, taille = chaleur cumulee)
+- Integrale de chaleur par episode : somme(T-23) du franchissement a la redescente (trapezes, C.jours).
+- Profils journaliers pseudo-aleatoires deterministes (pic 40-60 %, redescente asymetrique, variabilite
+  journaliere, double pouls si >= 12 j) — partages par les vues courbes, calendrier et indice.
+- Bouton "Tweet" (bas gauche) : texte <=280 car. adapte a la vue et a l'etat, compteur + copie 1 clic.
+- Donnee observee ajoutee : Juillet 2026 (pic 28,1 C, ~10 j).
+
+v2.4g
+- Bouton "Tweet" (bas gauche) : compose un texte <=280 caracteres adapte a la vue affichee et a l'etat
+  (dernier episode, annee atteinte, cumuls compares a 2003/2026, tendance), avec compteur et copie en 1 clic.
+
+v2.4f
+- Vue "Saisons" (bouton cercle) : cumuls par saison facon graphique Meteo-France/Infoclimat — X = annee,
+  Y = intensite maximale de l'annee, taille = chaleur cumulee de la saison (somme des integrales),
+  2026 en magenta, annees simulees en couleur d'annee. Survol = detail de la saison.
 
 v2.4e
 - Vue "Calendrier" (bouton grille) : reproduction du graphique de reference Meteo-France — X = annees (1947 ->),
@@ -94,7 +117,7 @@ Intensite plafonnee a 33.0 C.
 -->
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Canicules France v2.4 — génération 2027 → 2300</title>
+<title>Canicules France v2.5 — génération 2027 → 2300</title>
 <style>
 :root{--bg:#fff;--card:#fbfbfc;--ink:#1b1b1f;--mut:#6b7076;--line:#e4e6ea;}
 *{box-sizing:border-box}
@@ -143,6 +166,10 @@ svg.dim .bubble.active rect{opacity:1}
 .gen:hover:not(:disabled){background:#a93226;box-shadow:0 4px 10px rgba(192,57,43,.4)}
 .gen:active:not(:disabled){transform:translateY(1px) scale(.98)}
 .gen:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
+.gen.tw{background:#0f1419;color:#fff;box-shadow:none;padding:0 12px}
+.gen.tw:hover:not(:disabled){background:#272c30}
+.idesc.tw{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;white-space:pre-wrap;
+  background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin-top:4px;user-select:all}
 .gen.small{background:#fff;color:#c0392b;border:2px solid #c0392b;box-shadow:none;font-size:15px;padding:0 14px}
 .gen.small:hover:not(:disabled){background:#fff5f2}
 .navbtn.ghost{width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:#fff;font-size:17px;color:#8a8f96;cursor:pointer}
@@ -173,8 +200,10 @@ body.compact h1{display:none}
 body.compact .legend{display:none}
 body.compact .gen .full{display:none}
 body.compact .gen .shrt{display:inline}
-body.compact .nav{flex-wrap:nowrap;gap:4px;overflow:hidden}
+body.compact .nav{flex-wrap:nowrap;gap:3px;overflow:hidden}
 body.compact .gen{height:36px;padding:0 6px;font-size:12px;flex:0 1 auto;white-space:nowrap}
+body.compact .gen.tw{padding:0 8px}
+body.compact .idesc.tw{font-size:11.5px}
 body.compact .gen.small{padding:0 9px;font-size:13px}
 body.compact .counter{font-size:12px;margin-left:0;white-space:nowrap}
 body.compact .clast{display:none}
@@ -191,21 +220,23 @@ body.compact .foot{display:none}
 #wview{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:#fff;font-size:18px;cursor:pointer;flex:0 0 auto;margin-left:auto}
 #wview.on{background:#e3f2fd;border-color:#1565c0;box-shadow:inset 0 2px 5px rgba(0,0,0,.18)}
 body.compact #wview{width:36px;height:36px}
-body.waves .cbar,body.curves .cbar,body.indexv .cbar,body.calv .cbar{display:none}
+body.waves .cbar,body.curves .cbar,body.indexv .cbar,body.calv .cbar,body.seasv .cbar{display:none}
 #cview{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:#fff;font-size:18px;cursor:pointer;flex:0 0 auto}
 #cview.on{background:#e8f5e9;border-color:#2e7d32;box-shadow:inset 0 2px 5px rgba(0,0,0,.18)}
 body.compact #cview{width:36px;height:36px}
+#yview{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:#fff;font-size:17px;color:#ad1457;cursor:pointer;flex:0 0 auto}
+#yview.on{background:#fce4ec;border-color:#ad1457;box-shadow:inset 0 2px 5px rgba(0,0,0,.18)}
 #kview{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:#fff;font-size:17px;color:#8d6e63;cursor:pointer;flex:0 0 auto}
 #kview.on{background:#fff3e0;border-color:#e65100;box-shadow:inset 0 2px 5px rgba(0,0,0,.18)}
 #sview{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:#fff;font-size:17px;font-weight:800;color:#5d4037;cursor:pointer;flex:0 0 auto}
 #sview.on{background:#fff8e1;border-color:#b3261e;box-shadow:inset 0 2px 5px rgba(0,0,0,.18)}
-body.compact #sview,body.compact #wview,body.compact #cview,body.compact #kview{width:30px;height:30px;font-size:14px}
+body.compact #sview,body.compact #wview,body.compact #cview,body.compact #kview,body.compact #yview{width:28px;height:28px;font-size:13px}
 #iview{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:#fff;font-size:18px;cursor:pointer;flex:0 0 auto}
 #iview.on{background:#ffe9df;border-color:#c0392b;box-shadow:inset 0 2px 5px rgba(0,0,0,.18)}
 body.compact #wview{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:#fff;font-size:18px;cursor:pointer;flex:0 0 auto;margin-left:auto}
 #wview.on{background:#e3f2fd;border-color:#1565c0;box-shadow:inset 0 2px 5px rgba(0,0,0,.18)}
 body.compact #wview{width:36px;height:36px}
-body.waves .cbar,body.curves .cbar,body.indexv .cbar,body.calv .cbar{display:none}
+body.waves .cbar,body.curves .cbar,body.indexv .cbar,body.calv .cbar,body.seasv .cbar{display:none}
 #iview{width:36px;height:36px}
 /* cadre téléphone en vue iPhone simulée */
 body.phone{background:#e9ebee}
@@ -213,7 +244,7 @@ body.phone .wrap{max-width:398px;background:#fff;border:1px solid #cfd3d8;border
 
 </style></head>
 <body><div class="wrap">
-<h1>🔥 Canicules en France — de 2026 à 2300 <span class="ver">v2.4</span></h1>
+<h1>🔥 Canicules en France — de 2026 à 2300 <span class="ver">v2.5</span></h1>
 <div class="legend">
   <span class="lg"><span class="sw" style="background:#9aa0a6;opacity:.5"></span><b>Observé</b> (estompé)</span>
   <span class="lg"><span class="sw" style="background:#fff;border:2px solid #ff2fd6"></span><b>Juin 2026</b></span>
@@ -223,6 +254,7 @@ body.phone .wrap{max-width:398px;background:#fff;border:1px solid #cfd3d8;border
 <div class="chartbox"><svg id="chart" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Canicules 2026-2300"></svg></div>
 <div class="cbar"><span class="cy">2027</span><div class="cgrad"></div><span class="cy">2050</span><div class="cgrad g2"></div><span class="cy">2075</span><div class="cgrad g3"></div><span class="cy">2100</span></div>
 <div class="nav">
+  <button id="tweet" class="gen tw" title="Composer un tweet (≤280 car.)">🐦<span class="full"> Tweet</span></button>
   <button id="back" class="gen small" title="Reculer d'une canicule (←)" disabled>◂</button>
   <button id="fwd" class="gen small" title="Avancer d'une canicule (→)">▸</button>
   <button id="fwd10" class="gen small" title="Avancer de 10 canicules">▸▸</button>
@@ -233,6 +265,7 @@ body.phone .wrap{max-width:398px;background:#fff;border:1px solid #cfd3d8;border
   <button id="cview" title="Vue courbes de température (bascule)">📈</button>
   <button id="sview" title="Vue indice de chaleur cumulée + tendance (bascule)">Σ</button>
   <button id="kview" title="Vue calendrier des vagues de chaleur (bascule)">▦</button>
+  <button id="yview" title="Vue cumuls par saison (bascule)">◎</button>
   <button id="iview" title="Vue iPhone (bascule)">📱</button>
   <span id="counter" class="counter">—</span>
 </div>
@@ -359,6 +392,7 @@ function build(mobile){
   if(viewMode==="courbes"){ buildCurves(mobile); return; }
   if(viewMode==="indice"){ buildIndex(mobile); return; }
   if(viewMode==="calendrier"){ buildCalendar(mobile); return; }
+  if(viewMode==="saisons"){ buildSeasons(mobile); return; }
   C=cfg(mobile); F=C.F;
   svg.classList.remove("dim");
   svg.innerHTML="";
@@ -565,6 +599,57 @@ function buildIndex(mobile){
     svg.appendChild(hit);
   }
 }
+function buildSeasons(mobile){
+  C=cfg(mobile); F=C.F;
+  svg.classList.remove("dim");
+  svg.innerHTML="";
+  svg.setAttribute("viewBox",`0 0 ${C.VW} ${C.VH}`);
+  const Y0=1940, Y1=calBound(), IMIN=25, IMAX=33;
+  const bx=yr=>C.L+(yr-Y0)/(Y1-Y0)*(C.R-C.L);
+  const by=v=>C.B-(v-IMIN)/(IMAX-IMIN)*(C.B-C.T);
+  const defs=el("defs",{}); const cp=el("clipPath",{id:"plotclip"});
+  cp.appendChild(el("rect",{x:C.L,y:C.T,width:C.R-C.L,height:C.B-C.T}));
+  defs.appendChild(cp); svg.appendChild(defs);
+  const gg=el("g",{}); svg.appendChild(gg);
+  const xs=(Y1-Y0)>200?50:(mobile?40:20);
+  for(let yr=1940;yr<=Y1;yr+=xs){ gg.appendChild(el("line",{x1:bx(yr),y1:C.T,x2:bx(yr),y2:C.B,class:"grid"}));
+    const t=el("text",{x:bx(yr),y:C.B+16*F,class:"axl",style:`font-size:${11*F}px`}); t.textContent=yr; gg.appendChild(t); }
+  for(let v=IMIN;v<=IMAX;v+=1){ gg.appendChild(el("line",{x1:C.L,y1:by(v),x2:C.R,y2:by(v),class:"grid"}));
+    const t=el("text",{x:C.L-8,y:by(v)+4*F,class:"axl",style:`font-size:${10*F}px;text-anchor:end`}); t.textContent=v; gg.appendChild(t); }
+  const yl=el("text",{x:20,y:(C.T+C.B)/2,class:"axtitle",style:`font-size:${12*F}px`,transform:`rotate(-90 20 ${(C.T+C.B)/2})`}); yl.textContent="Intensité maximale (°C)"; svg.appendChild(yl);
+  const sub=el("text",{x:(C.L+C.R)/2,y:C.T-6*F,class:"axl",style:`font-size:${10*F}px;fill:#777`});
+  sub.textContent="taille = chaleur cumulée de la saison (°C·jours)"; svg.appendChild(sub);
+  gB=el("g",{"clip-path":"url(#plotclip)"}); svg.appendChild(gB); nodes=[];
+  const rows=[];
+  for(let yr=1947;yr<=Y1;yr++){
+    const eps=POINTS.filter(p=>p.yr===yr && (p.kind!=="proj" || chronoProj.indexOf(p)<revealed));
+    if(!eps.length) continue;
+    rows.push({yr:yr,eps:eps,H:yearIndex(yr,revealed),imax:Math.max(...eps.map(p=>p.i)),proj:eps[0].kind==="proj"});
+  }
+  rows.sort((a,b)=>b.H-a.H);
+  rows.forEach(r=>{
+    const rad=Math.max(5*F,Math.min(46*F,Math.sqrt(r.H)*C.RSCALE));
+    const cx=bx(r.yr), cy=by(Math.min(r.imax,IMAX+1.5));
+    const g=el("g",{class:"bubble "+(r.proj?"proj":(r.yr===2026?"start":"hist"))});
+    const fill = r.yr===2026 ? "#ff2fd6" : (r.proj ? ((r.eps.find(p=>p.kind==="proj")||{}).col||"#e8412f") : "#e8412f");
+    g.appendChild(el("circle",{cx:cx,cy:cy,r:rad,fill:fill,stroke:"#fff","stroke-width":0.9,opacity:0.62}));
+    if(rad>=11*F){
+      const fs=Math.max(8*F,Math.min(17*F,rad*0.48));
+      const t=el("text",{x:cx,y:cy+fs*0.35,class:"blab",style:`font-size:${fs}px;fill:#111`}); t.textContent=r.yr; g.appendChild(t);
+    }
+    g.addEventListener("pointerenter",()=>{
+      svg.classList.add("dim"); nodes.forEach(n=>n.classList.remove("active")); g.classList.add("active");
+      info.innerHTML=`<div class="ihead"><span class="idot" style="background:${fill}"></span>`+
+        `<span class="iname">Saison ${r.yr}</span><span class="itag ${r.proj?'proj':(r.yr===2026?'start':'hist')}">${r.proj?'Simulé':'Observé'}</span></div>`+
+        `<div class="ichips"><span class="chip">Σ ${r.H} °C·j</span>`+
+        `<span class="chip">🌡 max ${r.imax.toFixed(1)} °C</span>`+
+        `<span class="chip">${r.eps.length} épisode${r.eps.length>1?'s':''}</span></div>`+
+        `<div class="idesc">${r.eps.map(p=>p.label+" ("+p.d.toFixed(0)+" j, "+p.i.toFixed(1)+" °C)").join(" · ")}.</div>`;
+    });
+    g.addEventListener("pointerleave",unhover);
+    gB.appendChild(g); nodes.push(g);
+  });
+}
 function calBound(){ const e=winEnd(); return e<=2100 ? 2100 : Math.min(2300, Math.ceil(e/50)*50); }
 function buildCalendar(mobile){
   C=cfg(mobile); F=C.F;
@@ -627,14 +712,14 @@ function buildCalendar(mobile){
 let lastWin=null, lastCal=null;
 function refreshView(){
   if(viewMode==="calendrier"){ const b=calBound(); if(b!==lastCal){ lastCal=b; build(curMobile); } applyState(); return; }
-  if(viewMode==="courbes"||viewMode==="indice"){ build(curMobile); applyState(); return; }
+  if(viewMode==="courbes"||viewMode==="indice"||viewMode==="saisons"){ build(curMobile); applyState(); return; }
   if(viewMode!=="vagues") return;
   const e=winEnd();
   if(e!==lastWin){ lastWin=e; build(curMobile); }
   applyState();
 }
 function applyState(){
-  if(viewMode!=="courbes" && viewMode!=="indice"){
+  if(viewMode!=="courbes" && viewMode!=="indice" && viewMode!=="saisons"){
     chronoProj.forEach((p,k)=>{
       if(!p.__g || !p.__g.parentNode) return;   // hors fenêtre (vue vagues)
       if(k<revealed){ p.__g.classList.remove("hidden"); gB.appendChild(p.__g); }
@@ -665,7 +750,69 @@ function resetInfo(){
     `<b>⏸</b> pour suspendre, <b>◂</b>/<b>▸</b> pour reculer/avancer d'une canicule (espace = lecture/pause, ←/→ au clavier). Survolez / touchez une bulle pour sa fiche. `+
     `Observé = Météo-France ; simulé = trajectoire TRACC (PNACC-3).</div>`;
 }
-function unhover(){ if(lastShown){ show(lastShown,lastShown.__g); } else resetInfo(); }
+function unhover(){ if(lastShown && lastShown.__g){ show(lastShown,lastShown.__g); } else if(lastShown){ fiche(lastShown); } else resetInfo(); }
+// ---- composition du tweet (<=280 car., selon la vue et l'état) ----
+function fr(x,dec){ return (dec!=null?Number(x).toFixed(dec):String(x)).replace(".",","); }
+function trendAt(yr){
+  const W=7; let sm=0,n=0;
+  for(let q=yr-W;q<=yr+W;q++){ if(q<1947) continue; sm+=yearIndex(q,revealed); n++; }
+  return n? Math.round(sm/n) : 0;
+}
+function peakSeason(){                       // saison la plus chaude parmi les années complètes révélées
+  let best={yr:2026,H:yearIndex(2026,0)};
+  const last=revealed>0?chronoProj[revealed-1].yr:2026;
+  for(let yr=2027;yr<last;yr++){ const H=yearIndex(yr,revealed); if(H>best.H) best={yr:yr,H:H}; }
+  return best;
+}
+function tweetText(){
+  const last = revealed>0 ? chronoProj[revealed-1] : null;
+  const y = last ? last.yr : 2026;
+  const H26 = fr(yearIndex(2026,0),0), H03 = fr(yearIndex(2003,0),0);
+  const pre = last ? ("Simulation des #Canicules jusqu'en "+y) : "Les #Canicules en France depuis 1947";
+  const suf = "- obs. Météo-France, projections TRACC simulées - Vibe-Code Claude.";
+  let body;
+  switch(viewMode){
+    case "saisons":
+      body="Cumuls par saison en #France : chaque bulle est un été, sa taille la chaleur accumulée. "+
+           "Été le plus chaud à ce stade : "+peakSeason().yr+" (Σ "+fr(peakSeason().H,0)+" °C·jours), contre "+H26+" en 2026."; break;
+    case "indice":
+      body="Chaleur cumulée été par été en #France depuis 1947 : la tendance (moyenne 15 ans) atteint "+trendAt(y)+
+           " °C·jours, contre "+trendAt(2000)+" vers 2000. Les étés sans canicule disparaissent."; break;
+    case "calendrier":
+      body="Toutes les vagues de chaleur en #France depuis 1947 : une colonne par été, une cellule par jour "+
+           "colorée par l'indicateur thermique. Elles gagnent mai et septembre."; break;
+    case "courbes":
+      body="Profils journaliers en #France : "+(last?last.label+", "+fr(last.d,0)+" jours, pic à "+fr(last.i,1)+
+           " °C, Σ "+fr(heatInt(last),0)+" °C·jours — contre 29,5 °C et Σ "+H03+" pour août 2003."
+           :"l'été 2026 a dépassé 2003 en chaleur cumulée."); break;
+    case "vagues":
+      body="Les canicules en #France vues comme de vraies déferlantes : taille et couleur = chaleur accumulée. "+
+           "Elles s'enchaînent désormais au lieu d'être isolées."; break;
+    default:
+      body="Vagues de chaleur en #France : chaque bulle est un épisode, sa taille sa sévérité. "+
+           (last?"Dernière : "+last.label+", "+fr(last.d,0)+" j, pic à "+fr(last.i,1)+" °C."
+                :"L'été 2026 (Σ "+H26+" °C·jours) dépasse déjà 2003 (Σ "+H03+")."); break;
+  }
+  body=body.replace(/\s+/g," ").trim();
+  const room=280-pre.length-suf.length-3;               // " - " + " "
+  if(body.length>room) body=body.slice(0,room-1).replace(/\s\S*$/,"")+"…";
+  return pre+" - "+body+" "+suf;
+}
+function showTweet(){
+  pause();
+  const t=tweetText();
+  info.innerHTML=`<div class="ihead"><span class="iname">🐦 Tweet prêt à copier</span>`+
+    `<span class="itag ${t.length<=280?'hist':'proj'}">${t.length}/280</span>`+
+    `<button id="twcopy" class="chip" style="cursor:pointer">Copier</button></div>`+
+    `<div class="idesc tw">${t.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</div>`;
+  const b=$("twcopy");
+  if(b) b.addEventListener("click",()=>{
+    try{ navigator.clipboard.writeText(t); b.textContent="Copié ✓"; }
+    catch(e){ b.textContent="Sélectionnez le texte"; }
+  });
+}
+$("tweet").addEventListener("click",showTweet);
+
 function updateNav(){
   const c=$("counter");
   if(revealed===0) c.innerHTML=`<span class="cmut">0 / ${chronoProj.length}<span class="clast"> générées</span></span>`;
@@ -723,7 +870,7 @@ $("play").addEventListener("click",play);
 $("pausebtn").addEventListener("click",pause);
 
 // ---- bascules de vue (exclusives) ----
-const wb=$("wview"), cb=$("cview"), sb=$("sview"), kb=$("kview");
+const wb=$("wview"), cb=$("cview"), sb=$("sview"), kb=$("kview"), yb=$("yview");
 function setView(mode){
   pause();
   viewMode=mode;
@@ -731,11 +878,13 @@ function setView(mode){
   cb.classList.toggle("on",mode==="courbes");
   sb.classList.toggle("on",mode==="indice");
   kb.classList.toggle("on",mode==="calendrier");
+  yb.classList.toggle("on",mode==="saisons");
   if(document.body){
     document.body.classList.toggle("waves",mode==="vagues");
     document.body.classList.toggle("curves",mode==="courbes");
     document.body.classList.toggle("indexv",mode==="indice");
     document.body.classList.toggle("calv",mode==="calendrier");
+    document.body.classList.toggle("seasv",mode==="saisons");
   }
   lastWin = (mode==="vagues") ? winEnd() : null;
   lastCal = (mode==="calendrier") ? calBound() : null;
@@ -746,6 +895,7 @@ wb.addEventListener("click",()=>setView(viewMode==="vagues"?"bulles":"vagues"));
 cb.addEventListener("click",()=>setView(viewMode==="courbes"?"bulles":"courbes"));
 sb.addEventListener("click",()=>setView(viewMode==="indice"?"bulles":"indice"));
 kb.addEventListener("click",()=>setView(viewMode==="calendrier"?"bulles":"calendrier"));
+yb.addEventListener("click",()=>setView(viewMode==="saisons"?"bulles":"saisons"));
 lastCal=null;
 
 // ---- bascule vue iPhone (desktop uniquement) ----
