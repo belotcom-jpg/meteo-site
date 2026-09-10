@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v7.0 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v7.5.1 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v7.0</title>
+<title>MultiMaps — géographie (collège & lycée) — v7.5.1</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -283,6 +283,18 @@
   .bat-fiche{
     margin-top:5px; padding:7px 8px; border:1px solid var(--trait); border-radius:8px;
     background:#fdfcf9; font-size:12px; line-height:1.5; max-height:290px; overflow-y:auto;
+  }
+  /* Nom du quartier, pose au centre de son contour. */
+  .quartier-etq{ background:none !important; border:0 !important; pointer-events:none }
+  .quartier-etq span{
+    display:inline-block; transform:translate(-50%, -50%);
+    font:600 11px/1.15 system-ui, sans-serif; white-space:nowrap;
+    text-shadow:0 0 3px #fff, 0 0 3px #fff, 0 0 5px #fff, 1px 1px 0 #fff, -1px -1px 0 #fff;
+  }
+  /* Mesures de l'objet selectionne. */
+  .mesure-boite{
+    margin-top:5px; padding:6px 8px; border:1px solid var(--trait); border-radius:8px;
+    background:#f0f9ff; font-size:11.5px; line-height:1.4;
   }
   .journal-corps{
     max-height:300px; overflow-y:auto; border:1px solid var(--trait); border-radius:8px;
@@ -958,7 +970,13 @@
       <div class="croquis-rangee">
         <button class="croquis-btn" id="sel-supprimer" title="Supprime l’objet sélectionné (touche Suppr). Annulable par Ctrl+Z.">🗑 Supprimer</button>
         <button class="croquis-btn" id="sel-deselect" title="Ne plus rien sélectionner (touche Échap).">↶ Désélectionner</button>
-      </div>
+      
+    <div id="mesure-boite" class="mesure-boite" hidden></div>
+    <div id="mesure-aide" class="sous" style="font-size:9.5px;line-height:1.45;margin-top:4px;padding:5px 7px;border:1px dashed var(--trait);border-radius:7px;background:#f8fafc">
+      📏 <b>Mesurer</b> : tracez une ╱ <b>ligne</b> ou une ⬟ <b>zone</b>, passez en ⌒ <b>Sélection</b>, puis cliquez dessus. La longueur s’affiche ici — et l’aire pour une surface fermée.
+    </div>
+    <button class="croquis-btn" id="btn-mesure-total" style="width:100%;margin-top:3px" title="Longueur cumulée de toutes les lignes et aire totale de toutes les surfaces du croquis.">📏 Mesurer tout le croquis</button>
+  </div>
       <div class="croquis-rangee">
         <button class="croquis-btn" id="btn-copier-croquis" title="Copie l’objet sélectionné (Ctrl+C). Collez-le ensuite avec Ctrl+V, y compris dans un autre calque.">📋 Copier</button>
         <button class="croquis-btn" id="btn-coller-croquis" title="Colle le dernier objet copié dans le calque actif, légèrement décalé (Ctrl+V).">📌 Coller</button>
@@ -1234,6 +1252,19 @@
         <p class="sous" id="img-fond-etat" style="margin:4px 0 0">Cadrage approché — calez-le pour la précision.</p>
       </div>
     </div>
+  
+    <div class="sep"></div>
+    <span class="etiquette">Occupation du sol mondiale</span>
+    <div style="font-size:10px;color:#8a8577;margin-bottom:4px">Aplats sans texte, issus de VMap0 et du SRTM (domaine public). Ils couvrent le monde entier, là où l’IGN s’arrête aux frontières.</div>
+    <button class="calque-ajout donnee" id="btn-mff-eau" title="Lacs, fleuves et mers du monde entier, d’après VMap0.">💧 Eaux (mondial)</button>
+    <button class="calque-ajout donnee" id="btn-mff-foret" title="Couvert forestier mondial. À comparer avec la carte forestière IGN, bien plus fine sur la France.">🌲 Forêts (mondial)</button>
+    <button class="calque-ajout donnee" id="btn-mff-culture" title="Terres cultivées. La ceinture céréalière européenne y apparaît d’un coup.">🌾 Cultures (mondial)</button>
+    <button class="calque-ajout donnee" id="btn-mff-prairie" title="Prairies et savanes.">🌱 Prairies (mondial)</button>
+    <button class="calque-ajout donnee" id="btn-mff-sable" title="Zones sableuses : Sahara, Arabie, Taklamakan. Le contraste avec les cultures dessine les limites de l’aridité.">🏜 Sables et déserts</button>
+    <button class="calque-ajout donnee" id="btn-mff-marais" title="Zones humides et marécages.">🪵 Marais</button>
+    <button class="calque-ajout donnee" id="btn-mff-glace" title="Calottes et glaciers permanents.">❄ Glaces</button>
+    <button class="calque-ajout donnee" id="btn-mff-admin" title="Limites administratives mondiales, trait fin sans texte.">─ Frontières (mondial)</button>
+    <div style="font-size:9.5px;color:#57534e;margin-top:5px;line-height:1.45">Ces couches s’arrêtent au <b>zoom 11</b> : au-delà il n’y a plus de données et l’image devient floue. Couverture 60°N – 56°S — pas de pôles.</div>
   </div>
 </div>
 
@@ -1523,6 +1554,46 @@
         <button class="calque-ajout donnee esp-btn" id="btn-esp-argousier" data-sci="Hippophae rhamnoides" data-coul="#fb923c" title="L’argousier est un arbuste pionnier des sols nus : il fixe l’azote de l’air grâce à une bactérie de ses racines, et pousse donc là où rien ne pousse encore — sable, graviers, éboulis. Sa répartition française est disjointe et remarquable : les dunes du Nord, de Picardie et de Normandie d’un côté, les alluvions et terrasses des Alpes de l’autre. Deux milieux sans rapport, même contrainte : un substrat mobile, pauvre, sans concurrence. C’est un vestige de la végétation postglaciaire, quand la steppe froide couvrait la France. Il sert aujourd’hui à fixer les dunes, et ses baies orange sont parmi les plus riches en vitamine C d’Europe. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🟠 Argousier</button>
       </div>
     </details>
+    <details class="pilote-paquet"><summary>🍄 Champignons</summary>
+      <div class="pilote-grille">
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-cepe" data-sci="Boletus edulis" data-coul="#78350f" title="Le cèpe pousse en symbiose avec les racines des arbres — chênes, hêtres, châtaigniers, épicéas. Il ne peut exister sans eux : on ne le cultive pas. Il apparaît après les pluies de fin d’été, quand le sol reste tiède. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🍄 Cèpe de Bordeaux</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-girolle" data-sci="Cantharellus cibarius" data-coul="#f59e0b" title="Symbiose avec feuillus et conifères, sur sols acides et pauvres. Sa présence signale souvent une forêt ancienne, peu remaniée. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🍄 Girolle</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-morille" data-sci="Morchella esculenta" data-coul="#a16207" title="Printanière, contrairement à la plupart des champignons. Elle apparaît volontiers sur les sols perturbés : anciennes brûlures, vergers, terrains remués. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🍄 Morille</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-truffe" data-sci="Tuber melanosporum" data-coul="#1c1917" title="Symbiose avec le chêne vert et le chêne pubescent, sur sols calcaires du Sud-Est et du Périgord. La production est passée de 1 000 tonnes vers 1900 à quelques dizaines aujourd’hui. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">⚫ Truffe noire</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-amanite" data-sci="Amanita muscaria" data-coul="#dc2626" title="Rouge à points blancs, la plus reconnaissable. Toxique et hallucinogène, rarement mortelle. Elle accompagne bouleaux et épicéas — sa carte est celle de ces arbres. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">☠ Amanite tue-mouches</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-phalloide" data-sci="Amanita phalloides" data-coul="#166534" title="Responsable de la quasi-totalité des empoisonnements mortels par champignon en Europe. Un seul exemplaire suffit, et elle ressemble à des espèces comestibles. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">☠ Amanite phalloïde</button>
+      <div style="font-size:9.5px;color:#57534e;margin-top:5px;line-height:1.45">⚠️ <b>Ne consommez jamais</b> un champignon sans identification par un pharmacien. L’amanite phalloïde tue avec un seul exemplaire. Les points montrent des <b>observations passées</b>, non des lieux de cueillette.</div>
+      </div>
+    </details>
+    <details class="pilote-paquet"><summary>🫐 Petits fruits sauvages</summary>
+      <div class="pilote-grille">
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-myrtille" data-sci="Vaccinium myrtillus" data-coul="#4338ca" title="Landes et sous-bois acides de montagne, entre 800 et 2 000 m. Elle a besoin de sols pauvres et acides : sa carte est celle des terrains granitiques. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🫐 Myrtille sauvage</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-framboise" data-sci="Rubus idaeus" data-coul="#be185d" title="Colonise coupes forestières et clairières de montagne. Espèce pionnière : elle apparaît après une trouée et disparaît quand la forêt se referme. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🍓 Framboisier sauvage</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-mure" data-sci="Rubus fruticosus" data-coul="#581c87" title="Partout, des haies aux friches. Tenue pour envahissante, elle est en réalité un abri majeur pour la faune. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🫐 Ronce à mûres</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-groseille" data-sci="Ribes rubrum" data-coul="#e11d48" title="Sous-bois frais et bords de ruisseaux, surtout en montagne et dans le Nord-Est. Souvent échappée des jardins. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🍒 Groseillier rouge</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-fraise-bois" data-sci="Fragaria vesca" data-coul="#f43f5e" title="Lisières et talus sur sols frais. Elle fructifie de mai à juillet, plus tôt en plaine qu’en altitude — bon marqueur du décalage saisonnier. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🍓 Fraise des bois</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-airelle" data-sci="Vaccinium vitis-idaea" data-coul="#dc2626" title="Plus haute que la myrtille, jusqu’à 2 500 m. Elle supporte sols gelés, vent et neige tardive. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🫐 Airelle rouge</button>
+      <div style="font-size:9.5px;color:#57534e;margin-top:5px;line-height:1.45">Cueillette tolérée en petite quantité pour un usage personnel, avec l’accord du propriétaire, interdite en réserve. Lavez ou cuisez les fruits ramassés près du sol.</div>
+      </div>
+    </details>
+    <details class="pilote-paquet"><summary>🌼 Fleurs rares et protégées</summary>
+      <div class="pilote-grille">
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-sabot-venus" data-sci="Cypripedium calceolus" data-coul="#eab308" title="La plus grande orchidée d’Europe, protégée au niveau national et européen. Elle met dix à quinze ans avant de fleurir pour la première fois. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌼 Sabot de Vénus</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-saxifrage" data-sci="Saxifraga florulenta" data-coul="#c026d3" title="Endémique du seul Mercantour et de l’Argentera : elle n’existe nulle part ailleurs au monde. Elle vit vingt à soixante ans, fleurit une seule fois, puis meurt. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌸 Saxifrage à fleurs</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-gentiane-jaune" data-sci="Gentiana lutea" data-coul="#facc15" title="Prairies de montagne jusqu’à 2 500 m. Sa racine sert aux apéritifs amers. Elle met dix ans à fleurir et peut vivre plus de cinquante ans. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌼 Gentiane jaune</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-lis-martagon" data-sci="Lilium martagon" data-coul="#a21caf" title="Sous-bois clairs et prairies d’altitude. Ses fleurs à pétales recourbés s’ouvrent le soir et sont pollinisées par des papillons nocturnes. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌷 Lis martagon</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-niveole" data-sci="Leucojum vernum" data-coul="#94a3b8" title="Fleurit dès février dans les forêts humides, parfois à travers la neige. Protégée dans plusieurs départements. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌿 Nivéole de printemps</button>
+      <div style="font-size:9.5px;color:#57534e;margin-top:5px;line-height:1.45">⚠️ Ces espèces sont <b>protégées</b> : les cueillir, arracher ou transporter est un délit. La saxifrage à fleurs n’existe qu’au Mercantour, nulle part ailleurs au monde.</div>
+      </div>
+    </details>
+    <details class="pilote-paquet"><summary>🌵 Cactus et plantes grasses</summary>
+      <div class="pilote-grille">
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-figuier-barbarie" data-sci="Opuntia ficus-indica" data-coul="#65a30d" title="Cactus mexicain introduit au XVIᵉ siècle, naturalisé sur le pourtour méditerranéen. Il marque la limite du gel : il ne survit pas où les hivers descendent durablement sous −5 °C. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌵 Figuier de Barbarie</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-opuntia-rampante" data-sci="Opuntia humifusa" data-coul="#84cc16" title="Cactus nord-américain bien plus résistant au froid : naturalisé jusque dans la vallée du Rhône et en Alsace, sur coteaux secs et ensoleillés. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌵 Oponce rampante</button>
+        <button class="calque-ajout donnee esp-btn" id="btn-esp-joubarbe" data-sci="Sempervivum tectorum" data-coul="#0d9488" title="Plante grasse indigène, longtemps plantée sur les toits — on la croyait protectrice de la foudre. Rochers et murs secs jusqu’à 2 800 m. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🪴 Joubarbe des toits</button>
+      <div style="font-size:9.5px;color:#57534e;margin-top:5px;line-height:1.45">Le figuier de Barbarie dessine la <b>limite du gel</b> : il disparaît où les hivers descendent durablement sous −5 °C. Bon marqueur du climat méditerranéen réel.</div>
+      </div>
+    </details>
     <details class="pilote-paquet"><summary>Espèces introduites et envahissantes</summary>
       <div class="pilote-grille">
         <button class="calque-ajout donnee esp-btn" id="btn-esp-renouee" data-sci="Reynoutria japonica" data-coul="#be185d" title="Introduite comme ornementale en 1825, aujourd’hui l’une des espèces les plus problématiques d’Europe : elle colonise les berges, traverse le béton et rend tout le reste impossible à pousser. (Observations GBIF dans la vue actuelle — cliquez un point pour la date et la source.)">🌿 Renouée du Japon</button>
@@ -1729,6 +1800,8 @@
   <div class="widget-corps"><button class="calque-ajout donnee" id="btn-lim-reg" title="Contours des 13 régions métropolitaines + outre-mer (Admin Express COG Carto, IGN) — trait épais">🗾 Limites des régions</button>
       <button class="calque-ajout donnee" id="btn-lim-dep" title="Contours des 101 départements (Admin Express COG Carto, IGN) — trait moyen">🗾 Limites des départements</button>
       <button class="calque-ajout donnee" id="btn-lim-com" title="Contours des communes visibles à l'écran (Admin Express COG Carto, IGN) — trait fin, zoomez au niveau départemental (9+)">🗾 Limites des communes</button>
+    <button class="calque-ajout donnee" id="btn-quartiers" title="Les quartiers, dans leurs deux natures : les quartiers ADMINISTRATIFS (bleu) — à Paris, 80 quartiers fixés en 1859 et jamais modifiés — et les quartiers VÉCUS (rose pointillé) : la Butte-aux-Cailles, la Croix-Rousse, le Panier. Ces derniers n’ont aucune existence juridique et leurs limites sont floues, saisies dans OpenStreetMap par les habitants. Zoomez sur une ville avant de l’activer.">🏘 Quartiers</button>
+    <div style="font-size:9.5px;color:#57534e;margin-top:4px;line-height:1.45">L’écart entre le découpage <b>officiel</b> et les quartiers dont on <b>parle</b> est un objet d’étude en soi : les limites vécues ne coïncident presque jamais avec les limites administratives.</div>
     </div>
 </div>
 
@@ -2372,6 +2445,23 @@
     <button class="calque-ajout donnee" id="btn-orages" title="Les orages en cours d'après les modèles météo (fortes averses orageuses) : un pictogramme ⛈️ sur chaque zone concernée. C'est le diagnostic des modèles, pas des impacts de foudre mesurés.">⛈️ Orages en cours</button>
     <button class="calque-ajout donnee" id="btn-villes-meteo" title="Les 50 grandes villes avec leur température actuelle. Cliquez une ville : MultiMétéo s'ouvre sur ce point, avec tout le détail (modèles, heures, vigilance).">🏙 Villes : température &amp; clic vers MultiMétéo</button>
     <p class="sous" style="margin:4px 0 0">Températures Open-Meteo (modèles météo publics), relevé de l'heure. Météo ≠ climat : à croiser avec 🌡 Canicules et 🔥 Feux.</p>
+  
+    <div class="sep"></div>
+    <span class="etiquette">Tempêtes et tornades</span>
+    <button class="calque-ajout donnee" id="btn-tempetes" title="Douze tempêtes marquantes, de 1703 à Ciarán en 2023. Trajectoires schématiques, avec les vents mesurés et le bilan humain.">🌀 Tempêtes</button>
+    <div id="tmp-panneau" hidden>
+      <div class="croquis-rangee" style="margin-top:4px;align-items:center">
+        <input type="range" id="tmp-depuis" min="1700" max="2023" step="1" value="1700" style="flex:1;min-width:0" title="N’afficher que les tempêtes à partir de cette année.">
+        <span id="tmp-depuis-val" class="sous" style="min-width:40px;text-align:right;font-weight:700">1700</span>
+      </div>
+      <p class="sous" id="tmp-compte" style="margin:2px 0"></p>
+      <div style="font-size:9.5px;color:#57534e;margin-top:4px;line-height:1.45">Les trajectoires sont <b>schématiques</b> : elles indiquent la direction générale, non le tracé exact. Trait plein = tempête mesurée par des stations ; pointillé = reconstituée d’après les chroniques.</div>
+    </div>
+    <button class="calque-ajout donnee" id="btn-tornades" title="Treize tornades marquantes. La France en compte une cinquantaine par an — la plupart faibles et brèves. Le Nord en concentre une part notable.">🌪 Tornades</button>
+    <div id="tor-panneau" hidden>
+      <div id="tor-echelle" style="font-size:10px;color:#57534e;line-height:1.7;margin-top:3px"></div>
+      <div style="font-size:9.5px;color:#57534e;margin-top:4px;line-height:1.45">⚠️ On recense <b>bien plus</b> de tornades depuis les années 2000 — parce qu’on les observe mieux, non parce qu’il y en a davantage. Toute lecture d’une tendance sur ces données serait fausse.</div>
+    </div>
   </div>
 </div>
 
@@ -2538,7 +2628,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v7.0</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v7.5.1</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -2662,7 +2752,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v7.0</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v7.5.1</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -3199,6 +3289,12 @@
   map.zoomControl.setPosition('bottomright');
 
   const FONDS = {
+    // Maps-for-free : relief hypsometrique mondial issu du SRTM, en CC0 (domaine
+    // public). Aucun texte, aucune route : le relief seul. Couverture 60N-56S,
+    // resolution 90 m, zoom maximal 11 — au-dela il n'y a plus de donnees.
+    srtm:  { nom:'Relief mondial (SRTM)',
+              url:'https://maps-for-free.com/layer/relief/z{z}/row{y}/{z}_{x}-{y}.jpg',
+              att:'Maps-for-free \u00b7 SRTM \u00b7 CC0', max:11, sansCors:true },
     osm:   { nom:'OpenStreetMap', url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', att:'&copy; OpenStreetMap' },
     osmfr: { nom:'OSM France', url:'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', att:'&copy; OSM France', max:20 },
     ign:   { nom:'Plan IGN', url:'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/png&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', att:'&copy; IGN' },
@@ -3235,13 +3331,48 @@
   let fondActuel = null;
   let fondOpacite = parseFloat(localStorage.getItem('geo-fond-opacite'));
   if(!isFinite(fondOpacite) || fondOpacite <= 0.05){ fondOpacite = 1; try{ memoSet('geo-fond-opacite','1'); }catch(e){} }  // un fond invisible (0%) sauvegardé ne doit jamais masquer toute la carte au rechargement
+  // Entre 5 et 25 %, le fond est si pâle qu'on croit la carte en panne. On le dit,
+  // plutôt que de laisser chercher.
+  if(fondOpacite > 0.05 && fondOpacite < 0.25){
+    setTimeout(function(){
+      try{
+        afficherAlerte('\u26a0\ufe0f L\u2019opacit\u00e9 du fond est r\u00e9gl\u00e9e \u00e0 '
+          + Math.round(fondOpacite * 100) + ' % : la carte para\u00eet vide. '
+          + 'Remontez le curseur \u00ab Opacit\u00e9 du fond \u00bb dans les Fonds de carte.');
+      }catch(e){}
+    }, 1800);
+  }
   function appliquerFond(id){
     const f = FONDS[id]; if(!f) return;
     if(fondActuel) map.removeLayer(fondActuel);
     fondActuel = f.wms
       ? L.tileLayer.wms(f.url, { layers:f.wms, format:'image/png', transparent:false, version:'1.3.0',
           attribution:f.att, maxZoom:19, crossOrigin:'anonymous', opacity:fondOpacite }).addTo(map)
-      : L.tileLayer(f.url, { attribution:f.att, maxZoom:19, maxNativeZoom:f.max || 19, crossOrigin:'anonymous', opacity:fondOpacite }).addTo(map);
+      : L.tileLayer(f.url, { attribution:f.att, maxZoom:19, maxNativeZoom:f.max || 19,
+          // crossOrigin='anonymous' fait REFUSER l'image par le navigateur quand le
+          // serveur ne renvoie pas l'en-tete correspondant. Certains fonds libres ne le
+          // font pas : on ne l'exige que la ou il sert (export PNG du croquis).
+          crossOrigin: f.sansCors ? undefined : 'anonymous',
+          opacity:fondOpacite }).addTo(map);
+    // les echecs de tuiles n'apparaissent nulle part sans cela
+    if(fondActuel && fondActuel.on){
+      let ec = 0;
+      fondActuel.on('tileerror', function(ev){
+        ec++;
+        if(ec === 1 && typeof journal === 'function')
+          journal('reseau', 'fond ' + id + ' : tuile refus\u00e9e',
+            (ev && ev.tile && ev.tile.src ? String(ev.tile.src).slice(0, 90) : ''));
+        if(ec === 10 && typeof afficherAlerte === 'function')
+          afficherAlerte('\u26a0\ufe0f Le fond \u00ab ' + f.nom + ' \u00bb ne d\u00e9livre pas ses tuiles ('
+            + ec + ' refus). Choisissez-en un autre \u2014 d\u00e9tail dans le Journal.');
+      });
+      fondActuel.on('tileload', function(){
+        if(typeof journal === 'function' && !fondActuel._djaVu){
+          fondActuel._djaVu = true;
+          journal('reseau', 'fond ' + id + ' : tuiles re\u00e7ues');
+        }
+      });
+    }
     fondActuelId = id;
     memoSet('geo-fond', id);
   }
@@ -3295,7 +3426,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v7.0';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v7.5.1';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -12863,6 +12994,619 @@
     });
   })();
 
+  // ---------- Tempêtes et tornades ----------
+  //
+  // Deux phénomènes de nature différente : la tempête balaie des centaines de kilomètres
+  // et se lit par sa trajectoire ; la tornade est brève, très localisée, et se lit par un
+  // point et son intensité.
+  //
+  // AVERTISSEMENT DE MÉTHODE, porté dans l'interface : on recense bien plus de tornades
+  // depuis les années 2000 parce qu'on les observe mieux — téléphones, réseaux, réseau
+  // de bénévoles — non parce qu'il y en a davantage. Toute lecture d'une tendance sur
+  // ces données serait fausse.
+  const TEMPETES = [
+    { an:1703, n:'Grande temp\u00eate de 1703', d:'7\u201312 d\u00e9cembre', vent:null,
+      morts:'Plusieurs milliers en Manche',
+      tr:[[49.5,-5.5],[49.9,-1.5],[50.5,1.5],[51.0,4.0]],
+      x:'La plus violente temp\u00eate connue sur la Manche. La flotte anglaise perd treize navires '
+        + 'de guerre. En France, les c\u00f4tes normandes et bretonnes sont ravag\u00e9es. Daniel Defoe en '
+        + 'tire un livre, consid\u00e9r\u00e9 comme l\u2019un des premiers reportages journalistiques.' },
+    { an:1788, n:'Temp\u00eate et gr\u00eale du 13 juillet', d:'13 juillet', vent:null,
+      morts:'Bilan humain inconnu',
+      tr:[[46.5,0.5],[47.5,2.0],[48.5,3.0],[49.5,4.0]],
+      x:'Un orage de gr\u00eale exceptionnel d\u00e9truit les r\u00e9coltes sur un couloir de plusieurs '
+        + 'centaines de kilom\u00e8tres, quelques semaines avant la moisson. Il contribue \u00e0 la '
+        + 'disette de l\u2019hiver 1788-1789 \u2014 l\u2019un des \u00e9l\u00e9ments du contexte de la R\u00e9volution, parmi '
+        + 'd\u2019autres.' },
+    { an:1987, n:'Ouragan d\u2019octobre 1987', d:'15\u201316 octobre', vent:'216 km/h \u00e0 la pointe du Raz',
+      morts:'15 morts en France, 23 en Angleterre',
+      tr:[[47.5,-6.0],[48.5,-4.0],[49.0,-1.0],[49.5,2.0]],
+      x:'La Bretagne est la plus touch\u00e9e. En Angleterre, le pr\u00e9sentateur m\u00e9t\u00e9o Michael Fish '
+        + 'avait assur\u00e9 le matin m\u00eame qu\u2019il n\u2019y aurait pas d\u2019ouragan \u2014 l\u2019\u00e9pisode a marqu\u00e9 '
+        + 'durablement la profession.' },
+    { an:1999, n:'Lothar', d:'26 d\u00e9cembre', vent:'169 km/h \u00e0 Paris, 259 au Hohneck',
+      morts:'53 morts en France',
+      tr:[[48.8,-3.0],[48.9,0.5],[48.9,2.4],[48.7,5.0],[48.5,7.8]],
+      x:'Traverse la moiti\u00e9 nord en quelques heures, \u00e0 une vitesse de d\u00e9placement inhabituelle. '
+        + 'Les rafales \u00e0 169 km/h en plein Paris sont sans pr\u00e9c\u00e9dent mesur\u00e9. Le parc de Versailles '
+        + 'perd 10 000 arbres.' },
+    { an:1999, n:'Martin', d:'27 d\u00e9cembre', vent:'198 km/h \u00e0 l\u2019\u00eele d\u2019Ol\u00e9ron',
+      morts:'39 morts en France',
+      tr:[[45.5,-3.0],[45.6,-0.5],[45.4,2.0],[45.0,4.5],[44.5,7.0]],
+      x:'Vingt-quatre heures apr\u00e8s Lothar, sur la moiti\u00e9 sud. Les deux temp\u00eates ensemble '
+        + 'abattent 140 millions d\u2019arbres et privent 3,5 millions de foyers d\u2019\u00e9lectricit\u00e9. La '
+        + 'centrale du Blayais est partiellement inond\u00e9e \u2014 incident class\u00e9 niveau 2, qui '
+        + 'changera les normes de s\u00fbret\u00e9 nucl\u00e9aire.' },
+    { an:2009, n:'Klaus', d:'24 janvier', vent:'184 km/h \u00e0 Formigu\u00e8res',
+      morts:'12 morts en France',
+      tr:[[44.5,-3.0],[44.2,-0.6],[43.8,1.5],[43.5,4.0],[43.3,6.5]],
+      x:'Rase 60 % de la for\u00eat des Landes, d\u00e9j\u00e0 touch\u00e9e par Martin dix ans plus t\u00f4t. La plus '
+        + 'grande for\u00eat cultiv\u00e9e d\u2019Europe met des d\u00e9cennies \u00e0 s\u2019en remettre.' },
+    { an:2010, n:'Xynthia', d:'27\u201328 f\u00e9vrier', vent:'160 km/h \u00e0 la pointe de Chassiron',
+      morts:'47 morts en France',
+      tr:[[45.5,-3.5],[46.2,-1.4],[47.0,1.0],[48.0,3.5],[49.0,6.0]],
+      x:'Le vent seul n\u2019explique pas le bilan. La mar\u00e9e haute de coefficient 102 et la '
+        + 'surcote ont submerg\u00e9 des lotissements construits sous le niveau de la mer, derri\u00e8re '
+        + 'des digues insuffisantes. \u00c0 La Faute-sur-Mer, 29 morts dans un quartier autoris\u00e9 en '
+        + 'zone inondable. Le maire sera condamn\u00e9.' },
+    { an:2017, n:'Zeus', d:'6\u20137 mars', vent:'193 km/h \u00e0 la pointe du Raz',
+      morts:'3 morts',
+      tr:[[48.5,-5.0],[48.0,-2.0],[47.0,0.5],[46.0,3.0]],
+      x:'Temp\u00eate rapide sur la Bretagne et le Centre. Un million de foyers priv\u00e9s '
+        + 'd\u2019\u00e9lectricit\u00e9.' },
+    { an:2019, n:'Ciara puis Dennis', d:'f\u00e9vrier', vent:'161 km/h au cap Gris-Nez',
+      morts:'1 mort en France',
+      tr:[[50.5,-2.0],[50.3,1.5],[49.8,4.0],[49.0,6.5]],
+      x:'Deux temp\u00eates en une semaine sur le Nord. Le bilan humain reste faible : les alertes '
+        + 'et les fermetures pr\u00e9ventives fonctionnent d\u00e9sormais mieux.' },
+    { an:2020, n:'Alex', d:'2\u20133 octobre', vent:'186 km/h \u00e0 Belle-\u00cele',
+      morts:'10 morts, 8 disparus',
+      tr:[[47.5,-4.5],[46.5,-1.0],[45.0,3.0],[44.0,7.2]],
+      x:'Le vent frappe la Bretagne, mais le drame se joue dans les Alpes-Maritimes : jusqu\u2019\u00e0 '
+        + '500 mm de pluie en douze heures. Les vall\u00e9es de la Roya, de la V\u00e9subie et de la Tin\u00e9e '
+        + 'sont d\u00e9vast\u00e9es, des villages coup\u00e9s du monde pendant des semaines.' },
+    { an:2022, n:'Eunice', d:'18 f\u00e9vrier', vent:'176 km/h au cap Gris-Nez',
+      morts:'2 morts en France',
+      tr:[[50.6,-2.5],[50.4,1.0],[49.9,3.5],[49.2,6.0]],
+      x:'Troisi\u00e8me temp\u00eate en une semaine. Les rafales atteignent 196 km/h sur l\u2019\u00eele de Wight, '
+        + 'record britannique.' },
+    { an:2023, n:'Ciar\u00e1n', d:'1\u1d49r\u20132 novembre', vent:'207 km/h \u00e0 la pointe du Raz',
+      morts:'2 morts en France',
+      tr:[[49.0,-5.5],[48.8,-3.0],[49.2,0.0],[49.8,3.0],[50.2,6.0]],
+      x:'Rafales de 207 km/h en Bretagne, parmi les plus fortes jamais mesur\u00e9es en France. '
+        + '1,2 million de foyers priv\u00e9s d\u2019\u00e9lectricit\u00e9. Les d\u00e9g\u00e2ts mat\u00e9riels sont \u00e9normes, le '
+        + 'bilan humain faible \u2014 la pr\u00e9vision \u00e0 quatre jours a permis de tout fermer.' }
+  ];
+
+  // Échelle de Fujita améliorée : EF0 à EF5. En France, EF4 est le maximum observé.
+  const FUJITA = {
+    2:['EF2', '#f59e0b', '180\u2013220 km/h'],
+    3:['EF3', '#ea580c', '220\u2013270 km/h'],
+    4:['EF4', '#b91c1c', '270\u2013320 km/h']
+  };
+
+  const TORNADES = [
+    { an:1845, n:'Montville', lat:49.53, lon:1.05, f:4, morts:'70 morts',
+      x:'La plus meurtri\u00e8re jamais enregistr\u00e9e en France. Elle d\u00e9truit deux filatures en '
+        + 'pleine activit\u00e9 pr\u00e8s de Rouen \u2014 le bilan tient au fait qu\u2019elle frappe des b\u00e2timents '
+        + 'remplis d\u2019ouvriers.' },
+    { an:1967, n:'Palluel', lat:50.24, lon:3.10, f:4, morts:'6 morts',
+      x:'Traverse le Pas-de-Calais sur plus de 20 km. Le couloir du Nord concentre une part '
+        + 'notable des tornades fran\u00e7aises \u2014 relief plat, air maritime, contrastes thermiques.' },
+    { an:1967, n:'Pomm\u00e9r\u0153ul \u2013 Maubeuge', lat:50.28, lon:3.97, f:4, morts:'6 morts',
+      x:'Le m\u00eame jour que Palluel : une journ\u00e9e exceptionnelle qui produit plusieurs tornades '
+        + 'violentes dans le nord de la France et en Belgique.' },
+    { an:1988, n:'Beaumont-en-Auge', lat:49.28, lon:0.11, f:3, morts:'aucun',
+      x:'Tornade sur la c\u00f4te normande, d\u00e9g\u00e2ts importants sur les b\u00e2timents agricoles.' },
+    { an:2008, n:'Hautmont', lat:50.25, lon:3.92, f:4, morts:'3 morts, 18 bless\u00e9s',
+      x:'La plus violente tornade fran\u00e7aise document\u00e9e avec pr\u00e9cision. Elle traverse la ville '
+        + 'sur 15 km en quelques minutes, d\u00e9truit une centaine de maisons. Les vents sont '
+        + 'estim\u00e9s \u00e0 plus de 300 km/h. Un quartier entier est rebâti.' },
+    { an:2008, n:'Maisoncelle-Tuilerie', lat:49.55, lon:2.15, f:3, morts:'aucun',
+      x:'Oise. Elle survient trois mois avant Hautmont, dans une ann\u00e9e particuli\u00e8rement active.' },
+    { an:2013, n:'Coulommiers', lat:48.81, lon:3.09, f:2, morts:'aucun',
+      x:'Seine-et-Marne. Toitures arrach\u00e9es, arbres coup\u00e9s net sur plusieurs kilom\u00e8tres.' },
+    { an:2015, n:'Rochefort-sur-Mer', lat:45.94, lon:-0.96, f:2, morts:'aucun',
+      x:'Charente-Maritime. Tornade c\u00f4ti\u00e8re br\u00e8ve mais destructrice sur un quartier.' },
+    { an:2018, n:'Cherbourg', lat:49.64, lon:-1.62, f:2, morts:'aucun',
+      x:'Manche. Trombe marine venue \u00e0 terre \u2014 cas fr\u00e9quent sur les c\u00f4tes de la Manche.' },
+    { an:2019, n:'Bagneaux-sur-Loing', lat:48.23, lon:2.71, f:2, morts:'aucun',
+      x:'Seine-et-Marne. Une tornade dans un couloir o\u00f9 l\u2019on n\u2019en attend g\u00e9n\u00e9ralement pas.' },
+    { an:2021, n:'Bihucourt', lat:50.13, lon:2.83, f:3, morts:'aucun bless\u00e9 grave',
+      x:'Pas-de-Calais, 23 octobre. Le village est d\u00e9vast\u00e9 \u00e0 80 %. L\u2019absence de victimes tient '
+        + '\u00e0 l\u2019heure \u2014 en soir\u00e9e, les habitants \u00e9taient chez eux, \u00e0 l\u2019abri.' },
+    { an:2022, n:'Conty', lat:49.74, lon:2.15, f:2, morts:'aucun',
+      x:'Somme. Une saison 2022 marqu\u00e9e par plusieurs tornades dans les Hauts-de-France.' },
+    { an:2023, n:'Bihorel', lat:49.46, lon:1.12, f:2, morts:'1 bless\u00e9',
+      x:'Seine-Maritime. Une tornade en pleine agglom\u00e9ration rouennaise.' }
+  ];
+
+  const etatTempetes = { actif:false, groupe:null, depuis:1700 };
+  const etatTornades = { actif:false, groupe:null };
+
+  function dessinerTempetes(){
+    if(!etatTempetes.actif) return;
+    if(etatTempetes.groupe) map.removeLayer(etatTempetes.groupe);
+    const g = L.layerGroup();
+    let n = 0;
+    TEMPETES.forEach(function(t){
+      if(t.an < etatTempetes.depuis) return;
+      n++;
+      // les plus récentes sont mieux mesurées : trait plein ; les anciennes, pointillé
+      const mesuree = t.an >= 1980;
+      const coul = t.morts && /\d/.test(t.morts) && parseInt(t.morts) >= 30 ? '#7f1d1d'
+                 : (t.an >= 2000 ? '#b91c1c' : '#a16207');
+      const bulle = '<b>' + echap(t.n) + '</b> <span style="color:#6b7280">\u00b7 ' + t.an
+        + (t.d ? ', ' + echap(t.d) : '') + '</span>'
+        + (t.vent ? '<div style="color:' + coul + ';font-weight:700;font-size:11px;margin-top:2px">'
+            + '💨 ' + echap(t.vent) + '</div>' : '')
+        + '<div style="font-size:11px;color:#6b7280;margin-top:2px">' + echap(t.morts) + '</div>'
+        + '<div style="font-size:11.5px;line-height:1.55;margin-top:4px">' + echap(t.x) + '</div>';
+      // liseré blanc dessous, pour que la trajectoire se détache du fond
+      L.polyline(t.tr, { color:'#ffffff', weight:8, opacity:0.5, interactive:false }).addTo(g);
+      L.polyline(t.tr, { color:coul, weight:4, opacity:0.9,
+        dashArray: mesuree ? null : '10 6' })
+        .bindTooltip('<b>' + echap(t.n) + '</b> \u00b7 ' + t.an, { sticky:true })
+        .bindPopup(bulle)
+        .addTo(g);
+      // le point d'arrivée porte le nom
+      const fin = t.tr[t.tr.length - 1];
+      L.circleMarker(fin, { radius:5, weight:2, color:coul, fillColor:'#fff', fillOpacity:0.9 })
+        .bindTooltip('<b>' + echap(t.n) + '</b> \u00b7 ' + t.an, { direction:'top' })
+        .bindPopup(bulle)
+        .addTo(g);
+    });
+    g.addTo(map);
+    etatTempetes.groupe = g;
+    const c = document.getElementById('tmp-compte');
+    if(c) c.textContent = n + ' temp\u00eate(s) sur ' + TEMPETES.length;
+    const v = document.getElementById('tmp-depuis-val');
+    if(v) v.textContent = etatTempetes.depuis;
+    majLegende();
+  }
+
+  document.getElementById('btn-tempetes').addEventListener('click', function(){
+    const btn = document.getElementById('btn-tempetes');
+    const pan = document.getElementById('tmp-panneau');
+    if(etatTempetes.actif){
+      etatTempetes.actif = false;
+      if(etatTempetes.groupe){ map.removeLayer(etatTempetes.groupe); etatTempetes.groupe = null; }
+      if(pan) pan.hidden = true;
+      basculerBouton(btn, false, '', '🌀 Temp\u00eates');
+      majLegende();
+      return;
+    }
+    etatTempetes.actif = true;
+    basculerBouton(btn, true, '🌀 Temp\u00eates \u2715', '', '#b91c1c');
+    if(pan) pan.hidden = false;
+    dessinerTempetes();
+    afficherInfo('🌀 Trajectoires sch\u00e9matiques \u2014 cliquez pour le d\u00e9tail et le bilan', 8000);
+  });
+
+  (function cablerTempetes(){
+    const c = document.getElementById('tmp-depuis');
+    if(c) c.addEventListener('input', function(){
+      etatTempetes.depuis = +c.value;
+      dessinerTempetes();
+    });
+  })();
+
+  document.getElementById('btn-tornades').addEventListener('click', function(){
+    const btn = document.getElementById('btn-tornades');
+    if(etatTornades.actif){
+      etatTornades.actif = false;
+      if(etatTornades.groupe){ map.removeLayer(etatTornades.groupe); etatTornades.groupe = null; }
+      basculerBouton(btn, false, '', '🌪 Tornades');
+      majLegende();
+      return;
+    }
+    etatTornades.actif = true;
+    basculerBouton(btn, true, '🌪 Tornades \u2715', '', '#ea580c');
+    const g = L.layerGroup();
+    TORNADES.forEach(function(t){
+      const f = FUJITA[t.f] || FUJITA[2];
+      const mortel = /\d/.test(t.morts);
+      L.circleMarker([t.lat, t.lon], {
+        radius: 6 + t.f * 2, weight: mortel ? 3.5 : 2.5,
+        color:f[1], fillColor:f[1], fillOpacity:0.45
+      })
+        .bindTooltip('<b>' + echap(t.n) + '</b> \u00b7 ' + t.an + '<br><small>' + f[0] + '</small>',
+          { direction:'top' })
+        .bindPopup('<b>' + echap(t.n) + '</b> <span style="color:#6b7280">\u00b7 ' + t.an + '</span>'
+          + '<div style="color:' + f[1] + ';font-weight:700;font-size:12px;margin-top:2px">'
+          + f[0] + ' \u00b7 ' + f[2] + '</div>'
+          + '<div style="font-size:11px;color:#6b7280;margin-top:2px">' + echap(t.morts) + '</div>'
+          + '<div style="font-size:11.5px;line-height:1.55;margin-top:4px">' + echap(t.x) + '</div>')
+        .addTo(g);
+    });
+    g.addTo(map);
+    etatTornades.groupe = g;
+    const lg = document.getElementById('tor-echelle');
+    if(lg){
+      lg.innerHTML = Object.keys(FUJITA).map(function(k){
+        const f = FUJITA[k];
+        return '<span style="display:inline-flex;align-items:center;gap:3px;margin:0 8px 2px 0">'
+          + '<span style="width:9px;height:9px;border-radius:50%;background:' + f[1] + '"></span>'
+          + f[0] + ' <span style="color:#8a8577">' + f[2] + '</span></span>';
+      }).join('');
+    }
+    const pan = document.getElementById('tor-panneau');
+    if(pan) pan.hidden = false;
+    majLegende();
+    afficherInfo('🌪 ' + TORNADES.length + ' tornades marquantes \u2014 la France en compte '
+      + 'une cinquantaine par an, la plupart faibles', 9000);
+  });
+
+
+  // ---------- Couches thématiques Maps-for-free ----------
+  // Données VMap0 et SRTM, en CC0. Ces couches sont des aplats sans texte : elles
+  // s'empilent bien et donnent une lecture d'occupation du sol à l'échelle mondiale,
+  // là où l'IGN s'arrête aux frontières françaises.
+  const MFF = {
+    'mff-eau':    ['\ud83d\udca7 Eaux (mondial)', 'water',  'gif', 'Lacs, fleuves et mers du monde entier, d\u2019apr\u00e8s VMap0.'],
+    'mff-foret':  ['\ud83c\udf32 For\u00eats (mondial)', 'forest', 'gif', 'Couvert forestier mondial. \u00c0 comparer avec la carte foresti\u00e8re IGN, bien plus fine sur la France.'],
+    'mff-culture':['\ud83c\udf3e Cultures (mondial)', 'crop',   'gif', 'Terres cultiv\u00e9es. La ceinture c\u00e9r\u00e9ali\u00e8re europ\u00e9enne y appara\u00eet d\u2019un coup.'],
+    'mff-prairie':['\ud83c\udf31 Prairies (mondial)', 'grass',  'gif', 'Prairies et savanes.'],
+    'mff-sable':  ['\ud83c\udfdc Sables et d\u00e9serts', 'sand',  'gif', 'Zones sableuses : Sahara, Arabie, Taklamakan. Le contraste avec les cultures dessine les limites de l\u2019aridit\u00e9.'],
+    'mff-marais': ['\ud83e\udeb5 Marais', 'swamp', 'gif', 'Zones humides et mar\u00e9cages.'],
+    'mff-glace':  ['\u2744 Glaces', 'ice', 'gif', 'Calottes et glaciers permanents.'],
+    'mff-admin':  ['\u2500 Fronti\u00e8res (mondial)', 'admin', 'gif', 'Limites administratives mondiales, trait fin sans texte.']
+  };
+  const etatMff = {};
+
+  Object.keys(MFF).forEach(function(cle){
+    const conf = MFF[cle];
+    const btn = document.getElementById('btn-' + cle);
+    if(!btn) return;
+    etatMff[cle] = { actif:false, couche:null };
+    btn.addEventListener('click', function(){
+      const e = etatMff[cle];
+      if(e.actif){
+        e.actif = false;
+        if(e.couche) map.removeLayer(e.couche);
+        e.couche = null;
+        basculerBouton(btn, false, '', conf[0]);
+        majLegende();
+        return;
+      }
+      e.actif = true;
+      basculerBouton(btn, true, conf[0] + ' \u2715', '', '#0369a1');
+      if(!map.getPane('mff')){
+        const p = map.createPane('mff');
+        if(p && p.style){ p.style.zIndex = 205; p.style.pointerEvents = 'none'; }
+      }
+      e.couche = L.tileLayer(
+        'https://maps-for-free.com/layer/' + conf[1] + '/z{z}/row{y}/{z}_{x}-{y}.' + conf[2],
+        { pane:'mff', maxZoom:19, maxNativeZoom:11, opacity:0.75,
+          attribution:'Maps-for-free \u00b7 CC0' });
+      // Les tuiles passent par des balises image, pas par fetch : leurs echecs
+      // echappent au journal reseau. On les y fait entrer, sinon on ne peut que deviner.
+      let echecs = 0, chargees = 0;
+      e.couche.on('tileerror', function(ev){
+        echecs++;
+        if(echecs === 1 && typeof journal === 'function')
+          journal('reseau', cle + ' : tuile refus\u00e9e',
+            (ev && ev.tile && ev.tile.src ? String(ev.tile.src).replace('https://maps-for-free.com','') : ''));
+        if(echecs === 8){
+          e.actif = false;
+          try{ map.removeLayer(e.couche); }catch(x){}
+          e.couche = null;
+          basculerBouton(btn, false, '', conf[0]);
+          afficherAlerte('\u26a0\ufe0f ' + conf[0] + ' : le serveur maps-for-free.com ne d\u00e9livre pas '
+            + 'ses tuiles (' + echecs + ' refus). Le service est peut-\u00eatre indisponible, ou il bloque '
+            + 'les appels depuis un autre site. D\u00e9tail dans 📋 Journal.');
+        }
+      });
+      e.couche.on('tileload', function(){
+        chargees++;
+        if(chargees === 1 && typeof journal === 'function')
+          journal('reseau', cle + ' : tuiles re\u00e7ues', 'le service r\u00e9pond');
+      });
+      e.couche.addTo(map);
+      majLegende();
+      afficherInfo(conf[0] + ' \u2014 ' + conf[3], 8000);
+    });
+  });
+
+  // ---------- Quartiers ----------
+  //
+  // Deux natures bien distinctes, et c'est tout l'intérêt de les voir ensemble :
+  //
+  //   ADMINISTRATIFS (admin_level 10) — découpage officiel. Paris en compte 80,
+  //   quatre par arrondissement, fixés en 1859 et inchangés depuis. Ils servent aux
+  //   statistiques mais personne ne les nomme dans la vie courante.
+  //
+  //   VÉCUS (place=neighbourhood / quarter / suburb) — ceux dont les gens parlent :
+  //   la Butte-aux-Cailles, la Croix-Rousse, le Panier. Aucune existence juridique,
+  //   des limites floues et discutées, saisis dans OSM par les habitants eux-mêmes.
+  //
+  // L'écart entre les deux cartes est un objet d'étude en soi.
+  const etatQuartiers = { actif:false, groupe:null };
+
+  document.getElementById('btn-quartiers').addEventListener('click', async function(){
+    const btn = document.getElementById('btn-quartiers');
+    if(etatQuartiers.actif){
+      etatQuartiers.actif = false;
+      if(etatQuartiers.groupe){ map.removeLayer(etatQuartiers.groupe); etatQuartiers.groupe = null; }
+      basculerBouton(btn, false, '', '🏘 Quartiers');
+      majLegende();
+      return;
+    }
+    etatQuartiers.actif = true;
+    basculerBouton(btn, true, '🏘 Quartiers \u2715', '', '#be185d');
+    afficherInfo('🏘 Quartiers \u2014 interrogation d\u2019OpenStreetMap\u2026', 0);
+    try{
+      const b = map.getBounds();
+      const eQ = empriseSure(b);
+      const bbox = eQ.sud.toFixed(4) + ',' + eQ.ouest.toFixed(4) + ','
+                 + eQ.nord.toFixed(4) + ',' + eQ.est.toFixed(4);
+      const surface = Math.abs((eQ.nord - eQ.sud) * (eQ.est - eQ.ouest));
+      if(typeof journal === 'function')
+        journal('couche', 'quartiers : bbox ' + bbox + ' \u00b7 surface ' + surface.toFixed(2));
+      // les quartiers sont tres denses : au-dela d'une agglomeration, illisible
+      if(surface > 0.6){
+        etatQuartiers.actif = false;
+        basculerBouton(btn, false, '', '🏘 Quartiers');
+        afficherAlerte('Quartiers : zoomez sur une ville \u2014 ce d\u00e9coupage n\u2019a de sens '
+          + 'qu\u2019\u00e0 l\u2019\u00e9chelle d\u2019une agglom\u00e9ration.');
+        return;
+      }
+      // « out geom » ne rend rien pour un noeud simple, et une relation sans ses membres
+      // n'a pas de contour : c'est pourquoi la requete precedente revenait vide alors que
+      // « Butte-aux-Cailles » est bien dans OpenStreetMap. On sort donc « center » en plus,
+      // et on elargit les types de lieux acceptes.
+      const requete = '[out:json][timeout:25];('
+        + 'relation["boundary"="administrative"]["admin_level"~"^(10|11)$"](' + bbox + ');'
+        + 'relation["place"~"neighbourhood|quarter|suburb|borough|city_block"](' + bbox + ');'
+        + 'way["place"~"neighbourhood|quarter|suburb|borough|city_block"](' + bbox + ');'
+        + 'node["place"~"neighbourhood|quarter|suburb|borough|city_block"](' + bbox + ');'
+        + ');out geom center 300;';
+      // overpassRequete rend la REPONSE : il faut lire le JSON
+      const rep = await overpassRequete(requete);
+      const d = await rep.json();
+      if(!etatQuartiers.actif) return;
+      const els = d.elements || [];
+      if(typeof journal === 'function')
+        journal('couche', 'quartiers \u2192 ' + els.length + ' \u00e9l\u00e9ment(s)',
+          'serveur : ' + String(DERNIER_OVERPASS.url || '?').replace('https://','').split('/')[0]);
+      // Un « zero » venu du miroir suisse ne prouve rien en France : deja rencontre
+      // sur les massifs. On ne conclut pas a la place de l'usager.
+      if(!els.length && OVERPASS_REGIONAL.test(String(DERNIER_OVERPASS.url || ''))){
+        etatQuartiers.actif = false;
+        basculerBouton(btn, false, '', '🏘 Quartiers');
+        afficherAlerte('🏘 Quartiers : seul le miroir suisse a r\u00e9pondu, il ne couvre pas '
+          + 'la France. R\u00e9essayez dans un instant.');
+        return;
+      }
+
+      const g = L.layerGroup();
+      if(!map.getPane('quartiers')){
+        const p = map.createPane('quartiers');
+        if(p && p.style) p.style.zIndex = 376;
+      }
+      let admin = 0, vecus = 0;
+      els.forEach(function(el){
+        const t = el.tags || {};
+        const nom = t['name:fr'] || t.name;
+        if(!nom) return;
+        // administratif ou vecu : la distinction fait tout le sel de la couche
+        const estAdmin = t.boundary === 'administrative';
+        const coul = estAdmin ? '#0369a1' : '#be185d';
+        const bulle = '<b>' + echap(nom) + '</b>'
+          + '<div style="color:' + coul + ';font-weight:700;font-size:11px;margin-top:2px">'
+          + (estAdmin ? 'Quartier administratif' : 'Quartier v\u00e9cu') + '</div>'
+          + (t.place ? '<div style="font-size:11px;color:#6b7280">' + echap(t.place) + '</div>' : '')
+          + '<div style="font-size:11px;line-height:1.5;margin-top:4px;color:#57534e">'
+          + (estAdmin
+              ? 'D\u00e9coupage officiel. \u00c0 Paris, les 80 quartiers ont \u00e9t\u00e9 fix\u00e9s en 1859 et n\u2019ont '
+                + 'pas boug\u00e9 depuis : ils servent aux statistiques, pas \u00e0 la conversation.'
+              : 'Nom d\u2019usage, sans existence juridique. Ses limites sont <b>floues et '
+                + 'discut\u00e9es</b> \u2014 elles viennent de ce que les habitants ont saisi dans '
+                + 'OpenStreetMap.')
+          + '</div>';
+
+        const anneaux = anneauxOsm(el);
+        if(anneaux.length){
+          let centre = null;
+          anneaux.forEach(function(an){
+            const poly = L.polygon(an.map(function(p){ return L.latLng(p.lat, p.lon); }), {
+              pane:'quartiers', color:coul, weight: estAdmin ? 2 : 2.4,
+              opacity:0.9, fillColor:coul, fillOpacity:0.10,
+              dashArray: estAdmin ? null : '7 5'
+            }).bindTooltip('<b>' + echap(nom) + '</b><br><small>'
+                + (estAdmin ? 'administratif' : 'v\u00e9cu') + '</small>', { sticky:true })
+              .bindPopup(bulle);
+            poly.addTo(g);
+            try{ if(!centre) centre = poly.getBounds().getCenter(); }catch(e){}
+          });
+          if(centre){
+            L.marker(centre, { pane:'quartiers', keyboard:false, interactive:false,
+              icon: L.divIcon({ className:'quartier-etq',
+                html:'<span style="color:' + coul + '">' + echap(nom) + '</span>', iconSize:null }) })
+              .addTo(g);
+          }
+          if(estAdmin) admin++; else vecus++;
+        }else if(isFinite(el.lat) && isFinite(el.lon)
+                 || (el.center && isFinite(el.center.lat))){
+          // quartier saisi comme simple point : pas de contour, mais le nom compte
+          const la = isFinite(el.lat) ? el.lat : el.center.lat;
+          const lo = isFinite(el.lon) ? el.lon : el.center.lon;
+          L.circleMarker([la, lo], { pane:'quartiers', radius:5, weight:2,
+            color:coul, fillColor:'#fff', fillOpacity:0.9 })
+            .bindTooltip('<b>' + echap(nom) + '</b>', { direction:'top' })
+            .bindPopup(bulle)
+            .addTo(g);
+          L.marker([la, lo], { pane:'quartiers', keyboard:false, interactive:false,
+            icon: L.divIcon({ className:'quartier-etq',
+              html:'<span style="color:' + coul + '">' + echap(nom) + '</span>', iconSize:null }) })
+            .addTo(g);
+          vecus++;
+        }
+      });
+
+      if(!admin && !vecus){
+        etatQuartiers.actif = false;
+        basculerBouton(btn, false, '', '🏘 Quartiers');
+        afficherAlerte('🏘 Quartiers : rien de recens\u00e9 dans cette vue. \u00c9largissez '
+          + 'l\u00e9g\u00e8rement, ou v\u00e9rifiez 📋 Journal \u2014 il indique quel serveur a r\u00e9pondu.');
+        return;
+      }
+      g.addTo(map);
+      etatQuartiers.groupe = g;
+      majLegende();
+      afficherInfo('🏘 ' + (admin + vecus) + ' quartier(s) \u00b7 '
+        + admin + ' administratif(s) en bleu, ' + vecus + ' v\u00e9cu(s) en rose pointill\u00e9', 9000);
+    }catch(err){
+      etatQuartiers.actif = false;
+      basculerBouton(btn, false, '', '🏘 Quartiers');
+      const raison = String(err && err.message || err).slice(0, 90);
+      if(typeof journal === 'function') journal('couche', 'quartiers \u2192 \u00e9chec : ' + raison);
+      afficherAlerte('\u26a0\ufe0f Quartiers : ' + raison);
+    }
+  });
+
+  // ---------- Mesures : distance et aire ----------
+  //
+  // Calculs géodésiques, non planaires : sur une carte en Mercator, mesurer en pixels
+  // donnerait des résultats faux — un degré de longitude vaut 111 km à l'équateur et
+  // 71 km à Paris. On travaille donc sur la sphère.
+  //
+  // distanceTo de Leaflet applique la formule de haversine : exacte à quelques mètres
+  // sur les distances qui nous intéressent. L'aire suit la formule sphérique classique,
+  // celle qu'emploient les logiciels de SIG.
+  function pointsDuTrait(t){
+    if(!t || !t.layerObj) return [];
+    const l = t.layerObj;
+    try{
+      if(typeof l.getLatLngs === 'function'){
+        let p = l.getLatLngs();
+        // un polygone rend un tableau de tableaux : on prend l'anneau extérieur
+        while(Array.isArray(p) && p.length && Array.isArray(p[0])) p = p[0];
+        return p || [];
+      }
+      if(typeof l.getLatLng === 'function') return [l.getLatLng()];
+      if(typeof l.getBounds === 'function'){
+        const b = l.getBounds();
+        return [b.getNorthWest(), b.getNorthEast(), b.getSouthEast(), b.getSouthWest()];
+      }
+    }catch(e){}
+    return [];
+  }
+
+  function longueurTrait(pts){
+    let d = 0;
+    for(let i = 1; i < pts.length; i++){
+      try{ d += pts[i - 1].distanceTo(pts[i]); }catch(e){}
+    }
+    return d;   // en mètres
+  }
+
+  function aireTrait(pts){
+    // Formule sphérique de l'aire d'un polygone géodésique (méthode de L'Huilier
+    // simplifiée, celle utilisée par Leaflet.GeometryUtil et QGIS).
+    if(pts.length < 3) return 0;
+    const R = 6378137;                       // rayon terrestre, WGS84
+    const rad = Math.PI / 180;
+    let somme = 0;
+    for(let i = 0; i < pts.length; i++){
+      const p1 = pts[i], p2 = pts[(i + 1) % pts.length];
+      somme += (p2.lng - p1.lng) * rad
+             * (2 + Math.sin(p1.lat * rad) + Math.sin(p2.lat * rad));
+    }
+    return Math.abs(somme * R * R / 2);      // en mètres carrés
+  }
+
+  function formaterDistance(m){
+    if(m < 1000) return Math.round(m) + ' m';
+    if(m < 100000) return (m / 1000).toFixed(2).replace('.', ',') + ' km';
+    return Math.round(m / 1000) + ' km';
+  }
+
+  function formaterAire(m2){
+    const ha = m2 / 10000;
+    if(m2 < 10000) return Math.round(m2) + ' m\u00b2';
+    if(ha < 100) return ha.toFixed(2).replace('.', ',') + ' ha';
+    if(ha < 10000) return Math.round(ha) + ' ha \u00b7 ' + (m2 / 1e6).toFixed(1).replace('.', ',') + ' km\u00b2';
+    return Math.round(m2 / 1e6) + ' km\u00b2';
+  }
+
+  function majMesure(t){
+    const boite = document.getElementById('mesure-boite');
+    if(!boite) return;
+    if(!t){ boite.hidden = true; return; }
+    const pts = pointsDuTrait(t);
+    if(pts.length < 2){ boite.hidden = true; return; }
+
+    // un polygone ferme : on donne le perimetre ET l'aire
+    const ferme = t.type === 'zone' || t.type === 'rect' || t.type === 'cercle'
+               || (t.layerObj && t.layerObj instanceof L.Polygon);
+    const pourLong = ferme ? pts.concat([pts[0]]) : pts;
+    const d = longueurTrait(pourLong);
+    const a = ferme ? aireTrait(pts) : 0;
+
+    let html = '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:baseline">'
+      + '<span><b style="font-size:13px">' + formaterDistance(d) + '</b>'
+      + ' <span class="sous">' + (ferme ? 'p\u00e9rim\u00e8tre' : 'longueur') + '</span></span>';
+    if(ferme && a > 0){
+      html += '<span><b style="font-size:13px">' + formaterAire(a) + '</b>'
+        + ' <span class="sous">aire</span></span>';
+    }
+    html += '</div>';
+    if(!ferme && pts.length === 2){
+      // pour un segment simple, le cap est souvent ce qu'on cherche
+      try{
+        const a1 = pts[0], a2 = pts[1];
+        const y = Math.sin((a2.lng - a1.lng) * Math.PI / 180) * Math.cos(a2.lat * Math.PI / 180);
+        const x = Math.cos(a1.lat * Math.PI / 180) * Math.sin(a2.lat * Math.PI / 180)
+                - Math.sin(a1.lat * Math.PI / 180) * Math.cos(a2.lat * Math.PI / 180)
+                  * Math.cos((a2.lng - a1.lng) * Math.PI / 180);
+        const cap = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+        const rose = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSO', 'SO',
+                      'OSO', 'O', 'ONO', 'NO', 'NNO'];
+        html += '<div class="sous" style="margin-top:2px">cap ' + Math.round(cap) + '\u00b0 \u00b7 '
+          + rose[Math.round(cap / 22.5) % 16] + '</div>';
+      }catch(e){}
+    }
+    html += '<div class="sous" style="margin-top:3px;font-size:9.5px">'
+      + pts.length + ' sommet(s) \u00b7 calcul g\u00e9od\u00e9sique sur l\u2019ellipso\u00efde WGS84</div>';
+    boite.innerHTML = html;
+    boite.hidden = false;
+  }
+
+  // Bilan de tout le croquis, ou du calque courant
+  (function cablerBilanMesures(){
+    const b = document.getElementById('btn-mesure-total');
+    if(!b) return;
+    b.addEventListener('click', function(){
+      let nL = 0, nA = 0, totalL = 0, totalA = 0;
+      TRAITS.forEach(function(t){
+        const pts = pointsDuTrait(t);
+        if(pts.length < 2) return;
+        const ferme = t.type === 'zone' || t.type === 'rect' || t.type === 'cercle'
+                   || (t.layerObj && t.layerObj instanceof L.Polygon);
+        if(ferme){
+          nA++;
+          totalA += aireTrait(pts);
+          totalL += longueurTrait(pts.concat([pts[0]]));
+        }else{
+          nL++;
+          totalL += longueurTrait(pts);
+        }
+      });
+      if(!nL && !nA){
+        afficherInfo('📏 Aucun trac\u00e9 \u00e0 mesurer \u2014 dessinez d\u2019abord une ligne ou une zone', 5000);
+        return;
+      }
+      afficherAlerte('📏 Bilan du croquis \u00b7 '
+        + (nL ? nL + ' ligne(s), ' : '')
+        + (nA ? nA + ' surface(s) totalisant ' + formaterAire(totalA) + ' \u00b7 ' : '')
+        + 'longueur cumul\u00e9e ' + formaterDistance(totalL));
+      if(typeof journal === 'function')
+        journal('action', 'mesures : ' + nL + ' ligne(s), ' + nA + ' surface(s)',
+          formaterDistance(totalL) + (nA ? ' \u00b7 ' + formaterAire(totalA) : ''));
+    });
+  })();
+
   (function cablerLargeurLegende(){
     // les fleches existent en double : dans l'en-tete de la legende et dans celui du
     // journal, puisque l'un remplace l'autre dans le volet
@@ -13312,6 +14056,7 @@
   }
 
   function deselectionner(){
+    try{ majMesure(null); }catch(e){}
     if(selection && selection.layerObj && styleAvantSelection){
       try{ selection.layerObj.setStyle(styleAvantSelection); }catch(e){}
     }
@@ -13324,6 +14069,7 @@
   function selectionner(t){
     deselectionner();
     selection = t;
+    try{ majMesure(t); }catch(e){}
     try{
       styleAvantSelection = { color:t.layerObj.options.color, weight:t.layerObj.options.weight,
                               dashArray:t.layerObj.options.dashArray, opacity:t.layerObj.options.opacity };
@@ -21220,6 +21966,10 @@
 
   function coucheEstFrancaise(btn){
     if(!btn) return false;
+    // Les couches a couverture MONDIALE ne doivent jamais etre grisees hors de France,
+    // meme si leur infobulle mentionne l'IGN a titre de comparaison.
+    if(/^btn-(mff|monde|pays)-/.test(btn.id || '')) return false;
+    if(/mondial|monde entier|Natural Earth|couverture mondiale/i.test(btn.getAttribute('title') || '')) return false;
     if(ID_FRANCE.test(btn.id || '')) return true;
     return MOTS_FRANCE.test(btn.getAttribute('title') || '');
   }
