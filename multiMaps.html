@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v7.9 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v7.10 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v7.9</title>
+<title>MultiMaps — géographie (collège & lycée) — v7.10</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -2652,7 +2652,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v7.9</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v7.10</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -2776,7 +2776,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v7.9</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v7.10</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -3450,7 +3450,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v7.9';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v7.10';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -13932,11 +13932,12 @@
     afficherInfo('🥃 Le Pastis Mu\u2019 \u2014 interrogation du r\u00e9pertoire\u2026', 0);
     try{
       const b = empriseSure(map.getBounds());
-      // l'API attend une bbox en ouest,sud,est,nord
       const bbox = [b.ouest, b.sud, b.est, b.nord].map(function(x){ return x.toFixed(5); }).join(',');
-      const url = PASTIS_URL + '?bbox=' + bbox + '&limit=500';
+      // Premier essai avec bbox. Si l'API repond 200 mais sans point, on retente SANS
+      // filtre : mieux vaut le repertoire entier que rien.
+      let url = PASTIS_URL + '?bbox=' + bbox + '&limit=500';
       if(typeof journal === 'function') journal('couche', 'pastis : ' + url.slice(0, 110));
-      const r = await fetch(url, { headers:{ 'Accept':'application/json' } });
+      let r = await fetch(url, { headers:{ 'Accept':'application/json' } });
       if(!r.ok){
         // l'API rend toujours du JSON, meme en erreur : on lit le detail
         let detail = 'HTTP ' + r.status;
@@ -13944,18 +13945,40 @@
         if(r.status === 429) detail = 'trop de requ\u00eates \u2014 attendez une minute (limite 120/min)';
         throw new Error(detail);
       }
-      const d = await r.json();
+      let d = await r.json();
       if(!etatPastis.actif) return;
-      const feats = (d && d.features) || [];
-      const total = (d && (d.total || d.count)) || feats.length;
+      // la reponse peut se presenter de plusieurs facons : on les accepte toutes
+      const lire = function(x){
+        if(!x) return [];
+        if(Array.isArray(x)) return x;
+        return x.features || x.data || x.results || x.items || x.pastis || [];
+      };
+      let feats = lire(d);
       if(typeof journal === 'function')
-        journal('couche', 'pastis \u2192 ' + feats.length + ' point(s)',
-          total > feats.length ? total + ' au total dans le r\u00e9pertoire' : '');
+        journal('couche', 'pastis : r\u00e9ponse re\u00e7ue', 'cl\u00e9s = '
+          + (d && typeof d === 'object' ? Object.keys(d).slice(0, 6).join(', ') : typeof d)
+          + ' \u00b7 ' + feats.length + ' entr\u00e9e(s)');
+      if(!feats.length){
+        try{
+          url = PASTIS_URL + '?limit=1000';
+          if(typeof journal === 'function')
+            journal('couche', 'pastis : nouvel essai sans bbox', url.slice(0, 90));
+          r = await fetch(url, { headers:{ 'Accept':'application/json' } });
+          if(r.ok){
+            d = await r.json();
+            feats = lire(d);
+            if(typeof journal === 'function')
+              journal('couche', 'pastis sans bbox \u2192 ' + feats.length + ' entr\u00e9e(s)');
+          }
+        }catch(e){}
+      }
+      const total = (d && (d.total || d.count)) || feats.length;
       if(!feats.length){
         etatPastis.actif = false;
         basculerBouton(btn, false, '', '🥃 Le Pastis Mu\u2019');
-        afficherAlerte('🥃 Aucun point dans cette vue \u2014 le r\u00e9pertoire est surtout '
-          + 'm\u00e9ridional. Dézoomez sur le Sud-Est, ou toute la France.');
+        afficherAlerte('\ud83e\udd43 Le r\u00e9pertoire a r\u00e9pondu, mais sans point exploitable '
+          + '\u2014 m\u00eame sans filtre d\u2019emprise. Le format a peut-\u00eatre chang\u00e9 : '
+          + '\ud83d\udccb Journal indique les cl\u00e9s re\u00e7ues, utile pour le signaler.');
         return;
       }
 
@@ -13964,10 +13987,17 @@
         if(p && p.style) p.style.zIndex = 379;
       }
       const g = L.layerGroup();
+      let ignores = 0;
       feats.forEach(function(f){
-        const c = f.geometry && f.geometry.coordinates;
-        if(!c || !isFinite(c[0]) || !isFinite(c[1])) return;
-        const p = f.properties || {};
+        // GeoJSON [lon, lat], ou objet plat portant lat/lon directement
+        let c = f.geometry && f.geometry.coordinates;
+        if(!c){
+          const la = f.lat != null ? f.lat : (f.latitude != null ? f.latitude : null);
+          const lo = f.lon != null ? f.lon : (f.lng != null ? f.lng : (f.longitude != null ? f.longitude : null));
+          if(la != null && lo != null) c = [+lo, +la];
+        }
+        if(!c || !isFinite(c[0]) || !isFinite(c[1])){ ignores++; return; }
+        const p = f.properties || f;
         const nom = p.nom || p.name || p.titre || 'Point';
         const lieu = p.commune || p.ville || p.departement || '';
         L.circleMarker([c[1], c[0]], {            // GeoJSON : [lon, lat]
@@ -13987,6 +14017,8 @@
             + 'border-top:1px solid var(--trait)">Source : ' + PASTIS_CREDIT + '</div>')
           .addTo(g);
       });
+      if(ignores && typeof journal === 'function')
+        journal('couche', 'pastis : ' + ignores + ' entr\u00e9e(s) sans coordonn\u00e9es lisibles');
       g.addTo(map);
       etatPastis.groupe = g;
       // la licence impose le credit : on l'ajoute a l'attribution de la carte
