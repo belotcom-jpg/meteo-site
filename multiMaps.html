@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v7.10.1 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v7.11 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v7.10.1</title>
+<title>MultiMaps — géographie (collège & lycée) — v7.11</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -1808,7 +1808,8 @@
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
     <button class="widget-btn" data-action="fermer" title="Fermer (réouvrable via la fenêtre 🧭 pilote)">✕</button>
   </div>
-  <div class="widget-corps"><button class="calque-ajout donnee" id="btn-lim-reg" title="Contours des 13 régions métropolitaines + outre-mer (Admin Express COG Carto, IGN) — trait épais">🗾 Limites des régions</button>
+  <div class="widget-corps"><button class="calque-ajout donnee" id="btn-lim-pays" title="Frontières nationales du monde entier (Natural Earth). Complète la hiérarchie : pays, régions, départements, communes, quartiers. Actionne la même couche que « Pays du monde » dans la fenêtre Monde.">🌍 Limites des pays</button>
+    <button class="calque-ajout donnee" id="btn-lim-reg" title="Contours des 13 régions métropolitaines + outre-mer (Admin Express COG Carto, IGN) — trait épais">🗾 Limites des régions</button>
       <button class="calque-ajout donnee" id="btn-lim-dep" title="Contours des 101 départements (Admin Express COG Carto, IGN) — trait moyen">🗾 Limites des départements</button>
       <button class="calque-ajout donnee" id="btn-lim-com" title="Contours des communes visibles à l'écran (Admin Express COG Carto, IGN) — trait fin, zoomez au niveau départemental (9+)">🗾 Limites des communes</button>
     <button class="calque-ajout donnee" id="btn-quartiers" title="Les quartiers, dans leurs deux natures : les quartiers ADMINISTRATIFS (bleu) — à Paris, 80 quartiers fixés en 1859 et jamais modifiés — et les quartiers VÉCUS (rose pointillé) : la Butte-aux-Cailles, la Croix-Rousse, le Panier. Ces derniers n’ont aucune existence juridique et leurs limites sont floues, saisies dans OpenStreetMap par les habitants. Zoomez sur une ville avant de l’activer.">🏘 Quartiers</button>
@@ -2652,7 +2653,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v7.10.1</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v7.11</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -2776,7 +2777,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v7.10.1</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v7.11</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -3450,7 +3451,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v7.10.1';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v7.11';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -14042,6 +14043,32 @@
             ? ' \u2014 en mode fichier local, le navigateur bloque souvent ces appels.' : ''));
     }
   });
+
+
+  // ---------- Relais : limites des pays ----------
+  //
+  // La couche existe deja dans la fenetre Monde. Plutot que de la dupliquer — memes
+  // donnees, memes reglages, deux etats a tenir a jour — on renvoie sur elle. Le
+  // libelle suit l'etat reel de la couche.
+  (function cablerLimitesPays(){
+    const relais = document.getElementById('btn-lim-pays');
+    const vrai = document.getElementById('btn-monde-pays');
+    if(!relais || !vrai) return;
+    function refleter(){
+      const allume = (vrai.textContent || '').indexOf('\u2715') !== -1;
+      if(allume) basculerBouton(relais, true, '🌍 Limites des pays \u2715', '', '#0369a1');
+      else basculerBouton(relais, false, '', '🌍 Limites des pays');
+    }
+    relais.addEventListener('click', function(){
+      vrai.click();
+      // le libelle de la couche se met a jour apres sa requete reseau
+      setTimeout(refleter, 60);
+      setTimeout(refleter, 900);
+      setTimeout(refleter, 2500);
+    });
+    // si l'usager agit depuis la fenetre Monde, le relais suit aussi
+    vrai.addEventListener('click', function(){ setTimeout(refleter, 60); setTimeout(refleter, 900); });
+  })();
 
   (function cablerLargeurLegende(){
     // les fleches existent en double : dans l'en-tete de la legende et dans celui du
