@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v7.5.1 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v7.9 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v7.5.1</title>
+<title>MultiMaps — géographie (collège & lycée) — v7.9</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -296,6 +296,12 @@
     margin-top:5px; padding:6px 8px; border:1px solid var(--trait); border-radius:8px;
     background:#f0f9ff; font-size:11.5px; line-height:1.4;
   }
+  /* QR code du lien de vue. */
+  .qr-boite{
+    margin-top:6px; padding:7px; border:1px solid var(--trait); border-radius:8px;
+    background:#fff; text-align:center;
+  }
+  .qr-boite svg{ max-width:100%; height:auto }
   .journal-corps{
     max-height:300px; overflow-y:auto; border:1px solid var(--trait); border-radius:8px;
     background:#fdfcf9; padding:5px 7px; font:10.5px/1.55 ui-monospace,SFMono-Regular,monospace;
@@ -1332,7 +1338,10 @@
     <details class="pilote-paquet"><summary>🌃 Ciel nocturne</summary>
       <div class="pilote-grille">
         <button class="calque-ajout donnee" id="btn-astro-lumiere" title="La Terre vue de nuit par satellite (VIIRS Black Marble, NASA) : l’intensité des lumières artificielles révèle l’urbanisation, les axes de transport et le littoral.">🌃 Pollution lumineuse (NASA)</button>
-        <button class="calque-ajout donnee" id="btn-astro-reserves" title="Réserves internationales de ciel étoilé et parcs labellisés en France : les meilleurs endroits pour observer, protégés de la lumière artificielle.">⭐ Réserves de ciel étoilé</button>
+        <button class="calque-ajout donnee" id="btn-bortle" title="L’échelle de Bortle : neuf classes, du ciel noir absolu au cœur des grandes villes. Elle dit ce qu’on voit réellement à l’œil nu.">🌌 Échelle de Bortle</button>
+    <button class="calque-ajout donnee" id="btn-lpmap" title="Ouvre lightpollutionmap.info sur la vue actuelle : brillance du ciel mesurée (VIIRS, World Atlas, relevés SQM). Bien plus fin que la couche NASA embarquée.">🔗 Ouvrir lightpollutionmap.info</button>
+    <div style="font-size:9.5px;color:#57534e;margin-top:4px;line-height:1.45">La couche NASA ci-dessus montre la <b>lumière émise</b> vue du satellite. lightpollutionmap.info montre la <b>brillance du ciel</b> vue du sol — ce n’est pas la même chose : c’est la seconde qui décide de ce que vous voyez.</div>
+    <button class="calque-ajout donnee" id="btn-astro-reserves" title="Réserves internationales de ciel étoilé et parcs labellisés en France : les meilleurs endroits pour observer, protégés de la lumière artificielle.">⭐ Réserves de ciel étoilé</button>
         <button class="calque-ajout donnee" id="btn-astro-obs" title="Principaux observatoires astronomiques et planétariums de France, avec leur spécialité et ce qu’on peut y visiter.">🔭 Observatoires & planétariums</button>
       </div>
     </details>
@@ -1394,6 +1403,8 @@
     <div style="font-size:10px;color:#8a8577;margin-bottom:4px">Ce qu’un lieu doit à sa production. Recensement OpenStreetMap : recentrez la carte, puis choisissez une catégorie.</div>
     <button class="calque-ajout donnee" id="btn-ter-spiritueux" title="Eaux-de-vie, liqueurs, gin, rhum arrangé. Catégorie sans étiquette dédiée dans OpenStreetMap : ">🍸 Spiritueux locaux</button>
     <button class="calque-ajout donnee" id="btn-ter-pastis" title="Le pastis n’a pas d’appellation protégée mais un ancrage très net : Marseille et la Provence. ">🌿 Pastis &amp; anisés</button>
+    <button class="calque-ajout donnee" id="btn-pastis-mu" title="Répertoire du Pastis Mu’ : distilleries, producteurs et adresses recensés par lepastismu.com. Données sous licence CC BY 4.0, mises à jour en continu. Chaque point renvoie à sa fiche sur le site.">🥃 Le Pastis Mu’</button>
+    <div style="font-size:9.5px;color:#57534e;margin-top:4px;line-height:1.45">Source : <a href="https://lepastismu.com" target="_blank" rel="noopener">Le Pastis Mu’</a> · licence CC BY 4.0. Le répertoire s’enrichit régulièrement et la couche suit automatiquement.</div>
     <button class="calque-ajout donnee" id="btn-ter-distillerie" title="Distilleries artisanales et historiques. Catégorie bien représentée : Cognac, Armagnac, Calvados, Alpes, Jura.">🥃 Distilleries</button>
     <button class="calque-ajout donnee" id="btn-ter-vin" title="Domaines, caves et maisons de vin. Zoomez sur un vignoble : Bordelais, Bourgogne, vallée du Rhône, Alsace, Champagne.">🍷 Vins &amp; domaines</button>
     <button class="calque-ajout donnee" id="btn-ter-biere" title="La multiplication des microbrasseries depuis 2010 est l’un des faits marquants de la géographie alimentaire récente : ">🍺 Bières &amp; brasseries</button>
@@ -1834,7 +1845,18 @@
       <button class="calque-ajout donnee" id="btn-gares" title="Gares de voyageurs SNCF (SNCF Open Data) — cliquez une pastille pour le détail">🚉 Gares SNCF</button>
       <button class="calque-ajout donnee" id="btn-mh" title="Immeubles protégés au titre des monuments historiques (base Mérimée, ministère de la Culture). Zoomez au niveau d'un quartier.">🏛️ Monuments historiques</button>
       <button class="calque-ajout donnee" id="btn-sport" title="Recensement des équipements sportifs — piscines, gymnases, stades, skateparks… (ministère des Sports). Zoomez fortement, ils sont très nombreux.">🏊 Équipements sportifs</button>
+    
+    <div class="sep"></div>
+    <span class="etiquette">Accessibilité</span>
+    <button class="calque-ajout donnee" id="btn-isochrone" title="Cliquez un point : l’application trace les zones accessibles en 10, 20 et 30 minutes sur le réseau routier réel. La distance à vol d’oiseau ment — trente minutes font 45 km sur autoroute et 12 km en montagne.">⏱ Temps d’accès (isochrones)</button>
+    <div id="iso-panneau" hidden>
+      <select id="iso-mode" class="feux-annee" style="width:100%;margin-top:4px" title="Mode de déplacement. À pied, les paliers sont réduits de moitié : 5, 10 et 15 minutes.">
+        <option value="car">🚗 En voiture · 10, 20, 30 min</option>
+        <option value="pedestrian">🚶 À pied · 5, 10, 15 min</option>
+      </select>
+      <div style="font-size:9.5px;color:#57534e;margin-top:5px;line-height:1.45">Calcul sur le <b>réseau routier réel</b> (BD TOPO, IGN), avec des vitesses théoriques — sans trafic ni feux. France métropolitaine et Corse uniquement. Croisez avec l’exode rural ou les fermetures ferroviaires : les inégalités d’accès aux services apparaissent.</div>
     </div>
+  </div>
 </div>
 
 <div class="widget" id="wg-ville" style="width:246px">
@@ -2106,6 +2128,8 @@
     <button class="calque-ajout donnee" id="btn-explic-max" title="Fenêtre déplaçable avec l’explication complète : données, méthode, limites et messages de précaution.">📚 Explication complète + précautions</button>
     <button class="calque-ajout donnee" id="btn-export-png" title="Télécharge une image PNG de la vue actuelle avec le bandeau de précaution INCRUSTÉ dans l’image — impossible de partager la carte sans l’avertissement.">📸 Image de la vue (précaution incrustée)</button>
     <button class="calque-ajout donnee" id="btn-lien-vue" title="Copie un LIEN qui rouvre exactement cette vue : position, zoom, couches actives et horloge. Parfait pour un tweet ou une consigne de classe.">🔗 Copier le lien de cette vue</button>
+    <button class="calque-ajout donnee" id="btn-qr-vue" title="Fabrique un QR code de la vue actuelle, avec les couches allumées. Les élèves le scannent et ouvrent exactement la même carte sur leur téléphone.">📱 QR code de la vue</button>
+    <div id="qr-boite" class="qr-boite" hidden></div>
     <button class="calque-ajout donnee" id="btn-projection" title="Mode PROJECTION : masque les fenêtres secondaires, grossit la légende, la barre de temps et les infobulles. Re-cliquez pour revenir à l’affichage normal.">📽️ Mode projection (classe)</button>
   </div>
 </div>
@@ -2628,7 +2652,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v7.5.1</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v7.9</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -2752,7 +2776,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v7.5.1</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v7.9</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -3426,7 +3450,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v7.5.1';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v7.9';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -13606,6 +13630,381 @@
           formaterDistance(totalL) + (nA ? ' \u00b7 ' + formaterAire(totalA) : ''));
     });
   })();
+
+
+  // ---------- Bortle et passerelle vers lightpollutionmap.info ----------
+  //
+  // Deux mesures qu'on confond souvent : le satellite VIIRS voit la lumière ÉMISE vers
+  // le haut ; l'astronome mesure la brillance du CIEL au sol, en mag/arcsec². Un même
+  // éclairage donne un ciel très différent selon l'humidité, les aérosols, l'altitude.
+  const BORTLE = [
+    [1, 'Ciel noir absolu', '#000000', '21,7\u201322,0', 'La Voie lact\u00e9e projette une ombre. Lumi\u00e8re zodiacale visible. En France m\u00e9tropolitaine : quasi introuvable \u2014 quelques points du Massif central, des Alpes du Sud, de la Lozère.'],
+    [2, 'Ciel vraiment noir', '#1e3a5f', '21,5\u201321,7', 'Voie lact\u00e9e tr\u00e8s structur\u00e9e. On distingue M33 \u00e0 l\u2019\u0153il nu. R\u00e9serves de ciel \u00e9toil\u00e9 du Pic du Midi, du Quercy, des C\u00e9vennes.'],
+    [3, 'Ciel rural', '#1e5f8f', '21,3\u201321,5', 'Halos visibles \u00e0 l\u2019horizon. Voie lact\u00e9e encore riche. Campagnes \u00e9loign\u00e9es des villes.'],
+    [4, 'P\u00e9riph\u00e9rie rurale', '#2e8b57', '20,4\u201321,3', 'D\u00f4mes lumineux nets au-dessus des villes. La Voie lact\u00e9e perd ses d\u00e9tails. Cas le plus fr\u00e9quent des campagnes fran\u00e7aises.'],
+    [5, 'Banlieue', '#9acd32', '19,1\u201320,4', 'Voie lact\u00e9e p\u00e2le et fragmentaire. Les nuages sont plus clairs que le ciel.'],
+    [6, 'Banlieue lumineuse', '#ffd700', '18,0\u201319,1', 'Voie lact\u00e9e invisible au z\u00e9nith. M31 \u00e0 peine devinable.'],
+    [7, 'Transition ville', '#ff8c00', '17,5\u201318,0', 'Le ciel entier est gris\u00e2tre. Seules les \u00e9toiles les plus brillantes subsistent.'],
+    [8, 'Ville', '#ff4500', '<18,0', 'On lit un journal dehors. Quelques dizaines d\u2019\u00e9toiles visibles.'],
+    [9, 'C\u0153ur de grande ville', '#ffffff', '<17,5', 'Une poign\u00e9e d\u2019\u00e9toiles, la Lune et les plan\u00e8tes. Paris intra-muros.']
+  ];
+
+  document.getElementById('btn-bortle').addEventListener('click', function(){
+    const t = '<b>🌌 \u00c9chelle de Bortle</b>'
+      + '<div style="font-size:11px;color:#6b7280;margin:3px 0 6px">Neuf classes, d\u00e9finies par John Bortle en 2001. '
+      + 'La colonne <i>mag</i> donne la brillance du ciel en magnitude par seconde d\u2019arc carr\u00e9e : '
+      + '<b>plus le nombre est grand, plus le ciel est noir</b>.</div>'
+      + BORTLE.map(function(b){
+          return '<div style="display:flex;gap:7px;align-items:flex-start;margin-bottom:5px">'
+            + '<span style="flex:0 0 auto;width:15px;height:15px;border-radius:4px;border:1px solid #d6d3d1;'
+            + 'background:' + b[2] + '"></span>'
+            + '<div style="flex:1"><b>' + b[0] + ' \u00b7 ' + b[1] + '</b> '
+            + '<span style="font-size:10px;color:#6b7280">' + b[3] + ' mag</span>'
+            + '<div style="font-size:11px;line-height:1.45;color:#44403c">' + b[4] + '</div></div></div>';
+        }).join('')
+      + '<div style="font-size:10px;color:#8a8577;margin-top:5px;padding-top:4px;border-top:1px solid var(--trait)">'
+      + 'L\u2019\u00e9chelle d\u00e9crit ce qu\u2019on <b>voit</b>, non ce que le satellite <b>mesure</b> : '
+      + 'humidit\u00e9, a\u00e9rosols et altitude changent le r\u00e9sultat pour un m\u00eame \u00e9clairage au sol.</div>';
+    try{
+      L.popup({ maxWidth:330, className:'popup-bortle' })
+        .setLatLng(map.getCenter()).setContent(t).openOn(map);
+    }catch(e){ afficherInfo('🌌 \u00c9chelle de Bortle : 1 = ciel noir absolu, 9 = c\u0153ur de ville', 7000); }
+  });
+
+  document.getElementById('btn-lpmap').addEventListener('click', function(){
+    const c = map.getCenter();
+    const z = Math.max(3, Math.min(map.getZoom(), 15));
+    // l'etat de la carte est encode en base64 dans l'adresse : couche sb_2025,
+    // opacite 60 %, comme le reglage par defaut du site
+    let etat = '';
+    try{
+      etat = btoa(JSON.stringify({ basemap:'LayerBingRoad', overlay:'sb_2025',
+        overlaycolor:false, overlayopacity:'60', featuresopacity:'85' }));
+    }catch(e){}
+    const url = 'https://www.lightpollutionmap.info/#zoom=' + z.toFixed(2)
+      + '&lat=' + c.lat.toFixed(4) + '&lon=' + c.lng.toFixed(4)
+      + (etat ? '&state=' + etat : '');
+    try{ window.open(url, '_blank', 'noopener'); }catch(e){}
+    afficherInfo('🔗 lightpollutionmap.info ouvert sur cette vue \u2014 couche « brillance du ciel 2025 »', 7000);
+    if(typeof journal === 'function') journal('action', 'passerelle lightpollutionmap.info', url.slice(0, 80));
+  });
+
+  // ---------- QR code du lien de vue ----------
+  //
+  // Un generateur maison a ete ecrit puis abandonne : ses codes ne se decodaient pas
+  // (verifie avec un vrai lecteur). On charge donc une bibliotheque eprouvee, depuis
+  // le meme CDN que Leaflet, et seulement au premier clic. Si le reseau ne repond pas,
+  // on rend le lien copiable a la main plutot que rien.
+  let qrPret = null;
+  function chargerQR(){
+    if(qrPret) return qrPret;
+    qrPret = new Promise(function(resoudre, rejeter){
+      if(typeof window !== 'undefined' && window.qrcode){ resoudre(window.qrcode); return; }
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+      s.onload = function(){
+        if(window.qrcode) resoudre(window.qrcode);
+        else rejeter(new Error('biblioth\u00e8que charg\u00e9e mais inutilisable'));
+      };
+      s.onerror = function(){ rejeter(new Error('chargement impossible')); };
+      document.head.appendChild(s);
+    });
+    return qrPret;
+  }
+
+  function lienDeVue(){
+    let url = '';
+    try{
+      const b = document.getElementById('btn-lien-vue');
+      if(b) b.click();
+      const z = document.getElementById('tweet-zone');
+      url = (z && z.value) || '';
+    }catch(e){}
+    if(!/^https?:/.test(url)){
+      try{
+        const c = map.getCenter();
+        url = location.origin + location.pathname + '#vue=' + c.lat.toFixed(4) + ','
+          + c.lng.toFixed(4) + ',' + map.getZoom() + ',0,' + etatCouchesActives().join('.');
+      }catch(e){}
+    }
+    return url;
+  }
+
+  document.getElementById('btn-qr-vue').addEventListener('click', async function(){
+    const boite = document.getElementById('qr-boite');
+    if(!boite) return;
+    const url = lienDeVue();
+    if(/^file:/.test(url) || !url){
+      boite.innerHTML = '<div class="sous" style="line-height:1.45">\u26a0\ufe0f Page ouverte en '
+        + '<b>fichier local</b> : un QR ne servirait \u00e0 rien, le lien ne fonctionnerait que sur '
+        + 'cet ordinateur. D\u00e9posez l\u2019application en ligne (GitHub Pages) pour l\u2019utiliser en classe.</div>';
+      boite.hidden = false;
+      return;
+    }
+    boite.innerHTML = '<div class="sous">Fabrication du QR code\u2026</div>';
+    boite.hidden = false;
+    try{
+      const qrcode = await chargerQR();
+      // type 0 = la plus petite version qui contient le texte ; L = correction legere,
+      // suffisante pour un ecran ou un videoprojecteur
+      const q = qrcode(0, 'L');
+      q.addData(url);
+      q.make();
+      boite.innerHTML = q.createSvgTag({ cellSize: 4, margin: 4, scalable: true })
+        + '<div class="sous" style="margin-top:4px;line-height:1.4;font-size:9.5px">'
+        + 'Les \u00e9l\u00e8ves scannent : ils ouvrent <b>cette vue</b> avec <b>ces couches</b>.'
+        + '<br>' + etatCouchesActives().length + ' couche(s) transmise(s)'
+        + '</div>'
+        + '<button class="croquis-btn" id="qr-copier" style="width:100%;margin-top:4px">'
+        + '📋 Copier le lien</button>';
+      const c = document.getElementById('qr-copier');
+      if(c) c.addEventListener('click', function(){ copierTexte(url); });
+      if(typeof journal === 'function')
+        journal('action', 'QR code de la vue', etatCouchesActives().length + ' couche(s), '
+          + url.length + ' caract\u00e8res');
+    }catch(e){
+      // repli honnete : pas de QR, mais le lien reste utilisable
+      boite.innerHTML = '<div class="sous" style="line-height:1.45">Le g\u00e9n\u00e9rateur de QR n\u2019a pas '
+        + 'pu \u00eatre charg\u00e9 (' + echap(String(e && e.message || e)).slice(0, 40) + ').<br>'
+        + 'Le lien reste utilisable :</div>'
+        + '<textarea readonly style="width:100%;height:52px;font-size:10px;margin-top:4px">'
+        + echap(url) + '</textarea>';
+      if(typeof journal === 'function')
+        journal('action', 'QR \u2192 \u00e9chec de chargement', String(e && e.message || e).slice(0, 50));
+    }
+  });
+
+  // ---------- Isochrones : le temps plutôt que la distance ----------
+  //
+  // Service de la Géoplateforme IGN, moteur Valhalla sur la BD TOPO. Sans clé.
+  // On dessine trois couronnes — 10, 20, 30 minutes — depuis un point cliqué.
+  //
+  // L'intérêt pédagogique n'est pas la prouesse technique : c'est que la distance à
+  // vol d'oiseau ment. Trente minutes de voiture, ce sont 45 km sur autoroute et 12 km
+  // en montagne. Croisé avec l'exode rural et les fermetures ferroviaires déjà
+  // présentes, on voit se dessiner les inégalités d'accès aux services.
+  const etatIso = { actif:false, groupe:null, mode:'car', enCours:false };
+  const ISO_PALIERS = [
+    [600,  '10 min', '#166534', 0.30],
+    [1200, '20 min', '#ca8a04', 0.22],
+    [1800, '30 min', '#b91c1c', 0.16]
+  ];
+
+  async function traceIsochrone(latlng){
+    if(etatIso.enCours){ afficherInfo('\u23F1 Calcul d\u00e9j\u00e0 en cours\u2026', 3000); return; }
+    etatIso.enCours = true;
+    const mode = etatIso.mode;
+    const nomMode = mode === 'car' ? 'en voiture' : '\u00e0 pied';
+    afficherInfo('\u23F1 Calcul des zones accessibles ' + nomMode + '\u2026', 0);
+    if(!map.getPane('iso')){
+      const p = map.createPane('iso');
+      if(p && p.style) p.style.zIndex = 374;
+    }
+    if(etatIso.groupe) map.removeLayer(etatIso.groupe);
+    const g = L.layerGroup();
+    let obtenus = 0, dernierEchec = '';
+
+    // du plus grand au plus petit : les petits se posent par-dessus
+    for(let i = ISO_PALIERS.length - 1; i >= 0; i--){
+      const [sec, libelle, coul, opa] = ISO_PALIERS[i];
+      // à pied, trente minutes ne mènent pas loin : on réduit les paliers
+      const valeur = mode === 'pedestrian' ? Math.round(sec / 2) : sec;
+      const minutes = Math.round(valeur / 60);
+      try{
+        const url = 'https://data.geopf.fr/navigation/isochrone?'
+          + 'point=' + latlng.lng.toFixed(6) + ',' + latlng.lat.toFixed(6)
+          + '&resource=bdtopo-valhalla'
+          + '&costValue=' + valeur + '&costType=time'
+          + '&profile=' + mode
+          + '&direction=departure&geometryFormat=geojson&crs=EPSG:4326';
+        const r = await fetch(url);
+        if(!r.ok) throw new Error('HTTP ' + r.status);
+        const d = await r.json();
+        const geo = d.geometry || d;
+        if(!geo || !geo.coordinates) throw new Error('r\u00e9ponse sans g\u00e9om\u00e9trie');
+        L.geoJSON(geo, {
+          pane:'iso',
+          style:{ color:coul, weight:2, opacity:0.9, fillColor:coul, fillOpacity:opa }
+        })
+          .bindTooltip('<b>' + minutes + ' min</b> ' + nomMode, { sticky:true })
+          .bindPopup('<b>Zone accessible en ' + minutes + ' minutes</b> ' + nomMode
+            + '<div style="font-size:11.5px;line-height:1.55;margin-top:4px">'
+            + 'Calcul sur le r\u00e9seau routier r\u00e9el (BD TOPO, IGN) \u2014 pas \u00e0 vol d\u2019oiseau. '
+            + 'L\u2019\u00e9cart entre les deux est justement ce qui compte : trente minutes de voiture '
+            + 'font 45 km sur autoroute et 12 km en montagne.</div>'
+            + '<div style="font-size:10px;color:#8a8577;margin-top:4px">'
+            + 'Vitesses th\u00e9oriques, sans trafic ni feux. Source : G\u00e9oplateforme IGN.</div>')
+          .addTo(g);
+        obtenus++;
+      }catch(e){
+        dernierEchec = String(e && e.message || e).slice(0, 60);
+        if(typeof journal === 'function')
+          journal('couche', 'isochrone ' + minutes + ' min \u2192 \u00e9chec', dernierEchec);
+      }
+    }
+
+    // le point de départ, par-dessus tout
+    L.circleMarker(latlng, { pane:'iso', radius:6, weight:3, color:'#1c1917',
+      fillColor:'#fff', fillOpacity:1 })
+      .bindTooltip('Point de d\u00e9part', { direction:'top' })
+      .addTo(g);
+
+    etatIso.enCours = false;
+    if(!obtenus){
+      afficherAlerte('\u23F1 Isochrones : le service IGN n\u2019a pas r\u00e9pondu'
+        + (dernierEchec ? ' (' + dernierEchec + ')' : '')
+        + '. Il ne couvre que la France m\u00e9tropolitaine et la Corse.');
+      return;
+    }
+    g.addTo(map);
+    etatIso.groupe = g;
+    majLegende();
+    const p = ISO_PALIERS.map(function(x){
+      return Math.round((mode === 'pedestrian' ? x[0] / 2 : x[0]) / 60) + ' min';
+    }).join(' \u00b7 ');
+    afficherInfo('\u23F1 ' + obtenus + ' zone(s) ' + nomMode + ' : ' + p
+      + ' \u2014 cliquez ailleurs pour d\u00e9placer le point', 9000);
+    if(typeof journal === 'function')
+      journal('couche', 'isochrones \u2192 ' + obtenus + '/3 zone(s)', mode + ' depuis '
+        + latlng.lat.toFixed(4) + ',' + latlng.lng.toFixed(4));
+  }
+
+  document.getElementById('btn-isochrone').addEventListener('click', function(){
+    const btn = document.getElementById('btn-isochrone');
+    const pan = document.getElementById('iso-panneau');
+    if(etatIso.actif){
+      etatIso.actif = false;
+      if(etatIso.groupe){ map.removeLayer(etatIso.groupe); etatIso.groupe = null; }
+      if(pan) pan.hidden = true;
+      map.off('click', surClicIso);
+      basculerBouton(btn, false, '', '\u23F1 Temps d\u2019acc\u00e8s (isochrones)');
+      majLegende();
+      return;
+    }
+    etatIso.actif = true;
+    basculerBouton(btn, true, '\u23F1 Temps d\u2019acc\u00e8s \u2715', '', '#166534');
+    if(pan) pan.hidden = false;
+    map.on('click', surClicIso);
+    afficherInfo('\u23F1 Cliquez un point sur la carte : les zones accessibles en 10, 20 et '
+      + '30 minutes s\u2019afficheront', 9000);
+  });
+
+  function surClicIso(e){
+    if(!etatIso.actif) return;
+    // en mode croquis, le clic sert à dessiner : on ne s'en mêle pas
+    if(typeof mode !== 'undefined' && mode && mode !== 'main') return;
+    traceIsochrone(e.latlng);
+  }
+
+  (function cablerIso(){
+    const s = document.getElementById('iso-mode');
+    if(s) s.addEventListener('change', function(){
+      etatIso.mode = s.value;
+      afficherInfo('\u23F1 Mode : ' + (s.value === 'car' ? 'voiture' : '\u00e0 pied')
+        + ' \u2014 cliquez un point', 5000);
+    });
+  })();
+
+  // ---------- Le Pastis Mu' ----------
+  //
+  // API publique d'un partenaire, conçue d'après le cahier des charges qu'on lui avait
+  // transmis : GeoJSON en [lon, lat], HTTPS, CORS ouvert (origine « null » acceptée,
+  // donc utilisable même en file://), filtre bbox, limite 1000, 120 requêtes/minute.
+  //
+  // Licence CC BY 4.0 : la mention « Le Pastis Mu' » et le lien vers le site sont
+  // obligatoires — ils figurent dans l'attribution de la carte et dans chaque bulle.
+  const etatPastis = { actif:false, groupe:null };
+  const PASTIS_URL = 'https://lepastismu.com/api/v1/pastis';
+  const PASTIS_CREDIT = '<a href="https://lepastismu.com" target="_blank" rel="noopener">'
+    + 'Le Pastis Mu\u2019</a> \u00b7 CC BY 4.0';
+
+  document.getElementById('btn-pastis-mu').addEventListener('click', async function(){
+    const btn = document.getElementById('btn-pastis-mu');
+    if(etatPastis.actif){
+      etatPastis.actif = false;
+      if(etatPastis.groupe){ map.removeLayer(etatPastis.groupe); etatPastis.groupe = null; }
+      basculerBouton(btn, false, '', '🥃 Le Pastis Mu\u2019');
+      majLegende();
+      return;
+    }
+    etatPastis.actif = true;
+    basculerBouton(btn, true, '🥃 Le Pastis Mu\u2019 \u2715', '', '#ca8a04');
+    afficherInfo('🥃 Le Pastis Mu\u2019 \u2014 interrogation du r\u00e9pertoire\u2026', 0);
+    try{
+      const b = empriseSure(map.getBounds());
+      // l'API attend une bbox en ouest,sud,est,nord
+      const bbox = [b.ouest, b.sud, b.est, b.nord].map(function(x){ return x.toFixed(5); }).join(',');
+      const url = PASTIS_URL + '?bbox=' + bbox + '&limit=500';
+      if(typeof journal === 'function') journal('couche', 'pastis : ' + url.slice(0, 110));
+      const r = await fetch(url, { headers:{ 'Accept':'application/json' } });
+      if(!r.ok){
+        // l'API rend toujours du JSON, meme en erreur : on lit le detail
+        let detail = 'HTTP ' + r.status;
+        try{ const j = await r.json(); if(j && (j.message || j.error)) detail += ' \u2014 ' + (j.message || j.error); }catch(e){}
+        if(r.status === 429) detail = 'trop de requ\u00eates \u2014 attendez une minute (limite 120/min)';
+        throw new Error(detail);
+      }
+      const d = await r.json();
+      if(!etatPastis.actif) return;
+      const feats = (d && d.features) || [];
+      const total = (d && (d.total || d.count)) || feats.length;
+      if(typeof journal === 'function')
+        journal('couche', 'pastis \u2192 ' + feats.length + ' point(s)',
+          total > feats.length ? total + ' au total dans le r\u00e9pertoire' : '');
+      if(!feats.length){
+        etatPastis.actif = false;
+        basculerBouton(btn, false, '', '🥃 Le Pastis Mu\u2019');
+        afficherAlerte('🥃 Aucun point dans cette vue \u2014 le r\u00e9pertoire est surtout '
+          + 'm\u00e9ridional. Dézoomez sur le Sud-Est, ou toute la France.');
+        return;
+      }
+
+      if(!map.getPane('pastis')){
+        const p = map.createPane('pastis');
+        if(p && p.style) p.style.zIndex = 379;
+      }
+      const g = L.layerGroup();
+      feats.forEach(function(f){
+        const c = f.geometry && f.geometry.coordinates;
+        if(!c || !isFinite(c[0]) || !isFinite(c[1])) return;
+        const p = f.properties || {};
+        const nom = p.nom || p.name || p.titre || 'Point';
+        const lieu = p.commune || p.ville || p.departement || '';
+        L.circleMarker([c[1], c[0]], {            // GeoJSON : [lon, lat]
+          pane:'pastis', radius:7, weight:2.5,
+          color:'#a16207', fillColor:'#fde68a', fillOpacity:0.85
+        })
+          .bindTooltip('<b>' + echap(nom) + '</b>' + (lieu ? '<br><small>' + echap(lieu) + '</small>' : ''),
+            { direction:'top' })
+          .bindPopup('<b>' + echap(nom) + '</b>'
+            + (lieu ? '<div style="color:#a16207;font-weight:700;font-size:11px;margin-top:2px">'
+                + echap(lieu) + '</div>' : '')
+            + (p.description ? '<div style="font-size:11.5px;line-height:1.55;margin-top:4px">'
+                + echap(String(p.description).slice(0, 300)) + '</div>' : '')
+            + (p.url ? '<div style="margin-top:5px"><a href="' + echap(p.url)
+                + '" target="_blank" rel="noopener">Voir la fiche \u2197</a></div>' : '')
+            + '<div style="font-size:9.5px;color:#8a8577;margin-top:5px;padding-top:4px;'
+            + 'border-top:1px solid var(--trait)">Source : ' + PASTIS_CREDIT + '</div>')
+          .addTo(g);
+      });
+      g.addTo(map);
+      etatPastis.groupe = g;
+      // la licence impose le credit : on l'ajoute a l'attribution de la carte
+      try{ map.attributionControl.addAttribution(PASTIS_CREDIT); }catch(e){}
+      majLegende();
+      afficherInfo('🥃 ' + feats.length + ' adresse(s)'
+        + (total > feats.length ? ' sur ' + total + ' au r\u00e9pertoire' : '')
+        + ' \u00b7 cliquez un point pour sa fiche', 8000);
+    }catch(err){
+      etatPastis.actif = false;
+      basculerBouton(btn, false, '', '🥃 Le Pastis Mu\u2019');
+      const raison = String(err && err.message || err).slice(0, 90);
+      if(typeof journal === 'function') journal('couche', 'pastis \u2192 \u00e9chec', raison);
+      afficherAlerte('🥃 Le Pastis Mu\u2019 : ' + raison
+        + (/Failed to fetch/i.test(raison)
+            ? ' \u2014 en mode fichier local, le navigateur bloque souvent ces appels.' : ''));
+    }
+  });
 
   (function cablerLargeurLegende(){
     // les fleches existent en double : dans l'en-tete de la legende et dans celui du
