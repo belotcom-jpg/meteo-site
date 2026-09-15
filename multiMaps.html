@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- MultiMaps — édition géographie · v7.11 · juillet 2026 -->
+<!-- MultiMaps — édition géographie · v7.12 · juillet 2026 -->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MultiMaps — géographie (collège & lycée) — v7.11</title>
+<title>MultiMaps — géographie (collège & lycée) — v7.12</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -302,6 +302,21 @@
     background:#fff; text-align:center;
   }
   .qr-boite svg{ max-width:100%; height:auto }
+  /* Passerelles vers les sites specialises, en pied de fenetre. */
+  .passerelles{
+    margin-top:8px; padding-top:6px; border-top:1px dashed var(--trait);
+    display:flex; flex-wrap:wrap; gap:4px; align-items:center;
+  }
+  .passerelles-titre{
+    flex:1 1 100%; font-size:9.5px; color:#8a8577; letter-spacing:.03em;
+    text-transform:uppercase; margin-bottom:1px;
+  }
+  .passerelle-lien{
+    font:500 10.5px/1.2 system-ui, sans-serif; color:#0369a1;
+    background:#f0f9ff; border:1px solid #bae6fd; border-radius:11px;
+    padding:3px 8px; cursor:pointer;
+  }
+  .passerelle-lien:hover{ background:#e0f2fe; border-color:#7dd3fc }
   .journal-corps{
     max-height:300px; overflow-y:auto; border:1px solid var(--trait); border-radius:8px;
     background:#fdfcf9; padding:5px 7px; font:10.5px/1.55 ui-monospace,SFMono-Regular,monospace;
@@ -2653,7 +2668,7 @@
 
 <div class="widget widget-pilote" id="wg-pilote" style="left:12px;top:12px">
   <div class="widget-tete">
-    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v7.11</small></span>
+    <span class="widget-titre">🧭 MultiMaps <small style="font-weight:400;color:#8a8577">v7.12</small></span>
     <button class="widget-btn" id="btn-rail-replier" title="Replier la barre latérale">‹</button>
     <button class="widget-btn" data-action="replier" title="Replier / déplier">▾</button>
   </div>
@@ -2777,7 +2792,7 @@
 
 <div class="voile" id="voile-options">
   <div class="fenetre" role="dialog" aria-label="Options">
-    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v7.11</small></h2>
+    <h2>⚙️ Options <small style="font-size:11px;color:#8a8577;font-weight:400">· MultiMaps v7.12</small></h2>
     <p class="sous">Fichier de MultiMétéo sur le site <small>(sensible aux majuscules)</small></p>
     <input type="text" class="opt-select" id="url-meteo" value="pluiePro.html" spellcheck="false" aria-label="Nom du fichier de MultiMétéo" title="Nom exact du fichier de votre application météo, à côté de l'atlas. Les serveurs distinguent les majuscules : pluiePro.html n'est pas pluiepro.html. L'atlas y ajoute ?ville=Nom lors du clic sur une ville.">
     <p class="sous">Seuil « villes » des tops 50</p>
@@ -3451,7 +3466,7 @@
   // ================= Utilitaires =================
   const info = document.getElementById('mode-info');
   let infoTimer;
-  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v7.11';
+  const TITRE_BASE = 'MultiMaps — géographie (collège & lycée) — v7.12';
   let chargementsActifs = 0;
   function majTitre(delta){
     chargementsActifs = Math.max(0, chargementsActifs + delta);
@@ -14068,6 +14083,254 @@
     });
     // si l'usager agit depuis la fenetre Monde, le relais suit aussi
     vrai.addEventListener('click', function(){ setTimeout(refleter, 60); setTimeout(refleter, 900); });
+  })();
+
+  // ---------- Passerelles vers les sites spécialisés ----------
+  //
+  // Principe : l'application montre la donnée, le site de référence permet d'aller plus
+  // loin. Chaque fenêtre reçoit un lien discret qui ouvre le site compétent, CENTRÉ SUR
+  // LA VUE quand son adresse accepte des coordonnées.
+  //
+  // Tous ne les acceptent pas : ceux-là s'ouvrent sur leur page d'accueil, et l'infobulle
+  // le dit pour éviter la déception.
+  //
+  // Format : fenêtre : [ [nom, modèle d'adresse, ce qu'il apporte], … ]
+  //   {lat} {lon} {z} sont remplacés ; une adresse sans marqueur ouvre l'accueil.
+  const PASSERELLES = {
+    'wg-meteo': [
+      ['Windy', 'https://www.windy.com/?{lat},{lon},{z}',
+       'Mod\u00e8les multiples, vent en altitude, animation fine'],
+      ['M\u00e9t\u00e9o-France', 'https://meteofrance.com/',
+       'Vigilance officielle et bulletins'],
+      ['Blitzortung \u00b7 foudre', 'https://map.blitzortung.org/#{z}/{lat}/{lon}',
+       'Impacts de foudre en temps r\u00e9el'],
+      ['Keraunos \u00b7 tornades', 'https://www.keraunos.org/',
+       'Observatoire fran\u00e7ais des tornades et orages violents']
+    ],
+    'wg-feux': [
+      ['EFFIS', 'https://forest-fire.emergency.copernicus.eu/',
+       'Bulletins europ\u00e9ens et historique complet'],
+      ['NASA FIRMS', 'https://firms.modaps.eosdis.nasa.gov/map/#d:24hrs;@{lon},{lat},{z}z',
+       'Points chauds satellite, toutes sources']
+    ],
+    'wg-mer': [
+      ['MarineTraffic', 'https://www.marinetraffic.com/en/ais/home/centerx:{lon}/centery:{lat}/zoom:{z}',
+       'Trafic maritime en direct (AIS)'],
+      ['SHOM', 'https://data.shom.fr/',
+       'Cartes marines et donn\u00e9es officielles'],
+      ['mar\u00e9e.info', 'https://maree.info/',
+       'Horaires et coefficients de mar\u00e9e']
+    ],
+    'wg-rivieres': [
+      ['Vigicrues', 'https://www.vigicrues.gouv.fr/',
+       'Hauteurs d\u2019eau et vigilance crues en direct'],
+      ['Hubeau', 'https://hubeau.eaufrance.fr/',
+       'Toutes les donn\u00e9es publiques sur l\u2019eau']
+    ],
+    'wg-equip': [
+      ['Flightradar24', 'https://www.flightradar24.com/{lat},{lon}/{z}',
+       'Vols en direct'],
+      ['OpenRailwayMap', 'https://www.openrailwaymap.org/?lat={lat}&lon={lon}&zoom={z}',
+       'R\u00e9seau ferr\u00e9 d\u00e9taill\u00e9 : \u00e9lectrification, \u00e9cartement, signalisation']
+    ],
+    'wg-velo': [
+      ['G\u00e9ov\u00e9lo', 'https://geovelo.app/',
+       'Itin\u00e9raires cyclables calcul\u00e9s'],
+      ['CyclOSM', 'https://www.cyclosm.org/#map={z}/{lat}/{lon}/cyclosm',
+       'Carte cyclable d\u00e9taill\u00e9e']
+    ],
+    'wg-rando': [
+      ['Visorando', 'https://www.visorando.com/',
+       'Traces, descriptifs et difficult\u00e9'],
+      ['Waymarked Trails', 'https://hiking.waymarkedtrails.org/#?map={z}!{lat}!{lon}',
+       'Tous les itin\u00e9raires balis\u00e9s d\u2019Europe']
+    ],
+    'wg-montagnes': [
+      ['Peakbagger', 'https://www.peakbagger.com/',
+       'Prominence, ascensions, fiches de sommets'],
+      ['M\u00e9t\u00e9o-France Montagne', 'https://meteofrance.com/meteo-montagne',
+       'Bulletins d\u2019avalanche et manteau neigeux']
+    ],
+    'wg-geol': [
+      ['InfoTerre \u00b7 BRGM', 'https://infoterre.brgm.fr/viewer/MainTileForward.do',
+       'Cartes g\u00e9ologiques d\u00e9taill\u00e9es et forages']
+    ],
+    'wg-mineraux': [
+      ['Mindat', 'https://www.mindat.org/',
+       'Base mondiale des min\u00e9raux et gisements']
+    ],
+    'wg-sismique': [
+      ['R\u00e9Na\u00df', 'https://renass.unistra.fr/',
+       'R\u00e9seau national de surveillance sismique'],
+      ['USGS', 'https://earthquake.usgs.gov/earthquakes/map/',
+       'S\u00e9ismes mondiaux, magnitudes et m\u00e9canismes']
+    ],
+    'wg-vegetation': [
+      ['iNaturalist', 'https://www.inaturalist.org/observations?lat={lat}&lng={lon}&radius=15',
+       'Observations r\u00e9centes et aide \u00e0 l\u2019identification'],
+      ['INPN', 'https://inpn.mnhn.fr/',
+       'Inventaire national du patrimoine naturel'],
+      ['Tela Botanica', 'https://www.tela-botanica.org/',
+       'R\u00e9seau botanique francophone']
+    ],
+    'wg-animaux': [
+      ['Faune-France', 'https://www.faune-france.org/',
+       'Observations quotidiennes, atlas en cours'],
+      ['iNaturalist', 'https://www.inaturalist.org/observations?lat={lat}&lng={lon}&radius=15',
+       'Observations r\u00e9centes et identification'],
+      ['GBIF', 'https://www.gbif.org/occurrence/map',
+       'Base mondiale de biodiversit\u00e9']
+    ],
+    'wg-foret': [
+      ['ONF', 'https://www.onf.fr/',
+       'For\u00eats domaniales et gestion foresti\u00e8re'],
+      ['IGN \u00b7 inventaire forestier', 'https://inventaire-forestier.ign.fr/',
+       'Donn\u00e9es chiffr\u00e9es par r\u00e9gion']
+    ],
+    'wg-risques': [
+      ['G\u00e9orisques', 'https://www.georisques.gouv.fr/',
+       'Fiche compl\u00e8te des risques par adresse'],
+      ['ARIA \u00b7 accidents', 'https://www.aria.developpement-durable.gouv.fr/',
+       'Base des accidents technologiques']
+    ],
+    'wg-climat': [
+      ['DRIAS', 'https://www.drias-climat.fr/',
+       'Projections climatiques r\u00e9gionalis\u00e9es'],
+      ['ClimateData', 'https://climatedata.ca/',
+       'Comparaisons internationales']
+    ],
+    'wg-insee': [
+      ['Observatoire des territoires', 'https://www.observatoire-des-territoires.gouv.fr/',
+       'Indicateurs compar\u00e9s, toutes \u00e9chelles'],
+      ['INSEE \u00b7 statistiques locales', 'https://statistiques-locales.insee.fr/',
+       'Cartes et donn\u00e9es communales']
+    ],
+    'wg-histoire': [
+      ['Remonter le temps \u00b7 IGN', 'https://remonterletemps.ign.fr/comparer/basic?x={lon}&y={lat}&z={z}',
+       'Photos a\u00e9riennes depuis 1950 et cartes anciennes'],
+      ['G\u00e9oportail Cassini', 'https://www.geoportail.gouv.fr/',
+       'Carte de Cassini, \u00e9tat-major, superpositions'],
+      ['Gallica \u00b7 cartes', 'https://gallica.bnf.fr/',
+       'Fonds cartographique num\u00e9ris\u00e9 de la BnF']
+    ],
+    'wg-sites': [
+      ['POP \u00b7 patrimoine', 'https://www.pop.culture.gouv.fr/',
+       'Plateforme ouverte du patrimoine'],
+      ['UNESCO', 'https://whc.unesco.org/fr/list/',
+       'Liste du patrimoine mondial']
+    ],
+    'wg-archeo': [
+      ['Inrap', 'https://www.inrap.fr/',
+       'Fouilles pr\u00e9ventives et d\u00e9couvertes r\u00e9centes'],
+      ['Atlas des patrimoines', 'http://atlas.patrimoines.culture.fr/',
+       'Zones de pr\u00e9somption arch\u00e9ologique']
+    ],
+    'wg-astro': [
+      ['Heavens-Above', 'https://heavens-above.com/?lat={lat}&lng={lon}',
+       'Passages ISS et satellites visibles depuis ce point'],
+      ['Stellarium', 'https://stellarium-web.org/',
+       'Ciel du moment, planisph\u00e8re interactif'],
+      ['lightpollutionmap', 'https://www.lightpollutionmap.info/#zoom={z}&lat={lat}&lon={lon}',
+       'Brillance du ciel mesur\u00e9e']
+    ],
+    'wg-ville': [
+      ['Webcams du monde', 'https://worldwatcher.live/',
+       'Webcams publiques en direct, partout dans le monde'],
+      ['Windy \u00b7 webcams', 'https://www.windy.com/-Webcams/webcams?{lat},{lon},{z}',
+       'Des milliers de webcams, centr\u00e9es sur la vue']
+    ],
+    'wg-logement': [
+      ['DVF \u00b7 valeurs fonci\u00e8res', 'https://app.dvf.etalab.gouv.fr/',
+       'Toutes les ventes immobili\u00e8res d\u00e9clar\u00e9es'],
+      ['Ou-vivre', 'https://app.ou-vivre.fr/',
+       'Croiser des crit\u00e8res pour choisir o\u00f9 habiter']
+    ],
+    'wg-sols': [
+      ['G\u00e9oportail de l\u2019urbanisme', 'https://www.geoportail-urbanisme.gouv.fr/',
+       'PLU, zonages, servitudes'],
+      ['Cadastre', 'https://cadastre.data.gouv.fr/',
+       'Parcelles et b\u00e2ti']
+    ],
+    'wg-industriel': [
+      ['G\u00e9orisques \u00b7 sites pollu\u00e9s', 'https://www.georisques.gouv.fr/risques/basol',
+       'Sols pollu\u00e9s, anciennes activit\u00e9s'],
+      ['Registre des \u00e9missions', 'https://www.georisques.gouv.fr/risques/registre-des-emissions-polluantes',
+       '\u00c9missions industrielles d\u00e9clar\u00e9es']
+    ],
+    'wg-parcs': [
+      ['Parcs nationaux', 'https://www.parcsnationaux.fr/',
+       'Les onze parcs, r\u00e9glementation et acc\u00e8s'],
+      ['INPN \u00b7 espaces prot\u00e9g\u00e9s', 'https://inpn.mnhn.fr/zone/especeProtegee',
+       'ZNIEFF, Natura 2000, r\u00e9serves']
+    ],
+    'wg-educ': [
+      ['Annuaire de l\u2019\u00e9ducation', 'https://data.education.gouv.fr/',
+       'Tous les \u00e9tablissements, donn\u00e9es ouvertes'],
+      ['IPS \u00b7 indices sociaux', 'https://data.education.gouv.fr/explore/dataset/fr-en-ips-colleges-ap2022/',
+       'Indices de position sociale d\u00e9taill\u00e9s']
+    ],
+    'wg-terroir': [
+      ['INAO \u00b7 AOP et IGP', 'https://www.inao.gouv.fr/',
+       'Aires d\u00e9limit\u00e9es des appellations'],
+      ['Le Pastis Mu\u2019', 'https://lepastismu.com',
+       'R\u00e9pertoire des distilleries et producteurs']
+    ],
+    'wg-monde': [
+      ['Natural Earth', 'https://www.naturalearthdata.com/',
+       'Donn\u00e9es cartographiques mondiales libres'],
+      ['Our World in Data', 'https://ourworldindata.org/',
+       'Statistiques mondiales compar\u00e9es']
+    ],
+    'wg-littoral': [
+      ['Cerema \u00b7 littoral', 'https://www.cerema.fr/fr/activites/mers-littoraux',
+       'Recul du trait de c\u00f4te et submersion'],
+      ['SHOM \u00b7 niveaux marins', 'https://data.shom.fr/',
+       'R\u00e9f\u00e9rences altim\u00e9triques marines']
+    ]
+  };
+
+  function ouvrirPasserelle(modele){
+    let url = modele;
+    try{
+      const c = map.getCenter();
+      const z = Math.max(2, Math.min(Math.round(map.getZoom()), 18));
+      url = url.replace(/\{lat\}/g, c.lat.toFixed(5))
+               .replace(/\{lon\}/g, c.lng.toFixed(5))
+               .replace(/\{z\}/g, String(z));
+    }catch(e){}
+    try{ window.open(url, '_blank', 'noopener'); }catch(e){}
+    if(typeof journal === 'function')
+      journal('action', 'passerelle ouverte', url.slice(0, 80));
+  }
+
+  (function poserPasserelles(){
+    let posees = 0;
+    Object.keys(PASSERELLES).forEach(function(idFen){
+      const wg = document.getElementById(idFen);
+      if(!wg) return;
+      const liste = PASSERELLES[idFen];
+      const bloc = document.createElement('div');
+      bloc.className = 'passerelles';
+      bloc.innerHTML = '<span class="passerelles-titre">🔗 Pour aller plus loin</span>';
+      liste.forEach(function(p){
+        const [nom, modele, quoi] = p;
+        const suitLaVue = /\{lat\}/.test(modele);
+        const a = document.createElement('button');
+        a.className = 'passerelle-lien';
+        a.type = 'button';
+        a.textContent = nom + (suitLaVue ? ' \u00b7 sur la vue' : '');
+        a.title = quoi + (suitLaVue
+          ? ' \u2014 s\u2019ouvre centr\u00e9 sur la vue actuelle.'
+          : ' \u2014 s\u2019ouvre sur la page d\u2019accueil du site (il n\u2019accepte pas les coordonn\u00e9es).');
+        a.addEventListener('click', function(){ ouvrirPasserelle(modele); });
+        bloc.appendChild(a);
+        posees++;
+      });
+      wg.appendChild(bloc);
+    });
+    if(typeof journal === 'function')
+      journal('action', posees + ' passerelle(s) pos\u00e9e(s)',
+        Object.keys(PASSERELLES).length + ' fen\u00eatre(s)');
   })();
 
   (function cablerLargeurLegende(){
