@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>MultiMeteo v5.0</title>
+<title>MultiMeteo v5.1</title>
 <meta name="theme-color" content="#0d0d0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1215,6 +1215,8 @@ function tgl(name, btn){
   const lb=document.getElementById('layersMenuBtn');
   if(lb)lb.classList.toggle('on',Object.values(_layers).some(Boolean));
   document.getElementById('tbTout').classList.remove('ton');
+  /* Couche activée sans données : on les récupère à la demande. */
+  if(_layers[name]&&(name in _LAYER_VAR))_ensureLayerData(name);
   applyLayers();
   /* Légende interactive visible seulement quand MODÈLES est ON */
   if(name==='models'){
@@ -5983,7 +5985,7 @@ async function fetchNowcast(lat,lon){
     function(){
       const ctrl=new AbortController();
       setTimeout(function(){ctrl.abort();},6000);
-      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/5.0'}});
+      return fetch(apiUrl,{signal:ctrl.signal,headers:{'User-Agent':'MultiMeteo/5.1'}});
     },
     function(){
       const ctrl=new AbortController();
@@ -6623,7 +6625,7 @@ async function _loadWithCoords(lat,lon,displayName){
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&models=meteofrance_arome_france_hd,icon_d2&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain,pressure_msl&hourly=uv_index,temperature_2m&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover,windgusts_10m,uv_index,temperature_2m,relative_humidity_2m,sunshine_duration,weathercode&forecast_days=16&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover,wind_gusts_10m,uv_index,temperature_2m,relative_humidity_2m,sunshine_duration,weather_code&forecast_days=16&timezone=auto`),
     ]);
     const [omMain,omM15,omCurrent,metno,omDaily]=[_r0,_r1,_r2,_r3,_r4].map(r=>r.status==='fulfilled'?r.value:null);
     const rainMx=buildRainMx(omMain,metno,0);
@@ -6650,7 +6652,7 @@ async function _loadWithCoords(lat,lon,displayName){
     const probMx=buildProbMx(omMain,metno,0);
     _cachedData={omMain,omM15,rainMx,probMx};_updateClimateContext(omMain);
     _windData=omMain?.hourly?.windspeed_10m??null;
-    if(omDaily?.hourly?.windgusts_10m) _windGustData=omDaily.hourly.windgusts_10m;
+    if(omDaily?.hourly?.wind_gusts_10m||omDaily?.hourly?.windgusts_10m) _windGustData=omDaily.hourly.wind_gusts_10m||omDaily.hourly.windgusts_10m;
     _currentRain=omCurrent?.current?.precipitation??null;
     /* UV et température depuis omCurrent (pas de models=, tableau direct) */
     if(omCurrent?.current?.pressure_msl) _pressureMSL=omCurrent.current.pressure_msl;
@@ -6688,8 +6690,9 @@ async function _loadWithCoords(lat,lon,displayName){
     if(omDaily?.hourly?.uv_index) _uvHourlyData=omDaily.hourly.uv_index;
     if(omDaily?.hourly?.temperature_2m) _tempHourly=omDaily.hourly.temperature_2m;
     if(omDaily?.hourly?.relative_humidity_2m){_humidityHourly=omDaily.hourly.relative_humidity_2m;updateLazyDatasets();}
+    else console.warn('[hum] relative_humidity_2m absent — couches Humidité/Nuage/UV/Soleil indisponibles');
     if(omDaily?.hourly?.sunshine_duration) _sunshineHourly=omDaily.hourly.sunshine_duration;
-    if(omDaily?.hourly?.weathercode) _wcodeHourly=omDaily.hourly.weathercode;
+    if(omDaily?.hourly?.weather_code||omDaily?.hourly?.weathercode) _wcodeHourly=omDaily.hourly.weather_code||omDaily.hourly.weathercode;
     if(omDaily?.hourly?.uv_index) _uvHourlyData=omDaily.hourly.uv_index;
     if(omDaily?.daily?.temperature_2m_max) _tempByDay=omDaily.daily.temperature_2m_max.map(function(mx,di){return{max:mx,min:omDaily.daily.temperature_2m_min?.[di]??null};});
     _sunriseJ0=omDaily?.daily?.sunrise?.[0]?new Date(omDaily.daily.sunrise[0]).getHours()+(new Date(omDaily.daily.sunrise[0]).getMinutes()/60):6;
@@ -6925,7 +6928,7 @@ async function load(){
         const probMx=buildProbMx(omMain,metno,tIdx);
         _cachedData={omMain,omM15,rainMx,probMx};_updateClimateContext(omMain);
         _windData=omMain?.hourly?.windspeed_10m??null;
-    if(omDaily?.hourly?.windgusts_10m) _windGustData=omDaily.hourly.windgusts_10m;
+    if(omDaily?.hourly?.wind_gusts_10m||omDaily?.hourly?.windgusts_10m) _windGustData=omDaily.hourly.wind_gusts_10m||omDaily.hourly.windgusts_10m;
         if(omDaily?.hourly?.shortwave_radiation) _solarData=omDaily.hourly.shortwave_radiation;
         if(omDaily?.hourly?.cloud_cover) _cloudData=smoothCloudData(omDaily.hourly.cloud_cover);
         _currentRain=omCurrent?.current?.precipitation??omCurrent?.current?.rain??null;
@@ -6936,8 +6939,9 @@ async function load(){
     if(omDaily?.hourly?.uv_index) _uvHourlyData=omDaily.hourly.uv_index;
     if(omDaily?.hourly?.temperature_2m) _tempHourly=omDaily.hourly.temperature_2m;
     if(omDaily?.hourly?.relative_humidity_2m){_humidityHourly=omDaily.hourly.relative_humidity_2m;updateLazyDatasets();}
+    else console.warn('[hum] relative_humidity_2m absent — couches Humidité/Nuage/UV/Soleil indisponibles');
     if(omDaily?.hourly?.sunshine_duration) _sunshineHourly=omDaily.hourly.sunshine_duration;
-    if(omDaily?.hourly?.weathercode) _wcodeHourly=omDaily.hourly.weathercode;
+    if(omDaily?.hourly?.weather_code||omDaily?.hourly?.weathercode) _wcodeHourly=omDaily.hourly.weather_code||omDaily.hourly.weathercode;
     if(omDaily?.hourly?.uv_index) _uvHourlyData=omDaily.hourly.uv_index;
         if(omDaily?.daily?.temperature_2m_max) _tempByDay=omDaily.daily.temperature_2m_max.map(function(mx,di){return{max:mx,min:omDaily.daily.temperature_2m_min?.[di]??null};});
         _sunriseJ0=omDaily?.daily?.sunrise?.[0]?new Date(omDaily.daily.sunrise[0]).getHours()+(new Date(omDaily.daily.sunrise[0]).getMinutes()/60):6;
@@ -6970,7 +6974,7 @@ async function load(){
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=precipitation&models=meteofrance_arome_france_hd,icon_d2&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain,pressure_msl&hourly=uv_index,temperature_2m&forecast_days=2&timezone=auto`),
       fetchRetry(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`),
-      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover,windgusts_10m,uv_index,temperature_2m,relative_humidity_2m,sunshine_duration,weathercode&forecast_days=16&timezone=auto`),
+      fetchRetry(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&hourly=shortwave_radiation,cloud_cover,wind_gusts_10m,uv_index,temperature_2m,relative_humidity_2m,sunshine_duration,weather_code&forecast_days=16&timezone=auto`),
     ]);
     const [omMain,omM15,omCurrent,metno,omDaily]=_res2.map(r=>r.status==='fulfilled'?r.value:null);
     if(!omMain?.hourly?.time){showStatus('❌ Open-Meteo inaccessible — réessaie dans quelques secondes','#ff3d57');return;}
@@ -6986,7 +6990,7 @@ async function load(){
     const probMx=buildProbMx(omMain,metno,tIdx);
     _cachedData={omMain,omM15,rainMx,probMx};_updateClimateContext(omMain);
     _windData=omMain?.hourly?.windspeed_10m??null;
-    if(omDaily?.hourly?.windgusts_10m) _windGustData=omDaily.hourly.windgusts_10m;
+    if(omDaily?.hourly?.wind_gusts_10m||omDaily?.hourly?.windgusts_10m) _windGustData=omDaily.hourly.wind_gusts_10m||omDaily.hourly.windgusts_10m;
     if(omDaily?.hourly?.shortwave_radiation) _solarData=omDaily.hourly.shortwave_radiation;
     if(omDaily?.hourly?.cloud_cover) _cloudData=smoothCloudData(omDaily.hourly.cloud_cover);
     _currentRain=omCurrent?.current?.precipitation??omCurrent?.current?.rain??null;
@@ -8467,6 +8471,45 @@ function highlightModel(key,on){
 }
 
 /* Mettre à jour les datasets lazy (humidity, orage) après chargement des données */
+/* ── Chargement à la demande des données de couche ──
+   Humidité, nuages, ensoleillement et UV sont servis par UN SEUL appel groupé
+   (16 jours × 8 variables). S'il échoue — quota, délai, variable refusée —, les
+   quatre couches restent vides sans que rien ne le signale : c'est exactement ce
+   qui se produisait pour l'humidité (`_humidityHourly` nul).
+   On récupère donc la variable manquante par un appel dédié et léger, au moment
+   où l'utilisateur active la couche. */
+const _LAYER_VAR={humidity:'relative_humidity_2m',nuage:'cloud_cover',soleil:'sunshine_duration',uv:'uv_index'};
+let _layerFetching={};
+async function _ensureLayerData(name){
+  const v=_LAYER_VAR[name];
+  if(!v)return true;
+  const deja={humidity:_humidityHourly,nuage:_cloudData,soleil:_sunshineHourly,uv:_uvHourlyData}[name];
+  if(deja&&deja.length)return true;
+  if(_layerFetching[name])return false;
+  if(typeof _cityLat==='undefined'||_cityLat==null)return false;
+  _layerFetching[name]=true;
+  try{showStatus('⏳ Chargement des données…','#7ec9ff');}catch(e){}
+  try{
+    const u='https://api.open-meteo.com/v1/forecast?latitude='+_cityLat+'&longitude='+_cityLon
+      +'&hourly='+v+'&forecast_days=16&timezone=auto';
+    const r=await _fetchTO(u,12000);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    const arr=j&&j.hourly&&j.hourly[v];
+    if(!arr||!arr.length)throw new Error('données absentes');
+    if(name==='humidity')_humidityHourly=arr;
+    else if(name==='nuage')_cloudData=(typeof smoothCloudData==='function')?smoothCloudData(arr):arr;
+    else if(name==='soleil')_sunshineHourly=arr;
+    else if(name==='uv')_uvHourlyData=arr;
+    try{updateLazyDatasets();}catch(e){}
+    try{applyLayers();}catch(e){}
+    try{showStatus('','');}catch(e){}
+    return true;
+  }catch(e){
+    try{showStatus('Données de cette couche indisponibles ('+e.message+')','#ffaa00');}catch(_){}
+    return false;
+  }finally{_layerFetching[name]=false;}
+}
 function updateLazyDatasets(){
   if(!myChart)return;
   const ds=myChart.data.datasets;
